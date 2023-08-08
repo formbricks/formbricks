@@ -8,6 +8,17 @@ interface ActivityTabProps {
   surveys: TSurvey[];
 }
 
+const getSurveyNamesForWebhook = (webhook: TWebhook, allSurveys: TSurvey[]): string[] => {
+  if (webhook.surveyIds.length === 0) {
+    return allSurveys.map((survey) => survey.name);
+  } else {
+    return webhook.surveyIds.map((surveyId) => {
+      const survey = allSurveys.find((survey) => survey.id === surveyId);
+      return survey ? survey.name : "";
+    });
+  }
+};
+
 const convertTriggerIdToName = (triggerId: string): string => {
   switch (triggerId) {
     case "responseCreated":
@@ -21,7 +32,7 @@ const convertTriggerIdToName = (triggerId: string): string => {
   }
 };
 
-export default function WebhookActivityTab({ webhook, surveys }: ActivityTabProps) {
+export default function WebhookOverviewTab({ webhook, surveys }: ActivityTabProps) {
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
@@ -32,18 +43,15 @@ export default function WebhookActivityTab({ webhook, surveys }: ActivityTabProp
 
         <div>
           <Label className="text-slate-500">Surveys</Label>
-          {webhook.surveyIds.length === 0 && <p className="text-sm text-slate-900">-</p>}
-          {webhook.surveyIds
-            .map((surveyId) => surveys.find((survey) => survey.id === surveyId)?.name)
-            .map((surveyName) => (
-              <p key={surveyName} className="text-sm text-slate-900">
-                {surveyName}
-              </p>
-            ))}
+
+          {getSurveyNamesForWebhook(webhook, surveys).map((surveyName, index) => (
+            <p key={index} className="text-sm text-slate-900">
+              {surveyName}
+            </p>
+          ))}
         </div>
         <div>
           <Label className="text-slate-500">Triggers</Label>
-          {webhook.triggers.length === 0 && <p className="text-sm text-slate-900">-</p>}
           {webhook.triggers.map((triggerId) => (
             <p key={triggerId} className="text-sm text-slate-900">
               {convertTriggerIdToName(triggerId)}

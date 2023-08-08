@@ -1,6 +1,6 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
-import WebhookActivityTab from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookActivityTab";
+import WebhookOverviewTab from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookOverviewTab";
 import WebhookSettingsTab from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookSettingsTab";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Webhook } from "lucide-react";
@@ -16,8 +16,8 @@ interface WebhookModalProps {
 export default function WebhookModal({ environmentId, open, setOpen, webhook, surveys }: WebhookModalProps) {
   const tabs = [
     {
-      title: "Activity",
-      children: <WebhookActivityTab webhook={webhook} surveys={surveys} />,
+      title: "Overview",
+      children: <WebhookOverviewTab webhook={webhook} surveys={surveys} />,
     },
     {
       title: "Settings",

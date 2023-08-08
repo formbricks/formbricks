@@ -4,7 +4,8 @@ import { TWebhook } from "@formbricks/types/v1/webhooks";
 
 const renderSelectedSurveysText = (webhook: TWebhook, allSurveys: TSurvey[]) => {
   if (webhook.surveyIds.length === 0) {
-    return <p className="text-slate-400">No Surveys</p>;
+    const allSurveyNames = allSurveys.map((survey) => survey.name);
+    return <p className="text-slate-400">{allSurveyNames.join(", ")}</p>;
   } else {
     const selectedSurveyNames = webhook.surveyIds.map((surveyId) => {
       const survey = allSurveys.find((survey) => survey.id === surveyId);

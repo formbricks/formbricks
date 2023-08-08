@@ -1,23 +1,14 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import {
-  Button,
-  Checkbox,
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  Input,
-  Label,
-} from "@formbricks/ui";
+import { Button, Checkbox, Input, Label } from "@formbricks/ui";
 import clsx from "clsx";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { ChevronDown, Webhook } from "lucide-react";
+import { Webhook } from "lucide-react";
 import { TWebhookInput } from "@formbricks/types/v1/webhooks";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { createWebhook } from "@formbricks/lib/services/webhook";
@@ -30,16 +21,27 @@ interface AddWebhookModalProps {
   setOpen: (v: boolean) => void;
 }
 
+const triggers = [
+  { title: "Response Created", value: "responseCreated" as TPipelineTrigger },
+  { title: "Response Updated", value: "responseUpdated" as TPipelineTrigger },
+  { title: "Response Finished", value: "responseFinished" as TPipelineTrigger },
+];
+
 export default function AddWebhookModal({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) {
   const router = useRouter();
   const { handleSubmit, reset } = useForm();
+  const [testEndpointInput, setTestEndpointInput] = useState("");
+  const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
+  const [endpointAccessible, setEndpointAccessible] = useState<boolean>();
+  const [selectedTriggers, setSelectedTriggers] = useState<TPipelineTrigger[]>([]);
+  const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
+  const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
 
   const submitWebhook = async (): Promise<void> => {
     if (testEndpointInput === undefined || testEndpointInput === "") {
       toast.error("Please enter a URL");
       return;
     }
-
     if (selectedTriggers.length === 0) {
       toast.error("Please select at least one trigger");
       return;
@@ -53,6 +55,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
     try {
       await createWebhook(environmentId, updatedData);
       router.refresh();
+      resetStates();
       reset();
       setOpen(false);
       toast.success("Webhook added successfully.");
@@ -61,23 +64,19 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
       return;
     }
   };
-  const renderSelectedSurveysText = () => {
-    if (selectedSurveys.length === 0) {
-      return <p className="text-slate-400">Select Surveys for this webhook</p>;
-    } else {
-      const selectedSurveyNames = selectedSurveys.map((surveyId) => {
-        const survey = surveys.find((survey) => survey.id === surveyId);
-        return survey ? survey.name : "";
-      });
-      return <p className="text-slate-400">{selectedSurveyNames.join(", ")}</p>;
-    }
-  };
-  const [testEndpointInput, setTestEndpointInput] = useState("");
-  const [endpointAccessible, setEndpointAccessible] = useState<boolean>();
-  const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
 
-  const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
-  const [selectedTriggers, setSelectedTriggers] = useState<TPipelineTrigger[]>([]);
+  const resetStates = () => {
+    setTestEndpointInput("");
+    setEndpointAccessible(undefined);
+    setSelectedSurveys([]);
+    setSelectedTriggers([]);
+    setSelectedAllSurveys(false);
+  };
+
+  const handleSelectAllSurveys = () => {
+    setSelectedAllSurveys(!selectedAllSurveys);
+    setSelectedSurveys([]);
+  };
 
   const handleSelectedSurveyChange = (surveyId) => {
     setSelectedSurveys((prevSelectedSurveys) => {
@@ -133,7 +132,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
               <div className="col-span-1">
-                <Label>URL</Label>
+                <Label htmlFor="URL">URL</Label>
                 <div className="mt-1 flex">
                   <Input
                     type="text"
@@ -164,70 +163,72 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                   </Button>
                 </div>
               </div>
+
               <div>
-                <Label>Triggers</Label>
-                <div className="flex gap-2">
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <Checkbox
-                      key={"responseCreated"}
-                      value="responseCreated"
-                      checked={selectedTriggers.includes("responseCreated")}
-                      onCheckedChange={() => {
-                        handleCheckboxChange("responseCreated");
-                      }}
-                    />
-                    <Label className="flex cursor-pointer items-center">Response Created</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <Checkbox
-                      key={"responseUpdated"}
-                      value="responseUpdated"
-                      checked={selectedTriggers.includes("responseUpdated")}
-                      onCheckedChange={() => {
-                        handleCheckboxChange("responseUpdated");
-                      }}
-                    />
-                    <Label className="flex cursor-pointer items-center">Response Updated</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <Checkbox
-                      key={"responseFinished"}
-                      value="responseFinished"
-                      checked={selectedTriggers.includes("responseFinished")}
-                      onCheckedChange={() => {
-                        handleCheckboxChange("responseFinished");
-                      }}
-                    />
-                    <Label className="flex cursor-pointer items-center">Response Finished</Label>
+                <Label htmlFor="Triggers">Triggers</Label>
+                <div className="mt-1 rounded-lg border border-slate-200">
+                  <div className="grid content-center rounded-lg bg-slate-100 p-3 text-left text-sm text-slate-900">
+                    {triggers.map((survey) => (
+                      <div key={survey.value} className="my-1 flex items-center space-x-2">
+                        <label htmlFor={survey.value} className="flex cursor-pointer items-center">
+                          <Checkbox
+                            type="button"
+                            id={survey.value}
+                            value={survey.value}
+                            checked={selectedTriggers.includes(survey.value)}
+                            onCheckedChange={() => {
+                              handleCheckboxChange(survey.value);
+                            }}
+                          />
+                          <span className="ml-2">{survey.title}</span>
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
               <div>
-                <Label>Surveys to enable</Label>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-                    <div className="flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
-                      {renderSelectedSurveysText()}
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                <Label htmlFor="Surveys">Surveys</Label>
+                <div className="mt-1 rounded-lg border border-slate-200">
+                  <div className="grid content-center rounded-lg bg-slate-100 p-3 text-left text-sm text-slate-900">
+                    <div className="my-1 flex items-center space-x-2">
+                      <Checkbox
+                        type="button"
+                        id="allSurveys"
+                        value=""
+                        checked={selectedAllSurveys}
+                        onCheckedChange={() => handleSelectAllSurveys()}
+                      />
+                      <label
+                        htmlFor="allSurveys"
+                        className={`flex cursor-pointer items-center ${
+                          selectedAllSurveys ? "font-semibold" : ""
+                        }`}>
+                        All current and new surveys
+                      </label>
                     </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-full bg-slate-50 text-slate-700"
-                    align="start"
-                    side="bottom">
                     {surveys.map((survey) => (
-                      <DropdownMenuCheckboxItem
-                        key={survey.id}
-                        checked={selectedSurveys.includes(survey.id)}
-                        onSelect={(e) => e.preventDefault()}
-                        onCheckedChange={() => handleSelectedSurveyChange(survey.id)}>
-                        {survey.name}
-                      </DropdownMenuCheckboxItem>
+                      <div key={survey.id} className="my-1 flex items-center space-x-2">
+                        <Checkbox
+                          type="button"
+                          id={survey.id}
+                          value={survey.id}
+                          checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
+                          disabled={selectedAllSurveys}
+                          onCheckedChange={() => handleSelectedSurveyChange(survey.id)}
+                        />
+                        <label
+                          htmlFor={survey.id}
+                          className={`flex cursor-pointer items-center ${
+                            selectedAllSurveys ? "cursor-not-allowed opacity-50" : ""
+                          }`}>
+                          {survey.name}
+                        </label>
+                      </div>
                     ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
