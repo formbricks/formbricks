@@ -151,7 +151,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
               <div className="col-span-1">
-                <Label htmlFor="Name">Name</Label>
+                <Label htmlFor="name">Name</Label>
                 <div className="mt-1 flex">
                   <Input
                     type="text"
