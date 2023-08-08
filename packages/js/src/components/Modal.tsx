@@ -1,6 +1,6 @@
 import type { PlacementType } from "@formbricks/types/js";
 import { h, VNode } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
 // CSS classes object
@@ -15,6 +15,7 @@ export default function Modal({
   placement,
   clickOutside,
   darkOverlay,
+  highlightBorderColor,
   close,
 }: {
   children: VNode;
@@ -22,6 +23,7 @@ export default function Modal({
   placement: PlacementType;
   clickOutside: boolean;
   darkOverlay: boolean;
+  highlightBorderColor: string | null;
   close: () => void;
 }) {
   const [show, setShow] = useState(false);
@@ -80,6 +82,17 @@ export default function Modal({
     }
   };
 
+  const highlightBorderColorStyle = useMemo(() => {
+    if (!highlightBorderColor) return {};
+
+    return {
+      borderRadius: "8px",
+      border: "2px solid",
+      overflow: "hidden",
+      borderColor: highlightBorderColor,
+    };
+  }, [highlightBorderColor]);
+
   return (
     <div
       aria-live="assertive"
@@ -102,7 +115,7 @@ export default function Modal({
             getPlacementStyle(placement),
             show ? "fb-opacity-100" : "fb-opacity-0",
             "fb-h-fit fb-pointer-events-auto fb-absolute fb-w-full sm:fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4",
-            isMobile && "fb-top-full fb-rounded-t-3xl",
+            isMobile && "fb-top-full",
             handleMobileClasses(isMobile, show)
           )}>
           <div class="fb-absolute fb-top-0 fb-right-0 fb-pt-4 fb-pr-4 fb-block">
@@ -122,7 +135,7 @@ export default function Modal({
               </svg>
             </button>
           </div>
-          <div className="">{children}</div>
+          <div style={highlightBorderColorStyle}>{children}</div>
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
+import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
@@ -179,6 +180,111 @@ export function EditPlacement({ environmentId }) {
     </div>
   );
 }
+
+export const EditHighlightBorder: React.FC<{ environmentId: string }> = ({ environmentId }) => {
+  const { product, isLoadingProduct, isErrorProduct, mutateProduct } = useProduct(environmentId);
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
+
+  const [showHighlightBorder, setShowHighlightBorder] = useState(false);
+  const [color, setColor] = useState<string | null>(DEFAULT_BRAND_COLOR);
+
+  // Sync product state with local state
+  // not a good pattern, we should find a better way to do this
+  useEffect(() => {
+    if (product) {
+      setShowHighlightBorder(product.highlightBorderColor ? true : false);
+      setColor(product.highlightBorderColor);
+    }
+  }, [product]);
+
+  const handleSave = () => {
+    triggerProductMutate(
+      { highlightBorderColor: color },
+      {
+        onSuccess: () => {
+          toast.success("Settings updated successfully.");
+          // refetch product to update data
+          mutateProduct();
+        },
+        onError: () => {
+          toast.error("Something went wrong!");
+        },
+      }
+    );
+  };
+
+  const handleSwitch = (checked: boolean) => {
+    if (checked) {
+      if (!color) {
+        setColor(DEFAULT_BRAND_COLOR);
+        setShowHighlightBorder(true);
+      } else {
+        setShowHighlightBorder(true);
+      }
+    } else {
+      setShowHighlightBorder(false);
+      setColor(null);
+    }
+  };
+
+  if (isLoadingProduct) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorProduct) {
+    return <div>Error</div>;
+  }
+
+  return (
+    <div className="flex min-h-full w-full">
+      <div className="flex w-1/2 flex-col px-6 py-5">
+        <div className="mb-6 flex items-center space-x-2">
+          <Switch id="highlightBorder" checked={showHighlightBorder} onCheckedChange={handleSwitch} />
+          <h2 className="text-sm font-medium text-slate-800">Show highlight border</h2>
+        </div>
+
+        {showHighlightBorder && color ? (
+          <>
+            <Label htmlFor="brandcolor">Color (HEX)</Label>
+            <ColorPicker color={color} onChange={setColor} />
+          </>
+        ) : null}
+
+        <Button
+          type="submit"
+          variant="darkCTA"
+          className="mt-4 flex max-w-[80px] items-center justify-center"
+          loading={isMutatingProduct}
+          onClick={() => {
+            handleSave();
+          }}>
+          Save
+        </Button>
+      </div>
+
+      <div className="flex w-1/2 flex-col items-center justify-center gap-4 bg-slate-200 px-6 py-5">
+        <h3 className="text-slate-500">Preview</h3>
+        <div
+          className={cn("flex flex-col gap-4 rounded-lg border-2 bg-white p-5")}
+          {...(showHighlightBorder &&
+            color && {
+              style: {
+                borderColor: color,
+              },
+            })}>
+          <h3 className="text-sm font-semibold text-slate-800">How easy was it for you to do this?</h3>
+          <div className="flex rounded-2xl border border-slate-400">
+            {[1, 2, 3, 4, 5].map((num) => (
+              <div className="border-r border-slate-400 px-6 py-5 last:border-r-0">
+                <span className="text-sm font-medium">{num}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export function EditFormbricksSignature({ environmentId }) {
   const { isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
