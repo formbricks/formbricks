@@ -1,7 +1,7 @@
 "use client";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import { Button, Checkbox, Input, Label } from "@formbricks/ui";
+import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,9 @@ import { deleteWebhook, updateWebhook } from "@formbricks/lib/services/webhook";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/testEndpoint";
+import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/HardcodedTriggers";
+import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/TriggerCheckboxGroup";
+import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/SurveyCheckboxGroup";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -21,12 +24,6 @@ interface ActionSettingsTabProps {
   setOpen: (v: boolean) => void;
 }
 
-const triggers = [
-  { title: "Response Created", value: "responseCreated" as TPipelineTrigger },
-  { title: "Response Updated", value: "responseUpdated" as TPipelineTrigger },
-  { title: "Response Finished", value: "responseFinished" as TPipelineTrigger },
-];
-
 export default function WebhookSettingsTab({
   environmentId,
   webhook,
@@ -34,6 +31,15 @@ export default function WebhookSettingsTab({
   setOpen,
 }: ActionSettingsTabProps) {
   const router = useRouter();
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      name: webhook.name,
+      url: webhook.url,
+      triggers: webhook.triggers,
+      surveyIds: webhook.surveyIds,
+    },
+  });
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isUpdatingWebhook, setIsUpdatingWebhook] = useState(false);
   const [selectedTriggers, setSelectedTriggers] = useState<TPipelineTrigger[]>(webhook.triggers);
@@ -43,12 +49,12 @@ export default function WebhookSettingsTab({
   const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(webhook.surveyIds.length === 0);
 
-  const handleTestEndpoint = async () => {
+  const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
       setHittingEndpoint(true);
       await testEndpoint(testEndpointInput);
       setHittingEndpoint(false);
-      toast.success("Yay! We are able to ping the webhook!");
+      if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
       return true;
     } catch (err) {
@@ -62,43 +68,6 @@ export default function WebhookSettingsTab({
   const handleSelectAllSurveys = () => {
     setSelectedAllSurveys(!selectedAllSurveys);
     setSelectedSurveys([]);
-  };
-
-  const { register, handleSubmit } = useForm({
-    defaultValues: {
-      name: webhook.name,
-      url: webhook.url,
-      triggers: webhook.triggers,
-      surveyIds: webhook.surveyIds,
-    },
-  });
-
-  const onSubmit = async (data) => {
-    const endpointHitSuccessfully = await handleTestEndpoint();
-    if (!endpointHitSuccessfully) {
-      return;
-    }
-    if (selectedTriggers.length === 0) {
-      toast.error("Please select at least one trigger");
-      return;
-    }
-
-    if (!selectedAllSurveys && selectedSurveys.length === 0) {
-      toast.error("Please select at least one survey");
-      return;
-    }
-
-    const updatedData: TWebhookInput = {
-      name: data.name,
-      url: data.url as string,
-      triggers: selectedTriggers,
-      surveyIds: selectedSurveys,
-    };
-    setIsUpdatingWebhook(true);
-    await updateWebhook(environmentId, webhook.id, updatedData);
-    router.refresh();
-    setIsUpdatingWebhook(false);
-    setOpen(false);
   };
 
   const handleSelectedSurveyChange = (surveyId) => {
@@ -119,6 +88,35 @@ export default function WebhookSettingsTab({
         return [...prevValues, selectedValue];
       }
     });
+  };
+
+  const onSubmit = async (data) => {
+    if (selectedTriggers.length === 0) {
+      toast.error("Please select at least one trigger");
+      return;
+    }
+
+    if (!selectedAllSurveys && selectedSurveys.length === 0) {
+      toast.error("Please select at least one survey");
+      return;
+    }
+    const endpointHitSuccessfully = await handleTestEndpoint(false);
+    if (!endpointHitSuccessfully) {
+      return;
+    }
+
+    const updatedData: TWebhookInput = {
+      name: data.name,
+      url: data.url as string,
+      triggers: selectedTriggers,
+      surveyIds: selectedSurveys,
+    };
+    setIsUpdatingWebhook(true);
+    await updateWebhook(environmentId, webhook.id, updatedData);
+    toast.success("Webhook updated successfully.");
+    router.refresh();
+    setIsUpdatingWebhook(false);
+    setOpen(false);
   };
 
   return (
@@ -166,7 +164,7 @@ export default function WebhookSettingsTab({
               loading={hittingEndpoint}
               className="ml-2 whitespace-nowrap"
               onClick={() => {
-                handleTestEndpoint();
+                handleTestEndpoint(true);
               }}>
               Test Endpoint
             </Button>
@@ -175,67 +173,22 @@ export default function WebhookSettingsTab({
 
         <div>
           <Label htmlFor="Triggers">Triggers</Label>
-          <div className="mt-1 rounded-lg border border-slate-200">
-            <div className="grid content-center rounded-lg bg-slate-100 p-3 text-left text-sm text-slate-900">
-              {triggers.map((survey) => (
-                <div key={survey.value} className="my-1 flex items-center space-x-2">
-                  <label htmlFor={survey.value} className="flex cursor-pointer items-center">
-                    <Checkbox
-                      type="button"
-                      id={survey.value}
-                      value={survey.value}
-                      checked={selectedTriggers.includes(survey.value)}
-                      onCheckedChange={() => {
-                        handleCheckboxChange(survey.value);
-                      }}
-                    />
-                    <span className="ml-2">{survey.title}</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TriggerCheckboxGroup
+            triggers={triggers}
+            selectedTriggers={selectedTriggers}
+            onCheckboxChange={handleCheckboxChange}
+          />
         </div>
 
         <div>
           <Label htmlFor="Surveys">Surveys</Label>
-          <div className="mt-1 rounded-lg border border-slate-200">
-            <div className="grid content-center rounded-lg bg-slate-100 p-3 text-left text-sm text-slate-900">
-              <div className="my-1 flex items-center space-x-2">
-                <Checkbox
-                  type="button"
-                  id="allSurveys"
-                  value=""
-                  checked={selectedAllSurveys}
-                  onCheckedChange={() => handleSelectAllSurveys()}
-                />
-                <label
-                  htmlFor="allSurveys"
-                  className={`flex cursor-pointer items-center ${selectedAllSurveys ? "font-semibold" : ""}`}>
-                  All current and new surveys
-                </label>
-              </div>
-              {surveys.map((survey) => (
-                <div key={survey.id} className="my-1 flex items-center space-x-2">
-                  <Checkbox
-                    type="button"
-                    id={survey.id}
-                    value={survey.id}
-                    checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
-                    disabled={selectedAllSurveys}
-                    onCheckedChange={() => handleSelectedSurveyChange(survey.id)}
-                  />
-                  <label
-                    htmlFor={survey.id}
-                    className={`flex cursor-pointer items-center ${
-                      selectedAllSurveys ? "cursor-not-allowed opacity-50" : ""
-                    }`}>
-                    {survey.name}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SurveyCheckboxGroup
+            surveys={surveys}
+            selectedSurveys={selectedSurveys}
+            selectedAllSurveys={selectedAllSurveys}
+            onSelectAllSurveys={handleSelectAllSurveys}
+            onSelectedSurveyChange={handleSelectedSurveyChange}
+          />
         </div>
 
         <div className="flex justify-between border-t border-slate-200 py-6">

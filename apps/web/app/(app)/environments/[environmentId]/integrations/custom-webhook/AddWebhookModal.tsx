@@ -1,10 +1,13 @@
+import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/SurveyCheckboxGroup";
+import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/TriggerCheckboxGroup";
+import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/HardcodedTriggers";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/testEndpoint";
 import Modal from "@/components/shared/Modal";
 import { createWebhook } from "@formbricks/lib/services/webhook";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TWebhookInput } from "@formbricks/types/v1/webhooks";
-import { Button, Checkbox, Input, Label } from "@formbricks/ui";
+import { Button, Input, Label } from "@formbricks/ui";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -18,12 +21,6 @@ interface AddWebhookModalProps {
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
 }
-
-const triggers = [
-  { title: "Response Created", value: "responseCreated" as TPipelineTrigger },
-  { title: "Response Updated", value: "responseUpdated" as TPipelineTrigger },
-  { title: "Response Finished", value: "responseFinished" as TPipelineTrigger },
-];
 
 export default function AddWebhookModal({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) {
   const router = useRouter();
@@ -42,12 +39,12 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
 
-  const handleTestEndpoint = async () => {
+  const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
       setHittingEndpoint(true);
       await testEndpoint(testEndpointInput);
       setHittingEndpoint(false);
-      toast.success("Yay! We are able to ping the webhook!");
+      if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
       return true;
     } catch (err) {
@@ -64,7 +61,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
   };
 
   const handleSelectedSurveyChange = (surveyId: string) => {
-    setSelectedSurveys((prevSelectedSurveys) =>
+    setSelectedSurveys((prevSelectedSurveys: string[]) =>
       prevSelectedSurveys.includes(surveyId)
         ? prevSelectedSurveys.filter((id) => id !== surveyId)
         : [...prevSelectedSurveys, surveyId]
@@ -94,7 +91,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
           throw new Error("Please select at least one survey");
         }
 
-        const endpointHitSuccessfully = await handleTestEndpoint();
+        const endpointHitSuccessfully = await handleTestEndpoint(false);
         if (!endpointHitSuccessfully) return;
 
         const updatedData: TWebhookInput = {
@@ -106,7 +103,6 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
 
         await createWebhook(environmentId, updatedData);
         router.refresh();
-        reset();
         setOpenWithStates(false);
         toast.success("Webhook added successfully.");
       } catch (e) {
@@ -185,7 +181,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                     loading={hittingEndpoint}
                     className="ml-2 whitespace-nowrap"
                     onClick={() => {
-                      handleTestEndpoint();
+                      handleTestEndpoint(true);
                     }}>
                     Test Endpoint
                   </Button>
@@ -194,72 +190,22 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
 
               <div>
                 <Label htmlFor="Triggers">Triggers</Label>
-                <div className="border-slate-20 mt-1 rounded-lg border">
-                  <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {triggers.map((trigger) => (
-                      <div key={trigger.value} className="my-1 flex items-center space-x-2">
-                        <label htmlFor={trigger.value} className="flex cursor-pointer items-center">
-                          <Checkbox
-                            type="button"
-                            id={trigger.value}
-                            value={trigger.value}
-                            className="bg-white"
-                            checked={selectedTriggers.includes(trigger.value)}
-                            onCheckedChange={() => {
-                              handleCheckboxChange(trigger.value);
-                            }}
-                          />
-                          <span className="ml-2">{trigger.title}</span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <TriggerCheckboxGroup
+                  triggers={triggers}
+                  selectedTriggers={selectedTriggers}
+                  onCheckboxChange={handleCheckboxChange}
+                />
               </div>
 
               <div>
                 <Label htmlFor="Surveys">Surveys</Label>
-                <div className="mt-1 rounded-lg border border-slate-200">
-                  <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    <div className="my-1 flex items-center space-x-2">
-                      <Checkbox
-                        type="button"
-                        id="allSurveys"
-                        value=""
-                        checked={selectedAllSurveys}
-                        className="bg-white"
-                        onCheckedChange={handleSelectAllSurveys}
-                      />
-                      <label
-                        htmlFor="allSurveys"
-                        className={`flex cursor-pointer items-center ${
-                          selectedAllSurveys ? "font-semibold" : ""
-                        }`}>
-                        All current and new surveys
-                      </label>
-                    </div>
-                    {surveys.map((survey) => (
-                      <div key={survey.id} className="my-1 flex items-center space-x-2">
-                        <Checkbox
-                          type="button"
-                          id={survey.id}
-                          value={survey.id}
-                          className="bg-white"
-                          checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
-                          disabled={selectedAllSurveys}
-                          onCheckedChange={() => handleSelectedSurveyChange(survey.id)}
-                        />
-                        <label
-                          htmlFor={survey.id}
-                          className={`flex cursor-pointer items-center ${
-                            selectedAllSurveys ? "cursor-not-allowed opacity-50" : ""
-                          }`}>
-                          {survey.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <SurveyCheckboxGroup
+                  surveys={surveys}
+                  selectedSurveys={selectedSurveys}
+                  selectedAllSurveys={selectedAllSurveys}
+                  onSelectAllSurveys={handleSelectAllSurveys}
+                  onSelectedSurveyChange={handleSelectedSurveyChange}
+                />
               </div>
             </div>
           </div>
