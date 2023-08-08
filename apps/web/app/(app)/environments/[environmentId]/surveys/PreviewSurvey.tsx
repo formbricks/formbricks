@@ -23,7 +23,7 @@ interface PreviewSurveyProps {
   previewType?: "modal" | "fullwidth" | "email";
   product: TProduct;
   environment: TEnvironment;
-  overwritePosition: PlacementType | null;
+  overwritePosition?: PlacementType | null;
 }
 
 export default function PreviewSurvey({
