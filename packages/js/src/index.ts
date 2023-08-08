@@ -6,7 +6,7 @@ import { trackAction } from "./lib/actions";
 import { initialize } from "./lib/init";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
-import { resetPerson, setPersonAttribute, setPersonUserId, getPerson } from "./lib/person";
+import { resetPerson, setPersonAttribute, setPersonUserId, getPerson, logoutPerson } from "./lib/person";
 
 export type { EnvironmentId, KeyValueData, PersonId, ResponseId, SurveyId } from "@formbricks/api";
 
@@ -21,7 +21,7 @@ const init = async (initConfig: InitConfig) => {
   await queue.wait();
 };
 
-const setUserId = async (userId: string): Promise<void> => {
+const setUserId = async (userId: string | number): Promise<void> => {
   queue.add(true, setPersonUserId, userId);
   await queue.wait();
 };
@@ -31,12 +31,17 @@ const setEmail = async (email: string): Promise<void> => {
   await queue.wait();
 };
 
-const setAttribute = async (key: string, value: string): Promise<void> => {
+const setAttribute = async (key: string, value: any): Promise<void> => {
   queue.add(true, setPersonAttribute, key, value);
   await queue.wait();
 };
 
 const logout = async (): Promise<void> => {
+  queue.add(true, logoutPerson);
+  await queue.wait();
+};
+
+const reset = async (): Promise<void> => {
   queue.add(true, resetPerson);
   await queue.wait();
 };
@@ -58,6 +63,7 @@ const formbricks = {
   setAttribute,
   track,
   logout,
+  reset,
   registerRouteChange,
   getApi,
   getPerson,
