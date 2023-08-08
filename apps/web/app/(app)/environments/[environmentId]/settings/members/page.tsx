@@ -16,7 +16,7 @@ export default function MembersSettingsPage({ params }) {
       </SettingsCard>
       <SettingsCard
         title="Delete Team"
-        description="Delete team with all its products including all surveys, responses, people, actions and attributes. This cannot be undone.">
+        description="Delete team with all its products including all surveys, responses, people, actions and attributes">
         <DeleteTeam environmentId={params.environmentId} />
       </SettingsCard>
     </div>
