@@ -11,14 +11,13 @@ import {
   Input,
   Label,
 } from "@formbricks/ui";
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Webhook } from "lucide-react";
 import { TWebhookInput } from "@formbricks/types/v1/webhooks";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { createWebhook } from "@formbricks/lib/services/webhook";
@@ -121,7 +120,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <CursorArrowRaysIcon />
+                <Webhook />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">Add Webhook</div>

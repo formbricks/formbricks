@@ -1,9 +1,9 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
-import { CodeBracketIcon } from "@heroicons/react/24/solid";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
 import WebhookActivityTab from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookActivityTab";
 import WebhookSettingsTab from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookSettingsTab";
 import { TSurvey } from "@formbricks/types/v1/surveys";
+import { Webhook } from "lucide-react";
 
 interface WebhookModalProps {
   environmentId: string;
@@ -38,7 +38,7 @@ export default function WebhookModal({ environmentId, open, setOpen, webhook, su
         open={open}
         setOpen={setOpen}
         tabs={tabs}
-        icon={<CodeBracketIcon />}
+        icon={<Webhook />}
         label={webhook.url}
         description={""}
       />

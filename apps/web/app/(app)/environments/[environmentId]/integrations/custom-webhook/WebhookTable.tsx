@@ -1,12 +1,12 @@
 "use client";
 
 import { Button } from "@formbricks/ui";
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
 import AddWebhookModal from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/AddWebhookModal";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookDetailModal";
+import { Webhook } from "lucide-react";
 
 export default function WebhookTable({
   environmentId,
@@ -46,7 +46,7 @@ export default function WebhookTable({
           onClick={() => {
             setAddWebhookModalOpen(true);
           }}>
-          <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+          <Webhook className="mr-2 h-5 w-5 text-white" />
           Add Webhook
         </Button>
       </div>
