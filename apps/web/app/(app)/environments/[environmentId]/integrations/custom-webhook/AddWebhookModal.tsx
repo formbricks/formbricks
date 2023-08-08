@@ -36,14 +36,24 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
   const [selectedTriggers, setSelectedTriggers] = useState<TPipelineTrigger[]>([]);
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
+  const [creatingWebhook, setCreatingWebhook] = useState(false);
 
   const submitWebhook = async (): Promise<void> => {
+    setCreatingWebhook(true);
     if (testEndpointInput === undefined || testEndpointInput === "") {
       toast.error("Please enter a URL");
+      setCreatingWebhook(false);
       return;
     }
     if (selectedTriggers.length === 0) {
       toast.error("Please select at least one trigger");
+      setCreatingWebhook(false);
+      return;
+    }
+
+    if (!selectedAllSurveys && selectedSurveys.length === 0) {
+      toast.error("Please select at least one survey");
+      setCreatingWebhook(false);
       return;
     }
 
@@ -53,11 +63,17 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
       surveyIds: selectedSurveys,
     };
     try {
+      const endpointHitSuccessfully = await handleTestEndpoint();
+      if (!endpointHitSuccessfully) {
+        setCreatingWebhook(false);
+        return;
+      }
       await createWebhook(environmentId, updatedData);
       router.refresh();
       resetStates();
       reset();
       setOpen(false);
+      setCreatingWebhook(false);
       toast.success("Webhook added successfully.");
     } catch (e) {
       toast.error(e.message);
@@ -105,10 +121,12 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
       setHittingEndpoint(false);
       toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
+      return true;
     } catch (err) {
       setHittingEndpoint(false);
       toast.error("Oh no! We are unable to ping the webhook!");
       setEndpointAccessible(false);
+      return false;
     }
   };
 
@@ -167,8 +185,8 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
 
               <div>
                 <Label htmlFor="Triggers">Triggers</Label>
-                <div className="mt-1 rounded-lg border border-slate-20">
-                  <div className="grid content-center rounded-lg p-3 bg-slate-50 text-left text-sm text-slate-900">
+                <div className="border-slate-20 mt-1 rounded-lg border">
+                  <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                     {triggers.map((survey) => (
                       <div key={survey.value} className="my-1 flex items-center space-x-2">
                         <label htmlFor={survey.value} className="flex cursor-pointer items-center">
@@ -246,7 +264,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit">
+              <Button variant="darkCTA" type="submit" loading={creatingWebhook}>
                 Add Webhook
               </Button>
             </div>

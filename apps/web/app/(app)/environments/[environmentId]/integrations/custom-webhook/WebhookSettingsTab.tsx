@@ -50,10 +50,12 @@ export default function WebhookSettingsTab({
       setHittingEndpoint(false);
       toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
+      return true;
     } catch (err) {
       setHittingEndpoint(false);
       toast.error("Oh no! We are unable to ping the webhook!");
       setEndpointAccessible(false);
+      return false;
     }
   };
 
@@ -71,10 +73,20 @@ export default function WebhookSettingsTab({
   });
 
   const onSubmit = async (data) => {
+    const endpointHitSuccessfully = await handleTestEndpoint();
+    if (!endpointHitSuccessfully) {
+      return;
+    }
     if (selectedTriggers.length === 0) {
       toast.error("Please select at least one trigger");
       return;
     }
+
+    if (!selectedAllSurveys && selectedSurveys.length === 0) {
+      toast.error("Please select at least one survey");
+      return;
+    }
+
     const updatedData: TWebhookInput = {
       url: data.url as string,
       triggers: selectedTriggers,
