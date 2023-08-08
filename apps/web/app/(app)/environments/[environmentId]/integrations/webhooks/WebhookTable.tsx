@@ -3,9 +3,9 @@
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
-import AddWebhookModal from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/AddWebhookModal";
+import AddWebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/AddWebhookModal";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookDetailModal";
+import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookDetailModal";
 import { Webhook } from "lucide-react";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 

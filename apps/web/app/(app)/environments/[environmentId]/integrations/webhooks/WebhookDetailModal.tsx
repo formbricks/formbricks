@@ -1,7 +1,7 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
-import WebhookOverviewTab from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookOverviewTab";
-import WebhookSettingsTab from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookSettingsTab";
+import WebhookOverviewTab from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookOverviewTab";
+import WebhookSettingsTab from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookSettingsTab";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Webhook } from "lucide-react";
 

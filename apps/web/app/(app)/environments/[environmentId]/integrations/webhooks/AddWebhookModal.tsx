@@ -1,7 +1,7 @@
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/SurveyCheckboxGroup";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/TriggerCheckboxGroup";
-import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/HardcodedTriggers";
-import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/testEndpoint";
+import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/SurveyCheckboxGroup";
+import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/TriggerCheckboxGroup";
+import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/HardcodedTriggers";
+import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/testEndpoint";
 import Modal from "@/components/shared/Modal";
 import { createWebhook } from "@formbricks/lib/services/webhook";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";

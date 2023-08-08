@@ -12,10 +12,10 @@ import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
 import { deleteWebhook, updateWebhook } from "@formbricks/lib/services/webhook";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/testEndpoint";
-import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/HardcodedTriggers";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/TriggerCheckboxGroup";
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/SurveyCheckboxGroup";
+import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/testEndpoint";
+import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/HardcodedTriggers";
+import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/TriggerCheckboxGroup";
+import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/SurveyCheckboxGroup";
 
 interface ActionSettingsTabProps {
   environmentId: string;

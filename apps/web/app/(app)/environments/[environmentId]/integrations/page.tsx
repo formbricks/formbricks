@@ -30,13 +30,13 @@ export default function IntegrationsPage({ params }) {
           icon={<Image src={ZapierLogo} alt="Zapier Logo" />}
         />
         <Card
-          connectHref={`/environments/${params.environmentId}/integrations/custom-webhook`}
-          connectText="Add Webhooks"
+          connectHref={`/environments/${params.environmentId}/integrations/webhooks`}
+          connectText="Manage Webhooks"
           connectNewTab={false}
           docsHref="https://formbricks.com/docs/webhook-api/overview"
           docsText="Docs"
           docsNewTab={true}
-          label="Custom Webhook"
+          label="Webhooks"
           description="Trigger Webhooks based on actions in your surveys"
           icon={<Image src={WebhookLogo} alt="Webhook Logo" />}
         />

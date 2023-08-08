@@ -57,7 +57,7 @@ export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook
           <div className="text-left">
             {webhook.name ? (
               <div className="text-left">
-                <div className="font-medium text-slate-900">{webhook.name ? webhook.name : webhook.url}</div>
+                <div className="font-medium text-slate-900">{webhook.name}</div>
                 <div className="text-xs text-slate-400">{webhook.url}</div>
               </div>
             ) : (
@@ -66,13 +66,12 @@ export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook
           </div>
         </div>
       </div>
-      <div className="col-span-4 my-auto text-center text-sm text-slate-500">
-        <div className="font-medium text-slate-500">{renderSelectedSurveysText(webhook, surveys)}</div>
+      <div className="col-span-4 my-auto text-center text-sm text-slate-800">
+        {renderSelectedSurveysText(webhook, surveys)}
       </div>
-      <div className="col-span-2 my-auto text-center text-sm text-slate-500">
-        <div className="font-medium text-slate-500">{renderSelectedTriggersText(webhook)}</div>
+      <div className="col-span-2 my-auto text-center text-sm text-slate-800">
+        {renderSelectedTriggersText(webhook)}
       </div>
-
       <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
         {timeSinceConditionally(webhook.createdAt.toString())}
       </div>

@@ -1,6 +1,6 @@
-import WebhookRowData from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookRowData";
-import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookTable";
-import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/WebhookTableHeading";
+import WebhookRowData from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookRowData";
+import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTable";
+import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTableHeading";
 import GoBackButton from "@/components/shared/GoBackButton";
 import { getSurveys } from "@formbricks/lib/services/survey";
 import { getWebhooks } from "@formbricks/lib/services/webhook";

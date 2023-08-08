@@ -19,11 +19,12 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
 }) => {
   return (
     <div className="mt-1 rounded-lg border border-slate-200">
-      <div className="grid content-center rounded-lg bg-slate-100 p-3 text-left text-sm text-slate-900">
+      <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
         <div className="my-1 flex items-center space-x-2">
           <Checkbox
             type="button"
             id="allSurveys"
+            className="bg-white"
             value=""
             checked={selectedAllSurveys}
             onCheckedChange={onSelectAllSurveys}
@@ -40,6 +41,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
               type="button"
               id={survey.id}
               value={survey.id}
+              className="bg-white"
               checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
               disabled={selectedAllSurveys}
               onCheckedChange={() => onSelectedSurveyChange(survey.id)}
