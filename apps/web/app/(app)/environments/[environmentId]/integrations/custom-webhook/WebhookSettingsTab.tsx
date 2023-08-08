@@ -66,6 +66,7 @@ export default function WebhookSettingsTab({
 
   const { register, handleSubmit } = useForm({
     defaultValues: {
+      name: webhook.name,
       url: webhook.url,
       triggers: webhook.triggers,
       surveyIds: webhook.surveyIds,
@@ -88,6 +89,7 @@ export default function WebhookSettingsTab({
     }
 
     const updatedData: TWebhookInput = {
+      name: data.name,
       url: data.url as string,
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
@@ -122,6 +124,19 @@ export default function WebhookSettingsTab({
   return (
     <div>
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <div className="col-span-1">
+          <Label htmlFor="Name">Name</Label>
+          <div className="mt-1 flex">
+            <Input
+              type="text"
+              id="name"
+              {...register("name")}
+              defaultValue={webhook.name ?? ""}
+              placeholder="Optional: Label your webhook for easy identification"
+            />
+          </div>
+        </div>
+
         <div className="col-span-1">
           <Label htmlFor="URL">URL</Label>
           <div className="mt-1 flex">

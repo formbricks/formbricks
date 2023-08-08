@@ -55,7 +55,14 @@ export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook
       <div className="col-span-4 flex items-center pl-6 text-sm">
         <div className="flex items-center">
           <div className="text-left">
-            <div className="font-medium text-slate-900">{webhook.url}</div>
+            {webhook.name ? (
+              <div className="text-left">
+                <div className="font-medium text-slate-900">{webhook.name ? webhook.name : webhook.url}</div>
+                <div className="text-xs text-slate-400">{webhook.url}</div>
+              </div>
+            ) : (
+              <div className="font-medium text-slate-900">{webhook.url}</div>
+            )}
           </div>
         </div>
       </div>

@@ -39,7 +39,7 @@ export default function WebhookModal({ environmentId, open, setOpen, webhook, su
         setOpen={setOpen}
         tabs={tabs}
         icon={<Webhook />}
-        label={webhook.url}
+        label={webhook.name ? webhook.name : webhook.url}
         description={""}
       />
     </>

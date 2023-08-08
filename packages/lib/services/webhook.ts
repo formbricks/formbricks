@@ -37,6 +37,7 @@ export const createWebhook = async (
     }
     return await prisma.webhook.create({
       data: {
+        name: webhookInput.name,
         url: webhookInput.url,
         triggers: webhookInput.triggers,
         surveyIds: webhookInput.surveyIds || [],
@@ -66,6 +67,7 @@ export const updateWebhook = async (
         id: webhookId,
       },
       data: {
+        name: webhookInput.name,
         url: webhookInput.url,
         triggers: webhookInput.triggers,
         surveyIds: webhookInput.surveyIds || [],

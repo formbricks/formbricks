@@ -26,6 +26,7 @@ export default function WebhookTable({
   const [activeWebhook, setActiveWebhook] = useState<TWebhook>({
     environmentId,
     id: "",
+    name: "",
     url: "",
     triggers: [],
     surveyIds: [],

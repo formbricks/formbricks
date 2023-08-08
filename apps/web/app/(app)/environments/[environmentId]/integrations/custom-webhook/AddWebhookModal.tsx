@@ -29,7 +29,7 @@ const triggers = [
 
 export default function AddWebhookModal({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) {
   const router = useRouter();
-  const { handleSubmit, reset } = useForm();
+  const { handleSubmit, reset, register } = useForm();
   const [testEndpointInput, setTestEndpointInput] = useState("");
   const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
   const [endpointAccessible, setEndpointAccessible] = useState<boolean>();
@@ -38,7 +38,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
 
-  const submitWebhook = async (): Promise<void> => {
+  const submitWebhook = async (data: TWebhookInput): Promise<void> => {
     setCreatingWebhook(true);
     if (testEndpointInput === undefined || testEndpointInput === "") {
       toast.error("Please enter a URL");
@@ -58,6 +58,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
     }
 
     const updatedData: TWebhookInput = {
+      name: data.name,
       url: testEndpointInput,
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
@@ -149,6 +150,18 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
         <form onSubmit={handleSubmit(submitWebhook)}>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
+              <div className="col-span-1">
+                <Label htmlFor="Name">Name</Label>
+                <div className="mt-1 flex">
+                  <Input
+                    type="text"
+                    id="name"
+                    {...register("name")}
+                    placeholder="Optional: Label your webhook for easy identification"
+                  />
+                </div>
+              </div>
+
               <div className="col-span-1">
                 <Label htmlFor="URL">URL</Label>
                 <div className="mt-1 flex">
