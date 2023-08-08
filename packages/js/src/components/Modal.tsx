@@ -85,7 +85,7 @@ export default function Modal({
       aria-live="assertive"
       className={cn(
         isCenter ? "fb-pointer-events-auto" : "fb-pointer-events-none",
-        "fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-999999 fb-p-3 sm:fb-p-0"
+        "fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-999999"
       )}>
       <div
         className={cn(
@@ -99,7 +99,6 @@ export default function Modal({
         <div
           ref={modalRef}
           className={cn(
-            "fb-bottom-0 fb-inset-x-0",
             getPlacementStyle(placement),
             show ? "fb-opacity-100" : "fb-opacity-0",
             "fb-h-fit fb-pointer-events-auto fb-absolute fb-w-full sm:fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4",
