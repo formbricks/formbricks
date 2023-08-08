@@ -1,5 +1,3 @@
-"use client";
-
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/testEndpoint";
 import Modal from "@/components/shared/Modal";
 import { createWebhook } from "@formbricks/lib/services/webhook";
@@ -29,7 +27,13 @@ const triggers = [
 
 export default function AddWebhookModal({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) {
   const router = useRouter();
-  const { handleSubmit, reset, register } = useForm();
+  const {
+    handleSubmit,
+    reset,
+    register,
+    formState: { isSubmitting },
+  } = useForm();
+
   const [testEndpointInput, setTestEndpointInput] = useState("");
   const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
   const [endpointAccessible, setEndpointAccessible] = useState<boolean>();
@@ -37,83 +41,6 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
-
-  const submitWebhook = async (data: TWebhookInput): Promise<void> => {
-    setCreatingWebhook(true);
-    if (testEndpointInput === undefined || testEndpointInput === "") {
-      toast.error("Please enter a URL");
-      setCreatingWebhook(false);
-      return;
-    }
-    if (selectedTriggers.length === 0) {
-      toast.error("Please select at least one trigger");
-      setCreatingWebhook(false);
-      return;
-    }
-
-    if (!selectedAllSurveys && selectedSurveys.length === 0) {
-      toast.error("Please select at least one survey");
-      setCreatingWebhook(false);
-      return;
-    }
-
-    const updatedData: TWebhookInput = {
-      name: data.name,
-      url: testEndpointInput,
-      triggers: selectedTriggers,
-      surveyIds: selectedSurveys,
-    };
-    try {
-      const endpointHitSuccessfully = await handleTestEndpoint();
-      if (!endpointHitSuccessfully) {
-        setCreatingWebhook(false);
-        return;
-      }
-      await createWebhook(environmentId, updatedData);
-      router.refresh();
-      resetStates();
-      reset();
-      setOpen(false);
-      setCreatingWebhook(false);
-      toast.success("Webhook added successfully.");
-    } catch (e) {
-      toast.error(e.message);
-      return;
-    }
-  };
-
-  const resetStates = () => {
-    setTestEndpointInput("");
-    setEndpointAccessible(undefined);
-    setSelectedSurveys([]);
-    setSelectedTriggers([]);
-    setSelectedAllSurveys(false);
-  };
-
-  const handleSelectAllSurveys = () => {
-    setSelectedAllSurveys(!selectedAllSurveys);
-    setSelectedSurveys([]);
-  };
-
-  const handleSelectedSurveyChange = (surveyId) => {
-    setSelectedSurveys((prevSelectedSurveys) => {
-      if (prevSelectedSurveys.includes(surveyId)) {
-        return prevSelectedSurveys.filter((id) => id !== surveyId);
-      } else {
-        return [...prevSelectedSurveys, surveyId];
-      }
-    });
-  };
-
-  const handleCheckboxChange = (selectedValue) => {
-    setSelectedTriggers((prevValues) => {
-      if (prevValues.includes(selectedValue)) {
-        return prevValues.filter((value) => value !== selectedValue);
-      } else {
-        return [...prevValues, selectedValue];
-      }
-    });
-  };
 
   const handleTestEndpoint = async () => {
     try {
@@ -131,8 +58,77 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
     }
   };
 
+  const handleSelectAllSurveys = () => {
+    setSelectedAllSurveys(!selectedAllSurveys);
+    setSelectedSurveys([]);
+  };
+
+  const handleSelectedSurveyChange = (surveyId: string) => {
+    setSelectedSurveys((prevSelectedSurveys) =>
+      prevSelectedSurveys.includes(surveyId)
+        ? prevSelectedSurveys.filter((id) => id !== surveyId)
+        : [...prevSelectedSurveys, surveyId]
+    );
+  };
+
+  const handleCheckboxChange = (selectedValue: TPipelineTrigger) => {
+    setSelectedTriggers((prevValues) =>
+      prevValues.includes(selectedValue)
+        ? prevValues.filter((value) => value !== selectedValue)
+        : [...prevValues, selectedValue]
+    );
+  };
+
+  const submitWebhook = async (data: TWebhookInput): Promise<void> => {
+    if (!isSubmitting) {
+      try {
+        setCreatingWebhook(true);
+        if (!testEndpointInput || testEndpointInput === "") {
+          throw new Error("Please enter a URL");
+        }
+        if (selectedTriggers.length === 0) {
+          throw new Error("Please select at least one trigger");
+        }
+
+        if (!selectedAllSurveys && selectedSurveys.length === 0) {
+          throw new Error("Please select at least one survey");
+        }
+
+        const endpointHitSuccessfully = await handleTestEndpoint();
+        if (!endpointHitSuccessfully) return;
+
+        const updatedData: TWebhookInput = {
+          name: data.name,
+          url: testEndpointInput,
+          triggers: selectedTriggers,
+          surveyIds: selectedSurveys,
+        };
+
+        await createWebhook(environmentId, updatedData);
+        router.refresh();
+        reset();
+        setOpenWithStates(false);
+        toast.success("Webhook added successfully.");
+      } catch (e) {
+        toast.error(e.message);
+      } finally {
+        setCreatingWebhook(false);
+      }
+    }
+  };
+
+  const setOpenWithStates = (isOpen: boolean) => {
+    setOpen(isOpen);
+    reset();
+    setTestEndpointInput("");
+    setEndpointAccessible(undefined);
+    setSelectedSurveys([]);
+    setSelectedTriggers([]);
+    setSelectedAllSurveys(false);
+  };
+
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
+    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -200,20 +196,20 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                 <Label htmlFor="Triggers">Triggers</Label>
                 <div className="border-slate-20 mt-1 rounded-lg border">
                   <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {triggers.map((survey) => (
-                      <div key={survey.value} className="my-1 flex items-center space-x-2">
-                        <label htmlFor={survey.value} className="flex cursor-pointer items-center">
+                    {triggers.map((trigger) => (
+                      <div key={trigger.value} className="my-1 flex items-center space-x-2">
+                        <label htmlFor={trigger.value} className="flex cursor-pointer items-center">
                           <Checkbox
                             type="button"
-                            id={survey.value}
-                            value={survey.value}
+                            id={trigger.value}
+                            value={trigger.value}
                             className="bg-white"
-                            checked={selectedTriggers.includes(survey.value)}
+                            checked={selectedTriggers.includes(trigger.value)}
                             onCheckedChange={() => {
-                              handleCheckboxChange(survey.value);
+                              handleCheckboxChange(trigger.value);
                             }}
                           />
-                          <span className="ml-2">{survey.title}</span>
+                          <span className="ml-2">{trigger.title}</span>
                         </label>
                       </div>
                     ))}
@@ -232,7 +228,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                         value=""
                         checked={selectedAllSurveys}
                         className="bg-white"
-                        onCheckedChange={() => handleSelectAllSurveys()}
+                        onCheckedChange={handleSelectAllSurveys}
                       />
                       <label
                         htmlFor="allSurveys"
@@ -273,7 +269,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                 type="button"
                 variant="minimal"
                 onClick={() => {
-                  setOpen(false);
+                  setOpenWithStates(false);
                 }}>
                 Cancel
               </Button>
