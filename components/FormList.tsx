@@ -263,12 +263,21 @@ export default function FormList() {
                               Ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(form.dueDate) > 7 ? (
-                            <span className="text-base font-normal text-black-title line-clamp-3">
-                              {"Ferme le " +
+                            format(new Date(form.dueDate), "yyyy-MM-dd") <
+                            format(new Date(), "yyyy-MM-dd") ? (
+                              <span className="text-base font-normal text-rose-500 line-clamp-3">
+                                {"Fermé le " +format(new Date(form.dueDate),"dd MMMM yyyy",{
+                                  locale: fr})
+                                }
+                              </span>
+                            ) : (
+                              <span className="text-base font-normal text-black-title line-clamp-3">
+                                {"Ferme le " +
                                 format(new Date(form.dueDate), "dd MMMM yyyy", {
-                                  locale: fr,
+                                      locale: fr,
                                 })}
-                            </span>
+                              </span>
+                            )
                           ) : (
                             <span className="text-base  text-rose-500 font-normal line-clamp-3 ">
                               {format(new Date(form.dueDate), "yyyy-MM-dd") <
