@@ -172,6 +172,7 @@ function RoleElement({
 export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
 
+  const [loading, setLoading] = useState(false);
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
@@ -250,7 +251,10 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   };
 
   const handleLeaveTeam = async () => {
+    setLoading(true);
     const result = await removeMember(team.teamId, profile?.id);
+    setLeaveTeamModalOpen(false);
+    setLoading(false);
     if (!result) {
       toast.error("Something went wrong");
     } else {
@@ -390,7 +394,8 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         text="You wil leave this team and loose access to all surveys and responses. You can only rejoin if you are invited again."
         onOk={handleLeaveTeam}
         okBtnText="Yes, leave team"
-        disabled={isLeaveTeamDisabled}>
+        disabled={isLeaveTeamDisabled}
+        isLoading={loading}>
         {isLeaveTeamDisabled && (
           <p className="mt-2 text-sm text-red-700">
             You cannot leave this team as it is your only team. Create a new team first.

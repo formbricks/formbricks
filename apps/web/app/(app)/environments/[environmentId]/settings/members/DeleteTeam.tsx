@@ -7,13 +7,13 @@ import { useState, Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { useMembers } from "@/lib/members";
 import { useProfile } from "@/lib/profile";
-import { truncate } from "@/lib/utils";
 import { Button, ErrorComponent, Input } from "@formbricks/ui";
 import { useTeam, deleteTeam } from "@/lib/teams/teams";
 import { useMemberships } from "@/lib/memberships";
 
 export default function DeleteTeam({ environmentId }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
   const { profile } = useProfile();
@@ -34,19 +34,16 @@ export default function DeleteTeam({ environmentId }) {
   }
 
   const handleDeleteTeam = async () => {
-    if (memberships?.length <= 1) {
-      toast.error("Cannot delete team. You need at least 1.");
-      setIsDeleteDialogOpen(false);
-      return;
-    }
+    setIsDeleting(true);
     const deleteTeamRes = await deleteTeam(environmentId);
+    setIsDeleteDialogOpen(false);
+    setIsDeleting(false);
 
     if (deleteTeamRes?.deletedTeam?.id?.length > 0) {
       toast.success("Team deleted successfully.");
       router.push("/");
     } else if (deleteTeamRes?.message?.length > 0) {
       toast.error(deleteTeamRes.message);
-      setIsDeleteDialogOpen(false);
     } else {
       toast.error("Error deleting team. Please try again.");
     }
@@ -57,8 +54,6 @@ export default function DeleteTeam({ environmentId }) {
       {!isDeleteDisabled && (
         <div>
           <p className="text-sm text-slate-900">
-            Delete <b>{truncate(teamData?.name, 30)}</b>
-            &nbsp;with all its products incl. all surveys, responses, people, actions and attributes.{" "}
             <strong>This action cannot be undone.</strong>
           </p>
           <Button
@@ -82,6 +77,7 @@ export default function DeleteTeam({ environmentId }) {
         setOpen={setIsDeleteDialogOpen}
         teamData={teamData}
         deleteTeam={handleDeleteTeam}
+        isDeleting={isDeleting}
       />
     </div>
   );
@@ -92,9 +88,10 @@ interface DeleteTeamModalProps {
   setOpen: Dispatch<SetStateAction<boolean>>;
   teamData: { name: string; id: string; plan: string };
   deleteTeam: () => void;
+  isDeleting?: boolean;
 }
 
-function DeleteTeamModal({ setOpen, open, teamData, deleteTeam }: DeleteTeamModalProps) {
+function DeleteTeamModal({ setOpen, open, teamData, deleteTeam, isDeleting }: DeleteTeamModalProps) {
   const [inputValue, setInputValue] = useState("");
 
   const handleInputChange = (e) => {
@@ -108,7 +105,8 @@ function DeleteTeamModal({ setOpen, open, teamData, deleteTeam }: DeleteTeamModa
       deleteWhat="team"
       onDelete={deleteTeam}
       text="Before you proceed with deleting this team, please be aware of the following consequences:"
-      disabled={inputValue !== teamData?.name}>
+      disabled={inputValue !== teamData?.name}
+      isDeleting={isDeleting}>
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
