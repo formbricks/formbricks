@@ -58,7 +58,7 @@ export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook
           </div>
         </div>
       </div>
-      <div className="col-span-4 my-auto whitespace-nowrap pl-6 text-sm text-slate-500">
+      <div className="col-span-4 my-auto text-center text-sm text-slate-500">
         <div className="font-medium text-slate-500">{renderSelectedSurveysText(webhook, surveys)}</div>
       </div>
       <div className="col-span-2 my-auto text-center text-sm text-slate-500">

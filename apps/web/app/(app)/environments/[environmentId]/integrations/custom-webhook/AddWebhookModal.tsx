@@ -125,9 +125,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">Add Webhook</div>
-                <div className="text-sm text-slate-500">
-                  Send alerts to your own custom endpoints when an action is striggered in a survey.
-                </div>
+                <div className="text-sm text-slate-500">Send survey response data to a custom endpoint</div>
               </div>
             </div>
           </div>
@@ -172,6 +170,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                 <div className="flex gap-2">
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                     <Checkbox
+                      key={"responseCreated"}
                       value="responseCreated"
                       checked={selectedTriggers.includes("responseCreated")}
                       onCheckedChange={() => {
@@ -182,6 +181,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                   </div>
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                     <Checkbox
+                      key={"responseUpdated"}
                       value="responseUpdated"
                       checked={selectedTriggers.includes("responseUpdated")}
                       onCheckedChange={() => {
@@ -192,6 +192,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                   </div>
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                     <Checkbox
+                      key={"responseFinished"}
                       value="responseFinished"
                       checked={selectedTriggers.includes("responseFinished")}
                       onCheckedChange={() => {
