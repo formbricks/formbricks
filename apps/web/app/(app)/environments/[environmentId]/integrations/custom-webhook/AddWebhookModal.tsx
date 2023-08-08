@@ -1,18 +1,18 @@
 "use client";
 
+import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/testEndpoint";
 import Modal from "@/components/shared/Modal";
+import { createWebhook } from "@formbricks/lib/services/webhook";
+import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TWebhookInput } from "@formbricks/types/v1/webhooks";
 import { Button, Checkbox, Input, Label } from "@formbricks/ui";
 import clsx from "clsx";
+import { Webhook } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Webhook } from "lucide-react";
-import { TWebhookInput } from "@formbricks/types/v1/webhooks";
-import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
-import { createWebhook } from "@formbricks/lib/services/webhook";
-import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/custom-webhook/testEndpoint";
 
 interface AddWebhookModalProps {
   environmentId: string;
@@ -135,7 +135,8 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                 <Label htmlFor="URL">URL</Label>
                 <div className="mt-1 flex">
                   <Input
-                    type="text"
+                    type="url"
+                    id="URL"
                     value={testEndpointInput}
                     onChange={(e) => {
                       setTestEndpointInput(e.target.value);
@@ -166,8 +167,8 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
 
               <div>
                 <Label htmlFor="Triggers">Triggers</Label>
-                <div className="mt-1 rounded-lg border border-slate-200">
-                  <div className="grid content-center rounded-lg bg-slate-100 p-3 text-left text-sm text-slate-900">
+                <div className="mt-1 rounded-lg border border-slate-20">
+                  <div className="grid content-center rounded-lg p-3 bg-slate-50 text-left text-sm text-slate-900">
                     {triggers.map((survey) => (
                       <div key={survey.value} className="my-1 flex items-center space-x-2">
                         <label htmlFor={survey.value} className="flex cursor-pointer items-center">
@@ -175,6 +176,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                             type="button"
                             id={survey.value}
                             value={survey.value}
+                            className="bg-white"
                             checked={selectedTriggers.includes(survey.value)}
                             onCheckedChange={() => {
                               handleCheckboxChange(survey.value);
@@ -191,13 +193,14 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
               <div>
                 <Label htmlFor="Surveys">Surveys</Label>
                 <div className="mt-1 rounded-lg border border-slate-200">
-                  <div className="grid content-center rounded-lg bg-slate-100 p-3 text-left text-sm text-slate-900">
+                  <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                     <div className="my-1 flex items-center space-x-2">
                       <Checkbox
                         type="button"
                         id="allSurveys"
                         value=""
                         checked={selectedAllSurveys}
+                        className="bg-white"
                         onCheckedChange={() => handleSelectAllSurveys()}
                       />
                       <label
@@ -214,6 +217,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                           type="button"
                           id={survey.id}
                           value={survey.id}
+                          className="bg-white"
                           checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
                           disabled={selectedAllSurveys}
                           onCheckedChange={() => handleSelectedSurveyChange(survey.id)}

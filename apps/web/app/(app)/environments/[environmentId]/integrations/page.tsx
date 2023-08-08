@@ -1,8 +1,8 @@
+import JsLogo from "@/images/jslogo.png";
+import WebhookLogo from "@/images/webhook.png";
+import ZapierLogo from "@/images/zapier-small.png";
 import { Card } from "@formbricks/ui";
 import Image from "next/image";
-import JsLogo from "@/images/jslogo.png";
-import ZapierLogo from "@/images/zapier-small.png";
-import webhook from "@/images/webhook.png";
 
 export default function IntegrationsPage({ params }) {
   return (
@@ -38,7 +38,7 @@ export default function IntegrationsPage({ params }) {
           docsNewTab={true}
           label="Custom Webhook"
           description="Trigger Webhooks based on actions in your surveys"
-          icon={<Image src={webhook} alt="Javascript Logo" />}
+          icon={<Image src={WebhookLogo} alt="Webhook Logo" />}
         />
       </div>
     </div>
