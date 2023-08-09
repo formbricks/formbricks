@@ -1,7 +1,11 @@
+"use server";
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
-import { TSession } from "@formbricks/types/v1/sessions";
+import { TSession, TSessionWithActions } from "@formbricks/types/v1/sessions";
 import { Prisma } from "@prisma/client";
+import { cache } from "react";
 
 const select = {
   id: true,
@@ -31,6 +35,58 @@ export const getSession = async (sessionId: string): Promise<TSession | null> =>
     throw error;
   }
 };
+
+export const getSessionWithActionsOfPerson = async (
+  personId: string
+): Promise<TSessionWithActions[] | null> => {
+  try {
+    const sessionsWithActionsForPerson = await prisma.session.findMany({
+      where: {
+        personId,
+      },
+      select: {
+        id: true,
+        events: {
+          select: {
+            id: true,
+            createdAt: true,
+            eventClass: {
+              select: {
+                name: true,
+                description: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!sessionsWithActionsForPerson) return null;
+
+    return sessionsWithActionsForPerson;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+};
+
+export const getSessionCount = cache(async (personId: string): Promise<number> => {
+  try {
+    const sessionCount = await prisma.session.count({
+      where: {
+        personId,
+      },
+    });
+    return sessionCount;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+});
 
 export const createSession = async (personId: string): Promise<TSession> => {
   try {
