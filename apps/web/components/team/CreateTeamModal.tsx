@@ -25,6 +25,7 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
   const submitTeam = async (data) => {
     setLoading(true);
     const newTeam = await createTeam(data.name, (profile as any).id);
+
     const newMemberships = await mutateMemberships();
     changeEnvironmentByTeam(newTeam.id, newMemberships, router);
     toast.success("Team created successfully!");

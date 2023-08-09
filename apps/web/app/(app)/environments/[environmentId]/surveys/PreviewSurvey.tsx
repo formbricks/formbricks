@@ -138,7 +138,9 @@ export default function PreviewSurvey({
     switch (logic.condition) {
       case "equals":
         return (
-          (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
+          (Array.isArray(responseValue) &&
+            responseValue.length === 1 &&
+            responseValue.includes(logic.value)) ||
           responseValue.toString() === logic.value
         );
       case "notEquals":
@@ -273,7 +275,10 @@ export default function PreviewSurvey({
       </div>
 
       {previewType === "modal" ? (
-        <Modal isOpen={isModalOpen} placement={product.placement}>
+        <Modal
+          isOpen={isModalOpen}
+          placement={product.placement}
+          highlightBorderColor={product.highlightBorderColor}>
           {!countdownStop && autoClose !== null && autoClose > 0 && (
             <Progress progress={countdownProgress} brandColor={brandColor} />
           )}

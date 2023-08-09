@@ -4,6 +4,8 @@ import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 import { env } from "@/env.mjs";
+import { Prisma } from "@prisma/client";
+import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
@@ -15,7 +17,7 @@ export async function POST(request: Request) {
   let inviteId;
 
   try {
-    let data;
+    let data: Prisma.UserCreateArgs;
     let invite;
 
     if (inviteToken) {
@@ -89,7 +91,26 @@ export async function POST(request: Request) {
       };
     }
 
-    const userData = await prisma.user.create(data);
+    type UserWithMemberships = Prisma.UserGetPayload<{ include: { memberships: true } }>;
+
+    const userData = (await prisma.user.create({
+      ...data,
+      include: {
+        memberships: true,
+      },
+      // TODO: This is a hack to get the correct types (casting), we should find a better way to do this
+    })) as UserWithMemberships;
+
+    const teamId = userData.memberships[0].teamId;
+
+    if (teamId) {
+      fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
+        method: "POST",
+        headers: {
+          "x-api-key": INTERNAL_SECRET,
+        },
+      });
+    }
 
     if (inviteId) {
       sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
