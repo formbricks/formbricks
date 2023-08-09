@@ -1,9 +1,9 @@
 "use server";
 
 import { updateProfile, deleteProfile } from "@formbricks/lib/services/profile";
-import { Prisma } from "@prisma/client";
+import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
 
-export async function profileEditAction(userId: string, data: Prisma.UserUpdateInput) {
+export async function profileEditAction(userId: string, data: Partial<TProfileUpdateInput>) {
   return await updateProfile(userId, data);
 }
 
