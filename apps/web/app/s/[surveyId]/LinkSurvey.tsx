@@ -10,16 +10,17 @@ import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import type { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import Loading from "@/app/s/[surveyId]/loading";
 
-type EnhancedSurvey = Survey & {
+type TEnhancedSurvey = TSurveyWithAnalytics & {
   brandColor: string;
   formbricksSignature: boolean;
 };
 
 interface LinkSurveyProps {
-  survey: EnhancedSurvey;
+  survey: TEnhancedSurvey;
 }
 
 export default function LinkSurvey({ survey }: LinkSurveyProps) {
@@ -61,7 +62,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   if (!currentQuestion || prefilling) {
     return (
       <div className="flex h-full flex-1 items-center justify-center">
-        <LoadingSpinner />
+        <Loading />
       </div>
     );
   }

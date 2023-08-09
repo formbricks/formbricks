@@ -5,10 +5,10 @@ import { createResponse, updateResponse } from "@formbricks/lib/client/response"
 import { QuestionType, type Logic, type Question } from "@formbricks/types/questions";
 import { TResponseInput } from "@formbricks/types/v1/responses";
 import { useState, useEffect, useCallback } from "react";
-import type { Survey } from "@formbricks/types/surveys";
 import { useRouter } from "next/navigation";
 import { useGetOrCreatePerson } from "../people/people";
 import { Response } from "@formbricks/types/js";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 export const useLinkSurvey = (surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
@@ -20,9 +20,12 @@ export const useLinkSurvey = (surveyId: string) => {
     mutateSurvey: mutate,
   };
 };
-
-export const useLinkSurveyUtils = (survey: Survey) => {
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+type TEnhancedSurvey = TSurveyWithAnalytics & {
+  brandColor: string;
+  formbricksSignature: boolean;
+};
+export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
+  const [currentQuestion, setCurrentQuestion] = useState<any | null>(null);
   const [prefilling, setPrefilling] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [finished, setFinished] = useState(false);
@@ -32,7 +35,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
   const [storedResponseValue, setStoredResponseValue] = useState<string | null>(null);
   const router = useRouter();
-  const URLParams = new URLSearchParams(window.location.search);
+  const URLParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search :"");
   const isPreview = URLParams.get("preview") === "true";
   const hasFirstQuestionPrefill = URLParams.has(survey.questions[0].id);
   const firstQuestionPrefill = hasFirstQuestionPrefill ? URLParams.get(survey.questions[0].id) : null;
@@ -305,7 +308,7 @@ const clearStoredResponses = (surveyId: string) => {
   localStorage.removeItem(`formbricks-${surveyId}-responses`);
 };
 
-const checkValidity = (question: Question, answer: any): boolean => {
+const checkValidity = (question: any, answer: any): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
@@ -362,7 +365,7 @@ const checkValidity = (question: Question, answer: any): boolean => {
   }
 };
 
-const createAnswer = (question: Question, answer: string): string | number | string[] => {
+const createAnswer = (question: any, answer: string): string | number | string[] => {
   switch (question.type) {
     case QuestionType.OpenText:
     case QuestionType.MultipleChoiceSingle:
