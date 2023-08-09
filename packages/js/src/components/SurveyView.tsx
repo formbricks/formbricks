@@ -110,7 +110,9 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     switch (logic.condition) {
       case "equals":
         return (
-          (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
+          (Array.isArray(responseValue) &&
+            responseValue.length === 1 &&
+            responseValue.includes(logic.value)) ||
           responseValue.toString() === logic.value
         );
       case "notEquals":
@@ -160,10 +162,23 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     }
   }
 
-  function getNextQuestionId() {
+  function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    const currentQuestion = questions[currentQuestionIndex];
+    const responseValue = data[activeQuestionId];
+
     if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, responseValue)) {
+          return logic.destination;
+        }
+      }
+    }
 
     return questions[currentQuestionIndex + 1]?.id || "end";
   }
@@ -171,7 +186,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   function goToNextQuestion(answer: TResponseData): string {
     setLoadingElement(true);
     const questions = survey.questions;
-    const nextQuestionId = getNextQuestionId();
+    const nextQuestionId = getNextQuestionId(answer);
 
     if (nextQuestionId === "end") {
       submitResponse(answer);
@@ -210,21 +225,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
 
   const submitResponse = async (data: TResponseData) => {
     setLoadingElement(true);
-    const questions = survey.questions;
-    const nextQuestionId = getNextQuestionId();
-    const currentQuestion = questions[activeQuestionId];
-    const responseValue = data[activeQuestionId];
-
-    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
-        if (!logic.destination) continue;
-
-        if (evaluateCondition(logic, responseValue)) {
-          return logic.destination;
-        }
-      }
-    }
-
+    const nextQuestionId = getNextQuestionId(data);
     const finished = nextQuestionId === "end";
     // build response
     const responseRequest: TResponseInput = {

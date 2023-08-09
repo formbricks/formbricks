@@ -5,6 +5,7 @@ import { DatePicker, Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
   localSurvey: Survey;
@@ -117,11 +118,25 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     }
   };
 
-  const handleInputResponse = (e: any) => {
-    let value = parseInt(e.target.value);
-    if (value < 1) value = 1;
-    const updatedSurvey: Survey = { ...localSurvey, autoComplete: value };
+  const handleInputResponse = (e) => {
+    const updatedSurvey: Survey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
+  };
+
+  const handleInputResponseBlur = (e) => {
+    if (parseInt(e.target.value) === 0) {
+      toast.error("Response limit can't be set to 0");
+      return;
+    }
+
+    const inputResponses = localSurvey?._count?.responses || 0;
+
+    if (parseInt(e.target.value) <= inputResponses) {
+      toast.error(
+        `Response limit needs to exceed number of received responses (${localSurvey?._count?.responses}).`
+      );
+      return;
+    }
   };
 
   return (
@@ -169,11 +184,16 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       <Input
                         autoFocus
                         type="number"
-                        min="1"
+                        min={
+                          localSurvey?._count?.responses
+                            ? (localSurvey?._count?.responses + 1).toString()
+                            : "1"
+                        }
                         id="autoCompleteResponses"
                         value={localSurvey.autoComplete?.toString()}
-                        onChange={(e) => handleInputResponse(e)}
-                        className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                        onChange={handleInputResponse}
+                        onBlur={handleInputResponseBlur}
+                        className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                       />
                       completed responses.
                     </p>
