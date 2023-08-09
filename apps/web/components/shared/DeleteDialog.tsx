@@ -32,7 +32,7 @@ export default function DeleteDialog({
     <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
       <p>{text || "Are you sure? This action cannot be undone."}</p>
       <div>{children}</div>
-      <div className="my-4 space-x-2 text-right">
+      <div className="space-x-2 text-right">
         <Button
           variant="secondary"
           onClick={() => {

@@ -3,7 +3,7 @@ import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { getActionClasses } from "@formbricks/lib/services/actionClass";
-import { getPerson, select, transformPrismaPerson } from "@formbricks/lib/services/person";
+import { getPerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { extendSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
@@ -94,7 +94,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       },
       select: {
         person: {
-          select,
+          select: selectPerson,
         },
       },
     });

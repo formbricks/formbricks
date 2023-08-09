@@ -15,3 +15,10 @@ export const useTeam = (environmentId: string) => {
     mutateTeam: mutate,
   };
 };
+
+export const deleteTeam = async (environmentId: string) => {
+  const response = await fetch(`/api/v1/environments/${environmentId}/team/`, {
+    method: "DELETE",
+  });
+  return response.json();
+};

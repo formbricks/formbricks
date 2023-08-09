@@ -91,10 +91,14 @@ const nextConfig = {
         destination: "/docs/actions/code",
         permanent: true,
       },
-
       {
         source: "/pmf",
         destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/blog/v1-and-how-we-got-here",
+        destination: "/blog/experience-management-open-source",
         permanent: true,
       },
     ];

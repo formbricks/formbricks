@@ -30,10 +30,10 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
         <div className="w-full space-y-4 rounded-b-lg bg-white p-4">
           <div className="h-16 w-full rounded-lg bg-slate-100"></div>
 
-          <div className=" flex h-16 w-full items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-100 ">
+          <div className="flex flex-col h-16 w-full items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-100 ">
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
-                className="flex h-full w-full items-center justify-center"
+                className="flex w-full items-center justify-center"
                 href={`/environments/${environmentId}/settings/setup`}>
                 <span className="decoration-brand-dark underline  transition-all duration-300  ease-in-out">
                   Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>

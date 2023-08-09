@@ -18,3 +18,9 @@ export const ZDisplayInput = z.object({
 });
 
 export type TDisplayInput = z.infer<typeof ZDisplayInput>;
+
+export const ZDisplaysWithSurveyName = ZDisplay.extend({
+  surveyName: z.string(),
+});
+
+export type TDisplaysWithSurveyName = z.infer<typeof ZDisplaysWithSurveyName>;
