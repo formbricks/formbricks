@@ -1,81 +1,16 @@
 "use client";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { formbricksLogout } from "@/lib/formbricks";
-import { useProfileMutation } from "@/lib/profile/mutateProfile";
-import { useProfile } from "@/lib/profile/profile";
-import { deleteProfile } from "@/lib/users/users";
-import { Button, ErrorComponent, Input, Label, ProfileAvatar } from "@formbricks/ui";
+import { Button, Input, ProfileAvatar } from "@formbricks/ui";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
-
-export function EditName() {
-  const { register, handleSubmit, control, setValue } = useForm();
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
-
-  const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
-
-  const profileName = useWatch({
-    control,
-    name: "name",
-  });
-  const isProfileNameInputEmpty = !profileName?.trim();
-  const currentProfileName = profileName?.trim().toLowerCase() ?? "";
-  const previousProfileName = profile?.name?.trim().toLowerCase() ?? "";
-
-  useEffect(() => {
-    setValue("name", profile?.name ?? "");
-  }, [profile?.name]);
-
-  if (isLoadingProfile) {
-    return <LoadingSpinner />;
-  }
-  if (isErrorProfile) {
-    return <ErrorComponent />;
-  }
-
-  return (
-    <form
-      className="w-full max-w-sm items-center"
-      onSubmit={handleSubmit((data) => {
-        triggerProfileMutate(data)
-          .then(() => {
-            toast.success("Your name was updated successfully.");
-          })
-          .catch((error) => {
-            toast.error(`Error: ${error.message}`);
-          });
-      })}>
-      <Label htmlFor="fullname">Full Name</Label>
-      <Input
-        type="text"
-        id="fullname"
-        defaultValue={profile.name}
-        {...register("name")}
-        className={isProfileNameInputEmpty ? "border-red-300 focus:border-red-300" : ""}
-      />
-
-      <div className="mt-4">
-        <Label htmlFor="email">Email</Label>
-        <Input type="email" id="fullname" defaultValue={profile.email} disabled />
-      </div>
-      <Button
-        type="submit"
-        variant="darkCTA"
-        className="mt-4"
-        loading={isMutatingProfile}
-        disabled={isProfileNameInputEmpty || currentProfileName === previousProfileName}>
-        Update
-      </Button>
-    </form>
-  );
-}
+import { profileDeleteAction } from "./actions";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 export function EditAvatar({ session }) {
   return (
@@ -103,9 +38,10 @@ interface DeleteAccountModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   session: Session;
+  profile: TProfile;
 }
 
-function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps) {
+function DeleteAccountModal({ setOpen, open, session, profile }: DeleteAccountModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
@@ -116,7 +52,7 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps)
   const deleteAccount = async () => {
     try {
       setDeleting(true);
-      await deleteProfile();
+      await profileDeleteAction(profile.id);
       await signOut();
       await formbricksLogout();
     } catch (error) {
@@ -169,7 +105,7 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps)
   );
 }
 
-export function DeleteAccount({ session }: { session: Session | null }) {
+export function DeleteAccount({ session, profile }: { session: Session | null; profile: TProfile }) {
   const [isModalOpen, setModalOpen] = useState(false);
 
   if (!session) {
@@ -178,7 +114,7 @@ export function DeleteAccount({ session }: { session: Session | null }) {
 
   return (
     <div>
-      <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} session={session} />
+      <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} session={session} profile={profile} />
       <p className="text-sm text-slate-700">
         Delete your account with all personal data. <strong>This cannot be undone!</strong>
       </p>

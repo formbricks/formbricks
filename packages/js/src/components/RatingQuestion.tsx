@@ -105,7 +105,7 @@ export default function RatingQuestion({
                       selectedChoice === number ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50" : "",
                       a.length === number ? "fb-rounded-r-md" : "",
                       number === 1 ? "fb-rounded-l-md" : "",
-                      "fb-block fb-h-full fb-w-full fb-border hover:fb-bg-gray-100 focus:fb-outline-none"
+                      "fb-block fb-h-full fb-w-full fb-border hover:fb-bg-gray-100 focus:fb-outline-none fb-text-slate-800"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -148,7 +148,7 @@ export default function RatingQuestion({
                     )}
                   </label>
                 ) : (
-                  <label className="fb-flex fb-h-full fb-w-full fb-justify-center">
+                  <label className="fb-flex fb-h-full fb-w-full fb-justify-center fb-text-slate-800">
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={selectedChoice == number || hoveredNumber == number}
@@ -160,7 +160,7 @@ export default function RatingQuestion({
               </span>
             ))}
           </div>
-          <div className="fb-flex fb-justify-between fb-text-slate-500  fb-leading-6 fb-px-1.5 fb-text-xs">
+          <div className="fb-flex fb-justify-between fb-text-slate-500 fb-leading-6 fb-px-1.5 fb-text-xs">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>

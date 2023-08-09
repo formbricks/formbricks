@@ -1,14 +1,20 @@
-import useSWR from "swr";
-import { fetcher } from "@formbricks/lib/fetcher";
 import { createDisplay, markDisplayResponded } from "@formbricks/lib/client/display";
 import { createResponse, updateResponse } from "@formbricks/lib/client/response";
-import { QuestionType, type Logic, type Question } from "@formbricks/types/questions";
-import { TResponseInput } from "@formbricks/types/v1/responses";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useGetOrCreatePerson } from "../people/people";
+import { fetcher } from "@formbricks/lib/fetcher";
 import { Response } from "@formbricks/types/js";
+import { QuestionType, type Logic } from "@formbricks/types/questions";
+import { TResponseInput } from "@formbricks/types/v1/responses";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import useSWR from "swr";
+import { useGetOrCreatePerson } from "../people/people";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+
+interface StoredResponse {
+  id: string | null;
+  data: { [x: string]: any };
+  history: string[];
+}
 
 export const useLinkSurvey = (surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
@@ -32,6 +38,7 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
   const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
   const [storedResponseValue, setStoredResponseValue] = useState<string | null>(null);
   const router = useRouter();
@@ -47,19 +54,25 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
   const personId = person?.data.person.id ?? null;
 
   useEffect(() => {
-    const storedResponses = getStoredResponses(survey.id);
+    const storedResponse = getStoredResponse(survey.id);
     const questionKeys = survey.questions.map((question) => question.id);
-    if (storedResponses) {
-      const storedResponsesKeys = Object.keys(storedResponses);
+    if (storedResponse) {
+      if (storedResponse.id) {
+        setResponseId(storedResponse.id);
+      }
+      if (storedResponse.history) {
+        setHistory(storedResponse.history);
+      }
+      const storedResponsesKeys = Object.keys(storedResponse.data);
       // reduce to find the last answered question index
-      const lastAnsweredQuestionIndex = questionKeys.reduce((acc, key, index) => {
+      const lastStoredQuestionIndex = questionKeys.reduce((acc, key, index) => {
         if (storedResponsesKeys.includes(key)) {
           return index;
         }
         return acc;
       }, 0);
-      if (lastAnsweredQuestionIndex > 0 && survey.questions.length > lastAnsweredQuestionIndex + 1) {
-        const nextQuestion = survey.questions[lastAnsweredQuestionIndex + 1];
+      if (lastStoredQuestionIndex > 0 && survey.questions.length > lastStoredQuestionIndex + 1) {
+        const nextQuestion = survey.questions[lastStoredQuestionIndex];
         setCurrentQuestion(nextQuestion);
         setProgress(calculateProgress(nextQuestion, survey));
         setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
@@ -70,8 +83,8 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
 
   useEffect(() => {
     if (!isLoadingPerson) {
-      const storedResponses = getStoredResponses(survey.id);
-      if (survey && !storedResponses) {
+      const storedResponse = getStoredResponse(survey.id);
+      if (survey && !storedResponse) {
         setCurrentQuestion(survey.questions[0]);
 
         if (isPreview) return;
@@ -98,9 +111,22 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
     return elementIdx / survey.questions.length;
   }, []);
 
-  const getNextQuestionId = (): string => {
+  const getNextQuestionId = (answer: any): string => {
+    const activeQuestionId: string = currentQuestion?.id || "";
     const currentQuestionIndex = survey.questions.findIndex((q) => q.id === currentQuestion?.id);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    const answerValue = answer[activeQuestionId];
+
+    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          return logic.destination;
+        }
+      }
+    }
 
     if (lastQuestion) return "end";
     return survey.questions[currentQuestionIndex + 1].id;
@@ -114,21 +140,7 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
-    const activeQuestionId: string = currentQuestion?.id || "";
-    const nextQuestionId = getNextQuestionId();
-    const responseValue = data[activeQuestionId];
 
-    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
-        if (!logic.destination) continue;
-
-        if (evaluateCondition(logic, responseValue)) {
-          return logic.destination;
-        }
-      }
-    }
-
-    const finished = nextQuestionId === "end";
     // build response
     const responseRequest: TResponseInput = {
       surveyId: survey.id,
@@ -140,6 +152,9 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
       },
     };
 
+    const nextQuestionId = getNextQuestionId(data);
+    responseRequest.finished = nextQuestionId === "end";
+
     if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,
@@ -149,33 +164,19 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
         markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
       }
       setResponseId(response.id);
-      storeResponse(survey.id, response.data);
+      storeResponse(survey.id, response.data, response.id, history);
     } else if (responseId && !isPreview) {
       await updateResponse(
         responseRequest,
         responseId,
         `${window.location.protocol}//${window.location.host}`
       );
-      storeResponse(survey.id, data);
+      storeResponse(survey.id, data, responseId, history);
     }
 
     setLoadingElement(false);
 
-    if (!finished && nextQuestionId !== "end") {
-      const question = survey.questions.find((q) => q.id === nextQuestionId);
-
-      if (!question) throw new Error("Question not found");
-
-      setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestionId));
-      setCurrentQuestion(question);
-    } else {
-      setProgress(1);
-      setFinished(true);
-      clearStoredResponses(survey.id);
-      if (survey.redirectUrl && Object.values(data)[0] !== "dismissed") {
-        handleRedirect(survey.redirectUrl);
-      }
-    }
+    goToNextQuestion(data);
   };
 
   const handleRedirect = (url) => {
@@ -215,10 +216,11 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
   }, [handlePrefilling]);
 
   const getPreviousQuestionId = (): string => {
-    const currentQuestionIndex = survey.questions.findIndex((q) => q.id === currentQuestion?.id);
-    if (currentQuestionIndex === -1) throw new Error("Question not found");
-
-    return survey.questions[currentQuestionIndex - 1].id;
+    const newHistory = [...history];
+    const prevQuestionId = newHistory.pop();
+    if (!prevQuestionId) throw new Error("Question not found");
+    setHistory(newHistory);
+    return prevQuestionId;
   };
 
   const goToPreviousQuestion = (answer: Response["data"]) => {
@@ -239,14 +241,26 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
 
   const goToNextQuestion = (answer: Response["data"]) => {
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId();
+    const nextQuestionId = getNextQuestionId(answer);
 
     if (nextQuestionId === "end") {
-      submitResponse(answer);
+      setLoadingElement(false);
+      setProgress(1);
+      setFinished(true);
+      clearStoredResponses(survey.id);
+      if (survey.redirectUrl && Object.values(answer)[0] !== "dismissed") {
+        handleRedirect(survey.redirectUrl);
+      }
       return;
     }
 
-    storeResponse(survey.id, answer);
+    const newHistory = [...history];
+    if (currentQuestion) {
+      newHistory.push(currentQuestion.id);
+    }
+    setHistory(newHistory);
+
+    storeResponse(survey.id, answer, null, newHistory);
 
     const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
 
@@ -274,38 +288,50 @@ export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
   };
 };
 
-const storeResponse = (surveyId: string, answer: Response["data"]) => {
-  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-responses`);
+const storeResponse = (
+  surveyId: string,
+  responseData: Response["data"],
+  responseId: string | null = null,
+  history: string[] = []
+) => {
+  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-response`);
   if (storedResponses) {
-    const parsedResponses = JSON.parse(storedResponses);
-    localStorage.setItem(
-      `formbricks-${surveyId}-responses`,
-      JSON.stringify({ ...parsedResponses, ...answer })
-    );
+    const existingResponse = JSON.parse(storedResponses);
+    if (responseId) {
+      existingResponse.id = responseId;
+    }
+    existingResponse.data = { ...existingResponse.data, ...responseData };
+    existingResponse.history = history;
+    localStorage.setItem(`formbricks-${surveyId}-response`, JSON.stringify(existingResponse));
   } else {
-    localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify(answer));
+    const response = {
+      id: responseId,
+      data: responseData,
+      history,
+    };
+    localStorage.setItem(`formbricks-${surveyId}-response`, JSON.stringify(response));
   }
 };
 
-const getStoredResponses = (surveyId: string): Record<string, string> | null => {
-  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-responses`);
+const getStoredResponse = (surveyId: string): StoredResponse | null => {
+  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-response`);
   if (storedResponses) {
-    const parsedResponses = JSON.parse(storedResponses);
-    return parsedResponses;
+    return JSON.parse(storedResponses);
   }
   return null;
 };
 
 const getStoredResponseValue = (surveyId: string, questionId: string): string | null => {
-  const storedResponses = getStoredResponses(surveyId);
-  if (storedResponses) {
-    return storedResponses[questionId];
+  const storedResponse = getStoredResponse(surveyId);
+
+  if (storedResponse && typeof storedResponse.data === "object") {
+    return storedResponse.data[questionId];
   }
   return null;
 };
 
 const clearStoredResponses = (surveyId: string) => {
-  localStorage.removeItem(`formbricks-${surveyId}-responses`);
+  localStorage.removeItem(`formbricks-${surveyId}-response`);
 };
 
 const checkValidity = (question: any, answer: any): boolean => {

@@ -20,7 +20,7 @@ Please note that regardless of the method you choose, Formbricks is designed to 
 
 ---
 
-## (Production: Ubuntu) Running the Shell Script
+## (Most users: One-click Ubuntu setup) Running the Shell Script
 
 This is the quickest way to get Formbricks up and running on an Ubuntu server. The shell script will automatically install all the required dependencies and configure your server, making the process a breeze.
 
@@ -50,7 +50,7 @@ The script will prompt you for the following information:
 
 That's it! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
 
-## (Most users: Local Setup) Running the pre-built Docker Image
+## (Manual Deployment) Running the pre-built Docker Image
 
 ### Requirements
 
@@ -133,15 +133,9 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
     git clone https://github.com/formbricks/formbricks.git && cd formbricks
     ```
 
-    Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
+2.  Modify the `.env.docker` file as required by your setup. This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
 
-2.  Copy the `.env.docker` file to `.env` and edit it with an editor of your choice if needed.
-
-    ```bash
-    cp .env.docker .env
-    ```
-
-    Note: The environment variables are used at build time. When you change environment variables later, you need to rebuild the image with `docker compose build` for the changes to take effect.
+    Note: All environment variables starting with `NEXT_PUBLIC_` are used at build time. When you change environment variables later, you need to rebuild the image with `docker compose build` for the changes to take effect.
 
 3.  Finally start the docker compose process to build and spin up the Formbricks container as well as the PostgreSQL database.
 
