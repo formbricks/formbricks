@@ -54,7 +54,7 @@ export default function DeleteTeam({ environmentId }) {
       {!isDeleteDisabled && (
         <div>
           <p className="text-sm text-slate-900">
-           This action cannot be undone. If it&apos;s gone, it&apos;s gone.
+            This action cannot be undone. If it&apos;s gone, it&apos;s gone.
           </p>
           <Button
             disabled={isDeleteDisabled}
