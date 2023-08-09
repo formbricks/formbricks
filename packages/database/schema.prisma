@@ -30,6 +30,7 @@ enum PipelineTriggers {
 
 model Webhook {
   id            String             @id @default(cuid())
+  name          String?
   createdAt     DateTime           @default(now()) @map(name: "created_at")
   updatedAt     DateTime           @updatedAt @map(name: "updated_at")
   url           String

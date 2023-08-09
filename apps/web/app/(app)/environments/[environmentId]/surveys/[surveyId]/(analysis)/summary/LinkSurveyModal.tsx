@@ -1,7 +1,8 @@
 "use client";
 
 import CodeBlock from "@/components/shared/CodeBlock";
-import Modal from "@/components/shared/Modal";
+// import Modal from "@/components/shared/Modal";
+import { Dialog, DialogContent } from "@formbricks/ui";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";
@@ -40,8 +41,8 @@ top:0; width:100%; height:100%; border:0;">
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} blur={false}>
-      <div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="bottom-0 max-w-sm bg-white p-4 sm:bottom-auto sm:max-w-xl sm:p-6">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-100">
           <CheckIcon className="h-6 w-6 text-teal-600" aria-hidden="true" />
         </div>
@@ -50,24 +51,32 @@ top:0; width:100%; height:100%; border:0;">
           {showEmbed ? (
             <div className="mt-4">
               <p className="text-sm text-gray-500">Embed survey on your website:</p>
-              <CodeBlock language="html">{iframeCode}</CodeBlock>
+              <CodeBlock
+                customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
+                language="html">
+                {iframeCode}
+              </CodeBlock>
             </div>
           ) : (
             <div className="mt-4">
               <p className="text-sm text-gray-500">Share this link to let people answer your survey:</p>
-              <p
+              <div
                 ref={linkTextRef}
-                className="relative mt-3 w-full rounded-lg border border-slate-300 bg-slate-50 p-3 text-center text-slate-800"
+                className="relative mt-3 max-w-full overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-3 text-center text-slate-800"
                 onClick={() => handleTextSelection()}>
-                {`${window.location.protocol}//${window.location.host}/s/${survey.id}`}
-              </p>
+                <span
+                  style={{
+                    wordBreak: "break-all",
+                  }}>{`${window.location.protocol}//${window.location.host}/s/${survey.id}`}</span>
+              </div>
             </div>
           )}
-          <div className="mt-4 flex justify-end space-x-2">
+          <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               title="Embed survey in your website"
               aria-label="Embed survey in your website"
+              className="flex justify-center"
               onClick={() => {
                 setShowEmbed(true);
                 navigator.clipboard.writeText(iframeCode);
@@ -87,6 +96,7 @@ top:0; width:100%; height:100%; border:0;">
               }}
               title="Copy survey link to clipboard"
               aria-label="Copy survey link to clipboard"
+              className="flex justify-center"
               EndIcon={DocumentDuplicateIcon}>
               Copy URL
             </Button>
@@ -94,6 +104,7 @@ top:0; width:100%; height:100%; border:0;">
               variant="darkCTA"
               title="Preview survey"
               aria-label="Preview survey"
+              className="flex justify-center"
               href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
               target="_blank"
               EndIcon={EyeIcon}>
@@ -101,7 +112,7 @@ top:0; width:100%; height:100%; border:0;">
             </Button>
           </div>
         </div>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 }
