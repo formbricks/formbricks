@@ -44,15 +44,13 @@
     "react-hot-toast": "^2.4.1",
     "react-icons": "^4.10.1",
     "swr": "^2.2.0",
-    "ua-parser-js": "^1.0.35",
-    "validator": "^13.11.0"
+    "ua-parser-js": "^1.0.35"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "@types/bcryptjs": "^2.4.2",
     "@types/lodash": "^4.14.196",
     "@types/markdown-it": "^12.2.3",
-    "@types/validator": "^13.11.1",
     "eslint-config-formbricks": "workspace:*"
   }
 }
