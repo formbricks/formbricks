@@ -241,6 +241,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     const nextQuestionId = getNextQuestionId(answer);
 
     if (nextQuestionId === "end") {
+      setLoadingElement(false);
       setProgress(1);
       setFinished(true);
       clearStoredResponses(survey.id);
