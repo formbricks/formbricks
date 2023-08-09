@@ -34,14 +34,14 @@ export function EditAvatar({ session }) {
   );
 }
 
-interface DeleteAccounModaltProps {
+interface DeleteAccountModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   session: Session;
   profile: TProfile;
 }
 
-function DeleteAccountModal({ setOpen, open, session, profile }: DeleteAccounModaltProps) {
+function DeleteAccountModal({ setOpen, open, session, profile }: DeleteAccountModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
 

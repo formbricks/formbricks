@@ -223,6 +223,15 @@ export default function MultipleChoiceSingleForm({
                 Add &quot;Other&quot;
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="minimal"
+              type="button"
+              onClick={() => {
+                updateQuestion(questionIdx, { type: "multipleChoiceMulti" });
+              }}>
+              Convert to Multi Select
+            </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">
               <Select
