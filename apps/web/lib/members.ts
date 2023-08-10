@@ -30,6 +30,20 @@ export const updateMemberRole = async (teamId: string, userId: string, role: str
   }
 };
 
+export const transferOwnership = async (teamId: string, userId: string) => {
+  try {
+    const result = await fetch(`/api/v1/teams/${teamId}/transfer-ownership/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    return result.status === 200;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
 export const removeMember = async (teamId: string, userId: string) => {
   try {
     const result = await fetch(`/api/v1/teams/${teamId}/members/${userId}/`, {

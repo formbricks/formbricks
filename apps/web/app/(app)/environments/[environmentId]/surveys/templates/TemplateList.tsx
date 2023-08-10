@@ -28,11 +28,18 @@ type TemplateList = {
   onTemplateClick: (template: Template) => void;
   environment: TEnvironment;
   product: TProduct;
+  templateSearch?: string;
 };
 
 const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
-export default function TemplateList({ environmentId, onTemplateClick, product, environment }: TemplateList) {
+export default function TemplateList({
+  environmentId,
+  onTemplateClick,
+  product,
+  environment,
+  templateSearch,
+}: TemplateList) {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,21 +56,27 @@ export default function TemplateList({ environmentId, onTemplateClick, product, 
 
     const fullCategories =
       !!profile?.objective && profile.objective !== "other"
-        ? [RECOMMENDED_CATEGORY_NAME, ...defaultCategories]
+        ? [RECOMMENDED_CATEGORY_NAME, ALL_CATEGORY_NAME, ...defaultCategories]
         : [ALL_CATEGORY_NAME, ...defaultCategories];
 
     setCategories(fullCategories);
 
-    const activeFilter =
-      !!profile?.objective && profile.objective !== "other" ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
+    const activeFilter = templateSearch
+      ? ALL_CATEGORY_NAME
+      : !!profile?.objective && profile.objective !== "other"
+      ? RECOMMENDED_CATEGORY_NAME
+      : ALL_CATEGORY_NAME;
     setSelectedFilter(activeFilter);
-  }, [profile]);
+  }, [profile, templateSearch]);
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
+    const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
+    const autoComplete = surveyType === "web" ? 50 : null;
     const augmentedTemplate = {
       ...activeTemplate.preset,
-      type: environment?.widgetSetupCompleted ? "web" : "link",
+      type: surveyType,
+      autoComplete,
     };
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
@@ -72,19 +85,38 @@ export default function TemplateList({ environmentId, onTemplateClick, product, 
   if (isLoadingProfile) return <LoadingSpinner />;
   if (isErrorProfile) return <ErrorComponent />;
 
+  const filteredTemplates = templates.filter((template) => {
+    const matchesCategory =
+      selectedFilter === ALL_CATEGORY_NAME ||
+      template.category === selectedFilter ||
+      (selectedFilter === RECOMMENDED_CATEGORY_NAME && template.objectives?.includes(profile.objective));
+
+    const templateName = template.name?.toLowerCase();
+    const templateDescription = template.description?.toLowerCase();
+    const searchQuery = templateSearch?.toLowerCase() ?? "";
+    const searchWords = searchQuery.split(" ");
+
+    const matchesSearch = searchWords.every(
+      (word) => templateName?.includes(word) || templateDescription?.includes(word)
+    );
+
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-1">
         {categories.map((category) => (
           <button
             key={category}
             type="button"
             onClick={() => setSelectedFilter(category)}
+            disabled={templateSearch && templateSearch.length > 0 ? true : false}
             className={cn(
               selectedFilter === category
                 ? " bg-slate-800 font-semibold text-white"
                 : " bg-white text-slate-700 hover:bg-slate-100",
-              "mt-2 rounded border border-slate-800 px-2 py-1 text-sm transition-all duration-150 "
+              "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150 "
             )}>
             {category}
             {category === RECOMMENDED_CATEGORY_NAME && <SparklesIcon className="ml-1 inline h-5 w-5" />}
@@ -121,72 +153,62 @@ export default function TemplateList({ environmentId, onTemplateClick, product, 
             </div>
           )}
         </button>
-        {templates
-          .filter(
-            (template) =>
-              selectedFilter === ALL_CATEGORY_NAME ||
-              template.category === selectedFilter ||
-              (selectedFilter === RECOMMENDED_CATEGORY_NAME &&
-                template.objectives?.includes(profile.objective))
-          )
-          .map((template: Template) => (
-            <div
-              onClick={() => {
-                const newTemplate = replacePresetPlaceholders(template, product);
-                onTemplateClick(newTemplate);
-                setActiveTemplate(newTemplate);
-              }}
-              key={template.name}
-              className={cn(
-                activeTemplate?.name === template.name && "ring-2 ring-slate-400",
-                "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
-              )}>
-              <div className="flex">
-                <div
-                  className={`rounded border px-1.5 py-0.5 text-xs ${
-                    template.category === "Product Experience"
-                      ? "border-blue-300 bg-blue-50 text-blue-500"
-                      : template.category === "Exploration"
-                      ? "border-pink-300 bg-pink-50 text-pink-500"
-                      : template.category === "Growth"
-                      ? "border-orange-300 bg-orange-50 text-orange-500"
-                      : template.category === "Increase Revenue"
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                      : template.category === "Customer Success"
-                      ? "border-violet-300 bg-violet-50 text-violet-500"
-                      : "border-slate-300 bg-slate-50 text-slate-500" // default color
-                  }`}>
-                  {template.category}
-                </div>
-                {template.preset.questions.some(
-                  (question) => question.logic && question.logic.length > 0
-                ) && (
-                  <TooltipProvider delayDuration={80}>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <div>
-                          <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>This survey uses branching logic.</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+        {filteredTemplates.map((template: Template) => (
+          <div
+            onClick={() => {
+              const newTemplate = replacePresetPlaceholders(template, product);
+              onTemplateClick(newTemplate);
+              setActiveTemplate(newTemplate);
+            }}
+            key={template.name}
+            className={cn(
+              activeTemplate?.name === template.name && "ring-2 ring-slate-400",
+              "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
+            )}>
+            <div className="flex">
+              <div
+                className={`rounded border px-1.5 py-0.5 text-xs ${
+                  template.category === "Product Experience"
+                    ? "border-blue-300 bg-blue-50 text-blue-500"
+                    : template.category === "Exploration"
+                    ? "border-pink-300 bg-pink-50 text-pink-500"
+                    : template.category === "Growth"
+                    ? "border-orange-300 bg-orange-50 text-orange-500"
+                    : template.category === "Increase Revenue"
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                    : template.category === "Customer Success"
+                    ? "border-violet-300 bg-violet-50 text-violet-500"
+                    : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                }`}>
+                {template.category}
               </div>
-              <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
-              <p className="text-left text-xs text-slate-600">{template.description}</p>
-              {activeTemplate?.name === template.name && (
-                <Button
-                  variant="darkCTA"
-                  className="mt-6 px-6 py-3"
-                  disabled={activeTemplate === null}
-                  loading={loading}
-                  onClick={() => addSurvey(activeTemplate)}>
-                  Use this template
-                </Button>
+              {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
+                <TooltipProvider delayDuration={80}>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div>
+                        <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>This survey uses branching logic.</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
-          ))}
+            <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
+            <p className="text-left text-xs text-slate-600">{template.description}</p>
+            {activeTemplate?.name === template.name && (
+              <Button
+                variant="darkCTA"
+                className="mt-6 px-6 py-3"
+                disabled={activeTemplate === null}
+                loading={loading}
+                onClick={() => addSurvey(activeTemplate)}>
+                Use this template
+              </Button>
+            )}
+          </div>
+        ))}
       </div>
     </main>
   );

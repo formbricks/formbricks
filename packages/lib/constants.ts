@@ -18,3 +18,4 @@ export const WEBAPP_URL =
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = process.env.CRON_SECRET;
+export const DEFAULT_BRAND_COLOR = "#64748b";
