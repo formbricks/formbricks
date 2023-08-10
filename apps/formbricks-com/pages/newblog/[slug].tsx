@@ -1,6 +1,3 @@
-import Image from "next/image";
-import LayoutMdx from "@/components/shared/LayoutMdx";
-import AuthorBox from "@/components/shared/AuthorBox";
 import MetaInformation from "../../components/shared/MetaInformation";
 
 export async function getStaticPaths() {

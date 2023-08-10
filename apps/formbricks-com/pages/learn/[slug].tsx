@@ -2,20 +2,13 @@ export async function getStaticPaths() {
   const response = await fetch("http://localhost:1337/api/learn-articles?populate=");
   const articles = await response.json();
 
-  console.log("articles.data", articles.data);
-
-  const firstArticle = await fetch("http://localhost:1337/api/learn-articles/1?populate=*");
-  const firstArticleJSON = await firstArticle.json();
-
-  console.log("firstArticleJSON", firstArticleJSON);
-
   if (!Array.isArray(articles.data)) {
     console.error("Expected articles.data to be an array but got:", articles.data);
     return { paths: [], fallback: true };
   }
 
   const paths = articles.data.map((article) => ({
-    params: { slug: article.attributes.slug }, // Adjust this to match the actual path to the slug in your data
+    params: { slug: article.attributes.slug },
   }));
 
   return { paths, fallback: true };
