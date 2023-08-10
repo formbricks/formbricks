@@ -283,10 +283,10 @@ export default function PreviewSurvey({
         <div className="ml-auto flex items-center">
           <Button
             variant="minimal"
-            className="px-2 py-1 font-mono text-sm text-slate-400"
+            className="mx-2 my-4 px-1 py-0.2 text-sm text-slate-400 bg-white"
             onClick={resetQuestionProgress}>
             Restart
-            <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4 text-slate-400" />
+            <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </div>
