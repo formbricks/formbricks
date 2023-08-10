@@ -1,12 +1,10 @@
 export default function Loading() {
   return (
-
-    <div className="h-full w-full flex items-center justify-center">
-      <div className="flex w-1/4 h-1/2 flex-col">
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="flex h-1/2 w-1/4 flex-col">
         <div className="ph-no-capture h-16 w-1/3 animate-pulse rounded-lg bg-gray-200 font-medium text-slate-900"></div>
         <div className="ph-no-capture mt-4 h-full animate-pulse rounded-lg bg-gray-200 text-slate-900"></div>
       </div>
     </div>
-
   );
 }

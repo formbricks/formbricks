@@ -2,7 +2,7 @@ import { createDisplay, markDisplayResponded } from "@formbricks/lib/client/disp
 import { createResponse, updateResponse } from "@formbricks/lib/client/response";
 import { fetcher } from "@formbricks/lib/fetcher";
 import { Response } from "@formbricks/types/js";
-import { QuestionType } from "@formbricks/types/questions";
+import { Question, QuestionType } from "@formbricks/types/questions";
 import { TResponseInput } from "@formbricks/types/v1/responses";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -28,7 +28,7 @@ export const useLinkSurvey = (surveyId: string) => {
 };
 
 export const useLinkSurveyUtils = (survey: TSurvey) => {
-  const [currentQuestion, setCurrentQuestion] = useState<TSurveyQuestion | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<TSurveyQuestion | Question | null>(null);
   const [prefilling, setPrefilling] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [finished, setFinished] = useState(false);
@@ -39,7 +39,7 @@ export const useLinkSurveyUtils = (survey: TSurvey) => {
   const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
   const [storedResponseValue, setStoredResponseValue] = useState<string | null>(null);
   const router = useRouter();
-  const URLParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search :"");
+  const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const isPreview = URLParams.get("preview") === "true";
   const hasFirstQuestionPrefill = URLParams.has(survey.questions[0].id);
   const firstQuestionPrefill = hasFirstQuestionPrefill ? URLParams.get(survey.questions[0].id) : null;
@@ -331,7 +331,7 @@ const clearStoredResponses = (surveyId: string) => {
   localStorage.removeItem(`formbricks-${surveyId}-response`);
 };
 
-const checkValidity = (question: TSurveyQuestion, answer: any): boolean => {
+const checkValidity = (question: TSurveyQuestion | Question, answer: any): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
@@ -388,7 +388,7 @@ const checkValidity = (question: TSurveyQuestion, answer: any): boolean => {
   }
 };
 
-const createAnswer = (question: TSurveyQuestion, answer: string): string | number | string[] => {
+const createAnswer = (question: TSurveyQuestion | Question, answer: string): string | number | string[] => {
   switch (question.type) {
     case QuestionType.OpenText:
     case QuestionType.MultipleChoiceSingle:

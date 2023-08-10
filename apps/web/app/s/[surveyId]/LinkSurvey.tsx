@@ -19,7 +19,7 @@ interface LinkSurveyProps {
   product: TProduct;
 }
 
-export default function LinkSurvey({survey, product}:LinkSurveyProps) {
+export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
   const {
     currentQuestion,
     finished,

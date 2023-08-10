@@ -2,7 +2,7 @@ import { Input } from "@formbricks/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
-import type {  MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -12,7 +12,7 @@ import { BackButton } from "@/components/preview/BackButton";
 import { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion| TSurveyMultipleChoiceMultiQuestion;
+  question: MultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
