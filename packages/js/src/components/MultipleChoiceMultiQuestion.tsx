@@ -6,8 +6,8 @@ import { cn, shuffleArray } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import _ from "lodash";
 import { BackButton } from "./BackButton";
+import { symmetricDifference } from "../../../lib/utils/array";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -91,7 +91,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
+    if (symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }
