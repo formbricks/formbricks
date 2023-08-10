@@ -59,7 +59,7 @@ export default function ConsentQuestion({
           e.preventDefault();
           handleSumbit(answer);
         }}>
-        <label className="fb-relative fb-z-10 fb-mt-4 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-rounded-md fb-border fb-border-gray-200 fb-bg-slate-50 fb-p-4 fb-text-sm focus:fb-outline-none">
+        <label className="fb-relative fb-z-10 fb-mt-4 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-rounded-md fb-border fb-border-gray-200 fb-bg-slate-50 fb-p-4 fb-text-sm focus:fb-outline-none fb-text-slate-800">
           <input
             type="checkbox"
             id={question.id}
