@@ -339,7 +339,7 @@ export default function FormList() {
                                         <Menu.Item>
                                           {({ active }) => (
                                             <>
-                                              <button
+                                              {/* <button
                                                 onClick={() =>
                                                   deleteForm(form, formIdx)
                                                 }
@@ -354,7 +354,7 @@ export default function FormList() {
                                                   aria-hidden="true"
                                                 />
                                                 <span>Supprimer</span>
-                                              </button>
+                                              </button> */}
                                               <button
                                                 onClick={() =>
                                                   duplicateForm(form)
