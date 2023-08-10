@@ -257,36 +257,34 @@ export default function FormList() {
                                 : "w-5 h-5 text-rose-500 mr-1 text-2xl"
                             }
                           />
-                          {format(new Date(form.dueDate), "yyyy-MM-dd") ===
-                          format(new Date(), "yyyy-MM-dd") ? (
-                            <span className="text-base text-red-800 line-clamp-3">
-                              Ferme aujourd&apos;hui
-                            </span>
-                          ) : dateDayDiff(form.dueDate) > 7 ? (
-                            format(new Date(form.dueDate), "yyyy-MM-dd") <
-                            format(new Date(), "yyyy-MM-dd") ? (
-                              <span className="text-base font-normal text-rose-500 line-clamp-3">
-                                {"Fermé le " +format(new Date(form.dueDate),"dd MMMM yyyy",{
-                                  locale: fr})
-                                }
-                              </span>
-                            ) : (
-                              <span className="text-base font-normal text-black-title line-clamp-3">
-                                {"Ferme le " +
+                          {(() => {
+                            let today = format(new Date(), "yyyy-MM-dd");
+                            let dueDate = format(
+                              new Date(form.dueDate),
+                              "yyyy-MM-dd"
+                            );
+                            let dateIsPast = dueDate <= today;
+                            let dateStr = "";
+                            if (dueDate === today) dateStr = "aujourd'hui";
+                            else if (dateDayDiff(form.dueDate) <= 7)
+                              dateStr = timeSince(form.dueDate);
+                            else
+                              dateStr =
+                                "le " +
                                 format(new Date(form.dueDate), "dd MMMM yyyy", {
-                                      locale: fr,
-                                })}
+                                  locale: fr,
+                                });
+
+                            return (
+                              <span
+                                className={`text-base font-normal text-${
+                                  dateIsPast ? "rose-500" : "black-title"
+                                } line-clamp-3`}
+                              >
+                                {`Ferm${dateIsPast ? "é" : "e"} ` + dateStr}
                               </span>
-                            )
-                          ) : (
-                            <span className="text-base  text-rose-500 font-normal line-clamp-3 ">
-                              {format(new Date(form.dueDate), "yyyy-MM-dd") <
-                              format(new Date(), "yyyy-MM-dd")
-                                ? "Fermé"
-                                : "Ferme"}{" "}
-                              {timeSince(form.dueDate)}
-                            </span>
-                          )}
+                            );
+                          })()}
                         </span>
                         {/* {session.user.role === UserRole.ADMIN ? (
                           <span className='flex items-center px-6 py-1 text-base font-normal text-black-title'>
