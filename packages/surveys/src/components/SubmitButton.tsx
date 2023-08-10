@@ -1,9 +1,16 @@
-import { h } from "preact";
-
-import { cn } from "@/../../packages/lib/cn";
+import { cn } from "../../../lib/cn";
 import { isLight } from "../lib/utils";
+import { TSurveyQuestion } from "../../../types/v1/surveys";
 
-function SubmitButton({ question, lastQuestion, brandColor, onClick, type = "submit" }) {
+interface SubmitButtonProps {
+  question: TSurveyQuestion;
+  lastQuestion: boolean;
+  brandColor: string;
+  onClick: () => void;
+  type?: "submit" | "button";
+}
+
+function SubmitButton({ question, lastQuestion, brandColor, onClick, type = "submit" }: SubmitButtonProps) {
   return (
     <button
       type={type}

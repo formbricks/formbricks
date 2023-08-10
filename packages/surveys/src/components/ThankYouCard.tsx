@@ -1,10 +1,9 @@
-import { h } from "preact";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface ThankYouCardProps {
-  headline: string;
-  subheader: string;
+  headline?: string;
+  subheader?: string;
   brandColor: string;
 }
 

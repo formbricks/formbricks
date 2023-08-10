@@ -1,10 +1,9 @@
-import { h } from "preact";
 import { TResponseData } from "../../../types/v1/responses";
 import type { TSurveyCTAQuestion } from "../../../types/v1/surveys";
+import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
-import { BackButton } from "./BackButton";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;

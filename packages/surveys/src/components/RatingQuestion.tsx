@@ -1,8 +1,8 @@
-import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { TResponseData } from "../../../types/v1/responses";
 import type { TSurveyRatingQuestion } from "../../../types/v1/surveys";
 import { cn } from "../lib/utils";
+import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import {
   ConfusedFace,
@@ -18,7 +18,6 @@ import {
 } from "./Smileys";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { BackButton } from "./BackButton";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
@@ -47,6 +46,9 @@ export default function RatingQuestion({
   }, [storedResponseValue, question]);
 
   const handleSubmit = (value: number | null) => {
+    if (value === null) {
+      throw new Error("No value selected");
+    }
     const data = {
       [question.id]: value,
     };
@@ -69,7 +71,7 @@ export default function RatingQuestion({
     }
   };
 
-  const HiddenRadioInput = ({ number }) => (
+  const HiddenRadioInput = ({ number }: { number: number }) => (
     <input
       type="radio"
       name="rating"
@@ -105,7 +107,7 @@ export default function RatingQuestion({
                       selectedChoice === number ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50" : "",
                       a.length === number ? "fb-rounded-r-md" : "",
                       number === 1 ? "fb-rounded-l-md" : "",
-                      "fb-block fb-h-full fb-w-full fb-border hover:fb-bg-gray-100 focus:fb-outline-none"
+                      "fb-block fb-h-full fb-w-full fb-border hover:fb-bg-gray-100 focus:fb-outline-none fb-text-slate-800"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -148,7 +150,7 @@ export default function RatingQuestion({
                     )}
                   </label>
                 ) : (
-                  <label className="fb-flex fb-h-full fb-w-full fb-justify-center">
+                  <label className="fb-flex fb-h-full fb-w-full fb-justify-center fb-text-slate-800">
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={selectedChoice == number || hoveredNumber == number}
@@ -160,7 +162,7 @@ export default function RatingQuestion({
               </span>
             ))}
           </div>
-          <div className="fb-flex fb-justify-between fb-text-slate-500  fb-leading-6 fb-px-1.5 fb-text-xs">
+          <div className="fb-flex fb-justify-between fb-text-slate-500 fb-leading-6 fb-px-1.5 fb-text-xs">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>
@@ -168,7 +170,7 @@ export default function RatingQuestion({
       </div>
 
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-        {goToPreviousQuestion && (
+        {goToPreviousQuestion && selectedChoice && (
           <BackButton
             onClick={() => {
               goToPreviousQuestion({ [question.id]: selectedChoice });

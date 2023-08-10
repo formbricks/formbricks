@@ -1,5 +1,3 @@
-import { h } from "preact";
-
 export default function Progress({ progress, brandColor }: { progress: number; brandColor: string }) {
   return (
     <div className="fb-h-1 fb-w-full fb-rounded-full fb-bg-slate-200">

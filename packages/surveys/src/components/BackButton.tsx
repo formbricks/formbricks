@@ -1,6 +1,4 @@
-import { h } from "preact";
-
-import { cn } from "@/../../packages/lib/cn";
+import { cn } from "../../../lib/cn";
 
 interface BackButtonProps {
   onClick: () => void;

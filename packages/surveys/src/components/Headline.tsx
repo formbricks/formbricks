@@ -1,14 +1,10 @@
-import { h } from "preact";
-
-export default function Headline({
-  headline,
-  questionId,
-  style,
-}: {
-  headline: string;
+interface HeadlineProps {
+  headline?: string;
   questionId: string;
   style?: any;
-}) {
+}
+
+export default function Headline({ headline, questionId, style }: HeadlineProps) {
   return (
     <label
       htmlFor={questionId}

@@ -1,12 +1,11 @@
-import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { TResponseData } from "../../../types/v1/responses";
 import type { TSurveyNPSQuestion } from "../../../types/v1/surveys";
 import { cn } from "../lib/utils";
+import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { BackButton } from "./BackButton";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -33,6 +32,9 @@ export default function NPSQuestion({
   }, [storedResponseValue, question]);
 
   const handleSubmit = (value: number | null) => {
+    if (value === null) {
+      throw new Error("No value selected");
+    }
     const data = {
       [question.id]: value,
     };
@@ -72,7 +74,7 @@ export default function NPSQuestion({
                 key={number}
                 className={cn(
                   selectedChoice === number ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50" : "",
-                  "fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-border fb-bg-white fb-text-center fb-text-sm fb-leading-10 first:fb-rounded-l-md last:fb-rounded-r-md hover:fb-bg-gray-100 focus:fb-outline-none"
+                  "fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-border fb-bg-white fb-text-center fb-text-sm fb-leading-10 first:fb-rounded-l-md last:fb-rounded-r-md hover:fb-bg-gray-100 focus:fb-outline-none fb-text-slate-800"
                 )}>
                 <input
                   type="radio"
@@ -95,7 +97,7 @@ export default function NPSQuestion({
       </div>
 
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-        {goToPreviousQuestion && (
+        {goToPreviousQuestion && selectedChoice && (
           <BackButton
             onClick={() => {
               goToPreviousQuestion(

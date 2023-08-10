@@ -1,12 +1,11 @@
-import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { TResponseData } from "../../../types/v1/responses";
 import type { TSurveyChoice, TSurveyMultipleChoiceSingleQuestion } from "../../../types/v1/surveys";
 import { cn, shuffleArray } from "../lib/utils";
+import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { BackButton } from "./BackButton";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -39,7 +38,7 @@ export default function MultipleChoiceSingleQuestion({
         : question.choices
       : []
   );
-  const otherSpecify = useRef<HTMLInputElement>(null);
+  const otherSpecify = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!storedResponseValueValue) {
@@ -54,7 +53,7 @@ export default function MultipleChoiceSingleQuestion({
   }, [question.choices, storedResponseValue, storedResponseValueValue]);
 
   useEffect(() => {
-    if (selectedChoice === "other") {
+    if (selectedChoice === "other" && otherSpecify.current) {
       otherSpecify.current.value = savedOtherAnswer ?? "";
       otherSpecify.current?.focus();
     }
@@ -109,7 +108,7 @@ export default function MultipleChoiceSingleQuestion({
                   selectedChoice === choice.label
                     ? "fb-z-10 fb-bg-slate-50 fb-border-slate-400"
                     : "fb-border-gray-200",
-                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none hover:bg-slate-50"
+                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none fb-text-slate-800 hover:bg-slate-50"
                 )}>
                 <span className="fb-flex fb-items-center fb-text-sm">
                   <input
@@ -119,7 +118,7 @@ export default function MultipleChoiceSingleQuestion({
                     value={choice.label}
                     className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
-                    onChange={(e) => {
+                    onChange={() => {
                       setSelectedChoice(choice.id);
                     }}
                     checked={selectedChoice === choice.id}
@@ -153,10 +152,10 @@ export default function MultipleChoiceSingleQuestion({
               goToPreviousQuestion(
                 selectedChoice === "other"
                   ? {
-                      [question.id]: otherSpecify.current?.value,
+                      [question.id]: otherSpecify.current?.value!,
                     }
                   : {
-                      [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label,
+                      [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label!,
                     }
               );
             }}

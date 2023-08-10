@@ -1,11 +1,16 @@
 {
-  "name": "surveys",
+  "name": "@formbricks/surveys",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "go": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

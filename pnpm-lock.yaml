@@ -151,6 +151,9 @@ importers:
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../../packages/lib
+      '@formbricks/surveys':
+        specifier: workspace:*
+        version: link:../../packages/surveys
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types

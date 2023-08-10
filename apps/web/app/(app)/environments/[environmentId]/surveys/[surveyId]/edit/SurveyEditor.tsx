@@ -12,6 +12,7 @@ import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
 import QuestionsView from "./QuestionsView";
 import SurveyMenuBar from "./SurveyMenuBar";
 import { useEnvironment } from "@/lib/environments/environments";
+import { SurveyView } from "@/components/shared/Survey";
 
 interface SurveyEditorProps {
   environmentId: string;
@@ -78,7 +79,8 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
           )}
         </main>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
-          <PreviewSurvey
+          <SurveyView survey={localSurvey} brandColor="#000000" formbricksSignature={false} />
+          {/*           <PreviewSurvey 
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
@@ -90,7 +92,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             thankYouCard={localSurvey.thankYouCard}
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
             autoClose={localSurvey.autoClose}
-          />
+          /> */}
         </aside>
       </div>
     </div>

@@ -1,8 +1,8 @@
-export const cn = (...classes) => {
+export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
-export function isLight(color) {
+export function isLight(color: string) {
   let r, g, b;
   if (color.length === 4) {
     r = parseInt(color[1] + color[1], 16);
@@ -12,6 +12,9 @@ export function isLight(color) {
     r = parseInt(color[1] + color[2], 16);
     g = parseInt(color[3] + color[4], 16);
     b = parseInt(color[5] + color[6], 16);
+  }
+  if (r === undefined || g === undefined || b === undefined) {
+    throw new Error("Invalid color");
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 }

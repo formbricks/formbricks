@@ -1,11 +1,10 @@
-import { h } from "preact";
+import { useEffect, useState } from "preact/hooks";
 import { TResponseData } from "../../../types/v1/responses";
 import type { TSurveyOpenTextQuestion } from "../../../types/v1/surveys";
+import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { useEffect, useState } from "preact/hooks";
-import { BackButton } from "./BackButton";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;

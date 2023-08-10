@@ -1,8 +1,10 @@
 import { h, render } from "preact";
-import Survey from "./Survey";
+import { Survey } from "./components/Survey";
+import { TSurvey } from "../../types/v1/surveys";
 
 interface RenderSurveyProps {
   containerId: string;
+  survey: TSurvey;
   brandColor: string;
   formbricksSignature: boolean;
   onDisplay?: () => void;

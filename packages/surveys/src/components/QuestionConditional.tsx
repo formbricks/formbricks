@@ -1,13 +1,12 @@
-import { h } from "preact";
 import { QuestionType } from "../../../types/questions";
 import { TSurveyQuestion } from "../../../types/v1/surveys";
-import OpenTextQuestion from "./OpenTextQuestion";
-import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
-import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
-import NPSQuestion from "./NPSQuestion";
 import CTAQuestion from "./CTAQuestion";
-import RatingQuestion from "./RatingQuestion";
 import ConsentQuestion from "./ConsentQuestion";
+import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
+import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
+import NPSQuestion from "./NPSQuestion";
+import OpenTextQuestion from "./OpenTextQuestion";
+import RatingQuestion from "./RatingQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;

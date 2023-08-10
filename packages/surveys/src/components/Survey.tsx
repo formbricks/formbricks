@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
-import type { TJsConfig } from "../../../types/v1/js";
 import type { TResponseData } from "../../../types/v1/responses";
 import type { TSurvey, TSurveyLogic } from "../../../types/v1/surveys";
 import { clearStoredResponse, getStoredResponse, storeResponse } from "../lib/localStorage";
@@ -10,25 +9,23 @@ import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 
 interface SurveyViewProps {
-  config: TJsConfig;
   survey: TSurvey;
-  onResponse: (response: TResponseData) => void;
-  onAutoClose: () => void;
   brandColor: string;
-  formbricksSignature?: boolean;
+  formbricksSignature: boolean;
+  onDisplay?: () => void;
+  onResponse?: () => void;
 }
 
-export default function Survey({
+export function Survey({
   survey,
-  onResponse,
-  onAutoClose,
   brandColor,
-  formbricksSignature = true,
+  formbricksSignature,
+  onDisplay = () => {},
+  onResponse = () => {},
 }: SurveyViewProps) {
-  const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
+  const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [loadingElement, setLoadingElement] = useState(false);
-  const contentRef = useRef(null);
   const [finished, setFinished] = useState(false);
   const [storedResponseValue, setStoredResponseValue] = useState<any>(null);
 
@@ -36,6 +33,7 @@ export default function Survey({
   const [countdownStop, setCountdownStop] = useState(false);
   const startRef = useRef(performance.now());
   const frameRef = useRef<number | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const showBackButton = progress !== 0 && !finished;
 
@@ -46,7 +44,6 @@ export default function Survey({
     }
   };
 
-  //Scroll to top when question changes
   useLayoutEffect(() => {
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
@@ -68,7 +65,7 @@ export default function Survey({
         frameRef.current = requestAnimationFrame(frame);
       } else {
         handleStopCountdown();
-        onAutoClose();
+        close();
       }
     };
 
@@ -82,6 +79,10 @@ export default function Survey({
       }
     };
   }, [survey.autoClose, close]);
+
+  useEffect(() => {
+    onDisplay();
+  }, [survey]);
 
   useEffect(() => {
     setProgress(calculateProgress());
@@ -148,21 +149,34 @@ export default function Survey({
     }
   }
 
-  function getNextQuestionId() {
+  function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    const currentQuestion = questions[currentQuestionIndex];
+    const responseValue = data[activeQuestionId];
+
     if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, responseValue)) {
+          return logic.destination;
+        }
+      }
+    }
 
     return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
-  function goToNextQuestion(answer: TResponseData): void {
+  function goToNextQuestion(answer: TResponseData): string | void {
     setLoadingElement(true);
     const questions = survey.questions;
-    const nextQuestionId = getNextQuestionId();
+    const nextQuestionId = getNextQuestionId(answer);
 
     if (nextQuestionId === "end") {
-      submitResponse(answer);
+      onResponse();
       return;
     }
 
@@ -198,22 +212,10 @@ export default function Survey({
 
   const submitResponse = async (data: TResponseData) => {
     setLoadingElement(true);
-    const questions = survey.questions;
-    const nextQuestionId = getNextQuestionId();
-    const currentQuestion = questions[activeQuestionId];
-    const responseValue = data[activeQuestionId];
-
-    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
-        if (!logic.destination) continue;
-
-        if (evaluateCondition(logic, responseValue)) {
-          return logic.destination;
-        }
-      }
-    }
-
-    await onResponse(responseValue);
+    const nextQuestionId = getNextQuestionId(data);
+    const finished = nextQuestionId === "end";
+    // build response
+    onResponse();
     setLoadingElement(false);
 
     if (!finished && nextQuestionId !== "end") {

@@ -1,11 +1,10 @@
-import { h } from "preact";
+import { useEffect, useState } from "preact/hooks";
 import { TResponseData } from "../../../types/v1/responses";
 import type { TSurveyConsentQuestion } from "../../../types/v1/surveys";
+import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
-import { useEffect, useState } from "preact/hooks";
-import { BackButton } from "./BackButton";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -59,7 +58,7 @@ export default function ConsentQuestion({
           e.preventDefault();
           handleSumbit(answer);
         }}>
-        <label className="fb-relative fb-z-10 fb-mt-4 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-rounded-md fb-border fb-border-gray-200 fb-bg-slate-50 fb-p-4 fb-text-sm focus:fb-outline-none">
+        <label className="fb-relative fb-z-10 fb-mt-4 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-rounded-md fb-border fb-border-gray-200 fb-bg-slate-50 fb-p-4 fb-text-sm focus:fb-outline-none fb-text-slate-800">
           <input
             type="checkbox"
             id={question.id}
