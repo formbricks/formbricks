@@ -5,8 +5,8 @@ import { Button, ColorPicker, Label, Switch } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
-import { TProduct, TProductLookAndFeelInput } from "@formbricks/types/v1/product";
-import { updateLookAndFeelOfProduct } from "@formbricks/lib/services/product";
+import { TProduct } from "@formbricks/types/v1/product";
+import { updateProduct } from "@formbricks/lib/services/product";
 
 export const EditHighlightBorder = ({ product }: { product: TProduct }) => {
   const [showHighlightBorder, setShowHighlightBorder] = useState(product.highlightBorderColor ? true : false);
@@ -18,11 +18,11 @@ export const EditHighlightBorder = ({ product }: { product: TProduct }) => {
   const handleUpdateHighlightBorder = async () => {
     try {
       setUpdatingBorder(true);
-      let inputProduct: TProductLookAndFeelInput = {
+      let inputProduct: TProduct = {
         ...product,
         highlightBorderColor: color,
       };
-      await updateLookAndFeelOfProduct(inputProduct, product.id);
+      await updateProduct(inputProduct, product.id);
       toast.success("Border color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

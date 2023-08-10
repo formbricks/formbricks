@@ -1,7 +1,7 @@
 "use client";
 
-import { updateLookAndFeelOfProduct } from "@formbricks/lib/services/product";
-import { TProduct, TProductLookAndFeelInput } from "@formbricks/types/v1/product";
+import { updateProduct } from "@formbricks/lib/services/product";
+import { TProduct } from "@formbricks/types/v1/product";
 import { Label, Switch } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -15,11 +15,11 @@ export function EditFormbricksSignature({ product }: { product: TProduct }) {
       setUpdatingSignature(true);
       const newSignatureState = !formbricksSignature;
       setFormbricksSignature(newSignatureState);
-      const updatedProduct: TProductLookAndFeelInput = {
+      let inputProduct: TProduct = {
         ...product,
         formbricksSignature: newSignatureState,
       };
-      await updateLookAndFeelOfProduct(updatedProduct, product.id);
+      await updateProduct(inputProduct, product.id);
       toast.success(
         newSignatureState ? "Formbricks signature will be shown." : "Formbricks signature will now be hidden."
       );

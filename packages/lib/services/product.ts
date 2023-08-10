@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
 import { ZProduct } from "@formbricks/types/v1/product";
-import type { TProduct, TProductLookAndFeelInput } from "@formbricks/types/v1/product";
+import type { TProduct } from "@formbricks/types/v1/product";
 import { cache } from "react";
 
 const selectProduct = {
@@ -59,10 +59,7 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
   }
 });
 
-export const updateLookAndFeelOfProduct = async (
-  inputProduct: TProductLookAndFeelInput,
-  productId: string
-): Promise<TProduct> => {
+export const updateProduct = async (inputProduct: TProduct, productId: string): Promise<TProduct> => {
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({
@@ -70,12 +67,7 @@ export const updateLookAndFeelOfProduct = async (
         id: productId,
       },
       data: {
-        brandColor: inputProduct.brandColor,
-        highlightBorderColor: inputProduct.highlightBorderColor,
-        formbricksSignature: inputProduct.formbricksSignature,
-        placement: inputProduct.placement,
-        clickOutsideClose: inputProduct.clickOutsideClose,
-        darkOverlay: inputProduct.darkOverlay,
+        ...inputProduct,
       },
       select: selectProduct,
     });

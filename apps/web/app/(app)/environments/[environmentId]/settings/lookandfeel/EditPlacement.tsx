@@ -6,8 +6,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
-import { TProduct, TProductLookAndFeelInput } from "@formbricks/types/v1/product";
-import { updateLookAndFeelOfProduct } from "@formbricks/lib/services/product";
+import { TProduct } from "@formbricks/types/v1/product";
+import { updateProduct } from "@formbricks/lib/services/product";
 
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
@@ -26,13 +26,13 @@ export function EditPlacement({ product }: { product: TProduct }) {
   const handleUpdatePlacement = async () => {
     try {
       setUpdatingPlacement(true);
-      let inputProduct: TProductLookAndFeelInput = {
+      let inputProduct: TProduct = {
         ...product,
         placement: currentPlacement,
         darkOverlay: overlay === "darkOverlay",
         clickOutsideClose: clickOutside === "allow",
       };
-      await updateLookAndFeelOfProduct(inputProduct, product.id);
+      await updateProduct(inputProduct, product.id);
       toast.success("Placement updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

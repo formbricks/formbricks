@@ -1,10 +1,10 @@
 "use client";
 
-import { TProduct, TProductLookAndFeelInput } from "@formbricks/types/v1/product";
+import { TProduct } from "@formbricks/types/v1/product";
 import { Button, ColorPicker, Label } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { updateLookAndFeelOfProduct } from "@formbricks/lib/services/product";
+import { updateProduct } from "@formbricks/lib/services/product";
 
 export function EditBrandColor({ product }: { product: TProduct }) {
   const [color, setColor] = useState(product.brandColor);
@@ -13,11 +13,11 @@ export function EditBrandColor({ product }: { product: TProduct }) {
   const handleUpdateBrandColor = async () => {
     try {
       setUpdatingColor(true);
-      let inputProduct: TProductLookAndFeelInput = {
+      let inputProduct: TProduct = {
         ...product,
         brandColor: color,
       };
-      await updateLookAndFeelOfProduct(inputProduct, product.id);
+      await updateProduct(inputProduct, product.id);
       toast.success("Brand color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);
