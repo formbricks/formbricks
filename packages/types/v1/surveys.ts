@@ -239,7 +239,10 @@ export const ZSurvey = z.object({
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage,
-  brandColor: z.union([z.string(), z.null()]),
+  brandColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .nullable(),
   placement: z.union([z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]), z.null()]),
   clickOutsideClose: z.union([z.boolean(), z.null()]),
   darkOverlay: z.union([z.boolean(), z.null()]),
