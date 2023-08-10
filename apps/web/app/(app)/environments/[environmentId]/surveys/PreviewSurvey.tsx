@@ -10,6 +10,8 @@ import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
+import { Button } from "@formbricks/ui";
+import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -243,6 +245,12 @@ export default function PreviewSurvey({
     setActiveQuestionId(previousQuestionId);
   }
 
+  function resetQuestionProgress() {
+    setProgress(0);
+    setActiveQuestionId(questions[0].id);
+    setStoredResponse({});
+  }
+
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -272,6 +280,15 @@ export default function PreviewSurvey({
             {previewType === "modal" ? "Your web app" : "Preview"}
           </span>
         </p>
+        <div className="ml-auto flex items-center">
+          <Button
+            variant="minimal"
+            className="px-2 py-1 font-mono text-sm text-slate-400"
+            onClick={resetQuestionProgress}>
+            Restart
+            <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4 text-slate-400" />
+          </Button>
+        </div>
       </div>
 
       {previewType === "modal" ? (
