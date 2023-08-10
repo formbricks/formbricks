@@ -22,9 +22,12 @@ export default function SurveyStarter({
   const router = useRouter();
   const newSurveyFromTemplate = async (template: Template) => {
     setIsCreateSurveyLoading(true);
+    const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
+    const autoComplete = surveyType === "web" ? 50 : null;
     const augmentedTemplate = {
       ...template.preset,
-      type: environment?.widgetSetupCompleted ? "web" : "link",
+      type: surveyType,
+      autoComplete,
     };
     try {
       const survey = await createSurveyAction(environmentId, augmentedTemplate);

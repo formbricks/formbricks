@@ -29,11 +29,9 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
 
   useEffect(() => {
     if (survey) {
-      if (!localSurvey) {
-        setLocalSurvey(survey);
-      }
+      setLocalSurvey(survey);
 
-      if (!activeQuestionId && survey.questions.length > 0) {
+      if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }

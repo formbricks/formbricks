@@ -16,7 +16,7 @@ services:
     depends_on:
       - postgres
     env_file:
-      - .env
+      - .env.docker
     ports:
       - 3000:3000
 
