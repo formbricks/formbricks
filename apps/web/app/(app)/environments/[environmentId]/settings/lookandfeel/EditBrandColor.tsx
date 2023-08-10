@@ -1,23 +1,26 @@
 "use client";
 
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { Button, ColorPicker, Label } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { updateProduct } from "@formbricks/lib/services/product";
+import { updateProductAction } from "./actions";
 
-export function EditBrandColor({ product }: { product: TProduct }) {
+interface EditBrandColorProps {
+  product: TProduct;
+}
+
+export function EditBrandColor({ product }: EditBrandColorProps) {
   const [color, setColor] = useState(product.brandColor);
   const [updatingColor, setUpdatingColor] = useState(false);
 
   const handleUpdateBrandColor = async () => {
     try {
       setUpdatingColor(true);
-      let inputProduct: TProduct = {
-        ...product,
+      let inputProduct: Partial<TProductUpdateInput> = {
         brandColor: color,
       };
-      await updateProduct(inputProduct, product.id);
+      await updateProductAction(inputProduct, product.id);
       toast.success("Brand color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);
@@ -30,14 +33,7 @@ export function EditBrandColor({ product }: { product: TProduct }) {
     <div className="w-full max-w-sm items-center">
       <Label htmlFor="brandcolor">Color (HEX)</Label>
       <ColorPicker color={color} onChange={setColor} />
-      <Button
-        type="submit"
-        variant="darkCTA"
-        className="mt-4"
-        loading={updatingColor}
-        onClick={() => {
-          handleUpdateBrandColor();
-        }}>
+      <Button variant="darkCTA" className="mt-4" loading={updatingColor} onClick={handleUpdateBrandColor}>
         Save
       </Button>
     </div>

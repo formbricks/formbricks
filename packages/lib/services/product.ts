@@ -1,12 +1,10 @@
-"use server";
 import "server-only";
-
 import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
 import { ZProduct } from "@formbricks/types/v1/product";
-import type { TProduct } from "@formbricks/types/v1/product";
+import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { cache } from "react";
 
 const selectProduct = {
@@ -59,7 +57,10 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
   }
 });
 
-export const updateProduct = async (inputProduct: TProduct, productId: string): Promise<TProduct> => {
+export const updateProduct = async (
+  inputProduct: Partial<TProductUpdateInput>,
+  productId: string
+): Promise<TProduct> => {
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({
@@ -71,9 +72,6 @@ export const updateProduct = async (inputProduct: TProduct, productId: string): 
       },
       select: selectProduct,
     });
-    if (!updatedProduct) {
-      throw new ResourceNotFoundError("Update for Product", productId);
-    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

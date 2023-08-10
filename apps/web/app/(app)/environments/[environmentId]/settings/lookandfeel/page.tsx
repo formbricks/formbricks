@@ -1,10 +1,13 @@
-import { EditBrandColor } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/EditBrandColor";
+export const revalidate = REVALIDATION_INTERVAL;
+
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import { EditFormbricksSignature } from "./editSignature";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { EditPlacement } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/EditPlacement";
-import { EditHighlightBorder } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/EditHighlightBorder";
+import { EditFormbricksSignature } from "./EditSignature";
+import { EditBrandColor } from "./EditBrandColor";
+import { EditPlacement } from "./EditPlacement";
+import { EditHighlightBorder } from "./EditHighlightBorder";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const product = await getProductByEnvironmentId(params.environmentId);

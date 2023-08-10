@@ -6,8 +6,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/v1/product";
-import { updateProduct } from "@formbricks/lib/services/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { updateProductAction } from "./actions";
 
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
@@ -17,7 +17,11 @@ const placements = [
   { name: "Centered Modal", value: "center", disabled: false },
 ];
 
-export function EditPlacement({ product }: { product: TProduct }) {
+interface EditPlacementProps {
+  product: TProduct;
+}
+
+export function EditPlacement({ product }: EditPlacementProps) {
   const [currentPlacement, setCurrentPlacement] = useState<PlacementType>(product.placement);
   const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
   const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
@@ -26,13 +30,12 @@ export function EditPlacement({ product }: { product: TProduct }) {
   const handleUpdatePlacement = async () => {
     try {
       setUpdatingPlacement(true);
-      let inputProduct: TProduct = {
-        ...product,
+      let inputProduct: Partial<TProductUpdateInput> = {
         placement: currentPlacement,
         darkOverlay: overlay === "darkOverlay",
         clickOutsideClose: clickOutside === "allow",
       };
-      await updateProduct(inputProduct, product.id);
+      await updateProductAction(inputProduct, product.id);
       toast.success("Placement updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);
@@ -106,12 +109,7 @@ export function EditPlacement({ product }: { product: TProduct }) {
           </div>
         </>
       )}
-      <Button
-        type="submit"
-        variant="darkCTA"
-        className="mt-4"
-        loading={updatingPlacement}
-        onClick={handleUpdatePlacement}>
+      <Button variant="darkCTA" className="mt-4" loading={updatingPlacement} onClick={handleUpdatePlacement}>
         Save
       </Button>
     </div>

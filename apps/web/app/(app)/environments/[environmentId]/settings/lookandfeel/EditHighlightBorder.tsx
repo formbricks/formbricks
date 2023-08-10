@@ -5,24 +5,25 @@ import { Button, ColorPicker, Label, Switch } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
-import { TProduct } from "@formbricks/types/v1/product";
-import { updateProduct } from "@formbricks/lib/services/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { updateProductAction } from "./actions";
 
-export const EditHighlightBorder = ({ product }: { product: TProduct }) => {
+interface EditHighlightBorderProps {
+  product: TProduct;
+}
+
+export const EditHighlightBorder = ({ product }: EditHighlightBorderProps) => {
   const [showHighlightBorder, setShowHighlightBorder] = useState(product.highlightBorderColor ? true : false);
-  const [color, setColor] = useState<string | null>(
-    product.highlightBorderColor ? product.highlightBorderColor : DEFAULT_BRAND_COLOR
-  );
+  const [color, setColor] = useState<string | null>(product.highlightBorderColor || DEFAULT_BRAND_COLOR);
   const [updatingBorder, setUpdatingBorder] = useState(false);
 
   const handleUpdateHighlightBorder = async () => {
     try {
       setUpdatingBorder(true);
-      let inputProduct: TProduct = {
-        ...product,
+      let inputProduct: Partial<TProductUpdateInput> = {
         highlightBorderColor: color,
       };
-      await updateProduct(inputProduct, product.id);
+      await updateProductAction(inputProduct, product.id);
       toast.success("Border color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);
@@ -61,7 +62,6 @@ export const EditHighlightBorder = ({ product }: { product: TProduct }) => {
         ) : null}
 
         <Button
-          type="submit"
           variant="darkCTA"
           className="mt-4 flex max-w-[80px] items-center justify-center"
           loading={updatingBorder}
