@@ -2,13 +2,13 @@ import { createDisplay, markDisplayResponded } from "@formbricks/lib/client/disp
 import { createResponse, updateResponse } from "@formbricks/lib/client/response";
 import { fetcher } from "@formbricks/lib/fetcher";
 import { Response } from "@formbricks/types/js";
-import { QuestionType, type Logic } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/questions";
 import { TResponseInput } from "@formbricks/types/v1/responses";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 import { useGetOrCreatePerson } from "../people/people";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyLogic, TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface StoredResponse {
   id: string | null;
@@ -31,7 +31,7 @@ type TEnhancedSurvey = TSurveyWithAnalytics & {
   formbricksSignature: boolean;
 };
 export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
-  const [currentQuestion, setCurrentQuestion] = useState<any | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<TSurveyQuestion | null>(null);
   const [prefilling, setPrefilling] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [finished, setFinished] = useState(false);
@@ -334,7 +334,7 @@ const clearStoredResponses = (surveyId: string) => {
   localStorage.removeItem(`formbricks-${surveyId}-response`);
 };
 
-const checkValidity = (question: any, answer: any): boolean => {
+const checkValidity = (question: TSurveyQuestion, answer: any): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
@@ -391,7 +391,7 @@ const checkValidity = (question: any, answer: any): boolean => {
   }
 };
 
-const createAnswer = (question: any, answer: string): string | number | string[] => {
+const createAnswer = (question: TSurveyQuestion, answer: string): string | number | string[] => {
   switch (question.type) {
     case QuestionType.OpenText:
     case QuestionType.MultipleChoiceSingle:
@@ -424,7 +424,7 @@ const createAnswer = (question: any, answer: string): string | number | string[]
   }
 };
 
-const evaluateCondition = (logic: Logic, responseValue: any): boolean => {
+const evaluateCondition = (logic: TSurveyLogic, responseValue: any): boolean => {
   switch (logic.condition) {
     case "equals":
       return (

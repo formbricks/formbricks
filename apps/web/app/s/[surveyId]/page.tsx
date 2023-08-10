@@ -12,7 +12,6 @@ type TEnhancedSurvey = TSurveyWithAnalytics & {
   formbricksSignature: boolean;
 };
 
-
 export default async function LinkSurveyPage({ params }) {
   const survey = await getSurveyWithAnalytics(params.surveyId);
   const product = await getProductByEnvironmentId(params.environmentId);
