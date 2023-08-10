@@ -480,16 +480,10 @@ importers:
       preact:
         specifier: ^10.16.0
         version: 10.16.0
-      preact-custom-element:
-        specifier: ^4.2.1
-        version: 4.2.1(preact@10.16.0)
     devDependencies:
       '@preact/preset-vite':
         specifier: ^2.5.0
         version: 2.5.0(@babel/core@7.22.9)(preact@10.16.0)(vite@4.4.8)
-      '@types/preact-custom-element':
-        specifier: ^4.0.1
-        version: 4.0.1
       typescript:
         specifier: ^5.0.2
         version: 5.1.6
@@ -5774,12 +5768,6 @@ packages:
 
   /@types/parse-json@4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
-    dev: true
-
-  /@types/preact-custom-element@4.0.1:
-    resolution: {integrity: sha512-oduUzzxJAZ7qWJ5EsUffxvpRFnzgffilDlfxLR9Q2YkEzSfn3vudIrnDg0AiQgZJ0GkAjLzkxQyAxH6sS/EQdQ==}
-    dependencies:
-      preact: 10.16.0
     dev: true
 
   /@types/prismjs@1.26.0:
@@ -16789,14 +16777,6 @@ packages:
       - webpack-cli
       - webpack-command
     dev: true
-
-  /preact-custom-element@4.2.1(preact@10.16.0):
-    resolution: {integrity: sha512-/fiEEAyC+MXRlCBRmv/owoN5BLpO2nF/MF3YBHLtp4C2lNqlhV+a4he74A5DhfDoRmxDHm0sYVgQzWFEyzTDsw==}
-    peerDependencies:
-      preact: 10.x
-    dependencies:
-      preact: 10.16.0
-    dev: false
 
   /preact-render-to-string@5.2.6(preact@10.16.0):
     resolution: {integrity: sha512-JyhErpYOvBV1hEPwIxc/fHWXPfnEGdRKxc8gFdAZ7XV4tlzyzG847XAyEZqoDnynP88akM4eaHcSOzNcLWFguw==}
