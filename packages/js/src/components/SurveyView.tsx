@@ -38,7 +38,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const frameRef = useRef<number | null>(null);
 
   const showBackButton = progress !== 0 && !finished;
-  const brandColor = survey.brandColor ? survey.brandColor : config.state.product?.brandColor;
+  const brandColor = survey.brandColor || config.state.product?.brandColor;
 
   const handleStopCountdown = () => {
     if (frameRef.current !== null) {

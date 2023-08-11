@@ -9,7 +9,6 @@ import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import { PlacementType } from "@formbricks/types/js";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { Button } from "@formbricks/ui";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
@@ -18,19 +17,17 @@ import { useEffect, useRef, useState } from "react";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
-  questions: Question[];
-  brandColor: string;
-  highlightBorderColor?: string | null;
-  overwriteBorderHighlight?: boolean;
   environmentId: string;
+  questions: Question[];
+  product: TProduct;
   surveyType: Survey["type"];
+  environment: TEnvironment;
+  localSurvey?: Survey;
   thankYouCard: Survey["thankYouCard"];
   autoClose: Survey["autoClose"];
-  previewType?: "modal" | "fullwidth" | "email";
-  product: TProduct;
-  environment: TEnvironment;
-  overwritePosition?: PlacementType | null;
 }
+
+type previewType = "modal" | "fullwidth" | "email";
 
 function QuestionRenderer({
   activeQuestionId,
@@ -106,17 +103,13 @@ function PreviewModalContent({
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
+  product,
+  environment,
+  localSurvey,
   questions,
-  brandColor,
-  highlightBorderColor,
-  overwriteBorderHighlight,
   surveyType,
   thankYouCard,
   autoClose,
-  previewType,
-  product,
-  environment,
-  overwritePosition,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
@@ -129,6 +122,11 @@ export default function PreviewSurvey({
   const [previewMode, setPreviewMode] = useState("desktop");
   const showBackButton = progress !== 0 && !finished;
   const ContentRef = useRef<HTMLDivElement | null>(null);
+
+  const { highlightBorderColor, overwriteBorderHighlight } = localSurvey || {};
+
+  const brandColor = localSurvey?.brandColor || product.brandColor;
+  let previewType: previewType = surveyType === "web" ? "modal" : "fullwidth";
 
   useEffect(() => {
     if (product) {
@@ -369,7 +367,7 @@ export default function PreviewSurvey({
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
-                  placement={overwritePosition ? overwritePosition : product.placement}
+                  placement={localSurvey?.placement || product.placement}
                   highlightBorderColor={
                     overwriteBorderHighlight ? highlightBorderColor : product.highlightBorderColor
                   }
@@ -438,7 +436,7 @@ export default function PreviewSurvey({
             {previewType === "modal" ? (
               <Modal
                 isOpen={isModalOpen}
-                placement={overwritePosition ? overwritePosition : product.placement}
+                placement={localSurvey?.placement || product.placement}
                 highlightBorderColor={
                   overwriteBorderHighlight ? highlightBorderColor : product.highlightBorderColor
                 }

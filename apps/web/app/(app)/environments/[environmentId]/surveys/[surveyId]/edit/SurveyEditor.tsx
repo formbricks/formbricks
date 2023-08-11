@@ -82,17 +82,13 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
-            brandColor={localSurvey.brandColor ? localSurvey.brandColor : product.brandColor}
-            highlightBorderColor={localSurvey.highlightBorderColor}
-            overwriteBorderHighlight={localSurvey.overwriteBorderHighlight}
             environmentId={environmentId}
             product={product}
             environment={environment}
             surveyType={localSurvey.type}
             thankYouCard={localSurvey.thankYouCard}
-            previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
             autoClose={localSurvey.autoClose}
-            overwritePosition={localSurvey.placement}
+            localSurvey={localSurvey}
           />
         </aside>
       </div>

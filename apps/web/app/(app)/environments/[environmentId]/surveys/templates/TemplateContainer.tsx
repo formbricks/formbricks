@@ -70,7 +70,6 @@ export default function TemplateContainerWithPreview({
               <PreviewSurvey
                 activeQuestionId={activeQuestionId}
                 questions={activeTemplate.preset.questions}
-                brandColor={product.brandColor}
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
