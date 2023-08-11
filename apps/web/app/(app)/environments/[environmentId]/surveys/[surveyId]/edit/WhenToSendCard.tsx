@@ -4,7 +4,6 @@ import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(acti
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import {
   Badge,
   Button,
@@ -21,10 +20,11 @@ import {
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface WhenToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
 }
 
@@ -55,10 +55,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const handleCheckMark = () => {
     if (autoClose) {
-      const updatedSurvey: Survey = { ...localSurvey, autoClose: null };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: Survey = { ...localSurvey, autoClose: 10 };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: 10 };
       setLocalSurvey(updatedSurvey);
     }
   };
@@ -68,13 +68,13 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
     if (value < 1) value = 1;
 
-    const updatedSurvey: Survey = { ...localSurvey, autoClose: value };
+    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: value };
     setLocalSurvey(updatedSurvey);
   };
 
   const handleTriggerDelay = (e: any) => {
     let value = parseInt(e.target.value);
-    const updatedSurvey: Survey = { ...localSurvey, delay: value };
+    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, delay: value };
     setLocalSurvey(updatedSurvey);
   };
 

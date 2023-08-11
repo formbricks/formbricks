@@ -2,13 +2,13 @@
 
 import { md } from "@formbricks/lib/markdownIt";
 import type { ConsentQuestion } from "@formbricks/types/questions";
-import { Survey } from "@formbricks/types/surveys";
+import { TSurveyConsentQuestion,TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Editor, Input, Label } from "@formbricks/ui";
 import { useState } from "react";
 
 interface ConsentQuestionFormProps {
-  localSurvey: Survey;
-  question: ConsentQuestion;
+  localSurvey: TSurveyWithAnalytics;
+  question: ConsentQuestion|TSurveyConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   isInValid: boolean;

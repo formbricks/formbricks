@@ -10,10 +10,12 @@ import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
+import { TSurveyLogic, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
-  questions: Question[];
+  questions: Question[]|TSurveyQuestion[];
   brandColor: string;
   environmentId: string;
   surveyType: Survey["type"];
@@ -134,7 +136,7 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
-  function evaluateCondition(logic: Logic, responseValue: any): boolean {
+  function evaluateCondition(logic: TSurveyLogic, responseValue: any): boolean {
     switch (logic.condition) {
       case "equals":
         return (

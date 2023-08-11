@@ -13,6 +13,7 @@ export const ZSurveyClosedMessage = z
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
   })
+  .nullable()
   .optional();
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
@@ -125,6 +126,7 @@ const ZSurveyQuestionBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
+  isDraft: z.boolean().optional()
 });
 
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
@@ -218,6 +220,8 @@ export const ZSurveyAttributeFilter = z.object({
   condition: z.enum(["equals", "notEquals"]),
   value: z.string(),
 });
+
+export type TSurveyAttributeFilter = z.infer<typeof ZSurveyAttributeFilter>;
 
 export const ZSurvey = z.object({
   id: z.string().cuid2(),

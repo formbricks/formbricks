@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
-import { TSurvey, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyAttributeFilter, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import "server-only";
@@ -280,6 +280,175 @@ export const getSurveysWithAnalytics = cache(
     }
   }
 );
+
+export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithAnalytics) {
+  const currentTriggers = await prisma.surveyTrigger.findMany({
+    where: {
+      surveyId,
+    },
+  });
+  const currentAttributeFilters = await prisma.surveyAttributeFilter.findMany({
+    where: {
+      surveyId,
+    },
+  });
+  let data: any = {};
+  const body: Partial<TSurveyWithAnalytics> = { ...updatedSurvey };
+
+  if (body.type === "link") {
+    delete body.triggers;
+    delete body.recontactDays;
+    // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
+  }
+
+  if (body.triggers) {
+    const newTriggers: string[] = [];
+    const removedTriggers: string[] = [];
+    // find added triggers
+    for (const trigger of body.triggers) {
+      if (!trigger.id) {
+        continue;
+      }
+      if (currentTriggers.find((t) => t.eventClassId === trigger.id)) {
+        continue;
+      } else {
+        newTriggers.push(trigger.id);
+      }
+    }
+    // find removed triggers
+    for (const trigger of currentTriggers) {
+      if (body.triggers.find((t) => t.id === trigger.eventClassId)) {
+        continue;
+      } else {
+        removedTriggers.push(trigger.eventClassId);
+      }
+    }
+    // create new triggers
+    if (newTriggers.length > 0) {
+      data.triggers = {
+        ...(data.triggers || []),
+        create: newTriggers.map((eventClassId) => ({
+          eventClassId,
+        })),
+      };
+    }
+    // delete removed triggers
+    if (removedTriggers.length > 0) {
+      data.triggers = {
+        ...(data.triggers || []),
+        deleteMany: {
+          eventClassId: {
+            in: removedTriggers,
+          },
+        },
+      };
+    }
+    delete data.triggers;
+  }
+
+  const attributeFilters: TSurveyAttributeFilter[] = data.attributeFilters;
+  if (attributeFilters) {
+    const newFilters: TSurveyAttributeFilter[] = [];
+    const removedFilterIds: string[] = [];
+    // find added attribute filters
+    for (const attributeFilter of attributeFilters) {
+      if (!attributeFilter.id || !attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
+        continue;
+      }
+      if (
+        currentAttributeFilters.find(
+          (f) =>
+            f.id === attributeFilter.id &&
+            f.attributeClassId === attributeFilter.attributeClassId &&
+            f.condition === attributeFilter.condition &&
+            f.value === attributeFilter.value
+        )
+      ) {
+        continue;
+      } else {
+        newFilters.push({
+          id: attributeFilter.id,
+          attributeClassId: attributeFilter.attributeClassId,
+          condition: attributeFilter.condition,
+          value: attributeFilter.value,
+        });
+      }
+    }
+    // find removed attribute filters
+    for (const attributeFilter of currentAttributeFilters) {
+      if (
+        attributeFilters.find(
+          (f) =>
+            f.id === attributeFilter.id &&
+            f.attributeClassId === attributeFilter.attributeClassId &&
+            f.condition === attributeFilter.condition &&
+            f.value === attributeFilter.value
+        )
+      ) {
+        continue;
+      } else {
+        removedFilterIds.push(attributeFilter.attributeClassId);
+      }
+    }
+    // create new attribute filters
+    if (newFilters.length > 0) {
+      data.attributeFilters = {
+        ...(data.attributeFilters || []),
+        create: newFilters.map((attributeFilter) => ({
+          attributeClassId: attributeFilter.attributeClassId,
+          condition: attributeFilter.condition,
+          value: attributeFilter.value,
+        })),
+      };
+    }
+
+    // delete removed triggers
+    if (removedFilterIds.length > 0) {
+      // delete all attribute filters that match the removed attribute classes
+      await Promise.all(
+        removedFilterIds.map(async (attributeClassId) => {
+          await prisma.surveyAttributeFilter.deleteMany({
+            where: {
+              attributeClassId,
+            },
+          });
+        })
+      );
+    }
+  }
+  delete body.attributeFilters;
+
+  data = {
+    ...data,
+    ...body,
+  };
+
+  delete data.responseRate;
+  delete data.numDisplays;
+
+  console.log(data)
+
+  try {
+    const updated = await prisma.survey.update({
+      where: { id: surveyId },
+      data
+    });
+
+    if(!updated){
+      return null
+    }
+
+    return updated
+
+  } catch (error) {
+    console.log(error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+}
 
 export async function deleteSurvey(surveyId: string) {
   const deletedSurvey = await prisma.survey.delete({

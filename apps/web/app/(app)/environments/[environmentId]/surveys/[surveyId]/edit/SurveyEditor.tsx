@@ -1,31 +1,26 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProduct } from "@/lib/products/products";
-import { useSurvey } from "@/lib/surveys/surveys";
-import type { Survey } from "@formbricks/types/surveys";
-import { ErrorComponent } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import SettingsView from "./SettingsView";
 import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
 import QuestionsView from "./QuestionsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { useEnvironment } from "@/lib/environments/environments";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SurveyEditorProps {
-  environmentId: string;
-  surveyId: string;
+  survey : TSurveyWithAnalytics,
+  product : TProduct,
+  environment : TEnvironment
 }
 
-export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps): JSX.Element {
+export default function SurveyEditor({ survey,product, environment }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<Survey | null>();
+  const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId, true);
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
   useEffect(() => {
     if (survey) {
@@ -39,24 +34,18 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  if (isLoadingSurvey || isLoadingProduct || isLoadingEnvironment || !localSurvey) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorSurvey || isErrorProduct || isErrorEnvironment) {
-    return <ErrorComponent />;
-  }
-
   return (
-    <div className="flex h-full flex-col">
+    <>
+    {localSurvey && <div className="flex h-full flex-col">
       <SurveyMenuBar
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
         survey={survey}
-        environmentId={environmentId}
+        environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidQuestions={setInvalidQuestions}
+        product={product}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
@@ -67,13 +56,13 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
               setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
-              environmentId={environmentId}
+              environmentId={environment.id}
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
             />
           ) : (
             <SettingsView
-              environmentId={environmentId}
+              environmentId={environment.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
             />
@@ -85,7 +74,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
             brandColor={product.brandColor}
-            environmentId={environmentId}
+            environmentId={environment.id}
             product={product}
             environment={environment}
             surveyType={localSurvey.type}
@@ -95,6 +84,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
           />
         </aside>
       </div>
-    </div>
+    </div>}
+    </>
   );
 }

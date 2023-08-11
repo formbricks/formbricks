@@ -11,10 +11,11 @@ import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { Question } from "@formbricks/types/questions";
 import { validateQuestion } from "./Validation";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface QuestionsViewProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   environmentId: string;
@@ -38,7 +39,7 @@ export default function QuestionsView({
     }, {});
   }, []);
 
-  const handleQuestionLogicChange = (survey: Survey, compareId: string, updatedId: string): Survey => {
+  const handleQuestionLogicChange = (survey: TSurveyWithAnalytics, compareId: string, updatedId: string): TSurveyWithAnalytics => {
     survey.questions.forEach((question) => {
       if (!question.logic) return;
       question.logic.forEach((rule) => {
@@ -95,7 +96,7 @@ export default function QuestionsView({
 
   const deleteQuestion = (questionIdx: number) => {
     const questionId = localSurvey.questions[questionIdx].id;
-    let updatedSurvey: Survey = JSON.parse(JSON.stringify(localSurvey));
+    let updatedSurvey: TSurveyWithAnalytics = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
 
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");

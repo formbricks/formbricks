@@ -14,15 +14,19 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isEqual } from "lodash";
 import { validateQuestion } from "./Validation";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface SurveyMenuBarProps {
-  localSurvey: Survey;
-  survey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  survey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
+  product: TProduct
 }
 
 export default function SurveyMenuBar({
@@ -33,13 +37,13 @@ export default function SurveyMenuBar({
   activeId,
   setActiveId,
   setInvalidQuestions,
+  product
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const { product } = useProduct(environmentId);
   let faultyQuestions: String[] = [];
 
   useEffect(() => {
@@ -134,13 +138,9 @@ export default function SurveyMenuBar({
       return;
     }
 
-    triggerSurveyMutate({ ...strippedSurvey })
+    surveyMutateAction(survey.id ,{ ...strippedSurvey })
       .then(async (response) => {
-        if (!response?.ok) {
-          throw new Error(await response?.text());
-        }
-        const updatedSurvey = await response.json();
-        setLocalSurvey(updatedSurvey);
+        console.log(response)
         toast.success("Changes saved.");
         if (shouldNavigateBack) {
           router.back();
@@ -178,7 +178,7 @@ export default function SurveyMenuBar({
           className="w-72 border-white hover:border-slate-200 "
         />
       </div>
-      {!!localSurvey?.responseRate && (
+      {!!localSurvey?.analytics.responseRate && (
         <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-sm text-amber-700 shadow-sm">
           <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
           This survey received responses. To keep the data consistent, make changes with caution.

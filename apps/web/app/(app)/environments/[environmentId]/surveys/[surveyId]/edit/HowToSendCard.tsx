@@ -15,10 +15,11 @@ import {
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface HowToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
 }
 

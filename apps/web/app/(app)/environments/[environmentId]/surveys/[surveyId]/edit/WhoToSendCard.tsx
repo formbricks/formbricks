@@ -18,6 +18,7 @@ import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid"
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */
 import { UserGroupIcon, FunnelIcon } from "@heroicons/react/24/solid";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -25,8 +26,8 @@ const filterConditions = [
 ];
 
 interface WhoToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
 }
 

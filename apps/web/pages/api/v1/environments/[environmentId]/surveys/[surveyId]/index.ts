@@ -225,6 +225,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (data.surveyClosedMessage === null) {
       data.surveyClosedMessage = prismaClient.JsonNull;
     }
+    console.log(data)
 
     const prismaRes = await prisma.survey.update({
       where: { id: surveyId },

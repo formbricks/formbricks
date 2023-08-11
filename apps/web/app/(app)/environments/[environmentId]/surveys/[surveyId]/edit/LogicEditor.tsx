@@ -1,5 +1,5 @@
 import { Logic, LogicCondition, Question, QuestionType } from "@formbricks/types/questions";
-import { Survey } from "@formbricks/types/surveys";
+import { TSurveyQuestion,TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {
   Button,
   DropdownMenu,
@@ -23,9 +23,9 @@ import { useMemo } from "react";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 interface LogicEditorProps {
-  localSurvey: Survey;
+  localSurvey: TSurveyWithAnalytics;
   questionIdx: number;
-  question: Question;
+  question: Question|TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
 }
 

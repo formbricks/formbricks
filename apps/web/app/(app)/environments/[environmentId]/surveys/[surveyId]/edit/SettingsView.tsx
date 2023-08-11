@@ -1,14 +1,14 @@
-import type { Survey } from "@formbricks/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface SettingsViewProps {
   environmentId: string;
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
 }
 
 export default function SettingsView({ environmentId, localSurvey, setLocalSurvey }: SettingsViewProps) {
