@@ -48,7 +48,6 @@ function FormPage() {
           steps={formMenuSteps}
           currentStep="form"
           bgClass="bg-white"
-          limitHeightScreen={true}
         >
           <FullWidth>
             <Builder formId={formId} />
