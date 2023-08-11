@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import MetaInformation from "../../components/shared/MetaInformation";
 
 export async function getStaticPaths() {
@@ -22,21 +23,9 @@ export async function getStaticProps({ params }) {
   const resData = await res.json();
   const articles = resData.data;
   // find article by slug attribute
-  console.log("articles", articles);
   const article = articles.find((a) => a.attributes.article[0].slug === params.slug);
   return { props: { article } };
 }
-
-export const meta = {
-  title: "5 Open Source Survey and Form Tools maintained in 2023",
-  description:
-    "Most open source projects get abandoned after a while. But these 5 open source survey tools are still alive and kicking in 2023.",
-  date: "2023-04-12",
-  publishedTime: "2023-04-12T12:00:00",
-  authors: ["Johannes"],
-  section: "Open Source Surveys",
-  tags: ["Open Source Surveys", "Formbricks", "Typeform", "SurveyJS", "Typebot", "OpnForm", "LimeSurvey"],
-};
 
 export default function ArticlePage({ article }) {
   if (!article) return <div>Loading...</div>; // Render a loading state if data hasn't been fetched yet
