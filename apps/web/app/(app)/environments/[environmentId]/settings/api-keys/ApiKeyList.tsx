@@ -20,15 +20,11 @@ export default async function ApiKeyList({
   };
 
   const product = await getProductByEnvironmentId(environmentId);
-  const environments = await getEnvironments(product.id)
+  const environments = await getEnvironments(product.id);
   const environmentTypeId = findEnvironmentByType(environments, environmentType);
-  const apiKeyArray = await getApiKeys(environmentTypeId);
+  const apiKeys = await getApiKeys(environmentTypeId);
 
   return (
-    <EditApiKeys
-      environmentTypeId={environmentTypeId}
-      environmentType={environmentType}
-      apiKeyArray={apiKeyArray}
-    />
+    <EditApiKeys environmentTypeId={environmentTypeId} environmentType={environmentType} apiKeys={apiKeys} />
   );
 }

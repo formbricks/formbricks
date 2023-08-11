@@ -34,16 +34,13 @@ export const getApiKey = async (apiKey: string): Promise<TApiKey | null> => {
   }
 };
 
-export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[] | null> => {
+export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[]> => {
   try {
     const apiKeys = await prisma.apiKey.findMany({
       where: {
         environmentId,
       },
     });
-    if (!apiKeys) {
-      return null;
-    }
 
     return apiKeys;
   } catch (error) {
