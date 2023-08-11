@@ -245,13 +245,13 @@ export default function LogicEditor({
                 <div className="flex-1 basis-1/5">
                   {!logicConditions[logic.condition].multiSelect ? (
                     <Select value={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
-                      <SelectTrigger>
+                      <SelectTrigger className="overflow-hidden">
                         <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
                       <SelectContent>
                         {logicConditions[logic.condition].values?.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {value}
+                          <SelectItem key={value} value={value} title={value}>
+                            {truncate(value, 20)}
                           </SelectItem>
                         ))}
                       </SelectContent>

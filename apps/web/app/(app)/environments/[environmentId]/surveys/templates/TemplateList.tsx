@@ -71,9 +71,12 @@ export default function TemplateList({
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
+    const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
+    const autoComplete = surveyType === "web" ? 50 : null;
     const augmentedTemplate = {
       ...activeTemplate.preset,
-      type: environment?.widgetSetupCompleted ? "web" : "link",
+      type: surveyType,
+      autoComplete,
     };
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
