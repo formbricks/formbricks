@@ -40,7 +40,12 @@ export default async function handle(
         dueDate: true,
         formation: true,
         name: true,
-        place: true
+        place: true,
+        noCodeForm: {
+          select:{
+            id: true
+          }
+        }
       },
       orderBy:{
         dueDate: 'asc'

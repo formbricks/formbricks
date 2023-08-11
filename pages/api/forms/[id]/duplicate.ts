@@ -24,8 +24,14 @@ export default async function handle(
   if (req.method === "POST") {
     const session = await getSession({ req });
     const form = JSON.parse(req.body).form;
-    const { name, description, dueDate, place, answeringOrder, noCodeForm } =
-      form;
+    const {
+      name,
+      description,
+      dueDate,
+      place,
+      answeringOrder,
+      noCodeForm,
+    } = form;
 
     if (session.user.role !== UserRole.ADMIN) {
       return res.status(403).json({ message: "Unauthorized" });
@@ -38,7 +44,13 @@ export default async function handle(
       id = generateId(8);
       validId = await checkIdAvailability(id);
     }
-    // create form in database
+    const {id: tId, formId, ...duplicateNoCodeForm } = await prisma.noCodeForm.findUnique({
+      where: {
+        id: noCodeForm.id,
+      }
+    });
+    
+    // create duplicate form in database
     const result = await prisma.form.create({
       data: {
         name: `Copie de "${name}"`,
@@ -49,8 +61,7 @@ export default async function handle(
         id,
         owner: { connect: { email: session?.user?.email } },
         noCodeForm: {
-          connect: noCodeForm.id,
-          create: noCodeForm,
+          create: duplicateNoCodeForm,
         },
       },
       include: {
