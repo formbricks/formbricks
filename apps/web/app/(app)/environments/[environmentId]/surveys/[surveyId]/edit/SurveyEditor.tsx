@@ -83,6 +83,8 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
             brandColor={localSurvey.brandColor ? localSurvey.brandColor : product.brandColor}
+            highlightBorderColor={localSurvey.highlightBorderColor}
+            overwriteBorderHighlight={localSurvey.overwriteBorderHighlight}
             environmentId={environmentId}
             product={product}
             environment={environment}

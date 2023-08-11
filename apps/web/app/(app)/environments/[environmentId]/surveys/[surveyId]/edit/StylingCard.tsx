@@ -16,9 +16,18 @@ interface StylingCardProps {
 export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
   const [open, setOpen] = useState(false);
 
-  const { brandColor, placement, darkOverlay, clickOutsideClose, type } = localSurvey;
+  const {
+    brandColor,
+    placement,
+    darkOverlay,
+    clickOutsideClose,
+    type,
+    highlightBorderColor,
+    overwriteBorderHighlight,
+  } = localSurvey;
 
   const isBrandColor = brandColor !== null;
+  const ishighlightBorder = highlightBorderColor !== null;
   const isPosition = placement !== null;
 
   const togglePlacement = () => {
@@ -44,8 +53,28 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     }
   };
 
+  const toggleBorderColor = () => {
+    if (ishighlightBorder) {
+      setLocalSurvey({ ...localSurvey, highlightBorderColor: null });
+    } else {
+      setLocalSurvey({ ...localSurvey, highlightBorderColor: "#64748b" });
+    }
+  };
+
+  const toggleBorderColorSetting = () => {
+    if (overwriteBorderHighlight) {
+      setLocalSurvey({ ...localSurvey, overwriteBorderHighlight: false });
+    } else {
+      setLocalSurvey({ ...localSurvey, overwriteBorderHighlight: true });
+    }
+  };
+
   const handleColorChange = (color: string) => {
     setLocalSurvey({ ...localSurvey, brandColor: color });
+  };
+
+  const handleBorderColorChange = (color: string) => {
+    setLocalSurvey({ ...localSurvey, highlightBorderColor: color });
   };
 
   const handlePlacementChange = (placement: PlacementType) => {
@@ -131,6 +160,44 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                       />
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Highlight border */}
+          {type !== "link" && (
+            <div className="p-3 ">
+              <div className="ml-2 flex items-center space-x-1">
+                <Switch
+                  id="autoComplete"
+                  checked={overwriteBorderHighlight}
+                  onCheckedChange={toggleBorderColorSetting}
+                />
+                <Label htmlFor="autoComplete" className="cursor-pointer">
+                  <div className="ml-2">
+                    <h3 className="text-sm font-semibold text-slate-700">Overwrite border highlight</h3>
+                    <p className="text-xs font-normal text-slate-500">
+                      Change the border highlight for this survey.
+                    </p>
+                  </div>
+                </Label>
+              </div>
+              {overwriteBorderHighlight && (
+                <div className="ml-2 mt-4 rounded-lg border bg-slate-50 p-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="highlightBorder"
+                      checked={ishighlightBorder}
+                      onCheckedChange={toggleBorderColor}
+                    />
+                    <h2 className="text-sm font-medium text-slate-800">Show highlight border</h2>
+                  </div>
+                  {ishighlightBorder && (
+                    <div className="mt-6 w-full max-w-xs">
+                      <Label htmlFor="brandcolor">Color (HEX)</Label>
+                      <ColorPicker color={highlightBorderColor || ""} onChange={handleBorderColorChange} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

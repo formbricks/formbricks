@@ -36,6 +36,8 @@ export interface Survey {
   closeOnDate: Date | null;
   _count: { responses: number | null } | null;
   brandColor: string | null;
+  highlightBorderColor: string | null;
+  overwriteBorderHighlight: boolean;
   placement: PlacementType | null;
   clickOutsideClose: boolean | null;
   darkOverlay: boolean | null;

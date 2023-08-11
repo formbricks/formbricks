@@ -16,6 +16,9 @@ interface AppProps {
 
 export default function App({ config, survey, closeSurvey, errorHandler }: AppProps): VNode {
   const [isOpen, setIsOpen] = useState(true);
+  const { placement, darkOverlay, highlightBorderColor, clickOutsideClose, overwriteBorderHighlight } =
+    survey;
+  const { product } = config.state;
 
   const close = () => {
     setIsOpen(false);
@@ -30,10 +33,10 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
       <Modal
         isOpen={isOpen}
         close={close}
-        placement={survey.placement ? survey.placement : config.state.product.placement}
-        darkOverlay={survey.placement ? survey.darkOverlay : config.state.product.darkOverlay}
-        highlightBorderColor={config.state.product.highlightBorderColor}
-        clickOutside={survey.placement ? survey.clickOutsideClose : config.state.product.clickOutsideClose}>
+        placement={placement ? placement : product.placement}
+        darkOverlay={placement ? darkOverlay : product.darkOverlay}
+        highlightBorderColor={overwriteBorderHighlight ? highlightBorderColor : product.highlightBorderColor}
+        clickOutside={placement ? clickOutsideClose : product.clickOutsideClose}>
         <SurveyView config={config} survey={survey} close={close} errorHandler={errorHandler} />
       </Modal>
     </div>
