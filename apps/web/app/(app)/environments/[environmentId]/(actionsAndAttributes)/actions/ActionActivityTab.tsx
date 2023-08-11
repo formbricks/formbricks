@@ -1,5 +1,4 @@
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent, LoadingSpinner } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
 import { useEventClass } from "@/lib/eventClasses/eventClasses";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";

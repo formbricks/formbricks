@@ -1,9 +1,8 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useTeamMutation } from "@/lib/teams/mutateTeams";
 import { useTeam } from "@/lib/teams/teams";
-import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
+import { Button, ErrorComponent, Input, Label, LoadingSpinner } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";

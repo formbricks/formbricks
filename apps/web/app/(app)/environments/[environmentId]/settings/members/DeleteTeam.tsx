@@ -2,12 +2,11 @@
 
 import toast from "react-hot-toast";
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useState, Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { useMembers } from "@/lib/members";
 import { useProfile } from "@/lib/profile";
-import { Button, ErrorComponent, Input } from "@formbricks/ui";
+import { Button, ErrorComponent, Input, LoadingSpinner } from "@formbricks/ui";
 import { useTeam, deleteTeam } from "@/lib/teams/teams";
 import { useMemberships } from "@/lib/memberships";
 

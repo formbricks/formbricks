@@ -1,11 +1,11 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { useSurvey } from "@/lib/surveys/surveys";
 import {
   ErrorComponent,
+  LoadingSpinner,
   Select,
   SelectContent,
   SelectItem,

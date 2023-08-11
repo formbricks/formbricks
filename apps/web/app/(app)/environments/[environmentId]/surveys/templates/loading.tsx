@@ -1,4 +1,4 @@
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui";
 
 export default function LoadingPage() {
   return <LoadingSpinner />;

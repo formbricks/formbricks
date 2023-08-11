@@ -2,11 +2,10 @@
 
 import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/MergeTagsCombobox";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags";
 import { useTagsCountForEnvironment, useTagsForEnvironment } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
-import { Button, Input } from "@formbricks/ui";
+import { Button, Input, LoadingSpinner } from "@formbricks/ui";
 import React from "react";
 import { toast } from "react-hot-toast";
 

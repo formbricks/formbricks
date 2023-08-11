@@ -3,8 +3,8 @@
 import LegalFooter from "@/app/s/[surveyId]/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
+import { LoadingSpinner } from "@formbricks/ui";
 
 interface SurveyPageProps {
   surveyId: string;

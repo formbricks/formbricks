@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
@@ -10,6 +9,7 @@ import {
   ColorPicker,
   ErrorComponent,
   Label,
+  LoadingSpinner,
   RadioGroup,
   RadioGroupItem,
   Switch,

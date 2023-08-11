@@ -1,6 +1,6 @@
-"use client";
+import React from "react";
 
-export default function LoadingSpinner() {
+export const LoadingSpinner: React.FC = () => {
   return (
     <div className="flex h-full w-full items-center justify-center">
       <svg
@@ -16,4 +16,4 @@ export default function LoadingSpinner() {
       </svg>
     </div>
   );
-}
+};

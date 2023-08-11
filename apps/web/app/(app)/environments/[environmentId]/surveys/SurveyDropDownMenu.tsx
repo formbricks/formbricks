@@ -13,9 +13,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { LoadingSpinner } from "@formbricks/ui";
 import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,

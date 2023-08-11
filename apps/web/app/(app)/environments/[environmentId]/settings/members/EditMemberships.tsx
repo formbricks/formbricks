@@ -3,7 +3,6 @@
 import ShareInviteModal from "@/app/(app)/environments/[environmentId]/settings/members/ShareInviteModal";
 import TransferOwnershipModal from "@/app/(app)/environments/[environmentId]/settings/members/TransferOwnershipModal";
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import CreateTeamModal from "@/app/(app)/environments/[environmentId]/CreateTeamModal";
 import { env } from "@/env.mjs";
 import {
@@ -27,6 +26,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
+  LoadingSpinner,
   ProfileAvatar,
   Tooltip,
   TooltipContent,

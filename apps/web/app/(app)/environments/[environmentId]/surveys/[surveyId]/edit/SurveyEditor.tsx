@@ -1,10 +1,9 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent, LoadingSpinner } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import SettingsView from "./SettingsView";

@@ -1,6 +1,5 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProfile } from "@/lib/profile";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { cn } from "@formbricks/lib/cn";
@@ -10,6 +9,7 @@ import type { TProduct } from "@formbricks/types/v1/product";
 import {
   Button,
   ErrorComponent,
+  LoadingSpinner,
   Tooltip,
   TooltipContent,
   TooltipProvider,

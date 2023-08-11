@@ -1,6 +1,5 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
@@ -8,6 +7,7 @@ import {
   Badge,
   Button,
   Input,
+  LoadingSpinner,
   Select,
   SelectContent,
   SelectItem,

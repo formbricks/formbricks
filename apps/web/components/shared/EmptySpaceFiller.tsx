@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useEnvironment } from "@/lib/environments/environments";
-import LoadingSpinner from "./LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui";
 
 type EmptySpaceFillerProps = {
   type: "table" | "response" | "event" | "linkResponse" | "tag";

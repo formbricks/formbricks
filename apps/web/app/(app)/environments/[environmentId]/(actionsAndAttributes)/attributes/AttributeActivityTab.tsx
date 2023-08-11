@@ -1,8 +1,7 @@
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClass } from "@/lib/attributeClasses/attributeClasses";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { ErrorComponent, Label } from "@formbricks/ui";
+import { ErrorComponent, Label, LoadingSpinner } from "@formbricks/ui";
 import { TagIcon } from "@heroicons/react/24/solid";
 
 interface EventActivityTabProps {

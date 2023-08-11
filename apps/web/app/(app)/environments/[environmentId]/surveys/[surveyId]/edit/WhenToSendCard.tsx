@@ -1,7 +1,6 @@
 "use client";
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/AddNoCodeActionModal";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
@@ -10,6 +9,7 @@ import {
   Button,
   Input,
   Label,
+  LoadingSpinner,
   Select,
   SelectContent,
   SelectItem,

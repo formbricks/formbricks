@@ -16,6 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   ErrorComponent,
+  LoadingSpinner,
 } from "@formbricks/ui";
 import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
@@ -24,7 +25,6 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SuccessMessage";
 import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkModalButton";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SurveyStatusDropdown";
 
 interface SummaryHeaderProps {

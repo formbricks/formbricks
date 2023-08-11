@@ -1,7 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@formbricks/ui";
+import { Confetti, LoadingSpinner } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
 import { useEvents } from "@/lib/events/events";

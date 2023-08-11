@@ -6,14 +6,13 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 import { deleteProduct, useProduct } from "@/lib/products/products";
 import { truncate } from "@/lib/utils";
 
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
-import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
+import { Button, ErrorComponent, Input, Label, LoadingSpinner } from "@formbricks/ui";
 import { useProfile } from "@/lib/profile";
 import { useMembers } from "@/lib/members";
 

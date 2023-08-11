@@ -1,10 +1,9 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SurveyStatusDropdown";
 import { useEnvironment } from "@/lib/environments/environments";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent, LoadingSpinner } from "@formbricks/ui";
 
 interface StatusDropdownProps {
   survey: TSurvey;
