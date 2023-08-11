@@ -1,5 +1,4 @@
-import GoBackButton from "@/components/shared/GoBackButton";
-import { Button } from "@formbricks/ui";
+import { GoBackButton, Button } from "@formbricks/ui";
 import { Webhook } from "lucide-react";
 
 export default function Loading() {

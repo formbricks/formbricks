@@ -1,9 +1,9 @@
 "use client";
 
-import { BackIcon } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
+import { BackIcon } from "./icons/BackIcon";
 
-export default function GoBackButton() {
+export function GoBackButton() {
   const router = useRouter();
   return (
     <button className="inline-flex pt-5 text-sm text-slate-500" onClick={() => router.back()}>

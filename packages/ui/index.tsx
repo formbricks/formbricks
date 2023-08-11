@@ -49,6 +49,7 @@ export {
   DropdownMenuTrigger,
 } from "./components/DropdownMenu";
 export { ErrorComponent } from "./components/ErrorComponent";
+export { GoBackButton } from "./components/GoBackButton";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
 export { LoadingSpinner } from "./components/LoadingSpinner";
