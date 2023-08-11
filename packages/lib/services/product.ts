@@ -58,8 +58,8 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
 });
 
 export const updateProduct = async (
-  inputProduct: Partial<TProductUpdateInput>,
-  productId: string
+  productId: string,
+  inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
   let updatedProduct;
   try {

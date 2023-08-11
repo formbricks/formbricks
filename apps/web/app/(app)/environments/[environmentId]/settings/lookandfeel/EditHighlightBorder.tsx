@@ -23,7 +23,7 @@ export const EditHighlightBorder = ({ product }: EditHighlightBorderProps) => {
       let inputProduct: Partial<TProductUpdateInput> = {
         highlightBorderColor: color,
       };
-      await updateProductAction(inputProduct, product.id);
+      await updateProductAction(product.id, inputProduct);
       toast.success("Border color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

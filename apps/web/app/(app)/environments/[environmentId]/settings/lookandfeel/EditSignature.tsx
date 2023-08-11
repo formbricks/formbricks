@@ -22,7 +22,7 @@ export function EditFormbricksSignature({ product }: EditSignatureProps) {
       let inputProduct: Partial<TProductUpdateInput> = {
         formbricksSignature: newSignatureState,
       };
-      await updateProductAction(inputProduct, product.id);
+      await updateProductAction(product.id, inputProduct);
       toast.success(
         newSignatureState ? "Formbricks signature will be shown." : "Formbricks signature will now be hidden."
       );

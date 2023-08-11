@@ -20,7 +20,7 @@ export function EditBrandColor({ product }: EditBrandColorProps) {
       let inputProduct: Partial<TProductUpdateInput> = {
         brandColor: color,
       };
-      await updateProductAction(inputProduct, product.id);
+      await updateProductAction(product.id, inputProduct);
       toast.success("Brand color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

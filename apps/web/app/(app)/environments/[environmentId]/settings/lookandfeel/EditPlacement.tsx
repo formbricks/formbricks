@@ -35,7 +35,7 @@ export function EditPlacement({ product }: EditPlacementProps) {
         darkOverlay: overlay === "darkOverlay",
         clickOutsideClose: clickOutside === "allow",
       };
-      await updateProductAction(inputProduct, product.id);
+      await updateProductAction(product.id, inputProduct);
       toast.success("Placement updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);
