@@ -1,8 +1,8 @@
 "use client";
 
+import LegalFooter from "@/app/s/[surveyId]/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
-import LegalFooter from "@/components/shared/LegalFooter";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
 
