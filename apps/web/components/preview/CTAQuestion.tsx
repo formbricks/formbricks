@@ -1,9 +1,8 @@
 import type { CTAQuestion } from "@formbricks/types/questions";
-import HtmlBody from "./HtmlBody";
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
 import { Response } from "@formbricks/types/js";
-import { BackButton, Headline } from "@formbricks/ui";
+import { BackButton, Headline, HtmlBody } from "@formbricks/ui";
 
 interface CTAQuestionProps {
   question: CTAQuestion;

@@ -52,6 +52,9 @@ export {
 } from "./components/DropdownMenu";
 export { ErrorComponent } from "./components/ErrorComponent";
 export { GoBackButton } from "./components/GoBackButton";
+export { FormbricksSignature } from "./components/FormbricksSignature";
+export { Headline } from "./components/Headline";
+export { HtmlBody } from "./components/HtmlBody";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
 export { Modal } from "./components/Modal";
@@ -61,6 +64,7 @@ export { PasswordInput } from "./components/PasswordInput";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";
 export { HalfCircle, ProgressBar } from "./components/ProgressBar";
 export { RadioGroup, RadioGroupItem } from "./components/RadioGroup";
+export { RedirectCountDown } from "./components/RedirectCountDown";
 export { ResponsiveVideo } from "./components/ResponsiveVideo";
 export { SearchBox } from "./components/SearchBox";
 export {
@@ -73,10 +77,24 @@ export {
   SelectTrigger,
   SelectValue,
 } from "./components/Select";
+export { Subheader } from "./components/Subheader";
 export { Switch } from "./components/Switch";
 export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/Tooltip";
+export { ThankYouCard } from "./components/ThankYouCard";
 export { AddVariablesDropdown, Editor } from "./components/editor";
+export {
+  TiredFace,
+  WearyFace,
+  PerseveringFace,
+  FrowningFace,
+  ConfusedFace,
+  NeutralFace,
+  SlightlySmilingFace,
+  SmilingFaceWithSmilingEyes,
+  GrinningFaceWithSmilingEyes,
+  GrinningSquintingFace,
+} from "./components/Smileys";
 
 /* Icons */
 export { AngryBirdRage2Icon } from "./components/icons/AngryBirdRage2Icon";
@@ -113,7 +131,6 @@ export { FormIcon } from "./components/icons/FormIcon";
 export { FounderIcon } from "./components/icons/FounderIcon";
 export { GaugeSpeedFastIcon } from "./components/icons/GaugeSpeedFastIcon";
 export { HandPuzzleIcon } from "./components/icons/HandPuzzleIcon";
-export { Headline } from "./components/Headline";
 export { HeartCommentIcon } from "./components/icons/HeartCommentIcon";
 export { InterviewPromptIcon } from "./components/icons/InterviewPromptIcon";
 export { LaptopWorkerIcon } from "./components/icons/LaptopWorkerIcon";
@@ -122,14 +139,11 @@ export { NetPromoterScoreIcon } from "./components/icons/NetPromoterScoreIcon";
 export { NotDisappointedIcon } from "./components/icons/NotDisappointedIcon";
 export { OnboardingIcon } from "./components/icons/OnboardingIcon";
 export { PMFIcon } from "./components/icons/PMFIcon";
-export { RedirectCountDown } from "./components/RedirectCountDown";
 export { SettingsIcon } from "./components/icons/SettingsIcon";
 export { SkyscraperIcon } from "./components/icons/SkyscraperIcon";
 export { SomewhatDisappointedIcon } from "./components/icons/SomewhatDisappointedIcon";
-export { Subheader } from "./components/Subheader";
 export { TabletTouchIcon } from "./components/icons/TabletTouchIcon";
 export { TaskListSearchIcon } from "./components/icons/TaskListSearchIcon";
-export { ThankYouCard } from "./components/ThankYouCard";
 export { UserCommentIcon } from "./components/icons/UserCommentIcon";
 export { UserCoupleIcon } from "./components/icons/UserCoupleIcon";
 export { UserDeveloperIcon } from "./components/icons/UserDeveloperIcon";

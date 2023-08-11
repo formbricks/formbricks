@@ -1,6 +1,6 @@
 import { cleanHtml } from "@formbricks/lib/cleanHtml";
 
-export default function HtmlBody({ htmlString, questionId }: { htmlString: string; questionId: string }) {
+export function HtmlBody({ htmlString, questionId }: { htmlString: string; questionId: string }) {
   return (
     <label
       htmlFor={questionId}

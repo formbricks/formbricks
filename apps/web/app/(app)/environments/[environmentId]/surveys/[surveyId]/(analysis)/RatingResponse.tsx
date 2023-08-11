@@ -9,7 +9,7 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "@/components/Smileys";
+} from "@formbricks/ui";
 
 import { StarIcon } from "@heroicons/react/24/solid";
 

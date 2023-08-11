@@ -1,6 +1,6 @@
 {
   "extends": "@formbricks/tsconfig/nextjs.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../../packages/types/*.d.ts", "../../packages/ui/components/ThankYouCard.tsx", "../../packages/ui/components/ModalWithTabs.tsx", "../../packages/ui/components/EmptySpaceFiller.tsx", "../../packages/ui/components/RedirectCountDown.tsx", "../../packages/ui/components/Subheader.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../../packages/types/*.d.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
