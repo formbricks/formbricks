@@ -59,26 +59,44 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
   }
 });
 
-const updateProductService = async (
-  productId: string,
-  data: Prisma.ProductUpdateInput
-): Promise<TProduct> => {
-  try {
-    const updatedProduct = await prisma.product.update({
-      where: {
-        id: productId,
-      },
-      data,
-    });
+export const updateProduct = cache(
+  async (productId: string, data: Prisma.ProductUpdateInput): Promise<TProduct> => {
+    try {
+      const updatedProduct = await prisma.product.update({
+        where: {
+          id: productId,
+        },
+        data,
+      });
 
-    return updatedProduct;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
-      throw new ResourceNotFoundError("Product", productId);
-    } else {
-      throw error; // Re-throw any other errors
+      return updatedProduct;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+        throw new ResourceNotFoundError("Product", productId);
+      } else {
+        throw error; // Re-throw any other errors
+      }
     }
   }
-};
+);
 
-export const updateProduct = cache(updateProductService);
+export const getAvailableProducts = cache(async (teamId: string): Promise<TProduct[]> => {
+  const products = await prisma.product.findMany({
+    where: {
+      teamId,
+    },
+    select: selectProduct,
+  });
+
+  return products;
+});
+
+export const deleteProduct = cache(async (productId: string): Promise<TProduct> => {
+  const product = await prisma.product.delete({
+    where: {
+      id: productId,
+    },
+  });
+
+  return product;
+});
