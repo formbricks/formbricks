@@ -14,7 +14,6 @@ import {
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { QuestionType } from "@formbricks/types/questions";
-import { isArray } from "lodash";
 import clsx from "clsx";
 
 type QuestionFilterComboBoxProps = {
@@ -150,7 +149,7 @@ const QuestionFilterComboBox = ({
                       !isMultiple
                         ? onChangeFilterComboBoxValue(o)
                         : onChangeFilterComboBoxValue(
-                            isArray(filterComboBoxValue) ? [...filterComboBoxValue, o] : [o]
+                            Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, o] : [o]
                           );
                       !isMultiple && setOpen(false);
                     }}

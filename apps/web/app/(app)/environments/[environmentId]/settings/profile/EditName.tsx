@@ -7,18 +7,17 @@ import { profileEditAction } from "./actions";
 import { TProfile } from "@formbricks/types/v1/profile";
 
 export function EditName({ profile }: { profile: TProfile }) {
-
   const {
     register,
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm<{name:string}>()
+  } = useForm<{ name: string }>();
 
   return (
     <>
       <form
         className="w-full max-w-sm items-center"
-        onSubmit={handleSubmit(async(data) => {
+        onSubmit={handleSubmit(async (data) => {
           try {
             await profileEditAction(profile.id, data);
             toast.success("Your name was updated successfully.");
