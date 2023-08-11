@@ -18,7 +18,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import CreateTeamModal from "@/components/team/CreateTeamModal";
+import CreateTeamModal from "@/app/(app)/environments/[environmentId]/CreateTeamModal";
 import {
   changeEnvironment,
   changeEnvironmentByProduct,
