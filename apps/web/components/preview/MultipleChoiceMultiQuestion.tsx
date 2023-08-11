@@ -117,7 +117,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative space-y-2 rounded-md py-0.5">
             {questionChoices.map((choice) => (
               <div key={choice.id}>
                 <label
