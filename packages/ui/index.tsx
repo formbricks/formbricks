@@ -21,6 +21,7 @@ export {
   CommandShortcut,
 } from "./components/Command";
 export { Confetti } from "./components/Confetti";
+export { ContentWrapper } from "./components/ContentWrapper";
 export { DatePicker } from "./components/DatePicker";
 export {
   Dialog,

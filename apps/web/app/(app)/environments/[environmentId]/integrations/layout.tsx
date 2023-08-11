@@ -1,4 +1,4 @@
-import ContentWrapper from "@/components/shared/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

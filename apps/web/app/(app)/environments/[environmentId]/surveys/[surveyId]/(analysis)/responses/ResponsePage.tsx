@@ -3,7 +3,7 @@ import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surv
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/ResponseTimeline";
-import ContentWrapper from "@/components/shared/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import { getFilterResponses } from "@/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";

@@ -1,7 +1,6 @@
 "use client";
 
-import ContentWrapper from "@/components/shared/ContentWrapper";
-import { Button, Confetti } from "@formbricks/ui";
+import { Button, Confetti, ContentWrapper } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 
 export default function ConfirmationPage() {
