@@ -62,6 +62,7 @@ export { ModalWithTabs } from "./components/ModalWithTabs";
 export { LoadingSpinner } from "./components/LoadingSpinner";
 export { PasswordInput } from "./components/PasswordInput";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";
+export { Progress } from "./components/Progress";
 export { HalfCircle, ProgressBar } from "./components/ProgressBar";
 export { RadioGroup, RadioGroupItem } from "./components/RadioGroup";
 export { RedirectCountDown } from "./components/RedirectCountDown";

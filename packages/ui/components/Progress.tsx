@@ -1,6 +1,11 @@
 import React from "react";
 
-const ProgressComponent = ({ progress, brandColor }) => {
+interface ProgressProps {
+  progress: number;
+  brandColor: string;
+}
+
+const ProgressComponent = ({ progress, brandColor }: ProgressProps) => {
   return (
     <div className="h-1 w-full rounded-full bg-slate-200">
       <div
@@ -12,9 +17,7 @@ const ProgressComponent = ({ progress, brandColor }) => {
 
 ProgressComponent.displayName = "Progress";
 
-const Progress = React.memo(ProgressComponent, (prevProps, nextProps) => {
+export const Progress = React.memo(ProgressComponent, (prevProps, nextProps) => {
   // Only re-render if progress or brandColor changes
   return prevProps.progress === nextProps.progress && prevProps.brandColor === nextProps.brandColor;
 });
-
-export default Progress;

@@ -1,10 +1,16 @@
 "use client";
 
-import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
-import { Confetti, ContentWrapper, FormbricksSignature, LoadingSpinner, ThankYouCard } from "@formbricks/ui";
+import {
+  Confetti,
+  ContentWrapper,
+  FormbricksSignature,
+  LoadingSpinner,
+  Progress,
+  ThankYouCard,
+} from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import type { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
