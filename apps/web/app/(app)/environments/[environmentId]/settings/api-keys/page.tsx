@@ -1,3 +1,6 @@
+export const revalidate = REVALIDATION_INTERVAL;
+
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import ApiKeyList from "./ApiKeyList";

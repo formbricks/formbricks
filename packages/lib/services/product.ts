@@ -1,11 +1,10 @@
 import "server-only";
-
 import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
 import { ZProduct } from "@formbricks/types/v1/product";
-import type { TProduct } from "@formbricks/types/v1/product";
+import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { cache } from "react";
 
 const selectProduct = {

@@ -1,34 +1,37 @@
+export const revalidate = REVALIDATION_INTERVAL;
+
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import {
-  EditBrandColor,
-  EditPlacement,
-  EditFormbricksSignature,
-  EditHighlightBorder,
-} from "./editLookAndFeel";
+import { EditFormbricksSignature } from "./EditSignature";
+import { EditBrandColor } from "./EditBrandColor";
+import { EditPlacement } from "./EditPlacement";
+import { EditHighlightBorder } from "./EditHighlightBorder";
 
-export default function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
+export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
+  const product = await getProductByEnvironmentId(params.environmentId);
   return (
     <div>
       <SettingsTitle title="Look & Feel" />
       <SettingsCard title="Brand Color" description="Match the surveys with your user interface.">
-        <EditBrandColor environmentId={params.environmentId} />
+        <EditBrandColor product={product} />
       </SettingsCard>
       <SettingsCard
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
-        <EditPlacement environmentId={params.environmentId} />
+        <EditPlacement product={product} />
       </SettingsCard>
       <SettingsCard
         noPadding
         title="Highlight Border"
         description="Make sure your users notice the survey you display">
-        <EditHighlightBorder environmentId={params.environmentId} />
+        <EditHighlightBorder product={product} />
       </SettingsCard>
       <SettingsCard
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
-        <EditFormbricksSignature environmentId={params.environmentId} />
+        <EditFormbricksSignature product={product} />
       </SettingsCard>
     </div>
   );
