@@ -1,6 +1,6 @@
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import { EditProductName, EditWaitingTime, DeleteProduct } from "./editProduct";
+import { DeleteProduct, EditProductName, EditWaitingTime } from "./editProduct";
 
 export default function ProfileSettingsPage({ params }) {
   return (
@@ -10,8 +10,8 @@ export default function ProfileSettingsPage({ params }) {
         <EditProductName environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
-        title="Recontact Waiting Time"
-        description="Control how frequently users can be surveyed across all surveys.">
+        title="Recontact Waiting Time (In app surveys)"
+        description="Control how frequently users can be surveyed across all in app surveys.">
         <EditWaitingTime environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
