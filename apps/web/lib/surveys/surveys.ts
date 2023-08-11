@@ -1,20 +1,19 @@
-import useSWR from "swr";
-import { fetcher } from "@formbricks/lib/fetcher";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
+import {
+  DateRange,
+  SelectedFilterValue,
+} from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import {
   OptionsType,
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/ResponseFilter";
+import { fetcher } from "@formbricks/lib/fetcher";
 import { QuestionType } from "@formbricks/types/questions";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TTag } from "@formbricks/types/v1/tags";
-import {
-  DateRange,
-  SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
-import { isArray } from "lodash";
 import { isWithinInterval } from "date-fns";
+import useSWR from "swr";
 
 export const useSurveys = (environmentId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/environments/${environmentId}/surveys`, fetcher);
@@ -27,9 +26,9 @@ export const useSurveys = (environmentId: string) => {
   };
 };
 
-export const useSurvey = (environmentId: string, id: string) => {
+export const useSurvey = (environmentId: string, id: string, analytics?: boolean) => {
   const { data, error, mutate, isLoading } = useSWR(
-    `/api/v1/environments/${environmentId}/surveys/${id}`,
+    `/api/v1/environments/${environmentId}/surveys/${id}${analytics ? "?analytics=true" : ""}`,
     fetcher
   );
 
@@ -404,7 +403,7 @@ export const getFilterResponses = (
               if (question) {
                 const responseValue = response.data[question.id];
                 const filterValue = filter?.filterType?.filterComboBoxValue;
-                if (isArray(responseValue) && isArray(filterValue) && filterValue.length > 0) {
+                if (Array.isArray(responseValue) && Array.isArray(filterValue) && filterValue.length > 0) {
                   //@ts-ignore
                   const updatedResponseValue = question?.choices
                     ? //@ts-ignore
@@ -435,7 +434,7 @@ export const getFilterResponses = (
                 const filterValue = filter?.filterType?.filterComboBoxValue;
                 if (
                   filter?.filterType?.filterValue === "Includes either" &&
-                  isArray(filterValue) &&
+                  Array.isArray(filterValue) &&
                   filterValue.length > 0 &&
                   typeof responseValue === "string"
                 ) {

@@ -65,7 +65,8 @@ export default function SurveyMenuBar({
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: Survey["status"]) => {
-    const updatedSurvey = { ...localSurvey, status };
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    updatedSurvey.status = status;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -103,6 +104,17 @@ export default function SurveyMenuBar({
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
       toast.error("Please fill required fields");
+      return false;
+    }
+
+    /*
+     Check whether the count for autocomplete responses is not less 
+     than the current count of accepted response and also it is not set to 0
+    */
+    if (
+      (survey.autoComplete && survey._count?.responses && survey._count.responses >= survey.autoComplete) ||
+      survey?.autoComplete === 0
+    ) {
       return false;
     }
 

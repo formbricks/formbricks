@@ -23,17 +23,15 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
+  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId, true);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
   useEffect(() => {
     if (survey) {
-      if (!localSurvey) {
-        setLocalSurvey(survey);
-      }
+      setLocalSurvey(survey);
 
-      if (!activeQuestionId && survey.questions.length > 0) {
+      if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }

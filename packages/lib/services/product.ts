@@ -8,6 +8,21 @@ import { ZProduct } from "@formbricks/types/v1/product";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { cache } from "react";
 
+const selectProduct = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  name: true,
+  teamId: true,
+  brandColor: true,
+  highlightBorderColor: true,
+  recontactDays: true,
+  formbricksSignature: true,
+  placement: true,
+  clickOutsideClose: true,
+  darkOverlay: true,
+};
+
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct> => {
   let productPrisma;
 
@@ -20,6 +35,7 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
           },
         },
       },
+      select: selectProduct,
     });
 
     if (!productPrisma) {

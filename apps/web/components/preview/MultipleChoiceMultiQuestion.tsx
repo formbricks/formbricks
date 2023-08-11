@@ -1,14 +1,14 @@
-import { Input } from "@formbricks/ui";
+import { BackButton } from "@/components/preview/BackButton";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
+import { symmetricDifference } from "@formbricks/lib/utils/array";
+import { Response } from "@formbricks/types/js";
 import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { Input } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import _ from "lodash";
-import { Response } from "@formbricks/types/js";
-import { BackButton } from "@/components/preview/BackButton";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -39,16 +39,20 @@ export default function MultipleChoiceMultiQuestion({
     .map((choice) => choice.label);
 
   useEffect(() => {
-    const nonOtherSavedChoices = storedResponseValue?.filter((answer) =>
-      nonOtherChoiceLabels.includes(answer)
-    );
-    const savedOtherSpecified = storedResponseValue?.find((answer) => !nonOtherChoiceLabels.includes(answer));
+    if (Array.isArray(storedResponseValue)) {
+      const nonOtherSavedChoices = storedResponseValue?.filter((answer) =>
+        nonOtherChoiceLabels.includes(answer)
+      );
+      const savedOtherSpecified = storedResponseValue?.find(
+        (answer) => !nonOtherChoiceLabels.includes(answer)
+      );
 
-    setSelectedChoices(nonOtherSavedChoices ?? []);
+      setSelectedChoices(nonOtherSavedChoices ?? []);
 
-    if (savedOtherSpecified) {
-      setOtherSpecified(savedOtherSpecified);
-      setShowOther(true);
+      if (savedOtherSpecified) {
+        setOtherSpecified(savedOtherSpecified);
+        setShowOther(true);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedResponseValue, question.id]);
@@ -76,7 +80,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
+    if (storedResponseValue && symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }

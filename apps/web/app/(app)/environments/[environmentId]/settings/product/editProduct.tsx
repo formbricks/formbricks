@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -11,9 +12,114 @@ import { deleteProduct, useProduct } from "@/lib/products/products";
 import { truncate } from "@/lib/utils";
 
 import { useEnvironment } from "@/lib/environments/environments";
-import { Button, ErrorComponent } from "@formbricks/ui";
+import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
 import { useProfile } from "@/lib/profile";
 import { useMembers } from "@/lib/members";
+import { useProductMutation } from "@/lib/products/mutateProducts";
+
+export function EditProductName({ environmentId }) {
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);
+  const { mutateEnvironment } = useEnvironment(environmentId);
+
+  const { register, handleSubmit, control, setValue } = useForm();
+
+  const productName = useWatch({
+    control,
+    name: "name",
+  });
+  const isProductNameInputEmpty = !productName?.trim();
+  const currentProductName = productName?.trim().toLowerCase() ?? "";
+  const previousProductName = product?.name?.trim().toLowerCase() ?? "";
+
+  useEffect(() => {
+    setValue("name", product?.name ?? "");
+  }, [product?.name]);
+
+  if (isLoadingProduct) {
+    return <LoadingSpinner />;
+  }
+  if (isErrorProduct) {
+    return <ErrorComponent />;
+  }
+
+  return (
+    <form
+      className="w-full max-w-sm items-center"
+      onSubmit={handleSubmit((data) => {
+        triggerProductMutate(data)
+          .then(() => {
+            toast.success("Product name updated successfully.");
+            mutateEnvironment();
+          })
+          .catch((error) => {
+            toast.error(`Error: ${error.message}`);
+          });
+      })}>
+      <Label htmlFor="fullname">What&apos;s your product called?</Label>
+      <Input
+        type="text"
+        id="fullname"
+        defaultValue={product.name}
+        {...register("name")}
+        className={isProductNameInputEmpty ? "border-red-300 focus:border-red-300" : ""}
+      />
+
+      <Button
+        type="submit"
+        variant="darkCTA"
+        className="mt-4"
+        loading={isMutatingProduct}
+        disabled={isProductNameInputEmpty || currentProductName === previousProductName}>
+        Update
+      </Button>
+    </form>
+  );
+}
+
+export function EditWaitingTime({ environmentId }) {
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);
+
+  const { register, handleSubmit } = useForm();
+
+  if (isLoadingProduct) {
+    return <LoadingSpinner />;
+  }
+  if (isErrorProduct) {
+    return <ErrorComponent />;
+  }
+
+  return (
+    <form
+      className="w-full max-w-sm items-center"
+      onSubmit={handleSubmit((data) => {
+        triggerProductMutate(data)
+          .then(() => {
+            toast.success("Waiting period updated successfully.");
+          })
+          .catch((error) => {
+            toast.error(`Error: ${error.message}`);
+          });
+      })}>
+      <Label htmlFor="recontactDays">Wait X days before showing next survey:</Label>
+      <Input
+        type="number"
+        id="recontactDays"
+        defaultValue={product.recontactDays}
+        {...register("recontactDays", {
+          min: 0,
+          max: 365,
+          valueAsNumber: true,
+        })}
+      />
+
+      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProduct}>
+        Update
+      </Button>
+    </form>
+  );
+}
 
 export function DeleteProduct({ environmentId }) {
   const router = useRouter();

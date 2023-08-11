@@ -1,8 +1,7 @@
+import { Button, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { handleFeedbackSubmit, updateFeedback } from "../../lib/handleFeedbackSubmit";
-import { Popover, PopoverTrigger, PopoverContent } from "@formbricks/ui";
-import { Button } from "@formbricks/ui";
-import { useRouter } from "next/router";
 
 export const DocsFeedback: React.FC = () => {
   const router = useRouter();
@@ -26,7 +25,7 @@ export const DocsFeedback: React.FC = () => {
           Is everything on this page clear?
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <div className="mt-2 inline-flex space-x-3 md:ml-4 md:mt-0">
-              {["Yes 👍", " No 👎"].map((option) => (
+              {["Yes 👍", "No 👎"].map((option) => (
                 <PopoverTrigger
                   key={option}
                   className="rounded border border-slate-200 bg-slate-50 px-4 py-2 text-slate-900 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-slate-300"

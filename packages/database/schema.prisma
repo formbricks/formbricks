@@ -30,6 +30,7 @@ enum PipelineTriggers {
 
 model Webhook {
   id            String             @id @default(cuid())
+  name          String?
   createdAt     DateTime           @default(now()) @map(name: "created_at")
   updatedAt     DateTime           @updatedAt @map(name: "updated_at")
   url           String
@@ -319,19 +320,20 @@ enum WidgetPlacement {
 }
 
 model Product {
-  id                  String          @id @default(cuid())
-  createdAt           DateTime        @default(now()) @map(name: "created_at")
-  updatedAt           DateTime        @updatedAt @map(name: "updated_at")
-  name                String
-  team                Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId              String
-  environments        Environment[]
-  brandColor          String          @default("#64748b")
-  recontactDays       Int             @default(7)
-  formbricksSignature Boolean         @default(true)
-  placement           WidgetPlacement @default(bottomRight)
-  clickOutsideClose   Boolean         @default(true)
-  darkOverlay         Boolean         @default(false)
+  id                   String          @id @default(cuid())
+  createdAt            DateTime        @default(now()) @map(name: "created_at")
+  updatedAt            DateTime        @updatedAt @map(name: "updated_at")
+  name                 String
+  team                 Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId               String
+  environments         Environment[]
+  brandColor           String          @default("#64748b")
+  highlightBorderColor String?         
+  recontactDays        Int             @default(7)
+  formbricksSignature  Boolean         @default(true)
+  placement            WidgetPlacement @default(bottomRight)
+  clickOutsideClose    Boolean         @default(true)
+  darkOverlay          Boolean         @default(false)
 }
 
 enum Plan {
