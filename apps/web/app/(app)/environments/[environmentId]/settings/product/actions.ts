@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
-import { deleteProduct, updateProduct } from "@formbricks/lib/services/product";
+import { deleteProduct, getAvailableProducts, updateProduct } from "@formbricks/lib/services/product";
 import { TProduct } from "@formbricks/types/v1/product";
 import { getServerSession } from "next-auth";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/errors";
@@ -68,13 +68,19 @@ export const deleteProductAction = async (environmentId: string, userId: string,
   }
 
   const team = await getTeamByEnvironmentId(environmentId);
-
   const membership = team ? await getMembershipByUserId(userId, team.id) : null;
 
   if (membership?.role !== "admin" && membership?.role !== "owner") {
     throw new AuthenticationError("You are not allowed to delete products.");
   }
 
+  const availableProducts = team ? await getAvailableProducts(team.id) : null;
+
+  if (!!availableProducts && availableProducts?.length <= 1) {
+    throw new Error("You can't delete the last product in the environment.");
+  }
+
   const deletedProduct = await deleteProduct(productId);
+
   return deletedProduct;
 };
