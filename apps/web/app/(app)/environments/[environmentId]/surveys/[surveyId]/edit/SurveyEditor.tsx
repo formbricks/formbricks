@@ -88,7 +88,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             surveyType={localSurvey.type}
             thankYouCard={localSurvey.thankYouCard}
             autoClose={localSurvey.autoClose}
-            localSurvey={localSurvey}
+            survey={localSurvey}
           />
         </aside>
       </div>

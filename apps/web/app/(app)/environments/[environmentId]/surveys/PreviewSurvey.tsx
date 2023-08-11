@@ -22,7 +22,7 @@ interface PreviewSurveyProps {
   product: TProduct;
   surveyType: Survey["type"];
   environment: TEnvironment;
-  localSurvey?: Survey;
+  survey?: Survey;
   thankYouCard: Survey["thankYouCard"];
   autoClose: Survey["autoClose"];
 }
@@ -105,7 +105,7 @@ export default function PreviewSurvey({
   activeQuestionId,
   product,
   environment,
-  localSurvey,
+  survey,
   questions,
   surveyType,
   thankYouCard,
@@ -123,9 +123,10 @@ export default function PreviewSurvey({
   const showBackButton = progress !== 0 && !finished;
   const ContentRef = useRef<HTMLDivElement | null>(null);
 
-  const { highlightBorderColor, overwriteBorderHighlight } = localSurvey || {};
+  const { highlightBorderColor, overwriteBorderHighlight } = survey || {};
 
-  const brandColor = localSurvey?.brandColor || product.brandColor;
+  const brandColor = survey?.brandColor || product.brandColor;
+
   let previewType: previewType = surveyType === "web" ? "modal" : "fullwidth";
 
   useEffect(() => {
@@ -367,7 +368,7 @@ export default function PreviewSurvey({
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
-                  placement={localSurvey?.placement || product.placement}
+                  placement={survey?.placement || product.placement}
                   highlightBorderColor={
                     overwriteBorderHighlight ? highlightBorderColor : product.highlightBorderColor
                   }
@@ -436,7 +437,7 @@ export default function PreviewSurvey({
             {previewType === "modal" ? (
               <Modal
                 isOpen={isModalOpen}
-                placement={localSurvey?.placement || product.placement}
+                placement={survey?.placement || product.placement}
                 highlightBorderColor={
                   overwriteBorderHighlight ? highlightBorderColor : product.highlightBorderColor
                 }
