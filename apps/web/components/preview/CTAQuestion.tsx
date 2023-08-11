@@ -4,7 +4,7 @@ import HtmlBody from "./HtmlBody";
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
 import { Response } from "@formbricks/types/js";
-import { BackButton } from "@/components/preview/BackButton";
+import { BackButton } from "@formbricks/ui";
 
 interface CTAQuestionProps {
   question: CTAQuestion;

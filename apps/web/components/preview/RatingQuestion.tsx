@@ -20,7 +20,7 @@ import {
 import SubmitButton from "@/components/preview/SubmitButton";
 
 import { Response } from "@formbricks/types/js";
-import { BackButton } from "@/components/preview/BackButton";
+import { BackButton } from "@formbricks/ui";
 
 interface RatingQuestionProps {
   question: RatingQuestion;

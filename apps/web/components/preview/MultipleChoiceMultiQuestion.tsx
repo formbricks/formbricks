@@ -1,11 +1,10 @@
-import { BackButton } from "@/components/preview/BackButton";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
 import { symmetricDifference } from "@formbricks/lib/utils/array";
 import { Response } from "@formbricks/types/js";
 import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
-import { Input } from "@formbricks/ui";
+import { BackButton, Input } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
