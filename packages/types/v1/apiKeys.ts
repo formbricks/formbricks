@@ -10,9 +10,9 @@ export const ZApiKey = z.object({
   apiKey: z.string().optional(),
 });
 
-export const ZApiKeyData = z.object({
+export type TApiKey = z.infer<typeof ZApiKey>;
+
+export const ZApiKeyCreateInput = z.object({
   label: z.string(),
 });
-
-export type TApiKey = z.infer<typeof ZApiKey>;
-export type TApiKeyData = z.infer<typeof ZApiKeyData>;
+export type TApiKeyCreateInput = z.infer<typeof ZApiKeyCreateInput>;

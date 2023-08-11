@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TApiKey, TApiKeyData } from "@formbricks/types/v1/apiKeys";
+import { TApiKey, TApiKeyCreateInput } from "@formbricks/types/v1/apiKeys";
 import { Prisma } from "@prisma/client";
 import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
@@ -56,7 +56,7 @@ export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[]
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
-export async function createApiKey(environmentId: string, apiKeyData: TApiKeyData): Promise<TApiKey> {
+export async function createApiKey(environmentId: string, apiKeyData: TApiKeyCreateInput): Promise<TApiKey> {
   try {
     const key = randomBytes(16).toString("hex");
     const hashedKey = hashApiKey(key);
