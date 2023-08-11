@@ -7,10 +7,12 @@ import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { useEffect, useRef, useState } from "react";
-import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { PlacementType } from "@formbricks/types/js";
+import type { TProduct } from "@formbricks/types/v1/product";
+import { Button } from "@formbricks/ui";
+import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
+import { useEffect, useRef, useState } from "react";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -250,6 +252,12 @@ export default function PreviewSurvey({
     setActiveQuestionId(previousQuestionId);
   }
 
+  function resetQuestionProgress() {
+    setProgress(0);
+    setActiveQuestionId(questions[0].id);
+    setStoredResponse({});
+  }
+
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -279,6 +287,15 @@ export default function PreviewSurvey({
             {previewType === "modal" ? "Your web app" : "Preview"}
           </span>
         </p>
+        <div className="ml-auto flex items-center">
+          <Button
+            variant="minimal"
+            className="py-0.2 mx-2 my-4 bg-white px-2 text-sm text-slate-500"
+            onClick={resetQuestionProgress}>
+            Restart
+            <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {previewType === "modal" ? (
