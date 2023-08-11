@@ -1,4 +1,3 @@
-import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getAvailableProducts } from "@formbricks/lib/services/product";
 import { getProfile } from "@formbricks/lib/services/profile";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
@@ -29,6 +28,8 @@ export default async function DeleteProduct({ environmentId, userId, product }: 
       isDeleteDisabled={isDeleteDisabled}
       isUserAdminOrOwner={isUserAdminOrOwner}
       product={product}
+      environmentId={environmentId}
+      userId={userId}
     />
   );
 }

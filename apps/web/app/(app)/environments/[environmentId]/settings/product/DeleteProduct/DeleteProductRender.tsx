@@ -10,26 +10,35 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 
 type DeleteProductRenderProps = {
+  environmentId: string;
   isDeleteDisabled: boolean;
   isUserAdminOrOwner: boolean;
   product: TProduct;
+  userId: string;
 };
 
 const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
+  environmentId,
   isDeleteDisabled,
   isUserAdminOrOwner,
   product,
+  userId,
 }) => {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleDeleteProduct = async () => {
     try {
-      await deleteProductAction(product.id);
-      toast.success("Product deleted successfully.");
+      const deletedProduct = await deleteProductAction(environmentId, userId, product.id);
+
+      if (!!deletedProduct?.id) {
+        toast.success("Product deleted successfully.");
+        router.push("/");
+      }
     } catch (err) {
       console.log(err);
       toast.error("Product deleted successfully.");
+      setIsDeleteDialogOpen(false);
     }
   };
 

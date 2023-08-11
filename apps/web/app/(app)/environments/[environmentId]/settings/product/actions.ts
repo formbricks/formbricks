@@ -8,7 +8,6 @@ import { AuthenticationError, ResourceNotFoundError } from "@formbricks/errors";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
-import { getProfile } from "@formbricks/lib/services/profile";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { getMembershipByUserId } from "@formbricks/lib/services/membership";
 
@@ -44,7 +43,7 @@ export const updateProductAction = async (
   return updatedProduct;
 };
 
-export const deleteProductAction = async (environmentId: string, productId: string) => {
+export const deleteProductAction = async (environmentId: string, userId: string, productId: string) => {
   const session = await getServerSession();
 
   if (!session?.user) {
@@ -70,7 +69,7 @@ export const deleteProductAction = async (environmentId: string, productId: stri
 
   const team = await getTeamByEnvironmentId(environmentId);
 
-  const membership = team ? await getMembershipByUserId(session.user.id, team.id) : null;
+  const membership = team ? await getMembershipByUserId(userId, team.id) : null;
 
   if (membership?.role !== "admin" && membership?.role !== "owner") {
     throw new AuthenticationError("You are not allowed to delete products.");

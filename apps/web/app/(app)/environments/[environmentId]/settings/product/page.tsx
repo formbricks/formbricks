@@ -1,5 +1,4 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 
 import SettingsCard from "../SettingsCard";
@@ -8,6 +7,7 @@ import SettingsTitle from "../SettingsTitle";
 import EditProductName from "./EditProductName";
 import EditWaitingTime from "./EditWaitingTime";
 import DeleteProduct from "./DeleteProduct";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const session = await getServerSession(authOptions);
