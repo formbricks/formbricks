@@ -1,6 +1,5 @@
-import Modal from "@/components/shared/Modal";
 import { useEffect, useState } from "react";
-
+import { Modal } from "@formbricks/ui";
 interface ModalWithTabsProps {
   open: boolean;
   setOpen: (v: boolean) => void;

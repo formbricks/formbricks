@@ -32,6 +32,7 @@ export {
   DialogTitle,
   DialogTrigger,
 } from "./components/Dialog";
+export { DeleteDialog } from "./components/DeleteDialog";
 export {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -53,6 +54,7 @@ export { ErrorComponent } from "./components/ErrorComponent";
 export { GoBackButton } from "./components/GoBackButton";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
+export { Modal } from "./components/Modal";
 export { LoadingSpinner } from "./components/LoadingSpinner";
 export { PasswordInput } from "./components/PasswordInput";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";

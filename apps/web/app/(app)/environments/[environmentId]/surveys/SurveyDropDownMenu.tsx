@@ -5,7 +5,6 @@ import {
   deleteSurveyAction,
   duplicateSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +14,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { LoadingSpinner } from "@formbricks/ui";
+import { DeleteDialog, LoadingSpinner } from "@formbricks/ui";
 import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,

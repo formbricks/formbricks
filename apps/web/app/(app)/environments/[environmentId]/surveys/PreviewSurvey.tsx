@@ -1,7 +1,6 @@
 "use client";
 
 import FormbricksSignature from "@/components/preview/FormbricksSignature";
-import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
@@ -10,6 +9,7 @@ import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
+import { Modal } from "@formbricks/ui";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;

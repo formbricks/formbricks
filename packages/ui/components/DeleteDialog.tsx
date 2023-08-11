@@ -1,7 +1,7 @@
 "use client";
 
-import Modal from "@/components/shared/Modal";
-import { Button } from "@formbricks/ui";
+import Button from "./Button";
+import { Modal } from "./Modal";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -16,7 +16,7 @@ interface DeleteDialogProps {
   disabled?: boolean;
 }
 
-export default function DeleteDialog({
+export function DeleteDialog({
   open,
   setOpen,
   deleteWhat,

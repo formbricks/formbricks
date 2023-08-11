@@ -2,12 +2,11 @@ import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integr
 import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/TriggerCheckboxGroup";
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/HardcodedTriggers";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/testEndpoint";
-import Modal from "@/components/shared/Modal";
 import { createWebhook } from "@formbricks/lib/services/webhook";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TWebhookInput } from "@formbricks/types/v1/webhooks";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Button, Input, Label, Modal } from "@formbricks/ui";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
 import { useRouter } from "next/navigation";

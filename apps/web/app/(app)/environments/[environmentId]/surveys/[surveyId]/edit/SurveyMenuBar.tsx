@@ -1,13 +1,12 @@
 "use client";
 
 import AlertDialog from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AlertDialog";
-import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SurveyStatusDropdown";
 import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
-import { Button, Input } from "@formbricks/ui";
+import { DeleteDialog, Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

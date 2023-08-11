@@ -1,7 +1,6 @@
 "use client";
 
-import Modal from "@/components/shared/Modal";
-import { Button } from "@formbricks/ui";
+import { Button, Modal } from "@formbricks/ui";
 
 interface CustomDialogProps {
   open: boolean;

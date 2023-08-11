@@ -1,9 +1,9 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
 import type { NoCodeConfig } from "@formbricks/types/events";
 import {
   Button,
+  DeleteDialog,
   Input,
   Label,
   RadioGroup,

@@ -1,10 +1,10 @@
 "use client";
 
-import Modal from "@/components/shared/Modal";
 import {
   Button,
   Input,
   Label,
+  Modal,
   Select,
   SelectContent,
   SelectGroup,

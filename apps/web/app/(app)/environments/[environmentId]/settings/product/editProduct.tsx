@@ -5,14 +5,12 @@ import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
-
 import { deleteProduct, useProduct } from "@/lib/products/products";
 import { truncate } from "@/lib/utils";
 
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
-import { Button, ErrorComponent, Input, Label, LoadingSpinner } from "@formbricks/ui";
+import { Button, DeleteDialog, ErrorComponent, Input, Label, LoadingSpinner } from "@formbricks/ui";
 import { useProfile } from "@/lib/profile";
 import { useMembers } from "@/lib/members";
 

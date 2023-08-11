@@ -1,7 +1,6 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
-import { GoBackButton } from "@formbricks/ui";
+import { GoBackButton, DeleteDialog } from "@formbricks/ui";
 import { deletePersonAction } from "./actions";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TrashIcon } from "lucide-react";
