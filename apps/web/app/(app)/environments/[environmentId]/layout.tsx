@@ -1,11 +1,11 @@
 import EnvironmentsNavbar from "@/app/(app)/environments/[environmentId]/EnvironmentsNavbar";
-import ToasterClient from "@/components/ToasterClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import FormbricksClient from "../../FormbricksClient";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import ToasterClient from "@/app/(app)/environments/[environmentId]/ToasterClient";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);

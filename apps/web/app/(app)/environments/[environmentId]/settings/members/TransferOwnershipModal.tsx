@@ -1,4 +1,4 @@
-import CustomDialog from "@/components/shared/CustomDialog";
+import CustomDialog from "@/app/(app)/environments/[environmentId]/settings/members/CustomDialog";
 import { Input } from "@formbricks/ui";
 import { Dispatch, SetStateAction, useState } from "react";
 

@@ -40,7 +40,7 @@ import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
 import { useRouter } from "next/navigation";
 import { useMemberships } from "@/lib/memberships";
-import CustomDialog from "@/components/shared/CustomDialog";
+import CustomDialog from "@/app/(app)/environments/[environmentId]/settings/members/CustomDialog";
 
 type EditMembershipsProps = {
   environmentId: string;

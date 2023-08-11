@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SuccessMessage";
 import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkModalButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SurveyStatusDropdown";
 
 interface SummaryHeaderProps {
   surveyId: string;

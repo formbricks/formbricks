@@ -1,8 +1,8 @@
 "use client";
 
-import AlertDialog from "@/components/shared/AlertDialog";
+import AlertDialog from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AlertDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SurveyStatusDropdown";
 import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { deleteSurvey } from "@/lib/surveys/surveys";
