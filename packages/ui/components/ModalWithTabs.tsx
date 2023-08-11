@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { Modal } from "@formbricks/ui";
+import { Modal } from "./Modal";
 interface ModalWithTabsProps {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -14,7 +16,7 @@ type TabProps = {
   children: React.ReactNode;
 };
 
-export default function ModalWithTabs({ open, setOpen, tabs, icon, label, description }: ModalWithTabsProps) {
+export function ModalWithTabs({ open, setOpen, tabs, icon, label, description }: ModalWithTabsProps) {
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabClick = (index: number) => {

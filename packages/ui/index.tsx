@@ -55,6 +55,8 @@ export { GoBackButton } from "./components/GoBackButton";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
 export { Modal } from "./components/Modal";
+export { ModalWithTabs } from "./components/ModalWithTabs";
+
 export { LoadingSpinner } from "./components/LoadingSpinner";
 export { PasswordInput } from "./components/PasswordInput";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";
