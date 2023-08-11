@@ -19,12 +19,12 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     <div>
       <SettingsTitle title="Product Settings" />
       <SettingsCard title="Product Name" description="Change your products name.">
-        <EditProductName product={product} />
+        <EditProductName environmentId={params.environmentId} product={product} />
       </SettingsCard>
       <SettingsCard
         title="Recontact Waiting Time"
         description="Control how frequently users can be surveyed across all surveys.">
-        <EditWaitingTime product={product} />
+        <EditWaitingTime environmentId={params.environmentId} product={product} />
       </SettingsCard>
       <SettingsCard
         title="Delete Product"

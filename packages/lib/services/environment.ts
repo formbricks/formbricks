@@ -17,7 +17,8 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
     });
 
     if (!environmentPrisma) {
-      throw new ResourceNotFoundError("Environment", environmentId);
+      // throw new ResourceNotFoundError("Environment", environmentId);
+      return null;
     }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

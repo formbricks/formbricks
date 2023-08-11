@@ -1,6 +1,6 @@
 "use client";
 
-import { updateProductAction } from "@/app/(app)/environments/[environmentId]/settings/product/actions";
+import { updateProductAction } from "./actions";
 import { TProduct } from "@formbricks/types/v1/product";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -13,9 +13,10 @@ type TEditProductName = {
 
 type EditProductNameProps = {
   product: TProduct;
+  environmentId: string;
 };
 
-const EditProductName: React.FC<EditProductNameProps> = ({ product }) => {
+const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentId }) => {
   const router = useRouter();
   const {
     register,
@@ -29,7 +30,7 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product }) => {
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
     try {
-      await updateProductAction(product.id, data);
+      await updateProductAction(environmentId, product.id, data);
       toast.success("Product name updated successfully.");
 
       // Refresh the page to fetch the new data

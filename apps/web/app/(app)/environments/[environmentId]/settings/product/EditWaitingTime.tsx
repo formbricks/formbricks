@@ -13,10 +13,11 @@ type EditWaitingTimeFormValues = {
 };
 
 type EditWaitingTimeProps = {
+  environmentId: string;
   product: TProduct;
 };
 
-const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product }) => {
+const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentId }) => {
   const router = useRouter();
   const {
     register,
@@ -30,7 +31,7 @@ const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product }) => {
 
   const updateWaitingTime: SubmitHandler<EditWaitingTimeFormValues> = async (data) => {
     try {
-      await updateProductAction(product.id, data);
+      await updateProductAction(environmentId, product.id, data);
       toast.success("Waiting period updated successfully.");
 
       router.refresh();
