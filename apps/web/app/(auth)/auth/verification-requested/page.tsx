@@ -1,6 +1,6 @@
 "use client";
 
-import { RequestVerificationEmail } from "@/components/auth/RequestVerificationEmail";
+import { RequestVerificationEmail } from "./RequestVerificationEmail";
 import { useSearchParams } from "next/navigation";
 import FormWrapper from "@/app/(auth)/auth/FormWrapper";
 

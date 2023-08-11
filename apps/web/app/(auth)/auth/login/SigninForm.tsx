@@ -1,6 +1,6 @@
 "use client";
 
-import { GoogleButton } from "@/components/auth/GoogleButton";
+import { GoogleButton } from "@/app/(auth)/auth/GoogleButton";
 import { env } from "@/env.mjs";
 import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
@@ -8,7 +8,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import { GithubButton } from "./GithubButton";
+import { GithubButton } from "../GithubButton";
 
 export const SigninForm = () => {
   const searchParams = useSearchParams();

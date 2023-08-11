@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { SignupForm } from "@/components/auth/SignupForm";
+import { SignupForm } from "./SignupForm";
 import FormWrapper from "@/app/(auth)/auth/FormWrapper";
-import Testimonial from "@/components/auth/Testimonial";
 import { env } from "@/env.mjs";
+import Testimonial from "@/app/(auth)/auth/Testimonial";
 
 export default function SignUpPage() {
   const searchParams = useSearchParams();

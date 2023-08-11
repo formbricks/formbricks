@@ -1,6 +1,6 @@
 "use client";
 
-import IsPasswordValid from "@/components/auth/IsPasswordValid";
+import IsPasswordValid from "@/app/(auth)/auth/IsPasswordValid";
 import { resetPassword } from "@/lib/users/users";
 import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
