@@ -1,5 +1,5 @@
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
-import FormWrapper from "@/components/auth/FormWrapper";
+import FormWrapper from "@/app/(auth)/auth/FormWrapper";
 
 const ResetPasswordPage: React.FC = () => {
   return (

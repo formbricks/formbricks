@@ -2,7 +2,7 @@
 
 import { RequestVerificationEmail } from "@/components/auth/RequestVerificationEmail";
 import { useSearchParams } from "next/navigation";
-import FormWrapper from "@/components/auth/FormWrapper";
+import FormWrapper from "@/app/(auth)/auth/FormWrapper";
 
 export default function VerficationPage() {
   const searchParams = useSearchParams();

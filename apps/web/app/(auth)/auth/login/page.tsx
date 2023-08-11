@@ -1,6 +1,6 @@
 import { SigninForm } from "@/components/auth/SigninForm";
 import Testimonial from "@/components/auth/Testimonial";
-import FormWrapper from "@/components/auth/FormWrapper";
+import FormWrapper from "@/app/(auth)/auth/FormWrapper";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

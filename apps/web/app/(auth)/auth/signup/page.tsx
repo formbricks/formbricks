@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { SignupForm } from "@/components/auth/SignupForm";
-import FormWrapper from "@/components/auth/FormWrapper";
+import FormWrapper from "@/app/(auth)/auth/FormWrapper";
 import Testimonial from "@/components/auth/Testimonial";
 import { env } from "@/env.mjs";
 
