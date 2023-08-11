@@ -29,6 +29,10 @@ export default function VerificationPage(params) {
       </FormWrapper>
     );
   } catch (error) {
-    return <p className="text-center">Invalid email address</p>;
+    return (
+      <FormWrapper>
+        <p className="text-center">Invalid email address</p>
+      </FormWrapper>
+    );
   }
 }
