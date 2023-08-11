@@ -7,11 +7,11 @@ import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { useEffect, useRef, useState } from "react";
-import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TProduct } from "@formbricks/types/v1/product";
 import { Button } from "@formbricks/ui";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
+import { useEffect, useRef, useState } from "react";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -283,7 +283,7 @@ export default function PreviewSurvey({
         <div className="ml-auto flex items-center">
           <Button
             variant="minimal"
-            className="mx-2 my-4 px-1 py-0.2 text-sm text-slate-400 bg-white"
+            className="mx-2 my-4 px-2 py-0.2 text-sm text-slate-500 bg-white"
             onClick={resetQuestionProgress}>
             Restart
             <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
