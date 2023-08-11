@@ -4,15 +4,14 @@ import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
+import TabOption from "@/components/preview/TabOption";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { useEffect, useRef, useState } from "react";
-import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import TabOption from "@/components/preview/TabOption";
-import { DevicePhoneMobileIcon, ComputerDesktopIcon } from "@heroicons/react/24/solid";
-
+import type { TProduct } from "@formbricks/types/v1/product";
+import { ComputerDesktopIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
+import { useEffect, useRef, useState } from "react";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -325,6 +324,12 @@ export default function PreviewSurvey({
     setActiveQuestionId(previousQuestionId);
   }
 
+  function resetQuestionProgress() {
+    setProgress(0);
+    setActiveQuestionId(questions[0].id);
+    setStoredResponse({});
+  }
+
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -349,7 +354,11 @@ export default function PreviewSurvey({
             {/* below element is use to create notch for the mobile device mockup   */}
             <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
             {previewType === "modal" ? (
-              <Modal  isOpen={isModalOpen} placement={product.placement} highlightBorderColor={product.highlightBorderColor} previewMode="mobile">
+              <Modal
+                isOpen={isModalOpen}
+                placement={product.placement}
+                highlightBorderColor={product.highlightBorderColor}
+                previewMode="mobile">
                 {!countdownStop && autoClose !== null && autoClose > 0 && (
                   <Progress progress={countdownProgress} brandColor={brandColor} />
                 )}
@@ -412,7 +421,11 @@ export default function PreviewSurvey({
             </div>
 
             {previewType === "modal" ? (
-              <Modal isOpen={isModalOpen} placement={product.placement} highlightBorderColor={product.highlightBorderColor} previewMode="desktop">
+              <Modal
+                isOpen={isModalOpen}
+                placement={product.placement}
+                highlightBorderColor={product.highlightBorderColor}
+                previewMode="desktop">
                 {!countdownStop && autoClose !== null && autoClose > 0 && (
                   <Progress progress={countdownProgress} brandColor={brandColor} />
                 )}

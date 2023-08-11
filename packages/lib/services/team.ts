@@ -1,9 +1,9 @@
-import { cache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/errors";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { createId } from "@paralleldrive/cuid2";
+import { Prisma } from "@prisma/client";
+import { cache } from "react";
 import {
   ChurnResponses,
   ChurnSurvey,
@@ -57,6 +57,22 @@ export const getTeamByEnvironmentId = cache(async (environmentId: string): Promi
     throw error;
   }
 });
+
+export const deleteTeam = async (teamId: string) => {
+  try {
+    await prisma.team.delete({
+      where: {
+        id: teamId,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
 
 export const createDemoProduct = cache(async (teamId: string) => {
   const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({

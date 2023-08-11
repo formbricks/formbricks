@@ -6,8 +6,8 @@ import { cn, shuffleArray } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import _ from "lodash";
 import { BackButton } from "./BackButton";
+import { symmetricDifference } from "../../../lib/utils/array";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -91,7 +91,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
+    if (symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }
@@ -126,7 +126,7 @@ export default function MultipleChoiceMultiQuestion({
                   selectedChoices.includes(choice.label)
                     ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50"
                     : "fb-border-gray-200",
-                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-space-y-3 fb-rounded-md fb-border fb-p-4 hover:fb-bg-slate-50 focus:fb-outline-none"
+                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-space-y-3 fb-rounded-md fb-border fb-p-4 hover:fb-bg-slate-50 focus:fb-outline-none fb-text-slate-800"
                 )}>
                 <span className="fb-flex fb-items-center fb-text-sm">
                   <input
