@@ -438,8 +438,10 @@ export default function PreviewSurvey({
             {previewType === "modal" ? (
               <Modal
                 isOpen={isModalOpen}
-                placement={product.placement}
-                highlightBorderColor={product.highlightBorderColor}
+                placement={overwritePosition ? overwritePosition : product.placement}
+                highlightBorderColor={
+                  overwriteBorderHighlight ? highlightBorderColor : product.highlightBorderColor
+                }
                 previewMode="desktop">
                 {!countdownStop && autoClose !== null && autoClose > 0 && (
                   <Progress progress={countdownProgress} brandColor={brandColor} />

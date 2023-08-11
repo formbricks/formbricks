@@ -1,6 +1,6 @@
 "use client";
 
-import { Placement } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/editLookAndFeel";
+import { Placement } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/EditPlacement";
 import { PlacementType } from "@formbricks/types/js";
 import type { Survey } from "@formbricks/types/surveys";
 import { ColorPicker, Label, Switch } from "@formbricks/ui";

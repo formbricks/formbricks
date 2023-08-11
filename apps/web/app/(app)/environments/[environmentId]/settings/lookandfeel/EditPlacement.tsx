@@ -21,31 +21,16 @@ interface EditPlacementProps {
   product: TProduct;
 }
 
-export function EditPlacement({ product }: EditPlacementProps) {
-  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>(product.placement);
-  const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
-  const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
-  const [updatingPlacement, setUpdatingPlacement] = useState(false);
-
-  const handleUpdatePlacement = async () => {
-    try {
-      setUpdatingPlacement(true);
-      let inputProduct: Partial<TProductUpdateInput> = {
-        placement: currentPlacement,
-        darkOverlay: overlay === "darkOverlay",
-        clickOutsideClose: clickOutside === "allow",
-      };
-      await updateProductAction(product.id, inputProduct);
-      toast.success("Placement updated successfully.");
-    } catch (error) {
-      toast.error(`Error: ${error.message}`);
-    } finally {
-      setUpdatingPlacement(false);
-    }
-  };
-
+export function Placement({
+  setCurrentPlacement,
+  currentPlacement,
+  setOverlay,
+  overlay,
+  setClickOutside,
+  clickOutside,
+}) {
   return (
-    <div className="w-full items-center">
+    <>
       <div className="flex">
         <RadioGroup onValueChange={(e) => setCurrentPlacement(e as PlacementType)} value={currentPlacement}>
           {placements.map((placement) => (
@@ -67,7 +52,6 @@ export function EditPlacement({ product }: EditPlacementProps) {
             )}></div>
         </div>
       </div>
-
       {currentPlacement === "center" && (
         <>
           <div className="mt-6 space-y-2">
@@ -109,6 +93,43 @@ export function EditPlacement({ product }: EditPlacementProps) {
           </div>
         </>
       )}
+    </>
+  );
+}
+
+export function EditPlacement({ product }: EditPlacementProps) {
+  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>(product.placement);
+  const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
+  const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
+  const [updatingPlacement, setUpdatingPlacement] = useState(false);
+
+  const handleUpdatePlacement = async () => {
+    try {
+      setUpdatingPlacement(true);
+      let inputProduct: Partial<TProductUpdateInput> = {
+        placement: currentPlacement,
+        darkOverlay: overlay === "darkOverlay",
+        clickOutsideClose: clickOutside === "allow",
+      };
+      await updateProductAction(product.id, inputProduct);
+      toast.success("Placement updated successfully.");
+    } catch (error) {
+      toast.error(`Error: ${error.message}`);
+    } finally {
+      setUpdatingPlacement(false);
+    }
+  };
+
+  return (
+    <div className="w-full items-center">
+      <Placement
+        currentPlacement={currentPlacement}
+        setCurrentPlacement={setCurrentPlacement}
+        setOverlay={setOverlay}
+        overlay={overlay}
+        setClickOutside={setClickOutside}
+        clickOutside={clickOutside}
+      />
       <Button variant="darkCTA" className="mt-4" loading={updatingPlacement} onClick={handleUpdatePlacement}>
         Save
       </Button>
