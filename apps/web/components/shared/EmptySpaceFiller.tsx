@@ -30,7 +30,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
         <div className="w-full space-y-4 rounded-b-lg bg-white p-4">
           <div className="h-16 w-full rounded-lg bg-slate-100"></div>
 
-          <div className="flex flex-col h-16 w-full items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-100 ">
+          <div className="flex h-16 w-full flex-col items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-100 ">
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex w-full items-center justify-center"
