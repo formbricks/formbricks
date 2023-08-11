@@ -1,15 +1,15 @@
-import { Input } from "@formbricks/ui";
+import { BackButton } from "@/components/preview/BackButton";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
+import { symmetricDifference } from "@formbricks/lib/utils/array";
+import { Response } from "@formbricks/types/js";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
+import { Input } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import _ from "lodash";
-import { Response } from "@formbricks/types/js";
-import { BackButton } from "@/components/preview/BackButton";
-import { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion;
@@ -81,7 +81,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
+    if (storedResponseValue && symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }
