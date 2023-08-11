@@ -5,7 +5,7 @@ import { Button, ProfileAvatar } from "@formbricks/ui";
 import Image from "next/image";
 import { Session } from "next-auth";
 
-export function EditAvatar({ session }:{session: Session | null}) {
+export function EditAvatar({ session }: { session: Session | null }) {
   return (
     <div>
       {session?.user?.image ? (
