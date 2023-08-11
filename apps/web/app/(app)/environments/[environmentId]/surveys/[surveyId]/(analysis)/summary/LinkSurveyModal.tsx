@@ -1,8 +1,6 @@
 "use client";
 
-import CodeBlock from "@/components/shared/CodeBlock";
-// import Modal from "@/components/shared/Modal";
-import { Dialog, DialogContent } from "@formbricks/ui";
+import { CodeBlock, Dialog, DialogContent } from "@formbricks/ui";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";

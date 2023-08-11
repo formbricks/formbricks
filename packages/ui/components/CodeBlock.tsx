@@ -13,7 +13,7 @@ interface CodeBlockProps {
   customCodeClass?: string;
 }
 
-const CodeBlock: React.FC<CodeBlockProps> = ({ children, language, customCodeClass = "" }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = ({ children, language, customCodeClass = "" }) => {
   useEffect(() => {
     Prism.highlightAll();
   }, [children]);
@@ -34,5 +34,3 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, language, customCodeCla
     </div>
   );
 };
-
-export default CodeBlock;

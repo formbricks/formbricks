@@ -6,6 +6,7 @@ export { Calendar } from "./components/Calendar";
 export { Card } from "./components/Card";
 export type { CardProps } from "./components/Card";
 export { Checkbox } from "./components/Checkbox";
+export { CodeBlock } from "./components/CodeBlock";
 export { ColorPicker } from "./components/ColorPicker";
 export {
   Command,
