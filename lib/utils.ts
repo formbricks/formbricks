@@ -416,7 +416,7 @@ export const formatScoreSummary = (
   events[0].data = {
     ...events[0].data,
     formId,
-    formName: form.name,
+    formName: form.airtableTrainingSessionId,
     submissions,
   };
 

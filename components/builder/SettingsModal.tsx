@@ -28,6 +28,9 @@ export default function SettingsModal({ open, setOpen, formId }) {
   );
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(form.name);
+  const [airtableTrainingSessionId, setAirtableTrainingSessionId] = useState(
+    form.airtableTrainingSessionId
+  );
   const [dueDate, setDueDate] = useState(form.dueDate);
   const [description, setDescription] = useState(form.description);
   const [answeringOrder, setAnsweringOrder] = useState(form.answeringOrder);
@@ -51,6 +54,9 @@ export default function SettingsModal({ open, setOpen, formId }) {
         break;
       case "name":
         changes[inputName] = name;
+        break;
+      case "airtableTrainingSessionId":
+        changes[inputName] = airtableTrainingSessionId;
         break;
       case "answeringOrder":
         changes[inputName] = answeringOrder;
@@ -153,6 +159,28 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           onBlur={(e) => handleBlurInputs(e.target.name)}
+                          autoFocus
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-1">
+                      <label htmlFor="name" className="text-sm text-gray-500">
+                        Nom du sourcing sur Airtable
+                      </label>
+                      <div className="mt-1">
+                        <input
+                          type="text"
+                          name="name"
+                          className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
+                          placeholder="e.g. Customer Research Survey"
+                          value={name}
+                          onChange={(e) =>
+                            setAirtableTrainingSessionId(e.target.value)
+                          }
+                          onBlur={(e) =>
+                            handleBlurInputs(e.target.name)
+                          }
                           autoFocus
                           required
                         />

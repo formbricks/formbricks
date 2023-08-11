@@ -76,22 +76,23 @@ enum UserRole {
 }
 
 model Form {
-  id                 String              @id
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  owner              User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId            Int
-  formType           FormType            @default(NOCODE)
-  answeringOrder     FormOrder           @default(RANDOM)
-  name               String              @default("")
-  description        String              @default("")
-  dueDate            DateTime?
-  place              Location            @default(Autre)
-  formation          Formation           @default(AUTRE)
-  schema             Json                @default("{}")
-  submissionSessions SubmissionSession[]
-  pipelines          Pipeline[]
-  noCodeForm         NoCodeForm?
+  id                                     String              @id
+  createdAt                              DateTime            @default(now())
+  updatedAt                              DateTime            @updatedAt
+  owner                                  User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId                                Int
+  formType                               FormType            @default(NOCODE)
+  answeringOrder                         FormOrder           @default(RANDOM)
+  name                                   String              @default("")
+  airtableTrainingSessionId              String              @default("")
+  description                            String              @default("")
+  dueDate                                DateTime?
+  place                                  Location            @default(Autre)
+  formation                              Formation           @default(AUTRE)
+  schema                                 Json                @default("{}")
+  submissionSessions                     SubmissionSession[]
+  pipelines                              Pipeline[]
+  noCodeForm                             NoCodeForm?
 }
 
 model NoCodeForm {
