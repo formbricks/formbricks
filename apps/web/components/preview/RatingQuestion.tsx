@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { RatingQuestion } from "@formbricks/types/questions";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
 import { StarIcon } from "@heroicons/react/24/outline";
 import { StarIcon as FilledStarIcon } from "@heroicons/react/24/solid";
 import {
@@ -20,7 +18,7 @@ import {
 import SubmitButton from "@/components/preview/SubmitButton";
 
 import { Response } from "@formbricks/types/js";
-import { BackButton } from "@formbricks/ui";
+import { BackButton, Headline, Subheader } from "@formbricks/ui";
 
 interface RatingQuestionProps {
   question: RatingQuestion;

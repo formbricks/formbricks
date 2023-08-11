@@ -1,14 +1,12 @@
 "use client";
 
 import { cn } from "@/../../packages/lib/cn";
-import Headline from "@/components/preview/Headline";
-import Subheader from "@/components/preview/Subheader";
 import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/lib/formbricks";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { ResponseId, SurveyId } from "@formbricks/js";
-import { Button } from "@formbricks/ui";
+import { Button, Headline, Subheader } from "@formbricks/ui";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 

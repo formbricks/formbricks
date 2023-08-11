@@ -1,7 +1,8 @@
-import React from "react";
+"use client";
+
 import { useEffect, useState } from "react";
 
-export default function RedirectCountDown({ initiateCountdown }: { initiateCountdown: boolean | undefined }) {
+export function RedirectCountDown({ initiateCountdown }: { initiateCountdown: boolean | undefined }) {
   const [timeRemaining, setTimeRemaining] = useState(3);
 
   useEffect(() => {

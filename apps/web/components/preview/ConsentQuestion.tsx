@@ -3,7 +3,7 @@ import { isLight } from "@/lib/utils";
 import { Response } from "@formbricks/types/js";
 import type { ConsentQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
-import Headline from "./Headline";
+import { Headline } from "@formbricks/ui";
 import HtmlBody from "./HtmlBody";
 import { BackButton } from "@formbricks/ui";
 

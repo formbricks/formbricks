@@ -1,6 +1,6 @@
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import RedirectCountDown from "./RedirectCountDown";
+import { Headline } from "./Headline";
+import { Subheader } from "./Subheader";
+import { RedirectCountDown } from "./RedirectCountDown";
 
 interface ThankYouCardProps {
   headline: string;
@@ -9,12 +9,7 @@ interface ThankYouCardProps {
   initiateCountdown?: boolean;
 }
 
-export default function ThankYouCard({
-  headline,
-  subheader,
-  brandColor,
-  initiateCountdown,
-}: ThankYouCardProps) {
+export function ThankYouCard({ headline, subheader, brandColor, initiateCountdown }: ThankYouCardProps) {
   return (
     <div className="text-center">
       <div className="flex items-center justify-center" style={{ color: brandColor }}>

@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { NPSQuestion } from "@formbricks/types/questions";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { Response } from "@formbricks/types/js";
-import { BackButton } from "@formbricks/ui";
+import { BackButton, Headline, Subheader } from "@formbricks/ui";
 interface NPSQuestionProps {
   question: NPSQuestion;
   onSubmit: (data: { [x: string]: any }) => void;

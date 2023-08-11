@@ -3,13 +3,13 @@
 import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
-import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import { Modal } from "@formbricks/ui";
+import { ThankYouCard } from "@formbricks/ui";
+import Modal from "@/components/preview/Modal";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;

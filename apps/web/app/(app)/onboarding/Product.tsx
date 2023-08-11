@@ -1,10 +1,17 @@
 "use client";
 
-import Headline from "@/components/preview/Headline";
-import Subheader from "@/components/preview/Subheader";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
-import { Button, ColorPicker, ErrorComponent, Input, Label, LoadingSpinner } from "@formbricks/ui";
+import {
+  Button,
+  ColorPicker,
+  ErrorComponent,
+  Headline,
+  Input,
+  Label,
+  LoadingSpinner,
+  Subheader,
+} from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
