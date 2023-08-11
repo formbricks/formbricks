@@ -1,4 +1,4 @@
-import SecondNavbar from "@/components/environments/SecondNavBar";
+import SecondNavbar from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/SecondNavBar";
 import { CursorArrowRaysIcon, TagIcon } from "@heroicons/react/24/solid";
 
 interface ActionsAttributesTabsProps {
