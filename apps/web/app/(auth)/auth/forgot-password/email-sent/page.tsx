@@ -1,4 +1,4 @@
-import BackToLoginButton from "@/components/auth/BackToLoginButton";
+import BackToLoginButton from "@/app/(auth)/auth/BackToLoginButton";
 import FormWrapper from "@/components/auth/FormWrapper";
 
 const SignInPage: React.FC = () => {
