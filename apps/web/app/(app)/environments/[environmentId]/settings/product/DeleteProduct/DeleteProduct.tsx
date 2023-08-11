@@ -4,15 +4,18 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { getMembersByTeamId } from "@formbricks/lib/services/membership";
 import { TProduct } from "@formbricks/types/v1/product";
 import DeleteProductRender from "@/app/(app)/environments/[environmentId]/settings/product/DeleteProduct/DeleteProductRender";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 
 type DeleteProductProps = {
   environmentId: string;
-  userId: string;
   product: TProduct;
 };
 
-export default async function DeleteProduct({ environmentId, userId, product }: DeleteProductProps) {
-  const profile = await getProfile(userId);
+export default async function DeleteProduct({ environmentId, product }: DeleteProductProps) {
+  const session = await getServerSession(authOptions);
+
+  const profile = session ? await getProfile(session.user.id) : null;
   const team = await getTeamByEnvironmentId(environmentId);
 
   const availableProducts = team ? await getAvailableProducts(team.id) : null;
@@ -29,7 +32,7 @@ export default async function DeleteProduct({ environmentId, userId, product }: 
       isUserAdminOrOwner={isUserAdminOrOwner}
       product={product}
       environmentId={environmentId}
-      userId={userId}
+      userId={session?.user.id ?? ""}
     />
   );
 }

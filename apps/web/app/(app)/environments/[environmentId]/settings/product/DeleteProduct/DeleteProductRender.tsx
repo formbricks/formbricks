@@ -36,8 +36,7 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
         router.push("/");
       }
     } catch (err) {
-      console.log(err);
-      toast.error("Product deleted successfully.");
+      toast.error("Could not delete product.");
       setIsDeleteDialogOpen(false);
     }
   };
@@ -60,6 +59,7 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
           </Button>
         </div>
       )}
+
       {isDeleteDisabled && (
         <p className="text-sm text-red-700">
           {!isUserAdminOrOwner
@@ -67,6 +67,7 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
             : "This is your only product, it cannot be deleted. Create a new product first."}
         </p>
       )}
+
       <DeleteDialog
         deleteWhat="Product"
         open={isDeleteDialogOpen}

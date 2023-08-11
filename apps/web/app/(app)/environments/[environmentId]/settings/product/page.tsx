@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 
 import SettingsCard from "../SettingsCard";
@@ -7,11 +6,11 @@ import SettingsTitle from "../SettingsTitle";
 import EditProductName from "./EditProductName";
 import EditWaitingTime from "./EditWaitingTime";
 import DeleteProduct from "./DeleteProduct";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { getEnvironment } from "@formbricks/lib/services/environment";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const session = await getServerSession(authOptions);
-  const product = session ? await getProductByEnvironmentId(params.environmentId) : null;
+  const environment = await getEnvironment(params.environmentId);
+  const product = environment ? await getProductByEnvironmentId(params.environmentId) : null;
 
   if (!product) {
     return null;
@@ -31,11 +30,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       <SettingsCard
         title="Delete Product"
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
-        <DeleteProduct
-          environmentId={params.environmentId}
-          userId={session?.user.id ?? ""}
-          product={product}
-        />
+        <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
     </div>
   );

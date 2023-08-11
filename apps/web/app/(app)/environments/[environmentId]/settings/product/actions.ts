@@ -81,6 +81,5 @@ export const deleteProductAction = async (environmentId: string, userId: string,
   }
 
   const deletedProduct = await deleteProduct(productId);
-
   return deletedProduct;
 };
