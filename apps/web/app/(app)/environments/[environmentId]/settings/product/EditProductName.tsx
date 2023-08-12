@@ -33,7 +33,6 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
       await updateProductAction(environmentId, product.id, data);
       toast.success("Product name updated successfully.");
 
-      // Refresh the page to fetch the new data
       router.refresh();
     } catch (err) {
       toast.error(`Error: ${err.message}`);

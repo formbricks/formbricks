@@ -1,8 +1,7 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
 import { deleteProduct, getAvailableProducts, updateProduct } from "@formbricks/lib/services/product";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { getServerSession } from "next-auth";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/errors";
 import { getEnvironment } from "@formbricks/lib/services/environment";
@@ -14,7 +13,7 @@ import { getMembershipByUserId } from "@formbricks/lib/services/membership";
 export const updateProductAction = async (
   environmentId: string,
   productId: string,
-  data: Prisma.ProductUpdateInput
+  data: TProductUpdateInput
 ): Promise<TProduct> => {
   const session = await getServerSession();
 
