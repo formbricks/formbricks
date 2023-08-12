@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const surveyId = req.query.surveyId?.toString();
+  const uniqueResponseId = req.query.uniqueResponseId?.toString();
 
   if (!surveyId) {
     return res.status(400).json({ message: "Missing surveyId" });
@@ -29,6 +30,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         status: true,
         redirectUrl: true,
         surveyClosedMessage: true,
+        responses: {
+          select: {
+            uniqueResponseId: uniqueResponseId ? true : false,
+          },
+        },
       },
     });
 
@@ -61,6 +67,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         surveyClosedMessage: survey?.surveyClosedMessage,
       });
     }
+
+    // filters out responses without externalId
+    survey.responses = survey.responses.filter((response) => response.uniqueResponseId !== null);
 
     // if survey exists, return survey
     return res.status(200).json({

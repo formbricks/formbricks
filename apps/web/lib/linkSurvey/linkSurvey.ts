@@ -16,8 +16,11 @@ interface StoredResponse {
   history: string[];
 }
 
-export const useLinkSurvey = (surveyId: string) => {
-  const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
+export const useLinkSurvey = (surveyId: string, uniqueResponseId?: string) => {
+  const { data, error, mutate, isLoading } = useSWR(
+    `/api/v1/client/surveys/${surveyId}?uniqueResponseId=${uniqueResponseId}`,
+    fetcher
+  );
 
   return {
     survey: data,
@@ -46,7 +49,8 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
   const lastQuestion = currentQuestion?.id === survey.questions[survey.questions.length - 1].id;
 
-  const userId = URLParams.get("userId");
+  const userId = URLParams?.get("userId");
+  const uniqueResponseId = URLParams?.get("id");
   const { person, isLoadingPerson } = useGetOrCreatePerson(survey.environmentId, isPreview ? null : userId);
   const personId = person?.data.person.id ?? null;
 
@@ -142,6 +146,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     const responseRequest: TResponseInput = {
       surveyId: survey.id,
       personId: personId,
+      uniqueResponseId: uniqueResponseId ?? null,
       finished,
       data,
       meta: {

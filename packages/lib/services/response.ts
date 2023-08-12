@@ -122,6 +122,7 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
           personAttributes: person?.attributes,
         }),
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
+        uniqueResponseId: responseInput.uniqueResponseId,
       },
       select: responseSelection,
     });

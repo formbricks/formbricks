@@ -11,7 +11,10 @@ interface SurveyPageProps {
 }
 
 export default function SurveyPage({ surveyId }: SurveyPageProps) {
-  const { survey, isLoadingSurvey, isErrorSurvey } = useLinkSurvey(surveyId);
+  const URLParams = new URLSearchParams(window.location.search);
+  const uniqueResponseId = URLParams.get("id");
+  const { survey, isLoadingSurvey, isErrorSurvey } = useLinkSurvey(surveyId, uniqueResponseId ?? undefined);
+  const surveyUniqueResponseIds = survey?.responses.map((response) => response.uniqueResponseId) ?? [];
 
   if (isLoadingSurvey) {
     return (
@@ -32,6 +35,10 @@ export default function SurveyPage({ surveyId }: SurveyPageProps) {
         surveyClosedMessage={isErrorSurvey.info?.surveyClosedMessage}
       />
     );
+  }
+
+  if (surveyUniqueResponseIds.includes(uniqueResponseId)) {
+    console.log("non unique response id");
   }
 
   return (
