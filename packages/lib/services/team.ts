@@ -29,9 +29,10 @@ export const select = {
   updatedAt: true,
   name: true,
   plan: true,
+  stripeCustomerId: true
 };
 
-export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
+export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam> => {
   try {
     const team = await prisma.team.findFirst({
       where: {
