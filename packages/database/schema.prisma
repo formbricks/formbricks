@@ -3,7 +3,8 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // url      = env("DATABASE_URL")
+  url      = "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
 }
 
 generator client {
@@ -107,6 +108,9 @@ model Response {
   /// @zod.custom(imports.ZResponsePersonAttributes)
   /// [ResponsePersonAttributes]
   personAttributes Json?
+  uniqueResponseId String?  
+
+  @@unique([surveyId, uniqueResponseId])
 }
 
 model ResponseNote {
