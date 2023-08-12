@@ -120,7 +120,8 @@ export default function PreviewSurvey({
   const [storedResponseValue, setStoredResponseValue] = useState<any>();
   const [storedResponse, setStoredResponse] = useState<Record<string, any>>({});
   const [previewMode, setPreviewMode] = useState("desktop");
-  const showBackButton = progress !== 0 && !finished;
+  const showBackButton =
+    questions.findIndex((question) => question.id === activeQuestionId) !== 0 && !finished;
   const ContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

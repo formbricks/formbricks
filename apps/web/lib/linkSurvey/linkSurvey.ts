@@ -71,7 +71,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       if (lastStoredQuestionIndex > 0 && survey.questions.length > lastStoredQuestionIndex + 1) {
         const nextQuestion = survey.questions[lastStoredQuestionIndex];
         setCurrentQuestion(nextQuestion);
-        setProgress(calculateProgress(nextQuestion, survey));
+        setProgress(calculateProgress(nextQuestion, survey, progress));
         setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
       }
     }
@@ -104,13 +104,16 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion]);
 
+  let questionIdxTemp;
+  const progressArray: number[] = new Array(survey.questions.length).fill(undefined);
   const calculateProgress = useCallback(
     (currentQuestion: Question, survey: Survey, currentProgress: number) => {
+      const currentQuestionIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
       const surveyLength = survey.questions.length;
       const middleIdx = Math.floor(surveyLength / 2);
 
       // if idx would be zero, return 0.5 to achieve the goal gradient effect
-      let elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id) || 0.5;
+      let elementIdx = currentQuestionIdx || 0.5;
 
       // get all possible next questions ids from logic
       const possibleNextQuestions = currentQuestion.logic?.map((l) => l.destination) || [];
@@ -127,14 +130,30 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
       const newProgress = elementIdx / survey.questions.length;
 
+      // logic to check whether user has clicked on back button
+      if (currentQuestionIdx < questionIdxTemp) {
+        // progressArray is an array to store progress values of question where index of progressArray is equivalent to questionIdx
+        if (progressArray[currentQuestionIdx]) {
+          return progressArray[currentQuestionIdx];
+        }
+        // it may happen that due to logic jumps progress of some quesions can be missing
+        progressArray[currentQuestionIdx] = currentProgress - 0.1;
+        questionIdxTemp = currentQuestionIdx;
+        return currentProgress - 0.1;
+      }
+      questionIdxTemp = currentQuestionIdx;
+
       // Move forward by 5% or keep the new progress if it's greater
       if (newProgress > currentProgress) {
+        progressArray[currentQuestionIdx] = newProgress;
         return newProgress;
       } else if (newProgress <= currentProgress && currentProgress + 0.1 <= 1) {
         // Make sure not to exceed 100%
+        progressArray[currentQuestionIdx] = currentProgress + 0.1;
         return currentProgress + 0.1;
       }
 
+      progressArray[currentQuestionIdx] = currentProgress;
       return currentProgress; // In case no condition is met, return the current progress
     },
     []

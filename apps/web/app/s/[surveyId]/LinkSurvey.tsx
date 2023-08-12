@@ -39,7 +39,8 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     storedResponseValue,
   } = useLinkSurveyUtils(survey);
 
-  const showBackButton = progress !== 0 && !finished;
+  const showBackButton =
+    survey.questions.findIndex((question) => question === currentQuestion) !== 0 && !finished;
   // Create a reference to the top element
   const topRef = useRef<HTMLDivElement>(null);
   const [autoFocus, setAutofocus] = useState(false);

@@ -2,7 +2,7 @@ import type { TJsConfig } from "../../../types/v1/js";
 import type { TSurvey } from "../../../types/v1/surveys";
 import type { TSurveyLogic } from "../../../types/v1/surveys";
 import { h } from "preact";
-import { useEffect, useRef, useState, useLayoutEffect } from "preact/hooks";
+import { useEffect, useRef, useState, useLayoutEffect, useCallback } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { IErrorHandler } from "../lib/errors";
 import { Logger } from "../lib/logger";
@@ -37,7 +37,8 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const startRef = useRef(performance.now());
   const frameRef = useRef<number | null>(null);
 
-  const showBackButton = progress !== 0 && !finished;
+  const showBackButton =
+    survey.questions.findIndex((question) => question.id === activeQuestionId) !== 0 && !finished;
 
   const handleStopCountdown = () => {
     if (frameRef.current !== null) {
@@ -98,12 +99,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   }, [config, survey, errorHandler]);
 
   useEffect(() => {
-    setProgress(calculateProgress());
-
-    function calculateProgress() {
-      const elementIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
-      return elementIdx / survey.questions.length;
-    }
+    setProgress(calculateProgress(activeQuestionId, survey, progress));
   }, [activeQuestionId, survey]);
 
   function evaluateCondition(logic: TSurveyLogic, responseValue: any): boolean {
@@ -275,6 +271,61 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       }
     }
   };
+  let questionIdxTemp;
+  const progressArray: number[] = new Array(survey.questions.length).fill(undefined);
+  const calculateProgress = useCallback(
+    (currentQuestionId: string, survey: TSurvey, currentProgress: number) => {
+      const currentQuestionIdx = survey.questions.findIndex((e) => e.id === currentQuestionId);
+      const currentQuestion = survey.questions[currentQuestionIdx];
+      const surveyLength = survey.questions.length;
+      const middleIdx = Math.floor(surveyLength / 2);
+
+      // if idx would be zero, return 0.5 to achieve the goal gradient effect
+      let elementIdx = currentQuestionIdx || 0.5;
+
+      // get all possible next questions ids from logic
+      const possibleNextQuestions = currentQuestion.logic?.map((l) => l.destination) || [];
+
+      const lastQuestion = survey.questions
+        .filter((q) => possibleNextQuestions.includes(q.id))
+        .sort((a, b) => survey.questions.indexOf(a) - survey.questions.indexOf(b))
+        .pop();
+      const lastQuestionIdx = survey.questions.findIndex((e) => e.id === lastQuestion?.id);
+
+      // set elementIdx to whichever is smaller, the middleIdx or the questionIdx
+      if (lastQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastQuestionIdx - 1);
+      if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
+
+      const newProgress = elementIdx / survey.questions.length;
+
+      // logic to check whether user has clicked on back button
+      if (currentQuestionIdx < questionIdxTemp) {
+        // progressArray is an array to store progress values of question where index of progressArray is equivalent to questionIdx
+        if (progressArray[currentQuestionIdx]) {
+          return progressArray[currentQuestionIdx];
+        }
+        // it may happen that due to logic jumps progress of some quesions can be missing
+        progressArray[currentQuestionIdx] = currentProgress - 0.1;
+        questionIdxTemp = currentQuestionIdx;
+        return currentProgress - 0.1;
+      }
+      questionIdxTemp = currentQuestionIdx;
+
+      // Move forward by 5% or keep the new progress if it's greater
+      if (newProgress > currentProgress) {
+        progressArray[currentQuestionIdx] = newProgress;
+        return newProgress;
+      } else if (newProgress <= currentProgress && currentProgress + 0.1 <= 1) {
+        // Make sure not to exceed 100%
+        progressArray[currentQuestionIdx] = currentProgress + 0.1;
+        return currentProgress + 0.1;
+      }
+
+      progressArray[currentQuestionIdx] = currentProgress;
+      return currentProgress; // In case no condition is met, return the current progress
+    },
+    []
+  );
 
   return (
     <div>
