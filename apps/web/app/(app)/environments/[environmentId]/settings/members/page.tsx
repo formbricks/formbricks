@@ -3,8 +3,15 @@ import SettingsTitle from "../SettingsTitle";
 import { EditMemberships } from "./EditMemberships";
 import EditTeamName from "./EditTeamName";
 import DeleteTeam from "./DeleteTeam";
+import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 
-export default function MembersSettingsPage({ params }) {
+export default async function MembersSettingsPage({ params }: { params: { environmentId: string } }) {
+  const team = await getTeamByEnvironmentId(params.environmentId);
+
+  if (!team) {
+    return null;
+  }
+
   return (
     <div>
       <SettingsTitle title="Team" />
@@ -12,7 +19,7 @@ export default function MembersSettingsPage({ params }) {
         <EditMemberships environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">
-        <EditTeamName environmentId={params.environmentId} />
+        <EditTeamName team={team} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
         title="Delete Team"
