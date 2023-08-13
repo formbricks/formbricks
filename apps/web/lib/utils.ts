@@ -1,3 +1,5 @@
+import { TMembershipRole } from "@formbricks/types/v1/memberships";
+
 export function capitalizeFirstLetter(string: string | null = "") {
   if (string === null) {
     return "";
@@ -72,3 +74,11 @@ export const shuffleArray = (array: any[], shuffleOption: string) => {
 
   return arrayCopy;
 };
+
+export enum MEMBERSHIP_ROLES {
+  OWNER = "owner",
+  ADMIN = "admin",
+  EDITOR = "editor",
+  DEVELOPER = "developer",
+  VIEWER = "viewer",
+}

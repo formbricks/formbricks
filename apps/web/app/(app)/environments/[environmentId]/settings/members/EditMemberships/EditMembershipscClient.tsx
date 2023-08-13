@@ -37,10 +37,10 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import AddMemberModal from "./AddMemberModal";
 import { useRouter } from "next/navigation";
 import { useMemberships } from "@/lib/memberships";
 import CustomDialog from "@/components/shared/CustomDialog";
+import AddMemberModal from "@/app/(app)/environments/[environmentId]/settings/members/AddMemberModal";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -169,7 +169,7 @@ function RoleElement({
   return <Badge text={capitalizeFirstLetter(memberRole)} type="gray" size="tiny" />;
 }
 
-export function EditMemberships({ environmentId }: EditMembershipsProps) {
+export function EditMembershipsClient({ environmentId }: EditMembershipsProps) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
 
   const [loading, setLoading] = useState(false);
