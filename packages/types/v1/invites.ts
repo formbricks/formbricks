@@ -1,4 +1,5 @@
 import z from "zod";
+import { Prisma } from "@prisma/client";
 import { ZMembershipRole } from "./memberships";
 
 const ZInvite = z.object({
@@ -15,3 +16,4 @@ const ZInvite = z.object({
 });
 
 export type TInvite = z.infer<typeof ZInvite>;
+export type TInviteUpdateInput = Prisma.InviteUpdateInput;

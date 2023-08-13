@@ -1,6 +1,10 @@
 "use client";
 
 import TransferOwnershipModal from "@/app/(app)/environments/[environmentId]/settings/members/TransferOwnershipModal";
+import {
+  updateInviteAction,
+  updateMembershipAction,
+} from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import { transferOwnership, updateInviteeRole, updateMemberRole, useMembers } from "@/lib/members";
 import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "@/lib/utils";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
@@ -43,24 +47,25 @@ export default function MembershipRole({
   inviteId,
   currentUserRole,
 }: Role) {
-  // const { mutateTeam } = useMembers(environmentId);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
-  const disableRole =
-    memberRole && memberId && userId
-      ? memberRole === ("owner" as TMembershipRole) || memberId === userId
-      : false;
 
-  const handleMemberRoleUpdate = async (role: string) => {
+  const disableRole =
+    memberRole && memberId && userId ? memberRole === "owner" || memberId === userId : false;
+
+  const handleMemberRoleUpdate = async (role: TMembershipRole) => {
     setLoading(true);
-    if (memberAccepted) {
-      await updateMemberRole(teamId, memberId, role);
-    } else {
-      await updateInviteeRole(teamId, inviteId, role);
+    if (memberAccepted && memberId) {
+      await updateMembershipAction(memberId, teamId, { role });
+      return;
     }
+
+    if (inviteId) {
+      await updateInviteAction(inviteId, { role });
+    }
+
     setLoading(false);
-    // mutateTeam();
     router.refresh();
   };
 

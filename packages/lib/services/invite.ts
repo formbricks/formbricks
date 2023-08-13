@@ -1,6 +1,8 @@
 import { prisma } from "@formbricks/database";
-import { TInvite } from "@formbricks/types/v1/invites";
+import { Prisma } from "@prisma/client";
+import { TInvite, TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { cache } from "react";
+import { ResourceNotFoundError } from "@formbricks/errors";
 
 const inviteSelect = {
   id: true,
@@ -26,4 +28,22 @@ export const getInviteesByTeamId = cache(async (teamId: string): Promise<TInvite
   }
 
   return invites;
+});
+
+export const updateInvite = cache(async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite> => {
+  try {
+    const invite = await prisma.invite.update({
+      where: { id: inviteId },
+      data,
+      select: inviteSelect,
+    });
+
+    return invite;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+      throw new ResourceNotFoundError("Invite", inviteId);
+    } else {
+      throw error; // Re-throw any other errors
+    }
+  }
 });

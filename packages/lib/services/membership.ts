@@ -1,6 +1,8 @@
 import { prisma } from "@formbricks/database";
-import { TMember, TMembership } from "@formbricks/types/v1/memberships";
+import { Prisma } from "@prisma/client";
+import { TMember, TMembership, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
 import { cache } from "react";
+import { ResourceNotFoundError } from "@formbricks/errors";
 
 export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[]> => {
   const membersData = await prisma.membership.findMany({
@@ -77,3 +79,27 @@ export const getAllMembershipsByUserId = cache(async (userId: string) => {
 
   return memberships;
 });
+
+export const updateMembership = cache(
+  async (userId: string, teamId: string, data: TMembershipUpdateInput): Promise<TMembership> => {
+    try {
+      const membership = await prisma.membership.update({
+        where: {
+          userId_teamId: {
+            userId,
+            teamId,
+          },
+        },
+        data,
+      });
+
+      return membership;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+        throw new ResourceNotFoundError("Membership", `userId: ${userId}, teamId: ${teamId}`);
+      } else {
+        throw error; // Re-throw any other errors
+      }
+    }
+  }
+);

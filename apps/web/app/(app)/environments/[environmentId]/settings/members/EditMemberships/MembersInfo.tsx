@@ -31,11 +31,8 @@ const MembersInfo = async ({ environmentId, team }: MembersInfoProps) => {
 
   const profile = session ? await getProfile(session.user?.id) : null;
   const membership = session ? await getMembershipByUserId(session.user?.id, team.id) : null;
-  // const allMemberships = session ? await getAllMembershipsByUserId(session.user?.id) : null;
 
   const isUserAdminOrOwner = membership?.role === "admin" || membership?.role === "owner";
-
-  console.log({ members, invites });
 
   return (
     <div className="grid-cols-20">
