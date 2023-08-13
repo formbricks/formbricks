@@ -5,7 +5,7 @@ import {
   updateInviteAction,
   updateMembershipAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { transferOwnership, updateInviteeRole, updateMemberRole, useMembers } from "@/lib/members";
+import { transferOwnership } from "@/lib/members";
 import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "@/lib/utils";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 import {
@@ -62,7 +62,7 @@ export default function MembershipRole({
     }
 
     if (inviteId) {
-      await updateInviteAction(inviteId, { role });
+      await updateInviteAction(inviteId, teamId, { role });
     }
 
     setLoading(false);
@@ -71,7 +71,7 @@ export default function MembershipRole({
 
   const handleOwnershipTransfer = async () => {
     setLoading(true);
-    const isTransfered = await transferOwnership(teamId, memberId);
+    const isTransfered = memberId ? await transferOwnership(teamId, memberId) : false;
     if (isTransfered) {
       toast.success("Ownership transferred successfully");
     } else {
@@ -79,11 +79,10 @@ export default function MembershipRole({
     }
     setTransferOwnershipModalOpen(false);
     setLoading(false);
-    // mutateTeam();
     router.refresh();
   };
 
-  const handleRoleChange = (role: string) => {
+  const handleRoleChange = (role: TMembershipRole) => {
     if (role === "owner") {
       setTransferOwnershipModalOpen(true);
     } else {

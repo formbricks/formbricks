@@ -1,5 +1,6 @@
 "use server";
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { hasTeamAccess, isAdminOrOwner } from "@/lib/api/apiHelper";
 import { AuthenticationError } from "@formbricks/errors";
 import { updateInvite } from "@formbricks/lib/services/invite";
@@ -19,7 +20,7 @@ export const updateMembershipAction = async (
   teamId: string,
   data: TMembershipUpdateInput
 ) => {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   if (!session) {
     throw new AuthenticationError("Not authenticated");
@@ -38,6 +39,22 @@ export const updateMembershipAction = async (
   return await updateMembership(userId, teamId, data);
 };
 
-export const updateInviteAction = async (inviteId: string, data: TInviteUpdateInput) => {
+export const updateInviteAction = async (inviteId: string, teamId: string, data: TInviteUpdateInput) => {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  const hasAccess = await hasTeamAccess({ id: session.user.id }, teamId);
+  if (!hasAccess) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  const hasOwnerOrAdminAccess = await isAdminOrOwner({ id: session.user.id }, teamId);
+  if (!hasOwnerOrAdminAccess) {
+    throw new AuthenticationError("You are not allowed to update member's role in this team");
+  }
+
   return await updateInvite(inviteId, data);
 };
