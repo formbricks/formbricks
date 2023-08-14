@@ -1,3 +1,4 @@
+import { TInvite } from "@formbricks/types/v1/invites";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 
 export function capitalizeFirstLetter(string: string | null = "") {
@@ -82,3 +83,9 @@ export enum MEMBERSHIP_ROLES {
   DEVELOPER = "developer",
   VIEWER = "viewer",
 }
+
+export const isInviteExpired = (invite: TInvite) => {
+  const now = new Date();
+  const expiresAt = new Date(invite.expiresAt);
+  return now > expiresAt;
+};

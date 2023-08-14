@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { TInvite, TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { cache } from "react";
 import { ResourceNotFoundError } from "@formbricks/errors";
+import { sendInviteMemberEmail } from "../emails/emails";
 
 const inviteSelect = {
   id: true,
@@ -76,4 +77,34 @@ export const getInviteToken = cache(async (inviteId: string) => {
     inviteId,
     email: invite.email,
   };
+});
+
+export const resendInvite = cache(async (inviteId: string) => {
+  const invite = await prisma.invite.findUnique({
+    where: {
+      id: inviteId,
+    },
+    select: {
+      email: true,
+      name: true,
+      creator: true,
+    },
+  });
+
+  if (!invite) {
+    throw new ResourceNotFoundError("Invite", inviteId);
+  }
+
+  await sendInviteMemberEmail(inviteId, invite.creator?.name ?? "", invite.name ?? "", invite.email);
+
+  const updatedInvite = await prisma.invite.update({
+    where: {
+      id: inviteId,
+    },
+    data: {
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    },
+  });
+
+  return updatedInvite;
 });

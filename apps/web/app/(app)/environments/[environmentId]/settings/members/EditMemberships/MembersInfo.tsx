@@ -1,5 +1,7 @@
+import MemberActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/MemberActions";
 import MembershipRole from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/MembershipRole";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { isInviteExpired } from "@/lib/utils";
 import { getInviteesByTeamId } from "@formbricks/lib/services/invite";
 import {
   getAllMembershipsByUserId,
@@ -10,7 +12,7 @@ import { getProfile } from "@formbricks/lib/services/profile";
 import { TInvite } from "@formbricks/types/v1/invites";
 import { TMember } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";
-import { ProfileAvatar } from "@formbricks/ui";
+import { Badge, ProfileAvatar } from "@formbricks/ui";
 import { getServerSession } from "next-auth";
 import React from "react";
 
@@ -19,8 +21,9 @@ type MembersInfoProps = {
   team: TTeam;
 };
 
+// Type guard to check if member is an invitee
 function isInvitee(member: TMember | TInvite): member is TInvite {
-  return (member as TInvite).email !== undefined;
+  return (member as TInvite).expiresAt !== undefined;
 }
 
 const MembersInfo = async ({ environmentId, team }: MembersInfoProps) => {
@@ -69,6 +72,25 @@ const MembersInfo = async ({ environmentId, team }: MembersInfoProps) => {
                 currentUserRole={membership.role}
               />
             )}
+          </div>
+
+          <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
+            {!member.accepted &&
+              (isInviteExpired(member) ? (
+                <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
+              ) : (
+                <Badge className="mr-2" type="warning" text="Pending" size="tiny" />
+              ))}
+
+            <MemberActions
+              team={team}
+              member={!isInvitee(member) ? member : undefined}
+              invite={isInvitee(member) ? member : undefined}
+              isAdminOrOwner={isUserAdminOrOwner}
+              showDeleteButton={
+                isUserAdminOrOwner && member.role !== "owner" && member.userId !== profile?.id
+              }
+            />
           </div>
         </div>
       ))}

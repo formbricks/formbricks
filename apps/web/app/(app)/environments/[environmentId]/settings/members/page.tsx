@@ -20,7 +20,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
       <SettingsCard title="Manage members" description="Add or remove members in your team.">
         <EditMemberships environmentId={params.environmentId} team={team} />
 
-        {/* <EditMembershipsClient environmentId={params.environmentId} /> */}
+        <EditMembershipsClient environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">
         <EditTeamName team={team} environmentId={params.environmentId} />
