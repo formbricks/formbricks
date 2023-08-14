@@ -116,3 +116,34 @@ export const deleteMembership = cache(async (userId: string, teamId: string): Pr
 
   return deletedMembership;
 });
+
+export const transferOwnership = cache(async (currentOwnerId: string, newOwnerId: string, teamId: string) => {
+  try {
+    await prisma.$transaction([
+      prisma.membership.update({
+        where: {
+          userId_teamId: {
+            teamId,
+            userId: currentOwnerId,
+          },
+        },
+        data: {
+          role: "admin",
+        },
+      }),
+      prisma.membership.update({
+        where: {
+          userId_teamId: {
+            teamId,
+            userId: newOwnerId,
+          },
+        },
+        data: {
+          role: "owner",
+        },
+      }),
+    ]);
+  } catch (error) {
+    throw new Error("Something went wrong");
+  }
+});

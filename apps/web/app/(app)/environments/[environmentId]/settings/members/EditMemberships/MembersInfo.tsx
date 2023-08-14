@@ -1,24 +1,19 @@
 import MemberActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/MemberActions";
 import MembershipRole from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/MembershipRole";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { isInviteExpired } from "@/lib/utils";
-import { getInviteesByTeamId } from "@formbricks/lib/services/invite";
-import {
-  getAllMembershipsByUserId,
-  getMembersByTeamId,
-  getMembershipByUserId,
-} from "@formbricks/lib/services/membership";
-import { getProfile } from "@formbricks/lib/services/profile";
 import { TInvite } from "@formbricks/types/v1/invites";
-import { TMember } from "@formbricks/types/v1/memberships";
+import { TMember, TMembershipRole } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { Badge, ProfileAvatar } from "@formbricks/ui";
-import { getServerSession } from "next-auth";
 import React from "react";
 
 type MembersInfoProps = {
-  environmentId: string;
   team: TTeam;
+  members: TMember[];
+  invites: TInvite[];
+  isUserAdminOrOwner: boolean;
+  currentUserId: string;
+  currentUserRole: TMembershipRole;
 };
 
 // Type guard to check if member is an invitee
@@ -26,20 +21,19 @@ function isInvitee(member: TMember | TInvite): member is TInvite {
   return (member as TInvite).expiresAt !== undefined;
 }
 
-const MembersInfo = async ({ environmentId, team }: MembersInfoProps) => {
-  const members = await getMembersByTeamId(team.id);
-  const invites = await getInviteesByTeamId(team.id);
-
-  const session = await getServerSession(authOptions);
-
-  const profile = session ? await getProfile(session.user?.id) : null;
-  const membership = session ? await getMembershipByUserId(session.user?.id, team.id) : null;
-
-  const isUserAdminOrOwner = membership?.role === "admin" || membership?.role === "owner";
+const MembersInfo = async ({
+  team,
+  invites,
+  isUserAdminOrOwner,
+  members,
+  currentUserId,
+  currentUserRole,
+}: MembersInfoProps) => {
+  const allMembers = [...members, ...invites];
 
   return (
     <div className="grid-cols-20">
-      {[...members, ...invites].map((member) => (
+      {allMembers.map((member) => (
         <div
           className="grid-cols-20 grid h-auto w-full content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
           key={member.email}>
@@ -58,24 +52,24 @@ const MembersInfo = async ({ environmentId, team }: MembersInfoProps) => {
           </div>
 
           <div className="ph-no-capture col-span-3 flex flex-col items-start justify-center break-all">
-            {profile && membership && (
+            {allMembers?.length > 0 && (
               <MembershipRole
                 isAdminOrOwner={isUserAdminOrOwner}
                 memberRole={member.role}
-                memberId={member.userId}
-                memberName={member.name}
+                memberId={!isInvitee(member) ? member.userId : ""}
+                memberName={member.name ?? ""}
                 teamId={team.id}
-                environmentId={environmentId}
-                userId={profile?.id}
+                userId={currentUserId}
                 memberAccepted={member.accepted}
-                inviteId={isInvitee(member) ? member.id : undefined}
-                currentUserRole={membership.role}
+                inviteId={isInvitee(member) ? member.id : ""}
+                currentUserRole={currentUserRole}
               />
             )}
           </div>
 
           <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
             {!member.accepted &&
+              isInvitee(member) &&
               (isInviteExpired(member) ? (
                 <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
               ) : (
@@ -88,7 +82,7 @@ const MembersInfo = async ({ environmentId, team }: MembersInfoProps) => {
               invite={isInvitee(member) ? member : undefined}
               isAdminOrOwner={isUserAdminOrOwner}
               showDeleteButton={
-                isUserAdminOrOwner && member.role !== "owner" && member.userId !== profile?.id
+                isUserAdminOrOwner && member.role !== "owner" && (member as TMember).userId !== currentUserId
               }
             />
           </div>

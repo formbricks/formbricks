@@ -2,10 +2,10 @@
 
 import TransferOwnershipModal from "@/app/(app)/environments/[environmentId]/settings/members/TransferOwnershipModal";
 import {
+  transferOwnershipAction,
   updateInviteAction,
   updateMembershipAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { transferOwnership } from "@/lib/members";
 import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "@/lib/utils";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 import {
@@ -28,7 +28,6 @@ interface Role {
   teamId: string;
   memberId?: string;
   memberName: string;
-  environmentId: string;
   userId: string;
   memberAccepted: boolean;
   inviteId?: string;
@@ -41,7 +40,6 @@ export default function MembershipRole({
   teamId,
   memberId,
   memberName,
-  environmentId,
   userId,
   memberAccepted,
   inviteId,
@@ -56,13 +54,17 @@ export default function MembershipRole({
 
   const handleMemberRoleUpdate = async (role: TMembershipRole) => {
     setLoading(true);
-    if (memberAccepted && memberId) {
-      await updateMembershipAction(memberId, teamId, { role });
-      return;
-    }
 
-    if (inviteId) {
-      await updateInviteAction(inviteId, teamId, { role });
+    try {
+      if (memberAccepted && memberId) {
+        await updateMembershipAction(memberId, teamId, { role });
+      }
+
+      if (inviteId) {
+        await updateInviteAction(inviteId, teamId, { role });
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
     }
 
     setLoading(false);
@@ -71,15 +73,20 @@ export default function MembershipRole({
 
   const handleOwnershipTransfer = async () => {
     setLoading(true);
-    const isTransfered = memberId ? await transferOwnership(teamId, memberId) : false;
-    if (isTransfered) {
+    try {
+      if (memberId) {
+        await transferOwnershipAction(teamId, memberId);
+      }
+
+      setLoading(false);
+      setTransferOwnershipModalOpen(false);
       toast.success("Ownership transferred successfully");
-    } else {
-      toast.error("Something went wrong");
+      router.refresh();
+    } catch (err) {
+      toast.error(`Error: ${err.message}`);
+      setLoading(false);
+      setTransferOwnershipModalOpen(false);
     }
-    setTransferOwnershipModalOpen(false);
-    setLoading(false);
-    router.refresh();
   };
 
   const handleRoleChange = (role: TMembershipRole) => {
@@ -94,7 +101,8 @@ export default function MembershipRole({
     if (currentUserRole === "owner" && memberAccepted) {
       return Object.keys(MEMBERSHIP_ROLES);
     }
-    return Object.keys(MEMBERSHIP_ROLES).filter((role) => role !== "Owner");
+
+    return Object.keys(MEMBERSHIP_ROLES).filter((role) => role !== "OWNER");
   };
 
   if (isAdminOrOwner) {
@@ -116,7 +124,7 @@ export default function MembershipRole({
             <DropdownMenuContent>
               <DropdownMenuRadioGroup
                 value={capitalizeFirstLetter(memberRole)}
-                onValueChange={(value) => handleRoleChange(value.toLowerCase())}>
+                onValueChange={(value) => handleRoleChange(value.toLowerCase() as TMembershipRole)}>
                 {getMembershipRoles().map((role) => (
                   <DropdownMenuRadioItem key={role} value={role} className="capitalize">
                     {role.toLowerCase()}

@@ -2,8 +2,9 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { TInvite, TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { cache } from "react";
-import { ResourceNotFoundError } from "@formbricks/errors";
+import { ResourceNotFoundError, ValidationError } from "@formbricks/errors";
 import { sendInviteMemberEmail } from "../emails/emails";
+import { TMembershipRole } from "@formbricks/types/v1/memberships";
 
 const inviteSelect = {
   id: true,
@@ -108,3 +109,55 @@ export const resendInvite = cache(async (inviteId: string) => {
 
   return updatedInvite;
 });
+
+export const inviteUser = cache(
+  async ({
+    currentUser,
+    invitee,
+    teamId,
+  }: {
+    teamId: string;
+    invitee: { name: string; email: string; role: TMembershipRole };
+    currentUser: { id: string; name: string };
+  }) => {
+    const { name, email, role } = invitee;
+    const { id: currentUserId, name: currentUserName } = currentUser;
+    const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
+
+    if (existingInvite) {
+      throw new ValidationError("Invite already exists");
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      const member = await prisma.membership.findUnique({
+        where: {
+          userId_teamId: { teamId, userId: user.id },
+        },
+      });
+      if (member) {
+        throw new ValidationError("User is already a member of this team");
+      }
+    }
+
+    const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
+    const expiresAt = new Date(Date.now() + expiresIn);
+
+    const invite = await prisma.invite.create({
+      data: {
+        email,
+        name,
+        team: { connect: { id: teamId } },
+        creator: { connect: { id: currentUserId } },
+        acceptor: user ? { connect: { id: user.id } } : undefined,
+        role,
+        expiresAt,
+      },
+    });
+
+    await sendInviteMemberEmail(invite.id, currentUserName, name, email);
+
+    return invite;
+  }
+);
