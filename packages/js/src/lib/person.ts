@@ -118,11 +118,11 @@ export const hasAttributeKey = (key: string): boolean => {
 };
 
 export const setPersonUserId = async (
-  userId: string
+  userId: string | number
 ): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
   logger.debug("setting userId: " + userId);
   // check if attribute already exists with this value
-  if (hasAttributeValue("userId", userId)) {
+  if (hasAttributeValue("userId", userId.toString())) {
     logger.debug("userId already set to this value. Skipping update.");
     return okVoid();
   }
@@ -132,7 +132,7 @@ export const setPersonUserId = async (
       message: "userId cannot be changed after it has been set. You need to reset first",
     });
   }
-  const result = await updatePersonUserId(userId);
+  const result = await updatePersonUserId(userId.toString());
 
   if (result.ok !== true) return err(result.error);
 
@@ -145,16 +145,16 @@ export const setPersonUserId = async (
 
 export const setPersonAttribute = async (
   key: string,
-  value: string
+  value: any
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
-  logger.debug("setting attribute: " + key + " to value: " + value);
+  logger.debug("Setting attribute: " + key + " to value: " + value);
   // check if attribute already exists with this value
-  if (hasAttributeValue(key, value)) {
-    logger.debug("attribute already set to this value. Skipping update.");
+  if (hasAttributeValue(key, value.toString())) {
+    logger.debug("Attribute already set to this value. Skipping update.");
     return okVoid();
   }
 
-  const result = await updatePersonAttribute(key, value);
+  const result = await updatePersonAttribute(key, value.toString());
 
   let error: NetworkError | MissingPersonError;
 
@@ -176,9 +176,14 @@ export const setPersonAttribute = async (
   return okVoid();
 };
 
+export const logoutPerson = async (): Promise<void> => {
+  logger.debug("Resetting state");
+  config.update({ state: undefined });
+};
+
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
-  config.update({ state: undefined });
+  await logoutPerson();
   try {
     await sync();
     return okVoid();
