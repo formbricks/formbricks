@@ -48,6 +48,7 @@
     "react-confetti": "^6.1.0",
     "react-day-picker": "^8.8.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.7",
     "react-radio-group": "^3.0.3",
     "react-use": "^17.4.0"
   }
