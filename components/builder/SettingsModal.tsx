@@ -171,10 +171,10 @@ export default function SettingsModal({ open, setOpen, formId }) {
                       <div className="mt-1">
                         <input
                           type="text"
-                          name="name"
+                          name="airtableTrainingSessionId"
                           className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
                           placeholder="e.g. Customer Research Survey"
-                          value={name}
+                          value={airtableTrainingSessionId}
                           onChange={(e) =>
                             setAirtableTrainingSessionId(e.target.value)
                           }
