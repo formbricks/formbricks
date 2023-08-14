@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ZEnvironment: any = z.object({
+export const ZEnvironment = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
