@@ -142,7 +142,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
             <div>
               <p className="font-semibold text-slate-800">Survey Trigger</p>
-              <p className="mt-1 truncate text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500">
                 Choose the actions which trigger the survey.
               </p>
             </div>
