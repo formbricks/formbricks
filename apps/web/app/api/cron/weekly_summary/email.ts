@@ -144,7 +144,7 @@ const createSurveyFields = (surveryResponses: SurveyResponse[]) => {
       surveyFields += `
         <div style="margin-top:1em;">
           <p style="margin:0px;">${headline}</p>
-          <p style="font-weight: 500; margin:0px;">${answer}</p>  
+          <p style="font-weight: bold; margin:0px;">${answer}</p>  
         </div>
       `;
     }
