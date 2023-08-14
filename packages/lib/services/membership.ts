@@ -103,3 +103,16 @@ export const updateMembership = cache(
     }
   }
 );
+
+export const deleteMembership = cache(async (userId: string, teamId: string): Promise<TMembership> => {
+  const deletedMembership = await prisma.membership.delete({
+    where: {
+      userId_teamId: {
+        teamId,
+        userId,
+      },
+    },
+  });
+
+  return deletedMembership;
+});

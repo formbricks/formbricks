@@ -47,3 +47,33 @@ export const updateInvite = cache(async (inviteId: string, data: TInviteUpdateIn
     }
   }
 });
+
+export const deleteInvite = cache(async (inviteId: string): Promise<TInvite> => {
+  const deletedInvite = await prisma.invite.delete({
+    where: {
+      id: inviteId,
+    },
+  });
+
+  return deletedInvite;
+});
+
+export const getInviteToken = cache(async (inviteId: string) => {
+  const invite = await prisma.invite.findUnique({
+    where: {
+      id: inviteId,
+    },
+    select: {
+      email: true,
+    },
+  });
+
+  if (!invite) {
+    throw new ResourceNotFoundError("Invite", inviteId);
+  }
+
+  return {
+    inviteId,
+    email: invite.email,
+  };
+});
