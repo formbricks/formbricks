@@ -17,12 +17,12 @@ import {
   transferOwnership,
   updateMembership,
 } from "@formbricks/lib/services/membership";
-import { updateTeam } from "@formbricks/lib/services/team";
+import { deleteTeam, updateTeam } from "@formbricks/lib/services/team";
 import { TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
 import { TTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { getServerSession } from "next-auth";
-import { hasTeamAccess, hasTeamAuthority, isOwner } from "@formbricks/lib/auth";
+import { hasTeamAccess, hasTeamAuthority, hasTeamOwnership, isOwner } from "@formbricks/lib/auth";
 import { env } from "@/env.mjs";
 
 export const updateTeamAction = async (teamId: string, data: TTeamUpdateInput) => {
@@ -201,4 +201,18 @@ export const transferOwnershipAction = async (teamId: string, newOwnerId: string
   }
 
   await transferOwnership(session.user.id, newOwnerId, teamId);
+};
+
+export const deleteTeamAction = async (teamId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  const isUserTeamOwner = await hasTeamOwnership(session.user.id, teamId);
+  if (!isUserTeamOwner) {
+    throw new AuthorizationError("Not authorized");
+  }
+
+  return await deleteTeam(teamId);
 };

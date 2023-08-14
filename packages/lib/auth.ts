@@ -60,7 +60,21 @@ export const hasTeamAuthority = async (userId: string, teamId: string) => {
 
   const isAdminOrOwnerAccess = await isAdminOrOwner(userId, teamId);
   if (!isAdminOrOwnerAccess) {
-    throw new AuthenticationError("You are not allowed to update member's role in this team");
+    throw new AuthenticationError("You are not the admin or owner of this team");
+  }
+
+  return true;
+};
+
+export const hasTeamOwnership = async (userId: string, teamId: string) => {
+  const hasAccess = await hasTeamAccess(userId, teamId);
+  if (!hasAccess) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  const isOwnerAccess = await isOwner(userId, teamId);
+  if (!isOwnerAccess) {
+    throw new AuthenticationError("You are not the owner of this team");
   }
 
   return true;

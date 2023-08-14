@@ -1,27 +1,28 @@
 import { TTeam } from "@formbricks/types/v1/teams";
 import React from "react";
 import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/MembersInfo";
-import {
-  getAllMembershipsByUserId,
-  getMembersByTeamId,
-  getMembershipByUserId,
-} from "@formbricks/lib/services/membership";
+import { getMembersByTeamId } from "@formbricks/lib/services/membership";
 import { getInviteesByTeamId } from "@formbricks/lib/services/invite";
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
+import { TMembership } from "@formbricks/types/v1/memberships";
 
 type EditMembershipsProps = {
   team: TTeam;
   currentUserId: string;
+  currentUserMembership: TMembership;
+  allMemberships: TMembership[];
 };
 
-export async function EditMemberships({ team, currentUserId }: EditMembershipsProps) {
+export async function EditMemberships({
+  team,
+  currentUserId,
+  allMemberships,
+  currentUserMembership: membership,
+}: EditMembershipsProps) {
   const members = await getMembersByTeamId(team.id);
   const invites = await getInviteesByTeamId(team.id);
-  const membership = await getMembershipByUserId(currentUserId, team.id);
 
-  const allMemberships = await getAllMembershipsByUserId(currentUserId);
   const isLeaveTeamDisabled = allMemberships.length <= 1;
-
   const currentUserRole = membership?.role;
   const isUserAdminOrOwner = membership?.role === "admin" || membership?.role === "owner";
 
