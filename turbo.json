@@ -78,7 +78,8 @@
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
         "TELEMETRY_DISABLED",
-        "VERCEL_URL"
+        "VERCEL_URL",
+        "WEBAPP_URL"
       ]
     },
     "post-install": {
