@@ -498,7 +498,7 @@ function ResetProgressButton({ resetQuestionProgress }) {
   return (
     <Button
       variant="minimal"
-      className="py-0.2 bg-white px-2 text-sm text-slate-500"
+      className="py-0.2 bg-white mr-2 px-2 text-sm text-slate-500 font-sans"
       onClick={resetQuestionProgress}>
       Restart
       <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
