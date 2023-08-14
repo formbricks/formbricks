@@ -16,7 +16,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import {
   changeEnvironment,
@@ -28,7 +27,9 @@ import {
   CustomersIcon,
   DashboardIcon,
   FilterIcon,
-  FormIcon,
+  FormIcon,Popover, 
+  PopoverContent, 
+  PopoverTrigger,
   ProfileAvatar,
   SettingsIcon,
   Tooltip,
@@ -259,7 +260,7 @@ export default function Navigation({ environment, memberships, team, session }: 
                       <MenuIcon className="h-6 w-6 rounded-md bg-slate-200 p-1 text-slate-600" />
                     </span>
                   </PopoverTrigger>
-                  <PopoverContent className="mr-4 bg-slate-200">
+                  <PopoverContent className="mr-4 bg-slate-100 shadow">
                     <div className="flex flex-col">
                       {navigation.map((navItem) => (
                         <Link key={navItem.name} href={navItem.href}>
@@ -267,7 +268,7 @@ export default function Navigation({ environment, memberships, team, session }: 
                             onClick={() => setMobileNavMenuOpen(false)}
                             className={cn(
                               "flex items-center space-x-2 rounded-md p-2",
-                              navItem.current && "bg-slate-300"
+                              navItem.current && "bg-slate-200"
                             )}>
                             <navItem.icon className="h-5 w-5" />
                             <span className="font-medium text-slate-600">{navItem.name}</span>
