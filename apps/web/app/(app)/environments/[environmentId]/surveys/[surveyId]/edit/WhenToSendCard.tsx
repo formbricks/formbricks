@@ -6,17 +6,16 @@ import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import {
+  AdvancedOptionToggle,
   Badge,
   Button,
   Input,
-  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  Switch,
 } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -224,15 +223,13 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             </div>
           )}
 
-          <div className="ml-2 flex items-center space-x-1 p-4">
-            <Switch id="autoClose" checked={autoClose} onCheckedChange={handleCheckMark} />
-            <Label htmlFor="autoClose" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Auto close on inactivity</h3>
-              </div>
-            </Label>
-          </div>
-          {autoClose && (
+          <AdvancedOptionToggle
+            htmlId="autoClose"
+            className="ml-2 p-4"
+            isChecked={autoClose}
+            onToggle={handleCheckMark}
+            title="Auto close on inactivity"
+            description="Automatically close the survey if the user does not respond after certain number of seconds">
             <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
               <label
                 htmlFor="autoCloseSeconds"
@@ -253,7 +250,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                 </div>
               </label>
             </div>
-          )}
+          </AdvancedOptionToggle>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
       <AddNoCodeActionModal

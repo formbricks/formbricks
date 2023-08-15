@@ -6,7 +6,7 @@ interface AdvancedOptionToggleProps {
   onToggle: (checked: boolean) => void;
   htmlId: string;
   title: string;
-  description: string;
+  description: any;
   children: React.ReactNode;
   className?: string;
 }

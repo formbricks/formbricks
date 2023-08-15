@@ -2,7 +2,7 @@
 
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { Badge, Input, Label, RadioGroup, RadioGroupItem, Switch } from "@formbricks/ui";
+import { AdvancedOptionToggle, Badge, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
@@ -144,27 +144,25 @@ export default function RecontactOptionsCard({
           </RadioGroup>
         </div>
 
-        <div className="p-3">
-          <div className="ml-2 flex items-center space-x-1">
-            <Switch id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} />
-            {/* <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} /> */}
-            <Label htmlFor="recontactDays" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Ignore waiting time between surveys</h3>
-                <p className="text-xs font-normal text-slate-500">
-                  This setting overwrites your{" "}
-                  <Link
-                    className="decoration-brand-dark underline"
-                    href={`/environments/${environmentId}/settings/product`}
-                    target="_blank">
-                    waiting period
-                  </Link>
-                  . Use with caution.
-                </p>
-              </div>
-            </Label>
-          </div>
-          {ignoreWaiting && localSurvey.recontactDays !== null && (
+        <AdvancedOptionToggle
+          htmlId="recontactDays"
+          className="ml-2 p-4"
+          isChecked={ignoreWaiting}
+          onToggle={handleCheckMark}
+          title="Ignore waiting time between surveys"
+          description={
+            <>
+              This setting overwrites your{" "}
+              <Link
+                className="decoration-brand-dark underline"
+                href={`/environments/${environmentId}/settings/product`}
+                target="_blank">
+                waiting period
+              </Link>
+              . Use with caution.
+            </>
+          }>
+          {localSurvey.recontactDays !== null && (
             <div className="p-3">
               <RadioGroup
                 value={localSurvey.recontactDays.toString()}
@@ -220,7 +218,7 @@ export default function RecontactOptionsCard({
               </RadioGroup>
             </div>
           )}
-        </div>
+        </AdvancedOptionToggle>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
