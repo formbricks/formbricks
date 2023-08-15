@@ -5,9 +5,14 @@ import { formbricksEnabled } from "@/lib/formbricks";
 import formbricks from "@formbricks/js";
 import { useEffect } from "react";
 
+type UsageAttributesUpdaterProps = {
+  numSurveys: number;
+  totalSubmissions: number;
+};
+
 export default function FormbricksClient({ session }) {
   useEffect(() => {
-    if (formbricksEnabled && session.user && formbricks) {
+    if (formbricksEnabled && session?.user && formbricks) {
       formbricks.init({
         environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
         apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
@@ -20,5 +25,25 @@ export default function FormbricksClient({ session }) {
       }
     }
   }, [session]);
+  return null;
+}
+
+export const updateUsageAttributes = (numSurveys, totalSubmissions) => {
+  if (!formbricksEnabled || !formbricks) return;
+
+  if (numSurveys >= 3) {
+    formbricks.setAttribute("HasThreeSurveys", "true");
+  }
+
+  if (totalSubmissions >= 20) {
+    formbricks.setAttribute("HasTwentySubmissions", "true");
+  }
+};
+
+export function UsageAttributesUpdater({ numSurveys, totalSubmissions }: UsageAttributesUpdaterProps) {
+  useEffect(() => {
+    updateUsageAttributes(numSurveys, totalSubmissions);
+  }, [numSurveys, totalSubmissions]);
+
   return null;
 }
