@@ -61,9 +61,9 @@ export const PageUrlSelector = ({
                   name="noCodeConfig.pageUrl.rule"
                   defaultValue={"exactMatch"}
                   control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} {...field}>
-                      <SelectTrigger className="w-[170px] bg-white">
+                  render={({ field: { onChange, value } }) => (
+                    <Select onValueChange={onChange} {...value}>
+                      <SelectTrigger className="w-[175px] bg-white">
                         <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
                       <SelectContent className="bg-white">
