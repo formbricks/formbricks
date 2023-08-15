@@ -7,6 +7,32 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getAllMembershipsByUserId, getMembershipByUserId } from "@formbricks/lib/services/membership";
+import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
+import { Suspense } from "react";
+import { Skeleton } from "@formbricks/ui";
+
+const MembersLoading = () => (
+  <div className="rounded-lg border border-slate-200">
+    <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+      <div className="col-span-2"></div>
+      <div className="col-span-5">Fullname</div>
+      <div className="col-span-5">Email</div>
+      <div className="col-span-3">Role</div>
+      <div className="col-span-5"></div>
+    </div>
+
+    <div className="p-4">
+      {[1, 2, 3].map((_) => (
+        <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-white p-4 text-left text-sm font-semibold text-slate-900">
+          <Skeleton className="col-span-2 h-10 w-10 rounded-full" />
+          <Skeleton className="col-span-5 h-8 w-24" />
+          <Skeleton className="col-span-5 h-8 w-24" />
+          <Skeleton className="col-span-3 h-8 w-24" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export default async function MembersSettingsPage({ params }: { params: { environmentId: string } }) {
   const session = await getServerSession(authOptions);
@@ -20,6 +46,9 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
   const isDeleteDisabled = allMemberships.length <= 1;
   const currentUserRole = currentUserMembership?.role;
 
+  const isLeaveTeamDisabled = allMemberships.length <= 1;
+  const isUserAdminOrOwner = currentUserRole === "admin" || currentUserRole === "owner";
+
   if (!session || !team) {
     return null;
   }
@@ -30,13 +59,24 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
     <div>
       <SettingsTitle title="Team" />
       <SettingsCard title="Manage members" description="Add or remove members in your team.">
-        {currentUserMembership && (
-          <EditMemberships
+        {currentUserRole && (
+          <TeamActions
             team={team}
-            currentUserId={currentUserId}
-            allMemberships={allMemberships}
-            currentUserMembership={currentUserMembership}
+            isAdminOrOwner={isUserAdminOrOwner}
+            role={currentUserRole}
+            isLeaveTeamDisabled={isLeaveTeamDisabled}
           />
+        )}
+
+        {currentUserMembership && (
+          <Suspense fallback={<MembersLoading />}>
+            <EditMemberships
+              team={team}
+              currentUserId={currentUserId}
+              allMemberships={allMemberships}
+              currentUserMembership={currentUserMembership}
+            />
+          </Suspense>
         )}
       </SettingsCard>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">

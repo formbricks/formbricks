@@ -3,7 +3,6 @@ import React from "react";
 import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/MembersInfo";
 import { getMembersByTeamId } from "@formbricks/lib/services/membership";
 import { getInviteesByTeamId } from "@formbricks/lib/services/invite";
-import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
 import { TMembership } from "@formbricks/types/v1/memberships";
 
 type EditMembershipsProps = {
@@ -16,27 +15,16 @@ type EditMembershipsProps = {
 export async function EditMemberships({
   team,
   currentUserId,
-  allMemberships,
   currentUserMembership: membership,
 }: EditMembershipsProps) {
   const members = await getMembersByTeamId(team.id);
   const invites = await getInviteesByTeamId(team.id);
 
-  const isLeaveTeamDisabled = allMemberships.length <= 1;
   const currentUserRole = membership?.role;
   const isUserAdminOrOwner = membership?.role === "admin" || membership?.role === "owner";
 
   return (
     <div>
-      {currentUserRole && (
-        <TeamActions
-          team={team}
-          isAdminOrOwner={isUserAdminOrOwner}
-          role={currentUserRole}
-          isLeaveTeamDisabled={isLeaveTeamDisabled}
-        />
-      )}
-
       <div className="rounded-lg border border-slate-200">
         <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-2"></div>
