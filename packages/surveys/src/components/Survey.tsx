@@ -9,7 +9,7 @@ import Progress from "./Progress";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 
-interface SurveyViewProps {
+interface SurveyProps {
   survey: TSurvey;
   brandColor: string;
   formbricksSignature: boolean;
@@ -29,7 +29,7 @@ export function Survey({
   onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
-}: SurveyViewProps) {
+}: SurveyProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [loadingElement, setLoadingElement] = useState(false);
@@ -108,7 +108,7 @@ export function Survey({
   };
 
   return (
-    <div id="fbjs">
+    <div>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
         <div
           ref={contentRef}

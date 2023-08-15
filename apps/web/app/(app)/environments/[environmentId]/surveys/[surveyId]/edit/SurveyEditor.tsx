@@ -82,15 +82,10 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             survey={localSurvey}
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
-            questions={localSurvey.questions}
-            brandColor={product.brandColor}
             environmentId={environmentId}
             product={product}
             environment={environment}
-            surveyType={localSurvey.type}
-            thankYouCard={localSurvey.thankYouCard}
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
-            autoClose={localSurvey.autoClose}
           />
         </aside>
       </div>

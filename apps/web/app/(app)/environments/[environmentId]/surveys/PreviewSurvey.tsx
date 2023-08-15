@@ -2,8 +2,7 @@
 
 import Modal from "@/components/preview/Modal";
 import TabOption from "@/components/preview/TabOption";
-import { SurveyView } from "@/components/shared/Survey";
-import type { Logic, Question } from "@formbricks/types/questions";
+import { SurveyInline } from "@/components/shared/Survey";
 import { Survey } from "@formbricks/types/surveys";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
@@ -11,16 +10,12 @@ import { Button } from "@formbricks/ui";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import { ComputerDesktopIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";
+
 interface PreviewSurveyProps {
   survey: Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
-  questions: Question[];
-  brandColor: string;
   environmentId: string;
-  surveyType: Survey["type"];
-  thankYouCard: Survey["thankYouCard"];
-  autoClose: Survey["autoClose"];
   previewType?: "modal" | "fullwidth" | "email";
   product: TProduct;
   environment: TEnvironment;
@@ -30,175 +25,30 @@ export default function PreviewSurvey({
   survey,
   setActiveQuestionId,
   activeQuestionId,
-  questions,
-  brandColor,
-  surveyType,
-  thankYouCard,
-  autoClose,
   previewType,
   product,
   environment,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
-  const [progress, setProgress] = useState(0); // [0, 1]
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
-  const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
-  const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
-  const [storedResponse, setStoredResponse] = useState<Record<string, any>>({});
   const [previewMode, setPreviewMode] = useState("desktop");
   const ContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (product) {
-      setShowFormbricksSignature(product.formbricksSignature);
-    }
-  }, [product]);
-
-  const [countdownProgress, setCountdownProgress] = useState(1);
-  const startRef = useRef(performance.now());
-  const frameRef = useRef<number | null>(null);
-  const [countdownStop, setCountdownStop] = useState(false);
-
-  const handleStopCountdown = () => {
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-      setCountdownStop(true);
-    }
-  };
-
-  useEffect(() => {
-    if (!autoClose) return;
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-    }
-
-    const frame = () => {
-      if (!autoClose || !startRef.current) return;
-
-      const timeout = autoClose * 1000;
-      const elapsed = performance.now() - startRef.current;
-      const remaining = Math.max(0, timeout - elapsed);
-
-      setCountdownProgress(remaining / timeout);
-
-      if (remaining > 0) {
-        frameRef.current = requestAnimationFrame(frame);
-      } else {
-        handleStopCountdown();
-        setIsModalOpen(false);
-        // reopen the modal after 1 second
-        setTimeout(() => {
-          setIsModalOpen(true);
-          setActiveQuestionId(questions[0]?.id || ""); // set first question as active
-        }, 1500);
-      }
-    };
-
-    setCountdownStop(false);
-    setCountdownProgress(1);
-    startRef.current = performance.now();
-    frameRef.current = requestAnimationFrame(frame);
-
-    return () => {
-      if (frameRef.current !== null) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, [autoClose]);
-
-  useEffect(() => {
-    if (ContentRef.current) {
-      // scroll to top whenever question changes
-      ContentRef.current.scrollTop = 0;
-    }
-    if (activeQuestionId) {
-      setLastActiveQuestionId(activeQuestionId);
-      setProgress(calculateProgress(questions, activeQuestionId));
-    } else if (lastActiveQuestionId) {
-      setProgress(calculateProgress(questions, lastActiveQuestionId));
-    }
-
-    function calculateProgress(questions, activeQuestionId) {
-      if (activeQuestionId === "thank-you-card") return 1;
-
-      const elementIdx = questions.findIndex((e) => e.id === activeQuestionId);
-      return elementIdx / questions.length;
-    }
-  }, [activeQuestionId, lastActiveQuestionId, questions]);
-
-  useEffect(() => {
     // close modal if there are no questions left
-    if (surveyType === "web" && !thankYouCard.enabled) {
+    if (survey.type === "web" && !survey.thankYouCard.enabled) {
       if (activeQuestionId === "thank-you-card") {
         setIsModalOpen(false);
         setTimeout(() => {
-          setActiveQuestionId(questions[0].id);
+          setActiveQuestionId(survey.questions[0].id);
           setIsModalOpen(true);
         }, 500);
       }
     }
-  }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
-
-  function evaluateCondition(logic: Logic, responseValue: any): boolean {
-    switch (logic.condition) {
-      case "equals":
-        return (
-          (Array.isArray(responseValue) &&
-            responseValue.length === 1 &&
-            responseValue.includes(logic.value)) ||
-          responseValue.toString() === logic.value
-        );
-      case "notEquals":
-        return responseValue !== logic.value;
-      case "lessThan":
-        return logic.value !== undefined && responseValue < logic.value;
-      case "lessEqual":
-        return logic.value !== undefined && responseValue <= logic.value;
-      case "greaterThan":
-        return logic.value !== undefined && responseValue > logic.value;
-      case "greaterEqual":
-        return logic.value !== undefined && responseValue >= logic.value;
-      case "includesAll":
-        return (
-          Array.isArray(responseValue) &&
-          Array.isArray(logic.value) &&
-          logic.value.every((v) => responseValue.includes(v))
-        );
-      case "includesOne":
-        return (
-          Array.isArray(responseValue) &&
-          Array.isArray(logic.value) &&
-          logic.value.some((v) => responseValue.includes(v))
-        );
-      case "accepted":
-        return responseValue === "accepted";
-      case "clicked":
-        return responseValue === "clicked";
-      case "submitted":
-        if (typeof responseValue === "string") {
-          return responseValue !== "dismissed" && responseValue !== "" && responseValue !== null;
-        } else if (Array.isArray(responseValue)) {
-          return responseValue.length > 0;
-        } else if (typeof responseValue === "number") {
-          return responseValue !== null;
-        }
-        return false;
-      case "skipped":
-        return (
-          (Array.isArray(responseValue) && responseValue.length === 0) ||
-          responseValue === "" ||
-          responseValue === null ||
-          responseValue === "dismissed"
-        );
-      default:
-        return false;
-    }
-  }
+  }, [activeQuestionId, survey.type, survey, setActiveQuestionId]);
 
   function resetQuestionProgress() {
-    setProgress(0);
-    setActiveQuestionId(questions[0].id);
-    setStoredResponse({});
+    setActiveQuestionId(survey.questions[0].id);
   }
 
   useEffect(() => {
@@ -234,23 +84,13 @@ export default function PreviewSurvey({
                   placement={product.placement}
                   highlightBorderColor={product.highlightBorderColor}
                   previewMode="mobile">
-                  <SurveyView
+                  <SurveyInline
                     survey={survey}
-                    brandColor={brandColor}
-                    formbricksSignature={showFormbricksSignature}
+                    brandColor={product.brandColor}
+                    activeQuestionId={activeQuestionId || undefined}
+                    formbricksSignature={product.formbricksSignature}
+                    onActiveQuestionChange={setActiveQuestionId}
                   />
-                  {/* <PreviewModalContent
-                    activeQuestionId={activeQuestionId}
-                    lastActiveQuestionId={lastActiveQuestionId}
-                    questions={questions}
-                    brandColor={brandColor}
-                    thankYouCard={thankYouCard}
-                    gotoNextQuestion={gotoNextQuestion}
-                    showBackButton={showBackButton}
-                    goToPreviousQuestion={goToPreviousQuestion}
-                    storedResponseValue={storedResponseValue}
-                    showFormbricksSignature={showFormbricksSignature}
-                  /> */}
                 </Modal>
               ) : (
                 <div
@@ -258,22 +98,13 @@ export default function PreviewSurvey({
                   ref={ContentRef}>
                   <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
                     <div className="w-full max-w-md px-4">
-                      <SurveyView
+                      <SurveyInline
                         survey={survey}
-                        brandColor={brandColor}
-                        formbricksSignature={showFormbricksSignature}
+                        brandColor={product.brandColor}
+                        activeQuestionId={activeQuestionId || undefined}
+                        formbricksSignature={product.formbricksSignature}
+                        onActiveQuestionChange={setActiveQuestionId}
                       />
-                      {/* <QuestionRenderer
-                        activeQuestionId={activeQuestionId}
-                        lastActiveQuestionId={lastActiveQuestionId}
-                        questions={questions}
-                        brandColor={brandColor}
-                        thankYouCard={thankYouCard}
-                        gotoNextQuestion={gotoNextQuestion}
-                        showBackButton={showBackButton}
-                        goToPreviousQuestion={goToPreviousQuestion}
-                        storedResponseValue={storedResponseValue}
-                      /> */}
                     </div>
                   </div>
                 </div>
@@ -301,46 +132,25 @@ export default function PreviewSurvey({
                 placement={product.placement}
                 highlightBorderColor={product.highlightBorderColor}
                 previewMode="desktop">
-                <SurveyView
+                <SurveyInline
                   survey={survey}
-                  brandColor={brandColor}
-                  formbricksSignature={showFormbricksSignature}
+                  brandColor={product.brandColor}
+                  activeQuestionId={activeQuestionId || undefined}
+                  formbricksSignature={product.formbricksSignature}
+                  onActiveQuestionChange={setActiveQuestionId}
                 />
-                {/* <PreviewModalContent
-                  activeQuestionId={activeQuestionId}
-                  lastActiveQuestionId={lastActiveQuestionId}
-                  questions={questions}
-                  brandColor={brandColor}
-                  thankYouCard={thankYouCard}
-                  gotoNextQuestion={gotoNextQuestion}
-                  showBackButton={showBackButton}
-                  goToPreviousQuestion={goToPreviousQuestion}
-                  storedResponseValue={storedResponseValue}
-                  showFormbricksSignature={showFormbricksSignature}
-                /> */}
               </Modal>
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
                 <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
                   <div className="w-full max-w-md">
-                    <SurveyView
+                    <SurveyInline
                       survey={survey}
-                      brandColor={brandColor}
+                      brandColor={product.brandColor}
                       activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={showFormbricksSignature}
+                      formbricksSignature={product.formbricksSignature}
                       onActiveQuestionChange={setActiveQuestionId}
                     />
-                    {/* <QuestionRenderer
-                      activeQuestionId={activeQuestionId}
-                      lastActiveQuestionId={lastActiveQuestionId}
-                      questions={questions}
-                      brandColor={brandColor}
-                      thankYouCard={thankYouCard}
-                      gotoNextQuestion={gotoNextQuestion}
-                      showBackButton={showBackButton}
-                      goToPreviousQuestion={goToPreviousQuestion}
-                      storedResponseValue={storedResponseValue}
-                    /> */}
                   </div>
                 </div>
               </div>
