@@ -6,13 +6,14 @@ import { SurveyInline } from "@/components/shared/Survey";
 import { Survey } from "@formbricks/types/surveys";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import { ComputerDesktopIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";
 
 interface PreviewSurveyProps {
-  survey: Survey;
+  survey: TSurvey | Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   environmentId: string;
