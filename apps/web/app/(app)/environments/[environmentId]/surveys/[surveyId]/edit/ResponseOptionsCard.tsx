@@ -1,7 +1,7 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import { DatePicker, Input, Label, Switch } from "@formbricks/ui";
+import { AdvancedOptionToggle, DatePicker, Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
@@ -161,78 +161,53 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           {/* Close Survey on Limit */}
-          <div className="p-3">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoComplete" checked={autoComplete} onCheckedChange={handleCheckMark} />
-              <Label htmlFor="autoComplete" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Close survey on response limit</h3>
-                  <p className="text-xs font-normal text-slate-500">
-                    Automatically close the survey after a certain number of responses.
-                  </p>
-                </div>
-              </Label>
-            </div>
-            {autoComplete && (
-              <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
-                <label
-                  htmlFor="autoCompleteResponses"
-                  className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                  <div className="">
-                    <p className="text-sm font-semibold text-slate-700">
-                      Automatically mark the survey as complete after
-                      <Input
-                        autoFocus
-                        type="number"
-                        min={
-                          localSurvey?._count?.responses
-                            ? (localSurvey?._count?.responses + 1).toString()
-                            : "1"
-                        }
-                        id="autoCompleteResponses"
-                        value={localSurvey.autoComplete?.toString()}
-                        onChange={handleInputResponse}
-                        onBlur={handleInputResponseBlur}
-                        className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
-                      />
-                      completed responses.
-                    </p>
-                  </div>
-                </label>
+          <AdvancedOptionToggle
+            htmlId="closeOnNumberOfResponse"
+            className="p-4"
+            isChecked={autoComplete}
+            onToggle={handleCheckMark}
+            title="Close survey on response limit"
+            description="Automatically close the survey after a certain number of responses.">
+            <label
+              htmlFor="autoCompleteResponses"
+              className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+              <div className="">
+                <p className="text-sm font-semibold text-slate-700">
+                  Automatically mark the survey as complete after
+                  <Input
+                    autoFocus
+                    type="number"
+                    min={
+                      localSurvey?._count?.responses ? (localSurvey?._count?.responses + 1).toString() : "1"
+                    }
+                    id="autoCompleteResponses"
+                    value={localSurvey.autoComplete?.toString()}
+                    onChange={handleInputResponse}
+                    onBlur={handleInputResponseBlur}
+                    className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                  />
+                  completed responses.
+                </p>
               </div>
-            )}
-          </div>
+            </label>
+          </AdvancedOptionToggle>
           {/* Close Survey on Date */}
-          <div className="p-3 ">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch
-                id="surveyDeadline"
-                checked={surveyCloseOnDateToggle}
-                onCheckedChange={handleSurveyCloseOnDateToggle}
-              />
-              <Label htmlFor="surveyDeadline" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Close survey on date</h3>
-                  <p className="text-xs font-normal text-slate-500">
-                    Automatically closes the survey at the beginning of the day (UTC).
-                  </p>
-                  {localSurvey.status === "completed" && (
-                    <p className="text-xs font-normal text-slate-500">This form is already completed.</p>
-                  )}
-                </div>
-              </Label>
-            </div>
-            {surveyCloseOnDateToggle && (
-              <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
-                <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                  <p className="mr-2 text-sm font-semibold text-slate-700">
-                    Automatically mark survey as complete on:
-                  </p>
-                  <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
-                </div>
+          <AdvancedOptionToggle
+            htmlId="closeOnDate"
+            className="p-4"
+            isChecked={surveyCloseOnDateToggle}
+            onToggle={handleSurveyCloseOnDateToggle}
+            title="Close survey on date"
+            description="Automatically closes the survey at the beginning of the day (UTC).">
+            <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
+              <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                <p className="mr-2 text-sm font-semibold text-slate-700">
+                  Automatically mark survey as complete on:
+                </p>
+                <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
               </div>
-            )}
-          </div>
+            </div>
+          </AdvancedOptionToggle>
 
           {/* Redirect on completion */}
           {localSurvey.type === "link" && (

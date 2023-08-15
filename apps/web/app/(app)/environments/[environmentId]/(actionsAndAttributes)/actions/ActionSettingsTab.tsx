@@ -121,6 +121,9 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
           </p>
         ) : actionClass.type === "noCode" ? (
           <>
+            <div>
+              <Label>Select By</Label>
+            </div>
             <CssSelector
               isCssSelector={isCssSelector}
               setIsCssSelector={setIsCssSelector}
@@ -161,7 +164,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
               </Button>
             )}
 
-            <Button variant="secondary" href="https://formbricks.com/docs" target="_blank">
+            <Button variant="secondary" href="https://formbricks.com/docs/actions/no-code" target="_blank">
               Read Docs
             </Button>
           </div>
