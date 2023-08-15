@@ -23,7 +23,7 @@ export const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, register }: Inn
             <Input
               type="text"
               placeholder="e.g. 'Install App'"
-              {...register("noCodeConfig.innerHtml.value", { required: true })}
+              {...register("noCodeConfig.innerHtml.value", { required: isInnerHtml })}
             />
           </div>
         </div>

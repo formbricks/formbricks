@@ -74,7 +74,7 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
       await createActionClass(environmentId, updatedData);
       router.refresh();
       reset();
-      setOpen(false);
+      resetAllStates(false);
       toast.success("Action added successfully.");
     } catch (e) {
       toast.error(e.message);

@@ -73,7 +73,7 @@ export const PageUrlSelector = ({
             <Input
               type="text"
               placeholder="e.g. https://app.com/dashboard"
-              {...register("noCodeConfig.[pageUrl].value", { required: true })}
+              {...register("noCodeConfig.[pageUrl].value", { required: isPageUrl })}
             />
           </div>
         </div>
