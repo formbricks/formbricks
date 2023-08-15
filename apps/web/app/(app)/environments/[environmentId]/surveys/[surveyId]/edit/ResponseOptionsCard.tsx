@@ -199,7 +199,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
             onToggle={handleSurveyCloseOnDateToggle}
             title="Close survey on date"
             description="Automatically closes the survey at the beginning of the day (UTC).">
-            <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
+            <div className="ml-2 mt-4 flex w-full items-center space-x-1 pb-4">
               <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
                 <p className="mr-2 text-sm font-semibold text-slate-700">
                   Automatically mark survey as complete on:
@@ -212,86 +212,59 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           {/* Redirect on completion */}
           {localSurvey.type === "link" && (
             <>
-              <div className="p-3 ">
-                <div className="ml-2 flex items-center space-x-1">
-                  <Switch
-                    id="redirectUrl"
-                    checked={redirectToggle}
-                    onCheckedChange={handleRedirectCheckMark}
-                  />
-                  <Label htmlFor="redirectUrl" className="cursor-pointer">
-                    <div className="ml-2">
-                      <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
-                      <p className="text-xs font-normal text-slate-500">
-                        Redirect user to specified link on survey completion
-                      </p>
-                    </div>
-                  </Label>
-                </div>
-                {redirectToggle && (
-                  <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
-                    <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                      <p className="mr-2 whitespace-nowrap text-sm font-semibold text-slate-700">
-                        Redirect respondents here:
-                      </p>
-                      <Input
-                        autoFocus
-                        className="bg-white"
-                        type="url"
-                        placeholder="https://www.example.com"
-                        value={redirectUrl ? redirectUrl : ""}
-                        onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                      />
-                    </div>
+              <AdvancedOptionToggle
+                htmlId="redirectUrl"
+                className="p-4"
+                isChecked={redirectToggle}
+                onToggle={handleRedirectCheckMark}
+                title="Redirect on completion"
+                description="Redirect user to specified link on survey completion">
+                <div className="ml-2 mt-4 flex w-full items-center space-x-1 pb-4">
+                  <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                    <p className="mr-2 text-sm font-semibold text-slate-700">Redirect respondents here:</p>
+                    <Input
+                      autoFocus
+                      className="bg-white"
+                      type="url"
+                      placeholder="https://www.example.com"
+                      value={redirectUrl ? redirectUrl : ""}
+                      onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                    />
                   </div>
-                )}
-              </div>
+                </div>
+              </AdvancedOptionToggle>
 
               {/* Adjust Survey Closed Message */}
-              <div className="p-3 ">
-                <div className="ml-2 flex items-center space-x-1">
-                  <Switch
-                    id="adjustSurveyClosedMessage"
-                    checked={surveyClosedMessageToggle}
-                    onCheckedChange={handleCloseSurveyMessageToggle}
-                  />
-                  <Label htmlFor="adjustSurveyClosedMessage" className="cursor-pointer">
-                    <div className="ml-2">
-                      <h3 className="text-sm font-semibold text-slate-700">
-                        {" "}
-                        {"Adjust 'Survey Closed' message"}
-                      </h3>
-                      <p className="text-xs font-normal text-slate-500">
-                        Change the message visitors see when the survey is closed.
-                      </p>
-                    </div>
-                  </Label>
-                </div>
-                {surveyClosedMessageToggle && (
-                  <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
-                    <div className="w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                      <Label htmlFor="headline">Heading</Label>
-                      <Input
-                        autoFocus
-                        id="heading"
-                        className="mb-4 mt-2 bg-white"
-                        name="heading"
-                        defaultValue={surveyClosedMessage.heading}
-                        onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
-                      />
+              <AdvancedOptionToggle
+                htmlId="adjustSurveyClosedMessage"
+                className="p-4"
+                isChecked={surveyClosedMessageToggle}
+                onToggle={handleCloseSurveyMessageToggle}
+                title="Adjust 'Survey Closed' message"
+                description="Change the message visitors see when the survey is closed.">
+                <div className="ml-2 mt-4 flex w-full items-center space-x-1 pb-4">
+                  <div className="w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                    <Label htmlFor="headline">Heading</Label>
+                    <Input
+                      autoFocus
+                      id="heading"
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      defaultValue={surveyClosedMessage.heading}
+                      onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
+                    />
 
-                      <Label htmlFor="headline">Subheading</Label>
-                      <Input
-                        className="mt-2 bg-white"
-                        id="subheading"
-                        name="subheading"
-                        defaultValue={surveyClosedMessage.subheading}
-                        onChange={(e) => handleClosedSurveyMessageChange({ subheading: e.target.value })}
-                      />
-                    </div>
+                    <Label htmlFor="headline">Subheading</Label>
+                    <Input
+                      className="mt-2 bg-white"
+                      id="subheading"
+                      name="subheading"
+                      defaultValue={surveyClosedMessage.subheading}
+                      onChange={(e) => handleClosedSurveyMessageChange({ subheading: e.target.value })}
+                    />
                   </div>
-                )}
-              </div>
+                </div>
+              </AdvancedOptionToggle>
             </>
           )}
         </div>
