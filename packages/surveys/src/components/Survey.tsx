@@ -1,6 +1,6 @@
 import type { TResponse, TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurvey } from "@formbricks/types/v1/surveys";
-import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
 import { AutoCloseWrapper } from "./AutoCloseWrapper";
@@ -13,7 +13,9 @@ interface SurveyViewProps {
   survey: TSurvey;
   brandColor: string;
   formbricksSignature: boolean;
+  activeQuestionId?: string;
   onDisplay?: () => void;
+  onActiveQuestionChange?: (questionId: string) => void;
   onResponse?: (response: Partial<TResponse>) => void;
   onClose?: () => void;
 }
@@ -22,23 +24,29 @@ export function Survey({
   survey,
   brandColor,
   formbricksSignature,
+  activeQuestionId,
   onDisplay = () => {},
+  onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
 }: SurveyViewProps) {
-  const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
+  const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    setQuestionId(activeQuestionId || survey.questions[0].id);
+  }, [activeQuestionId]);
+
+  useEffect(() => {
     // scroll to top when question changes
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, [activeQuestionId]);
+  }, [questionId]);
 
   // call onDisplay when component is mounted
   useEffect(() => {
@@ -50,30 +58,22 @@ export function Survey({
     setProgress(calculateProgress());
 
     function calculateProgress() {
-      if (activeQuestionId === "end") return 100;
-      const elementIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
+      if (questionId === "end") return 100;
+      const elementIdx = survey.questions.findIndex((e) => e.id === questionId);
       return elementIdx / survey.questions.length;
     }
-  }, [activeQuestionId, survey]);
+  }, [questionId, survey]);
 
   useEffect(() => {
     // store history stack
-    setHistory([...history, activeQuestionId]);
-  }, [activeQuestionId]);
-
-  function onSubmit(responseData: TResponseData) {
-    setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData);
-    onResponse({ data: responseData, finished: nextQuestionId === "end" }); // Mark as finished if next question is "end"
-    setActiveQuestionId(nextQuestionId);
-    setLoadingElement(false);
-  }
+    setHistory([...history, questionId]);
+  }, [questionId]);
 
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
-    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    const currentQuestionIndex = questions.findIndex((q) => q.id === questionId);
     const currentQuestion = questions[currentQuestionIndex];
-    const responseValue = data[activeQuestionId];
+    const responseValue = data[questionId];
 
     if (currentQuestionIndex === -1) throw new Error("Question not found");
 
@@ -89,12 +89,22 @@ export function Survey({
     return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
+  function onSubmit(responseData: TResponseData) {
+    setLoadingElement(true);
+    const nextQuestionId = getNextQuestionId(responseData);
+    onResponse({ data: responseData, finished: nextQuestionId === "end" }); // Mark as finished if next question is "end"
+    setQuestionId(nextQuestionId);
+    setLoadingElement(false);
+    onActiveQuestionChange(nextQuestionId);
+  }
+
   const onBack = (): void => {
     const newHistory = [...history];
     const prevQuestionId = newHistory.pop();
     if (!prevQuestionId) throw new Error("Question not found");
     setHistory(newHistory);
-    setActiveQuestionId(prevQuestionId);
+    setQuestionId(prevQuestionId);
+    onActiveQuestionChange(prevQuestionId);
   };
 
   return (
@@ -106,7 +116,7 @@ export function Survey({
             loadingElement ? "animate-pulse opacity-60" : "",
             "max-h-[80vh] overflow-y-auto px-4 py-6 font-sans text-slate-800 sm:p-6"
           )}>
-          {activeQuestionId === "end" && survey.thankYouCard.enabled ? (
+          {questionId === "end" && survey.thankYouCard.enabled ? (
             <ThankYouCard
               headline={survey.thankYouCard.headline}
               subheader={survey.thankYouCard.subheader}
@@ -115,7 +125,7 @@ export function Survey({
           ) : (
             survey.questions.map(
               (question, idx) =>
-                activeQuestionId === question.id && (
+                questionId === question.id && (
                   <QuestionConditional
                     question={question}
                     onSubmit={onSubmit}

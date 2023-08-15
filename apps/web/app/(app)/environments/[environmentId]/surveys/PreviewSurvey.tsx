@@ -1,11 +1,8 @@
 "use client";
 
-import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
-import Progress from "@/components/preview/Progress";
-import QuestionConditional from "@/components/preview/QuestionConditional";
 import TabOption from "@/components/preview/TabOption";
-import ThankYouCard from "@/components/preview/ThankYouCard";
+import { SurveyView } from "@/components/shared/Survey";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
@@ -15,6 +12,7 @@ import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import { ComputerDesktopIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";
 interface PreviewSurveyProps {
+  survey: Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   questions: Question[];
@@ -28,78 +26,8 @@ interface PreviewSurveyProps {
   environment: TEnvironment;
 }
 
-function QuestionRenderer({
-  activeQuestionId,
-  lastActiveQuestionId,
-  questions,
-  brandColor,
-  thankYouCard,
-  gotoNextQuestion,
-  showBackButton,
-  goToPreviousQuestion,
-  storedResponseValue,
-}) {
-  return (
-    <div>
-      {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-        <ThankYouCard
-          brandColor={brandColor}
-          headline={thankYouCard?.headline || "Thank you!"}
-          subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-        />
-      ) : (
-        questions.map((question, idx) =>
-          (activeQuestionId || lastActiveQuestionId) === question.id ? (
-            <QuestionConditional
-              key={question.id}
-              question={question}
-              brandColor={brandColor}
-              lastQuestion={idx === questions.length - 1}
-              onSubmit={gotoNextQuestion}
-              storedResponseValue={storedResponseValue}
-              goToNextQuestion={gotoNextQuestion}
-              goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
-              autoFocus={false}
-            />
-          ) : null
-        )
-      )}
-    </div>
-  );
-}
-
-function PreviewModalContent({
-  activeQuestionId,
-  lastActiveQuestionId,
-  questions,
-  brandColor,
-  thankYouCard,
-  gotoNextQuestion,
-  showBackButton,
-  goToPreviousQuestion,
-  storedResponseValue,
-  showFormbricksSignature,
-}) {
-  return (
-    <div className="px-4 py-6 sm:p-6">
-      <QuestionRenderer
-        activeQuestionId={activeQuestionId}
-        lastActiveQuestionId={lastActiveQuestionId}
-        questions={questions}
-        brandColor={brandColor}
-        thankYouCard={thankYouCard}
-        gotoNextQuestion={gotoNextQuestion}
-        showBackButton={showBackButton}
-        goToPreviousQuestion={goToPreviousQuestion}
-        storedResponseValue={storedResponseValue}
-      />
-
-      {showFormbricksSignature && <FormbricksSignature />}
-    </div>
-  );
-}
-
 export default function PreviewSurvey({
+  survey,
   setActiveQuestionId,
   activeQuestionId,
   questions,
@@ -116,11 +44,8 @@ export default function PreviewSurvey({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
   const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
-  const [finished, setFinished] = useState(false);
-  const [storedResponseValue, setStoredResponseValue] = useState<any>();
   const [storedResponse, setStoredResponse] = useState<Record<string, any>>({});
   const [previewMode, setPreviewMode] = useState("desktop");
-  const showBackButton = progress !== 0 && !finished;
   const ContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -185,9 +110,6 @@ export default function PreviewSurvey({
     if (ContentRef.current) {
       // scroll to top whenever question changes
       ContentRef.current.scrollTop = 0;
-    }
-    if (activeQuestionId !== "end") {
-      setFinished(false);
     }
     if (activeQuestionId) {
       setLastActiveQuestionId(activeQuestionId);
@@ -273,59 +195,6 @@ export default function PreviewSurvey({
     }
   }
 
-  function getNextQuestion(answer: any): string {
-    // extract activeQuestionId from answer to make it work when form is collapsed.
-    const activeQuestionId = Object.keys(answer)[0];
-    if (!activeQuestionId) return "";
-
-    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
-    if (currentQuestionIndex === -1) throw new Error("Question not found");
-
-    const responseValue = answer[activeQuestionId];
-    const currentQuestion = questions[currentQuestionIndex];
-
-    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
-        if (!logic.destination) continue;
-
-        if (evaluateCondition(logic, responseValue)) {
-          return logic.destination;
-        }
-      }
-    }
-    return questions[currentQuestionIndex + 1]?.id || "end";
-  }
-
-  const gotoNextQuestion = (data) => {
-    setStoredResponse({ ...storedResponse, ...data });
-    const nextQuestionId = getNextQuestion(data);
-    setStoredResponseValue(storedResponse[nextQuestionId]);
-    if (nextQuestionId !== "end") {
-      setActiveQuestionId(nextQuestionId);
-    } else {
-      setFinished(true);
-      if (thankYouCard?.enabled) {
-        setActiveQuestionId("thank-you-card");
-        setProgress(1);
-      } else {
-        setIsModalOpen(false);
-        setTimeout(() => {
-          setActiveQuestionId(questions[0].id);
-          setIsModalOpen(true);
-        }, 500);
-      }
-    }
-  };
-
-  function goToPreviousQuestion(data: any) {
-    setStoredResponse({ ...storedResponse, ...data });
-    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
-    if (currentQuestionIndex === -1) throw new Error("Question not found");
-    const previousQuestionId = questions[currentQuestionIndex - 1].id;
-    setStoredResponseValue(storedResponse[previousQuestionId]);
-    setActiveQuestionId(previousQuestionId);
-  }
-
   function resetQuestionProgress() {
     setProgress(0);
     setActiveQuestionId(questions[0].id);
@@ -365,10 +234,12 @@ export default function PreviewSurvey({
                   placement={product.placement}
                   highlightBorderColor={product.highlightBorderColor}
                   previewMode="mobile">
-                  {!countdownStop && autoClose !== null && autoClose > 0 && (
-                    <Progress progress={countdownProgress} brandColor={brandColor} />
-                  )}
-                  <PreviewModalContent
+                  <SurveyView
+                    survey={survey}
+                    brandColor={brandColor}
+                    formbricksSignature={showFormbricksSignature}
+                  />
+                  {/* <PreviewModalContent
                     activeQuestionId={activeQuestionId}
                     lastActiveQuestionId={lastActiveQuestionId}
                     questions={questions}
@@ -379,8 +250,7 @@ export default function PreviewSurvey({
                     goToPreviousQuestion={goToPreviousQuestion}
                     storedResponseValue={storedResponseValue}
                     showFormbricksSignature={showFormbricksSignature}
-                  />
-                  <Progress progress={progress} brandColor={brandColor} />
+                  /> */}
                 </Modal>
               ) : (
                 <div
@@ -388,7 +258,12 @@ export default function PreviewSurvey({
                   ref={ContentRef}>
                   <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
                     <div className="w-full max-w-md px-4">
-                      <QuestionRenderer
+                      <SurveyView
+                        survey={survey}
+                        brandColor={brandColor}
+                        formbricksSignature={showFormbricksSignature}
+                      />
+                      {/* <QuestionRenderer
                         activeQuestionId={activeQuestionId}
                         lastActiveQuestionId={lastActiveQuestionId}
                         questions={questions}
@@ -398,13 +273,7 @@ export default function PreviewSurvey({
                         showBackButton={showBackButton}
                         goToPreviousQuestion={goToPreviousQuestion}
                         storedResponseValue={storedResponseValue}
-                      />
-                    </div>
-                  </div>
-                  <div className="z-10 w-full rounded-b-lg bg-white">
-                    <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
-                      <Progress progress={progress} brandColor={brandColor} />
-                      {showFormbricksSignature && <FormbricksSignature />}
+                      /> */}
                     </div>
                   </div>
                 </div>
@@ -432,10 +301,12 @@ export default function PreviewSurvey({
                 placement={product.placement}
                 highlightBorderColor={product.highlightBorderColor}
                 previewMode="desktop">
-                {!countdownStop && autoClose !== null && autoClose > 0 && (
-                  <Progress progress={countdownProgress} brandColor={brandColor} />
-                )}
-                <PreviewModalContent
+                <SurveyView
+                  survey={survey}
+                  brandColor={brandColor}
+                  formbricksSignature={showFormbricksSignature}
+                />
+                {/* <PreviewModalContent
                   activeQuestionId={activeQuestionId}
                   lastActiveQuestionId={lastActiveQuestionId}
                   questions={questions}
@@ -446,14 +317,20 @@ export default function PreviewSurvey({
                   goToPreviousQuestion={goToPreviousQuestion}
                   storedResponseValue={storedResponseValue}
                   showFormbricksSignature={showFormbricksSignature}
-                />
-                <Progress progress={progress} brandColor={brandColor} />
+                /> */}
               </Modal>
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
                 <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
                   <div className="w-full max-w-md">
-                    <QuestionRenderer
+                    <SurveyView
+                      survey={survey}
+                      brandColor={brandColor}
+                      activeQuestionId={activeQuestionId || undefined}
+                      formbricksSignature={showFormbricksSignature}
+                      onActiveQuestionChange={setActiveQuestionId}
+                    />
+                    {/* <QuestionRenderer
                       activeQuestionId={activeQuestionId}
                       lastActiveQuestionId={lastActiveQuestionId}
                       questions={questions}
@@ -463,13 +340,7 @@ export default function PreviewSurvey({
                       showBackButton={showBackButton}
                       goToPreviousQuestion={goToPreviousQuestion}
                       storedResponseValue={storedResponseValue}
-                    />
-                  </div>
-                </div>
-                <div className="z-10 w-full rounded-b-lg bg-white">
-                  <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
-                    <Progress progress={progress} brandColor={brandColor} />
-                    {showFormbricksSignature && <FormbricksSignature />}
+                    /> */}
                   </div>
                 </div>
               </div>
@@ -498,7 +369,7 @@ function ResetProgressButton({ resetQuestionProgress }) {
   return (
     <Button
       variant="minimal"
-      className="py-0.2 bg-white mr-2 px-2 text-sm text-slate-500 font-sans"
+      className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
       onClick={resetQuestionProgress}>
       Restart
       <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />

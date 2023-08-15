@@ -9,9 +9,11 @@ interface RenderSurveyProps {
   survey: TSurvey;
   brandColor: string;
   formbricksSignature: boolean;
+  activeQuestionId?: string;
   onDisplay?: () => void;
   onResponse?: (response: Partial<TResponse>) => void;
   onClose?: () => void;
+  onActiveQuestionChange?: (questionId: string) => void;
 }
 
 export const renderSurvey = (props: RenderSurveyProps) => {

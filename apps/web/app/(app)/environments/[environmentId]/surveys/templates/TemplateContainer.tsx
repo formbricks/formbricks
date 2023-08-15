@@ -68,6 +68,7 @@ export default function TemplateContainerWithPreview({
             <div className="my-6 flex h-full w-full flex-col items-center justify-center">
               <p className="pb-2 text-center text-sm font-normal text-slate-400">Preview</p>
               <PreviewSurvey
+                survey={activeTemplate.preset}
                 activeQuestionId={activeQuestionId}
                 questions={activeTemplate.preset.questions}
                 brandColor={product.brandColor}
