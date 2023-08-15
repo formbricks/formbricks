@@ -1,4 +1,4 @@
-import { Input, AdvancedOptionToggle } from "@formbricks/ui";
+import { AdvancedOptionToggle, Input } from "@formbricks/ui";
 import { UseFormRegister } from "react-hook-form";
 
 interface InnerHtmlSelectorProps {
