@@ -1,7 +1,7 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import { AdvancedOptionToggle, DatePicker, Input, Label, Switch } from "@formbricks/ui";
+import { AdvancedOptionToggle, DatePicker, Input, Label } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
