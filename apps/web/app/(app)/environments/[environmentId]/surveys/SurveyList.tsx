@@ -1,14 +1,14 @@
+import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/SurveyDropDownMenu";
+import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/SurveyStarter";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getSurveysWithAnalytics } from "@formbricks/lib/services/survey";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/SurveyDropDownMenu";
-import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/SurveyStarter";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
-import { getSurveysWithAnalytics } from "@formbricks/lib/services/survey";
-import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
@@ -23,7 +23,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
 
   return (
     <>
-      <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 ">
+      <ul className="grid place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 ">
         <Link href={`/environments/${environmentId}/surveys/templates`}>
           <li className="col-span-1 h-56">
             <div className="delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-900 to-slate-800 font-light text-white shadow transition ease-in-out hover:scale-105 hover:from-slate-800 hover:to-slate-700">

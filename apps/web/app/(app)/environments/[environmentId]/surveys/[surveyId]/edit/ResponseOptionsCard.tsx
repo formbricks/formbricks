@@ -151,7 +151,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           </div>
           <div>
             <p className="font-semibold text-slate-800">Response Options</p>
-            <p className="mt-1 truncate text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500">
               Decide how and how long people can respond.
             </p>
           </div>

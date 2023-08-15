@@ -38,7 +38,7 @@ export default function AddQuestionButton({ addQuestion, environmentId }: AddQue
           </div>
           <div className="px-4 py-3">
             <p className="font-semibold">Add Question</p>
-            <p className="mt-1 truncate text-sm text-slate-500">Add a new question to your survey</p>
+            <p className="mt-1 text-sm text-slate-500">Add a new question to your survey</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
