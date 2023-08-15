@@ -1,4 +1,4 @@
-import { Input, AdvancedOptionToggle } from "@formbricks/ui";
+import { AdvancedOptionToggle, Input } from "@formbricks/ui";
 import { UseFormRegister } from "react-hook-form";
 
 interface InnerHtmlSelectorProps {
@@ -23,6 +23,7 @@ export const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, register }: Inn
             <Input
               type="text"
               placeholder="e.g. 'Install App'"
+              className="bg-white"
               {...register("noCodeConfig.innerHtml.value", { required: true })}
             />
           </div>

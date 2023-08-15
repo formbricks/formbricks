@@ -1,16 +1,16 @@
 import {
+  AdvancedOptionToggle,
+  Button,
+  Input,
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
-  Input,
-  Button,
-  AdvancedOptionToggle,
+  SelectTrigger,
+  SelectValue,
 } from "@formbricks/ui";
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Control, Controller, UseFormRegister } from "react-hook-form";
 import clsx from "clsx";
+import { Control, Controller, UseFormRegister } from "react-hook-form";
 
 interface PageUrlSelectorProps {
   isPageUrl: boolean;
@@ -73,6 +73,7 @@ export const PageUrlSelector = ({
             <Input
               type="text"
               placeholder="e.g. https://app.com/dashboard"
+              className="ml-2 bg-white"
               {...register("noCodeConfig.[pageUrl].value", { required: true })}
             />
           </div>
@@ -97,8 +98,8 @@ export const PageUrlSelector = ({
                     : isMatch === "no"
                     ? "border-red-200 bg-red-50"
                     : isMatch === "default"
-                    ? "border-slate-200 bg-white"
-                    : null
+                    ? "border-slate-200"
+                    : "bg-white"
                 )}
                 placeholder="e.g. https://app.com/dashboard"
               />

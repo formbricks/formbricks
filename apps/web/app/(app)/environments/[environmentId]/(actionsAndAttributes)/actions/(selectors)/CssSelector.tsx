@@ -22,6 +22,7 @@ export const CssSelector = ({ isCssSelector, setIsCssSelector, register }: CssSe
           <Input
             type="text"
             placeholder="Add .css-class or #css-id"
+            className="bg-white"
             {...register("noCodeConfig.cssSelector.value", { required: true })}
           />
         </div>
