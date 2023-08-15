@@ -1,6 +1,8 @@
+import { TResponse } from "@formbricks/types/v1/responses";
 import { h, render } from "preact";
-import { Survey } from "./components/Survey";
 import { TSurvey } from "../../types/v1/surveys";
+import { Survey } from "./components/Survey";
+import { addStylesToDom } from "./lib/styles";
 
 interface RenderSurveyProps {
   containerId: string;
@@ -8,10 +10,12 @@ interface RenderSurveyProps {
   brandColor: string;
   formbricksSignature: boolean;
   onDisplay?: () => void;
-  onResponse?: () => void;
+  onResponse?: (response: Partial<TResponse>) => void;
+  onClose?: () => void;
 }
 
 export const renderSurvey = (props: RenderSurveyProps) => {
+  addStylesToDom();
   const { containerId, ...surveyProps } = props;
   const element = document.getElementById(containerId);
   if (!element) {

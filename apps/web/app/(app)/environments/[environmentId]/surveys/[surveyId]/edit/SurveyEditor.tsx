@@ -79,8 +79,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
           )}
         </main>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
-          <SurveyView survey={localSurvey} brandColor="#000000" formbricksSignature={false} />
-          {/*           <PreviewSurvey 
+          <PreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
@@ -92,7 +91,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             thankYouCard={localSurvey.thankYouCard}
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
             autoClose={localSurvey.autoClose}
-          /> */}
+          />
         </aside>
       </div>
     </div>

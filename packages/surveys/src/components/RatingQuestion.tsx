@@ -1,6 +1,6 @@
-import { useEffect, useState } from "preact/hooks";
-import { TResponseData } from "../../../types/v1/responses";
-import type { TSurveyRatingQuestion } from "../../../types/v1/surveys";
+import { TResponseData } from "@formbricks/types/v1/responses";
+import type { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
+import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -22,28 +22,22 @@ import SubmitButton from "./SubmitButton";
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
   onSubmit: (data: TResponseData) => void;
-  lastQuestion: boolean;
+  onBack: (responseData: TResponseData) => void;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
   brandColor: string;
-  storedResponseValue: number | null;
-  goToNextQuestion: (answer: TResponseData) => void;
-  goToPreviousQuestion?: (answer?: TResponseData) => void;
 }
 
 export default function RatingQuestion({
   question,
   onSubmit,
-  lastQuestion,
+  onBack,
+  isFirstQuestion,
+  isLastQuestion,
   brandColor,
-  storedResponseValue,
-  goToNextQuestion,
-  goToPreviousQuestion,
 }: RatingQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [hoveredNumber, setHoveredNumber] = useState(0);
-
-  useEffect(() => {
-    setSelectedChoice(storedResponseValue);
-  }, [storedResponseValue, question]);
 
   const handleSubmit = (value: number | null) => {
     if (value === null) {
@@ -52,11 +46,6 @@ export default function RatingQuestion({
     const data = {
       [question.id]: value,
     };
-    if (storedResponseValue === value) {
-      goToNextQuestion(data);
-      setSelectedChoice(null);
-      return;
-    }
     onSubmit(data);
     setSelectedChoice(null);
   };
@@ -76,7 +65,7 @@ export default function RatingQuestion({
       type="radio"
       name="rating"
       value={number}
-      className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0 fb-left-0"
+      className="absolute left-0 h-full w-full cursor-pointer opacity-0"
       onChange={() => handleSelect(number)}
       required={question.required}
       checked={selectedChoice === number}
@@ -91,23 +80,23 @@ export default function RatingQuestion({
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="fb-my-4">
+      <div className="my-4">
         <fieldset>
-          <legend className="fb-sr-only">Choices</legend>
-          <div className="fb-flex">
+          <legend className="sr-only">Choices</legend>
+          <div className="flex">
             {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
               <span
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="fb-relative fb-max-h-10 fb-flex-1 fb-cursor-pointer fb-bg-white fb-text-center fb-text-sm fb-leading-10">
+                className="relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     className={cn(
-                      selectedChoice === number ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50" : "",
-                      a.length === number ? "fb-rounded-r-md" : "",
-                      number === 1 ? "fb-rounded-l-md" : "",
-                      "fb-block fb-h-full fb-w-full fb-border hover:fb-bg-gray-100 focus:fb-outline-none fb-text-slate-800"
+                      selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
+                      a.length === number ? "rounded-r-md" : "",
+                      number === 1 ? "rounded-l-md" : "",
+                      "block h-full w-full border text-slate-800 hover:bg-gray-100 focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -115,17 +104,17 @@ export default function RatingQuestion({
                 ) : question.scale === "star" ? (
                   <label
                     className={cn(
-                      number <= hoveredNumber ? "fb-text-yellow-500" : "",
-                      "fb-flex fb-h-full fb-w-full fb-justify-center"
+                      number <= hoveredNumber ? "text-yellow-500" : "",
+                      "flex h-full w-full justify-center"
                     )}>
                     <HiddenRadioInput number={number} />
                     {selectedChoice && selectedChoice >= number ? (
-                      <span className="fb-text-yellow-300">
+                      <span className="text-yellow-300">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
                           fill="currentColor"
-                          className="fb-max-h-full fb-h-6 fb-w-6 ">
+                          className="h-6 max-h-full w-6 ">
                           <path
                             fillRule="evenodd"
                             d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
@@ -140,7 +129,7 @@ export default function RatingQuestion({
                         viewBox="0 0 24 24"
                         stroke-width="1.5"
                         stroke="currentColor"
-                        className="fb-h-6 fb-max-h-full fb-w-6">
+                        className="h-6 max-h-full w-6">
                         <path
                           stroke-linecap="round"
                           stroke-linejoin="round"
@@ -150,7 +139,7 @@ export default function RatingQuestion({
                     )}
                   </label>
                 ) : (
-                  <label className="fb-flex fb-h-full fb-w-full fb-justify-center fb-text-slate-800">
+                  <label className="flex h-full w-full justify-center text-slate-800">
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={selectedChoice == number || hoveredNumber == number}
@@ -162,18 +151,18 @@ export default function RatingQuestion({
               </span>
             ))}
           </div>
-          <div className="fb-flex fb-justify-between fb-text-slate-500 fb-leading-6 fb-px-1.5 fb-text-xs">
+          <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>
         </fieldset>
       </div>
 
-      <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-        {goToPreviousQuestion && selectedChoice && (
+      <div className="mt-4 flex w-full justify-between">
+        {!isFirstQuestion && selectedChoice && (
           <BackButton
             onClick={() => {
-              goToPreviousQuestion({ [question.id]: selectedChoice });
+              onBack({ [question.id]: selectedChoice });
             }}
           />
         )}
@@ -181,7 +170,7 @@ export default function RatingQuestion({
         {(!question.required || selectedChoice) && (
           <SubmitButton
             question={question}
-            lastQuestion={lastQuestion}
+            isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             onClick={() => {}}
           />
@@ -198,8 +187,8 @@ interface RatingSmileyProps {
 }
 
 function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
-  const activeColor = "fb-fill-yellow-500";
-  const inactiveColor = "fb-fill-none";
+  const activeColor = "fill-yellow-500";
+  const inactiveColor = "fill-none";
   let icons = [
     <TiredFace className={active ? activeColor : inactiveColor} />,
     <WearyFace className={active ? activeColor : inactiveColor} />,

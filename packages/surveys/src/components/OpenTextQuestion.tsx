@@ -1,6 +1,6 @@
-import { useEffect, useState } from "preact/hooks";
-import { TResponseData } from "../../../types/v1/responses";
-import type { TSurveyOpenTextQuestion } from "../../../types/v1/surveys";
+import { TResponseData } from "@formbricks/types/v1/responses";
+import type { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
+import { useState } from "preact/hooks";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -9,36 +9,26 @@ import SubmitButton from "./SubmitButton";
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
   onSubmit: (data: TResponseData) => void;
-  lastQuestion: boolean;
+  onBack: (responseData: TResponseData) => void;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
   brandColor: string;
-  storedResponseValue: string | null;
-  goToNextQuestion: (answer: TResponseData) => void;
-  goToPreviousQuestion?: (answer: TResponseData) => void;
 }
 
 export default function OpenTextQuestion({
   question,
   onSubmit,
-  lastQuestion,
+  onBack,
+  isFirstQuestion,
+  isLastQuestion,
   brandColor,
-  storedResponseValue,
-  goToNextQuestion,
-  goToPreviousQuestion,
 }: OpenTextQuestionProps) {
   const [value, setValue] = useState<string>("");
-
-  useEffect(() => {
-    setValue(storedResponseValue ?? "");
-  }, [storedResponseValue, question.id]);
 
   const handleSubmit = (value: string) => {
     const data = {
       [question.id]: value,
     };
-    if (storedResponseValue === value) {
-      goToNextQuestion(data);
-      return;
-    }
     onSubmit(data);
     setValue(""); // reset value
   };
@@ -51,34 +41,34 @@ export default function OpenTextQuestion({
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="fb-mt-4">
+      <div className="mt-4">
         {question.longAnswer === false ? (
           <input
             name={question.id}
             id={question.id}
-            placeholder={!storedResponseValue ? question.placeholder : undefined}
+            placeholder={question.placeholder}
             required={question.required}
             value={value}
             onInput={(e) => setValue(e.currentTarget.value)}
-            className="fb-block fb-w-full fb-rounded-md fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm fb-bg-slate-50 fb-border-slate-100 focus:fb-border-slate-500 focus:fb-outline-none"
+            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
           />
         ) : (
           <textarea
             rows={3}
             name={question.id}
             id={question.id}
-            placeholder={!storedResponseValue ? question.placeholder : undefined}
+            placeholder={question.placeholder}
             required={question.required}
             value={value}
             onInput={(e) => setValue(e.currentTarget.value)}
-            className="fb-block fb-w-full fb-rounded-md fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm fb-bg-slate-50 fb-border-slate-100 focus:fb-border-slate-500"></textarea>
+            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
         )}
       </div>
-      <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-        {goToPreviousQuestion && (
+      <div className="mt-4 flex w-full justify-between">
+        {!isFirstQuestion && (
           <BackButton
             onClick={() => {
-              goToPreviousQuestion({
+              onBack({
                 [question.id]: value,
               });
             }}
@@ -87,7 +77,7 @@ export default function OpenTextQuestion({
         <div></div>
         <SubmitButton
           question={question}
-          lastQuestion={lastQuestion}
+          isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}
         />

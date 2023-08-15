@@ -9,15 +9,15 @@ interface ThankYouCardProps {
 
 export default function ThankYouCard({ headline, subheader, brandColor }: ThankYouCardProps) {
   return (
-    <div className="fb-text-center">
-      <div className="fb-flex fb-items-center fb-justify-center" style={{ color: brandColor }}>
+    <div className="text-center">
+      <div className="flex items-center justify-center" style={{ color: brandColor }}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
           stroke-width="1.5"
           stroke="currentColor"
-          class="fb-h-24 fb-w-24">
+          class="h-24 w-24">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -26,7 +26,7 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
         </svg>
       </div>
 
-      <span className="fb-inline-block fb-rounded-[100%] fb-w-16 fb-h-1 fb-mb-[10px] fb-bg-slate-300"></span>
+      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-slate-300"></span>
 
       <div>
         <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />

@@ -1,6 +1,6 @@
+import { TResponseData } from "@formbricks/types/v1/responses";
+import type { TSurveyChoice, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { TResponseData } from "../../../types/v1/responses";
-import type { TSurveyChoice, TSurveyMultipleChoiceSingleQuestion } from "../../../types/v1/surveys";
 import { cn, shuffleArray } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -10,25 +10,20 @@ import SubmitButton from "./SubmitButton";
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
   onSubmit: (data: TResponseData) => void;
-  lastQuestion: boolean;
+  onBack: (responseData: TResponseData) => void;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
   brandColor: string;
-  storedResponseValue: string | null;
-  goToNextQuestion: (answer: TResponseData) => void;
-  goToPreviousQuestion?: (answer: TResponseData) => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
   question,
   onSubmit,
-  lastQuestion,
+  onBack,
+  isFirstQuestion,
+  isLastQuestion,
   brandColor,
-  storedResponseValue,
-  goToNextQuestion,
-  goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
-  const storedResponseValueValue = question.choices.find(
-    (choice) => choice.label === storedResponseValue
-  )?.id;
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [savedOtherAnswer, setSavedOtherAnswer] = useState<string | null>(null);
   const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
@@ -39,18 +34,6 @@ export default function MultipleChoiceSingleQuestion({
       : []
   );
   const otherSpecify = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (!storedResponseValueValue) {
-      const otherChoiceId = question.choices.find((choice) => choice.id === "other")?.id;
-      if (otherChoiceId && storedResponseValue) {
-        setSelectedChoice(otherChoiceId);
-        setSavedOtherAnswer(storedResponseValue);
-      }
-    } else {
-      setSelectedChoice(storedResponseValueValue);
-    }
-  }, [question.choices, storedResponseValue, storedResponseValueValue]);
 
   useEffect(() => {
     if (selectedChoice === "other" && otherSpecify.current) {
@@ -78,11 +61,6 @@ export default function MultipleChoiceSingleQuestion({
     const data = {
       [question.id]: value,
     };
-    if (value === storedResponseValue) {
-      goToNextQuestion(data);
-      resetForm(); // reset form
-      return;
-    }
     onSubmit(data);
     resetForm(); // reset form
   };
@@ -97,26 +75,24 @@ export default function MultipleChoiceSingleQuestion({
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="fb-mt-4">
+      <div className="mt-4">
         <fieldset>
-          <legend className="fb-sr-only">Options</legend>
-          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
+          <legend className="sr-only">Options</legend>
+          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
                 className={cn(
-                  selectedChoice === choice.label
-                    ? "fb-z-10 fb-bg-slate-50 fb-border-slate-400"
-                    : "fb-border-gray-200",
-                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none fb-text-slate-800 hover:bg-slate-50"
+                  selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
                 )}>
-                <span className="fb-flex fb-items-center fb-text-sm">
+                <span className="flex items-center text-sm">
                   <input
                     type="radio"
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
-                    className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
+                    className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setSelectedChoice(choice.id);
@@ -125,7 +101,7 @@ export default function MultipleChoiceSingleQuestion({
                     style={{ borderColor: brandColor, color: brandColor }}
                     required={question.required && idx === 0}
                   />
-                  <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
+                  <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
                   </span>
                 </span>
@@ -135,7 +111,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={`${choice.id}-label`}
                     name={question.id}
                     placeholder="Please specify"
-                    className="fb-mt-3 fb-flex fb-h-10 fb-w-full fb-rounded-md fb-border fb-bg-white fb-border-slate-300 fb-bg-transparent fb-px-3 fb-py-2 fb-text-sm fb-text-slate-800 placeholder:fb-text-slate-400 focus:fb-outline-none  focus:fb-ring-2 focus:fb-ring-slate-400 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50 dark:fb-border-slate-500 dark:fb-text-slate-300"
+                    className="mt-3 flex h-10 w-full rounded-md border border-slate-300 bg-transparent bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none  focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
                     required={question.required}
                     aria-labelledby={`${choice.id}-label`}
                   />
@@ -145,26 +121,23 @@ export default function MultipleChoiceSingleQuestion({
           </div>
         </fieldset>
       </div>
-      <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-        {goToPreviousQuestion && (
+      <div className="mt-4 flex w-full justify-between">
+        {!isFirstQuestion && (
           <BackButton
             onClick={() => {
-              goToPreviousQuestion(
-                selectedChoice === "other"
-                  ? {
-                      [question.id]: otherSpecify.current?.value!,
-                    }
-                  : {
-                      [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label!,
-                    }
-              );
+              const data: TResponseData = {};
+              const value = otherSpecify.current?.value || selectedChoice;
+              if (value) {
+                data[question.id] = [value];
+              }
+              onBack(data);
             }}
           />
         )}
         <div></div>
         <SubmitButton
           question={question}
-          lastQuestion={lastQuestion}
+          isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}
         />

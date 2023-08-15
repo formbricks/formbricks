@@ -1,8 +1,8 @@
 export default function Progress({ progress, brandColor }: { progress: number; brandColor: string }) {
   return (
-    <div className="fb-h-1 fb-w-full fb-rounded-full fb-bg-slate-200">
+    <div className="h-1 w-full rounded-full bg-slate-200">
       <div
-        className="fb-h-1 fb-rounded-full fb-transition-width fb-duration-500"
+        className="transition-width h-1 rounded-full duration-500"
         style={{ backgroundColor: brandColor, width: `${Math.floor(progress * 100)}%` }}></div>
     </div>
   );

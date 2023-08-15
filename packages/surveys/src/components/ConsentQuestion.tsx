@@ -1,6 +1,6 @@
-import { useEffect, useState } from "preact/hooks";
-import { TResponseData } from "../../../types/v1/responses";
-import type { TSurveyConsentQuestion } from "../../../types/v1/surveys";
+import { TResponseData } from "@formbricks/types/v1/responses";
+import type { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
+import { useState } from "preact/hooks";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
@@ -9,27 +9,21 @@ import SubmitButton from "./SubmitButton";
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
   onSubmit: (data: TResponseData) => void;
-  lastQuestion: boolean;
+  onBack: (responseData: TResponseData) => void;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
   brandColor: string;
-  storedResponseValue: string | null;
-  goToNextQuestion: (answer: TResponseData) => void;
-  goToPreviousQuestion?: (answer?: TResponseData) => void;
 }
 
 export default function ConsentQuestion({
   question,
   onSubmit,
-  lastQuestion,
+  onBack,
+  isFirstQuestion,
+  isLastQuestion,
   brandColor,
-  storedResponseValue,
-  goToNextQuestion,
-  goToPreviousQuestion,
 }: ConsentQuestionProps) {
   const [answer, setAnswer] = useState<string>("dismissed");
-
-  useEffect(() => {
-    setAnswer(storedResponseValue ?? "dismissed");
-  }, [storedResponseValue, question]);
 
   const handleOnChange = () => {
     answer === "accepted" ? setAnswer("dissmissed") : setAnswer("accepted");
@@ -39,12 +33,6 @@ export default function ConsentQuestion({
     const data = {
       [question.id]: value,
     };
-    if (storedResponseValue === value) {
-      goToNextQuestion(data);
-      setAnswer("dismissed");
-
-      return;
-    }
     onSubmit(data);
     setAnswer("dismissed");
   };
@@ -58,7 +46,7 @@ export default function ConsentQuestion({
           e.preventDefault();
           handleSumbit(answer);
         }}>
-        <label className="fb-relative fb-z-10 fb-mt-4 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-rounded-md fb-border fb-border-gray-200 fb-bg-slate-50 fb-p-4 fb-text-sm focus:fb-outline-none fb-text-slate-800">
+        <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm text-slate-800 focus:outline-none">
           <input
             type="checkbox"
             id={question.id}
@@ -66,21 +54,21 @@ export default function ConsentQuestion({
             value={question.label}
             onChange={handleOnChange}
             checked={answer === "accepted"}
-            className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
+            className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
             style={{ borderColor: brandColor, color: brandColor }}
             required={question.required}
           />
-          <span id={`${question.id}-label`} className="fb-ml-3 fb-font-medium">
+          <span id={`${question.id}-label`} className="ml-3 font-medium">
             {question.label}
           </span>
         </label>
 
-        <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-          {goToPreviousQuestion && (
+        <div className="mt-4 flex w-full justify-between">
+          {!isFirstQuestion && (
             <BackButton
               onClick={() =>
-                goToPreviousQuestion({
+                onBack({
                   [question.id]: answer,
                 })
               }
@@ -90,7 +78,7 @@ export default function ConsentQuestion({
           <SubmitButton
             brandColor={brandColor}
             question={question}
-            lastQuestion={lastQuestion}
+            isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />
         </div>

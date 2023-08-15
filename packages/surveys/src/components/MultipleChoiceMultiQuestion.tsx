@@ -1,7 +1,6 @@
-import _ from "lodash";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { TResponseData } from "../../../types/v1/responses";
-import type { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "../../../types/v1/surveys";
+import { TResponseData } from "@formbricks/types/v1/responses";
+import type { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 import { cn, shuffleArray } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -11,21 +10,19 @@ import SubmitButton from "./SubmitButton";
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: TResponseData) => void;
-  lastQuestion: boolean;
+  onBack: (responseData: TResponseData) => void;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
   brandColor: string;
-  storedResponseValue: string[] | null;
-  goToNextQuestion: (answer: TResponseData) => void;
-  goToPreviousQuestion?: (answer: TResponseData) => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
   question,
   onSubmit,
-  lastQuestion,
+  onBack,
+  isFirstQuestion,
+  isLastQuestion,
   brandColor,
-  storedResponseValue,
-  goToNextQuestion,
-  goToPreviousQuestion,
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [showOther, setShowOther] = useState(false);
@@ -42,25 +39,6 @@ export default function MultipleChoiceMultiQuestion({
   const isAtLeastOneChecked = () => {
     return selectedChoices.length > 0 || otherSpecified.length > 0;
   };
-
-  const nonOtherChoiceLabels = question.choices
-    .filter((label) => label.id !== "other")
-    .map((choice) => choice.label);
-
-  useEffect(() => {
-    const nonOtherSavedChoices = storedResponseValue?.filter((answer) =>
-      nonOtherChoiceLabels.includes(answer)
-    );
-    const savedOtherSpecified = storedResponseValue?.find((answer) => !nonOtherChoiceLabels.includes(answer));
-
-    setSelectedChoices(nonOtherSavedChoices ?? []);
-
-    if (savedOtherSpecified) {
-      setOtherSpecified(savedOtherSpecified);
-      setShowOther(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storedResponseValue, question.id]);
 
   useEffect(() => {
     setQuestionChoices(
@@ -83,11 +61,6 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
-      goToNextQuestion(data);
-      return;
-    }
-
     if (question.required && selectedChoices.length <= 0) {
       return;
     }
@@ -107,26 +80,26 @@ export default function MultipleChoiceMultiQuestion({
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="fb-mt-4">
+      <div className="mt-4">
         <fieldset>
-          <legend className="fb-sr-only">Options</legend>
-          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
+          <legend className="sr-only">Options</legend>
+          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2">
             {questionChoices.map((choice) => (
               <label
                 key={choice.id}
                 className={cn(
                   selectedChoices.includes(choice.label)
-                    ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50"
-                    : "fb-border-gray-200",
-                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-space-y-3 fb-rounded-md fb-border fb-p-4 hover:fb-bg-slate-50 focus:fb-outline-none fb-text-slate-800"
+                    ? "z-10 border-slate-400 bg-slate-50"
+                    : "border-gray-200",
+                  "relative flex cursor-pointer flex-col space-y-3 rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
                 )}>
-                <span className="fb-flex fb-items-center fb-text-sm">
+                <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
-                    className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
+                    className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={(e) => {
                       if (choice.id === "other") {
@@ -146,7 +119,7 @@ export default function MultipleChoiceMultiQuestion({
                     checked={selectedChoices.includes(choice.label) || (choice.id === "other" && showOther)}
                     style={{ borderColor: brandColor, color: brandColor }}
                   />
-                  <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
+                  <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
                   </span>
                 </span>
@@ -157,7 +130,7 @@ export default function MultipleChoiceMultiQuestion({
                     name={question.id}
                     placeholder="Please specify"
                     className={cn(
-                      "fb-mt-3 fb-flex fb-h-10 fb-w-full fb-rounded-md fb-border fb-bg-white fb-border-slate-300 fb-bg-transparent fb-px-3 fb-py-2 fb-text-sm fb-text-slate-800 placeholder:fb-text-slate-400 focus:fb-outline-none  focus:fb-ring-2 focus:fb-ring-slate-400 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50 dark:fb-border-slate-500 dark:fb-text-slate-300"
+                      "mt-3 flex h-10 w-full rounded-md border border-slate-300 bg-transparent bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none  focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
                     )}
                     onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                     aria-labelledby={`${choice.id}-label`}
@@ -171,18 +144,18 @@ export default function MultipleChoiceMultiQuestion({
       </div>
       <input
         type="text"
-        className="clip-[rect(0,0,0,0)] fb-absolute fb-m-[-1px] fb-h-1 fb-w-1 fb-overflow-hidden fb-whitespace-nowrap fb-border-0 fb-p-0 fb-text-transparent fb-caret-transparent focus:fb-border-transparent focus:fb-ring-0"
+        className="clip-[rect(0,0,0,0)] absolute m-[-1px] h-1 w-1 overflow-hidden whitespace-nowrap border-0 p-0 text-transparent caret-transparent focus:border-transparent focus:ring-0"
         required={question.required}
         value={isAtLeastOneChecked() ? "checked" : ""}
       />
-      <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-        {goToPreviousQuestion && (
+      <div className="mt-4 flex w-full justify-between">
+        {!isFirstQuestion && (
           <BackButton
             onClick={() => {
               if (otherSpecified.length > 0 && showOther) {
                 selectedChoices.push(otherSpecified);
               }
-              goToPreviousQuestion({
+              onBack({
                 [question.id]: selectedChoices,
               });
               resetForm();
@@ -192,7 +165,7 @@ export default function MultipleChoiceMultiQuestion({
         <div></div>
         <SubmitButton
           question={question}
-          lastQuestion={lastQuestion}
+          isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}
         />

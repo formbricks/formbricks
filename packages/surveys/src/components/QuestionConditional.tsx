@@ -1,3 +1,4 @@
+import { TResponseData } from "@formbricks/types/v1/responses";
 import { QuestionType } from "../../../types/questions";
 import { TSurveyQuestion } from "../../../types/v1/surveys";
 import CTAQuestion from "./CTAQuestion";
@@ -10,92 +11,83 @@ import RatingQuestion from "./RatingQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
-  lastQuestion: boolean;
+  onSubmit: (data: TResponseData) => void;
+  onBack: (responseData: TResponseData) => void;
+  isFirstQuestion: boolean;
+  isLastQuestion: boolean;
   brandColor: string;
-  storedResponseValue: any;
-  goToNextQuestion: (answer: any) => void;
-  goToPreviousQuestion?: (answer: any) => void;
 }
 
 export default function QuestionConditional({
   question,
   onSubmit,
-  lastQuestion,
+  onBack,
+  isFirstQuestion,
+  isLastQuestion,
   brandColor,
-  storedResponseValue,
-  goToNextQuestion,
-  goToPreviousQuestion,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
       onSubmit={onSubmit}
-      lastQuestion={lastQuestion}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      storedResponseValue={storedResponseValue}
-      goToNextQuestion={goToNextQuestion}
-      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       question={question}
       onSubmit={onSubmit}
-      lastQuestion={lastQuestion}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      storedResponseValue={storedResponseValue}
-      goToNextQuestion={goToNextQuestion}
-      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       question={question}
       onSubmit={onSubmit}
-      lastQuestion={lastQuestion}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      storedResponseValue={storedResponseValue}
-      goToNextQuestion={goToNextQuestion}
-      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.NPS ? (
     <NPSQuestion
       question={question}
       onSubmit={onSubmit}
-      lastQuestion={lastQuestion}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      storedResponseValue={storedResponseValue}
-      goToNextQuestion={goToNextQuestion}
-      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
       question={question}
       onSubmit={onSubmit}
-      lastQuestion={lastQuestion}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      storedResponseValue={storedResponseValue}
-      goToNextQuestion={goToNextQuestion}
-      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.Rating ? (
     <RatingQuestion
       question={question}
       onSubmit={onSubmit}
-      lastQuestion={lastQuestion}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      storedResponseValue={storedResponseValue}
-      goToNextQuestion={goToNextQuestion}
-      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
       question={question}
       onSubmit={onSubmit}
-      lastQuestion={lastQuestion}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      storedResponseValue={storedResponseValue}
-      goToNextQuestion={goToNextQuestion}
-      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : null;
 }
