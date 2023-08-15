@@ -1,27 +1,22 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useEnvironment } from "@/lib/environments/environments";
-import { ErrorComponent } from "@formbricks/ui";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 
-export default function EnvironmentNotice({ environmentId }: { environmentId: string }) {
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
+export default function EnvironmentNotice({
+  environment,
+  environments,
+}: {
+  environment: TEnvironment;
+  environments: TEnvironment[];
+}) {
   const router = useRouter();
 
   const changeEnvironment = (environmentType: string) => {
-    const newEnvironmentId = environment.product.environments.find((e) => e.type === environmentType)?.id;
+    const newEnvironmentId = environments.find((e) => e.type === environmentType)?.id;
     router.push(`/environments/${newEnvironmentId}/`);
   };
-
-  if (isLoadingEnvironment) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorEnvironment) {
-    return <ErrorComponent />;
-  }
 
   return (
     <div>

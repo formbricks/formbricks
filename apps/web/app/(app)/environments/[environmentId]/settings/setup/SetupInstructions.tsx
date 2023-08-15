@@ -15,10 +15,15 @@ const tabs = [
 
 export default function SetupInstructions({ environmentId }) {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     Prism.highlightAll();
   }, [activeTab]);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <div>
@@ -35,7 +40,7 @@ export default function SetupInstructions({ environmentId }) {
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
-    apiHost: "${window.location.protocol}//${window.location.host}",
+    apiHost: "${isClient ? window.location.protocol : ""}//${isClient ? window.location.host : ""}",
     debug: true, // remove when in production
   });
 }`}</CodeBlock>

@@ -36,12 +36,16 @@ import {
   DashboardIcon,
   ErrorComponent,
   FilterIcon,
-  FormIcon, Popover, PopoverContent, PopoverTrigger, ProfileAvatar,
+  FormIcon,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  ProfileAvatar,
   SettingsIcon,
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@formbricks/ui";
 import {
   AdjustmentsVerticalIcon,
