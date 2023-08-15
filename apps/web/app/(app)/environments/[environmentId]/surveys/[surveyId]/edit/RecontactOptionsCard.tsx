@@ -100,7 +100,7 @@ export default function RecontactOptionsCard({
           </div>
           <div>
             <p className="font-semibold text-slate-800">Recontact Options</p>
-            <p className="mt-1 truncate text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500">
               Decide how often people can answer this survey.
             </p>
           </div>
