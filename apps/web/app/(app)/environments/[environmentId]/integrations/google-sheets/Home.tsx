@@ -4,13 +4,13 @@ import Image from "next/image";
 import GoogleSheetsLogo from "@/images/google-sheets-small.png";
 import FormbricksGoogleSheet from "@/images/formbricks-googlesheet.png"
 import { Button } from "@formbricks/ui";
-import { getSpreadSheets } from "@formbricks/lib/client/google"
+import { authorization } from "@formbricks/lib/client/google"
 
 
 export default function Home({environmentId,setShowSurveySelect}) {
 
     const handleGoogleLogin = async() => {
-        getSpreadSheets(environmentId).then((res)=>{if(res.ok){setShowSurveySelect(true)}})
+        authorization(environmentId).then((res)=>{if(res.ok){setShowSurveySelect(true)}})
     }
 
     return (
