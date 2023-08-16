@@ -27,6 +27,7 @@
     "lottie-web": "^5.12.2",
     "next": "13.4.12",
     "next-plausible": "^3.10.1",
+    "next-seo": "^6.1.0",
     "next-sitemap": "^4.1.8",
     "node-fetch": "^3.3.2",
     "prism-react-renderer": "^2.0.6",
