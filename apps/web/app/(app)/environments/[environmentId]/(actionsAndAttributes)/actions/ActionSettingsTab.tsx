@@ -30,6 +30,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
   const [isCssSelector, setIsCssSelector] = useState(actionClass.noCodeConfig?.cssSelector ? true : false);
   const [isInnerHtml, setIsInnerHtml] = useState(actionClass.noCodeConfig?.innerHtml ? true : false);
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
+  const [isDeletingAction, setIsDeletingAction] = useState(false);
 
   const { register, handleSubmit, control, watch } = useForm({
     defaultValues: {
@@ -87,6 +88,20 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
       toast.error(error.message);
     } finally {
       setIsUpdatingAction(false);
+    }
+  };
+
+  const handleDeleteAction = async () => {
+    try {
+      setIsDeletingAction(true);
+      await deleteActionClass(environmentId, actionClass.id);
+      router.refresh();
+      toast.success("Action deleted successfully");
+      setOpen(false);
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsDeletingAction(false);
     }
   };
 
@@ -180,18 +195,10 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
       <DeleteDialog
         open={openDeleteDialog}
         setOpen={setOpenDeleteDialog}
+        isDeleting={isDeletingAction}
         deleteWhat={"Action"}
         text="Are you sure you want to delete this action? This also removes this action as a trigger from all your surveys."
-        onDelete={async () => {
-          setOpen(false);
-          try {
-            await deleteActionClass(environmentId, actionClass.id);
-            router.refresh();
-            toast.success("Action deleted successfully");
-          } catch (error) {
-            toast.error("Something went wrong. Please try again.");
-          }
-        }}
+        onDelete={handleDeleteAction}
       />
     </div>
   );

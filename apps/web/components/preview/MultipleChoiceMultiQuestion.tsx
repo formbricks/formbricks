@@ -4,14 +4,15 @@ import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
 import { symmetricDifference } from "@formbricks/lib/utils/array";
 import { Response } from "@formbricks/types/js";
-import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion;
+  question: MultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
@@ -57,7 +58,7 @@ export default function MultipleChoiceMultiQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedResponseValue, question.id]);
 
-  const [questionChoices, setQuestionChoices] = useState<Choice[]>(
+  const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
     question.choices
       ? question.shuffleOption !== "none"
         ? shuffleArray(question.choices, question.shuffleOption)
