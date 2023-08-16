@@ -4,15 +4,67 @@ import Image from "next/image";
 import fetch from "node-fetch";
 import ReactMarkdown from "react-markdown";
 
+type Article = {
+  id?: number;
+  attributes?: {
+    author?: string;
+    title?: string;
+    text?: string;
+    slug?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+    meta?: {
+      id?: number;
+      description?: string;
+      title?: string;
+      publisher?: string;
+      section?: string;
+      tags?: {
+        id?: number;
+        tag?: string;
+      }[];
+    };
+    faq?: {
+      id?: number;
+      question?: string;
+      answer?: string;
+    }[];
+  };
+};
+
+type ArticlePageProps = {
+  article?: Article;
+};
+
+interface ArticleResponse {
+  data: Article[];
+  meta: {
+    pagination: {
+      page: number;
+      pageSize: number;
+      pageCount: number;
+      total: number;
+    };
+  };
+}
+
 export async function getStaticPaths() {
   const response = await fetch(
-    "http://127.0.0.1:1337/api/articles?populate[meta][populate]=*&filters[category][name][$eq]=learn"
+    "https://strapi.formbricks.com/api/articles?populate[meta][populate]=*&filters[category][name][$eq]=learn",
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.STRAPI_API_KEY}`,
+      },
+    }
   );
-  const articles = await response.json();
-
   if (!response.ok) {
     throw new Error(`HTTP error! Status: ${response.status}`);
   }
+
+  const articles = (await response.json()) as ArticleResponse;
+
+  console.log("articles", articles);
 
   const paths = articles.data.map((article) => ({
     params: { slug: article.attributes.slug },
@@ -23,17 +75,22 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   const res = await fetch(
-    `http://127.0.0.1:1337/api/articles?populate[meta][populate]=*&populate[faq][populate]=*&filters[slug][$eq]=${params.slug}`
+    `https://strapi.formbricks.com/api/articles?populate[meta][populate]=*&populate[faq][populate]=*&filters[slug][$eq]=${params.slug}`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.STRAPI_API_KEY}`,
+      },
+    }
   );
   if (!res.ok) {
     throw new Error("Something went wrong");
   }
-  const resData = await res.json();
+  const resData = (await res.json()) as ArticleResponse;
   const article = resData.data[0];
   return { props: { article } };
 }
 
-export default function ArticlePage({ article = {} }) {
+export default function ArticlePage({ article = {} }: ArticlePageProps) {
   if (!article || !article.attributes) return <div>Loading...</div>;
 
   // Use next/image to render images in markdown
