@@ -1,5 +1,5 @@
 import { cn } from "@formbricks/lib/cn";
-import { QueueListIcon, Cog8ToothIcon } from "@heroicons/react/24/solid";
+import { Cog8ToothIcon, QueueListIcon } from "@heroicons/react/24/solid";
 
 interface Tab {
   id: "questions" | "settings";
@@ -27,7 +27,7 @@ interface QuestionsAudienceTabsProps {
 
 export default function QuestionsAudienceTabs({ activeId, setActiveId }: QuestionsAudienceTabsProps) {
   return (
-    <div className="fixed z-10 flex h-14 w-1/2 items-center justify-center border bg-white">
+    <div className="fixed z-10 flex h-14 md:w-1/2 w-full items-center justify-center border bg-white">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabs.map((tab) => (
           <button

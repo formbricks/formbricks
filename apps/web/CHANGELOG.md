@@ -1,5 +1,20 @@
 # @formbricks/web
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [01523393]
+  - @formbricks/js@1.0.4
+
+## 1.0.2
+
+### Patch Changes
+
+- 3dde021c: Release version 1.0.2
+- Updated dependencies [3dde021c]
+  - @formbricks/js@1.0.3
+
 ## 0.1.2
 
 ### Patch Changes

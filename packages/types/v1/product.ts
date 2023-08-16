@@ -19,3 +19,11 @@ export const ZProduct = z.object({
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
+
+export const ZProductUpdateInput = ZProduct.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;
