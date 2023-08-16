@@ -58,16 +58,11 @@ export function Survey({
     setProgress(calculateProgress());
 
     function calculateProgress() {
-      if (questionId === "end") return 100;
+      if (questionId === "end") return 1;
       const elementIdx = survey.questions.findIndex((e) => e.id === questionId);
       return elementIdx / survey.questions.length;
     }
   }, [questionId, survey]);
-
-  useEffect(() => {
-    // store history stack
-    setHistory([...history, questionId]);
-  }, [questionId]);
 
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
@@ -94,11 +89,14 @@ export function Survey({
     const nextQuestionId = getNextQuestionId(responseData);
     onResponse({ data: responseData, finished: nextQuestionId === "end" }); // Mark as finished if next question is "end"
     setQuestionId(nextQuestionId);
+    // add to history
+    setHistory([...history, questionId]);
     setLoadingElement(false);
     onActiveQuestionChange(nextQuestionId);
   }
 
   const onBack = (): void => {
+    console.log(JSON.stringify(history, null, 2));
     const newHistory = [...history];
     const prevQuestionId = newHistory.pop();
     if (!prevQuestionId) throw new Error("Question not found");
@@ -114,7 +112,7 @@ export function Survey({
           ref={contentRef}
           className={cn(
             loadingElement ? "animate-pulse opacity-60" : "",
-            "max-h-[80vh] overflow-y-auto px-4 py-6 font-sans text-slate-800 sm:p-6"
+            "h-full max-h-[80vh] overflow-y-auto px-4 py-6 font-sans text-slate-800 sm:p-6"
           )}>
           {questionId === "end" && survey.thankYouCard.enabled ? (
             <ThankYouCard
@@ -138,8 +136,10 @@ export function Survey({
             )
           )}
         </div>
-        {formbricksSignature && <FormbricksSignature />}
-        <Progress progress={progress} brandColor={brandColor} />
+        <div className="top-0 z-10 w-full border-b bg-white">
+          {formbricksSignature && <FormbricksSignature />}
+          <Progress progress={progress} brandColor={brandColor} />
+        </div>
       </AutoCloseWrapper>
     </div>
   );

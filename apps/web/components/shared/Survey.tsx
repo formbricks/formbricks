@@ -1,10 +1,10 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
 import { Survey } from "@formbricks/types/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
+import { TResponseUpdate } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useEffect, useMemo } from "react";
 
-const createContainerId = () => `formbricks-survey-modal-${Math.random().toString(36).slice(2)}`;
+const createContainerId = () => `formbricks-survey-container`;
 
 interface SurveyProps {
   survey: TSurvey | Survey;
@@ -12,7 +12,7 @@ interface SurveyProps {
   formbricksSignature: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;
-  onResponse?: (response: Partial<TResponse>) => void;
+  onResponse?: (response: TResponseUpdate) => void;
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
 }
@@ -47,8 +47,18 @@ export const SurveyInline = ({
       activeQuestionId,
       onActiveQuestionChange,
     });
-  });
-  return <div id={containerId}></div>;
+  }, [
+    activeQuestionId,
+    brandColor,
+    containerId,
+    formbricksSignature,
+    onActiveQuestionChange,
+    onClose,
+    onDisplay,
+    onResponse,
+    survey,
+  ]);
+  return <div id={containerId} />;
 };
 
 export const SurveyModal = ({
@@ -80,7 +90,20 @@ export const SurveyModal = ({
       activeQuestionId,
       onActiveQuestionChange,
     });
-  });
+  }, [
+    activeQuestionId,
+    brandColor,
+    clickOutside,
+    darkOverlay,
+    formbricksSignature,
+    highlightBorderColor,
+    onActiveQuestionChange,
+    onClose,
+    onDisplay,
+    onResponse,
+    placement,
+    survey,
+  ]);
   return <div id="formbricks-survey"></div>;
 };
 
@@ -115,6 +138,20 @@ export const SurveyModalInline = ({
       activeQuestionId,
       onActiveQuestionChange,
     });
-  });
+  }, [
+    activeQuestionId,
+    brandColor,
+    clickOutside,
+    containerId,
+    darkOverlay,
+    formbricksSignature,
+    highlightBorderColor,
+    onActiveQuestionChange,
+    onClose,
+    onDisplay,
+    onResponse,
+    placement,
+    survey,
+  ]);
   return <div id={containerId}></div>;
 };
