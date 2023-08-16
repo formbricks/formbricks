@@ -39,7 +39,7 @@ export function SurveyModal({
         clickOutside={clickOutside}
         darkOverlay={darkOverlay}
         highlightBorderColor={highlightBorderColor}
-        isOpen={false}
+        isOpen={true}
         onClose={onClose}>
         <Survey
           survey={survey}

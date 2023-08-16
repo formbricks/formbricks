@@ -5,6 +5,7 @@ import { Config } from "./config";
 import { ErrorHandler, match } from "./errors";
 import { Logger } from "./logger";
 import { sync } from "./sync";
+import { renderSurveyModal } from "@formbricks/surveys";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -23,11 +24,33 @@ export const renderWidget = (survey: TSurvey) => {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
   }
 
+  const product = config.get().state.product;
+
+  console.log("product", product);
+
   setTimeout(() => {
-    render(
+    renderSurveyModal({
+      survey: survey,
+      brandColor: product.brandColor,
+      formbricksSignature: product.formbricksSignature,
+      clickOutside: product.clickOutsideClose,
+      darkOverlay: product.darkOverlay,
+      highlightBorderColor: product.highlightBorderColor,
+      placement: product.placement,
+      onDisplay: () => {
+        console.log("Survey displayed");
+      },
+      onResponse: (responseUpdate) => {
+        console.log("Survey response", responseUpdate);
+      },
+      onClose: () => {
+        console.log("Survey closed");
+      },
+    });
+    /* render(
       h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
       document.getElementById(containerId)
-    );
+    ); */
   }, survey.delay * 1000);
 };
 

@@ -10,9 +10,6 @@ interface BaseProps {
   brandColor: string;
   formbricksSignature: boolean;
   activeQuestionId?: string;
-  clickOutside: boolean;
-  darkOverlay: boolean;
-  highlightBorderColor: string | null;
   onDisplay?: () => void;
   onResponse?: (response: Partial<TResponse>) => void;
   onClose?: () => void;
@@ -24,6 +21,9 @@ interface RenderSurveyInlineProps extends BaseProps {
 }
 
 interface RenderSurveyModalProps extends BaseProps {
+  clickOutside: boolean;
+  darkOverlay: boolean;
+  highlightBorderColor: string | null;
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
 }
 

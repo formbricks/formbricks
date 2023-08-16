@@ -374,6 +374,9 @@ importers:
       '@formbricks/api':
         specifier: workspace:*
         version: link:../api
+      '@formbricks/surveys':
+        specifier: workspace:*
+        version: link:../surveys
       '@formbricks/types':
         specifier: workspace:*
         version: link:../types
