@@ -10,14 +10,16 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 
 export default async function ProfileSettingsPage({ params }) {
   const session = await getServerSession(authOptions);
-  const team = await getTeamByEnvironmentId(params.environmentId)
+  const team = await getTeamByEnvironmentId(params.environmentId);
 
   return (
     <>
-      {team && session && <div>
-        <SettingsTitle title="Billing & Plan" />
-        <PricingTable team={team}/>
-      </div>}
+      {team && session && (
+        <div>
+          <SettingsTitle title="Billing & Plan" />
+          <PricingTable team={team} />
+        </div>
+      )}
     </>
   );
 }

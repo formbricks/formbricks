@@ -169,7 +169,7 @@ export default function SurveyMenuBar({
           }}>
           Back
         </Button>
-        <p className="pl-4 font-semibold hidden md:block">{product.name} / </p>
+        <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
         <Input
           defaultValue={localSurvey.name}
           onChange={(e) => {

@@ -8,8 +8,10 @@ import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
 
 export default async function LinkSurveyPage({ params }) {
-
-  const [survey, product] = await Promise.all([getSurvey(params.surveyId), getProductByEnvironmentId(params.environmentId)]);
+  const [survey, product] = await Promise.all([
+    getSurvey(params.surveyId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
 
   if (survey && survey.status !== "inProgress") {
     return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
