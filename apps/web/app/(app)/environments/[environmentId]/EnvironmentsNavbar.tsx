@@ -16,7 +16,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import {
@@ -25,25 +24,29 @@ import {
   changeEnvironmentByTeam,
 } from "@/lib/environments/changeEnvironments";
 import { useEnvironment } from "@/lib/environments/environments";
+import { formbricksLogout } from "@/lib/formbricks";
 import { useMemberships } from "@/lib/memberships";
 import { useTeam } from "@/lib/teams/teams";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
+import formbricks from "@formbricks/js";
+import { cn } from "@formbricks/lib/cn";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   CustomersIcon,
   DashboardIcon,
   ErrorComponent,
   FilterIcon,
-  FormIcon,
-  ProfileAvatar,
+  FormIcon, Popover, PopoverContent, PopoverTrigger, ProfileAvatar,
   SettingsIcon,
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@formbricks/ui";
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,
+  ChatBubbleBottomCenterTextIcon,
   ChevronDownIcon,
   CodeBracketIcon,
   CreditCardIcon,
@@ -53,9 +56,9 @@ import {
   PlusIcon,
   UserCircleIcon,
   UsersIcon,
-  ChatBubbleBottomCenterTextIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { MenuIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -63,11 +66,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
-import { formbricksLogout } from "@/lib/formbricks";
-import formbricks from "@formbricks/js";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { MenuIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -268,7 +266,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   <MenuIcon className="h-6 w-6 rounded-md bg-slate-200 p-1 text-slate-600" />
                 </span>
               </PopoverTrigger>
-              <PopoverContent className="mr-4 bg-slate-200">
+              <PopoverContent className="mr-4 bg-slate-100 shadow">
                 <div className="flex flex-col">
                   {navigation.map((navItem) => (
                     <Link key={navItem.name} href={navItem.href}>
@@ -276,7 +274,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                         onClick={() => setMobileNavMenuOpen(false)}
                         className={cn(
                           "flex items-center space-x-2 rounded-md p-2",
-                          navItem.current && "bg-slate-300"
+                          navItem.current && "bg-slate-200"
                         )}>
                         <navItem.icon className="h-5 w-5" />
                         <span className="font-medium text-slate-600">{navItem.name}</span>

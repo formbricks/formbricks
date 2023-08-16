@@ -6,9 +6,10 @@ import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { Response } from "@formbricks/types/js";
 import { BackButton } from "@/components/preview/BackButton";
+import { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
 
 interface NPSQuestionProps {
-  question: NPSQuestion;
+  question: NPSQuestion | TSurveyNPSQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

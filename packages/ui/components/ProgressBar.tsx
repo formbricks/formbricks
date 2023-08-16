@@ -37,7 +37,7 @@ export const HalfCircle: React.FC<HalfCircleProps> = ({ value }: { value: number
       </div>
       <div className="flex justify-between text-sm leading-10 text-slate-600">
         <p>-100</p>
-        <p className="text-4xl text-black">{Math.round(value)}</p>
+        <p className="text-2xl text-black md:text-4xl">{Math.round(value)}</p>
         <p>100</p>
       </div>
     </div>
