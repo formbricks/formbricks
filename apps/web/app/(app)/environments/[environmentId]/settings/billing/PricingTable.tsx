@@ -3,7 +3,6 @@
 import { TTeam } from "@formbricks/types/v1/teams";
 import { Badge, Button } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -16,7 +15,6 @@ const stripeURl =
 
 interface PricingTableProps {
   team: TTeam;
-  session: Session | null;
 }
 
 export default function PricingTable({ team }: PricingTableProps) {

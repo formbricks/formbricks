@@ -16,7 +16,7 @@ export default async function ProfileSettingsPage({ params }) {
     <>
       {team && session && <div>
         <SettingsTitle title="Billing & Plan" />
-        <PricingTable team={team} session={session} />
+        <PricingTable team={team}/>
       </div>}
     </>
   );
