@@ -64,6 +64,10 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
       if (data.name === "") throw new Error("Please give your action a name");
       if (!isPageUrl && !isCssSelector && !isInnerHtml) throw new Error("Please select atleast one selector");
 
+      if (isPageUrl && data.noCodeConfig?.pageUrl?.rule === undefined) {
+        throw new Error("Please select a rule for page URL");
+      }
+
       const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
       const updatedData: TActionClassInput = {
         ...data,

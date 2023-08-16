@@ -43,18 +43,18 @@ export const PageUrlSelector = ({
         setIsPageUrl(!isPageUrl);
       }}
       title="Page URL"
-      description="If a user visits a specific URL">
-      <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-4">
-        <div className="grid w-full grid-cols-3 gap-x-8">
+      description="If a user visits a specific URL"
+      childBorder={true}>
+      <div className="col-span-1 space-y-3 p-4">
+        <div className="grid grid-cols-3 gap-x-8">
           <div className="col-span-1">
             <Label>URL</Label>
             <Controller
-              name="noCodeConfig.pageUrl.rule"
-              defaultValue={"exactMatch"}
+              name="noCodeConfig.[pageUrl].rule"
               control={control}
               render={({ field: { onChange, value } }) => (
-                <Select onValueChange={onChange} {...value}>
-                  <SelectTrigger className="w-[175px] bg-white">
+                <Select onValueChange={onChange} {...value} value={value}>
+                  <SelectTrigger className="w-[160px] bg-white">
                     <SelectValue placeholder="Select match type" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
@@ -69,9 +69,10 @@ export const PageUrlSelector = ({
               )}
             />
           </div>
-          <div className="col-span-2 flex w-full items-end">
+          <div className="col-span-2 flex items-end">
             <Input
               type="text"
+              className="bg-white"
               placeholder="e.g. https://app.com/dashboard"
               {...register("noCodeConfig.[pageUrl].value", { required: isPageUrl })}
             />

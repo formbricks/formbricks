@@ -151,9 +151,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           </div>
           <div>
             <p className="font-semibold text-slate-800">Response Options</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Decide how and how long people can respond.
-            </p>
+            <p className="mt-1 text-sm text-slate-500">Decide how and how long people can respond.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -163,49 +161,41 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           {/* Close Survey on Limit */}
           <AdvancedOptionToggle
             htmlId="closeOnNumberOfResponse"
-            className="p-4"
             isChecked={autoComplete}
             onToggle={handleCheckMark}
             title="Close survey on response limit"
-            description="Automatically close the survey after a certain number of responses.">
-            <label
-              htmlFor="autoCompleteResponses"
-              className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-              <div className="">
-                <p className="text-sm font-semibold text-slate-700">
-                  Automatically mark the survey as complete after
-                  <Input
-                    autoFocus
-                    type="number"
-                    min={
-                      localSurvey?._count?.responses ? (localSurvey?._count?.responses + 1).toString() : "1"
-                    }
-                    id="autoCompleteResponses"
-                    value={localSurvey.autoComplete?.toString()}
-                    onChange={handleInputResponse}
-                    onBlur={handleInputResponseBlur}
-                    className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
-                  />
-                  completed responses.
-                </p>
-              </div>
+            description="Automatically close the survey after a certain number of responses."
+            childBorder={true}>
+            <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-700">
+                Automatically mark the survey as complete after
+                <Input
+                  autoFocus
+                  type="number"
+                  min={localSurvey?._count?.responses ? (localSurvey?._count?.responses + 1).toString() : "1"}
+                  id="autoCompleteResponses"
+                  value={localSurvey.autoComplete?.toString()}
+                  onChange={handleInputResponse}
+                  onBlur={handleInputResponseBlur}
+                  className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                />
+                completed responses.
+              </p>
             </label>
           </AdvancedOptionToggle>
           {/* Close Survey on Date */}
           <AdvancedOptionToggle
             htmlId="closeOnDate"
-            className="p-4"
             isChecked={surveyCloseOnDateToggle}
             onToggle={handleSurveyCloseOnDateToggle}
             title="Close survey on date"
-            description="Automatically closes the survey at the beginning of the day (UTC).">
-            <div className="ml-2 mt-4 flex w-full items-center space-x-1 pb-4">
-              <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <p className="mr-2 text-sm font-semibold text-slate-700">
-                  Automatically mark survey as complete on:
-                </p>
-                <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
-              </div>
+            description="Automatically closes the survey at the beginning of the day (UTC)."
+            childBorder={true}>
+            <div className="flex cursor-pointer p-4">
+              <p className="mr-2 mt-3 text-sm font-semibold text-slate-700">
+                Automatically mark survey as complete on:
+              </p>
+              <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
             </div>
           </AdvancedOptionToggle>
 
@@ -214,17 +204,19 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
             <>
               <AdvancedOptionToggle
                 htmlId="redirectUrl"
-                className="p-4"
                 isChecked={redirectToggle}
                 onToggle={handleRedirectCheckMark}
                 title="Redirect on completion"
-                description="Redirect user to specified link on survey completion">
-                <div className="ml-2 mt-4 flex w-full items-center space-x-1 pb-4">
-                  <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                    <p className="mr-2 text-sm font-semibold text-slate-700">Redirect respondents here:</p>
+                description="Redirect user to specified link on survey completion"
+                childBorder={true}>
+                <div className="w-full p-4">
+                  <div className="flex w-full cursor-pointer items-center">
+                    <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
+                      Redirect respondents here:
+                    </p>
                     <Input
                       autoFocus
-                      className="bg-white"
+                      className="w-full bg-white"
                       type="url"
                       placeholder="https://www.example.com"
                       value={redirectUrl ? redirectUrl : ""}
@@ -237,13 +229,13 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               {/* Adjust Survey Closed Message */}
               <AdvancedOptionToggle
                 htmlId="adjustSurveyClosedMessage"
-                className="p-4"
                 isChecked={surveyClosedMessageToggle}
                 onToggle={handleCloseSurveyMessageToggle}
                 title="Adjust 'Survey Closed' message"
-                description="Change the message visitors see when the survey is closed.">
-                <div className="ml-2 mt-4 flex w-full items-center space-x-1 pb-4">
-                  <div className="w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                description="Change the message visitors see when the survey is closed."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
                     <Label htmlFor="headline">Heading</Label>
                     <Input
                       autoFocus

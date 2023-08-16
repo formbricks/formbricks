@@ -16,15 +16,15 @@ export const CssSelector = ({ isCssSelector, setIsCssSelector, register }: CssSe
         setIsCssSelector(!isCssSelector);
       }}
       title="CSS Selector"
-      description="If a user clicks a button with a specific CSS class or id">
-      <div className="w-full rounded-lg border border-slate-100 bg-slate-50 p-4">
-        <div className="flex items-end">
-          <Input
-            type="text"
-            placeholder="Add .css-class or #css-id"
-            {...register("noCodeConfig.cssSelector.value", { required: isCssSelector })}
-          />
-        </div>
+      description="If a user clicks a button with a specific CSS class or id"
+      childBorder={true}>
+      <div className="w-full rounded-lg border border-slate-100 p-4">
+        <Input
+          type="text"
+          className="bg-white"
+          placeholder="Add .css-class or #css-id"
+          {...register("noCodeConfig.cssSelector.value", { required: isCssSelector })}
+        />
       </div>
     </AdvancedOptionToggle>
   );

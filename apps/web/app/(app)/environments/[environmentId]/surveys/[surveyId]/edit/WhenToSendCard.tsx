@@ -223,31 +223,25 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
           <AdvancedOptionToggle
             htmlId="autoClose"
-            className="ml-2 p-4"
             isChecked={autoClose}
             onToggle={handleCheckMark}
             title="Auto close on inactivity"
-            description="Automatically close the survey if the user does not respond after certain number of seconds">
-            <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
-              <label
-                htmlFor="autoCloseSeconds"
-                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <div className="">
-                  <p className="text-sm font-semibold text-slate-700">
-                    Automatically close survey after
-                    <Input
-                      type="number"
-                      min="1"
-                      id="autoCloseSeconds"
-                      value={localSurvey.autoClose?.toString()}
-                      onChange={(e) => handleInputSeconds(e)}
-                      className="mx-2 inline w-16 bg-white text-center text-sm"
-                    />
-                    seconds with no initial interaction.
-                  </p>
-                </div>
-              </label>
-            </div>
+            description="Automatically close the survey if the user does not respond after certain number of seconds"
+            childBorder={true}>
+            <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
+              <p className="text-sm font-semibold text-slate-700">
+                Automatically close survey after
+                <Input
+                  type="number"
+                  min="1"
+                  id="autoCloseSeconds"
+                  value={localSurvey.autoClose?.toString()}
+                  onChange={(e) => handleInputSeconds(e)}
+                  className="mx-2 inline w-16 bg-white text-center text-sm"
+                />
+                seconds with no initial interaction.
+              </p>
+            </label>
           </AdvancedOptionToggle>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

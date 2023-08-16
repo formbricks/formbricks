@@ -8,7 +8,7 @@ interface AdvancedOptionToggleProps {
   title: string;
   description: any;
   children: React.ReactNode;
-  className?: string;
+  childBorder?: boolean;
 }
 
 export function AdvancedOptionToggle({
@@ -18,10 +18,10 @@ export function AdvancedOptionToggle({
   title,
   description,
   children,
-  className,
+  childBorder,
 }: AdvancedOptionToggleProps) {
   return (
-    <div className={className}>
+    <div className="px-4 py-2">
       <div className="flex items-center space-x-1">
         <Switch id={htmlId} checked={isChecked} onCheckedChange={onToggle} />
         <Label htmlFor={htmlId} className="cursor-pointer">
@@ -31,7 +31,14 @@ export function AdvancedOptionToggle({
           </div>
         </Label>
       </div>
-      {isChecked && <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">{children}</div>}
+      {isChecked && (
+        <div
+          className={`mt-4 flex w-full items-center space-x-1 rounded-lg ${
+            childBorder ? "border" : ""
+          } bg-slate-50`}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }
