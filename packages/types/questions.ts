@@ -11,6 +11,7 @@ export enum QuestionType {
   CTA = "cta",
   Rating = "rating",
   Consent = "consent",
+  CAL = "cal",
 }
 
 export type Question =
@@ -20,7 +21,8 @@ export type Question =
   | NPSQuestion
   | CTAQuestion
   | RatingQuestion
-  | ConsentQuestion;
+  | ConsentQuestion
+  | BookingWithCal;
 
 export interface IQuestion<T extends Logic> {
   id: string;
@@ -80,6 +82,11 @@ export interface ConsentQuestion extends IQuestion<CTALogic> {
   dismissButtonLabel?: string;
 }
 
+export interface BookingWithCal extends IQuestion<BookingWithCalLogic> {
+  type: QuestionType.CAL;
+  label: string;
+}
+
 export type LogicCondition =
   | "submitted"
   | "skipped"
@@ -129,6 +136,11 @@ export interface CTALogic extends LogicBase {
   condition: "clicked" | "skipped" | undefined;
   value?: undefined;
 }
+
+export interface BookingWithCalLogic extends LogicBase {
+  value?: undefined;
+}
+
 export interface RatingLogic extends LogicBase {
   condition:
     | "submitted"
@@ -155,4 +167,5 @@ export type Logic =
   | NPSLogic
   | CTALogic
   | RatingLogic
-  | ConsentLogic;
+  | ConsentLogic
+  | BookingWithCalLogic;
