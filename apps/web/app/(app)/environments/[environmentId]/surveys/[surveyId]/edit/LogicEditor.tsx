@@ -207,9 +207,6 @@ export default function LogicEditor({
     updateQuestion(questionIdx, { logic: updatedLogic });
   };
 
-  const truncate = (str: string, n: number) =>
-    str && str.length > n ? str.substring(0, n - 1) + "..." : str;
-
   if (!(question.type in conditions)) {
     return <></>;
   }
@@ -233,7 +230,10 @@ export default function LogicEditor({
                   {conditions[question.type].map(
                     (condition) =>
                       !(question.required && condition === "skipped") && (
-                        <SelectItem key={condition} value={condition}>
+                        <SelectItem
+                          key={condition}
+                          value={condition}
+                          title={logicConditions[condition].label}>
                           {logicConditions[condition].label}
                         </SelectItem>
                       )
@@ -250,8 +250,8 @@ export default function LogicEditor({
                       </SelectTrigger>
                       <SelectContent>
                         {logicConditions[logic.condition].values?.map((value) => (
-                          <SelectItem key={value} value={value} title={value}>
-                            {truncate(value, 20)}
+                          <SelectItem key={value} value={value} title={value} className="truncate">
+                            {value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -259,11 +259,15 @@ export default function LogicEditor({
                   ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-                        <div className="flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
+                        <div className="flex h-10 w-40 items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
                           {logic.value?.length === 0 ? (
-                            <p className="text-slate-400">Select match type</p>
+                            <p className="truncate text-slate-400" title="Select match type">
+                              Select match type
+                            </p>
                           ) : (
-                            <p>{logic.value.join(", ")}</p>
+                            <p className="truncate" title={logic.value.join(", ")}>
+                              {logic.value.join(", ")}
+                            </p>
                           )}
                           <ChevronDown className="h-4 w-4 opacity-50" />
                         </div>
@@ -275,6 +279,7 @@ export default function LogicEditor({
                         {logicConditions[logic.condition].values?.map((value) => (
                           <DropdownMenuCheckboxItem
                             key={value}
+                            title={value}
                             checked={logic.value?.includes(value)}
                             onSelect={(e) => e.preventDefault()}
                             onCheckedChange={(e) => updateMultiSelectLogic(logicIdx, e, value)}>
@@ -300,7 +305,11 @@ export default function LogicEditor({
                     (question, idx) =>
                       idx !== questionIdx && (
                         <SelectItem key={question.id} value={question.id} title={question.headline}>
-                          {idx + 1} - {truncate(question.headline, 14)}
+                          <div className="w-40">
+                            <p className="truncate">
+                              {idx + 1} - {question.headline}
+                            </p>
+                          </div>
                         </SelectItem>
                       )
                   )}
