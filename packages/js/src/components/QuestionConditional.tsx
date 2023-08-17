@@ -8,6 +8,7 @@ import NPSQuestion from "./NPSQuestion";
 import CTAQuestion from "./CTAQuestion";
 import RatingQuestion from "./RatingQuestion";
 import ConsentQuestion from "./ConsentQuestion";
+import BookingWithCal from "./BookingWithCal";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -90,6 +91,16 @@ export default function QuestionConditional({
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
+      question={question}
+      onSubmit={onSubmit}
+      lastQuestion={lastQuestion}
+      brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
+    />
+  ) : question.type === "cal" ? (
+    <BookingWithCal
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
