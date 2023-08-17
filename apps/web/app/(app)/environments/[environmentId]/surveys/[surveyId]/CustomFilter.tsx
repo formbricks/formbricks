@@ -318,7 +318,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
                 )}
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {

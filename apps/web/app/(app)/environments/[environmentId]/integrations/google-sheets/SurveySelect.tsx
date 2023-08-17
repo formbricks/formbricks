@@ -4,7 +4,8 @@ import { TSurvey } from "@formbricks/types/v1/surveys"
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator"
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon } from "@heroicons/react/24/solid";
-import {useState} from "react"
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import { useEffect } from "react";
 
 interface SurveySelectProps {
     surveys: TSurvey[]
@@ -21,8 +22,7 @@ export default function SurveySelect({ surveys, environmentId, setSelectedSurvey
                     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
                     .map((survey) => (
                         <div key={survey.id} className="relative col-span-1 h-56" onClick={()=>{
-                            console.log(survey.id)
-                            setSelectedSurvey(survey.id)}}>
+                            setSelectedSurvey(survey)}}>
                             <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
                                 <div className="px-6 py-4">
                                     <Badge

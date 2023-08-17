@@ -294,6 +294,20 @@ enum EnvironmentType {
   development
 }
 
+enum IntegrationType {
+  googleSheets
+}
+
+model Integration {
+  id            String      @id @default(cuid())
+  type          IntegrationType
+  environmentId String
+  config        Json
+  environment   Environment @relation(fields: [environmentId], references: [id])
+
+  @@unique([type, environmentId])
+}
+
 model Environment {
   id                   String           @id @default(cuid())
   createdAt            DateTime         @default(now()) @map(name: "created_at")
@@ -309,6 +323,7 @@ model Environment {
   apiKeys              ApiKey[]
   webhooks             Webhook[]
   tags                 Tag[]
+  integration          Integration[]
 }
 
 enum WidgetPlacement {
@@ -328,7 +343,7 @@ model Product {
   teamId               String
   environments         Environment[]
   brandColor           String          @default("#64748b")
-  highlightBorderColor String?         
+  highlightBorderColor String?
   recontactDays        Int             @default(7)
   formbricksSignature  Boolean         @default(true)
   placement            WidgetPlacement @default(bottomRight)

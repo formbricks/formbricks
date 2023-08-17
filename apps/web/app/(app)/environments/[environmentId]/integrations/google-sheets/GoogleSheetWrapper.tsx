@@ -8,7 +8,7 @@ import {useState,useEffect} from 'react'
 export default function GoogleSheetWrapper({environmentId,surveys,Spreadsheet}) {
 
     useEffect(() => {
-      console.log(Spreadsheet)
+      console.log(selectedSurvey)
     }, [])
     
 
@@ -16,7 +16,7 @@ export default function GoogleSheetWrapper({environmentId,surveys,Spreadsheet}) 
     const[selectedSurvey, setSelectedSurvey] = useState()
 
     if(selectedSurvey){
-        return <SpreadsheetSelect />
+        return <SpreadsheetSelect environmentId={environmentId} spreadsheet={Spreadsheet} selectedSurvey={selectedSurvey}/>
     }
 
     if(!showSurveySelect){
