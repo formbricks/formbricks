@@ -451,7 +451,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
-                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                <div className="flex w-full flex-grow p-4 flex-col items-center justify-center bg-white py-6">
                   <div className="w-full max-w-md">
                     <QuestionRenderer
                       activeQuestionId={activeQuestionId}
