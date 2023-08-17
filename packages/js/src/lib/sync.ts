@@ -2,8 +2,10 @@ import { TJsState } from "@formbricks/types/v1/js";
 import { trackAction } from "./actions";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
+import { Logger } from "./logger";
 
 const config = Config.getInstance();
+const logger = Logger.getInstance();
 
 const syncWithBackend = async (): Promise<Result<TJsState, NetworkError>> => {
   const url = `${config.get().apiHost}/api/v1/js/sync`;
@@ -42,6 +44,9 @@ export const sync = async (): Promise<void> => {
   const state = syncResult.value;
   const oldState = config.get().state;
   config.update({ state });
+  const surveyNames = state.surveys.map((s) => s.name);
+  logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames);
+
   // if session is new, track action
   if (!oldState?.session || oldState.session.id !== state.session.id) {
     const trackActionResult = await trackAction("New Session");
