@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { Response } from "@formbricks/types/js";
 import { BackButton, Headline, Subheader } from "@formbricks/ui";
+import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
 
 interface OpenTextQuestionProps {
-  question: OpenTextQuestion;
+  question: TSurveyOpenTextQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

@@ -5,9 +5,10 @@ import type { ConsentQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import { Headline, HtmlBody } from "@formbricks/ui";
 import { BackButton } from "@formbricks/ui";
+import { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
 
 interface ConsentQuestionProps {
-  question: ConsentQuestion;
+  question: ConsentQuestion | TSurveyConsentQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

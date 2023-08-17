@@ -1,16 +1,16 @@
 "use client";
 
+import { useEnvironment } from "@/lib/environments/environments";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { ErrorComponent, LoadingSpinner } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
-import SettingsView from "./SettingsView";
-import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
+import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
+import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { useEnvironment } from "@/lib/environments/environments";
 
 interface SurveyEditorProps {
   environmentId: string;

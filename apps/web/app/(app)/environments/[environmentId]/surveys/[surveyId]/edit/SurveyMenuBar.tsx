@@ -8,10 +8,10 @@ import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { DeleteDialog, Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { isEqual } from "lodash";
 import { validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
@@ -168,7 +168,7 @@ export default function SurveyMenuBar({
           }}>
           Back
         </Button>
-        <p className="pl-4 font-semibold">{product.name} / </p>
+        <p className="pl-4 font-semibold hidden md:block">{product.name} / </p>
         <Input
           defaultValue={localSurvey.name}
           onChange={(e) => {

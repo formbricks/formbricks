@@ -3,12 +3,12 @@ import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
 import { Response } from "@formbricks/types/js";
 import { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { TSurveyChoice } from "@formbricks/types/v1/surveys";
 import { BackButton, Input, Headline, Subheader } from "@formbricks/ui";
+import { TSurveyChoice, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
 import { useEffect, useRef, useState } from "react";
 
 interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestion;
+  question: MultipleChoiceSingleQuestion | TSurveyMultipleChoiceSingleQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
@@ -99,7 +99,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative space-y-2 rounded-md py-0.5">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}

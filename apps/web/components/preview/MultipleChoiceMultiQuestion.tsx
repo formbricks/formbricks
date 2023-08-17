@@ -3,12 +3,13 @@ import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
 import { symmetricDifference } from "@formbricks/lib/utils/array";
 import { Response } from "@formbricks/types/js";
-import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { BackButton, Input, Headline, Subheader } from "@formbricks/ui";
+import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 import { useEffect, useState } from "react";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion;
+  question: MultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
@@ -54,7 +55,7 @@ export default function MultipleChoiceMultiQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedResponseValue, question.id]);
 
-  const [questionChoices, setQuestionChoices] = useState<Choice[]>(
+  const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
     question.choices
       ? question.shuffleOption !== "none"
         ? shuffleArray(question.choices, question.shuffleOption)
@@ -114,7 +115,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative space-y-2 rounded-md py-0.5">
             {questionChoices.map((choice) => (
               <div key={choice.id}>
                 <label

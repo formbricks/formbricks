@@ -18,10 +18,19 @@ export default function HeadingSection({
   const router = useRouter();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeletingPerson, setIsDeletingPerson] = useState(false);
+
   const handleDeletePerson = async () => {
-    await deletePersonAction(person.id);
-    router.push(`/environments/${environmentId}/people`);
-    toast.success("Person deleted successfully.");
+    try {
+      setIsDeletingPerson(true);
+      await deletePersonAction(person.id);
+      router.push(`/environments/${environmentId}/people`);
+      toast.success("Person deleted successfully.");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsDeletingPerson(false);
+    }
   };
 
   return (
@@ -45,6 +54,7 @@ export default function HeadingSection({
         setOpen={setDeleteDialogOpen}
         deleteWhat="person"
         onDelete={handleDeletePerson}
+        isDeleting={isDeletingPerson}
       />
     </>
   );

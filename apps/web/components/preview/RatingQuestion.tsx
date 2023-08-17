@@ -4,24 +4,27 @@ import type { RatingQuestion } from "@formbricks/types/questions";
 import { StarIcon } from "@heroicons/react/24/outline";
 import { StarIcon as FilledStarIcon } from "@heroicons/react/24/solid";
 import {
+  BackButton,
   ConfusedFace,
   FrowningFace,
   GrinningFaceWithSmilingEyes,
   GrinningSquintingFace,
+  Headline,
   NeutralFace,
   PerseveringFace,
   SlightlySmilingFace,
   SmilingFaceWithSmilingEyes,
+  Subheader,
   TiredFace,
   WearyFace,
 } from "@formbricks/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 
 import { Response } from "@formbricks/types/js";
-import { BackButton, Headline, Subheader } from "@formbricks/ui";
+import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 
 interface RatingQuestionProps {
-  question: RatingQuestion;
+  question: RatingQuestion | TSurveyRatingQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
