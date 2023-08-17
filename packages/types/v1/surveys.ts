@@ -194,6 +194,13 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
+export const ZSurveyBookingWithCal = ZSurveyQuestionBase.extend({
+  type: z.literal(QuestionType.CAL),
+  label: z.string().min(1),
+});
+
+export type TSurveyBookingWithCal = z.infer<typeof ZSurveyBookingWithCal>;
+
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyQuestion = z.union([
@@ -204,6 +211,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyNPSQuestion,
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
+  ZSurveyBookingWithCal,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
