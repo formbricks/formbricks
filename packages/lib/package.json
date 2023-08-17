@@ -19,7 +19,6 @@
     "date-fns": "^2.30.0",
     "markdown-it": "^13.0.1",
     "posthog-node": "^3.1.1",
-    "react-markdown": "^8.0.7",
     "server-only": "^0.0.1",
     "tailwind-merge": "^1.14.0"
   },

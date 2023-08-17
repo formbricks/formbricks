@@ -25,8 +25,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
-    "dotenv-cli": "^7.2.1",
-    "react-markdown": "^8.0.7"
+    "dotenv-cli": "^7.2.1"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",

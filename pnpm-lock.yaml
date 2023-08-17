@@ -291,9 +291,6 @@ importers:
       next-seo:
         specifier: ^6.1.0
         version: 6.1.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
-      react-markdown:
-        specifier: ^8.0.7
-        version: 8.0.7(@types/react@18.2.18)(react@18.2.0)
     devDependencies:
       '@formbricks/tsconfig':
         specifier: workspace:*
@@ -347,9 +344,6 @@ importers:
       next-seo:
         specifier: ^6.1.0
         version: 6.1.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
-      react-markdown:
-        specifier: ^8.0.7
-        version: 8.0.7(@types/react@18.2.18)(react@18.2.0)
     devDependencies:
       '@formbricks/tsconfig':
         specifier: workspace:*
@@ -366,9 +360,6 @@ importers:
       next-seo:
         specifier: ^6.1.0
         version: 6.1.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
-      react-markdown:
-        specifier: ^8.0.7
-        version: 8.0.7(@types/react@18.2.18)(react@18.2.0)
     devDependencies:
       eslint:
         specifier: ^8.46.0
@@ -533,9 +524,6 @@ importers:
       next-seo:
         specifier: ^6.1.0
         version: 6.1.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
-      react-markdown:
-        specifier: ^8.0.7
-        version: 8.0.7(@types/react@18.2.18)(react@18.2.0)
     devDependencies:
       '@types/node':
         specifier: 20.4.6
@@ -555,9 +543,6 @@ importers:
       next-seo:
         specifier: ^6.1.0
         version: 6.1.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
-      react-markdown:
-        specifier: ^8.0.7
-        version: 8.0.7(@types/react@18.2.18)(react@18.2.0)
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -655,9 +640,6 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
-      react-markdown:
-        specifier: ^8.0.7
-        version: 8.0.7(@types/react@18.2.18)(react@18.2.0)
       react-radio-group:
         specifier: ^3.0.3
         version: 3.0.3(react-dom@18.2.0)(react@18.2.0)

@@ -10,7 +10,6 @@
     "@formbricks/tsconfig": "workspace:*"
   },
   "dependencies": {
-    "react-markdown": "^8.0.7",
     "zod": "^3.21.4"
   }
 }

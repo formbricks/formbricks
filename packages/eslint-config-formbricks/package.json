@@ -13,8 +13,5 @@
     "eslint-config-prettier": "^8.10.0",
     "eslint-config-turbo": "latest",
     "eslint-plugin-react": "7.33.1"
-  },
-  "dependencies": {
-    "react-markdown": "^8.0.7"
   }
 }
