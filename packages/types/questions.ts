@@ -9,6 +9,7 @@ export enum QuestionType {
   MultipleChoiceMulti = "multipleChoiceMulti",
   NPS = "nps",
   CTA = "cta",
+  BookingwithCal = "bwc",
   Rating = "rating",
   Consent = "consent",
 }
@@ -19,6 +20,7 @@ export type Question =
   | MultipleChoiceMultiQuestion
   | NPSQuestion
   | CTAQuestion
+  | BookingwithCalQuestion
   | RatingQuestion
   | ConsentQuestion;
 
@@ -63,6 +65,11 @@ export interface CTAQuestion extends IQuestion<CTALogic> {
   buttonUrl?: string;
   buttonExternal: boolean;
   dismissButtonLabel?: string;
+}
+
+export interface BookingwithCalQuestion extends IQuestion<BookingwithCalLogic> {
+  type: QuestionType.BookingwithCal;
+
 }
 
 export interface RatingQuestion extends IQuestion<RatingLogic> {
@@ -129,6 +136,10 @@ export interface CTALogic extends LogicBase {
   condition: "clicked" | "skipped" | undefined;
   value?: undefined;
 }
+
+export interface BookingwithCalLogic extends LogicBase {
+  
+}
 export interface RatingLogic extends LogicBase {
   condition:
     | "submitted"
@@ -154,5 +165,6 @@ export type Logic =
   | MultipleChoiceMultiLogic
   | NPSLogic
   | CTALogic
+  | BookingwithCalLogic
   | RatingLogic
   | ConsentLogic;

@@ -4,6 +4,7 @@ import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 import NPSQuestion from "./NPSQuestion";
 import CTAQuestion from "./CTAQuestion";
+import { BookingwithCal } from "./BookingwithCalQuestion";
 import RatingQuestion from "./RatingQuestion";
 
 interface QuestionConditionalProps {
@@ -53,6 +54,11 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+    />
+  ) : question.type === QuestionType.BookingwithCal ? (
+    <BookingwithCalQuestion
+      question={question}
+      onSubmit
     />
   ) : question.type === QuestionType.Rating ? (
     <RatingQuestion
