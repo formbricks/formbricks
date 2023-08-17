@@ -64,8 +64,6 @@ export async function getStaticPaths() {
 
   const articles = (await response.json()) as ArticleResponse;
 
-  console.log("articles", articles);
-
   const paths = articles.data.map((article) => ({
     params: { slug: article.attributes.slug },
   }));
