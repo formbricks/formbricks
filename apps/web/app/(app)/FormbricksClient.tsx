@@ -28,8 +28,8 @@ export default function FormbricksClient({ session }) {
   return null;
 }
 
-export const updateUsageAttributes = (numSurveys, totalSubmissions) => {
-  if (!formbricksEnabled || !formbricks) return;
+const updateUsageAttributes = (numSurveys, totalSubmissions) => {
+  if (!formbricksEnabled) return;
 
   if (numSurveys >= 3) {
     formbricks.setAttribute("HasThreeSurveys", "true");
