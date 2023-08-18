@@ -17,6 +17,8 @@ import {
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */
+import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
+import { sampleUserSegment } from "@formbricks/types/v1/userSegment";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -106,9 +108,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             </div>
             <div>
               <p className="font-semibold text-slate-800">Target Audience</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Pre-segment your users with attributes filters.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
             </div>
             {localSurvey.type === "link" && (
               <div className="flex w-full items-center justify-end pr-2">
@@ -141,6 +141,10 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                   : "Only users who match the attribute filter will see the survey."}
               </p>
             </div>
+          </div>
+
+          <div className="p-6">
+            <SegmentFilters segment={sampleUserSegment.filterGroup} />
           </div>
 
           {localSurvey.attributeFilters?.map((attributeFilter, idx) => (

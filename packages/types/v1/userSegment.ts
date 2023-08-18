@@ -17,9 +17,12 @@ const ATTRIBUTE_OPERATORS = [
   "endsWith",
 ] as const;
 
-const SEGMENT_OPERATORS = ["userIsIn", "userIsnotIn"] as const;
+const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
 
 const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
+
+const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS, ...DEVICE_OPERATORS] as const;
+export type TAllOperators = (typeof ALL_OPERATORS)[number];
 
 const ACTION_METRICS = [
   "lastQuarterCount",
@@ -111,7 +114,7 @@ export const ZUserSegmentFilter = z
 
 export type TUserSegmentFilter = z.infer<typeof ZUserSegmentFilter>;
 
-type TBaseFilterGroup = {
+export type TBaseFilterGroup = {
   connector: "and" | "or" | null;
   resource: TUserSegmentFilter | TBaseFilterGroup;
 }[];
@@ -150,18 +153,70 @@ export const ZUserSegment = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
+  private: z.boolean().default(true),
   filterGroup: ZUserSegmentFilterGroup,
 
   // describes which surveys is this segment applicable to
   surveys: z.array(z.string()),
 });
 
-type TUserSegment = z.infer<typeof ZUserSegment>;
+export const convertOperatorToText = (operator: TAllOperators) => {
+  switch (operator) {
+    case "equals":
+      return "=";
+    case "notEquals":
+      return "!=";
+    case "lessThan":
+      return "<";
+    case "lessEqual":
+      return "<=";
+    case "greaterThan":
+      return ">";
+    case "greaterEqual":
+      return ">=";
+    case "contains":
+      return "contains";
+    case "doesNotContain":
+      return "does not contain";
+    case "startsWith":
+      return "starts with";
+    case "endsWith":
+      return "ends with";
+    case "userIsIn":
+      return "User is in";
+    case "userIsNotIn":
+      return "User is not in";
+    default:
+      return operator;
+  }
+};
+
+export const convertMetricToText = (metric: (typeof ACTION_METRICS)[number]) => {
+  switch (metric) {
+    case "lastQuarterCount":
+      return "Last quarter (Count)";
+    case "lastMonthCount":
+      return "Last month (Count)";
+    case "lastWeekCount":
+      return "Last week (Count)";
+    case "occuranceCount":
+      return "Occurance (Count)";
+    case "lastOccurranceDaysAgo":
+      return "Last occurrance (Days ago)";
+    case "firstOccurranceDaysAgo":
+      return "First occurrance (Days ago)";
+    default:
+      return metric;
+  }
+};
+
+export type TUserSegment = z.infer<typeof ZUserSegment>;
 
 const sampleJson: TUserSegment = {
   id: "123",
   name: "Segment 1",
   description: "Segment 1 description",
+  private: false,
   filterGroup: [
     {
       connector: null,
@@ -216,6 +271,122 @@ const sampleJson: TUserSegment = {
   surveys: ["123", "456"],
 };
 
-const parsedResult = ZUserSegment.safeParse(sampleJson);
-
-console.log(parsedResult);
+export const sampleUserSegment: TUserSegment = {
+  id: "segment123",
+  name: "Sample User Segment",
+  description: "A sample user segment description",
+  private: false,
+  filterGroup: [
+    {
+      connector: null,
+      resource: {
+        root: {
+          type: "attribute",
+          attributeClassId: "user plan",
+        },
+        value: "free",
+        qualifier: {
+          operator: "equals",
+        },
+      },
+    },
+    {
+      connector: "and",
+      resource: {
+        root: { type: "attribute", attributeClassId: "cart" },
+        qualifier: { operator: "equals" },
+        value: 3,
+      },
+    },
+    {
+      connector: "or",
+      resource: [
+        {
+          connector: null,
+          resource: {
+            root: {
+              type: "action",
+              actionClassId: "buy",
+            },
+            qualifier: {
+              metric: "occuranceCount",
+              operator: "greaterThan",
+            },
+            value: 3,
+          },
+        },
+        {
+          connector: "or",
+          resource: [
+            {
+              connector: null,
+              resource: {
+                root: { type: "attribute", attributeClassId: "user plan" },
+                qualifier: { metric: "occuranceCount", operator: "greaterThan" },
+                value: 3,
+              },
+            },
+            {
+              connector: "and",
+              resource: {
+                root: { type: "action", actionClassId: "buy" },
+                qualifier: { metric: "occuranceCount", operator: "greaterThan" },
+                value: 3,
+              },
+            },
+          ],
+        },
+        {
+          connector: "and",
+          resource: {
+            root: {
+              type: "attribute",
+              attributeClassId: "user plan",
+            },
+            qualifier: {
+              operator: "equals",
+            },
+            value: "free",
+          },
+        },
+        {
+          connector: "and",
+          resource: {
+            root: { type: "device", deviceType: "phone" },
+            qualifier: {
+              operator: "equals",
+            },
+            value: "phone",
+          },
+        },
+      ],
+    },
+    {
+      connector: "and",
+      resource: {
+        root: {
+          type: "segment",
+          userSegmentId: "power user",
+        },
+        qualifier: {
+          operator: "userIsIn",
+        },
+        value: "power user",
+      },
+    },
+    {
+      connector: "or",
+      resource: {
+        root: {
+          type: "segment",
+          userSegmentId: "power user",
+        },
+        qualifier: {
+          operator: "userIsNotIn",
+        },
+        value: "power user",
+      },
+    },
+  ],
+  surveys: ["survey123", "survey456"],
+};
