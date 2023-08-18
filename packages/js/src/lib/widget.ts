@@ -1,11 +1,13 @@
-import { h, render } from "preact";
+import { createDisplay } from "@formbricks/lib/client/display";
+import { ResponseQueue } from "@formbricks/lib/responseQueue";
+import { renderSurveyModal } from "@formbricks/surveys";
+import { TResponseUpdate } from "@formbricks/types/v1/responses";
 import type { TSurvey } from "../../../types/v1/surveys";
-import App from "../App";
 import { Config } from "./config";
-import { ErrorHandler, match } from "./errors";
+import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
 import { sync } from "./sync";
-import { renderSurveyModal } from "@formbricks/surveys";
+import SurveyState from "@formbricks/lib/surveyState";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -26,7 +28,18 @@ export const renderWidget = (survey: TSurvey) => {
 
   const product = config.get().state.product;
 
-  console.log("product", product);
+  const surveyState = new SurveyState(survey.id);
+
+  const responseQueue = new ResponseQueue(
+    {
+      apiHost: config.get().apiHost,
+      retryAttempts: 2,
+      onResponseSendingFailed: (response) => {
+        alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+      },
+    },
+    surveyState
+  );
 
   setTimeout(() => {
     renderSurveyModal({
@@ -38,19 +51,19 @@ export const renderWidget = (survey: TSurvey) => {
       highlightBorderColor: product.highlightBorderColor,
       placement: product.placement,
       onDisplay: () => {
-        console.log("Survey displayed");
+        createDisplay(
+          {
+            surveyId: survey.id,
+            personId: config.get().state.person.id,
+          },
+          config.get().apiHost
+        );
       },
-      onResponse: (responseUpdate) => {
-        console.log("Survey response", responseUpdate);
+      onResponse: (responseUpdate: TResponseUpdate) => {
+        responseQueue.add(responseUpdate);
       },
-      onClose: () => {
-        console.log("Survey closed");
-      },
+      onClose: closeSurvey,
     });
-    /* render(
-      h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
-      document.getElementById(containerId)
-    ); */
   }, survey.delay * 1000);
 };
 

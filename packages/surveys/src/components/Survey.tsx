@@ -34,6 +34,11 @@ export function Survey({
   const [progress, setProgress] = useState(0); // [0, 1]
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const [responseData, setResponseData] = useState<TResponseData>({});
+
+  useEffect(() => {
+    console.log("responseData", responseData);
+  }, [responseData]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,7 +89,12 @@ export function Survey({
     return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
-  function onSubmit(responseData: TResponseData) {
+  const onChange = (responseDataUpdate: TResponseData) => {
+    const updatedResponseData = { ...responseData, ...responseDataUpdate };
+    setResponseData(updatedResponseData);
+  };
+
+  const onSubmit = (responseData: TResponseData) => {
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
     onResponse({ data: responseData, finished: nextQuestionId === "end" }); // Mark as finished if next question is "end"
@@ -93,7 +103,7 @@ export function Survey({
     setHistory([...history, questionId]);
     setLoadingElement(false);
     onActiveQuestionChange(nextQuestionId);
-  }
+  };
 
   const onBack = (): void => {
     console.log(JSON.stringify(history, null, 2));
@@ -126,6 +136,8 @@ export function Survey({
                 questionId === question.id && (
                   <QuestionConditional
                     question={question}
+                    value={responseData[question.id]}
+                    onChange={onChange}
                     onSubmit={onSubmit}
                     onBack={onBack}
                     isFirstQuestion={idx === 0}

@@ -2,6 +2,7 @@ import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Survey } from "./Survey";
 import Modal from "./Modal";
+import { useState } from "preact/hooks";
 
 interface SurveyModalProps {
   survey: TSurvey;
@@ -32,6 +33,15 @@ export function SurveyModal({
   onResponse = () => {},
   onClose = () => {},
 }: SurveyModalProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const close = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 1000); // wait for animation to finish}
+  };
+
   return (
     <div id="fbjs">
       <Modal
@@ -39,8 +49,8 @@ export function SurveyModal({
         clickOutside={clickOutside}
         darkOverlay={darkOverlay}
         highlightBorderColor={highlightBorderColor}
-        isOpen={true}
-        onClose={onClose}>
+        isOpen={isOpen}
+        onClose={close}>
         <Survey
           survey={survey}
           brandColor={brandColor}

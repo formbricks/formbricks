@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyChoice, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
-import { useEffect, useRef, useState } from "preact/hooks";
+import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
+import { useMemo, useRef } from "preact/hooks";
 import { cn, shuffleArray } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -9,8 +9,10 @@ import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
+  value: string | number | string[];
+  onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
-  onBack: (responseData: TResponseData) => void;
+  onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
@@ -18,51 +20,38 @@ interface MultipleChoiceSingleProps {
 
 export default function MultipleChoiceSingleQuestion({
   question,
+  value,
+  onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
   isLastQuestion,
   brandColor,
 }: MultipleChoiceSingleProps) {
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
-  const [savedOtherAnswer, setSavedOtherAnswer] = useState<string | null>(null);
-  const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
-    question.choices
-      ? question.shuffleOption && question.shuffleOption !== "none"
-        ? shuffleArray(question.choices, question.shuffleOption)
-        : question.choices
-      : []
-  );
-  const otherSpecify = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (selectedChoice === "other" && otherSpecify.current) {
-      otherSpecify.current.value = savedOtherAnswer ?? "";
-      otherSpecify.current?.focus();
-    }
-  }, [savedOtherAnswer, selectedChoice]);
-
-  useEffect(() => {
-    setQuestionChoices(
+  console.log(JSON.stringify(question, null, 2));
+  const questionChoices = useMemo(
+    () =>
       question.choices
         ? question.shuffleOption && question.shuffleOption !== "none"
           ? shuffleArray(question.choices, question.shuffleOption)
           : question.choices
-        : []
-    );
-  }, [question.choices, question.shuffleOption]);
+        : [],
+    [question.choices, question.shuffleOption]
+  );
+  const otherSpecify = useRef<HTMLInputElement | null>(null);
 
-  const resetForm = () => {
-    setSelectedChoice(null);
-    setSavedOtherAnswer(null);
-  };
+  /*   useEffect(() => {
+    if (selectedChoice === "other" && otherSpecify.current) {
+      otherSpecify.current.value = savedOtherAnswer ?? "";
+      otherSpecify.current?.focus();
+    }
+  }, [savedOtherAnswer, selectedChoice]); */
 
   const handleSubmit = (value: string) => {
     const data = {
       [question.id]: value,
     };
     onSubmit(data);
-    resetForm(); // reset form
   };
 
   return (
@@ -83,7 +72,7 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 key={choice.id}
                 className={cn(
-                  selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
+                  value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
                   "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
@@ -95,9 +84,9 @@ export default function MultipleChoiceSingleQuestion({
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
-                      setSelectedChoice(choice.id);
+                      onChange({ [question.id]: choice.label });
                     }}
-                    checked={selectedChoice === choice.id}
+                    checked={value === choice.label}
                     style={{ borderColor: brandColor, color: brandColor }}
                     required={question.required && idx === 0}
                   />
@@ -105,11 +94,15 @@ export default function MultipleChoiceSingleQuestion({
                     {choice.label}
                   </span>
                 </span>
-                {choice.id === "other" && selectedChoice === "other" && (
+                {choice.id === "other" && !questionChoices.find((c) => c.label === value) && (
                   <input
                     ref={otherSpecify}
                     id={`${choice.id}-label`}
                     name={question.id}
+                    value={value}
+                    onChange={(e) => {
+                      onChange({ [question.id]: e.currentTarget.value });
+                    }}
                     placeholder="Please specify"
                     className="mt-3 flex h-10 w-full rounded-md border border-slate-300 bg-transparent bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none  focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
                     required={question.required}
@@ -122,18 +115,7 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && (
-          <BackButton
-            onClick={() => {
-              const data: TResponseData = {};
-              const value = otherSpecify.current?.value || selectedChoice;
-              if (value) {
-                data[question.id] = [value];
-              }
-              onBack(data);
-            }}
-          />
-        )}
+        {!isFirstQuestion && <BackButton onClick={onBack} />}
         <div></div>
         <SubmitButton
           question={question}

@@ -70,8 +70,8 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
             brandColor={product.brandColor}
             formbricksSignature={product.formbricksSignature}
             onDisplay={() => createDisplay({ surveyId: survey.id }, window?.location?.origin)}
-            onResponse={(response) => {
-              responseQueue.add(response);
+            onResponse={(responseUpdate) => {
+              responseQueue.add(responseUpdate);
             }}
           />
         </ContentWrapper>

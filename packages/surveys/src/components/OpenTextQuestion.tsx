@@ -1,6 +1,5 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
-import { useState } from "preact/hooks";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -8,8 +7,10 @@ import SubmitButton from "./SubmitButton";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
+  value: string | number | string[];
+  onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
-  onBack: (responseData: TResponseData) => void;
+  onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
@@ -17,27 +18,19 @@ interface OpenTextQuestionProps {
 
 export default function OpenTextQuestion({
   question,
+  value,
+  onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
   isLastQuestion,
   brandColor,
 }: OpenTextQuestionProps) {
-  const [value, setValue] = useState<string>("");
-
-  const handleSubmit = (value: string) => {
-    const data = {
-      [question.id]: value,
-    };
-    onSubmit(data);
-    setValue(""); // reset value
-  };
-
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        handleSubmit(value);
+        onSubmit({ [question.id]: value });
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -49,7 +42,9 @@ export default function OpenTextQuestion({
             placeholder={question.placeholder}
             required={question.required}
             value={value}
-            onInput={(e) => setValue(e.currentTarget.value)}
+            onInput={(e) => {
+              onChange({ [question.id]: e.currentTarget.value });
+            }}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
           />
         ) : (
@@ -60,7 +55,9 @@ export default function OpenTextQuestion({
             placeholder={question.placeholder}
             required={question.required}
             value={value}
-            onInput={(e) => setValue(e.currentTarget.value)}
+            onInput={(e) => {
+              onChange({ [question.id]: e.currentTarget.value });
+            }}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
         )}
       </div>
@@ -68,9 +65,7 @@ export default function OpenTextQuestion({
         {!isFirstQuestion && (
           <BackButton
             onClick={() => {
-              onBack({
-                [question.id]: value,
-              });
+              onBack();
             }}
           />
         )}

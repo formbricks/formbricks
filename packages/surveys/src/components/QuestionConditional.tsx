@@ -11,8 +11,10 @@ import RatingQuestion from "./RatingQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
+  value: string | number | string[];
+  onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
-  onBack: (responseData: TResponseData) => void;
+  onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
@@ -20,6 +22,8 @@ interface QuestionConditionalProps {
 
 export default function QuestionConditional({
   question,
+  value,
+  onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
@@ -29,6 +33,8 @@ export default function QuestionConditional({
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
+      value={value}
+      onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
@@ -38,6 +44,8 @@ export default function QuestionConditional({
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       question={question}
+      value={value}
+      onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}

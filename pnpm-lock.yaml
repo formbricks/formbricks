@@ -374,6 +374,9 @@ importers:
       '@formbricks/api':
         specifier: workspace:*
         version: link:../api
+      '@formbricks/lib':
+        specifier: workspace:*
+        version: link:../lib
       '@formbricks/surveys':
         specifier: workspace:*
         version: link:../surveys
@@ -389,9 +392,6 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^6.2.1
         version: 6.2.1(eslint@8.46.0)(typescript@5.1.6)
-      autoprefixer:
-        specifier: ^10.4.14
-        version: 10.4.14(postcss@8.4.27)
       babel-jest:
         specifier: ^29.6.2
         version: 29.6.2(@babel/core@7.22.9)

@@ -48,6 +48,7 @@
     "@babel/preset-env": "^7.22.9",
     "@babel/preset-typescript": "^7.22.5",
     "@formbricks/api": "workspace:*",
+    "@formbricks/lib": "workspace:*",
     "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@types/jest": "^29.5.3",
