@@ -144,7 +144,9 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
           </div>
 
           <div className="p-6">
-            <SegmentFilters segment={sampleUserSegment.filterGroup} />
+            <div className="rounded-lg border-2 border-slate-300 p-4">
+              <SegmentFilters segment={sampleUserSegment.filterGroup} />
+            </div>
           </div>
 
           {localSurvey.attributeFilters?.map((attributeFilter, idx) => (

@@ -5,9 +5,18 @@ import {
   convertOperatorToText,
   convertMetricToText,
 } from "@formbricks/types/v1/userSegment";
-import { Select, SelectTrigger } from "@formbricks/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  Input,
+  Select,
+  SelectTrigger,
+  TabBar,
+} from "@formbricks/ui";
 // import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
-import { MousePointerClick, TagIcon, Users2Icon, MonitorSmartphoneIcon } from "lucide-react";
+import { MousePointerClick, TagIcon, Users2Icon, MonitorSmartphoneIcon, PlusCircleIcon } from "lucide-react";
 import { useState } from "react";
 
 const isResourceFilter = (
@@ -258,8 +267,23 @@ const SegmentFilterItem = ({ resource, connector }: SegmentFilterItemProps) => {
 };
 
 const SegmentFilters = ({ segment }: { segment: TBaseFilterGroup }) => {
+  const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
+  const [activeTabId, setActiveId] = useState<string>("all");
+
+  const tabs: {
+    id: string;
+    label: string;
+    icon?: React.ReactNode;
+  }[] = [
+    { id: "all", label: "All" },
+    { id: "actions", label: "Actions", icon: <MousePointerClick className="h-4 w-4" /> },
+    { id: "attributes", label: "Attributes", icon: <TagIcon className="h-4 w-4" /> },
+    { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
+    { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
+  ];
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 rounded-lg">
       {segment.map((group) => {
         const { connector, resource } = group;
 
@@ -269,13 +293,41 @@ const SegmentFilters = ({ segment }: { segment: TBaseFilterGroup }) => {
           return (
             <div className="flex items-start gap-2">
               <span className="cursor-pointer text-sm underline">{!!connector ? connector : "Where"}</span>
-              <div className="flex-1 rounded-lg border-2 border-slate-300 p-4">
+              <div className="rounded-lg border-2 border-slate-300 p-4">
                 <SegmentFilters segment={resource} />
               </div>
             </div>
           );
         }
       })}
+
+      {/* <button className="flex max-w-[160px] items-center gap-2 text-sm">
+        <PlusCircleIcon className="h-4 w-4" />
+        <p>Add filter</p>
+      </button> */}
+
+      <Dialog>
+        <DialogTrigger className="max-w-[160px]">
+          <button className="flex items-center gap-2 text-sm">
+            <PlusCircleIcon className="h-4 w-4" />
+            <p>Add filter</p>
+          </button>
+        </DialogTrigger>
+
+        <DialogContent className="w-[600px] bg-slate-100 sm:max-w-2xl" hideCloseButton>
+          <div className="flex w-auto flex-col">
+            <Input placeholder="Browse filters..." autoFocus />
+
+            <TabBar
+              className="bg-slate-100"
+              tabs={tabs}
+              activeId={activeTabId}
+              setActiveId={setActiveId}></TabBar>
+          </div>
+
+          <div>{activeTabId}</div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
