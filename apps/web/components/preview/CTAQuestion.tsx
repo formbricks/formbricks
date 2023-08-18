@@ -5,9 +5,10 @@ import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
 import { Response } from "@formbricks/types/js";
 import { BackButton } from "@/components/preview/BackButton";
+import { TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
 
 interface CTAQuestionProps {
-  question: CTAQuestion;
+  question: CTAQuestion | TSurveyCTAQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

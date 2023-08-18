@@ -15,12 +15,12 @@
     "@formbricks/database": "*",
     "@formbricks/errors": "*",
     "@formbricks/types": "*",
+    "@paralleldrive/cuid2": "^2.2.1",
     "date-fns": "^2.30.0",
     "markdown-it": "^13.0.1",
     "posthog-node": "^3.1.1",
     "server-only": "^0.0.1",
-    "tailwind-merge": "^1.14.0",
-    "@paralleldrive/cuid2": "^2.2.1"
+    "tailwind-merge": "^1.14.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
