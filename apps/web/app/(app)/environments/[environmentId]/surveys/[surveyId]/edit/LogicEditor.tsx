@@ -218,13 +218,13 @@ export default function LogicEditor({
       {question?.logic && question?.logic?.length !== 0 && (
         <div className="mt-2 space-y-3">
           {question?.logic?.map((logic, logicIdx) => (
-            <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-sm">
+            <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-xs xl:text-sm">
               <BsArrowReturnRight className="h-4 w-4" />
-              <p className="text-slate-700">If this answer</p>
+              <p className="text-slate-800">If this answer</p>
 
               <Select value={logic.condition} onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
-                <SelectTrigger className="min-w-fit flex-1">
-                  <SelectValue placeholder="Select condition" />
+                <SelectTrigger className=" min-w-fit flex-1">
+                  <SelectValue placeholder="Select condition" className="text-xs lg:text-sm" />
                 </SelectTrigger>
                 <SelectContent>
                   {conditions[question.type].map(
@@ -233,7 +233,8 @@ export default function LogicEditor({
                         <SelectItem
                           key={condition}
                           value={condition}
-                          title={logicConditions[condition].label}>
+                          title={logicConditions[condition].label}
+                          className="text-xs lg:text-sm">
                           {logicConditions[condition].label}
                         </SelectItem>
                       )
@@ -250,7 +251,7 @@ export default function LogicEditor({
                       </SelectTrigger>
                       <SelectContent>
                         {logicConditions[logic.condition].values?.map((value) => (
-                          <SelectItem key={value} value={value} title={value} className="truncate">
+                          <SelectItem key={value} value={value} title={value}>
                             {value}
                           </SelectItem>
                         ))}
@@ -292,7 +293,7 @@ export default function LogicEditor({
                 </div>
               )}
 
-              <p className="text-slate-700">skip to</p>
+              <p className="text-slate-800">jump to</p>
 
               <Select
                 value={logic.destination}
