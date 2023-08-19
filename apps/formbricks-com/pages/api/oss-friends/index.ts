@@ -47,6 +47,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://formbricks.com",
         },
         {
+          name: "Ghostfolio",
+          description:
+            "Ghostfolio is a privacy-first, open source dashboard for your personal finances. Designed to simplify asset tracking and empower informed investment decisions.",
+          href: "https://ghostfol.io",
+        },
+        {
           name: "GitWonk",
           description:
             "GitWonk is an open-source technical documentation tool, designed and built focusing on the developer experience.",
