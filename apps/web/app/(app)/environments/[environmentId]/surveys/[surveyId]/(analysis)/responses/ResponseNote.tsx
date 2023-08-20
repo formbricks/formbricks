@@ -1,10 +1,10 @@
 "use client";
 
-import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
+import { addResponseNote, updateResponseNote } from "@/lib/responseNotes/responsesNotes";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Button } from "@formbricks/ui";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { MinusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon } from "lucide-react";
@@ -32,6 +32,8 @@ export default function ResponseNotes({
   const router = useRouter();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
+  const [isUpdatingNote, setIsUpdatingNote] = useState(false);
+  const [noteId, setNoteId] = useState("");
   const divRef = useRef<HTMLDivElement>(null);
 
   const handleNoteSubmission = async (e: FormEvent) => {
@@ -45,6 +47,26 @@ export default function ResponseNotes({
     } catch (e) {
       toast.error("An error occurred creating a new note");
       setIsCreatingNote(false);
+    }
+  };
+
+  const handleEditPencil = (note: TResponseNote) => {
+    setNoteText(note.text);
+    setIsUpdatingNote(true);
+    setNoteId(note.id);
+  };
+
+  const handleNoteUpdate = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingNote(true);
+    try {
+      await updateResponseNote(environmentId, surveyId, responseId, noteId, noteText);
+      router.refresh();
+      setIsUpdatingNote(false);
+      setNoteText("");
+    } catch (e) {
+      toast.error("An error occurred updating a note");
+      setIsUpdatingNote(false);
     }
   };
 
@@ -123,13 +145,18 @@ export default function ResponseNotes({
                     {timeSince(note.updatedAt.toISOString())}
                   </time>
                 </span>
-                <span className="block text-slate-700">{note.text}</span>
+                <div className="group/notetext flex items-center">
+                  <span className="block pr-1 text-slate-700">{note.text}</span>
+                  <button onClick={() => handleEditPencil(note)}>
+                    <PencilIcon className=" h-3 w-3 text-gray-500 opacity-0 group-hover/notetext:opacity-100" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
           <div className="h-[120px]">
             <div className={clsx("absolute bottom-0 w-full px-3 pb-3", !notes.length && "absolute bottom-0")}>
-              <form onSubmit={handleNoteSubmission}>
+              <form onSubmit={isUpdatingNote ? handleNoteUpdate : handleNoteSubmission}>
                 <div className="mt-4">
                   <textarea
                     rows={2}
@@ -140,14 +167,16 @@ export default function ResponseNotes({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && noteText) {
                         e.preventDefault();
-                        handleNoteSubmission(e);
+                        {
+                          isUpdatingNote ? handleNoteUpdate(e) : handleNoteSubmission(e);
+                        }
                       }
                     }}
                     required></textarea>
                 </div>
                 <div className="mt-2 flex w-full justify-end">
                   <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
-                    Send
+                    {isUpdatingNote ? "Save" : "Send"}
                   </Button>
                 </div>
               </form>
