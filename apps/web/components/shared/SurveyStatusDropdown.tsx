@@ -54,60 +54,62 @@ export default function SurveyStatusDropdown({
       ) : (
         <TooltipProvider delayDuration={50}>
           <Tooltip open={isStatusChangeDisabled ? undefined : false}>
-            <TooltipTrigger>
-              <Select
-                disabled={isStatusChangeDisabled}
-                onValueChange={(value) => {
-                  triggerSurveyMutate({ status: value })
-                    .then(() => {
-                      toast.success(
-                        value === "inProgress"
-                          ? "Survey live"
-                          : value === "paused"
-                          ? "Survey paused"
-                          : value === "completed"
-                          ? "Survey completed"
-                          : ""
-                      );
-                    })
-                    .catch((error) => {
-                      toast.error(`Error: ${error.message}`);
-                    });
+            <TooltipTrigger asChild>
+              <div>
+                <Select
+                  disabled={isStatusChangeDisabled}
+                  onValueChange={(value) => {
+                    triggerSurveyMutate({ status: value })
+                      .then(() => {
+                        toast.success(
+                          value === "inProgress"
+                            ? "Survey live"
+                            : value === "paused"
+                            ? "Survey paused"
+                            : value === "completed"
+                            ? "Survey completed"
+                            : ""
+                        );
+                      })
+                      .catch((error) => {
+                        toast.error(`Error: ${error.message}`);
+                      });
 
-                  if (updateLocalSurveyStatus)
-                    updateLocalSurveyStatus(
-                      value as "draft" | "inProgress" | "paused" | "completed" | "archived"
-                    );
-                }}>
-                <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
-                  <SelectValue>
-                    <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
-                      <span className="ml-2 text-sm text-slate-700">
-                        {survey.status === "draft" && "Draft"}
-                        {survey.status === "inProgress" && "In-progress"}
-                        {survey.status === "paused" && "Paused"}
-                        {survey.status === "completed" && "Completed"}
-                        {survey.status === "archived" && "Archived"}
-                      </span>
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
-                    <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                    In-progress
-                  </SelectItem>
-                  <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
-                    <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                    Paused
-                  </SelectItem>
-                  <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
-                    <CheckCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                    Completed
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                    if (updateLocalSurveyStatus)
+                      updateLocalSurveyStatus(
+                        value as "draft" | "inProgress" | "paused" | "completed" | "archived"
+                      );
+                  }}>
+                  <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
+                    <SelectValue>
+                      <div className="flex items-center">
+                        <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+                        <span className="ml-2 text-sm text-slate-700">
+                          {survey.status === "draft" && "Draft"}
+                          {survey.status === "inProgress" && "In-progress"}
+                          {survey.status === "paused" && "Paused"}
+                          {survey.status === "completed" && "Completed"}
+                          {survey.status === "archived" && "Archived"}
+                        </span>
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
+                      <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                      In-progress
+                    </SelectItem>
+                    <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
+                      <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                      Paused
+                    </SelectItem>
+                    <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
+                      <CheckCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                      Completed
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               To update the survey status, update the &ldquo;Close

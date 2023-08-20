@@ -70,10 +70,12 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
       </div>
       <div className="block sm:hidden">
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Button size="sm" variant="secondary" className="h-full w-full rounded-md p-2">
-              <EllipsisHorizontalIcon className="h-6" />
-            </Button>
+          <DropdownMenuTrigger asChild>
+            <div>
+              <Button size="sm" variant="secondary" className="h-full w-full rounded-md p-2">
+                <EllipsisHorizontalIcon className="h-6" />
+              </Button>
+            </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
