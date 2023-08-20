@@ -36,10 +36,6 @@ export function Survey({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
 
-  useEffect(() => {
-    console.log("responseData", responseData);
-  }, [responseData]);
-
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

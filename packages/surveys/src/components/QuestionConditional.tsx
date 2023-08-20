@@ -55,6 +55,8 @@ export default function QuestionConditional({
   ) : question.type === QuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       question={question}
+      value={value}
+      onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}

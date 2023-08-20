@@ -26,7 +26,7 @@ const shuffle = (array: any[]) => {
   }
 };
 
-export const shuffleArray = (array: any[], shuffleOption: string) => {
+export const shuffleQuestions = (array: any[], shuffleOption: string) => {
   const arrayCopy = [...array];
   const otherIndex = arrayCopy.findIndex((element) => element.id === "other");
   const otherElement = otherIndex !== -1 ? arrayCopy.splice(otherIndex, 1)[0] : null;
