@@ -35,6 +35,9 @@ tasks:
       sed -i -r "s#^(NEXTAUTH_URL=).*#\1 $(gp url 3000)#" .env &&
       turbo --filter "@formbricks/web" go
 
+  - name : website
+    command: gp sync-await init && turbo --filter "@formbricks/formbricks-com" dev
+
   - name: Init Formbricks
     init: |
       cp .env.example .env &&
@@ -53,6 +56,9 @@ ports:
   - port: 3000
     visibility: public
     onOpen: open-browser
+  - port: 3001
+    visibility: public
+    onOpen: ignore
   - port: 3002
     visibility: public
     onOpen: ignore
