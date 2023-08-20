@@ -59,7 +59,13 @@ ports:
   - port: 5432
     visibility: public
     onOpen: ignore
-
+  - port: 1025
+    visibility: public
+    onOpen: ignore
+  - port: 8025
+    visibility: public
+    onOpen: ignore
+    
 github:
   prebuilds:
     master: true
