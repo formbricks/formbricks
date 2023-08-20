@@ -66,6 +66,8 @@ export default function QuestionConditional({
   ) : question.type === QuestionType.NPS ? (
     <NPSQuestion
       question={question}
+      value={value}
+      onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
@@ -75,6 +77,8 @@ export default function QuestionConditional({
   ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
       question={question}
+      value={value}
+      onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
@@ -84,6 +88,8 @@ export default function QuestionConditional({
   ) : question.type === QuestionType.Rating ? (
     <RatingQuestion
       question={question}
+      value={value}
+      onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
@@ -93,6 +99,8 @@ export default function QuestionConditional({
   ) : question.type === "consent" ? (
     <ConsentQuestion
       question={question}
+      value={value}
+      onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}

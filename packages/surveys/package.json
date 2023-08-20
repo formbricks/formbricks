@@ -13,10 +13,9 @@
     "go": "tsc && vite build",
     "preview": "vite preview"
   },
-  "dependencies": {
-    "preact": "^10.16.0"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "preact": "^10.16.0",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "^2.5.0",
     "autoprefixer": "^10.4.14",

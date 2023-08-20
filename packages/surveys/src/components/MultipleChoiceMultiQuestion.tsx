@@ -31,7 +31,9 @@ export default function MultipleChoiceSingleQuestion({
   const [otherSelected, setOtherSelected] = useState(
     !!value && !question.choices.find((c) => c.label === value)
   ); // initially set to true if value is not in choices
-  const [otherValue, setOtherValue] = useState("");
+  const [otherValue, setOtherValue] = useState(
+    (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
+  ); // initially set to the first value that is not in choices
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -76,7 +78,8 @@ export default function MultipleChoiceSingleQuestion({
           return;
         }
         onSubmit({ [question.id]: value });
-      }}>
+      }}
+      className="w-full">
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

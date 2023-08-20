@@ -1,6 +1,5 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
-import { useState } from "preact/hooks";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
@@ -8,8 +7,10 @@ import SubmitButton from "./SubmitButton";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
+  value: string | number | string[];
+  onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
-  onBack: (responseData: TResponseData) => void;
+  onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
@@ -17,25 +18,14 @@ interface ConsentQuestionProps {
 
 export default function ConsentQuestion({
   question,
+  value,
+  onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
   isLastQuestion,
   brandColor,
 }: ConsentQuestionProps) {
-  const [answer, setAnswer] = useState<string>("dismissed");
-
-  const handleOnChange = () => {
-    answer === "accepted" ? setAnswer("dissmissed") : setAnswer("accepted");
-  };
-
-  const handleSumbit = (value: string) => {
-    const data = {
-      [question.id]: value,
-    };
-    onSubmit(data);
-    setAnswer("dismissed");
-  };
   return (
     <div>
       <Headline headline={question.headline} questionId={question.id} />
@@ -44,7 +34,7 @@ export default function ConsentQuestion({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          handleSumbit(answer);
+          onSubmit({ [question.id]: value });
         }}>
         <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm text-slate-800 focus:outline-none">
           <input
@@ -52,8 +42,14 @@ export default function ConsentQuestion({
             id={question.id}
             name={question.id}
             value={question.label}
-            onChange={handleOnChange}
-            checked={answer === "accepted"}
+            onChange={(e) => {
+              if (e.target instanceof HTMLInputElement && e.target.checked) {
+                onChange({ [question.id]: "accepted" });
+              } else {
+                onChange({ [question.id]: "dismissed" });
+              }
+            }}
+            checked={value === "accepted"}
             className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
             style={{ borderColor: brandColor, color: brandColor }}
@@ -65,15 +61,7 @@ export default function ConsentQuestion({
         </label>
 
         <div className="mt-4 flex w-full justify-between">
-          {!isFirstQuestion && (
-            <BackButton
-              onClick={() =>
-                onBack({
-                  [question.id]: answer,
-                })
-              }
-            />
-          )}
+          {!isFirstQuestion && <BackButton onClick={() => onBack()} />}
           <div />
           <SubmitButton
             brandColor={brandColor}

@@ -52,7 +52,7 @@ export function AutoCloseWrapper({ survey, brandColor, onClose, children }: Auto
       {!countdownStop && survey.autoClose && (
         <Progress progress={countdownProgress} brandColor={brandColor} />
       )}
-      <div onClick={handleStopCountdown} onMouseOver={handleStopCountdown}>
+      <div onClick={handleStopCountdown} onMouseOver={handleStopCountdown} className="h-full w-full">
         {children}
       </div>
     </>

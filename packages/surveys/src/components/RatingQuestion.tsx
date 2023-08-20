@@ -21,8 +21,10 @@ import SubmitButton from "./SubmitButton";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
+  value: string | number | string[];
+  onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
-  onBack: (responseData: TResponseData) => void;
+  onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
@@ -30,33 +32,22 @@ interface RatingQuestionProps {
 
 export default function RatingQuestion({
   question,
+  value,
+  onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
   isLastQuestion,
   brandColor,
 }: RatingQuestionProps) {
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [hoveredNumber, setHoveredNumber] = useState(0);
 
-  const handleSubmit = (value: number | null) => {
-    if (value === null) {
-      throw new Error("No value selected");
-    }
-    const data = {
-      [question.id]: value,
-    };
-    onSubmit(data);
-    setSelectedChoice(null);
-  };
-
   const handleSelect = (number: number) => {
-    setSelectedChoice(number);
+    onChange({ [question.id]: number });
     if (question.required) {
       onSubmit({
         [question.id]: number,
       });
-      setSelectedChoice(null); // reset choice
     }
   };
 
@@ -68,7 +59,7 @@ export default function RatingQuestion({
       className="absolute left-0 h-full w-full cursor-pointer opacity-0"
       onChange={() => handleSelect(number)}
       required={question.required}
-      checked={selectedChoice === number}
+      checked={value === number}
     />
   );
 
@@ -76,8 +67,9 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        handleSubmit(selectedChoice);
-      }}>
+        onSubmit({ [question.id]: value });
+      }}
+      className="w-full">
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
@@ -93,7 +85,7 @@ export default function RatingQuestion({
                 {question.scale === "number" ? (
                   <label
                     className={cn(
-                      selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
+                      value === number ? "z-10 border-slate-400 bg-slate-50" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
                       "block h-full w-full border text-slate-800 hover:bg-gray-100 focus:outline-none"
@@ -108,7 +100,7 @@ export default function RatingQuestion({
                       "flex h-full w-full justify-center"
                     )}>
                     <HiddenRadioInput number={number} />
-                    {selectedChoice && selectedChoice >= number ? (
+                    {typeof value === "number" && value >= number ? (
                       <span className="text-yellow-300">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -142,7 +134,7 @@ export default function RatingQuestion({
                   <label className="flex h-full w-full justify-center text-slate-800">
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
-                      active={selectedChoice == number || hoveredNumber == number}
+                      active={value == number || hoveredNumber == number}
                       idx={i}
                       range={question.range}
                     />
@@ -159,15 +151,15 @@ export default function RatingQuestion({
       </div>
 
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && selectedChoice && (
+        {!isFirstQuestion && (
           <BackButton
             onClick={() => {
-              onBack({ [question.id]: selectedChoice });
+              onBack();
             }}
           />
         )}
         <div></div>
-        {(!question.required || selectedChoice) && (
+        {(!question.required || value) && (
           <SubmitButton
             question={question}
             isLastQuestion={isLastQuestion}

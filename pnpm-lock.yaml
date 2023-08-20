@@ -482,10 +482,6 @@ importers:
         version: 0.4.1(prettier@2.8.8)
 
   packages/surveys:
-    dependencies:
-      preact:
-        specifier: ^10.16.0
-        version: 10.16.0
     devDependencies:
       '@formbricks/types':
         specifier: workspace:*
@@ -499,6 +495,9 @@ importers:
       postcss:
         specifier: ^8.4.27
         version: 8.4.27
+      preact:
+        specifier: ^10.16.0
+        version: 10.16.0
       tailwindcss:
         specifier: ^3.3.3
         version: 3.3.3

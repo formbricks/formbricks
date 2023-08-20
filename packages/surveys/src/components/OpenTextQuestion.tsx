@@ -31,7 +31,8 @@ export default function OpenTextQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit({ [question.id]: value });
-      }}>
+      }}
+      className="w-full">
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

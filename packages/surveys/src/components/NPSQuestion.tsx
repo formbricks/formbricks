@@ -1,6 +1,5 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
-import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -9,8 +8,10 @@ import SubmitButton from "./SubmitButton";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
+  value: string | number | string[];
+  onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
-  onBack: (responseData: TResponseData) => void;
+  onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
@@ -18,40 +19,19 @@ interface NPSQuestionProps {
 
 export default function NPSQuestion({
   question,
+  value,
+  onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
   isLastQuestion,
   brandColor,
 }: NPSQuestionProps) {
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
-
-  const handleSubmit = (value: number | null) => {
-    if (value === null) {
-      throw new Error("No value selected");
-    }
-    const data = {
-      [question.id]: value,
-    };
-    setSelectedChoice(null);
-    onSubmit(data);
-  };
-
-  const handleSelect = (number: number) => {
-    setSelectedChoice(number);
-    if (question.required) {
-      setSelectedChoice(null);
-      onSubmit({
-        [question.id]: number,
-      });
-    }
-  };
-
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        handleSubmit(selectedChoice);
+        onSubmit({ [question.id]: value });
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -63,16 +43,23 @@ export default function NPSQuestion({
               <label
                 key={number}
                 className={cn(
-                  selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
+                  value === number ? "z-10 border-slate-400 bg-slate-50" : "",
                   "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm leading-10 text-slate-800 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:outline-none"
                 )}>
                 <input
                   type="radio"
                   name="nps"
                   value={number}
-                  checked={selectedChoice === number}
+                  checked={value === number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
-                  onClick={() => handleSelect(number)}
+                  onClick={() => {
+                    if (question.required) {
+                      onSubmit({
+                        [question.id]: value,
+                      });
+                    }
+                    onChange({ [question.id]: number });
+                  }}
                   required={question.required}
                 />
                 {number}
@@ -87,12 +74,10 @@ export default function NPSQuestion({
       </div>
 
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && selectedChoice && (
+        {!isFirstQuestion && (
           <BackButton
             onClick={() => {
-              onBack({
-                [question.id]: selectedChoice,
-              });
+              onBack();
             }}
           />
         )}

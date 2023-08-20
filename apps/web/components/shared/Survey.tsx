@@ -58,7 +58,7 @@ export const SurveyInline = ({
     onResponse,
     survey,
   ]);
-  return <div id={containerId} />;
+  return <div id={containerId} className="h-full w-full" />;
 };
 
 export const SurveyModal = ({
