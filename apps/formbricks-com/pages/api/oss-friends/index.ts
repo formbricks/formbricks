@@ -37,7 +37,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         {
           name: "Erxes",
           description:
-            "The Open-Source HubSpot Alternative. A single XOS enables to create unique and life-changing experiences ​​that work for all types of business.",
+            "The Open-Source HubSpot Alternative. A single XOS enables to create unique and life-changing experiences that work for all types of business.",
           href: "https://erxes.io",
         },
         {
@@ -45,6 +45,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Survey granular user segments at any point in the user journey. Gather up to 6x more insights with targeted micro-surveys. All open-source.",
           href: "https://formbricks.com",
+        },
+        {
+          name: "Ghostfolio",
+          description:
+            "Ghostfolio is a privacy-first, open source dashboard for your personal finances. Designed to simplify asset tracking and empower informed investment decisions.",
+          href: "https://ghostfol.io",
         },
         {
           name: "GitWonk",
