@@ -1,95 +1,134 @@
 import { Layout } from "@/components/docs/Layout";
+import Image from "next/image";
+
+import I1 from "./1-in app surve or popup survey setup.webp";
+import I2 from "./2-settings for survey popup in app for feedback.webp";
+import I3 from "./3-web app survey settings for in app survey popup.webp";
+import I4 from "./4-in app survey trigger for popup survey.webp";
+import I5 from "./5-options survez popup in app for feedback.webp";
+import I6 from "./6-setup in app survey popup feedback box.webp";
+import I7 from "./7-in app survey popup for feedback.webp";
+import I8 from "./8-pop up form in web app survey.webp";
+import I9 from "./9-set up in app micro survey popup.webp";
+import I10 from "./10-micro survey pop up in app.webp";
 
 export const meta = {
-  title: "Quickstart",
-  description:
-    "Get started with Formbricks: Choose self-hosted or cloud, create an account, and follow our quickstart guide to set up in-product micro-surveys with ease.",
+  title: "Collect in app survey responses in 10 minutes with Formbricks",
+  description: "Get your first in app survey response in 10 minutes.",
 };
 
-Welcome to Formbricks! In this quickstart guide, we'll walk you through the initial steps to get up and running with our in-product micro-surveys. Choose between self-hosted and cloud options, create an account, and set up the JavaScript widget. Let's dive in!
+In app surveys have a 6 to 10 times higher conversion rate then emailed out surveys. This tutorial explains how to run an in app survey in your web app in 10 to 15 minutes. Let’s go!
 
-## Step 1: Choose between self-hosted and cloud
+## 1. Create a free Formbricks Cloud account
 
-First, you need to decide whether you want to use the self-hosted or cloud version of Formbricks.
+While you can self-host Formbricks, he quickest and easiest way to get started it with our free Cloud plan. Just sign up here and click through the Onboarding, until you’re here:
 
-- **Self-hosted**: If you prefer to host Formbricks on your own servers, check out the dedicated [Self-hosted Documentation](/docs/self-hosting/deployment) page.
-- **Cloud**: For a hassle-free experience, choose our cloud offering, which takes care of server maintenance and updates for you. [Sign Up now.](https://app.formbricks.com/auth/signup)
+<Image src={I1} alt="Choose in app survey template" quality="100" className="rounded-lg" />
 
-## Step 2: Create an account
+## 2. Create your first survey
 
-1. Visit the Formbricks Sign up page.
-2. Enter your email address, choose a password, and click **Sign Up** to create your account. Alternatively you can sign up using your GitHub account.
+To be able to see a survey in your app, you need to create one. We’ll choose one of the templates and head over to the survey settings:
 
-## Step 3: Switch to the Development Environment
+<Image src={I2} alt="Settings for popup survey inside web app" quality="100" className="rounded-lg" />
 
-In Formbricks, you can work in different environments to manage your surveys and settings. We recommend using the **Development environment** for your local testing and staging environments to keep your Production environment and it's data clean. To get started, switch to the **Development Environment**:
+As you can see in the orange note here, we have not yet connected Formbricks Cloud with our app. We will do so in just a minute, let’s first setup the survey correctly.
 
-1. Log in to your Formbricks dashboard.
-2. Click the your profile picture in the top right corner and in the dropdown under your current Environment select **Development**.
-3. Select **Development** from the list.
+Select “Web App” in the How to ask settings:
 
-## Step 4: Set up the JavaScript widget
+<Image src={I3} alt="Survey settings for popup micro surve" quality="100" className="rounded-lg" />
 
-You can find all the setup instructions as well as a check if your installation was successful in the **Setup Checklist** in the Formbricks settings.
+Scroll down to Survey Trigger and choose “New Session”. This will cause this survey to appearwhen the Formbricks Widget tracks a new user session:
 
-### HTML
+<Image
+  src={I4}
+  alt="In app survey trigger for feedback popup micro survey"
+  quality="100"
+  className="rounded-lg"
+/>
 
-Add the following script to the `<head>` tag of your HTML file:
+In Recontact Options we make these settings, so that we can play around with it more easily. By default, each survey will be shown to each user only one time to prevent survey fatigue:
 
-```html
-<script type="text/javascript">
-  !(function () {
-    var t = document.createElement("script");
-    (t.type = "text/javascript"),
-      (t.async = !0),
-      (t.src = "https://unpkg.com/@formbricks/js@^1.0.0/dist/index.umd.js");
-    var e = document.getElementsByTagName("script")[0];
-    e.parentNode.insertBefore(t, e),
-      setTimeout(function () {
-        window.formbricks = window.js;
-        window.formbricks.init({
-          environmentId: "your-environment-id",
-          apiHost: "https://app.formbricks.com",
-        });
-      }, 500);
-  })();
-</script>
-```
+<Image src={I5} alt="Options for survey popup in app micro survey" quality="100" className="rounded-lg" />
 
-Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings.
+Now hit **Publish** and you’ll be forwarded to the Summary Page. This is where you’ll find the responses to this survey. On the Summary Page click through to the Setup Checklist:
 
-### Npm
+<Image src={I6} alt="pop up survey settings for inapp web survey" quality="100" className="rounded-lg" />
 
-1. Install the Formbricks package using npm:
+## 3. Set up the Formbricks Widget in your app
 
-```bash
-npm install -s @formbricks/js
-```
+On the Setup Checklist you have two elements: A widget status indicator and a step by step manual on how to setup Formbricks.
 
-2. Import Formbricks and initialize the widget in your main component (e.g., App.tsx or App.js):
+At the top you find the Widget Status Indivator. Once your app is connected to Formbricks Cloud successfully, this will turn green:
 
-```javascript
-import formbricks from "@formbricks/js";
+<Image src={I7} alt="feedback popup in app survey" quality="100" className="rounded-lg" />
 
-if (typeof window !== "undefined") {
-  formbricks.init({
-    environmentId: "your-environment-id",
-    apiHost: "https://app.formbricks.com",
-  });
-}
-```
+In the manual, this code snippet contains all the information you need:
 
-Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings.
+- The **environment ID** of your current Formbricks workspace
+- The **API Host** which is ‘https://app.formbricks.com’ for Cloud users
 
-For more detailed guides for different frameworks, check out our [Next.js](/docs/getting-started/nextjs) and [Vue.js](/docs/getting-started/vuejs) guides.
+<Image src={I8} alt="settings for in app survey popping up" quality="100" className="rounded-lg" />
+## Next.JS Setup - App Dir
 
-## Step 5: Verify your setup
+see prev. docs
 
-After setting up the widget, head back to the Formbricks dashboard:
+## Next.JS Setup - Pages Dir
 
-1. Navigate to **Settings** in the top menubar.
-2. Check the **Setup Checklist** to ensure everything is working correctly.
+see prev. docs
 
-If you see confetti and a green box saying "Receiving data" you've successfully set up Formbricks. You're ready to start creating and customizing your in-product surveys.
+## React Setup
+
+ist wie Pages Dir?
+
+## Vue.js Setup
+
+see prev. docs
+
+## 4. Restart your app and open browser console
+
+Now, restart your app and open the browser console to see the Formbricks debug logs. If you did everything right, you should now see your survey in the lower right corner:
+
+SCREENSHOT OF ONBOARDING SURVEY
+
+## Debugging - Most common errors
+
+In case you don’t see your survey right away, there is no need to worry. Here are the most frequent errors and how to fix them. Go through them in this order to find the error fast:
+
+1. **Formbricks Cloud and your app are not connected properly.**
+
+Go back to [app.formbricks.com](http://app.formbricks.com) and check go to the Setup Checklist in the Settings. If the status is still indicated as “Not connected” your app has not yet sent pinged the Formbricks Cloud:
+
+<Image
+  src={I9}
+  alt="setup checklist ui of survey popup for in app surveys"
+  quality="100"
+  className="rounded-lg"
+/>
+**How to fix it:**
+
+1. Check if your app loads the Formbricks widget correctly. Go to X, Y, Z
+
+1. **Survey not loaded**
+
+If your app is connected with Formbricks Cloud, the survey might have not been loaded properly. Check the debug logs and search for the list of surveys loaded. It should look like so:
+
+SURVEY LIST DEBUG LOGS
+
+**How to fix it:**
+
+The widget only loads surveys which are **public** and **in progress**. Go to Formbricks Cloud and to the Survey Summary page. Check if your survey is live:
+
+<Image src={I10} alt="ui of survey popup for in app micro surveys" quality="100" className="rounded-lg" />
+
+1. **Survey not triggered**
+
+If the survey is loaded by the widget it might not have been triggered properly.
+
+**How to fix:**
+
+1. Check the debug logs for “Event ‘New Session” tracked”. If you see it in the logs and the survey still did not get displayed, [pls let us know.](mailto:support@formbricks.com)
+2. Open your local app in an incognito tab or window. The New Session event is only fired if a user was inactive for X or was logged out of Formbricks via formrbicks.logout().
+
+That should fix it! If not, please [join our Discord](https://formbricks.com/discord)! We’re more than happy to help you get started 😊
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
