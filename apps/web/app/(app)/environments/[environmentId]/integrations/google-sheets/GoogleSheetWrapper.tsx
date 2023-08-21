@@ -1,31 +1,25 @@
 "use client"
 
 import Home from '@/app/(app)/environments/[environmentId]/integrations/google-sheets/Home'
-import SurveySelect from '@/app/(app)/environments/[environmentId]/integrations/google-sheets/SurveySelect'
-import SpreadsheetSelect from "./SpreadsheetSelect"
 import {useState} from 'react'
-import SuccessMessage from '@/app/(app)/environments/[environmentId]/integrations/google-sheets/SuccessMessage'
+import Connect from '@/app/(app)/environments/[environmentId]/integrations/google-sheets/Connect'
+import AddIntegrationModal from '@/app/(app)/environments/[environmentId]/integrations/google-sheets/AddIntegrationModal'
 
 export default function GoogleSheetWrapper({environmentId,surveys,Spreadsheet,integrations}) {
 
     const [showSurveySelect, setShowSurveySelect] = useState(false)
     const[selectedSurvey, setSelectedSurvey] = useState()
     const [configCompleted, setConfigCompleted] = useState(false)
+    const [isConnected, setIsConnected] = useState(false)
+    const [openAddIntegrationModal, setOpenAddIntegrationModal] = useState(false)
 
-    if(configCompleted){
-        return <SuccessMessage selectedSurvey={selectedSurvey}/>
-    }
-
-    if(selectedSurvey){
-        return <SpreadsheetSelect environmentId={environmentId} spreadsheet={Spreadsheet} selectedSurvey={selectedSurvey} integrations={integrations} setConfigCompleted={setConfigCompleted}/>
-    }
-
-    if(!showSurveySelect){
-        return <Home environmentId={environmentId} setShowSurveySelect={setShowSurveySelect} integrations={integrations}/>
-    }
-    else {
-        return < SurveySelect environmentId={environmentId}  surveys={surveys} setSelectedSurvey={setSelectedSurvey}/>
-    }
-  
+    return (
+        <>
+         <AddIntegrationModal environmentId={environmentId} surveys={surveys} open={openAddIntegrationModal} setOpen={setOpenAddIntegrationModal} spreadsheets={Spreadsheet} integrations={integrations}/>
+         {!isConnected && <Connect environmentId={environmentId} setIsConnected={setIsConnected}/>}
+         {isConnected && <Home environmentId={environmentId} setShowSurveySelect={setShowSurveySelect} integrations={integrations} setOpenAddIntegrationModal={setOpenAddIntegrationModal}/>}
+        </>
+    )
+   
 }
 

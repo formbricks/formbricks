@@ -1,4 +1,3 @@
-import { env } from "@/env.mjs";
 const fs = require('fs').promises;
 const path = require('path');
 const {authenticate} = require('@google-cloud/local-auth');
@@ -33,7 +32,7 @@ async function loadSavedCredentialsIfExist() {
  * @param {OAuth2Client} client
  * @return {Promise<void>}
  */
-async function saveCredentials(client) {
+async function saveCredentials(client:any) {
   const content = await fs.readFile(CREDENTIALS_PATH);
   const keys = JSON.parse(content);
   const key = keys.installed || keys.web;
@@ -53,7 +52,10 @@ async function saveCredentials(client) {
 export async function authorize() {
   let client = await loadSavedCredentialsIfExist();
   if (client) {
-    return client;
+    console.log("helooooooooooooooooooooo")
+      console.log(client.json)
+      const resJson = await client.json()
+    return resjson;
   }
   client = await authenticate({
     scopes: SCOPES,
@@ -62,18 +64,6 @@ export async function authorize() {
   if (client.credentials) {
     await saveCredentials(client);
   }
+  console.log(client)
   return client;
-}
-import type { NextApiRequest, NextApiResponse } from "next";
-
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-
-  // GET
-  // if (req.method === "GET") {
-  //    const response = await authorize()
-  //     return res.json(response)
-  // }
-  // else {
-  //   throw new Error(`errr`);
-  // }
 }

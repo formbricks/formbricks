@@ -6,6 +6,7 @@ export const authorization = async (environmentId:string): Promise<any> => {
     console.error(res.text);
     throw new Error("Could not create response");
   }
+  console.log(res+"mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm")
   return res;
 };
 

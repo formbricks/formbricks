@@ -11,7 +11,9 @@ export default async function GoogleSheet({ params }) {
     return (
         <>
             <GoBackButton />
+            <div className="w-full h-[75vh]">
             <GoogleSheetWrapper environmentId={params.environmentId} surveys={surveys} Spreadsheet={Spreadsheet} integrations={integrations}/>
+            </div>
         </>
     )
 }
