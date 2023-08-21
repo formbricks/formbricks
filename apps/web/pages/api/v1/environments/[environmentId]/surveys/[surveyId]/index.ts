@@ -33,6 +33,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       include: {
         triggers: true,
         attributeFilters: true,
+        userSegment: true,
         _count: analytics ? { select: { responses: { where: { finished: true } } } } : false,
       },
     });
@@ -82,6 +83,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         surveyId,
       },
     });
+
     let data: any = {};
     const body = { ...req.body };
 

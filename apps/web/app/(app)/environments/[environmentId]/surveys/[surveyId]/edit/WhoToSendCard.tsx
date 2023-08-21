@@ -1,5 +1,7 @@
 "use client";
 
+import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
+import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
@@ -16,9 +18,7 @@ import {
 } from "@formbricks/ui";
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react"; /*  */
-import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
-import { sampleUserSegment } from "@formbricks/types/v1/userSegment";
+import { useCallback, useEffect, useState } from "react"; /*  */
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -33,8 +33,31 @@ interface WhoToSendCardProps {
 
 export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
+  const [isCreatingUserSegment, setIsCreatingUserSegment] = useState(true);
+  const [isUserSegmentError, setIsUserSegmentError] = useState(false);
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
     useAttributeClasses(environmentId);
+
+  const createUserSegment = useCallback(async () => {
+    if (!localSurvey.userSegment) {
+      try {
+        await createUserSegmentAction(environmentId, localSurvey.id, "", "", []);
+        setIsCreatingUserSegment(false);
+        return;
+      } catch (err) {
+        setIsUserSegmentError(true);
+        setIsCreatingUserSegment(false);
+      }
+    }
+
+    setIsCreatingUserSegment(false);
+  }, [environmentId, localSurvey.id, localSurvey.userSegment]);
+
+  useEffect(() => {
+    if (localSurvey.type !== "link") {
+      createUserSegment();
+    }
+  }, [createUserSegment, localSurvey.type]);
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
@@ -74,11 +97,11 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     setLocalSurvey(updatedSurvey);
   };
 
-  if (isLoadingAttributeClasses) {
+  if (isLoadingAttributeClasses || isCreatingUserSegment) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorAttributeClasses) {
+  if (isErrorAttributeClasses || isUserSegmentError) {
     return <div>Error</div>;
   }
 
@@ -145,7 +168,13 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
           <div className="p-6">
             <div className="rounded-lg border-2 border-slate-300 p-4">
-              <SegmentFilters segment={sampleUserSegment.filterGroup} />
+              <p className="text-sm font-semibold">Send survey to audience who match...</p>
+              {/* <Button variant="darkCTA" onClick={() => handleCreateTestSegment()}>
+                Create test segment
+              </Button> */}
+              {!!localSurvey.userSegment?.filters && (
+                <SegmentFilters segment={localSurvey.userSegment?.filters} />
+              )}
             </div>
           </div>
 

@@ -155,6 +155,7 @@ export const ZUserSegment = z.object({
   description: z.string().optional(),
   private: z.boolean().default(true),
   filters: ZUserSegmentFilterGroup,
+  environmentId: z.string(),
 
   // describes which surveys is this segment applicable to
   surveys: z.array(z.string()),

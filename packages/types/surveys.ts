@@ -1,4 +1,5 @@
 import { Question } from "./questions";
+import { TUserSegment } from "./v1/userSegment";
 
 export interface ThankYouCard {
   enabled: boolean;
@@ -28,6 +29,7 @@ export interface Survey {
   responseRate: number;
   displayOption: "displayOnce" | "displayMultiple" | "respondMultiple";
   attributeFilters: AttributeFilter[];
+  userSegment: TUserSegment | null;
   autoClose: number | null;
   delay: number;
   autoComplete: number | null;

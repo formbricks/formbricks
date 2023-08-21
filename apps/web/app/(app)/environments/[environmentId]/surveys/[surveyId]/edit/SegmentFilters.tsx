@@ -1,3 +1,4 @@
+import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import {
   TBaseFilterGroup,
@@ -5,17 +6,7 @@ import {
   convertOperatorToText,
   convertMetricToText,
 } from "@formbricks/types/v1/userSegment";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-  Input,
-  Select,
-  SelectTrigger,
-  TabBar,
-} from "@formbricks/ui";
-// import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { Dialog, DialogContent, DialogTrigger, Input, Select, SelectTrigger, TabBar } from "@formbricks/ui";
 import { MousePointerClick, TagIcon, Users2Icon, MonitorSmartphoneIcon, PlusCircleIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -36,34 +27,7 @@ const SegmentFilterItem = ({ resource, connector }: SegmentFilterItemProps) => {
   const [userSegmentOperator, setUserSegmentOperator] = useState(
     resource.root.type === "segment" ? resource.qualifier.operator : ""
   );
-
-  const selectValue = () => {
-    switch (resource.root.type) {
-      case "action": {
-        // fetch action class name from actionClassId
-        return resource.root.actionClassId;
-      }
-
-      case "attribute": {
-        // fetch attribute class name from attributeClassId
-        return resource.root.attributeClassId;
-      }
-
-      case "segment": {
-        // fetch segment name from userSegmentId
-        return resource.root.userSegmentId;
-      }
-
-      case "device": {
-        // fetch device type name from deviceType
-        return resource.root.deviceType;
-      }
-
-      default: {
-        return "";
-      }
-    }
-  };
+  const {} = useAttributeClasses(environmentId);
 
   const onConnectorChange = () => {
     if (!connectorState) return;
@@ -236,34 +200,6 @@ const SegmentFilterItem = ({ resource, connector }: SegmentFilterItemProps) => {
       </div>
     );
   }
-
-  return (
-    <div className="flex items-center gap-4">
-      {!!connector ? <p>{connector}</p> : <p>Where</p>}
-
-      <Select value={selectValue()} onValueChange={(value) => console.log({ value })}>
-        <SelectTrigger className="w-[120px] capitalize">
-          <p>{selectValue()}</p>
-        </SelectTrigger>
-
-        {/* <SelectContent>
-          {attributeClasses
-            .filter((attributeClass) => !attributeClass.archived)
-            .map((attributeClass) => (
-              <SelectItem value={attributeClass.id}>{attributeClass.name}</SelectItem>
-            ))}
-        </SelectContent> */}
-      </Select>
-
-      <Select value={convertOperatorToText(resource.qualifier.operator)}>
-        <SelectTrigger className="flex w-[40px] items-center justify-center text-center" hideArrow>
-          <p>{convertOperatorToText(resource.qualifier.operator)}</p>
-        </SelectTrigger>
-      </Select>
-
-      <div className="rounded-lg border-2 p-2">{resource.value}</div>
-    </div>
-  );
 };
 
 const SegmentFilters = ({ segment }: { segment: TBaseFilterGroup }) => {
@@ -300,11 +236,6 @@ const SegmentFilters = ({ segment }: { segment: TBaseFilterGroup }) => {
           );
         }
       })}
-
-      {/* <button className="flex max-w-[160px] items-center gap-2 text-sm">
-        <PlusCircleIcon className="h-4 w-4" />
-        <p>Add filter</p>
-      </button> */}
 
       <Dialog>
         <DialogTrigger className="max-w-[160px]">
