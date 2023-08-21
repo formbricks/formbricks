@@ -154,7 +154,7 @@ export const ZUserSegment = z.object({
   name: z.string(),
   description: z.string().optional(),
   private: z.boolean().default(true),
-  filterGroup: ZUserSegmentFilterGroup,
+  filters: ZUserSegmentFilterGroup,
 
   // describes which surveys is this segment applicable to
   surveys: z.array(z.string()),
@@ -217,7 +217,7 @@ const sampleJson: TUserSegment = {
   name: "Segment 1",
   description: "Segment 1 description",
   private: false,
-  filterGroup: [
+  filters: [
     {
       connector: null,
       resource: {
@@ -276,7 +276,7 @@ export const sampleUserSegment: TUserSegment = {
   name: "Sample User Segment",
   description: "A sample user segment description",
   private: false,
-  filterGroup: [
+  filters: [
     {
       connector: null,
       resource: {

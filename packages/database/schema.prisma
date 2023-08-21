@@ -311,6 +311,7 @@ model Environment {
   apiKeys              ApiKey[]
   webhooks             Webhook[]
   tags                 Tag[]
+  userSegments         UserSegment[]
 }
 
 enum WidgetPlacement {
@@ -479,11 +480,14 @@ model User {
 }
 
 model UserSegment {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  name      String
-  private   Boolean  @default(true)
-  filters   Json     @default("[]")
-  surveys   Survey[]
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  title         String
+  description   String?
+  private       Boolean     @default(true)
+  filters       Json        @default("[]")
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  surveys       Survey[]
 }
