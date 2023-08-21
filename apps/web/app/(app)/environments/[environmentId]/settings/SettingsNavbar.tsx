@@ -223,7 +223,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           ))}
         </nav>
       </div>
-      <div className="fixed z-10 flex h-14 w-full items-center justify-between bg-white px-4 sm:hidden sm:px-6">
+      <div className="fixed z-10 flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:hidden sm:px-6">
         <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
           <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
             <span className="flex items-center">
@@ -235,7 +235,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             <div className="flex flex-col">
               {navigation.map((item) => (
                 <div key={item.title}>
-                  <p className="mt-6 pl-3 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <p className="mt-3 pl-3 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     {item.title}{" "}
                     {item.title === "Product" && product?.name && (
                       <span className="font-normal capitalize">({truncate(product?.name, 10)})</span>

@@ -273,7 +273,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         )}
         <Button
           variant="secondary"
-          className="mr-2"
+          className="mr-2 hidden sm:inline-flex"
           onClick={() => {
             setCreateTeamModalOpen(true);
           }}>
@@ -292,26 +292,26 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
       <div className="rounded-lg border border-slate-200">
         <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-2"></div>
-          <div className="col-span-5">Fullname</div>
+          <div className="hidden sm:col-span-5 sm:block">Fullname</div>
           <div className="col-span-5">Email</div>
-          <div className="col-span-3">Role</div>
-          <div className="col-span-5"></div>
+          <div className="hidden sm:col-span-3 sm:block">Role</div>
+          <div className="hidden sm:col-span-5 sm:block"></div>
         </div>
         <div className="grid-cols-20">
           {[...team.members, ...team.invitees].map((member) => (
             <div
               className="grid-cols-20 grid h-auto w-full content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
-              <div className="h-58 col-span-2 pl-4">
+              <div className="h-58 col-span-2 hidden pl-4 sm:block">
                 <ProfileAvatar userId={member.userId || member.email} />
               </div>
-              <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
+              <div className="ph-no-capture col-span-5 hidden flex-col justify-center break-all sm:flex">
                 <p>{member.name}</p>
               </div>
-              <div className="ph-no-capture col-span-5  flex flex-col justify-center break-all">
+              <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
                 {member.email}
               </div>
-              <div className="ph-no-capture col-span-3 flex flex-col items-start justify-center break-all">
+              <div className="ph-no-capture col-span-3 hidden flex-col items-start justify-center break-all sm:flex">
                 <RoleElement
                   isAdminOrOwner={isAdminOrOwner}
                   memberRole={member.role}
@@ -325,7 +325,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                   currentUserRole={role}
                 />
               </div>
-              <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
+              <div className="col-span-5 ml-48 flex items-center justify-end gap-x-2 pr-4 sm:ml-0 sm:gap-x-4">
                 {!member.accepted &&
                   (isExpired(member) ? (
                     <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
