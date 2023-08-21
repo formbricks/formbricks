@@ -1,3 +1,4 @@
+import { capitalizeFirstLetter } from "@/lib/utils";
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
@@ -52,7 +53,7 @@ const renderSelectedTriggersText = (webhook: TWebhook) => {
 
 export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook; surveys: TSurvey[] }) {
   return (
-    <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg hover:bg-slate-100">
+    <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
       <div className="col-span-3 flex items-center truncate pl-6 text-sm">
         <div className="flex items-center">
           <div className="text-left">
@@ -68,7 +69,7 @@ export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook
         </div>
       </div>
       <div className="col-span-1 my-auto text-center text-sm text-slate-800">
-        <Badge text={webhook.source || "user"} type="gray" size="tiny" />
+        <Badge text={capitalizeFirstLetter(webhook.source) || "User"} type="gray" size="tiny" />
       </div>
       <div className="col-span-4 my-auto text-center text-sm text-slate-800">
         {renderSelectedSurveysText(webhook, surveys)}
