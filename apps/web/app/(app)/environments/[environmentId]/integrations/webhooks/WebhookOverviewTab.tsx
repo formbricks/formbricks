@@ -38,7 +38,12 @@ export default function WebhookOverviewTab({ webhook, surveys }: ActivityTabProp
       <div className="col-span-2 space-y-4 pr-6">
         <div>
           <Label className="text-slate-500">Name</Label>
-          <p className="text-sm text-slate-900">{webhook.name ? webhook.name : "-"}</p>
+          <p className="truncate text-sm text-slate-900">{webhook.name ? webhook.name : "-"}</p>
+        </div>
+
+        <div>
+          <Label className="text-slate-500">Created by a Third Party</Label>
+          <p className="text-sm text-slate-900">{webhook.source === "user" ? "No" : webhook.source}</p>
         </div>
 
         <div>

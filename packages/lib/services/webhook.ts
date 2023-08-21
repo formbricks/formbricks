@@ -8,11 +8,15 @@ import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbr
 
 export const getWebhooks = async (environmentId: string): Promise<TWebhook[]> => {
   try {
-    return await prisma.webhook.findMany({
+    const webhooks = await prisma.webhook.findMany({
       where: {
         environmentId: environmentId,
       },
     });
+    return webhooks.map((webhook) => ({
+      ...webhook,
+      source: webhook.source as "user" | "zapier" | null | undefined,
+    }));
   } catch (error) {
     throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
   }
@@ -24,7 +28,13 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> => {
       id,
     },
   });
-  return webhook;
+  if (webhook) {
+    return {
+      ...webhook,
+      source: webhook.source as "user" | "zapier" | null | undefined,
+    };
+  }
+  return null;
 };
 
 export const createWebhook = async (
@@ -32,13 +42,18 @@ export const createWebhook = async (
   webhookInput: TWebhookInput
 ): Promise<TWebhook> => {
   try {
-    if (!webhookInput.url || !webhookInput.triggers) {
-      throw new InvalidInputError("Missing URL or trigger in webhook input");
+    if (!webhookInput.url || !webhookInput.triggers || !webhookInput.source) {
+      throw new InvalidInputError("Missing URL, trigger, or source in webhook input");
     }
-    return await prisma.webhook.create({
+    if (webhookInput.source !== "user" && webhookInput.source !== "zapier") {
+      throw new InvalidInputError("Invalid source in webhook input");
+    }
+
+    let createdWebhook = await prisma.webhook.create({
       data: {
         name: webhookInput.name,
         url: webhookInput.url,
+        source: webhookInput.source,
         triggers: webhookInput.triggers,
         surveyIds: webhookInput.surveyIds || [],
         environment: {
@@ -48,6 +63,10 @@ export const createWebhook = async (
         },
       },
     });
+    return {
+      ...createdWebhook,
+      source: createdWebhook.source as "user" | "zapier" | null | undefined,
+    };
   } catch (error) {
     if (!(error instanceof InvalidInputError)) {
       throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
@@ -73,7 +92,10 @@ export const updateWebhook = async (
         surveyIds: webhookInput.surveyIds || [],
       },
     });
-    return result;
+    return {
+      ...result,
+      source: result.source as "user" | "zapier" | null | undefined,
+    };
   } catch (error) {
     throw new DatabaseError(
       `Database error when updating webhook with ID ${webhookId} for environment ${environmentId}`
@@ -83,11 +105,15 @@ export const updateWebhook = async (
 
 export const deleteWebhook = async (id: string): Promise<TWebhook> => {
   try {
-    return await prisma.webhook.delete({
+    let deletedWebhook = await prisma.webhook.delete({
       where: {
         id,
       },
     });
+    return {
+      ...deletedWebhook,
+      source: deletedWebhook.source as "user" | "zapier" | null | undefined,
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
       throw new ResourceNotFoundError("Webhook", id);

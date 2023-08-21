@@ -108,6 +108,7 @@ export default function WebhookSettingsTab({
     const updatedData: TWebhookInput = {
       name: data.name,
       url: data.url as string,
+      source: data.source,
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
     };
@@ -147,7 +148,9 @@ export default function WebhookSettingsTab({
               onChange={(e) => {
                 setTestEndpointInput(e.target.value);
               }}
+              readOnly={webhook.source !== "user"}
               className={clsx(
+                webhook.source === "user" ? null : "cursor-not-allowed bg-gray-100 text-gray-500",
                 endpointAccessible === true
                   ? "border-green-500 bg-green-50"
                   : endpointAccessible === false
@@ -177,6 +180,7 @@ export default function WebhookSettingsTab({
             triggers={triggers}
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
+            allowChanges={webhook.source === "user"}
           />
         </div>
 
@@ -188,19 +192,22 @@ export default function WebhookSettingsTab({
             selectedAllSurveys={selectedAllSurveys}
             onSelectAllSurveys={handleSelectAllSurveys}
             onSelectedSurveyChange={handleSelectedSurveyChange}
+            allowChanges={webhook.source === "user"}
           />
         </div>
 
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
-            <Button
-              type="button"
-              variant="warn"
-              onClick={() => setOpenDeleteDialog(true)}
-              StartIcon={TrashIcon}
-              className="mr-3">
-              Delete
-            </Button>
+            {webhook.source === "user" && (
+              <Button
+                type="button"
+                variant="warn"
+                onClick={() => setOpenDeleteDialog(true)}
+                StartIcon={TrashIcon}
+                className="mr-3">
+                Delete
+              </Button>
+            )}
 
             <Button
               variant="secondary"

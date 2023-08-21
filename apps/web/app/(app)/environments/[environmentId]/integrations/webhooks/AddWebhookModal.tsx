@@ -97,6 +97,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
         const updatedData: TWebhookInput = {
           name: data.name,
           url: testEndpointInput,
+          source: "user",
           triggers: selectedTriggers,
           surveyIds: selectedSurveys,
         };
@@ -194,6 +195,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                   triggers={triggers}
                   selectedTriggers={selectedTriggers}
                   onCheckboxChange={handleCheckboxChange}
+                  allowChanges={true}
                 />
               </div>
 
@@ -205,6 +207,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                   selectedAllSurveys={selectedAllSurveys}
                   onSelectAllSurveys={handleSelectAllSurveys}
                   onSelectedSurveyChange={handleSelectedSurveyChange}
+                  allowChanges={true}
                 />
               </div>
             </div>
