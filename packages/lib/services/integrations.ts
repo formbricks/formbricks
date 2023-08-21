@@ -5,19 +5,30 @@ import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/errors";
 // import { cache } from "react"; 
 
-export async function createIntegration(environmentId: string, integrationData: any): Promise<any> {
+export async function createOrUpdateIntegration(environmentId: string, integrationData: any): Promise<any> {
     try {
         console.log(integrationData)
-        const result = await prisma.integration.create({
-            data: {
+        const result = await prisma.integration.upsert({
+            where:{
+                type_environmentId:{
+                    environmentId,
+                    type : "googleSheets"
+                }
+            },
+            update: {
                 ...integrationData,
                 environment: { connect: { id: environmentId } },
             },
+            create:{
+                ...integrationData,
+                environment: { connect: { id: environmentId } },
+            }
         });
         console.log(result)
         return result;
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.log(error)
             throw new DatabaseError("Database operation failed");
         }
         throw error;

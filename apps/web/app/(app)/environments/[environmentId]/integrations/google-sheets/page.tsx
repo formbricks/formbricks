@@ -11,8 +11,7 @@ export default async function GoogleSheet({ params }) {
     return (
         <>
             <GoBackButton />
-            {console.log(integrations)}
-            <GoogleSheetWrapper environmentId={params.environmentId} surveys={surveys} Spreadsheet={Spreadsheet}/>
+            <GoogleSheetWrapper environmentId={params.environmentId} surveys={surveys} Spreadsheet={Spreadsheet} integrations={integrations}/>
         </>
     )
 }

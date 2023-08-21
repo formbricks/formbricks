@@ -2,67 +2,42 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { Button, Input } from "@formbricks/ui";
-import { createIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import { Button } from "@formbricks/ui";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 
-export default function SpreadsheetSelect({environmentId, spreadsheet, selectedSurvey }) {
-
+export default function SpreadsheetSelect({ environmentId, spreadsheet, selectedSurvey, integrations, setConfigCompleted }) {
   const [selectedSpreadsheet, setSelectedSpreadsheet] = useState()
   const [selectedSpreadsheetId, setSelectedSpreadsheetId] = useState()
-  const [toggle, settoggle] = useState("")
-  const [spreadsheetName, setSpreadsheetName] = useState("")
-  const [worksheetName, setWorksheetName] = useState("")
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
-  const integrationData = {
+  const [loading, setLoading] = useState<boolean>(false)
+  const existingIntegrationData = integrations.find((integration) => { return integration.type === "googleSheets" })?.config.data
+  const googleSheetIntegration = {
     type: "googleSheets",
+    environment: environmentId,
     config: {
-      spreadsheetId: "",
-      surveyId: "",
-      questionIds:[""]
+      data: existingIntegrationData || []
     }
-
+  }
+  const integrationData = {
+    spreadsheetId: "",
+    spreadsheetName: "",
+    surveyId: "",
+    surveyName: "",
+    questionIds: [""]
   };
 
   return (
     <div className="flex flex-col">
-      <h2 className="text-center text-2xl font-semibold my-2">Select a Spreadsheet</h2>
-      <p className="text-center">Select a Spreadsheet to link with selected survey</p>
+      <h2 className="text-center text-2xl font-semibold my-2">Configure your Google Sheet Integration</h2>
+      <p className="text-center">Select a Spreadsheet and questions you wish to send to that spreadsheet</p>
       <div className="mt-4">
         <div className="rounded-lg bg-white p-6 shadow w-3/4 mx-auto">
-          <div className="flex flex-col">
-            <p className="font-medium">Choose an option</p>
-            <span className="flex items-center mt-4">
-              <input
-                type="radio"
-                id="newSpreadhseet"
-                name="newSpreadhseet"
-                value="newSpreadhseet"
-                onChange={() => settoggle("new")}
-                className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
-              />
-              <span className="ml-3 ">
-                Create a new spreadsheet
-              </span>
-            </span>
-            <span className="flex items-center mt-4">
-              <input
-                type="radio"
-                id="newSpreadhseet"
-                name="newSpreadhseet"
-                value="newSpreadhseet"
-                onChange={() => settoggle("existing")}
-                className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
-              />
-              <span className="ml-3">
-                Use an existing spreadsheet
-              </span>
-            </span>
-          </div>
           <div>
             <div className="mt-6">
               <p className="font-medium">Select Spreadsheet</p>
               <div className="mt-4">
-                {toggle === "existing" && <DropdownMenu.Root>
+                <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button
                       type="button"
@@ -98,28 +73,7 @@ export default function SpreadsheetSelect({environmentId, spreadsheet, selectedS
 
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>
-                </DropdownMenu.Root>}
-                {toggle === "new" &&
-                  <Input
-                    id="spreadsheetName"
-                    name="spreadsheetName"
-                    value={spreadsheetName}
-                    placeholder="Enter new spreadsheet name"
-                    onChange={(event: any) => { setSpreadsheetName(event.target.value) }}
-                  />
-                }
-              </div>
-            </div>
-            <div className="mt-6">
-              <p className="font-medium">Worksheet name</p>
-              <div className="mt-4">
-                <Input
-                  id="spreadsheetName"
-                  name="spreadsheetName"
-                  value={worksheetName}
-                  placeholder="Enter new spreadsheet name"
-                  onChange={(event: any) => { setWorksheetName(event.target.value) }}
-                />
+                </DropdownMenu.Root>
               </div>
             </div>
             <div className="mt-6">
@@ -149,7 +103,11 @@ export default function SpreadsheetSelect({environmentId, spreadsheet, selectedS
                     </span>
                   </span>
                 ))}
-
+                <Button variant="minimal" className="mt-4" onClick={()=>{
+                   setSelectedQuestions(selectedSurvey.questions.map(question => question.id));
+                }
+                }>Select all
+                </Button>
               </div>
             </div>
 
@@ -157,21 +115,26 @@ export default function SpreadsheetSelect({environmentId, spreadsheet, selectedS
         </div>
         <div className="flex justify-between w-3/4 mx-auto mt-4">
           <Button variant="secondary">cancel</Button>
-          <Button variant="primary" onClick={() => {
-            integrationData.config.spreadsheetId = selectedSpreadsheetId ? selectedSpreadsheetId:"";
-            integrationData.config.surveyId = selectedSurvey.id;
-            integrationData.config.questionIds = selectedQuestions;
-            console.log(integrationData)
+          <Button variant="primary" loading={loading} disabled={!selectedSpreadsheet || selectedQuestions.length === 0} onClick={() => {
+            setLoading(true)
+            integrationData.spreadsheetId = selectedSpreadsheetId ? selectedSpreadsheetId : "";
+            integrationData.spreadsheetName = selectedSpreadsheet ? selectedSpreadsheet : "NA";
+            integrationData.surveyId = selectedSurvey.id;
+            integrationData.surveyName = selectedSurvey.name;
+            integrationData.questionIds = selectedQuestions;
             // Call the createIntegrationAction function with integrationData
-            createIntegrationAction(environmentId, integrationData)
-              .then((result) => {
-                console.log("done")
+            googleSheetIntegration.config.data.push(integrationData);
+            console.log(googleSheetIntegration)
+            upsertIntegrationAction(environmentId, googleSheetIntegration)
+              .then(() => {
+                setLoading(false)
+                setConfigCompleted(true)
               })
               .catch((error) => {
                 console.log(error)
               });
           }}>
-            Save
+           Save
           </Button>
 
         </div>
