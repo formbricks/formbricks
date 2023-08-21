@@ -1,6 +1,7 @@
 import { Layout } from "@/components/docs/Layout";
 import Image from "next/image";
 
+import ReactApp from "./1-in app survey react app popup form.webp";
 import SetupChecklist from "./env-id.png";
 import WidgetNotConnected from "./widget-not-connected.png";
 import WidgetConnected from "./widget-connected.png";
@@ -33,24 +34,35 @@ pnpm add @formbricks/js
 
 ## 2. Integrating with React
 
-Update your App.tsx file like so:
+Update your App.js file like so:
 
 ```tsx
-import React from "react";
 import formbricks from "@formbricks/js";
+import "./App.css";
+import logo from "./logo.svg";
 
 if (typeof window !== "undefined") {
   formbricks.init({
-    environmentId: "your-environment-id",
-    apiHost: "your-api-host", // e.g. https://app.formbricks.com
+    environmentId: "cllc820rs01-REPLACE-ME", // replace with your env ID!
+    apiHost: "https://app.formbricks.com", // update if you're self-hosting
     debug: true, // remove when in production
   });
 }
 
 function App() {
-  // Your component logic here if needed
-
-  return <div>{/* Your component content or other components */}</div>;
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.js</code> and save to reload.
+        </p>
+        <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
+          Learn React
+        </a>
+      </header>
+    </div>
+  );
 }
 
 export default App;
@@ -59,6 +71,13 @@ export default App;
 ## What are we doing here?
 
 The app initializes 'formbricks' when it's loaded in a browser environment (due to the typeof window !== "undefined" check) and then renders your components or content.
+
+<Image
+  src={ReactApp}
+  alt="In app survey in React app for micro surveys"
+  quality="100"
+  className="rounded-lg"
+/>
 
 ## 3. Validate your setup
 
