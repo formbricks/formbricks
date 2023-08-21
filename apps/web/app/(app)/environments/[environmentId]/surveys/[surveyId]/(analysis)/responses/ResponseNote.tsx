@@ -4,8 +4,7 @@ import { addResponseNote, updateResponseNote } from "@/lib/responseNotes/respons
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Button } from "@formbricks/ui";
-import { PencilIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { MinusIcon } from "@heroicons/react/24/solid";
+import { MinusIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
