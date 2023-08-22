@@ -22,6 +22,8 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
 
   const calculateProgress = useCallback(
     (currentQuestionId: string, survey: TSurvey, currentProgress: number) => {
+      if (currentQuestionId === "end") return 1;
+
       const progressArray: number[] = new Array(survey.questions.length).fill(undefined);
       const currentQuestionIdx = survey.questions.findIndex((e) => e.id === currentQuestionId);
       const currentQuestion = survey.questions[currentQuestionIdx];
