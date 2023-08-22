@@ -143,7 +143,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
-                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
                   <div className="w-full max-w-md">
                     <SurveyInline
                       survey={survey}
