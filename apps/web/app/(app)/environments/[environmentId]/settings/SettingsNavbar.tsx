@@ -4,7 +4,7 @@ import { useProduct } from "@/lib/products/products";
 import { useTeam } from "@/lib/teams/teams";
 import { truncate } from "@/lib/utils";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { Popover, PopoverTrigger, PopoverContent } from "@formbricks/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import {
   AdjustmentsVerticalIcon,
@@ -13,10 +13,10 @@ import {
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
+  HashtagIcon,
   KeyIcon,
   LinkIcon,
   PaintBrushIcon,
-  HashtagIcon,
   UserCircleIcon,
   UsersIcon,
 } from "@heroicons/react/24/solid";
@@ -45,7 +45,6 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
     links: NavigationLink[];
   }
 
-  // Then, specify the type of the navigation array
   const navigation: NavigationSection[] = useMemo(
     () => [
       {
@@ -186,7 +185,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
 
   return (
     <>
-      <div className="fixed hidden h-full bg-white py-2 pl-4 pr-10 sm:block ">
+      <div className="fixed hidden h-full bg-white py-2 pl-4 pr-10 md:block ">
         <nav className="flex-1 space-y-1 bg-white px-2">
           {navigation.map((item) => (
             <div key={item.title}>
@@ -223,7 +222,9 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           ))}
         </nav>
       </div>
-      <div className="fixed z-10 flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:hidden sm:px-6">
+
+      {/* Mobile Menu */}
+      <div className="fixed z-10 flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 md:hidden">
         <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
           <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
             <span className="flex items-center">

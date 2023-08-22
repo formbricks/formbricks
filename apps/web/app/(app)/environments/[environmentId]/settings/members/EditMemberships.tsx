@@ -2,6 +2,7 @@
 
 import ShareInviteModal from "@/app/(app)/environments/[environmentId]/settings/members/ShareInviteModal";
 import TransferOwnershipModal from "@/app/(app)/environments/[environmentId]/settings/members/TransferOwnershipModal";
+import CustomDialog from "@/components/shared/CustomDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
@@ -17,6 +18,7 @@ import {
   updateMemberRole,
   useMembers,
 } from "@/lib/members";
+import { useMemberships } from "@/lib/memberships";
 import { useProfile } from "@/lib/profile";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
@@ -35,12 +37,10 @@ import {
 } from "@formbricks/ui";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
-import { useRouter } from "next/navigation";
-import { useMemberships } from "@/lib/memberships";
-import CustomDialog from "@/components/shared/CustomDialog";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -292,7 +292,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
       <div className="rounded-lg border border-slate-200">
         <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-2"></div>
-          <div className="hidden sm:col-span-5 sm:block">Fullname</div>
+          <div className="col-span-5">Fullname</div>
           <div className="col-span-5">Email</div>
           <div className="hidden sm:col-span-3 sm:block">Role</div>
           <div className="hidden sm:col-span-5 sm:block"></div>
@@ -302,10 +302,12 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
             <div
               className="grid-cols-20 grid h-auto w-full content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
-              <div className="h-58 col-span-2 hidden pl-4 sm:block">
-                <ProfileAvatar userId={member.userId || member.email} />
+              <div className="h-58 col-span-2  pl-4 ">
+                <div className="hidden sm:block">
+                  <ProfileAvatar userId={member.userId || member.email} />
+                </div>
               </div>
-              <div className="ph-no-capture col-span-5 hidden flex-col justify-center break-all sm:flex">
+              <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
                 <p>{member.name}</p>
               </div>
               <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
@@ -325,7 +327,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                   currentUserRole={role}
                 />
               </div>
-              <div className="col-span-5 ml-48 flex items-center justify-end gap-x-2 pr-4 sm:ml-0 sm:gap-x-4">
+              <div className="col-span-5 ml-48 hidden items-center justify-end gap-x-2 pr-4 sm:ml-0 sm:gap-x-4 lg:flex">
                 {!member.accepted &&
                   (isExpired(member) ? (
                     <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
