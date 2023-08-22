@@ -28,7 +28,7 @@ interface Resource {
 
 const resources: Array<Resource> = [
   {
-    href: '/contacts',
+    href: '/docs/contacts',
     name: 'Contacts',
     description:
       'Learn about the contact model and how to create, retrieve, update, delete, and list contacts.',
@@ -42,7 +42,7 @@ const resources: Array<Resource> = [
     },
   },
   {
-    href: '/conversations',
+    href: '/docs/conversations',
     name: 'Conversations',
     description:
       'Learn about the conversation model and how to create, retrieve, update, delete, and list conversations.',
@@ -56,7 +56,7 @@ const resources: Array<Resource> = [
     },
   },
   {
-    href: '/messages',
+    href: '/docs/messages',
     name: 'Messages',
     description:
       'Learn about the message model and how to create, retrieve, update, delete, and list messages.',
@@ -70,7 +70,7 @@ const resources: Array<Resource> = [
     },
   },
   {
-    href: '/groups',
+    href: '/docs/groups',
     name: 'Groups',
     description:
       'Learn about the group model and how to create, retrieve, update, delete, and list groups.',

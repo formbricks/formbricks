@@ -3,23 +3,23 @@ import { Heading } from '@/app/docs/_components/Heading'
 
 const guides = [
   {
-    href: '/authentication',
+    href: '/docs/authentication',
     name: 'Authentication',
     description: 'Learn how to authenticate your API requests.',
   },
   {
-    href: '/pagination',
+    href: '/docs/pagination',
     name: 'Pagination',
     description: 'Understand how to work with paginated responses.',
   },
   {
-    href: '/errors',
+    href: '/docs/errors',
     name: 'Errors',
     description:
       'Read about the different types of errors returned by the API.',
   },
   {
-    href: '/webhooks',
+    href: '/docs/webhooks',
     name: 'Webhooks',
     description:
       'Learn how to programmatically configure webhooks for your app.',
