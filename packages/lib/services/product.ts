@@ -23,6 +23,9 @@ const selectProduct = {
 };
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct> => {
+  if (!environmentId) {
+    throw new ValidationError("EnvironmentId is required");
+  }
   let productPrisma;
   try {
     productPrisma = await prisma.product.findFirst({
