@@ -17,13 +17,6 @@
         "@formbricks/js#build"
       ]
     },
-    "@formbricks/api#go": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": [
-        "@formbricks/errors#build"
-      ]
-    },
     "@formbricks/api#build": {
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]

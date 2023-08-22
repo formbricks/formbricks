@@ -1,17 +1,4 @@
 tasks:
-  - name: errors
-    command: |
-      gp sync-await init && 
-      turbo --filter "@formbricks/errors" go
-
-  - name: api
-    init: |
-      gp sync-await init-install &&
-      bash .gitpod/setup-api.bash
-    command: |
-      gp sync-await init && 
-      turbo --filter "@formbricks/api" go
-    
   - name: demo
     init: |
       gp sync-await init-install && 
@@ -22,18 +9,6 @@ tasks:
       sed -i -r "s#^(NEXT_PUBLIC_FORMBRICKS_API_HOST=).*#\1 $(gp url 3000)#" .env &&
       gp sync-await init && 
       turbo --filter "@formbricks/demo" go
-
-  - name: web
-    init: |
-      gp sync-await init-install && 
-      bash .gitpod/setup-web.bash &&
-      turbo --filter "@formbricks/database" db:down
-    command: |
-      gp sync-await init &&
-      cp .env.example .env &&
-      sed -i -r "s#^(NEXT_PUBLIC_WEBAPP_URL=).*#\1 $(gp url 3000)#" .env &&
-      sed -i -r "s#^(NEXTAUTH_URL=).*#\1 $(gp url 3000)#" .env &&
-      turbo --filter "@formbricks/web" go
 
   - name : website
     command: gp sync-await init && turbo --filter "@formbricks/formbricks-com" dev
@@ -49,6 +24,18 @@ tasks:
       gp tasks list &&
       gp ports await 3002 && gp ports await 3000 && gp open apps/demo/.env && gp preview $(gp url 3002) --external
 
+  - name: web
+    init: |
+      gp sync-await init-install && 
+      bash .gitpod/setup-web.bash &&
+      turbo --filter "@formbricks/database" db:down
+    command: |
+      gp sync-await init &&
+      cp .env.example .env &&
+      sed -i -r "s#^(NEXT_PUBLIC_WEBAPP_URL=).*#\1 $(gp url 3000)#" .env &&
+      sed -i -r "s#^(NEXTAUTH_URL=).*#\1 $(gp url 3000)#" .env &&
+      turbo --filter "@formbricks/web" go
+      
 image:
   file: .gitpod.Dockerfile
 
