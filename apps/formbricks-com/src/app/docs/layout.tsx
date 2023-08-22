@@ -1,10 +1,10 @@
 import glob from 'fast-glob'
 
 import { Providers } from '@/app/providers'
-import { Layout } from '@/components/Layout'
+import { Layout } from '@/app/docs/_components/Layout'
 
 import { type Metadata } from 'next'
-import { type Section } from '@/components/SectionProvider'
+import { type Section } from '@/app/docs/_components/SectionProvider'
 
 export const metadata: Metadata = {
   title: {

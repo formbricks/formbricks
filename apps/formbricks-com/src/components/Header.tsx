@@ -3,15 +3,15 @@ import Link from 'next/link'
 import clsx from 'clsx'
 import { motion, useScroll, useTransform } from 'framer-motion'
 
-import { Button } from '@/components/Button'
-import { Logo } from '@/components/Logo'
+import { Button } from '@/app/docs/_components/Button'
+import { Logo } from '@/app/docs/_components/Logo'
 import {
   MobileNavigation,
   useIsInsideMobileNavigation,
-} from '@/components/MobileNavigation'
-import { useMobileNavigationStore } from '@/components/MobileNavigation'
-import { MobileSearch, Search } from '@/components/Search'
-import { ThemeToggle } from '@/components/ThemeToggle'
+} from '@/app/docs/_components/MobileNavigation'
+import { useMobileNavigationStore } from '@/app/docs/_components/MobileNavigation'
+import { MobileSearch, Search } from '@/app/docs/_components/Search'
+import { ThemeToggle } from '@/app/docs/_components/ThemeToggle'
 
 function TopLevelNavItem({
   href,
@@ -53,7 +53,7 @@ export const Header = forwardRef<
           'backdrop-blur-sm dark:backdrop-blur lg:left-72 xl:left-80',
         isInsideMobileNavigation
           ? 'bg-white dark:bg-zinc-900'
-          : 'bg-white/[var(--bg-opacity-light)] dark:bg-zinc-900/[var(--bg-opacity-dark)]',
+          : 'bg-white/[var(--bg-opacity-light)] dark:bg-zinc-900/[var(--bg-opacity-dark)]'
       )}
       style={
         {
@@ -66,7 +66,7 @@ export const Header = forwardRef<
         className={clsx(
           'absolute inset-x-0 top-full h-px transition',
           (isInsideMobileNavigation || !mobileNavIsOpen) &&
-            'bg-zinc-900/7.5 dark:bg-white/7.5',
+            'bg-zinc-900/7.5 dark:bg-white/7.5'
         )}
       />
       <Search />

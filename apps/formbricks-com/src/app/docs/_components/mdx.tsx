@@ -1,13 +1,17 @@
 import Link from 'next/link'
 import clsx from 'clsx'
 
-import { Feedback } from '@/components/Feedback'
-import { Heading } from '@/components/Heading'
-import { Prose } from '@/components/Prose'
+import { Feedback } from '@/app/docs/_components/Feedback'
+import { Heading } from '@/app/docs/_components/Heading'
+import { Prose } from '@/app/docs/_components/Prose'
 
 export const a = Link
-export { Button } from '@/components/Button'
-export { CodeGroup, Code as code, Pre as pre } from '@/components/Code'
+export { Button } from '@/app/docs/_components/Button'
+export {
+  CodeGroup,
+  Code as code,
+  Pre as pre,
+} from '@/app/docs/_components/Code'
 
 export function wrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -21,7 +25,7 @@ export function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 export const h2 = function H2(
-  props: Omit<React.ComponentPropsWithoutRef<typeof Heading>, 'level'>,
+  props: Omit<React.ComponentPropsWithoutRef<typeof Heading>, 'level'>
 ) {
   return <Heading level={2} {...props} />
 }
@@ -72,7 +76,7 @@ export function Col({
     <div
       className={clsx(
         '[&>:first-child]:mt-0 [&>:last-child]:mb-0',
-        sticky && 'xl:sticky xl:top-24',
+        sticky && 'xl:sticky xl:top-24'
       )}
     >
       {children}

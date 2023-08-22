@@ -6,10 +6,10 @@ import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 import { AnimatePresence, motion, useIsPresent } from 'framer-motion'
 
-import { Button } from '@/components/Button'
-import { useIsInsideMobileNavigation } from '@/components/MobileNavigation'
-import { useSectionStore } from '@/components/SectionProvider'
-import { Tag } from '@/components/Tag'
+import { Button } from '@/app/docs/_components/Button'
+import { useIsInsideMobileNavigation } from '@/app/docs/_components/MobileNavigation'
+import { useSectionStore } from '@/app/docs/_components/SectionProvider'
+import { Tag } from '@/app/docs/_components/Tag'
 import { remToPx } from '@/lib/remToPx'
 
 interface NavGroup {
@@ -66,7 +66,7 @@ function NavLink({
         isAnchorLink ? 'pl-7' : 'pl-4',
         active
           ? 'text-zinc-900 dark:text-white'
-          : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white',
+          : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
       )}
     >
       <span className="truncate">{children}</span>
@@ -91,15 +91,15 @@ function VisibleSectionHighlight({
       useSectionStore((s) => s.sections),
       useSectionStore((s) => s.visibleSections),
     ],
-    useIsInsideMobileNavigation(),
+    useIsInsideMobileNavigation()
   )
 
   let isPresent = useIsPresent()
   let firstVisibleSectionIndex = Math.max(
     0,
     [{ id: '_top' }, ...sections].findIndex(
-      (section) => section.id === visibleSections[0],
-    ),
+      (section) => section.id === visibleSections[0]
+    )
   )
   let itemHeight = remToPx(2)
   let height = isPresent
@@ -158,7 +158,7 @@ function NavigationGroup({
   let isInsideMobileNavigation = useIsInsideMobileNavigation()
   let [pathname, sections] = useInitialValue(
     [usePathname(), useSectionStore((s) => s.sections)],
-    isInsideMobileNavigation,
+    isInsideMobileNavigation
   )
 
   let isActiveGroup =

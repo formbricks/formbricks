@@ -1,7 +1,7 @@
 import Image from 'next/image'
 
-import { Button } from '@/components/Button'
-import { Heading } from '@/components/Heading'
+import { Button } from '@/app/docs/_components/Button'
+import { Heading } from '@/app/docs/_components/Heading'
 import logoGo from '@/images/logos/go.svg'
 import logoNode from '@/images/logos/node.svg'
 import logoPhp from '@/images/logos/php.svg'

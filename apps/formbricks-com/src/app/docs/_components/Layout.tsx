@@ -4,11 +4,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 
-import { Footer } from '@/components/Footer'
-import { Header } from '@/components/Header'
-import { Logo } from '@/components/Logo'
-import { Navigation } from '@/components/Navigation'
-import { type Section, SectionProvider } from '@/components/SectionProvider'
+import { Footer } from '@/app/docs/_components/Footer'
+import { Header } from '@/app/docs/_components/Header'
+import { Logo } from '@/app/docs/_components/Logo'
+import { Navigation } from '@/app/docs/_components/Navigation'
+import {
+  type Section,
+  SectionProvider,
+} from '@/app/docs/_components/SectionProvider'
 
 export function Layout({
   children,
