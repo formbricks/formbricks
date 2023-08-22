@@ -12,6 +12,8 @@ import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
+import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { sampleUserSegment } from "@formbricks/types/v1/userSegment";
 
 interface SurveyEditorProps {
   environmentId: string;
@@ -22,8 +24,10 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
+  const [isCreatingUserSegment, setIsCreatingUserSegment] = useState(true);
+  const [isUserSegmentError, setIsUserSegmentError] = useState(false);
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId, true);
+  const { survey, isLoadingSurvey, isErrorSurvey, mutateSurvey } = useSurvey(environmentId, surveyId, true);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
@@ -37,11 +41,31 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  if (isLoadingSurvey || isLoadingProduct || isLoadingEnvironment || !localSurvey) {
+  useEffect(() => {
+    const createUserSegment = async () => {
+      try {
+        await createUserSegmentAction(environmentId, surveyId, "", "", sampleUserSegment.filters);
+        setIsCreatingUserSegment(false);
+        mutateSurvey();
+      } catch (err) {
+        setIsUserSegmentError(true);
+        setIsCreatingUserSegment(false);
+      }
+    };
+
+    if (survey && !survey.userSegment) {
+      setIsCreatingUserSegment(true);
+      createUserSegment();
+    } else {
+      setIsCreatingUserSegment(false);
+    }
+  }, [environmentId, mutateSurvey, survey, surveyId]);
+
+  if (isLoadingSurvey || isLoadingProduct || isLoadingEnvironment || !localSurvey || isCreatingUserSegment) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurvey || isErrorProduct || isErrorEnvironment) {
+  if (isErrorSurvey || isErrorProduct || isErrorEnvironment || isUserSegmentError) {
     return <ErrorComponent />;
   }
 
@@ -77,7 +101,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             />
           )}
         </main>
-        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
+        {/* <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
           <PreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
@@ -91,7 +115,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
             autoClose={localSurvey.autoClose}
           />
-        </aside>
+        </aside> */}
       </div>
     </div>
   );

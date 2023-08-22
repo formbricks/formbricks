@@ -1,6 +1,8 @@
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { createId } from "@paralleldrive/cuid2";
 
-const BASE_OPERATORS = [
+export const BASE_OPERATORS = [
   "equals",
   "notEquals",
   "lessThan",
@@ -9,7 +11,7 @@ const BASE_OPERATORS = [
   "greaterEqual",
 ] as const;
 
-const ATTRIBUTE_OPERATORS = [
+export const ATTRIBUTE_OPERATORS = [
   ...BASE_OPERATORS,
   "contains",
   "doesNotContain",
@@ -34,6 +36,7 @@ const ACTION_METRICS = [
 ] as const;
 
 export const ZUserSegmentFilterValue = z.union([z.string(), z.number()]);
+export type TUserSegmentFilterValue = z.infer<typeof ZUserSegmentFilterValue>;
 
 // Root of the filter
 export const ZUserSegmentFilterRootType = z.enum(["attribute", "action", "segment", "device"]);
@@ -58,6 +61,7 @@ export const ZUserSegmentFilterRoot = z.discriminatedUnion("type", [
 ]);
 
 export const ZUserSegmentAttributeFilter = z.object({
+  id: z.string().cuid2(),
   root: ZUserSegmentFilterRoot,
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
@@ -66,6 +70,7 @@ export const ZUserSegmentAttributeFilter = z.object({
 });
 
 export const ZUserSegmentActionFilter = z.object({
+  id: z.string().cuid2(),
   root: ZUserSegmentFilterRoot,
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
@@ -75,6 +80,7 @@ export const ZUserSegmentActionFilter = z.object({
 });
 
 export const ZUserSegmentSegmentFilter = z.object({
+  id: z.string().cuid2(),
   root: ZUserSegmentFilterRoot,
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
@@ -83,6 +89,7 @@ export const ZUserSegmentSegmentFilter = z.object({
 });
 
 export const ZUserSegmentDeviceFilter = z.object({
+  id: z.string().cuid2(),
   root: ZUserSegmentFilterRoot,
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
@@ -114,10 +121,13 @@ export const ZUserSegmentFilter = z
 
 export type TUserSegmentFilter = z.infer<typeof ZUserSegmentFilter>;
 
-export type TBaseFilterGroup = {
+export type TBaseFilterGroupItem = {
+  id: string;
   connector: "and" | "or" | null;
   resource: TUserSegmentFilter | TBaseFilterGroup;
-}[];
+};
+
+export type TBaseFilterGroup = TBaseFilterGroupItem[];
 
 const refineFilterGroup = (filterGroup: TBaseFilterGroup): boolean => {
   let isValid = true;
@@ -142,6 +152,7 @@ export const ZUserSegmentFilterGroup: z.ZodType<TBaseFilterGroup> = z
   .lazy(() =>
     z.array(
       z.object({
+        id: z.string().cuid2(),
         connector: z.enum(["and", "or"]).nullable(),
         resource: z.union([ZUserSegmentFilter, ZUserSegmentFilterGroup]),
       })
@@ -213,64 +224,10 @@ export const convertMetricToText = (metric: (typeof ACTION_METRICS)[number]) => 
 
 export type TUserSegment = z.infer<typeof ZUserSegment>;
 
-const sampleJson: TUserSegment = {
-  id: "123",
-  name: "Segment 1",
-  description: "Segment 1 description",
-  private: false,
-  filters: [
-    {
-      connector: null,
-      resource: {
-        root: {
-          type: "attribute",
-          attributeClassId: "123",
-        },
-        qualifier: {
-          operator: "equals",
-        },
-        value: "123",
-      },
-    },
-    {
-      connector: "and",
-      resource: {
-        root: { type: "action", actionClassId: "123" },
-        qualifier: { operator: "equals", metric: "lastOccurranceDaysAgo" },
-        value: "123",
-      },
-    },
-    {
-      connector: null,
-      resource: [
-        {
-          connector: null,
-          resource: {
-            root: { type: "segment", userSegmentId: "123" },
-            qualifier: { operator: "userIsIn" },
-            value: "123",
-          },
-        },
-        {
-          connector: "and",
-          resource: [
-            {
-              connector: null,
-              resource: {
-                root: { type: "device", deviceType: "desktop" },
-                qualifier: {
-                  operator: "equals",
-                },
-                value: "desktop",
-              },
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  surveys: ["123", "456"],
-};
+export type TUserSegmentUpdateInput = Omit<
+  Prisma.UserSegmentUpdateInput,
+  "id" | "createdAt" | "updatedAt" | "environmentId"
+>;
 
 export const sampleUserSegment: TUserSegment = {
   id: "segment123",
@@ -279,11 +236,13 @@ export const sampleUserSegment: TUserSegment = {
   private: false,
   filters: [
     {
+      id: createId(),
       connector: null,
       resource: {
+        id: createId(),
         root: {
           type: "attribute",
-          attributeClassId: "user plan",
+          attributeClassId: "cllkgdvdn000k195wxygd0ua6",
         },
         value: "free",
         qualifier: {
@@ -292,57 +251,74 @@ export const sampleUserSegment: TUserSegment = {
       },
     },
     {
+      id: createId(),
       connector: "and",
       resource: {
-        root: { type: "attribute", attributeClassId: "cart" },
+        id: createId(),
+        root: { type: "attribute", attributeClassId: "cllkgdvdn000l195w5olqltq7" },
         qualifier: { operator: "equals" },
         value: 3,
       },
     },
     {
+      id: createId(),
       connector: "or",
       resource: [
         {
+          id: createId(),
           connector: null,
           resource: {
-            root: {
-              type: "action",
-              actionClassId: "buy",
-            },
-            qualifier: {
-              metric: "occuranceCount",
-              operator: "greaterThan",
-            },
+            id: createId(),
+            root: { type: "attribute", attributeClassId: "cllkgdvdn000l195w5olqltq7" },
+            qualifier: { operator: "equals" },
             value: 3,
           },
         },
         {
-          connector: "or",
+          id: createId(),
+          connector: "and",
           resource: [
             {
+              id: createId(),
               connector: null,
               resource: {
-                root: { type: "attribute", attributeClassId: "user plan" },
-                qualifier: { metric: "occuranceCount", operator: "greaterThan" },
+                id: createId(),
+                root: {
+                  type: "action",
+                  actionClassId: "cllkgdvdn000i195wkdnvccun",
+                },
+                qualifier: {
+                  metric: "occuranceCount",
+                  operator: "greaterThan",
+                },
                 value: 3,
               },
             },
             {
-              connector: "and",
+              id: createId(),
+              connector: "or",
               resource: {
-                root: { type: "action", actionClassId: "buy" },
-                qualifier: { metric: "occuranceCount", operator: "greaterThan" },
-                value: 3,
+                id: createId(),
+                root: {
+                  type: "attribute",
+                  attributeClassId: "cllkgdveb000y195w8roob8xp",
+                },
+                qualifier: {
+                  operator: "equals",
+                },
+                value: "free",
               },
             },
           ],
         },
         {
+          id: createId(),
           connector: "and",
           resource: {
+            id: createId(),
             root: {
               type: "attribute",
-              attributeClassId: "user plan",
+              attributeClassId: "cllkgdveb000y195w8roob8xp",
             },
             qualifier: {
               operator: "equals",
@@ -350,44 +326,9 @@ export const sampleUserSegment: TUserSegment = {
             value: "free",
           },
         },
-        {
-          connector: "and",
-          resource: {
-            root: { type: "device", deviceType: "phone" },
-            qualifier: {
-              operator: "equals",
-            },
-            value: "phone",
-          },
-        },
       ],
-    },
-    {
-      connector: "and",
-      resource: {
-        root: {
-          type: "segment",
-          userSegmentId: "power user",
-        },
-        qualifier: {
-          operator: "userIsIn",
-        },
-        value: "power user",
-      },
-    },
-    {
-      connector: "or",
-      resource: {
-        root: {
-          type: "segment",
-          userSegmentId: "power user",
-        },
-        qualifier: {
-          operator: "userIsNotIn",
-        },
-        value: "power user",
-      },
     },
   ],
   surveys: ["survey123", "survey456"],
+  environmentId: "env123",
 };

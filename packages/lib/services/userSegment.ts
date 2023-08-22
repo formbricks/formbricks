@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { TBaseFilterGroup } from "@formbricks/types/v1/userSegment";
+import { TBaseFilterGroup, TUserSegmentUpdateInput } from "@formbricks/types/v1/userSegment";
 
 export const createUserSegment = async (
   environmentId: string,
@@ -20,6 +20,17 @@ export const createUserSegment = async (
         },
       },
     },
+  });
+
+  return userSegment;
+};
+
+export const updateUserSegment = async (segmentId: string, data: TUserSegmentUpdateInput) => {
+  const userSegment = await prisma.userSegment.update({
+    where: {
+      id: segmentId,
+    },
+    data,
   });
 
   return userSegment;
