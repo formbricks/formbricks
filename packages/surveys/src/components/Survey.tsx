@@ -5,7 +5,7 @@ import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
 import { AutoCloseWrapper } from "./AutoCloseWrapper";
 import FormbricksSignature from "./FormbricksSignature";
-import Progress from "./Progress";
+import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 
@@ -31,7 +31,6 @@ export function Survey({
   onClose = () => {},
 }: SurveyProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
-  const [progress, setProgress] = useState(0); // [0, 1]
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -53,17 +52,6 @@ export function Survey({
   useEffect(() => {
     onDisplay();
   }, []);
-
-  useEffect(() => {
-    // calculate progress
-    setProgress(calculateProgress());
-
-    function calculateProgress() {
-      if (questionId === "end") return 1;
-      const elementIdx = survey.questions.findIndex((e) => e.id === questionId);
-      return elementIdx / survey.questions.length;
-    }
-  }, [questionId, survey]);
 
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
@@ -146,7 +134,7 @@ export function Survey({
         </div>
         <div className="top-0 z-10 w-full border-b">
           {formbricksSignature && <FormbricksSignature />}
-          <Progress progress={progress} brandColor={brandColor} />
+          <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
         </div>
       </AutoCloseWrapper>
     </>
