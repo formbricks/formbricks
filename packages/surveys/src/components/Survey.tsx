@@ -102,39 +102,36 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
-        <div
-          ref={contentRef}
-          className={cn(
-            loadingElement ? "animate-pulse opacity-60" : "",
-            "flex h-full max-h-[80vh] w-full items-center justify-center overflow-y-auto px-4 py-6 font-sans text-slate-800 sm:p-6"
-          )}>
-          {questionId === "end" && survey.thankYouCard.enabled ? (
-            <ThankYouCard
-              headline={survey.thankYouCard.headline}
-              subheader={survey.thankYouCard.subheader}
-              brandColor={brandColor}
-            />
-          ) : (
-            survey.questions.map(
-              (question, idx) =>
-                questionId === question.id && (
-                  <QuestionConditional
-                    question={question}
-                    value={responseData[question.id]}
-                    onChange={onChange}
-                    onSubmit={onSubmit}
-                    onBack={onBack}
-                    isFirstQuestion={idx === 0}
-                    isLastQuestion={idx === survey.questions.length - 1}
-                    brandColor={brandColor}
-                  />
-                )
-            )
-          )}
-        </div>
-        <div className="top-0 z-10 w-full border-b">
-          {formbricksSignature && <FormbricksSignature />}
-          <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
+        <div className="flex h-full w-full flex-col justify-between bg-white px-6 py-3">
+          <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
+            {questionId === "end" && survey.thankYouCard.enabled ? (
+              <ThankYouCard
+                headline={survey.thankYouCard.headline}
+                subheader={survey.thankYouCard.subheader}
+                brandColor={brandColor}
+              />
+            ) : (
+              survey.questions.map(
+                (question, idx) =>
+                  questionId === question.id && (
+                    <QuestionConditional
+                      question={question}
+                      value={responseData[question.id]}
+                      onChange={onChange}
+                      onSubmit={onSubmit}
+                      onBack={onBack}
+                      isFirstQuestion={idx === 0}
+                      isLastQuestion={idx === survey.questions.length - 1}
+                      brandColor={brandColor}
+                    />
+                  )
+              )
+            )}
+          </div>
+          <div className="h-20">
+            {formbricksSignature && <FormbricksSignature />}
+            <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
+          </div>
         </div>
       </AutoCloseWrapper>
     </>
