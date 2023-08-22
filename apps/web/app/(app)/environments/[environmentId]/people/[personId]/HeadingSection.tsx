@@ -1,30 +1,18 @@
-"use client";
-
-import DeleteDialog from "@/components/shared/DeleteDialog";
 import GoBackButton from "@/components/shared/GoBackButton";
-import { deletePersonAction } from "./actions";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TrashIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { DeletePersonButton } from "./DeletePersonButton";
+import { getPerson } from "@formbricks/lib/services/person";
 
-export default function HeadingSection({
-  environmentId,
-  person,
-}: {
+interface HeadingSectionProps {
   environmentId: string;
-  person: TPerson;
-}) {
-  const router = useRouter();
+  personId: string;
+}
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const handleDeletePerson = async () => {
-    await deletePersonAction(person.id);
-    router.push(`/environments/${environmentId}/people`);
-    toast.success("Person deleted successfully.");
-  };
+export default async function HeadingSection({ environmentId, personId }: HeadingSectionProps) {
+  const person = await getPerson(personId);
 
+  if (!person) {
+    throw new Error("No such person found");
+  }
   return (
     <>
       <GoBackButton />
@@ -33,20 +21,9 @@ export default function HeadingSection({
           <span>{person.attributes.email || person.id}</span>
         </h1>
         <div className="flex items-center space-x-3">
-          <button
-            onClick={() => {
-              setDeleteDialogOpen(true);
-            }}>
-            <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-700" />
-          </button>
+          <DeletePersonButton environmentId={environmentId} personId={personId} />
         </div>
       </div>
-      <DeleteDialog
-        open={deleteDialogOpen}
-        setOpen={setDeleteDialogOpen}
-        deleteWhat="person"
-        onDelete={handleDeletePerson}
-      />
     </>
   );
 }

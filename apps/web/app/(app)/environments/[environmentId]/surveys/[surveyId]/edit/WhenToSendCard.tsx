@@ -1,8 +1,6 @@
 "use client";
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/AddNoCodeActionModal";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
 import {
   Badge,
@@ -21,12 +19,13 @@ import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid"
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 interface WhenToSendCardProps {
-  localSurvey: any;
-  setLocalSurvey: (survey: any) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
-  eventClasses: any;
+  eventClasses: TActionClass[];
 }
 
 export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey,eventClasses }: WhenToSendCardProps) {
@@ -35,15 +34,26 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const autoClose = localSurvey.autoClose !== null;
 
+  let newTrigger = {
+    id: "", // Set the appropriate value for the id
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "",
+    type: "code" as const, // Set the appropriate value for the type
+    environmentId: "",
+    description: null,
+    noCodeConfig: null,
+  };
+
   const addTriggerEvent = () => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = [...localSurvey.triggers, ""];
+    updatedSurvey.triggers = [...localSurvey.triggers, newTrigger];
     setLocalSurvey(updatedSurvey);
   };
 
   const setTriggerEvent = (idx: number, eventClassId: string) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = eventClasses.find((eventClass) => {return eventClass.id === eventClassId}).id;
+    updatedSurvey.triggers[idx] = eventClasses!.find((eventClass) => {return eventClass.id === eventClassId})!;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -85,12 +95,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     }
   }, [localSurvey.type]);
 
-  useEffect(() => {
-    
-   console.log(localSurvey)
-   console.log(eventClasses)
-  }, []);  
-
   //create new empty trigger on page load, remove one click for user
   useEffect(() => {
     if (localSurvey.triggers.length === 0) {
@@ -120,7 +124,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             <div className="flex items-center pl-2 pr-5">
               {!localSurvey.triggers ||
               localSurvey.triggers.length === 0 ||
-              localSurvey.triggers[0] === "" ? (
+              !localSurvey.triggers[0] ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"
@@ -141,9 +145,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
             <div>
               <p className="font-semibold text-slate-800">Survey Trigger</p>
-              <p className="mt-1 truncate text-sm text-slate-500">
-                Choose the actions which trigger the survey.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Choose the actions which trigger the survey.</p>
             </div>
             {localSurvey.type === "link" && (
               <div className="flex w-full items-center justify-end pr-2">

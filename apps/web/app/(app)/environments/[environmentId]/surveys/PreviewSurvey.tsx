@@ -4,14 +4,17 @@ import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
+import TabOption from "@/components/preview/TabOption";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { useEffect, useRef, useState } from "react";
-import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { TSurveyLogic, TSurveyQuestion } from "@formbricks/types/v1/surveys";
-
+import type { TProduct } from "@formbricks/types/v1/product";
+import { Button } from "@formbricks/ui";
+import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
+import { ComputerDesktopIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
+import { useEffect, useRef, useState } from "react";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -24,6 +27,77 @@ interface PreviewSurveyProps {
   previewType?: "modal" | "fullwidth" | "email";
   product: TProduct;
   environment: TEnvironment;
+}
+
+function QuestionRenderer({
+  activeQuestionId,
+  lastActiveQuestionId,
+  questions,
+  brandColor,
+  thankYouCard,
+  gotoNextQuestion,
+  showBackButton,
+  goToPreviousQuestion,
+  storedResponseValue,
+}) {
+  return (
+    <div>
+      {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+        <ThankYouCard
+          brandColor={brandColor}
+          headline={thankYouCard?.headline || "Thank you!"}
+          subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+        />
+      ) : (
+        questions.map((question, idx) =>
+          (activeQuestionId || lastActiveQuestionId) === question.id ? (
+            <QuestionConditional
+              key={question.id}
+              question={question}
+              brandColor={brandColor}
+              lastQuestion={idx === questions.length - 1}
+              onSubmit={gotoNextQuestion}
+              storedResponseValue={storedResponseValue}
+              goToNextQuestion={gotoNextQuestion}
+              goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
+              autoFocus={false}
+            />
+          ) : null
+        )
+      )}
+    </div>
+  );
+}
+
+function PreviewModalContent({
+  activeQuestionId,
+  lastActiveQuestionId,
+  questions,
+  brandColor,
+  thankYouCard,
+  gotoNextQuestion,
+  showBackButton,
+  goToPreviousQuestion,
+  storedResponseValue,
+  showFormbricksSignature,
+}) {
+  return (
+    <div className="px-4 py-6 sm:p-6">
+      <QuestionRenderer
+        activeQuestionId={activeQuestionId}
+        lastActiveQuestionId={lastActiveQuestionId}
+        questions={questions}
+        brandColor={brandColor}
+        thankYouCard={thankYouCard}
+        gotoNextQuestion={gotoNextQuestion}
+        showBackButton={showBackButton}
+        goToPreviousQuestion={goToPreviousQuestion}
+        storedResponseValue={storedResponseValue}
+      />
+
+      {showFormbricksSignature && <FormbricksSignature />}
+    </div>
+  );
 }
 
 export default function PreviewSurvey({
@@ -46,8 +120,9 @@ export default function PreviewSurvey({
   const [finished, setFinished] = useState(false);
   const [storedResponseValue, setStoredResponseValue] = useState<any>();
   const [storedResponse, setStoredResponse] = useState<Record<string, any>>({});
-
+  const [previewMode, setPreviewMode] = useState("desktop");
   const showBackButton = progress !== 0 && !finished;
+  const ContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (product) {
@@ -108,6 +183,13 @@ export default function PreviewSurvey({
   }, [autoClose]);
 
   useEffect(() => {
+    if (ContentRef.current) {
+      // scroll to top whenever question changes
+      ContentRef.current.scrollTop = 0;
+    }
+    if (activeQuestionId !== "end") {
+      setFinished(false);
+    }
     if (activeQuestionId) {
       setLastActiveQuestionId(activeQuestionId);
       setProgress(calculateProgress(questions, activeQuestionId));
@@ -245,6 +327,12 @@ export default function PreviewSurvey({
     setActiveQuestionId(previousQuestionId);
   }
 
+  function resetQuestionProgress() {
+    setProgress(0);
+    setActiveQuestionId(questions[0].id);
+    setStoredResponse({});
+  }
+
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -262,96 +350,159 @@ export default function PreviewSurvey({
   }
 
   return (
-    <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
-      <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
-        <div className="ml-6 flex space-x-2">
-          <div className="h-3 w-3 rounded-full bg-red-500"></div>
-          <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-          <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-        </div>
-        <p>
-          <span className="ml-4 font-mono text-sm text-slate-400">
-            {previewType === "modal" ? "Your web app" : "Preview"}
-          </span>
-        </p>
-      </div>
-
-      {previewType === "modal" ? (
-        <Modal
-          isOpen={isModalOpen}
-          placement={product.placement}
-          highlightBorderColor={product.highlightBorderColor}>
-          {!countdownStop && autoClose !== null && autoClose > 0 && (
-            <Progress progress={countdownProgress} brandColor={brandColor} />
-          )}
-          <div
-            onClick={() => handleStopCountdown()}
-            onMouseOver={() => handleStopCountdown()}
-            className="px-4 py-6 sm:p-6">
-            {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-              <ThankYouCard
-                brandColor={brandColor}
-                headline={thankYouCard?.headline || "Thank you!"}
-                subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-              />
-            ) : (
-              questions.map((question, idx) =>
-                (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                  <QuestionConditional
-                    key={question.id}
-                    question={question}
+    <div className="flex h-full w-full flex-col items-center justify-items-center">
+      <div className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        {previewMode === "mobile" && (
+          <>
+            <div className="absolute right-0 top-0 m-2">
+              <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+            </div>
+            <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
+              {/* below element is use to create notch for the mobile device mockup   */}
+              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
+              {previewType === "modal" ? (
+                <Modal
+                  isOpen={isModalOpen}
+                  placement={product.placement}
+                  highlightBorderColor={product.highlightBorderColor}
+                  previewMode="mobile">
+                  {!countdownStop && autoClose !== null && autoClose > 0 && (
+                    <Progress progress={countdownProgress} brandColor={brandColor} />
+                  )}
+                  <PreviewModalContent
+                    activeQuestionId={activeQuestionId}
+                    lastActiveQuestionId={lastActiveQuestionId}
+                    questions={questions}
                     brandColor={brandColor}
-                    lastQuestion={idx === questions.length - 1}
-                    onSubmit={gotoNextQuestion}
+                    thankYouCard={thankYouCard}
+                    gotoNextQuestion={gotoNextQuestion}
+                    showBackButton={showBackButton}
+                    goToPreviousQuestion={goToPreviousQuestion}
                     storedResponseValue={storedResponseValue}
-                    goToNextQuestion={gotoNextQuestion}
-                    goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
-                    autoFocus={false}
+                    showFormbricksSignature={showFormbricksSignature}
                   />
-                ) : null
-              )
-            )}
-            {showFormbricksSignature && <FormbricksSignature />}
-          </div>
-          <Progress progress={progress} brandColor={brandColor} />
-        </Modal>
-      ) : (
-        <div className="flex flex-grow flex-col overflow-y-auto">
-          <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
-            <div className="w-full max-w-md">
-              {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-                <ThankYouCard
-                  brandColor={brandColor}
-                  headline={thankYouCard?.headline || "Thank you!"}
-                  subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-                />
+                  <Progress progress={progress} brandColor={brandColor} />
+                </Modal>
               ) : (
-                questions.map((question, idx) =>
-                  (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                    <QuestionConditional
-                      key={question.id}
-                      question={question}
-                      brandColor={brandColor}
-                      lastQuestion={idx === questions.length - 1}
-                      onSubmit={gotoNextQuestion}
-                      storedResponseValue={storedResponseValue}
-                      goToNextQuestion={gotoNextQuestion}
-                      goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
-                      autoFocus={false}
-                    />
-                  ) : null
-                )
+                <div
+                  className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
+                  ref={ContentRef}>
+                  <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                    <div className="w-full max-w-md px-4">
+                      <QuestionRenderer
+                        activeQuestionId={activeQuestionId}
+                        lastActiveQuestionId={lastActiveQuestionId}
+                        questions={questions}
+                        brandColor={brandColor}
+                        thankYouCard={thankYouCard}
+                        gotoNextQuestion={gotoNextQuestion}
+                        showBackButton={showBackButton}
+                        goToPreviousQuestion={goToPreviousQuestion}
+                        storedResponseValue={storedResponseValue}
+                      />
+                    </div>
+                  </div>
+                  <div className="z-10 w-full rounded-b-lg bg-white">
+                    <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
+                      <Progress progress={progress} brandColor={brandColor} />
+                      {showFormbricksSignature && <FormbricksSignature />}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-          <div className="z-10 w-full rounded-b-lg bg-white">
-            <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
-              <Progress progress={progress} brandColor={brandColor} />
-              {showFormbricksSignature && <FormbricksSignature />}
+          </>
+        )}
+        {previewMode === "desktop" && (
+          <div className="flex h-full w-5/6 flex-1 flex-col">
+            <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
+              <div className="ml-6 flex space-x-2">
+                <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+              </div>
+              <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                {previewType === "modal" ? "Your web app" : "Preview"}
+                <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+              </p>
             </div>
+
+            {previewType === "modal" ? (
+              <Modal
+                isOpen={isModalOpen}
+                placement={product.placement}
+                highlightBorderColor={product.highlightBorderColor}
+                previewMode="desktop">
+                {!countdownStop && autoClose !== null && autoClose > 0 && (
+                  <Progress progress={countdownProgress} brandColor={brandColor} />
+                )}
+                <PreviewModalContent
+                  activeQuestionId={activeQuestionId}
+                  lastActiveQuestionId={lastActiveQuestionId}
+                  questions={questions}
+                  brandColor={brandColor}
+                  thankYouCard={thankYouCard}
+                  gotoNextQuestion={gotoNextQuestion}
+                  showBackButton={showBackButton}
+                  goToPreviousQuestion={goToPreviousQuestion}
+                  storedResponseValue={storedResponseValue}
+                  showFormbricksSignature={showFormbricksSignature}
+                />
+                <Progress progress={progress} brandColor={brandColor} />
+              </Modal>
+            ) : (
+              <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
+                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
+                  <div className="w-full max-w-md">
+                    <QuestionRenderer
+                      activeQuestionId={activeQuestionId}
+                      lastActiveQuestionId={lastActiveQuestionId}
+                      questions={questions}
+                      brandColor={brandColor}
+                      thankYouCard={thankYouCard}
+                      gotoNextQuestion={gotoNextQuestion}
+                      showBackButton={showBackButton}
+                      goToPreviousQuestion={goToPreviousQuestion}
+                      storedResponseValue={storedResponseValue}
+                    />
+                  </div>
+                </div>
+                <div className="z-10 w-full rounded-b-lg bg-white">
+                  <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
+                    <Progress progress={progress} brandColor={brandColor} />
+                    {showFormbricksSignature && <FormbricksSignature />}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      {/* for toggling between mobile and desktop mode  */}
+      <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
+        <TabOption
+          active={previewMode === "mobile"}
+          icon={<DevicePhoneMobileIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+          onClick={() => setPreviewMode("mobile")}
+        />
+        <TabOption
+          active={previewMode === "desktop"}
+          icon={<ComputerDesktopIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+          onClick={() => setPreviewMode("desktop")}
+        />
+      </div>
     </div>
+  );
+}
+
+function ResetProgressButton({ resetQuestionProgress }) {
+  return (
+    <Button
+      variant="minimal"
+      className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
+      onClick={resetQuestionProgress}>
+      Restart
+      <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
+    </Button>
   );
 }

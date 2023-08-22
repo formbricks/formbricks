@@ -1,9 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import {
   Badge,
   Button,
@@ -14,11 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */
-import { UserGroupIcon, FunnelIcon } from "@heroicons/react/24/solid";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -29,10 +26,10 @@ interface WhoToSendCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
-  attributeClasses
-}
+  attributeClasses : TAttributeClass[];
+  }
 
-export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey,attributeClasses }: WhoToSendCardProps) {
+export default function WhoToSendCard({ localSurvey, setLocalSurvey,attributeClasses }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
 
 
@@ -93,9 +90,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             </div>
             <div>
               <p className="font-semibold text-slate-800">Target Audience</p>
-              <p className="mt-1 truncate text-sm text-slate-500">
-                Pre-segment your users with attributes filters.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
             </div>
             {localSurvey.type === "link" && (
               <div className="flex w-full items-center justify-end pr-2">
@@ -177,12 +172,13 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 <Input
                   value={attributeFilter.value}
                   onChange={(e) =>
+                    {e.preventDefault();
                     setAttributeFilter(
                       idx,
                       attributeFilter.attributeClassId,
                       attributeFilter.condition,
                       e.target.value
-                    )
+                    )}
                   }
                 />
                 <button onClick={() => removeAttributeFilter(idx)}>

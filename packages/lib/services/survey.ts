@@ -282,8 +282,23 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(surveyId: string, updatedSurvey: any) {
-  console.log(updatedSurvey)
+export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithAnalytics) {
+  
+  let data: any = {};
+  let body: Partial<any> = { ...updatedSurvey };
+
+  if(updatedSurvey.triggers && updatedSurvey.triggers.length > 0){
+    const modifiedTriggers  = updatedSurvey.triggers.map(trigger => {
+      if (typeof trigger === 'object' && trigger.id) {
+        return trigger.id;
+      } else if (typeof trigger === 'string' && trigger !== undefined) {
+        return trigger;
+      }
+    });
+
+    body = { ...updatedSurvey, triggers: modifiedTriggers }
+  }
+
   const currentTriggers = await prisma.surveyTrigger.findMany({
     where: {
       surveyId,
@@ -294,8 +309,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
       surveyId,
     },
   });
-  let data: any = {};
-  const body: Partial<any> = { ...updatedSurvey };
+  
 
   delete body.updatedAt;
   // preventing issue with unknowingly updating analytics
@@ -326,7 +340,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
     }
     // find removed triggers
     for (const trigger of currentTriggers) {
-      if (body.triggers.find((t:any) => t === trigger.eventClassId)) {
+      if (body.triggers.find((t: any) => t === trigger.eventClassId)) {
         continue;
       } else {
         removedTriggers.push(trigger.eventClassId);
@@ -354,21 +368,22 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
     }
     delete body.triggers;
   }
-  
 
-  const attributeFilters: TSurveyAttributeFilter[] = data.attributeFilters;
+ 
+
+  const attributeFilters: TSurveyAttributeFilter[] = body.attributeFilters;
+  console.log(attributeFilters)
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
     const removedFilterIds: string[] = [];
     // find added attribute filters
     for (const attributeFilter of attributeFilters) {
-      if (!attributeFilter.id || !attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
+      if (!attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
         continue;
       }
       if (
         currentAttributeFilters.find(
           (f) =>
-            f.id === attributeFilter.id &&
             f.attributeClassId === attributeFilter.attributeClassId &&
             f.condition === attributeFilter.condition &&
             f.value === attributeFilter.value
@@ -377,7 +392,6 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
         continue;
       } else {
         newFilters.push({
-          id: attributeFilter.id,
           attributeClassId: attributeFilter.attributeClassId,
           condition: attributeFilter.condition,
           value: attributeFilter.value,
@@ -389,7 +403,6 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
       if (
         attributeFilters.find(
           (f) =>
-            f.id === attributeFilter.id &&
             f.attributeClassId === attributeFilter.attributeClassId &&
             f.condition === attributeFilter.condition &&
             f.value === attributeFilter.value
@@ -410,8 +423,8 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
           value: attributeFilter.value,
         })),
       };
+      console.log("creating nre attricute filtyer --------------------------------------")
     }
-
     // delete removed triggers
     if (removedFilterIds.length > 0) {
       // delete all attribute filters that match the removed attribute classes
@@ -425,8 +438,8 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
         })
       );
     }
+    delete body.attributeFilters;
   }
-  delete body.attributeFilters;
 
   data = {
     ...data,
@@ -444,7 +457,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: any) {
       data
     });
 
-    if(!updated){
+    if (!updated) {
       return null
     }
 

@@ -9,10 +9,10 @@ import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { isEqual } from "lodash";
 import { validateQuestion } from "./Validation";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
@@ -69,7 +69,8 @@ export default function SurveyMenuBar({
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: Survey["status"]) => {
-    const updatedSurvey = { ...localSurvey, status };
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    updatedSurvey.status = status;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -125,19 +126,10 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = (shouldNavigateBack = false) => {
-    // Convert the trigger array to the modified format
-  const modifiedTriggers = localSurvey.triggers.map(trigger => {
-    if (typeof trigger === 'object' && trigger !== null) {
-      return trigger.id;
-    } else if (typeof trigger === 'string') {
-      return trigger;
-    }
-  });
 
   // Create a copy of localSurvey with isDraft removed from every question
   const strippedSurvey = {
     ...localSurvey,
-    triggers: modifiedTriggers, // Update the trigger field with the modified array
     questions: localSurvey.questions.map((question) => {
       const { isDraft, ...rest } = question;
       return rest;
@@ -177,7 +169,7 @@ export default function SurveyMenuBar({
           }}>
           Back
         </Button>
-        <p className="pl-4 font-semibold">{product.name} / </p>
+        <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
         <Input
           defaultValue={localSurvey.name}
           onChange={(e) => {
@@ -187,10 +179,12 @@ export default function SurveyMenuBar({
           className="w-72 border-white hover:border-slate-200 "
         />
       </div>
-      {!!localSurvey?.analytics.responseRate && (
-        <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-sm text-amber-700 shadow-sm">
-          <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
-          This survey received responses. To keep the data consistent, make changes with caution.
+      {!!localSurvey.analytics.responseRate && (
+        <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
+          <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
+          <p className="max-w-[90%] pl-1 text-xs lg:text-sm">
+            This survey received responses. To keep the data consistent, make changes with caution.
+          </p>
         </div>
       )}
       <div className="mt-3 flex sm:ml-4 sm:mt-0">

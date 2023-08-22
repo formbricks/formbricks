@@ -93,9 +93,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey,environment
           </div>
           <div>
             <p className="font-semibold text-slate-800">How to ask</p>
-            <p className="mt-1 truncate text-sm text-slate-500">
-              In-app survey, link survey or email survey.
-            </p>
+            <p className="mt-1 text-sm text-slate-500">In-app survey, link survey or email survey.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>

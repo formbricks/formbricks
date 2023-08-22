@@ -215,7 +215,6 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
 export const ZSurveyAttributeFilter = z.object({
-  id: z.string().cuid2(),
   attributeClassId: z.string(),
   condition: z.enum(["equals", "notEquals"]),
   value: z.string(),

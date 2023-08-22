@@ -2,36 +2,35 @@
 
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
-import SettingsView from "./SettingsView";
-import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
+import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
+import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 interface SurveyEditorProps {
   survey : TSurveyWithAnalytics,
   product : TProduct,
   environment : TEnvironment,
-  eventClasses : any
-  attributeClasses : any
+  eventClasses : TActionClass[],
+  attributeClasses : TAttributeClass[],
 }
 
 export default function SurveyEditor({ survey,product, environment,eventClasses, attributeClasses }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics>();
+  const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics>(survey);
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
 
   useEffect(() => {
-    console.log(survey)
     if (survey) {
-      if (!localSurvey) {
-        setLocalSurvey(survey);
-      }
+      setLocalSurvey(survey);
 
-      if (!activeQuestionId && survey.questions.length > 0) {
+      if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }
@@ -39,7 +38,7 @@ export default function SurveyEditor({ survey,product, environment,eventClasses,
 
   return (
     <>
-    {(localSurvey && environment) && <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col">
       <SurveyMenuBar
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
@@ -89,7 +88,7 @@ export default function SurveyEditor({ survey,product, environment,eventClasses,
           />
         </aside>
       </div>
-    </div>}
+    </div>
     </>
   );
 }

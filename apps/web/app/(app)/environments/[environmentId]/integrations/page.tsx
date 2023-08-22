@@ -9,7 +9,7 @@ export default function IntegrationsPage({ params }) {
     <div>
       <h1 className="my-2 text-3xl font-bold text-slate-800">Integrations</h1>
       <p className="mb-6 text-slate-500">Connect Formbricks with your favorite tools.</p>
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card
           docsHref="https://formbricks.com/docs/getting-started/nextjs-app"
           docsText="Docs"

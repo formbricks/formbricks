@@ -3,7 +3,7 @@ import { checkInitialized } from "./init";
 
 export class CommandQueue {
   private queue: {
-    command: (args: any) => Promise<Result<void, any>> | Result<void, any>;
+    command: (args: any) => Promise<Result<void, any>> | Result<void, any> | Promise<void>;
     checkInitialized: boolean;
     commandArgs: any[];
   }[] = [];
@@ -13,7 +13,7 @@ export class CommandQueue {
 
   public add<A>(
     checkInitialized: boolean = true,
-    command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any>,
+    command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any> | Promise<void>,
     ...args: A[]
   ) {
     this.queue.push({ command, checkInitialized, commandArgs: args });

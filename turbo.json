@@ -75,10 +75,12 @@
         "RAILWAY_STATIC_URL",
         "RENDER_EXTERNAL_URL",
         "SENTRY_DSN",
+        "STRAPI_API_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
         "TELEMETRY_DISABLED",
-        "VERCEL_URL"
+        "VERCEL_URL",
+        "WEBAPP_URL"
       ]
     },
     "post-install": {

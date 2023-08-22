@@ -6,8 +6,8 @@ import { cn, shuffleArray } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import _ from "lodash";
 import { BackButton } from "./BackButton";
+import { symmetricDifference } from "../../../lib/utils/array";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -91,7 +91,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
+    if (symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }
@@ -118,7 +118,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="fb-mt-4">
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
-          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
+          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {questionChoices.map((choice) => (
               <label
                 key={choice.id}

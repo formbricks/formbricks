@@ -1,17 +1,18 @@
-import { Input } from "@formbricks/ui";
+import { BackButton } from "@/components/preview/BackButton";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
-import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { symmetricDifference } from "@formbricks/lib/utils/array";
+import { Response } from "@formbricks/types/js";
+import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
+import { Input } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import _ from "lodash";
-import { Response } from "@formbricks/types/js";
-import { BackButton } from "@/components/preview/BackButton";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion;
+  question: MultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
@@ -57,7 +58,7 @@ export default function MultipleChoiceMultiQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedResponseValue, question.id]);
 
-  const [questionChoices, setQuestionChoices] = useState<Choice[]>(
+  const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
     question.choices
       ? question.shuffleOption !== "none"
         ? shuffleArray(question.choices, question.shuffleOption)
@@ -80,7 +81,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
+    if (storedResponseValue && symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }
@@ -117,7 +118,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative space-y-2 rounded-md py-0.5">
             {questionChoices.map((choice) => (
               <div key={choice.id}>
                 <label
