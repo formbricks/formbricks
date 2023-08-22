@@ -22,6 +22,7 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
+  const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
 
   const responseQueue = useMemo(
     () =>
@@ -57,7 +58,7 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
             Survey Preview 👀
             <button
               className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
-              onClick={() => {}}>
+              onClick={() => setActiveQuestionId(survey.questions[0].id)}>
               Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
             </button>
           </div>
@@ -70,6 +71,8 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
           onResponse={(responseUpdate) => {
             responseQueue.add(responseUpdate);
           }}
+          onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
+          activeQuestionId={activeQuestionId}
         />
       </ContentWrapper>
     </>
