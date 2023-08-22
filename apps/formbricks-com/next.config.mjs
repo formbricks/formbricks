@@ -1,10 +1,10 @@
 import nextMDX from "@next/mdx";
 
 import { withPlausibleProxy } from "next-plausible";
-import { recmaPlugins } from "./src/mdx/recma.mjs";
-import { rehypePlugins } from "./src/mdx/rehype.mjs";
-import { remarkPlugins } from "./src/mdx/remark.mjs";
-import withSearch from "./src/mdx/search.mjs";
+import { recmaPlugins } from "./mdx/recma.mjs";
+import { rehypePlugins } from "./mdx/rehype.mjs";
+import { remarkPlugins } from "./mdx/remark.mjs";
+import withSearch from "./mdx/search.mjs";
 
 const withMDX = nextMDX({
   options: {

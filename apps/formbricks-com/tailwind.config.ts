@@ -1,11 +1,11 @@
-import defaultTheme from "tailwindcss/defaultTheme";
-import { type Config } from "tailwindcss";
-import typographyStyles from "./typography";
-import typographyPlugin from "@tailwindcss/typography";
 import headlessuiPlugin from "@headlessui/tailwindcss";
+import typographyPlugin from "@tailwindcss/typography";
+import { type Config } from "tailwindcss";
+import defaultTheme from "tailwindcss/defaultTheme";
+import typographyStyles from "./typography";
 
 export default {
-  content: ["./src/**/*.{js,mjs,jsx,ts,tsx,mdx}"],
+  content: ["./**/*.{js,mjs,jsx,ts,tsx,mdx}"],
   darkMode: "class",
   theme: {
     fontSize: {
