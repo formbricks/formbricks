@@ -54,7 +54,7 @@ export default function Modal({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, clickOutside, close, isCenter]);
+  }, [show, clickOutside, onClose, isCenter]);
 
   const handleMobileClasses = (isMobile: boolean, show: boolean) => {
     return isMobile ? (show ? mobileClasses.show : mobileClasses.hide) : "";
@@ -128,7 +128,7 @@ export default function Modal({
           <div class="absolute right-0 top-0 block pr-4 pt-4">
             <button
               type="button"
-              onClick={close}
+              onClick={onClose}
               class="relative rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
               <span class="sr-only">Close</span>
               <svg

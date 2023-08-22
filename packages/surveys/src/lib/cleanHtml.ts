@@ -32,12 +32,21 @@ export function cleanHtml(str: string): string {
    * @param  {String}  value The attribute value
    * @return {Boolean}       If true, the attribute is potentially dangerous
    */
-  function isPossiblyDangerous(name: string, value: string) {
+  /**
+   * Check if the attribute is potentially dangerous
+   */
+  function isPossiblyDangerous(name: string, value: string): boolean {
     let val = value.replace(/\s+/g, "").toLowerCase();
-    if (["src", "href", "xlink:href"].includes(name)) {
-      if (val.includes("javascript:") || val.includes("data:")) return true;
+    if (
+      ["src", "href", "xlink:href"].includes(name) &&
+      (val.includes("javascript:") || val.includes("data:"))
+    ) {
+      return true;
     }
-    if (name.startsWith("on")) return true;
+    if (name.startsWith("on")) {
+      return true;
+    }
+    return false;
   }
 
   /**
