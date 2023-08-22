@@ -101,7 +101,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             />
           )}
         </main>
-        {/* <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
+        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
           <PreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
@@ -115,7 +115,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
             autoClose={localSurvey.autoClose}
           />
-        </aside> */}
+        </aside>
       </div>
     </div>
   );
