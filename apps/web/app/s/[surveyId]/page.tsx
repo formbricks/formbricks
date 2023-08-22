@@ -10,7 +10,7 @@ import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
 export default async function LinkSurveyPage({ params }) {
   const survey = await getSurvey(params.surveyId);
 
-  if (!survey) {
+  if (!survey || survey.type !== "link") {
     return <SurveyInactive status="not found" />;
   }
 
