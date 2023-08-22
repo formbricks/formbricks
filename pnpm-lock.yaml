@@ -389,6 +389,9 @@ importers:
       '@formbricks/surveys':
         specifier: workspace:*
         version: link:../surveys
+      '@formbricks/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@formbricks/types':
         specifier: workspace:*
         version: link:../types
@@ -501,6 +504,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.14
         version: 10.4.14(postcss@8.4.27)
+      eslint-config-formbricks:
+        specifier: workspace:*
+        version: link:../eslint-config-formbricks
       postcss:
         specifier: ^8.4.27
         version: 8.4.27

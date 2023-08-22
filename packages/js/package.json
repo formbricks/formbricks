@@ -8,40 +8,29 @@
     "surveys",
     "experience management"
   ],
+  "sideEffects": false,
   "source": "src/index.ts",
-  "main": "./dist/index.js",
-  "module": "./dist/index.module.js",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "unpkg": "./dist/index.umd.js",
-  "types": "./dist/js/src/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.module.js"
-    },
-    "./package.json": "./package.json",
-    "./": "./"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
   },
   "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "go": "tsup --watch",
+    "lint": "eslint ./src --fix",
     "clean": "rimraf .turbo node_modules dist",
-    "dev": "microbundle --css inline --watch",
-    "go": "microbundle --css inline --watch",
-    "lint": "eslint '{src,tests}/**/*.{ts,tsx}'",
-    "test": "jest",
-    "build": "microbundle --css inline"
+    "test": "jest"
   },
   "files": [
     "dist"
   ],
-  "eslintConfig": {
-    "parser": "@typescript-eslint/parser",
-    "extends": [
-      "preact",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "ignorePatterns": [
-      "build/"
-    ]
-  },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
     "@babel/core": "^7.22.9",
@@ -50,6 +39,7 @@
     "@formbricks/api": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/surveys": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@types/jest": "^29.5.3",
     "@typescript-eslint/eslint-plugin": "^6.2.1",
