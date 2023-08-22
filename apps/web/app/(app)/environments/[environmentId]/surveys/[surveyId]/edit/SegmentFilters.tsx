@@ -43,6 +43,7 @@ type SegmentFilterItemProps = {
   onFilterValueChange: (filterId: string, newValue: TUserSegmentFilterValue) => void;
   onAddFilterBelow: (filterId: string) => void;
   onCreateGroup: (filterId: string) => void;
+  onDeleteFilter: (filterId: string) => void;
 };
 
 const SegmentFilterItem = ({
@@ -52,6 +53,7 @@ const SegmentFilterItem = ({
   onFilterValueChange,
   onAddFilterBelow,
   onCreateGroup,
+  onDeleteFilter,
 }: SegmentFilterItemProps) => {
   const [connectorState, setConnectorState] = useState(connector);
   const [valueInput, setValueInput] = useState(resource.value.toString());
@@ -215,6 +217,10 @@ const SegmentFilterItem = ({
           CG
         </Button>
 
+        <Button size="sm" onClick={() => onDeleteFilter(resource.id)}>
+          D
+        </Button>
+
         {/* <Select value={resource.value.toString()}>
           <SelectTrigger className="flex w-auto items-center justify-center text-center capitalize" hideArrow>
             <p>{resource.value}</p>
@@ -330,92 +336,86 @@ const SegmentFilters = ({
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
   ];
 
-  const handleFilterValuechange = (filterId: string, newValue: TUserSegmentFilterValue) => {
-    const searchAndUpdate = (group: TBaseFilterGroup) => {
-      const clonedGroup = [...group];
-      clonedGroup.forEach((filterGroup) => {
-        if (isResourceFilter(filterGroup.resource)) {
-          if (filterGroup.resource.id === filterId) {
-            filterGroup.resource.value = newValue;
-            return;
-          }
-        } else {
-          searchAndUpdate(filterGroup.resource);
-        }
-      });
-
-      return clonedGroup;
-    };
-
-    const updatedLocalSurvey = { ...localSurvey };
-    if (updatedLocalSurvey?.userSegment?.filters) {
-      const clonedUpdatedsurvey = searchAndUpdate(updatedLocalSurvey.userSegment.filters);
-      updatedLocalSurvey.userSegment.filters = clonedUpdatedsurvey;
-    }
-
-    setLocalSurvey(updatedLocalSurvey);
-  };
-
-  const handleAddFilterBelow = (filterId: string, groupIndex: number | null = null) => {
+  const handleFilterValueChange = (filterId: string, newValue: TUserSegmentFilterValue) => {
     const updatedLocalSurvey = produce(localSurvey, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup): TBaseFilterGroup => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
-          const filterGroup = group[i];
-          if (isResourceFilter(filterGroup.resource)) {
-            if (filterGroup.resource.id === filterId) {
-              const newFilter = {
-                id: createId(),
-                root: { type: "attribute", attributeClassId: "" },
-                qualifier: { operator: "endsWith" },
-                value: "",
-              };
+          const { resource } = group[i];
 
-              try {
-                const debug = original(group);
-                debug?.splice(i + 1, 0, { id: createId(), resource: newFilter, connector: "and" });
-                console.log(debug);
-              } catch (err) {
-                console.log(err);
-              }
-
-              group.splice(i + 1, 0, { id: createId(), resource: newFilter, connector: "and" });
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              resource.value = newValue;
             }
-          } else if (groupIndex !== null && groupIndex === i) {
-            const newFilter = {
-              id: createId(),
-              connector: "and",
-              resource: {
-                id: createId(),
-                root: { type: "attribute", attributeClassId: "" },
-                qualifier: { operator: "endsWith" },
-                value: "",
-              },
-            };
-
-            group.splice(i + 1, 0, newFilter, ...(group[i + 1] ? [group[i + 1]] : []));
           } else {
-            filterGroup.resource = searchAndUpdate(filterGroup.resource);
+            searchAndUpdate(resource);
           }
         }
-
-        return group;
       };
 
       if (draft.userSegment?.filters) {
-        draft.userSegment.filters = searchAndUpdate(draft.userSegment.filters);
+        searchAndUpdate(draft.userSegment.filters);
       }
     });
 
     setLocalSurvey(updatedLocalSurvey);
   };
 
-  const handleCreateGroup = (filterId: string) => {
+  const handleAddFilterBelow = (resourceId: string) => {
     const updatedLocalSurvey = produce(localSurvey, (draft) => {
-      const recurse = (group: TBaseFilterGroup) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === resourceId) {
+              const newFilter: TUserSegmentFilter = {
+                id: createId(),
+                root: { type: "attribute", attributeClassId: "" },
+                qualifier: { operator: "endsWith" },
+                value: "",
+              };
+
+              group.splice(i + 1, 0, { id: createId(), resource: newFilter, connector: "and" });
+              break;
+            }
+          } else {
+            // resource is a filter group
+
+            if (group[i].id === resourceId) {
+              const newFilter: TBaseFilterGroupItem = {
+                id: createId(),
+                connector: "and",
+                resource: {
+                  id: createId(),
+                  root: { type: "attribute", attributeClassId: "" },
+                  qualifier: { operator: "endsWith" },
+                  value: "",
+                },
+              };
+
+              group.splice(i + 1, 0, newFilter);
+            } else {
+              searchAndUpdate(resource);
+            }
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const handleCreateGroup = (resourceId: string) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndCreateGroup = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const filterGroup = group[i];
           if (isResourceFilter(filterGroup.resource)) {
-            if (filterGroup.resource.id === filterId) {
+            if (filterGroup.resource.id === resourceId) {
               const newFilter: TUserSegmentFilter = {
                 id: createId(),
                 root: { type: "attribute", attributeClassId: "" },
@@ -427,7 +427,10 @@ const SegmentFilters = ({
                 id: createId(),
                 connector: filterGroup.connector,
                 resource: [
-                  filterGroup,
+                  {
+                    ...filterGroup,
+                    connector: null,
+                  },
                   {
                     id: createId(),
                     connector: "and",
@@ -439,83 +442,93 @@ const SegmentFilters = ({
               group.splice(i, 1, newGroupToAdd);
             }
           } else {
-            recurse(filterGroup.resource);
+            if (group[i].id === resourceId) {
+              // make an outer group, wrap the current group in it and add a filter below it
+
+              const newFilter: TBaseFilterGroupItem = {
+                id: createId(),
+                connector: "and",
+                resource: {
+                  id: createId(),
+                  root: { type: "attribute", attributeClassId: "" },
+                  qualifier: { operator: "endsWith" },
+                  value: "",
+                },
+              };
+
+              const outerGroup: TBaseFilterGroupItem = {
+                connector: filterGroup.connector,
+                id: createId(),
+                resource: [{ ...filterGroup, connector: null }, newFilter],
+              };
+
+              group.splice(i, 1, outerGroup);
+            } else {
+              searchAndCreateGroup(filterGroup.resource);
+            }
           }
         }
       };
 
       if (draft.userSegment?.filters) {
-        recurse(draft.userSegment.filters);
+        searchAndCreateGroup(draft.userSegment.filters);
       }
     });
 
     setLocalSurvey(updatedLocalSurvey);
   };
 
-  // const handleCreateGroup = (filterId: string) => {
-  //   const searchAndUpdate = (group: TBaseFilterGroup): TBaseFilterGroup => {
-  //     return group.map((filterGroup, i) => {
-  //       if (isResourceFilter(filterGroup.resource)) {
-  //         if (filterGroup.resource.id === filterId) {
-  //           const newFilter = {
-  //             connector: "and",
-  //             resource: {
-  //               root: { type: "attribute", attributeClassId: "" },
-  //               qualifier: { operator: "endsWith" },
-  //               value: "",
-  //             },
-  //           };
+  const handleDeleteResource = (resourceId: string) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const deleteResource = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
 
-  //           const newNestedGroup = [{ connector: null, resource: filterGroup.resource }, newFilter];
+          if (isResourceFilter(resource) && resource.id === resourceId) {
+            group.splice(i, 1); // Delete the filter
 
-  //           return {
-  //             connector: filterGroup.connector,
-  //             resource: newNestedGroup,
-  //           };
-  //         }
-  //       } else {
-  //         return {
-  //           ...filterGroup,
-  //           resource: searchAndUpdate(filterGroup.resource),
-  //         };
-  //       }
+            break;
+          } else if (!isResourceFilter(resource) && group[i].id === resourceId) {
+            group.splice(i, 1); // Delete the group
 
-  //       return filterGroup;
-  //     });
-  //   };
+            break;
+          } else if (!isResourceFilter(resource)) {
+            deleteResource(resource); // Recursively search in the group
+          }
+        }
+      };
 
-  //   const updatedLocalSurvey = {
-  //     ...localSurvey,
-  //     userSegment: {
-  //       ...localSurvey.userSegment,
-  //       filters: searchAndUpdate(localSurvey.userSegment.filters),
-  //     },
-  //   };
+      if (draft.userSegment?.filters) {
+        deleteResource(draft.userSegment.filters);
+      }
+    });
 
-  //   setLocalSurvey(updatedLocalSurvey);
-  // };
+    setLocalSurvey(updatedLocalSurvey);
+  };
 
   return (
     <div className="flex flex-col gap-4 rounded-lg">
-      {group?.map((groupItem, groupIndex) => {
-        const { connector, resource } = groupItem;
+      {group?.map((groupItem) => {
+        const { connector, resource, id: resourceId } = groupItem;
 
         if (isResourceFilter(resource)) {
           return (
             <SegmentFilterItem
+              key={resourceId}
               connector={connector}
               resource={resource}
               environmentId={environmentId}
               onFilterValueChange={(filterId: string, newValue: string | number) =>
-                handleFilterValuechange(filterId, newValue)
+                handleFilterValueChange(filterId, newValue)
               }
               onAddFilterBelow={(filterId: string) => handleAddFilterBelow(filterId)}
               onCreateGroup={(filterId: string) => handleCreateGroup(filterId)}
+              onDeleteFilter={(filterId: string) => handleDeleteResource(filterId)}
             />
           );
         } else {
           return (
-            <div className="flex flex-col gap-1">
+            <div key={resourceId} className="flex flex-col gap-1">
               <div className="flex items-start gap-2">
                 <span className="cursor-pointer text-sm underline">{!!connector ? connector : "Where"}</span>
                 <div className="rounded-lg border-2 border-slate-300 p-4">
@@ -527,9 +540,20 @@ const SegmentFilters = ({
                   />
                 </div>
               </div>
-              <Button size="sm" className="w-fit" onClick={() => handleAddFilterBelow("", groupIndex)}>
-                AFB
-              </Button>
+
+              <div className="flex items-center gap-2 p-4">
+                <Button size="sm" className="w-fit" onClick={() => handleAddFilterBelow(resourceId)}>
+                  AFB
+                </Button>
+
+                <Button size="sm" className="w-fit" onClick={() => handleCreateGroup(resourceId)}>
+                  CG
+                </Button>
+
+                <Button size="sm" className="w-fit" onClick={() => handleDeleteResource(resourceId)}>
+                  D
+                </Button>
+              </div>
             </div>
           );
         }

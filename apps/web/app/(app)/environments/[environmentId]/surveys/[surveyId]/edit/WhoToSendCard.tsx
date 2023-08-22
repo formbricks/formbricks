@@ -82,7 +82,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     return <div>Error</div>;
   }
 
-  // console.log(localSurvey.userSegment?.filters);
+  console.log(localSurvey.userSegment?.filters);
 
   return (
     <>
