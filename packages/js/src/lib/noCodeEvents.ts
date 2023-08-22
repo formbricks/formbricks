@@ -105,18 +105,25 @@ export const checkClickMatch = (event: MouseEvent) => {
   const targetElement = event.target as HTMLElement;
   (state?.noCodeActionClasses || []).forEach((action: TActionClass) => {
     const innerHtml = action.noCodeConfig?.innerHtml?.value;
-    const cssSelector = action.noCodeConfig?.cssSelector?.value;
+    const cssSelectors = action.noCodeConfig?.cssSelector?.value;
     const pageUrl = action.noCodeConfig?.pageUrl?.value;
 
-    if (!innerHtml && !cssSelector && !pageUrl) {
+    if (!innerHtml && !cssSelectors && !pageUrl) {
       return;
     }
 
     if (innerHtml && targetElement.innerHTML !== innerHtml) {
       return;
     }
-    if (cssSelector && !targetElement.matches(cssSelector)) {
-      return;
+
+    if (cssSelectors) {
+      // Split selectors that start with a . or # including the . or #
+      const individualSelectors = cssSelectors.split(/\s*(?=[.#])/);
+      for (let selector of individualSelectors) {
+        if (!targetElement.matches(selector)) {
+          return;
+        }
+      }
     }
     if (pageUrl) {
       const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule);
