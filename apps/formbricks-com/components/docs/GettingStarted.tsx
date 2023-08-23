@@ -13,14 +13,15 @@ const gettingStarted = [
     description: "Integrate the Formbricks SDK into a Next.js application with the new app directory",
   },
   {
-    href: "/docs/getting-started/nextjs-pages",
-    name: "Next.js Pages",
-    description: "Integrate the Formbricks SDK into a Next.js application with the pages directory",
+    href: "/docs/self-hosting/deployment",
+    name: "Self Host Deployment",
+    description:
+      "Host Formbricks on your own servers, check out our dedicated Self-hosted Documentation page.",
   },
   {
-    href: "/docs/getting-started/vuejs",
-    name: "Vue.js",
-    description: "Integrate the Formbricks SDK into a Vue.js application",
+    href: "/docs/best-practices/interview-prompt",
+    name: "Interview Prompt",
+    description: "Set user interviews on autopilot for a continuous stream of interviews.",
   },
 ];
 
@@ -28,7 +29,7 @@ export function GettingStarted() {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="getting-started">
-        Getting Started
+        Quick Resources
       </Heading>
       <div className="not-prose mt-4 grid grid-cols-1 gap-8 border-t border-zinc-900/5 pt-10 dark:border-white/5 sm:grid-cols-2 xl:grid-cols-4">
         {gettingStarted.map((guide) => (
