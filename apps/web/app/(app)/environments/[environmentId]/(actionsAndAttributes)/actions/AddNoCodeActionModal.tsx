@@ -32,6 +32,7 @@ interface AddNoCodeActionModalProps {
 export default function AddNoCodeActionModal({ environmentId, open, setOpen }: AddNoCodeActionModalProps) {
   const router = useRouter();
   const { register, control, handleSubmit, watch, reset } = useForm();
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // clean up noCodeConfig before submitting by removing unnecessary fields
   const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
@@ -43,6 +44,7 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
   };
 
   const submitEventClass = async (data: Partial<TActionClassInput>): Promise<void> => {
+    setIsSubmitting(true)
     const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
 
     const updatedData: TActionClassInput = {
@@ -56,8 +58,10 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
       router.refresh();
       reset();
       setOpen(false);
+      setIsSubmitting(false)
       toast.success("Action added successfully.");
     } catch (e) {
+      setIsSubmitting(false)
       toast.error(e.message);
       return;
     }
@@ -259,7 +263,7 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit">
+              <Button variant="darkCTA" type="submit" loading={isSubmitting}>
                 Add Action
               </Button>
             </div>

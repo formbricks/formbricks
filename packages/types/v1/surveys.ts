@@ -10,11 +10,12 @@ export const ZSurveyThankYouCard = z.object({
 
 export const ZSurveyClosedMessage = z
   .object({
+    enabled:z.boolean(),
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
   })
   .nullable()
-  .optional();
+  .optional()
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 

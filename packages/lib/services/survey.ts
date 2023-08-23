@@ -287,9 +287,10 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithAnalytics) {
+export async function updateSurvey(updatedSurvey:TSurvey):Promise<TSurvey> {
+  const surveyId = updatedSurvey.id 
   let data: any = {};
-  let body: Partial<any> = { ...updatedSurvey };
+  let survey: Partial<any> = { ...updatedSurvey };
 
   if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
     const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {
@@ -300,7 +301,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
       }
     });
 
-    body = { ...updatedSurvey, triggers: modifiedTriggers };
+    survey = { ...updatedSurvey, triggers: modifiedTriggers };
   }
 
   const currentTriggers = await prisma.surveyTrigger.findMany({
@@ -314,24 +315,24 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
     },
   });
 
-  delete body.updatedAt;
+  delete survey.updatedAt;
   // preventing issue with unknowingly updating analytics
-  delete body.analytics;
+  delete survey.analytics;
 
-  if (body.type === "link") {
-    delete body.triggers;
-    delete body.recontactDays;
+  if (survey.type === "link") {
+    delete survey.triggers;
+    delete survey.recontactDays;
     // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
-    if (!body.surveyClosedMessage) {
-      body.surveyClosedMessage = null;
+    if (!survey.surveyClosedMessage) {
+      survey.surveyClosedMessage = null;
     }
   }
 
-  if (body.triggers) {
+  if (survey.triggers) {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
     // find added triggers
-    for (const eventClassId of body.triggers) {
+    for (const eventClassId of survey.triggers) {
       if (!eventClassId) {
         continue;
       }
@@ -343,7 +344,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
     }
     // find removed triggers
     for (const trigger of currentTriggers) {
-      if (body.triggers.find((t: any) => t === trigger.eventClassId)) {
+      if (survey.triggers.find((t: any) => t === trigger.eventClassId)) {
         continue;
       } else {
         removedTriggers.push(trigger.eventClassId);
@@ -369,10 +370,10 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
         },
       };
     }
-    delete body.triggers;
+    delete survey.triggers;
   }
 
-  const attributeFilters: TSurveyAttributeFilter[] = body.attributeFilters;
+  const attributeFilters: TSurveyAttributeFilter[] = survey.attributeFilters;
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
     const removedFilterIds: string[] = [];
@@ -437,28 +438,28 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
         })
       );
     }
-    delete body.attributeFilters;
+    delete survey.attributeFilters;
   }
+
 
   data = {
     ...data,
-    ...body,
+    ...survey,
   };
 
-  delete data.responseRate;
-  delete data.numDisplays;
-
   try {
-    const updatedSurvey = await prisma.survey.update({
+    const prismaSurvey  = await prisma.survey.update({
       where: { id: surveyId },
       data,
     });
+    
+    const modifiedSurvey: TSurvey = {
+      ...prismaSurvey, // Properties from prismaSurvey
+      triggers: updatedSurvey.triggers, // Include triggers from updatedSurvey
+      attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
+    };
 
-    if (!updatedSurvey) {
-      return null;
-    }
-
-    return updatedSurvey;
+    return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

@@ -12,12 +12,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { TProduct } from "@formbricks/types/v1/product";
 
 interface SurveyMenuBarProps {
-  localSurvey: any;
+  localSurvey: TSurveyWithAnalytics;
   survey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
@@ -126,7 +126,7 @@ export default function SurveyMenuBar({
   const saveSurveyAction = (shouldNavigateBack = false) => {
     setIsMutatingSurvey(true);
     // Create a copy of localSurvey with isDraft removed from every question
-    const strippedSurvey = {
+    const strippedSurvey: TSurvey = {
       ...localSurvey,
       questions: localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
@@ -138,7 +138,7 @@ export default function SurveyMenuBar({
       return;
     }
 
-    surveyMutateAction(survey.id, { ...strippedSurvey })
+    surveyMutateAction({ ...strippedSurvey })
       .then(async () => {
         setIsMutatingSurvey(false);
         toast.success("Changes saved.");
@@ -153,6 +153,7 @@ export default function SurveyMenuBar({
         }
       })
       .catch(() => {
+        setIsMutatingSurvey(false);
         toast.error(`Error saving changes`);
       });
   };
@@ -217,7 +218,7 @@ export default function SurveyMenuBar({
             disabled={
               localSurvey.type === "web" &&
               localSurvey.triggers &&
-              (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+              (localSurvey.triggers[0]?.id === "" || localSurvey.triggers.length === 0)
             }
             variant="darkCTA"
             loading={isMutatingSurvey}
@@ -226,7 +227,7 @@ export default function SurveyMenuBar({
               if (!validateSurvey(localSurvey)) {
                 return;
               }
-              await surveyMutateAction(survey.id, { ...localSurvey, status: "inProgress" });
+              await surveyMutateAction({ ...localSurvey, status: "inProgress" });
               setIsMutatingSurvey(false);
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
             }}>
