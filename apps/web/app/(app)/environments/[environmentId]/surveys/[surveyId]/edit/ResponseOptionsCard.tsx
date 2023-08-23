@@ -17,7 +17,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
   const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
-  useState
+  useState;
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({

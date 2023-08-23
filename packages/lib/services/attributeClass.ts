@@ -35,8 +35,7 @@ export const getAttributeClasses = cache(async (environmentId: string): Promise<
   } catch (error) {
     throw new DatabaseError(`Database error when fetching attributeClasses for environment ${environmentId}`);
   }
-}
-)
+});
 export const updatetAttributeClass = async (
   attributeClassId: string,
   data: { description?: string; archived?: boolean }

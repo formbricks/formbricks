@@ -13,11 +13,11 @@ import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
 import { useEffect, useRef, useState } from "react";
-import { TSurveyMultipleChoiceSingleQuestion,TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyMultipleChoiceSingleQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
-  question: MultipleChoiceSingleQuestion| TSurveyMultipleChoiceSingleQuestion;
+  question: MultipleChoiceSingleQuestion | TSurveyMultipleChoiceSingleQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;

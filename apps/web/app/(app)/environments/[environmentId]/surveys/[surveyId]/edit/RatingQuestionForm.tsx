@@ -4,11 +4,11 @@ import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outlin
 import Dropdown from "./RatingTypeDropdown";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { TSurveyRatingQuestion,TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyRatingQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
-  question: RatingQuestion|TSurveyRatingQuestion;
+  question: RatingQuestion | TSurveyRatingQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;

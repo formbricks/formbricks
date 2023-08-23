@@ -28,11 +28,16 @@ interface WhenToSendCardProps {
   eventClasses: TActionClass[];
 }
 
-export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey,eventClasses }: WhenToSendCardProps) {
+export default function WhenToSendCard({
+  environmentId,
+  localSurvey,
+  setLocalSurvey,
+  eventClasses,
+}: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
-  let eventClassLength = eventClasses.length
-  const [activeIndex, setActiveIndex] = useState<number|null>(null)
+  let eventClassLength = eventClasses.length;
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const autoClose = localSurvey.autoClose !== null;
 
@@ -55,7 +60,9 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const setTriggerEvent = (idx: number, eventClassId: string) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = eventClasses!.find((eventClass) => {return eventClass.id === eventClassId})!;
+    updatedSurvey.triggers[idx] = eventClasses!.find((eventClass) => {
+      return eventClass.id === eventClassId;
+    })!;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -90,15 +97,13 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     setLocalSurvey(updatedSurvey);
   };
   useEffect(() => {
-    if(activeIndex!==null){
-      setTriggerEvent(activeIndex, eventClasses[eventClasses.length-1].id)
+    if (activeIndex !== null) {
+      setTriggerEvent(activeIndex, eventClasses[eventClasses.length - 1].id);
     }
-    eventClassLength = eventClasses.length
-  }, [eventClasses])
-  
+    eventClassLength = eventClasses.length;
+  }, [eventClasses]);
 
   useEffect(() => {
-    
     if (localSurvey.type === "link") {
       setOpen(false);
     }
@@ -131,9 +136,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           )}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {!localSurvey.triggers ||
-              localSurvey.triggers.length === 0 ||
-              !localSurvey.triggers[0] ? (
+              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"
@@ -181,7 +184,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       value="none"
                       onClick={() => {
                         setAddEventModalOpen(true);
-                        setActiveIndex(idx)
+                        setActiveIndex(idx);
                       }}>
                       <PlusIcon className="mr-1 h-5 w-5" />
                       Add Action

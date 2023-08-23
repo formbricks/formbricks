@@ -6,7 +6,6 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { TActionClass, TActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { cache } from "react";
 
-
 const select = {
   id: true,
   createdAt: true,
@@ -34,7 +33,7 @@ export const getActionClasses = cache(async (environmentId: string): Promise<TAc
   } catch (error) {
     throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
   }
-})
+});
 
 export const deleteActionClass = async (
   environmentId: string,

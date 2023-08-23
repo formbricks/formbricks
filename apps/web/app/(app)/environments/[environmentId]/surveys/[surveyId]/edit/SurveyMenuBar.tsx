@@ -24,7 +24,7 @@ interface SurveyMenuBarProps {
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
-  product: TProduct
+  product: TProduct;
 }
 
 export default function SurveyMenuBar({
@@ -35,14 +35,14 @@ export default function SurveyMenuBar({
   activeId,
   setActiveId,
   setInvalidQuestions,
-  product
+  product,
 }: SurveyMenuBarProps) {
   const router = useRouter();
-  // const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id); 
+  // const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [isMutatingSurvey, setIsMutatingSurvey] = useState(false)
+  const [isMutatingSurvey, setIsMutatingSurvey] = useState(false);
   let faultyQuestions: String[] = [];
 
   useEffect(() => {
@@ -125,23 +125,23 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = (shouldNavigateBack = false) => {
-    setIsMutatingSurvey(true)
-  // Create a copy of localSurvey with isDraft removed from every question
-  const strippedSurvey = {
-    ...localSurvey,
-    questions: localSurvey.questions.map((question) => {
-      const { isDraft, ...rest } = question;
-      return rest;
-    }),
-  };
+    setIsMutatingSurvey(true);
+    // Create a copy of localSurvey with isDraft removed from every question
+    const strippedSurvey = {
+      ...localSurvey,
+      questions: localSurvey.questions.map((question) => {
+        const { isDraft, ...rest } = question;
+        return rest;
+      }),
+    };
 
     if (!validateSurvey(localSurvey)) {
       return;
     }
 
-    surveyMutateAction(survey.id,{ ...strippedSurvey })
+    surveyMutateAction(survey.id, { ...strippedSurvey })
       .then(async () => {
-        setIsMutatingSurvey(false)
+        setIsMutatingSurvey(false);
         toast.success("Changes saved.");
         if (shouldNavigateBack) {
           router.back();
@@ -223,12 +223,12 @@ export default function SurveyMenuBar({
             variant="darkCTA"
             loading={isMutatingSurvey}
             onClick={async () => {
-              setIsMutatingSurvey(true)
+              setIsMutatingSurvey(true);
               if (!validateSurvey(localSurvey)) {
                 return;
               }
-              await surveyMutateAction(survey.id,{ ...localSurvey, status: "inProgress" })
-              setIsMutatingSurvey(false)
+              await surveyMutateAction(survey.id, { ...localSurvey, status: "inProgress" });
+              setIsMutatingSurvey(false);
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
             }}>
             Publish

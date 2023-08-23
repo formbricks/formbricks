@@ -26,10 +26,10 @@ interface WhoToSendCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
-  attributeClasses : TAttributeClass[];
-  }
+  attributeClasses: TAttributeClass[];
+}
 
-export default function WhoToSendCard({ localSurvey, setLocalSurvey,attributeClasses }: WhoToSendCardProps) {
+export default function WhoToSendCard({ localSurvey, setLocalSurvey, attributeClasses }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
   const condition = filterConditions[0].id === "equals" ? "equals" : "notEquals";
 
@@ -49,9 +49,13 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey,attributeCla
   };
 
   const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
-    console.log("running")
+    console.log("running");
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.attributeFilters[idx] = { attributeClassId, condition: condition === "equals" ? "equals" : "notEquals", value };
+    updatedSurvey.attributeFilters[idx] = {
+      attributeClassId,
+      condition: condition === "equals" ? "equals" : "notEquals",
+      value,
+    };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -171,15 +175,15 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey,attributeCla
                 </Select>
                 <Input
                   value={attributeFilter.value}
-                  onChange={(e) =>
-                    {e.preventDefault();
+                  onChange={(e) => {
+                    e.preventDefault();
                     setAttributeFilter(
                       idx,
                       attributeFilter.attributeClassId,
                       attributeFilter.condition,
                       e.target.value
-                    )}
-                  }
+                    );
+                  }}
                 />
                 <button onClick={() => removeAttributeFilter(idx)}>
                   <TrashIcon className="h-4 w-4 text-slate-400" />

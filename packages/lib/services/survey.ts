@@ -1,6 +1,12 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
-import { TSurvey, TSurveyAttributeFilter, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyAttributeFilter,
+  TSurveyWithAnalytics,
+  ZSurvey,
+  ZSurveyWithAnalytics,
+} from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import "server-only";
@@ -282,20 +288,19 @@ export const getSurveysWithAnalytics = cache(
 );
 
 export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithAnalytics) {
-  
   let data: any = {};
   let body: Partial<any> = { ...updatedSurvey };
 
-  if(updatedSurvey.triggers && updatedSurvey.triggers.length > 0){
-    const modifiedTriggers  = updatedSurvey.triggers.map(trigger => {
-      if (typeof trigger === 'object' && trigger.id) {
+  if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
+    const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {
+      if (typeof trigger === "object" && trigger.id) {
         return trigger.id;
-      } else if (typeof trigger === 'string' && trigger !== undefined) {
+      } else if (typeof trigger === "string" && trigger !== undefined) {
         return trigger;
       }
     });
 
-    body = { ...updatedSurvey, triggers: modifiedTriggers }
+    body = { ...updatedSurvey, triggers: modifiedTriggers };
   }
 
   const currentTriggers = await prisma.surveyTrigger.findMany({
@@ -308,7 +313,6 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
       surveyId,
     },
   });
-  
 
   delete body.updatedAt;
   // preventing issue with unknowingly updating analytics
@@ -319,7 +323,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
     delete body.recontactDays;
     // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
     if (!body.surveyClosedMessage) {
-      body.surveyClosedMessage = null
+      body.surveyClosedMessage = null;
     }
   }
 
@@ -367,8 +371,6 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
     }
     delete body.triggers;
   }
-
- 
 
   const attributeFilters: TSurveyAttributeFilter[] = body.attributeFilters;
   if (attributeFilters) {
@@ -449,17 +451,16 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
   try {
     const updatedSurvey = await prisma.survey.update({
       where: { id: surveyId },
-      data
+      data,
     });
 
     if (!updatedSurvey) {
-      return null
+      return null;
     }
 
-    return updatedSurvey
-
+    return updatedSurvey;
   } catch (error) {
-    console.log(error)
+    console.log(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

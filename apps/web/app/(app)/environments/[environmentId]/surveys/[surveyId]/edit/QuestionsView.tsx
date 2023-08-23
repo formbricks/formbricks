@@ -38,7 +38,11 @@ export default function QuestionsView({
     }, {});
   }, []);
 
-  const handleQuestionLogicChange = (survey: TSurveyWithAnalytics, compareId: string, updatedId: string): TSurveyWithAnalytics => {
+  const handleQuestionLogicChange = (
+    survey: TSurveyWithAnalytics,
+    compareId: string,
+    updatedId: string
+  ): TSurveyWithAnalytics => {
     survey.questions.forEach((question) => {
       if (!question.logic) return;
       question.logic.forEach((rule) => {

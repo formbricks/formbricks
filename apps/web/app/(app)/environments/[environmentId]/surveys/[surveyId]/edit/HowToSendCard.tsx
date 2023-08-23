@@ -21,13 +21,12 @@ interface HowToSendCardProps {
   environment: TEnvironment;
 }
 
-export default function HowToSendCard({ localSurvey, setLocalSurvey,environment
-}: HowToSendCardProps) {
+export default function HowToSendCard({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? false : true);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
 
   useEffect(() => {
-    console.log("environemtn change")
+    console.log("environemtn change");
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
     } else {

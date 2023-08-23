@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from "react";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
-  questions: Question[]|TSurveyQuestion[];
+  questions: Question[] | TSurveyQuestion[];
   brandColor: string;
   environmentId: string;
   surveyType: Survey["type"];
