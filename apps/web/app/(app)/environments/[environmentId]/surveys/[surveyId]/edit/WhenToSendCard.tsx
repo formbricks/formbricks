@@ -36,7 +36,6 @@ export default function WhenToSendCard({
 }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
-  let eventClassLength = eventClasses.length;
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const autoClose = localSurvey.autoClose !== null;
@@ -100,7 +99,6 @@ export default function WhenToSendCard({
     if (activeIndex !== null) {
       setTriggerEvent(activeIndex, eventClasses[eventClasses.length - 1].id);
     }
-    eventClassLength = eventClasses.length;
   }, [eventClasses]);
 
   useEffect(() => {
