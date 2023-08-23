@@ -1,6 +1,8 @@
 "use client";
 
-import { addResponseNote, updateResponseNote } from "@/lib/responseNotes/responsesNotes";
+import { updateResponseNoteAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
+import { useProfile } from "@/lib/profile";
+import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Button } from "@formbricks/ui";
@@ -30,6 +32,7 @@ export default function ResponseNotes({
   setIsOpen,
 }: ResponseNotesProps) {
   const router = useRouter();
+  const { profile } = useProfile();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
@@ -60,7 +63,7 @@ export default function ResponseNotes({
     e.preventDefault();
     setIsUpdatingNote(true);
     try {
-      await updateResponseNote(environmentId, surveyId, responseId, noteId, noteText);
+      await updateResponseNoteAction(responseId, noteId, noteText);
       router.refresh();
       setIsUpdatingNote(false);
       setNoteText("");
@@ -147,9 +150,11 @@ export default function ResponseNotes({
                 </span>
                 <div className="group/notetext flex items-center">
                   <span className="block pr-1 text-slate-700">{note.text}</span>
-                  <button onClick={() => handleEditPencil(note)}>
-                    <PencilIcon className=" h-3 w-3 text-gray-500 opacity-0 group-hover/notetext:opacity-100" />
-                  </button>
+                  {profile.id === note.user.id && (
+                    <button onClick={() => handleEditPencil(note)}>
+                      <PencilIcon className=" h-3 w-3 text-gray-500 opacity-0 group-hover/notetext:opacity-100" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
