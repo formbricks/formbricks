@@ -49,7 +49,6 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, attributeCl
   };
 
   const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
-    console.log("running");
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.attributeFilters[idx] = {
       attributeClassId,

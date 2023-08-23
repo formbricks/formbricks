@@ -38,7 +38,6 @@ export default function SurveyMenuBar({
   product,
 }: SurveyMenuBarProps) {
   const router = useRouter();
-  // const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);

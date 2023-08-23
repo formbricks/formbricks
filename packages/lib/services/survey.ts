@@ -460,7 +460,6 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
 
     return updatedSurvey;
   } catch (error) {
-    console.log(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
