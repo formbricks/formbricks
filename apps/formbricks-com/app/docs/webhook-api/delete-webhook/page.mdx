@@ -1,0 +1,73 @@
+export const meta = {
+  title: "API: Delete Webhook",
+  description: "Learn how to delete a specific webhook by its ID via API.",
+};
+
+[Webhook API]()
+
+# API: Delete Webhook
+
+## Delete a specific webhook by its ID {{ tag: 'DELETE', label: '/api/v1/webhooks/[webhookId]' }}
+
+<Row>
+  <Col>
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/webhooks/[webhookId]">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location --request DELETE 'https://app.formbricks.com/api/v1/webhooks/[webhookId]' \
+    --header 'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{ title: '200 Success' }}
+    {
+      "data": {
+        "id": "cliu167rk000019zfhbo68bar",
+        "createdAt": "2023-06-13T08:38:02.960Z",
+        "updatedAt": "2023-06-13T08:38:02.960Z",
+        "url": "https://mysystem.com/myendpoint",
+        "environmentId": "clisypjy4000319t4imm289uo",
+        "triggers": ["responseFinished"]
+      }
+    }
+    ```
+
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+      }
+    }
+    ```
+
+    ```json {{ title: '404 Not Found' }}
+    {
+      "code": "not_found",
+      "message": "Webhook not found.",
+      "details": {
+        "webhookId": "The requested webhook does not exist."
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>

@@ -1,0 +1,108 @@
+export const meta = {
+  title: "API: Create webhook",
+  description: "Learn how to create a new webhook via API.",
+};
+
+[Webhook API]()
+
+# API: Create webhook
+
+## Create a new Webhook {{ tag: 'POST', label: '/api/v1/webhooks' }}
+
+Add a webhook to your product.
+
+<Row>
+  <Col>
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+    ### Request Body Parameters
+
+    <Properties>
+      <Property name="url" type="string" required>
+        The URL where the webhook will send data to.
+      </Property>
+      <Property name="triggers" type="string[]" required>
+        List of events that will trigger the webhook.
+      </Property>
+      <Property name="surveyIds" type="string[]">
+        List of survey IDs that will trigger the webhook. If not provided, the webhook will be triggered for all surveys.
+      </Property>
+    </Properties>
+
+| field name | required | default | description                                                                                                       |
+| ---------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------- |
+| url        | yes      | -       | The endpoint that the webhook will send data to                                                                   |
+| trigger    | yes      | -       | The event that will trigger the webhook ("responseCreated" or "responseUpdated" or "responseFinished")            |
+| surveyIds  | no       | -       | List of survey IDs that will trigger the webhook. If not provided, the webhook will be triggered for all surveys. |
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/webhooks">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location --request POST 'https://app.formbricks.com/api/v1/webhooks' \
+    --header 'x-api-key: <your-api-key>' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{
+      "url": "https://mysystem.com/myendpoint",
+      "triggers": ["responseFinished"]
+    }'
+    ```
+
+    ```json {{ title: 'Example Request Body' }}
+    {
+      "url": "https://mysystem.com/myendpoint",
+      "triggers": ["responseFinished"]
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{ title: '200 Success' }}
+    {
+      "data": {
+        "id": "cliu1kdza000219zftad4ip6c",
+        "createdAt": "2023-06-13T08:49:04.198Z",
+        "updatedAt": "2023-06-13T08:49:04.198Z",
+        "url": "https://mysystem.com/myendpoint",
+        "environmentId": "clisypjy4000319t4imm289uo",
+        "triggers": ["responseFinished"],
+        "surveyIds": ["clisypjy4000319t4imm289uo"]
+      }
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "Missing trigger",
+      "details": {
+        "missing_field": "trigger"
+      }
+    }
+    ```
+
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>

@@ -1,0 +1,71 @@
+export const meta = {
+  title: "API: List Webhooks",
+  description: "Learn how to retrieve a list of all webhooks via API.",
+};
+
+[Webhook API]()
+
+# API: List Webhooks
+
+## Retrieve a list of all webhooks {{ tag: 'GET', label: '/api/v1/webhooks' }}
+
+<Row>
+  <Col>
+
+    Learn how to retrieve a list of all webhooks via API.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/webhooks">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/webhooks' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{ title: '200 Success' }}
+    {
+      "data": [
+        {
+          "id": "cliu1kdza000219zftad4ip6c",
+          "createdAt": "2023-06-13T08:49:04.198Z",
+          "updatedAt": "2023-06-13T08:49:04.198Z",
+          "url": "https://mysystem.com/myendpoint",
+          "environmentId": "clisypjy4000319t4imm289uo",
+          "triggers": [
+            "responseFinished"
+          ]
+        }
+      ]
+    }
+    ```
+
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
