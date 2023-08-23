@@ -1,6 +1,6 @@
 "use client";
 
-import { TBaseFilterGroupItem, TUserSegmentFilter } from "@formbricks/types/v1/userSegment";
+import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
 import React, { useState } from "react";
 import { Dialog, DialogTrigger, DialogContent, Input, TabBar } from "@formbricks/ui";
 import { MonitorSmartphoneIcon, MousePointerClick, PlusCircleIcon, TagIcon, Users2Icon } from "lucide-react";
@@ -54,7 +54,29 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
             <>
               {eventClasses.map((eventClass) => {
                 return (
-                  <div className="flex cursor-pointer items-center gap-4 text-sm">
+                  <div
+                    onClick={() => {
+                      const newFilter: TBaseFilterGroupItem = {
+                        id: createId(),
+                        connector: "and",
+                        resource: {
+                          id: createId(),
+                          root: {
+                            type: "action",
+                            actionClassId: eventClass.id,
+                          },
+                          qualifier: {
+                            metric: "occuranceCount",
+                            operator: "equals",
+                          },
+                          value: "",
+                        },
+                      };
+
+                      onAddFilter(newFilter);
+                      setOpen(false);
+                    }}
+                    className="flex cursor-pointer items-center gap-4 text-sm">
                     <MousePointerClick className="h-4 w-4" />
                     <p>{eventClass.name}</p>
                   </div>

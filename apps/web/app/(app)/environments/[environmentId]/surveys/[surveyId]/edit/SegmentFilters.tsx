@@ -25,10 +25,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
+  TabBar,
 } from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -120,7 +124,6 @@ type TAttributeSegmentFilterProps = SegmentFilterItemProps & {
   resource: TUserSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
 };
-
 const AttributeSegmentFilter = ({
   environmentId,
   connector,
@@ -482,6 +485,140 @@ const ActionSegmentFilter = ({
   );
 };
 
+type AddNewFilterItemProps = {
+  environmentId: string;
+  connector: TUserSegmentConnector;
+  filterId: string;
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
+};
+const AddNewFilterItem = ({
+  connector,
+  filterId,
+  environmentId,
+  localSurvey,
+  setLocalSurvey,
+}: AddNewFilterItemProps) => {
+  const [activeTabId, setActiveId] = useState("actions");
+  const { attributeClasses } = useAttributeClasses(environmentId);
+  const { eventClasses } = useEventClasses(environmentId);
+
+  const tabs = [
+    { id: "actions", label: "Actions" },
+    { id: "attributes", label: "Attributes" },
+  ];
+
+  const onAddFilter = (filter: TUserSegmentFilter) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              resource.qualifier = filter.qualifier;
+              resource.root = filter.root;
+              resource.value = filter.value;
+
+              resource.selectNewFilter = false;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  return (
+    <div className="flex items-center gap-4 text-sm">
+      <SegmentFilterItemConnector
+        connector={connector}
+        filterId={filterId}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+      />
+      <Popover>
+        <PopoverTrigger>
+          <div className="rounded-md bg-slate-200 p-2 text-slate-600 hover:border hover:border-slate-500">
+            <span>Select filter...</span>
+          </div>
+        </PopoverTrigger>
+
+        <PopoverContent className="bg-slate-50">
+          <div className="flex flex-col gap-4">
+            <TabBar activeId={activeTabId} setActiveId={setActiveId} tabs={tabs} />
+
+            <div className="max-h-96 overflow-auto">
+              {activeTabId === "actions" && (
+                <div className="flex flex-col gap-4">
+                  {eventClasses.map((eventClass) => (
+                    <div
+                      className="flex cursor-pointer items-center gap-2"
+                      onClick={() => {
+                        const filter: TUserSegmentFilter = {
+                          id: "sample",
+                          root: {
+                            type: "action",
+                            actionClassId: eventClass.id,
+                          },
+                          qualifier: {
+                            metric: "occuranceCount",
+                            operator: "equals",
+                          },
+                          value: "",
+                        };
+
+                        onAddFilter(filter);
+                      }}>
+                      <MousePointerClick className="h-4 w-4" />
+                      <span>{eventClass.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeTabId === "attributes" && (
+                <div className="flex flex-col gap-4">
+                  {attributeClasses.map((attributeClass) => (
+                    <div
+                      className="flex cursor-pointer items-center gap-2"
+                      onClick={() => {
+                        const filter: TUserSegmentFilter = {
+                          id: "sample",
+                          root: {
+                            type: "attribute",
+                            attributeClassId: attributeClass.id,
+                          },
+                          qualifier: {
+                            operator: "equals",
+                          },
+                          value: "",
+                        };
+
+                        onAddFilter(filter);
+                      }}>
+                      <MousePointerClick className="h-4 w-4" />
+                      <span>{attributeClass.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
 const SegmentFilterItem = ({
   resource,
   connector,
@@ -534,6 +671,18 @@ const SegmentFilterItem = ({
 
     setConnectorState("and");
   };
+
+  if (resource.selectNewFilter) {
+    return (
+      <AddNewFilterItem
+        environmentId={environmentId}
+        connector={connector}
+        filterId={resource.id}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+      />
+    );
+  }
 
   // action UI
 
@@ -676,6 +825,7 @@ const SegmentFilters = ({
                 root: { type: "attribute", attributeClassId: "" },
                 qualifier: { operator: "endsWith" },
                 value: "",
+                selectNewFilter: true,
               };
 
               group.splice(i + 1, 0, { id: createId(), resource: newFilter, connector: "and" });
@@ -688,11 +838,18 @@ const SegmentFilters = ({
               const newFilter: TBaseFilterGroupItem = {
                 id: createId(),
                 connector: "and",
+                // resource: {
+                //   id: createId(),
+                //   root: { type: "attribute", attributeClassId: "" },
+                //   qualifier: { operator: "endsWith" },
+                //   value: "",
+                // },
                 resource: {
                   id: createId(),
                   root: { type: "attribute", attributeClassId: "" },
                   qualifier: { operator: "endsWith" },
                   value: "",
+                  selectNewFilter: true,
                 },
               };
 

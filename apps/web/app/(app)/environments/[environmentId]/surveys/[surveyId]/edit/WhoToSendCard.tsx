@@ -20,7 +20,7 @@ import {
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
-import { useCallback, useEffect, useState } from "react"; /*  */
+import { useEffect, useState } from "react"; /*  */
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -100,6 +100,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   if (isErrorAttributeClasses) {
     return <div>Error</div>;
   }
+
+  console.log(localSurvey.userSegment?.filters);
 
   return (
     <>
