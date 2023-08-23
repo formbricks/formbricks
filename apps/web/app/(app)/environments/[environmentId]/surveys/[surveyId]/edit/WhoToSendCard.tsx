@@ -1,11 +1,12 @@
 "use client";
 
+import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { sampleUserSegment } from "@formbricks/types/v1/userSegment";
+import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
 import {
   Badge,
   Button,
@@ -18,7 +19,8 @@ import {
 } from "@formbricks/ui";
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react"; /*  */
+import { produce } from "immer";
+import { useCallback, useEffect, useState } from "react"; /*  */
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -35,6 +37,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [open, setOpen] = useState(false);
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
     useAttributeClasses(environmentId);
+
+  const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
@@ -74,6 +78,21 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     setLocalSurvey(updatedSurvey);
   };
 
+  const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      if (draft?.userSegment?.filters?.length === 0) {
+        draft.userSegment?.filters.push({
+          ...filter,
+          connector: null,
+        });
+      } else {
+        draft.userSegment?.filters.push(filter);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
   if (isLoadingAttributeClasses) {
     return <LoadingSpinner />;
   }
@@ -81,8 +100,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   if (isErrorAttributeClasses) {
     return <div>Error</div>;
   }
-
-  console.log(localSurvey.userSegment?.filters);
 
   return (
     <>
@@ -148,17 +165,24 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
           <div className="p-6">
             <div className="rounded-lg border-2 border-slate-300 p-4">
               <p className="text-sm font-semibold">Send survey to audience who match...</p>
-              {/* <Button variant="darkCTA" onClick={() => handleCreateTestSegment()}>
-                Create test segment
-              </Button> */}
               {!!localSurvey.userSegment?.filters && (
-                <SegmentFilters
-                  // segment={sampleUserSegment.filters}
-                  group={localSurvey.userSegment.filters}
-                  environmentId={environmentId}
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                />
+                <>
+                  <SegmentFilters
+                    group={localSurvey.userSegment.filters}
+                    environmentId={environmentId}
+                    localSurvey={localSurvey}
+                    setLocalSurvey={setLocalSurvey}
+                  />
+
+                  <AddFilterModal
+                    environmentId={environmentId}
+                    onAddFilter={(filter) => {
+                      handleAddFilterInGroup(filter);
+                    }}
+                    open={addFilterModalOpen}
+                    setOpen={setAddFilterModalOpen}
+                  />
+                </>
               )}
             </div>
           </div>

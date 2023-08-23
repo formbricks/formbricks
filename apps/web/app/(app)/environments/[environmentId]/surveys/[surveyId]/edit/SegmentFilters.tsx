@@ -11,23 +11,37 @@ import {
   BASE_OPERATORS,
   TUserSegmentFilterValue,
   TBaseFilterGroupItem,
+  TUserSegmentConnector,
+  TUserSegmentAttributeFilter,
+  TAttributeOperator,
+  TUserSegmentActionFilter,
+  TBaseOperator,
+  ACTION_METRICS,
+  TActionMetric,
 } from "@formbricks/types/v1/userSegment";
 import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  TabBar,
 } from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
-import { MousePointerClick, TagIcon, Users2Icon, MonitorSmartphoneIcon, PlusCircleIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { produce, original } from "immer";
+import {
+  MousePointerClick,
+  TagIcon,
+  Users2Icon,
+  MonitorSmartphoneIcon,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { produce } from "immer";
+import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 
 const isResourceFilter = (
   resource: TUserSegmentFilter | TBaseFilterGroup
@@ -40,30 +54,475 @@ type SegmentFilterItemProps = {
   connector: TConnector;
   resource: TUserSegmentFilter;
   environmentId: string;
-  onFilterValueChange: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
   onAddFilterBelow: (filterId: string) => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
+  onMoveFilter: (filterId: string, direction: "up" | "down") => void;
+};
+
+const SegmentFilterItemConnector = ({
+  connector,
+  localSurvey,
+  setLocalSurvey,
+  filterId,
+}: {
+  connector: TUserSegmentConnector;
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
+  filterId: string;
+}) => {
+  const updateLocalSurvey = (newConnector: TUserSegmentConnector) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              group[i].connector = newConnector;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const onConnectorChange = () => {
+    if (!connector) return;
+
+    if (connector === "and") {
+      updateLocalSurvey("or");
+    } else {
+      updateLocalSurvey("and");
+    }
+  };
+
+  return (
+    <div className="w-[40px]">
+      <span className={cn(!!connector && "cursor-pointer underline")} onClick={onConnectorChange}>
+        {!!connector ? connector : "Where"}
+      </span>
+    </div>
+  );
+};
+
+type TAttributeSegmentFilterProps = SegmentFilterItemProps & {
+  resource: TUserSegmentAttributeFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+};
+
+const AttributeSegmentFilter = ({
+  environmentId,
+  connector,
+  resource,
+  localSurvey,
+  setLocalSurvey,
+  onAddFilterBelow,
+  onCreateGroup,
+  onDeleteFilter,
+  onMoveFilter,
+  updateValueInLocalSurvey,
+}: TAttributeSegmentFilterProps) => {
+  const { attributeClassId } = resource.root;
+  const { attributeClasses } = useAttributeClasses(environmentId);
+  const operatorText = convertOperatorToText(resource.qualifier.operator);
+
+  const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
+    return {
+      id: operator,
+      name: convertOperatorToText(operator),
+    };
+  });
+
+  const attributeClass = attributeClasses.find(
+    (attributeClass) => attributeClass.id === attributeClassId
+  )?.name;
+
+  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              resource.qualifier.operator = newOperator;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const updateAttributeClassIdInLocalSurvey = (filterId: string, newAttributeClassId: string) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              (resource as TUserSegmentAttributeFilter).root.attributeClassId = newAttributeClassId;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  return (
+    <div className="flex items-center gap-4 text-sm">
+      <SegmentFilterItemConnector
+        key={connector}
+        connector={connector}
+        filterId={resource.id}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+      />
+
+      <Select
+        value={attributeClass}
+        onValueChange={(value) => {
+          updateAttributeClassIdInLocalSurvey(resource.id, value);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
+          <div className="flex items-center gap-1">
+            <TagIcon className="h-4 w-4 text-sm" />
+            <p>{attributeClass}</p>
+          </div>
+        </SelectTrigger>
+
+        <SelectContent>
+          {attributeClasses
+            .filter((attributeClass) => !attributeClass.archived)
+            .map((attributeClass) => (
+              <SelectItem value={attributeClass.id}>{attributeClass.name}</SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={operatorText}
+        onValueChange={(operator: TAttributeOperator) => {
+          updateOperatorInLocalSurvey(resource.id, operator);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
+          <p>{operatorText}</p>
+        </SelectTrigger>
+
+        <SelectContent>
+          {operatorArr.map((operator) => (
+            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Input
+        value={resource.value.toString()}
+        onChange={(e) => {
+          updateValueInLocalSurvey(resource.id, e.target.value);
+        }}
+        className="w-auto"
+      />
+
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <MoreVertical className="h-4 w-4" />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => onAddFilterBelow(resource.id)}>
+              add filter below
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => onCreateGroup(resource.id)}>create group</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "up")}>move up</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "down")}>move down</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <button onClick={() => onDeleteFilter(resource.id)}>
+          <Trash2 className="h-4 w-4 cursor-pointer"></Trash2>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+type TActionSegmentFilterProps = SegmentFilterItemProps & {
+  resource: TUserSegmentActionFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+};
+const ActionSegmentFilter = ({
+  environmentId,
+  connector,
+  resource,
+  localSurvey,
+  setLocalSurvey,
+  onAddFilterBelow,
+  onCreateGroup,
+  onDeleteFilter,
+  onMoveFilter,
+  updateValueInLocalSurvey,
+}: TActionSegmentFilterProps) => {
+  const { actionClassId } = resource.root;
+  const { eventClasses } = useEventClasses(environmentId);
+  const operatorText = convertOperatorToText(resource.qualifier.operator);
+  const qualifierMetric = resource.qualifier.metric;
+
+  const operatorArr = BASE_OPERATORS.map((operator) => ({
+    id: operator,
+    name: convertOperatorToText(operator),
+  }));
+
+  const actionMetrics = ACTION_METRICS.map((metric) => ({
+    id: metric,
+    name: convertMetricToText(metric),
+  }));
+
+  const attributeClass = eventClasses.find((eventClass) => eventClass.id === actionClassId)?.name;
+
+  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TBaseOperator) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              resource.qualifier.operator = newOperator;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const updateActionClassIdInLocalSurvey = (filterId: string, actionClassId: string) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              (resource as TUserSegmentActionFilter).root.actionClassId = actionClassId;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const updateActionMetricInLocalSurvey = (filterId: string, newMetric: TActionMetric) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              (resource as TUserSegmentActionFilter).qualifier.metric = newMetric;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  return (
+    <div className="flex items-center gap-4 text-sm">
+      <SegmentFilterItemConnector
+        key={connector}
+        connector={connector}
+        filterId={resource.id}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+      />
+
+      <Select
+        value={attributeClass}
+        onValueChange={(value) => {
+          updateActionClassIdInLocalSurvey(resource.id, value);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
+          <div className="flex items-center gap-1">
+            <MousePointerClick className="h-4 w-4 text-sm" />
+            <p>{attributeClass}</p>
+          </div>
+        </SelectTrigger>
+
+        <SelectContent>
+          {eventClasses
+            .filter((eventClass) => !eventClass.archived)
+            .map((eventClass) => (
+              <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={qualifierMetric}
+        onValueChange={(value: TActionMetric) => {
+          updateActionMetricInLocalSurvey(resource.id, value);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
+          <p>{qualifierMetric}</p>
+        </SelectTrigger>
+
+        <SelectContent>
+          {actionMetrics.map((metric) => (
+            <SelectItem value={metric.id}>{metric.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={operatorText}
+        onValueChange={(operator: TBaseOperator) => {
+          updateOperatorInLocalSurvey(resource.id, operator);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
+          <p>{operatorText}</p>
+        </SelectTrigger>
+
+        <SelectContent>
+          {operatorArr.map((operator) => (
+            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Input
+        value={resource.value.toString()}
+        onChange={(e) => {
+          updateValueInLocalSurvey(resource.id, e.target.value);
+        }}
+        className="w-auto"
+      />
+
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <MoreVertical className="h-4 w-4" />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => onAddFilterBelow(resource.id)}>
+              add filter below
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => onCreateGroup(resource.id)}>create group</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "up")}>move up</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "down")}>move down</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <button onClick={() => onDeleteFilter(resource.id)}>
+          <Trash2 className="h-4 w-4 cursor-pointer"></Trash2>
+        </button>
+      </div>
+    </div>
+  );
 };
 
 const SegmentFilterItem = ({
   resource,
   connector,
   environmentId,
-  onFilterValueChange,
+  localSurvey,
+  setLocalSurvey,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
+  onMoveFilter,
 }: SegmentFilterItemProps) => {
   const [connectorState, setConnectorState] = useState(connector);
-  const [valueInput, setValueInput] = useState(resource.value.toString());
   const [userSegmentOperator, setUserSegmentOperator] = useState(
     resource.root.type === "segment" ? resource.qualifier.operator : ""
   );
-  const [selectedOperator, setSelectedOperator] = useState(resource.qualifier.operator);
 
-  const { attributeClasses } = useAttributeClasses(environmentId);
-  const { eventClasses } = useEventClasses(environmentId);
+  const updateFilterValueInLocalSurvey = (filterId: string, newValue: string | number) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              resource.value = newValue;
+
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
 
   const onConnectorChange = () => {
     if (!connectorState) return;
@@ -79,154 +538,38 @@ const SegmentFilterItem = ({
   // action UI
 
   if (resource.root.type === "action") {
-    const operatorText = convertOperatorToText(selectedOperator);
-
-    const eventClass = eventClasses.find((eventClass) => eventClass.id === resource.root.actionTypeId)?.name;
-    const operatorArr = BASE_OPERATORS.map((operator) => {
-      return {
-        id: operator,
-        name: convertOperatorToText(operator),
-      };
-    });
-
-    let qualifierMetric: string = "";
-
-    if ("metric" in resource.qualifier) {
-      qualifierMetric = convertMetricToText(resource.qualifier.metric);
-    }
-
     return (
-      <div className="flex items-center gap-4 text-sm">
-        <span className={cn(!!connectorState && "cursor-pointer underline")} onClick={onConnectorChange}>
-          {!!connectorState ? connectorState : "Where"}
-        </span>
-
-        <Select value={eventClass}>
-          <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
-            <div className="flex items-center gap-1">
-              <MousePointerClick className="h-4 w-4 text-sm" />
-              <p>{eventClass}</p>
-            </div>
-          </SelectTrigger>
-
-          <SelectContent>
-            {eventClasses.map((eventClass) => (
-              <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {!!qualifierMetric && (
-          <Select value={qualifierMetric}>
-            <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
-              <p>{qualifierMetric}</p>
-            </SelectTrigger>
-          </Select>
-        )}
-
-        <Select value={operatorText}>
-          <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
-            <p>{operatorText}</p>
-          </SelectTrigger>
-        </Select>
-
-        <Select value={resource.value.toString()}>
-          <SelectTrigger className="flex w-auto items-center justify-center text-center capitalize" hideArrow>
-            <p>{resource.value}</p>
-          </SelectTrigger>
-        </Select>
-      </div>
+      <ActionSegmentFilter
+        connector={connector}
+        resource={resource as TUserSegmentActionFilter}
+        environmentId={environmentId}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        onAddFilterBelow={onAddFilterBelow}
+        onCreateGroup={onCreateGroup}
+        onDeleteFilter={onDeleteFilter}
+        onMoveFilter={onMoveFilter}
+        updateValueInLocalSurvey={updateFilterValueInLocalSurvey}
+      />
     );
   }
 
   // attribute UI
 
   if (resource.root.type === "attribute") {
-    const operatorText = convertOperatorToText(selectedOperator);
-
-    const attributeClass = attributeClasses.find(
-      (attributeClass) => attributeClass.id === resource.root.attributeClassId
-    )?.name;
-    const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
-      return {
-        id: operator,
-        name: convertOperatorToText(operator),
-      };
-    });
-
     return (
-      <div className="flex items-center gap-4 text-sm">
-        <div className="w-[40px]">
-          <span className={cn(!!connectorState && "cursor-pointer underline")} onClick={onConnectorChange}>
-            {!!connectorState ? connectorState : "Where"}
-          </span>
-        </div>
-
-        <Select value={attributeClass}>
-          <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
-            <div className="flex items-center gap-1">
-              <TagIcon className="h-4 w-4 text-sm" />
-              <p>{attributeClass}</p>
-            </div>
-          </SelectTrigger>
-
-          <SelectContent>
-            {attributeClasses
-              .filter((attributeClass) => !attributeClass.archived)
-              .map((attributeClass) => (
-                <SelectItem value={attributeClass.id}>{attributeClass.name}</SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={operatorText}
-          onValueChange={(operator) => {
-            setSelectedOperator(operator);
-          }}>
-          <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
-            <p>{operatorText}</p>
-          </SelectTrigger>
-
-          <SelectContent>
-            {operatorArr.map((operator) => (
-              <SelectItem value={operator.id}>{operator.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Input
-          value={valueInput}
-          onChange={(e) => {
-            setValueInput(e.target.value);
-
-            onFilterValueChange(
-              // localSegment.findIndex((group) => group.resource === resource),
-              resource.id,
-              e.target.value
-            );
-          }}
-          className="w-auto"
-        />
-
-        <Button size="sm" onClick={() => onAddFilterBelow(resource.id)}>
-          AFB
-        </Button>
-
-        <Button size="sm" onClick={() => onCreateGroup(resource.id)}>
-          CG
-        </Button>
-
-        <Button size="sm" onClick={() => onDeleteFilter(resource.id)}>
-          D
-        </Button>
-
-        {/* <Select value={resource.value.toString()}>
-          <SelectTrigger className="flex w-auto items-center justify-center text-center capitalize" hideArrow>
-            <p>{resource.value}</p>
-          </SelectTrigger>
-        </Select> */}
-      </div>
+      <AttributeSegmentFilter
+        connector={connector}
+        resource={resource as TUserSegmentAttributeFilter}
+        environmentId={environmentId}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        onAddFilterBelow={onAddFilterBelow}
+        onCreateGroup={onCreateGroup}
+        onDeleteFilter={onDeleteFilter}
+        onMoveFilter={onMoveFilter}
+        updateValueInLocalSurvey={updateFilterValueInLocalSurvey}
+      />
     );
   }
 
@@ -319,46 +662,6 @@ const SegmentFilters = ({
   setLocalSurvey: (survey: Survey) => void;
 }) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [activeTabId, setActiveId] = useState<string>("all");
-
-  const { attributeClasses } = useAttributeClasses(environmentId);
-  const { eventClasses } = useEventClasses(environmentId);
-
-  const tabs: {
-    id: string;
-    label: string;
-    icon?: React.ReactNode;
-  }[] = [
-    { id: "all", label: "All" },
-    { id: "actions", label: "Actions", icon: <MousePointerClick className="h-4 w-4" /> },
-    { id: "attributes", label: "Attributes", icon: <TagIcon className="h-4 w-4" /> },
-    { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
-    { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
-  ];
-
-  const handleFilterValueChange = (filterId: string, newValue: TUserSegmentFilterValue) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              resource.value = newValue;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
-      }
-    });
-
-    setLocalSurvey(updatedLocalSurvey);
-  };
 
   const handleAddFilterBelow = (resourceId: string) => {
     const updatedLocalSurvey = produce(localSurvey, (draft) => {
@@ -394,6 +697,7 @@ const SegmentFilters = ({
               };
 
               group.splice(i + 1, 0, newFilter);
+              break;
             } else {
               searchAndUpdate(resource);
             }
@@ -440,6 +744,8 @@ const SegmentFilters = ({
               };
 
               group.splice(i, 1, newGroupToAdd);
+
+              break;
             }
           } else {
             if (group[i].id === resourceId) {
@@ -463,6 +769,8 @@ const SegmentFilters = ({
               };
 
               group.splice(i, 1, outerGroup);
+
+              break;
             } else {
               searchAndCreateGroup(filterGroup.resource);
             }
@@ -478,6 +786,82 @@ const SegmentFilters = ({
     setLocalSurvey(updatedLocalSurvey);
   };
 
+  const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const moveUp = (group: TBaseFilterGroup, i: number) => {
+        if (i === 0) {
+          return;
+        }
+
+        const previousTemp = group[i - 1];
+
+        group[i - 1] = group[i];
+        group[i] = previousTemp;
+
+        if (i - 1 === 0) {
+          const newConnector = group[i - 1].connector;
+
+          group[i - 1].connector = null;
+          group[i].connector = newConnector;
+        }
+      };
+
+      const moveDown = (group: TBaseFilterGroup, i: number) => {
+        if (i === group.length - 1) {
+          return;
+        }
+
+        const temp = group[i + 1];
+        group[i + 1] = group[i];
+        group[i] = temp;
+
+        // after the swap, determine if the connector should be null or not
+        if (i === 0) {
+          const nextConnector = group[i].connector;
+
+          group[i].connector = null;
+          group[i + 1].connector = nextConnector;
+        }
+      };
+
+      const searchAndMove = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === resourceId) {
+              if (direction === "up") {
+                moveUp(group, i);
+                break;
+              } else {
+                moveDown(group, i);
+                break;
+              }
+            }
+          } else {
+            if (group[i].id === resourceId) {
+              if (direction === "up") {
+                moveUp(group, i);
+                break;
+              } else {
+                moveDown(group, i);
+                break;
+              }
+            }
+
+            searchAndMove(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndMove(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
   const handleDeleteResource = (resourceId: string) => {
     const updatedLocalSurvey = produce(localSurvey, (draft) => {
       const deleteResource = (group: TBaseFilterGroup) => {
@@ -485,21 +869,109 @@ const SegmentFilters = ({
           const { resource } = group[i];
 
           if (isResourceFilter(resource) && resource.id === resourceId) {
-            group.splice(i, 1); // Delete the filter
+            group.splice(i, 1);
 
             break;
           } else if (!isResourceFilter(resource) && group[i].id === resourceId) {
-            group.splice(i, 1); // Delete the group
+            group.splice(i, 1);
 
             break;
           } else if (!isResourceFilter(resource)) {
-            deleteResource(resource); // Recursively search in the group
+            deleteResource(resource);
+          }
+        }
+      };
+
+      const deleteEmptyGroups = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (!isResourceFilter(resource) && resource.length === 0) {
+            group.splice(i, 1);
+          } else if (!isResourceFilter(resource)) {
+            deleteEmptyGroups(resource);
           }
         }
       };
 
       if (draft.userSegment?.filters) {
         deleteResource(draft.userSegment.filters);
+
+        // check if there are any empty groups and delete them
+        deleteEmptyGroups(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const toggleGroupConnector = (groupId: string, newConnectorValue: TUserSegmentConnector) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+          if (!isResourceFilter(resource)) {
+            if (group[i].id === groupId) {
+              group[i].connector = newConnectorValue;
+              break;
+            } else {
+              searchAndUpdate(resource);
+            }
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const onConnectorChange = (groupId: string, connector: TUserSegmentConnector) => {
+    if (!connector) return;
+
+    if (connector === "and") {
+      toggleGroupConnector(groupId, "or");
+    } else {
+      toggleGroupConnector(groupId, "and");
+    }
+  };
+
+  const handleAddFilterInGroup = (groupId: string, filter: TBaseFilterGroupItem) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const addFilter = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            continue;
+          } else {
+            if (group[i].id === groupId) {
+              const { resource } = group[i];
+
+              if (!isResourceFilter(resource)) {
+                if (resource.length === 0) {
+                  resource.push({
+                    ...filter,
+                    connector: null,
+                  });
+                } else {
+                  resource.push(filter);
+                }
+              }
+
+              break;
+            } else {
+              addFilter(resource);
+            }
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        addFilter(draft.userSegment.filters);
       }
     });
 
@@ -509,28 +981,37 @@ const SegmentFilters = ({
   return (
     <div className="flex flex-col gap-4 rounded-lg">
       {group?.map((groupItem) => {
-        const { connector, resource, id: resourceId } = groupItem;
+        const { connector, resource, id: groupId } = groupItem;
 
         if (isResourceFilter(resource)) {
           return (
             <SegmentFilterItem
-              key={resourceId}
+              key={groupId}
               connector={connector}
               resource={resource}
               environmentId={environmentId}
-              onFilterValueChange={(filterId: string, newValue: string | number) =>
-                handleFilterValueChange(filterId, newValue)
-              }
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
               onAddFilterBelow={(filterId: string) => handleAddFilterBelow(filterId)}
               onCreateGroup={(filterId: string) => handleCreateGroup(filterId)}
               onDeleteFilter={(filterId: string) => handleDeleteResource(filterId)}
+              onMoveFilter={(filterId: string, direction: "up" | "down") =>
+                handleMoveResource(filterId, direction)
+              }
             />
           );
         } else {
           return (
-            <div key={resourceId} className="flex flex-col gap-1">
+            <div key={groupId} className="flex flex-col gap-1">
               <div className="flex items-start gap-2">
-                <span className="cursor-pointer text-sm underline">{!!connector ? connector : "Where"}</span>
+                <div key={connector} className="w-[40px]">
+                  <span
+                    className={cn(!!connector && "cursor-pointer underline")}
+                    onClick={() => onConnectorChange(groupId, connector)}>
+                    {!!connector ? connector : "Where"}
+                  </span>
+                </div>
+
                 <div className="rounded-lg border-2 border-slate-300 p-4">
                   <SegmentFilters
                     group={resource}
@@ -538,104 +1019,49 @@ const SegmentFilters = ({
                     localSurvey={localSurvey}
                     setLocalSurvey={setLocalSurvey}
                   />
+
+                  <AddFilterModal
+                    environmentId={environmentId}
+                    open={addFilterModalOpen}
+                    setOpen={setAddFilterModalOpen}
+                    onAddFilter={(filter) => handleAddFilterInGroup(groupId, filter)}
+                  />
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 p-4">
-                <Button size="sm" className="w-fit" onClick={() => handleAddFilterBelow(resourceId)}>
-                  AFB
-                </Button>
+                <div className="flex items-center gap-2 p-4">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <MoreVertical className="h-4 w-4" />
+                    </DropdownMenuTrigger>
 
-                <Button size="sm" className="w-fit" onClick={() => handleCreateGroup(resourceId)}>
-                  CG
-                </Button>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleAddFilterBelow(groupId)}>
+                        add filter below
+                      </DropdownMenuItem>
 
-                <Button size="sm" className="w-fit" onClick={() => handleDeleteResource(resourceId)}>
-                  D
-                </Button>
+                      <DropdownMenuItem onClick={() => handleCreateGroup(groupId)}>
+                        create group
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem onClick={() => handleMoveResource(groupId, "up")}>
+                        move up
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem onClick={() => handleMoveResource(groupId, "down")}>
+                        move down
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <button onClick={() => handleDeleteResource(groupId)}>
+                    <Trash2 className="h-4 w-4 cursor-pointer" />
+                  </button>
+                </div>
               </div>
             </div>
           );
         }
       })}
-
-      <Dialog open={addFilterModalOpen} onOpenChange={(open) => setAddFilterModalOpen(open)}>
-        <DialogTrigger className="max-w-[160px]">
-          <button className="flex items-center gap-2 text-sm">
-            <PlusCircleIcon className="h-4 w-4" />
-            <p>Add filter</p>
-          </button>
-        </DialogTrigger>
-
-        <DialogContent className="w-[600px] bg-slate-100 sm:max-w-2xl" hideCloseButton>
-          <div className="flex w-auto flex-col">
-            <Input placeholder="Browse filters..." autoFocus />
-
-            <TabBar
-              className="bg-slate-100"
-              tabs={tabs}
-              activeId={activeTabId}
-              setActiveId={setActiveId}></TabBar>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {activeTabId === "actions" && (
-              <>
-                {eventClasses.map((eventClass) => {
-                  return (
-                    <div className="flex cursor-pointer items-center gap-4 text-sm">
-                      <MousePointerClick className="h-4 w-4" />
-                      <p>{eventClass.name}</p>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-
-            {activeTabId === "attributes" && (
-              <>
-                {attributeClasses.map((attributeClass) => {
-                  return (
-                    <div
-                      onClick={() => {
-                        setLocalSurvey((prev) => {
-                          return {
-                            ...prev,
-                            userSegment: {
-                              ...prev.userSegment,
-                              filters: [
-                                ...prev.userSegment.filters,
-                                {
-                                  connector: null,
-                                  resource: {
-                                    root: {
-                                      type: "attribute",
-                                      attributeClassId: attributeClass.id,
-                                    },
-                                    qualifier: {
-                                      operator: "equals",
-                                    },
-                                    value: "",
-                                  },
-                                },
-                              ],
-                            },
-                          };
-                        });
-
-                        setAddFilterModalOpen(false);
-                      }}
-                      className="flex cursor-pointer items-center gap-4 text-sm">
-                      <TagIcon className="h-4 w-4" />
-                      <p>{attributeClass.name}</p>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

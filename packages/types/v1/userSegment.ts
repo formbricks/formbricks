@@ -10,6 +10,8 @@ export const BASE_OPERATORS = [
   "greaterThan",
   "greaterEqual",
 ] as const;
+export const ZBaseOperator = z.enum(BASE_OPERATORS);
+export type TBaseOperator = z.infer<typeof ZBaseOperator>;
 
 export const ATTRIBUTE_OPERATORS = [
   ...BASE_OPERATORS,
@@ -18,15 +20,21 @@ export const ATTRIBUTE_OPERATORS = [
   "startsWith",
   "endsWith",
 ] as const;
+export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
+export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
 
 const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
+export const ZSegmentOperator = z.enum(SEGMENT_OPERATORS);
+export type TSegmentOperator = z.infer<typeof ZSegmentOperator>;
 
 const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
+export const ZDeviceOperator = z.enum(DEVICE_OPERATORS);
+export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
 
 const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS, ...DEVICE_OPERATORS] as const;
 export type TAllOperators = (typeof ALL_OPERATORS)[number];
 
-const ACTION_METRICS = [
+export const ACTION_METRICS = [
   "lastQuarterCount",
   "lastMonthCount",
   "lastWeekCount",
@@ -34,6 +42,8 @@ const ACTION_METRICS = [
   "lastOccurranceDaysAgo",
   "firstOccurranceDaysAgo",
 ] as const;
+export const ZActionMetric = z.enum(ACTION_METRICS);
+export type TActionMetric = z.infer<typeof ZActionMetric>;
 
 export const ZUserSegmentFilterValue = z.union([z.string(), z.number()]);
 export type TUserSegmentFilterValue = z.infer<typeof ZUserSegmentFilterValue>;
@@ -62,40 +72,56 @@ export const ZUserSegmentFilterRoot = z.discriminatedUnion("type", [
 
 export const ZUserSegmentAttributeFilter = z.object({
   id: z.string().cuid2(),
-  root: ZUserSegmentFilterRoot,
+  root: z.object({
+    type: z.literal("attribute"),
+    attributeClassId: z.string(),
+  }),
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
-    operator: z.enum(ATTRIBUTE_OPERATORS),
+    operator: ZAttributeOperator,
   }),
 });
+export type TUserSegmentAttributeFilter = z.infer<typeof ZUserSegmentAttributeFilter>;
 
 export const ZUserSegmentActionFilter = z.object({
   id: z.string().cuid2(),
-  root: ZUserSegmentFilterRoot,
+  root: z.object({
+    type: z.literal("action"),
+    actionClassId: z.string(),
+  }),
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
     metric: z.enum(ACTION_METRICS),
-    operator: z.enum(BASE_OPERATORS),
+    operator: ZBaseOperator,
   }),
 });
+export type TUserSegmentActionFilter = z.infer<typeof ZUserSegmentActionFilter>;
 
 export const ZUserSegmentSegmentFilter = z.object({
   id: z.string().cuid2(),
-  root: ZUserSegmentFilterRoot,
+  root: z.object({
+    type: z.literal("segment"),
+    userSegmentId: z.string(),
+  }),
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
-    operator: z.enum(SEGMENT_OPERATORS),
+    operator: ZSegmentOperator,
   }),
 });
+export type TUserSegmentSegmentFilter = z.infer<typeof ZUserSegmentSegmentFilter>;
 
 export const ZUserSegmentDeviceFilter = z.object({
   id: z.string().cuid2(),
-  root: ZUserSegmentFilterRoot,
+  root: z.object({
+    type: z.literal("device"),
+    deviceType: z.string(),
+  }),
   value: ZUserSegmentFilterValue,
   qualifier: z.object({
-    operator: z.enum(DEVICE_OPERATORS),
+    operator: ZDeviceOperator,
   }),
 });
+export type TUserSegmentDeviceFilter = z.infer<typeof ZUserSegmentDeviceFilter>;
 
 export const ZUserSegmentFilter = z
   .union([
@@ -121,9 +147,13 @@ export const ZUserSegmentFilter = z
 
 export type TUserSegmentFilter = z.infer<typeof ZUserSegmentFilter>;
 
+export const ZUserSegmentConnector = z.enum(["and", "or"]).nullable();
+
+export type TUserSegmentConnector = z.infer<typeof ZUserSegmentConnector>;
+
 export type TBaseFilterGroupItem = {
   id: string;
-  connector: "and" | "or" | null;
+  connector: TUserSegmentConnector;
   resource: TUserSegmentFilter | TBaseFilterGroup;
 };
 
@@ -153,7 +183,7 @@ export const ZUserSegmentFilterGroup: z.ZodType<TBaseFilterGroup> = z
     z.array(
       z.object({
         id: z.string().cuid2(),
-        connector: z.enum(["and", "or"]).nullable(),
+        connector: ZUserSegmentConnector,
         resource: z.union([ZUserSegmentFilter, ZUserSegmentFilterGroup]),
       })
     )
@@ -203,7 +233,7 @@ export const convertOperatorToText = (operator: TAllOperators) => {
   }
 };
 
-export const convertMetricToText = (metric: (typeof ACTION_METRICS)[number]) => {
+export const convertMetricToText = (metric: TActionMetric) => {
   switch (metric) {
     case "lastQuarterCount":
       return "Last quarter (Count)";
