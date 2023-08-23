@@ -16,9 +16,7 @@ interface SettingsViewProps {
   attributeClasses: TAttributeClass[]
 }
 
-
-
-export default async function SettingsView({ environment, localSurvey, setLocalSurvey,eventClasses,attributeClasses }: SettingsViewProps) {
+export default function SettingsView({ environment, localSurvey, setLocalSurvey,eventClasses,attributeClasses }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard

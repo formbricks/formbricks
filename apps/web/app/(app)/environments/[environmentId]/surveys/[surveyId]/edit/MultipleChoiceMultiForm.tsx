@@ -1,5 +1,4 @@
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
-import { Survey } from "@formbricks/types/surveys";
 import {
   Button,
   Input,

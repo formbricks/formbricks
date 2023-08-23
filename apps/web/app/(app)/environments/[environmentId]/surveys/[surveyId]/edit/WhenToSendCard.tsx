@@ -31,6 +31,8 @@ interface WhenToSendCardProps {
 export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey,eventClasses }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
+  let eventClassLength = eventClasses.length
+  const [activeIndex, setActiveIndex] = useState<number|null>(null)
 
   const autoClose = localSurvey.autoClose !== null;
 
@@ -87,6 +89,13 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, delay: value };
     setLocalSurvey(updatedSurvey);
   };
+  useEffect(() => {
+    if(activeIndex!==null){
+      setTriggerEvent(activeIndex, eventClasses[eventClasses.length-1].id)
+    }
+    eventClassLength = eventClasses.length
+  }, [eventClasses])
+  
 
   useEffect(() => {
     
@@ -172,6 +181,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       value="none"
                       onClick={() => {
                         setAddEventModalOpen(true);
+                        setActiveIndex(idx)
                       }}>
                       <PlusIcon className="mr-1 h-5 w-5" />
                       Add Action

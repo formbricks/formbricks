@@ -4,6 +4,8 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { TActionClass, TActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { cache } from "react";
+
 
 const select = {
   id: true,
@@ -16,7 +18,7 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = async (environmentId: string): Promise<TActionClass[]> => {
+export const getActionClasses = cache(async (environmentId: string): Promise<TActionClass[]> => {
   try {
     let actionClasses = await prisma.eventClass.findMany({
       where: {
@@ -32,7 +34,7 @@ export const getActionClasses = async (environmentId: string): Promise<TActionCl
   } catch (error) {
     throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
   }
-};
+})
 
 export const deleteActionClass = async (
   environmentId: string,

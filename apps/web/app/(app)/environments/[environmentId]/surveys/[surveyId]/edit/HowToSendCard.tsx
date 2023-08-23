@@ -27,6 +27,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey,environment
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
 
   useEffect(() => {
+    console.log("environemtn change")
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
     } else {

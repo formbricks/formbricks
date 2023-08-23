@@ -6,7 +6,6 @@ import { cache } from "react";
 import "server-only";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 export const selectSurveyWithAnalytics = {
   id: true,
@@ -372,7 +371,6 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
  
 
   const attributeFilters: TSurveyAttributeFilter[] = body.attributeFilters;
-  console.log(attributeFilters)
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
     const removedFilterIds: string[] = [];
@@ -423,7 +421,6 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
           value: attributeFilter.value,
         })),
       };
-      console.log("creating nre attricute filtyer --------------------------------------")
     }
     // delete removed triggers
     if (removedFilterIds.length > 0) {
@@ -449,19 +446,17 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
   delete data.responseRate;
   delete data.numDisplays;
 
-  console.log(data)
-
   try {
-    const updated = await prisma.survey.update({
+    const updatedSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data
     });
 
-    if (!updated) {
+    if (!updatedSurvey) {
       return null
     }
 
-    return updated
+    return updatedSurvey
 
   } catch (error) {
     console.log(error)

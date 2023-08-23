@@ -3,8 +3,6 @@
 import AlertDialog from "@/components/shared/AlertDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
-import { useProduct } from "@/lib/products/products";
-import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
@@ -40,10 +38,11 @@ export default function SurveyMenuBar({
   product
 }: SurveyMenuBarProps) {
   const router = useRouter();
-  const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
+  // const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id); 
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [isMutatingSurvey, setIsMutatingSurvey] = useState(false)
   let faultyQuestions: String[] = [];
 
   useEffect(() => {
@@ -126,7 +125,7 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = (shouldNavigateBack = false) => {
-
+    setIsMutatingSurvey(true)
   // Create a copy of localSurvey with isDraft removed from every question
   const strippedSurvey = {
     ...localSurvey,
@@ -141,7 +140,8 @@ export default function SurveyMenuBar({
     }
 
     surveyMutateAction(survey.id,{ ...strippedSurvey })
-      .then(async (response) => {
+      .then(async () => {
+        setIsMutatingSurvey(false)
         toast.success("Changes saved.");
         if (shouldNavigateBack) {
           router.back();
@@ -223,10 +223,12 @@ export default function SurveyMenuBar({
             variant="darkCTA"
             loading={isMutatingSurvey}
             onClick={async () => {
+              setIsMutatingSurvey(true)
               if (!validateSurvey(localSurvey)) {
                 return;
               }
-              await triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
+              await surveyMutateAction(survey.id,{ ...localSurvey, status: "inProgress" })
+              setIsMutatingSurvey(false)
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
             }}>
             Publish

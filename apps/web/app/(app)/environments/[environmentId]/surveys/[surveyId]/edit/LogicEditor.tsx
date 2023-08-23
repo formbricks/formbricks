@@ -1,5 +1,5 @@
-import { Logic, LogicCondition, Question, QuestionType } from "@formbricks/types/questions";
-import { TSurveyQuestion,TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { LogicCondition, Question, QuestionType } from "@formbricks/types/questions";
+import { TSurveyLogic, TSurveyQuestion,TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {
   Button,
   DropdownMenu,
@@ -48,7 +48,7 @@ export default function LogicEditor({
     if ("choices" in question) {
       return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
-      return Array.from({ length: question.range }, (_, i) => (i + 1).toString());
+      return Array.from({ length: question.range ? question.range : 0}, (_, i) => (i + 1).toString());
     } else if (question.type === QuestionType.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
@@ -141,7 +141,7 @@ export default function LogicEditor({
   };
 
   const addLogic = () => {
-    const newLogic: Logic[] = !question.logic ? [] : question.logic;
+    const newLogic: TSurveyLogic[] = !question.logic ? [] : question.logic;
     newLogic.push({
       condition: undefined,
       value: undefined,

@@ -31,7 +31,7 @@ interface WhoToSendCardProps {
 
 export default function WhoToSendCard({ localSurvey, setLocalSurvey,attributeClasses }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
-
+  const condition = filterConditions[0].id === "equals" ? "equals" : "notEquals";
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -43,7 +43,7 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey,attributeCla
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.attributeFilters = [
       ...localSurvey.attributeFilters,
-      { attributeClassId: "", condition: filterConditions[0].id, value: "" },
+      { attributeClassId: "", condition: condition, value: "" },
     ];
     setLocalSurvey(updatedSurvey);
   };
@@ -51,7 +51,7 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey,attributeCla
   const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
     console.log("running")
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.attributeFilters[idx] = { attributeClassId, condition, value };
+    updatedSurvey.attributeFilters[idx] = { attributeClassId, condition: condition === "equals" ? "equals" : "notEquals", value };
     setLocalSurvey(updatedSurvey);
   };
 

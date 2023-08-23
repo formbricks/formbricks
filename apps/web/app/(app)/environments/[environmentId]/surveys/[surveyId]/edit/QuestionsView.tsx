@@ -1,6 +1,5 @@
 "use client";
 
-import type { Survey } from "@formbricks/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
