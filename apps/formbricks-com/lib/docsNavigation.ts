@@ -10,10 +10,11 @@ const navigation = [
   {
     title: "Getting Started",
     links: [
-      { title: "Quickstart", href: "/docs/getting-started/quickstart" },
+      { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
       { title: "Next.js App Dir", href: "/docs/getting-started/nextjs-app" },
       { title: "Next.js Pages Dir", href: "/docs/getting-started/nextjs-pages" },
-      { title: "Setup with Vue.js", href: "/docs/getting-started/vuejs" },
+      { title: "React", href: "/docs/getting-started/react" },
+      { title: "Vue.js", href: "/docs/getting-started/vuejs" },
     ],
   },
   {
