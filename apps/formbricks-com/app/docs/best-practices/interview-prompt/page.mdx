@@ -58,17 +58,32 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Interview Prompt”:
 
-<Image src={CreatePrompt} alt="Create interview prompt by template" quality="100" className="rounded-lg" />
+<Image
+  src={CreatePrompt}
+  alt="Create interview prompt by template"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 2. Update prompt and CTA
 
 Update the prompt, description and button text to match your products tonality. You can also update the button color in the Product Settings.
 
-<Image src={ChangeText} alt="Change text content" quality="100" className="rounded-lg" />
+<Image
+  src={ChangeText}
+  alt="Change text content"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 In the button settings you have to make sure it is set to “External URL”. In the URL field, copy your booking link (e.g. https://cal.com/company/user-interview). If you don’t have a booking link yet, head over to [cal.com](http://cal.com) and get one - they have the best free plan out there!
 
-<Image src={InterviewExample} alt="Add CSS action" quality="100" className="rounded-lg" />
+<Image
+  src={InterviewExample}
+  alt="Add CSS action"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 Save, and move over to the “Audience” tab.
 
@@ -89,7 +104,7 @@ Great, now only the “Power User” segment will see our Interview Prompt. But 
 
 To create the trigger to show your Interview Prompt, go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool No-Code User Action Tracker:
 
-<Image src={AddAction} alt="Add action" quality="100" className="rounded-lg" />
+<Image src={AddAction} alt="Add action" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 
 <Note>
   ## You can also add actions in your code {{ class: "text-white" }}
@@ -101,28 +116,48 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
 
 1. **pageURL:** Whenever a user visits a page the survey will be displayed, as long as the other conditions match. Other conditions are pre-segmentation, if this user has seen a survey in the past 2 weeks, etc.
 
-<Image src={ActionPageurl} alt="Add page URL action" quality="100" className="rounded-lg" />
+<Image
+  src={ActionPageurl}
+  alt="Add page URL action"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 2. **innerText & CSS-Selector:** When a user clicks an element (like a button) with a specific text content or CSS selector, the prompt will be displayed as long as the other conditions also match.
 
 <div className="grid grid-cols-2 space-x-2">
-  <Image src={ActionCSS} alt="Add CSS action" quality="100" className="rounded-lg" />
-  <Image src={ActionInner} alt="Add inner text action" quality="100" className="rounded-lg" />
+  <Image src={ActionCSS} alt="Add CSS action" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+  <Image
+    src={ActionInner}
+    alt="Add inner text action"
+    quality="100"
+    className="rounded-lg max-w-full sm:max-w-3xl"
+  />
 </div>
 
 ### 5. Select action in the “When to ask” card
 
-<Image src={SelectAction} alt="Select feedback button action" quality="100" className="rounded-lg" />
+<Image
+  src={SelectAction}
+  alt="Select feedback button action"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 6. Set Recontact Options correctly
 
 Scroll down to “Recontact Options”. Here you have to choose the correct settings to strike the right balance between asking for user feedback and preventing survey fatigue. Your settings also depend on the size of your user base or segment. If you e.g. have thousands of “Power Users” you can easily afford to only display the prompt once. If you have a smaller user base you might want to ask twice to get a sufficient amount of bookings:
 
-<Image src={RecontactOptions} alt="Set recontact options" quality="100" className="rounded-lg" />
+<Image
+  src={RecontactOptions}
+  alt="Set recontact options"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 7. Congrats! You’re ready to publish your survey 💃 🤸
 
-<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg" />
+<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 
 <Note>
   ## Formbricks Widget running? {{ class: "text-white" }}

@@ -1,5 +1,5 @@
 export const meta = {
-  title: "Deploying Formbricks to production",
+  title: "Deploying Formbricks with Docker",
   description:
     "Utilize Docker-Compose for easy deployment on your machine. Clone the repo, configure settings, and build the image to access the app on localhost.",
 };
@@ -9,8 +9,6 @@ export const meta = {
 # Running Formbricks with Docker
 
 Quickly set up and start using Formbricks without getting into the technicalities of the build process. You'll be using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container.
-
-## We will be using the pre-built Formbricks Docker Image
 
 This is ideal for those who are testing Formbricks or want to run it with minimal to no modifications. For this we use the [public Docker image](https://hub.docker.com/r/formbricks/formbricks) and a simple docker-compose file.
 
@@ -54,7 +52,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
    <CodeGroup title="Generate NextAuth Secret">
 
    ```bash
-   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $(openssl rand -base64 32)/" docker-compose.yml
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)/" docker-compose.yml
    ```
 
    </CodeGroup>
@@ -99,7 +97,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
 
    </CodeGroup>
 
-3. Update env vars as necessary.
+3. Update env vars as necessary in the docker-compose file.
 4. Re-start the Formbricks stack
 
    <CodeGroup title="Relaunch the Docker Instance">
@@ -122,4 +120,49 @@ docker compose logs -f
 
 </CodeGroup>
 
+In an ideal case, you should see something like this:
+
+<CodeGroup title="Docker Build Underway">
+
+```bash
+[+] Running 9/16
+⠹ formbricks 15 layers [⣿⣤⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀] 29.78MB/47.76MB Pulling                                                           13.3s
+✔ 7264a8db6415 Already exists                                                                                                 0.0s
+⠋ 751194035c36 Downloading    [===============================>                   ]  29.78MB/47.76...                         8.1s
+✔ eff5dce73b38 Download complete                                                                                              1.7s
+✔ c8ce5be43019 Download complete                                                                                              1.2s
+✔ a2f33c630af5 Download complete                                                                                              5.1s
+✔ e3b64e437860 Download complete                                                                                              3.3s
+✔ a6551ac5f976 Download complete                                                                                              4.9s
+✔ 4f4fb700ef54 Download complete                                                                                              6.0s
+✔ 22163889e16b Download complete                                                                                              6.7s
+✔ dc647bb9eb13 Download complete                                                                                              7.8s
+⠋ 49c2ad494720 Waiting                                                                                                        8.1s
+⠋ 5c797a842dcb Waiting                                                                                                        8.1s
+⠋ 1f231213db04 Waiting                                                                                                        8.1s
+⠋ e407294bdcda Waiting                                                                                                        8.1s
+⠋ 6fd8358dca47 Pulling fs layer                                                                                               8.1s
+
+[+] Running 2/2
+✔ Container formbricks-quickstart-postgres-1    Created                                                                       0.0s
+✔ Container formbricks-quickstart-formbricks-1  Created                                                                       0.0s
+```
+
+</CodeGroup>
+
+And at the tail of the output, you should see something like this:
+
+<CodeGroup title="Docker Build Completed">
+
+```bash
+formbricks-quickstart-formbricks-1  | All migrations have been successfully applied.
+formbricks-quickstart-formbricks-1  |
+formbricks-quickstart-formbricks-1  | - info Loaded env from /home/nextjs/apps/web/.env
+formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random-string>:3000
+```
+
+</CodeGroup>
+
 You can close the logs again with `CTRL + C`.
+
+Still facing issues? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

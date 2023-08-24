@@ -285,31 +285,6 @@ export const navigation: Array<NavGroup> = [
   },
 ];
 
-// export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
-//   return (
-//     <nav {...props}>
-//       <ul role="list">
-//         <TopLevelNavItem href="/docs/introduction/what-is-formbricks">Documentation</TopLevelNavItem>
-//         <TopLevelNavItem href="https://github.com/formbricks/formbricks">Star us on GitHub</TopLevelNavItem>
-//         <TopLevelNavItem href="https://formbricks.com/discord">Join our Discord</TopLevelNavItem>
-
-//         {navigation.map((group, groupIndex) => (
-//           <NavigationGroup key={group.title} group={group} className={groupIndex === 0 ? "md:mt-0" : ""} />
-//         ))}
-//         <li className="sticky bottom-0 z-10 mt-6 min-[416px]:hidden">
-//           <Button
-//             href="https://app.formbricks.com/auth/signup"
-//             target="_blank"
-//             variant="filled"
-//             className="w-full">
-//             Get Started
-//           </Button>
-//         </li>
-//       </ul>
-//     </nav>
-//   );
-// }
-
 export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
   return (
     <nav {...props}>
@@ -321,8 +296,12 @@ export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
           <NavigationGroup key={group.title} group={group} className={groupIndex === 0 ? "md:mt-0" : ""} />
         ))}
         <li className="sticky bottom-0 z-10 mt-6 min-[416px]:hidden">
-          <Button href="#" variant="filled" className="w-full">
-            Sign in
+          <Button
+            href="https://app.formbricks.com/auth/signup"
+            target="_blank"
+            variant="filled"
+            className="w-full">
+            Get Started
           </Button>
         </li>
       </ul>

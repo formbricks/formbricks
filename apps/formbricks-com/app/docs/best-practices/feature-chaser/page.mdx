@@ -53,13 +53,23 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Feature Chaser”:
 
-<Image src={CreateSurvey} alt="Create survey by template" quality="100" className="rounded-lg" />
+<Image
+  src={CreateSurvey}
+  alt="Create survey by template"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 2. Update questions
 
 The questions you want to ask are dependent on your feature and can be very specific. In the template, we suggest a high-level check on how easy it was for the user to achieve their goal. We also add an opportunity to provide context:
 
-<Image src={ChangeText} alt="Change text content" quality="100" className="rounded-lg" />
+<Image
+  src={ChangeText}
+  alt="Change text content"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 Save, and move over to where the magic happens: The “Audience” tab.
 
@@ -73,27 +83,47 @@ There are two ways to track a button:
 
 1. **Trigger by innerText:** You might have a button with a unique text at the end of your feature e.g. "Export Report". You can setup a user Action with the according `innerText` to trigger the survey, like so:
 
-<Image src={ActionText} alt="Set the trigger by inner Text" quality="100" className="rounded-lg" />
+<Image
+  src={ActionText}
+  alt="Set the trigger by inner Text"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 2. **Trigger by CSS Selector:** In case you have more than one button saying “Export Report” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“export-report-featurename”` and set your user action up like so:
 
-<Image src={ActionCSS} alt="Set the trigger by CSS Selector" quality="100" className="rounded-lg" />
+<Image
+  src={ActionCSS}
+  alt="Set the trigger by CSS Selector"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 Please follow our [Actions manual](/docs/actions/why) for an in-depth description of how Actions work.
 
 ### 4. Select Action in the “When to ask” card
 
-<Image src={SelectAction} alt="Select PMF trigger button action" quality="100" className="rounded-lg" />
+<Image
+  src={SelectAction}
+  alt="Select PMF trigger button action"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 5. Last step: Set Recontact Options correctly
 
 Lastly, scroll down to “Recontact Options”. Here you have full freedom to decide who you want to ask. Generally, you only want to ask every user once and prevent survey fatigue. It's up to you to decide if you want to ask again, when the user did not yet reply:
 
-<Image src={RecontactOptions} alt="Set recontact options" quality="100" className="rounded-lg" />
+<Image
+  src={RecontactOptions}
+  alt="Set recontact options"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg" />
+<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 
 <Note>
   ## Formbricks Widget running? {{ class: "text-white" }}

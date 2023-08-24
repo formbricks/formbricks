@@ -1,12 +1,12 @@
 export const meta = {
-  title: "Deploying Formbricks to production",
+  title: "Deploying Formbricks from Source Code",
   description:
-    "Utilize Docker-Compose for easy deployment on your machine. Clone the repo, configure settings, and build the image to access the app on localhost.",
+    "Build the Formbricks Image right from the open-sourced codebase and make changes however needed. Deploy it then with the freedom of customizing even the compile-time environment variables.",
 };
 
 [Self-hosting]()
 
-# Deploying Formbricks to production
+# Building and Running Formbricks from Source
 
 This approach provides the flexibility to configure every aspect of your Formbricks instance, including environment variables that need to be set at build time. While we don't recommend changing the source code of Formbricks, this method allows you to set your own configuration that might be necessary for specific deployment needs. Keep in mind that this method requires a more in-depth understanding of Docker and the build process. However, the trade-off is the additional control and flexibility you gain, making it worth considering if you're a more advanced user or have very specific configuration needs.
 
@@ -91,8 +91,14 @@ Please refer to the [Formbricks Instructions](https://github.com/formbricks/form
 
 If you encounter any issues, you can check the logs of the container with:
 
+<CodeGroup title="Docker container logs">
+
 ```bash
 docker compose logs -f
 ```
 
+</CodeGroup>
+
 You can close the logs again with `CTRL + C`.
+
+Still facing issues? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
