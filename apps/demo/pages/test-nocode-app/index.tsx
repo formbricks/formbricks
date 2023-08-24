@@ -88,142 +88,111 @@ export default function AppPage({}) {
               try again.
             </p>
           </div>
-
           <div className="p-6">
             <div>
               <button
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
                 onClick={() => {
-                  formbricks.track("Code Action");
+                  console.log("Inner Text");
                 }}>
-                Code Action
+                Inner Text
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
-                This button sends a{" "}
-                <a href="https://formbricks.com/docs/actions/code" className="underline" target="_blank">
-                  Code Action
-                </a>{" "}
-                to the Formbricks API called &apos;Code Action&apos;. You will find it in the Actions Tab.
-              </p>
+              <p className="text-xs text-slate-700 dark:text-gray-300">Inner Text only</p>
             </div>
           </div>
-          <div className="p-6">
-            <div>
-              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
-                No-Code Action
-              </button>
-            </div>
-            <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
-                This button sends a{" "}
-                <a
-                  href="https://formbricks.com/docs/actions/no-code"
-                  className="underline dark:text-blue-500"
-                  target="_blank">
-                  No Code Action
-                </a>{" "}
-                as long as you created it beforehand in the Formbricks App.{" "}
-                <a
-                  href="https://formbricks.com/docs/actions/no-code"
-                  target="_blank"
-                  className="underline dark:text-blue-500">
-                  Here are instructions on how to do it.
-                </a>
-              </p>
-            </div>
-          </div>
+
           <div className="p-6">
             <div>
               <button
+                id="css-id"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
                 onClick={() => {
-                  formbricks.setAttribute("Plan", "Free");
-                }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
-                Set Plan to &apos;Free&apos;
+                  console.log("Inner Text + CSS ID");
+                }}>
+                Inner Text
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
-                This button sets the{" "}
-                <a
-                  href="https://formbricks.com/docs/attributes/custom-attributes"
-                  target="_blank"
-                  className="underline dark:text-blue-500">
-                  attribute
-                </a>{" "}
-                &apos;Plan&apos; to &apos;Free&apos;. If the attribute does not exist, it creates it.
-              </p>
+              <p className="text-xs text-slate-700 dark:text-gray-300">Inner Text + Css ID</p>
             </div>
           </div>
+
           <div className="p-6">
             <div>
               <button
+                className="css-class mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
                 onClick={() => {
-                  formbricks.setAttribute("Plan", "Paid");
-                }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
-                Set Plan to &apos;Paid&apos;
+                  console.log("Inner Text + CSS Class");
+                }}>
+                Inner Text
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
-                This button sets the{" "}
-                <a
-                  href="https://formbricks.com/docs/attributes/custom-attributes"
-                  target="_blank"
-                  className="underline dark:text-blue-500">
-                  attribute
-                </a>{" "}
-                &apos;Plan&apos; to &apos;Paid&apos;. If the attribute does not exist, it creates it.
-              </p>
+              <p className="text-xs text-slate-700 dark:text-gray-300">Inner Text + CSS Class</p>
             </div>
           </div>
+
           <div className="p-6">
             <div>
               <button
+                id="css-id"
+                className="css-class mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
                 onClick={() => {
-                  formbricks.setEmail("test@web.com");
-                }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
-                Set Email
+                  console.log("ID + Class");
+                }}>
+                ID and Class
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
-                This button sets the{" "}
-                <a
-                  href="https://formbricks.com/docs/attributes/identify-users"
-                  target="_blank"
-                  className="underline dark:text-blue-500">
-                  user email
-                </a>{" "}
-                &apos;test@web.com&apos;
-              </p>
+              <p className="text-xs text-slate-700 dark:text-gray-300">ID + Class</p>
             </div>
           </div>
+
           <div className="p-6">
             <div>
               <button
+                id="css-id"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
                 onClick={() => {
-                  formbricks.setUserId("THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING");
-                }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
-                Set User ID
+                  console.log("ID + Class");
+                }}>
+                ID only
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
-                This button sets an external{" "}
-                <a
-                  href="https://formbricks.com/docs/attributes/identify-users"
-                  target="_blank"
-                  className="underline dark:text-blue-500">
-                  user ID
-                </a>{" "}
-                to &apos;THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING&apos;
-              </p>
+              <p className="text-xs text-slate-700 dark:text-gray-300">ID only</p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                className="css-class mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+                onClick={() => {
+                  console.log("Class only");
+                }}>
+                Class only
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-gray-300">Class only</p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                className="css-1 css-2 mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+                onClick={() => {
+                  console.log("Class + Class");
+                }}>
+                Class + Class
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-gray-300">Class + Class</p>
             </div>
           </div>
         </div>
