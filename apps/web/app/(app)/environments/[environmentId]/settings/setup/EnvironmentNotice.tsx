@@ -1,14 +1,7 @@
 "use client";
 
-<<<<<<< HEAD
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-=======
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useEnvironment } from "@/lib/environments/environments";
-import { ErrorComponent } from "@formbricks/ui";
 import { LightBulbIcon } from "@heroicons/react/24/solid";
->>>>>>> 9f6c40fd4260b1f8e442cd68fad7ba7255f82bd5
 import { useRouter } from "next/navigation";
 
 export default function EnvironmentNotice({

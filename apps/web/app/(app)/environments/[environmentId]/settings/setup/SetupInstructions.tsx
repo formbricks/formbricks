@@ -42,14 +42,8 @@ export default function SetupInstructions({ environmentId }) {
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
-<<<<<<< HEAD
     apiHost: "${isClient ? window.location.protocol : ""}//${isClient ? window.location.host : ""}",
-=======
-    apiHost: "${typeof window !== "undefined" && window.location.protocol}//${
-              typeof window !== "undefined" && window.location.host
-            }",
->>>>>>> 9f6c40fd4260b1f8e442cd68fad7ba7255f82bd5
-    debug: true, // remove when in production
+    debug: true, // remove when in production 
   });
 }`}</CodeBlock>
 
