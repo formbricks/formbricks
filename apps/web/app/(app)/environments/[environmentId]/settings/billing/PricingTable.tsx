@@ -1,8 +1,8 @@
 "use client";
-import { useTeam } from "@/lib/teams/teams";
-import { Badge, Button, ErrorComponent, LoadingSpinner } from "@formbricks/ui";
+import { Badge, Button, LoadingSpinner } from "@formbricks/ui";
+
+import { TTeam } from "@formbricks/types/v1/teams";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -13,18 +13,12 @@ const stripeURl =
     : "https://buy.stripe.com/test_8wMaHA3UWcACfuM3cc";
 
 interface PricingTableProps {
-  environmentId: string;
-  session: Session | null;
+  team: TTeam;
 }
 
-export default function PricingTable({ environmentId, session }: PricingTableProps) {
+export default function PricingTable({ team }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
-  const { team, isLoadingTeam, isErrorTeam } = useTeam(environmentId);
-
-  if (isLoadingTeam) return <LoadingSpinner />;
-
-  if (!session || isErrorTeam) return <ErrorComponent />;
 
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);

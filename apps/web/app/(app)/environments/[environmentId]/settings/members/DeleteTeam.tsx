@@ -1,13 +1,13 @@
 "use client";
 
-import toast from "react-hot-toast";
-import { useState, Dispatch, SetStateAction } from "react";
-import { useRouter } from "next/navigation";
-import { useMembers } from "@/lib/members";
-import { useProfile } from "@/lib/profile";
 import { Button, DeleteDialog, ErrorComponent, Input, LoadingSpinner } from "@formbricks/ui";
 import { useTeam, deleteTeam } from "@/lib/teams/teams";
+import { useMembers } from "@/lib/members";
 import { useMemberships } from "@/lib/memberships";
+import { useProfile } from "@/lib/profile";
+import { useRouter } from "next/navigation";
+import { Dispatch, SetStateAction, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function DeleteTeam({ environmentId }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

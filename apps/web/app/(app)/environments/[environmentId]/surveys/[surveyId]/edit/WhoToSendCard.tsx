@@ -106,9 +106,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             </div>
             <div>
               <p className="font-semibold text-slate-800">Target Audience</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Pre-segment your users with attributes filters.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
             </div>
             {localSurvey.type === "link" && (
               <div className="flex w-full items-center justify-end pr-2">

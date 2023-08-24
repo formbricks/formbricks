@@ -3,13 +3,13 @@
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { formbricksLogout } from "@/lib/formbricks";
 import { Button, DeleteDialog, Input, ProfileAvatar } from "@formbricks/ui";
+import { TProfile } from "@formbricks/types/v1/profile";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { profileDeleteAction } from "./actions";
-import { TProfile } from "@formbricks/types/v1/profile";
 
 export function EditAvatar({ session }) {
   return (

@@ -1,8 +1,8 @@
+import { useEffect } from "react";
 import Footer from "./Footer";
 import Header from "./Header";
 import MetaInformation from "./MetaInformation";
 import { Prose } from "./Prose";
-import { useEffect } from "react";
 
 const useExternalLinks = (selector: string) => {
   useEffect(() => {

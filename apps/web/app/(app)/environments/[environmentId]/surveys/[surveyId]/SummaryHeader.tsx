@@ -70,7 +70,7 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
       </div>
       <div className="block sm:hidden">
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild>
             <Button size="sm" variant="secondary" className="h-full w-full rounded-md p-2">
               <EllipsisHorizontalIcon className="h-6" />
             </Button>
