@@ -1,13 +1,13 @@
 "use client";
 
-import { Confetti } from "@formbricks/ui";
 import { timeSince } from "@formbricks/lib/time";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TEvent } from "@formbricks/types/v1/events";
+import { Confetti } from "@formbricks/ui";
 import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TEvent } from "@formbricks/types/v1/events";
 
 interface WidgetStatusIndicatorProps {
   environment: TEnvironment;
@@ -70,7 +70,7 @@ export default function WidgetStatusIndicator({
     return (
       <div
         className={clsx(
-          "flex flex-col items-center justify-center space-y-2 rounded-lg py-6",
+          "flex flex-col items-center justify-center space-y-2 rounded-lg py-6 text-center",
           status === "notImplemented" && "bg-slate-100",
           status === "running" && "bg-green-100",
           status === "issue" && "bg-amber-100"
@@ -84,7 +84,7 @@ export default function WidgetStatusIndicator({
           )}>
           <currentStatus.icon />
         </div>
-        <p className="text-xl font-bold text-slate-800">{currentStatus.title}</p>
+        <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
         <p className="text-sm text-slate-700">
           {currentStatus.subtitle}{" "}
           {status !== "notImplemented" && <span>{timeSince(events[0].createdAt.toISOString())}</span>}

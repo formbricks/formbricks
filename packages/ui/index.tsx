@@ -1,3 +1,4 @@
+export { AdvancedOptionToggle } from "./components/AdvancedOptionToggle";
 export { Alert, AlertDescription, AlertTitle } from "./components/Alert";
 export { PersonAvatar, ProfileAvatar } from "./components/Avatars";
 export { Badge } from "./components/Badge";

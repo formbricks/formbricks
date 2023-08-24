@@ -1,3 +1,4 @@
+import { UsageAttributesUpdater } from "@/app/(app)/FormbricksClient";
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/SurveyStarter";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
@@ -16,6 +17,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
   const environments: TEnvironment[] = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type);
+  const totalSubmissions = surveys.reduce((acc, survey) => acc + (survey.analytics?.numResponses || 0), 0);
 
   if (surveys.length === 0) {
     return <SurveyStarter environmentId={environmentId} environment={environment} product={product} />;
@@ -94,6 +96,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
             </li>
           ))}
       </ul>
+      <UsageAttributesUpdater numSurveys={surveys.length} totalSubmissions={totalSubmissions} />
     </>
   );
 }

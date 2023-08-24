@@ -73,18 +73,18 @@ export default function AppPage({}) {
               Reset person / pull data from Formbricks app
             </h3>
             <p className="text-slate-700 dark:text-gray-300">
-              On formbricks.logout() a few things happen: <strong>New person is created</strong> and{" "}
+              On formbricks.reset() a few things happen: <strong>New person is created</strong> and{" "}
               <strong>surveys & no-code actions are pulled from Formbricks:</strong>.
             </p>
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
               onClick={() => {
-                formbricks.logout();
+                formbricks.reset();
               }}>
-              Logout
+              Reset
             </button>
             <p className="text-xs text-slate-700 dark:text-gray-300">
-              If you made a change in Formbricks app and it does not seem to work, hit &apos;Logout&apos; and
+              If you made a change in Formbricks app and it does not seem to work, hit &apos;Reset&apos; and
               try again.
             </p>
           </div>
