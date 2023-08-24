@@ -328,9 +328,18 @@ export default function PreviewSurvey({
   }
 
   function resetQuestionProgress() {
+    if (progress === 0) {
+      const currentPreviewMode = previewMode
+      setPreviewMode("none");
+      setTimeout(() => {
+        setPreviewMode(currentPreviewMode);
+      }, 10);
+    }
     setProgress(0);
     setActiveQuestionId(questions[0].id);
-    setStoredResponse({});
+    setStoredResponse({}) 
+    setStoredResponseValue("")
+
   }
 
   useEffect(() => {

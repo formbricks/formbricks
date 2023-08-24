@@ -41,7 +41,7 @@ export default function EditThankYouCard({
   return (
     <div
       className={cn(
-        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
+        open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
         "flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
@@ -86,7 +86,7 @@ export default function EditThankYouCard({
             )}
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-4">
+        <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
             <div className="mt-3">
               <Label htmlFor="headline">Headline</Label>
