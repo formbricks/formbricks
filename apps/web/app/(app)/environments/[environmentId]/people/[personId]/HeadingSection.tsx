@@ -1,5 +1,3 @@
-"use client";
-
 import { GoBackButton } from "@formbricks/ui";
 import { DeletePersonButton } from "./DeletePersonButton";
 import { getPerson } from "@formbricks/lib/services/person";
