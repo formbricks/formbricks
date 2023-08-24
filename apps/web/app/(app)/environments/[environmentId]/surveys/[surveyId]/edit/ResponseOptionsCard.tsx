@@ -80,6 +80,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     subheading?: string;
   }) => {
     const message = {
+      enabled: surveyCloseOnDateToggle,
       heading: heading ?? surveyClosedMessage.heading,
       subheading: subheading ?? surveyClosedMessage.subheading,
     };

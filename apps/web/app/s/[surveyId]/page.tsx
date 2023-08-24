@@ -15,7 +15,7 @@ export default async function LinkSurveyPage({ params }) {
   }
 
   if (survey && survey.status !== "inProgress") {
-    return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
+    return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage ? survey.surveyClosedMessage : undefined} />;
   }
 
   const product = await getProductByEnvironmentId(survey.environmentId);
