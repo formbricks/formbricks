@@ -14,14 +14,22 @@ One way to send attributes to Formbricks is in your code. In Formbricks, there a
 
 You can use the setAttribute function to set any custom attribute for the user (e.g. name, plan, etc.):
 
+<CodeGroup title="Setting Plan to Pro">
+
 ```javascript
 formbricks.setAttribute("Plan", "Pro");
 ```
 
+</CodeGroup>
+
 Generally speaking, the setAttribute function works like this:
+
+<CodeGroup title="Setting Custom Attributes">
 
 ```javascript
 formbricks.setAttribute("attribute_key", "attribute_value");
 ```
+
+</CodeGroup>
 
 Where `attributeName` is the name of the attribute you want to set, and `attributeValue` is the value of the attribute you want to set.

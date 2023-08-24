@@ -21,23 +21,33 @@ Before proceeding, ensure you have the following:
 1. A Vue.js application set up and ready to go.
 2. A Formbricks account with an `environmentId` and `apiHost` for your application. You can find these in the Setup Checklist in the Settings.
 
-## Installation
+## 1. Installation
 
 To get started, install the Formbricks SDK using your preferred package manager:
 
-```bash
+<CodeGroup title="Install Formbricks">
+
+```sh {{ title: 'npm' }}
 npm install --save @formbricks/js
-# or
-yarn add @formbricks/js
-# or
+```
+
+```sh {{ title: 'pnpm' }}
 pnpm add @formbricks/js
 ```
 
-## Integration
+```sh {{ title: 'yarn' }}
+yarn add @formbricks/js
+```
+
+</CodeGroup>
+
+## 2. Integration with Vue.js
 
 1. Create a new file called \`formbricks.js\` inside the \`src\` folder of your Vue.js application, and add the following code to initialize the Formbricks SDK:
 
-```javascript
+<CodeGroup title="Integrating Formbricks: src/formbricks.js">
+
+```js
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
@@ -50,13 +60,21 @@ if (typeof window !== "undefined") {
 export default formbricks;
 ```
 
+</CodeGroup>
+
 2. In your main.js or main.ts file, import the formbricks.js module:
+
+<CodeGroup title="Integrating Formbricks: main.js/ts">
 
 ```javascript
 import formbricks from "@/formbricks";
 ```
 
+</CodeGroup>
+
 3. To make sure Formbricks SDK registers every page change in your Vue.js application, add a global navigation guard to your Vue Router configuration:
+
+<CodeGroup title="Integrating Formbricks">
 
 ```javascript
 import Vue from "vue";
@@ -75,6 +93,8 @@ router.afterEach((to, from) => {
   }
 });
 ```
+
+</CodeGroup>
 
 Now, the Formbricks SDK is set up and ready to use in your Vue.js application. You can start creating and customizing in-product micro-surveys for your users.
 

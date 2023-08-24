@@ -10,11 +10,17 @@ export const meta = {
 
 Actions can also be set in the code base. You can fire an action using `formbricks.track()`
 
+<CodeGroup title="Track an action">
+
 ```javascript
 formbricks.track("Action Name");
 ```
 
+</CodeGroup>
+
 Here is an example of how to fire an action when a user clicks a button:
+
+<CodeGroup title="Track Button Click">
 
 ```javascript
 const handleClick = () => {
@@ -23,3 +29,5 @@ const handleClick = () => {
 
 return <button onClick={handleClick}>Click Me</button>;
 ```
+
+</CodeGroup>

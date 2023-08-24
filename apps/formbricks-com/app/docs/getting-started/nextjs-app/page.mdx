@@ -25,24 +25,33 @@ Before getting started, make sure you have:
 
 <Image src={SetupChecklist} alt="Step 2 - Setup Checklist" quality="100" className="rounded-lg" />
 
-## Installing Formbricks SDK
+## 1. Installing Formbricks SDK
 
 First, you need to install the Formbricks SDK using one of the following commands:
 
-```bash
+<CodeGroup title="Install Formbricks">
+
+```sh {{ title: 'npm' }}
 npm install --save @formbricks/js
-# or
-yarn add @formbricks/js
-# or
+```
+
+```sh {{ title: 'pnpm' }}
 pnpm add @formbricks/js
 ```
 
-## Integrating with Next.js 13 App Directory
+```sh {{ title: 'yarn' }}
+yarn add @formbricks/js
+```
+
+</CodeGroup>
+
+## 2. Integrating with Next.js 13 App Directory
 
 The Next.js 13 app directory requires us to initialize Formbricks differently than the pages directory. Specifically, the app directory server-side renders components by default, and the formbricks-js library is a client-side library. To make these work together, create a `formbricks.tsx` file (or `formbricks.js` if you don't use Typescript) and set up the FormbricksProvider with the 'use client' directive:
 
-```tsx
-// app/formbricks.tsx
+<CodeGroup title="Integrating Formbricks: app/formbricks.tsx">
+
+```tsx {{ title: 'app/formbricks.tsx' }}
 "use client";
 import formbricks from "@formbricks/js";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -68,10 +77,13 @@ export default function FormbricksProvider() {
 }
 ```
 
+</CodeGroup>
+
 Once we do this, we can then import the `formbricks.tsx` file in our `app/layout.tsx` file, and wrap our app in the Formbricks provider.
 
+<CodeGroup title="Integrating Formbricks: app/layout.tsx">
+
 ```tsx
-// app/layout.tsx
 import FormbricksProvider from "./formbricks";
 import "./globals.css";
 
@@ -85,7 +97,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-## Validate your setup
+</CodeGroup>
+
+## 3. Validate your setup
 
 Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:
 

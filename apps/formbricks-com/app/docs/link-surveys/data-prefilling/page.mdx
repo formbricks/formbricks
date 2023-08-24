@@ -23,9 +23,13 @@ URL prefilling of data comes in handy when you:
 
 ## Quick Example
 
-```txt
+<CodeGroup title="Example URL">
+
+```sh
 https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id=5
 ```
+
+</CodeGroup>
 
 ## How it works
 
@@ -55,51 +59,63 @@ Here are a few examples to get you started:
 
 ### Rating Question
 
-```txt
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
+<CodeGroup title="Translates to 5 stars / points / emojis">
 
-// -> translates to 5 stars / points / emojis
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
 ```
+
+</CodeGroup>
 
 ### NPS Question
 
-```txt
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
+<CodeGroup title="Translates to an NPS rating of 10">
 
-// -> translates to an NPS rating of 10
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
 ```
+
+</CodeGroup>
 
 ### Single Select Question (Radio)
 
-```txt
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id=Very%20disappointed
+<CodeGroup title="Chooses the option 'Very disappointed' in the single select question. The string has to be identical to the option in your question">
 
-// -> Chooses the option "Very disappointed" in the single select question. The string has to be identical to the option in your question.
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id=Very%20disappointed
 ```
+
+</CodeGroup>
 
 ### Multi Select Question (Checkbox)
 
-```txt
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=Sun%2CPalms%2CBeach
+<CodeGroup title="Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question">
 
-// -> Selects three options "Sun, Palms and Beach" in the multi select question. The strings have to be identical to the options in your question.
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=Sun%2CPalms%2CBeach
 ```
+
+</CodeGroup>
 
 ### Open Text Question
 
-```txt
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
+<CodeGroup title="Adds 'I love Formbricks' as the answer to the open text question">
 
-// -> Adds "I love Formbricks" as the answer to the open text question
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
 ```
+
+</CodeGroup>
 
 ### CTA Question
 
+<CodeGroup title="Adds 'clicked' as the answer to the CTA question. Alternatively, you can set it to 'dismissed' to skip the question.">
+
 ```txt
 https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=clicked
-
-// -> Adds "clicked" as the answer to the CTA question. Alternatively, you can set it to "dismissed" to skip the question.
 ```
+
+</CodeGroup>
 
 ## Validation
 

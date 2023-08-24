@@ -1,54 +1,43 @@
 import Image from "next/image";
 
-import { Button } from "@/components/docs/Button";
-import { Heading } from "@/components/docs/Heading";
-import logoGo from "@/images/logos/go.svg";
-import logoNode from "@/images/logos/node.svg";
-import logoPhp from "@/images/logos/php.svg";
-import logoPython from "@/images/logos/python.svg";
-import logoRuby from "@/images/logos/ruby.svg";
+import { Button } from "./Button";
+import logoHtml from "@/images/logos/html5.svg";
+import logoNextjs from "@/images/logos/nextjs.svg";
+import logoReactJs from "@/images/logos/reactjs.svg";
+import logoVueJs from "@/images/logos/vuejs.svg";
 
 const libraries = [
   {
-    href: "#",
-    name: "PHP",
-    description: "A popular general-purpose scripting language that is especially suited to web development.",
-    logo: logoPhp,
+    href: "#formbricks-x-html",
+    name: "HTML",
+    description: "All you need to do is add 3 lines of code to your HTML script and thats it, you're done!",
+    logo: logoHtml,
   },
   {
-    href: "#",
-    name: "Ruby",
-    description: "A dynamic, open source programming language with a focus on simplicity and productivity.",
-    logo: logoRuby,
+    href: "#formbricks-x-react-js",
+    name: "React.js",
+    description: "Load the our Js library with your environment ID and you're ready to go!",
+    logo: logoReactJs,
   },
   {
-    href: "#",
-    name: "Node.js",
-    description: "Node.js® is an open-source, cross-platform JavaScript runtime environment.",
-    logo: logoNode,
-  },
-  {
-    href: "#",
-    name: "Python",
+    href: "#formbricks-x-next-js",
+    name: "Next.js",
     description:
-      "Python is a programming language that lets you work quickly and integrate systems more effectively.",
-    logo: logoPython,
+      "Natively add us to your NextJs project with support for both App as well as Pages project structure!",
+    logo: logoNextjs,
   },
   {
-    href: "#",
-    name: "Go",
-    description: "An open-source programming language supported by Google with built-in concurrency.",
-    logo: logoGo,
+    href: "#formbricks-x-vue-js",
+    name: "Vue.js",
+    description: "Simply add us to your router change and sit back!",
+    logo: logoVueJs,
   },
 ];
 
 export function Libraries() {
   return (
     <div className="my-16 xl:max-w-none">
-      <Heading level={2} id="official-libraries">
-        Official libraries
-      </Heading>
-      <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-t border-zinc-900/5 pt-10 dark:border-white/5 sm:grid-cols-2 xl:max-w-none xl:grid-cols-3">
+      <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-zinc-900/5 dark:border-white/5 sm:grid-cols-2 xl:max-w-none xl:grid-cols-3">
         {libraries.map((library) => (
           <div key={library.name} className="flex flex-row-reverse gap-6">
             <div className="flex-auto">
