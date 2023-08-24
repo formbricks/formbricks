@@ -105,6 +105,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/quickstart",
+        destination: "/docs/quickstart-in-app-survey",
+        permanent: true,
+      },
+      {
         source: "/pmf",
         destination: "/",
         permanent: true,
