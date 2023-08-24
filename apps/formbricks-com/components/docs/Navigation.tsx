@@ -267,7 +267,12 @@ export const navigation: Array<NavGroup> = [
   },
   {
     title: "Self-hosting",
-    links: [{ title: "Deployment", href: "/docs/self-hosting/deployment" }],
+    links: [
+      { title: "Deployment", href: "/docs/self-hosting/deployment" },
+      { title: "Production", href: "/docs/self-hosting/production" },
+      { title: "Docker", href: "/docs/self-hosting/docker" },
+      { title: "From Source", href: "/docs/self-hosting/from-source" },
+    ],
   },
   {
     title: "Contributing",

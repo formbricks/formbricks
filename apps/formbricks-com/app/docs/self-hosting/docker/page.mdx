@@ -1,0 +1,125 @@
+export const meta = {
+  title: "Deploying Formbricks to production",
+  description:
+    "Utilize Docker-Compose for easy deployment on your machine. Clone the repo, configure settings, and build the image to access the app on localhost.",
+};
+
+[Self-hosting]()
+
+# Running Formbricks with Docker
+
+Quickly set up and start using Formbricks without getting into the technicalities of the build process. You'll be using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container.
+
+## We will be using the pre-built Formbricks Docker Image
+
+This is ideal for those who are testing Formbricks or want to run it with minimal to no modifications. For this we use the [public Docker image](https://hub.docker.com/r/formbricks/formbricks) and a simple docker-compose file.
+
+### Requirements
+
+Ensure `docker` & `docker compose` are installed on your server/system. Both are typically included with Docker utilities, like Docker Desktop and Rancher Desktop.
+
+<Note>
+  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the
+  Docker documentation.
+</Note>
+
+1. **Create a New Directory for Formbricks**
+
+   Open a terminal and create a new directory for Formbricks, then navigate into this new directory:
+
+   <CodeGroup title="Create and cd into the new directory">
+
+   ```bash
+   mkdir formbricks-quickstart && cd formbricks-quickstart
+   ```
+
+   </CodeGroup>
+
+2. **Download the Docker-Compose File**
+
+   Download the docker-compose file directly from the Formbricks repository:
+
+   <CodeGroup title="Download docker compose file">
+
+   ```bash
+   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+   ```
+
+   </CodeGroup>
+
+3. **Generate NextAuth Secret**
+
+   Next, you need to generate a NextAuth secret. This will be used for session signing and encryption. The `sed` command below generates a random string using `openssl`, then replaces the `NEXTAUTH_SECRET:` placeholder in the `docker-compose.yml` file with this generated secret:
+
+   <CodeGroup title="Generate NextAuth Secret">
+
+   ```bash
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $(openssl rand -base64 32)/" docker-compose.yml
+   ```
+
+   </CodeGroup>
+
+4. **Start the Docker Setup**
+
+   You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
+
+   <CodeGroup title="Launch Docker Instance">
+
+   ```bash
+   docker compose up -d
+   ```
+
+   </CodeGroup>
+
+   The `-d` flag will run the containers in detached mode, meaning they'll run in the background.
+
+5. **Visit Formbricks in Your Browser**
+
+   After starting the Docker setup, visit http://localhost:3000 in your browser to interact with the Formbricks application. The first time you access this page, you'll be greeted by a setup wizard. Follow the prompts to define your first user and get started.
+
+## Updating Formbricks
+
+1. Stop the Formbricks stack
+
+   <CodeGroup title="Stop the docker instance">
+
+   ```bash
+   docker compose down
+   ```
+
+   </CodeGroup>
+
+2. Pull the latest changes
+
+   <CodeGroup title="Pull the changes into docker">
+
+   ```bash
+   docker compose pull
+   ```
+
+   </CodeGroup>
+
+3. Update env vars as necessary.
+4. Re-start the Formbricks stack
+
+   <CodeGroup title="Relaunch the Docker Instance">
+
+   ```bash
+   docker compose up -d
+   ```
+
+   </CodeGroup>
+
+## Debugging
+
+If you encounter any issues, you can check the logs of the container with:
+
+<CodeGroup title="Look into docker logs">
+
+```bash
+docker compose logs -f
+```
+
+</CodeGroup>
+
+You can close the logs again with `CTRL + C`.
