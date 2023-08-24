@@ -32,7 +32,7 @@ export const select = {
   stripeCustomerId: true,
 };
 
-export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam> => {
+export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
   try {
     const team = await prisma.team.findFirst({
       where: {

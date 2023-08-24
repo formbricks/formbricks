@@ -12,6 +12,14 @@ export default async function ProfileSettingsPage({ params }) {
   const session = await getServerSession(authOptions);
   const team = await getTeamByEnvironmentId(params.environmentId);
 
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
   return (
     <>
       {team && session && (
