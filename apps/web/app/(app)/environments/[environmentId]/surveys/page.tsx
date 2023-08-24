@@ -6,7 +6,7 @@ import SurveysList from "./SurveyList";
 import { Metadata } from "next";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getEvents } from "@formbricks/lib/services/events";
+import { getActions } from "@formbricks/lib/services/actions";
 import { updateEnvironmentAction } from "@/app/(app)/environments/[environmentId]/settings/setup/actions";
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function SurveysPage({ params }) {
   const [environment, events] = await Promise.all([
     getEnvironment(params.environmentId),
-    getEvents(params.environmentId),
+    getActions(params.environmentId),
   ]);
 
   return (

@@ -10,3 +10,11 @@ export const ZEnvironment = z.object({
 });
 
 export type TEnvironment = z.infer<typeof ZEnvironment>;
+
+export const ZEnvironmentUpdateInput = z.object({
+  type: z.enum(["development", "production"]),
+  productId: z.string(),
+  widgetSetupCompleted: z.boolean(),
+});
+
+export type TEnvironmentUpdateInput = z.infer<typeof ZEnvironmentUpdateInput>;

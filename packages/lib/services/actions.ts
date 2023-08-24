@@ -1,13 +1,13 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
+import { TAction } from "@formbricks/types/v1/actions";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 
-export const getEvents = cache(async (environmentId: string): Promise<any[]> => {
-  let eventsPrisma;
+export const getActions = cache(async (environmentId: string, limit? : number): Promise<any> => {
   try {
-    eventsPrisma = await prisma.event.findMany({
+    const actionsPrisma = await prisma.event.findMany({
       where: {
         eventClass: {
           environmentId: environmentId,
@@ -16,13 +16,13 @@ export const getEvents = cache(async (environmentId: string): Promise<any[]> => 
       orderBy: {
         createdAt: "desc",
       },
-      take: 20,
+      take: limit ? limit : 20,
       include: {
         eventClass: true,
       },
     });
 
-    return eventsPrisma;
+    return actionsPrisma;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

@@ -4,11 +4,11 @@ import CodeBlock from "@/components/shared/CodeBlock";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TabBar } from "@formbricks/ui";
 import Link from "next/link";
-import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import { useEffect, useState } from "react";
 import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 import packageJson from "@/package.json";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 const tabs = [
   { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
@@ -17,15 +17,6 @@ const tabs = [
 
 export default function SetupInstructions({ environmentId }) {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    Prism.highlightAll();
-  }, [activeTab]);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   return (
     <div>
@@ -42,7 +33,7 @@ export default function SetupInstructions({ environmentId }) {
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
-    apiHost: "${isClient ? window.location.protocol : ""}//${isClient ? window.location.host : ""}",
+    apiHost: "${WEBAPP_URL}",
     debug: true, // remove when in production 
   });
 }`}</CodeBlock>

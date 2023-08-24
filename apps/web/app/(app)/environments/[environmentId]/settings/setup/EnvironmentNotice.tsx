@@ -1,22 +1,15 @@
-"use client";
-
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { LightBulbIcon } from "@heroicons/react/24/solid";
-import { useRouter } from "next/navigation";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 export default function EnvironmentNotice({
   environment,
-  environments,
+  devEnvironmentId
 }: {
   environment: TEnvironment;
-  environments: TEnvironment[];
+  devEnvironmentId: string
 }) {
-  const router = useRouter();
 
-  const changeEnvironment = (environmentType: string) => {
-    const newEnvironmentId = environments.find((e) => e.type === environmentType)?.id;
-    router.push(`/environments/${newEnvironmentId}/`);
-  };
 
   return (
     <div>
@@ -25,7 +18,7 @@ export default function EnvironmentNotice({
           <LightBulbIcon className="mr-3 h-6 w-6 text-blue-400" />
           <p>
             You&apos;re currently in the Production environment.
-            <a onClick={() => changeEnvironment("development")} className="ml-1 cursor-pointer underline">
+            <a href={`${WEBAPP_URL}/environments/${devEnvironmentId}`} className="ml-1 cursor-pointer underline">
               Switch to Development environment.
             </a>
           </p>
