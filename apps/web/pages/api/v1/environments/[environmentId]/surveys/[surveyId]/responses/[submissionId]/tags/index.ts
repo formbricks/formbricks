@@ -1,9 +1,8 @@
-import { captureTelemetry } from "@/../../packages/lib/telemetry";
-import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
-import { prisma } from "@formbricks/database";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { responses } from "@/lib/api/response";
+import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -77,7 +76,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(500).json({ message: "Internal Server Error" });
     }
 
-    captureTelemetry(`tags retrieved for response ${responseId}`);
     return res.json(tags);
   }
 
