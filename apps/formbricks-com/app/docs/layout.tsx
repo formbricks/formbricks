@@ -9,7 +9,7 @@ import { type Section } from "@/components/docs/SectionProvider";
 export const metadata: Metadata = {
   title: {
     template: "Formbricks – Experience Management for B2B SaaS",
-    default: "Official Documentation for Formbricks",
+    default: "Formbricks Docs",
   },
 };
 
