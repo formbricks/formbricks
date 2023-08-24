@@ -1,14 +1,23 @@
 /** @type {import('next').NextConfig} */
 
+import rehypePrism from "@mapbox/rehype-prism";
 import nextMDX from "@next/mdx";
 import { withPlausibleProxy } from "next-plausible";
 import remarkGfm from "remark-gfm";
-import rehypePrism from "@mapbox/rehype-prism";
 
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
   transpilePackages: ["@formbricks/ui", "@formbricks/lib"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "seo-strapi-aws-s3.s3.eu-central-1.amazonaws.com",
+        port: "",
+      },
+    ],
+  },
   async redirects() {
     return [
       {
@@ -89,6 +98,11 @@ const nextConfig = {
       {
         source: "/docs/events/code",
         destination: "/docs/actions/code",
+        permanent: true,
+      },
+      {
+        source: "/docs/quickstart",
+        destination: "/docs/quickstart-in-app-survey",
         permanent: true,
       },
       {

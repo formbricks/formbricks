@@ -9,10 +9,10 @@ import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { isEqual } from "lodash";
 import { validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
@@ -169,7 +169,7 @@ export default function SurveyMenuBar({
           }}>
           Back
         </Button>
-        <p className="pl-4 font-semibold">{product.name} / </p>
+        <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
         <Input
           defaultValue={localSurvey.name}
           onChange={(e) => {
@@ -180,9 +180,11 @@ export default function SurveyMenuBar({
         />
       </div>
       {!!localSurvey?.responseRate && (
-        <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-sm text-amber-700 shadow-sm">
-          <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
-          This survey received responses. To keep the data consistent, make changes with caution.
+        <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
+          <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
+          <p className="max-w-[90%] pl-1 text-xs lg:text-sm">
+            This survey received responses. To keep the data consistent, make changes with caution.
+          </p>
         </div>
       )}
       <div className="mt-3 flex sm:ml-4 sm:mt-0">

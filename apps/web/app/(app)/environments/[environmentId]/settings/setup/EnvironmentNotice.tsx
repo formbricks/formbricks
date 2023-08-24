@@ -3,7 +3,7 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { ErrorComponent } from "@formbricks/ui";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { LightBulbIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 
 export default function EnvironmentNotice({ environmentId }: { environmentId: string }) {
@@ -26,14 +26,14 @@ export default function EnvironmentNotice({ environmentId }: { environmentId: st
   return (
     <div>
       {environment.type === "production" && !environment.widgetSetupCompleted && (
-        <div className="flex items-center rounded-lg border border-amber-100 bg-amber-50 p-4 text-slate-900 shadow-sm">
-          <ExclamationTriangleIcon className="mr-3 h-6 w-6 text-amber-700" />
-          You&apos;re currently in the Production environment.
-          <a
-            onClick={() => changeEnvironment("development")}
-            className="ml-1 cursor-pointer font-medium underline">
-            Set up Development environment?
-          </a>
+        <div className="flex items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
+          <LightBulbIcon className="mr-3 h-6 w-6 text-blue-400" />
+          <p>
+            You&apos;re currently in the Production environment.
+            <a onClick={() => changeEnvironment("development")} className="ml-1 cursor-pointer underline">
+              Switch to Development environment.
+            </a>
+          </p>
         </div>
       )}
     </div>

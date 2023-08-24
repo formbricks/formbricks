@@ -22,7 +22,7 @@ Before getting started, make sure you have:
 
 <Image src={SetupChecklist} alt="Step 2 - Setup Checklist" quality="100" className="rounded-lg" />
 
-## Installing Formbricks SDK
+## 1. Installing Formbricks SDK
 
 First, you need to install the Formbricks SDK using one of the following commands:
 
@@ -34,7 +34,7 @@ yarn add @formbricks/js
 pnpm add @formbricks/js
 ```
 
-## Integrating with Next.js 13 App Directory
+## 2. Integrating with Next.js 13 App Directory
 
 The Next.js 13 app directory requires us to initialize Formbricks differently than the pages directory. Specifically, the app directory server-side renders components by default, and the formbricks-js library is a client-side library. To make these work together, create a `formbricks.tsx` file (or `formbricks.js` if you don't use Typescript) and set up the FormbricksProvider with the 'use client' directive:
 
@@ -82,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-## Validate your setup
+## 3. Validate your setup
 
 Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:
 

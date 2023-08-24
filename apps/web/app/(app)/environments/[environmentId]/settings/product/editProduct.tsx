@@ -125,6 +125,7 @@ export function DeleteProduct({ environmentId }) {
   const router = useRouter();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState(false);
 
   const { profile } = useProfile();
   const { team } = useMembers(environmentId);
@@ -149,7 +150,9 @@ export function DeleteProduct({ environmentId }) {
       setIsDeleteDialogOpen(false);
       return;
     }
+    setDeletingProduct(true);
     const deleteProductRes = await deleteProduct(environmentId);
+    setDeletingProduct(false);
 
     if (deleteProductRes?.id?.length > 0) {
       toast.success("Product deleted successfully.");
@@ -191,6 +194,7 @@ export function DeleteProduct({ environmentId }) {
         deleteWhat="Product"
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
+        isDeleting={deletingProduct}
         onDelete={handleDeleteProduct}
         text={`Are you sure you want to delete "${truncate(
           product?.name,

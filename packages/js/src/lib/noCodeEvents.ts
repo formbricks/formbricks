@@ -16,9 +16,10 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
     return okVoid();
   }
 
-  const pageUrlEvents: TActionClass[] = state?.noCodeActionClasses.filter(
-    (e) => e.noCodeConfig?.type === "pageUrl"
-  );
+  const pageUrlEvents: TActionClass[] = (state?.noCodeActionClasses || []).filter((action) => {
+    const { innerHtml, cssSelector, pageUrl } = action.noCodeConfig || {};
+    return pageUrl && !innerHtml && !cssSelector;
+  });
 
   if (pageUrlEvents.length === 0) {
     return okVoid();
@@ -101,43 +102,45 @@ export const checkClickMatch = (event: MouseEvent) => {
   if (!state) {
     return;
   }
-  const innerHtmlEvents: TActionClass[] = state?.noCodeActionClasses?.filter(
-    (e) => e.noCodeConfig?.type === "innerHtml"
-  );
-  const cssSelectorEvents: TActionClass[] = state?.noCodeActionClasses?.filter(
-    (e) => e.noCodeConfig?.type === "cssSelector"
-  );
-
   const targetElement = event.target as HTMLElement;
+  (state?.noCodeActionClasses || []).forEach((action: TActionClass) => {
+    const innerHtml = action.noCodeConfig?.innerHtml?.value;
+    const cssSelectors = action.noCodeConfig?.cssSelector?.value;
+    const pageUrl = action.noCodeConfig?.pageUrl?.value;
 
-  innerHtmlEvents.forEach((e) => {
-    const innerHtml = e.noCodeConfig?.innerHtml;
-    if (innerHtml && targetElement.innerHTML === innerHtml.value) {
-      trackAction(e.name).then((res) => {
-        match(
-          res,
-          (_value) => {},
-          (err) => {
-            errorHandler.handle(err);
-          }
-        );
-      });
+    if (!innerHtml && !cssSelectors && !pageUrl) {
+      return;
     }
-  });
 
-  cssSelectorEvents.forEach((e) => {
-    const cssSelector = e.noCodeConfig?.cssSelector;
-    if (cssSelector && targetElement.matches(cssSelector.value)) {
-      trackAction(e.name).then((res) => {
-        match(
-          res,
-          (_value) => {},
-          (err) => {
-            errorHandler.handle(err);
-          }
-        );
-      });
+    if (innerHtml && targetElement.innerHTML !== innerHtml) {
+      return;
     }
+
+    if (cssSelectors) {
+      // Split selectors that start with a . or # including the . or #
+      const individualSelectors = cssSelectors.split(/\s*(?=[.#])/);
+      for (let selector of individualSelectors) {
+        if (!targetElement.matches(selector)) {
+          return;
+        }
+      }
+    }
+    if (pageUrl) {
+      const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule);
+      if (!urlMatch.ok || !urlMatch.value) {
+        return;
+      }
+    }
+
+    trackAction(action.name).then((res) => {
+      match(
+        res,
+        (_value) => {},
+        (err) => {
+          errorHandler.handle(err);
+        }
+      );
+    });
   });
 };
 

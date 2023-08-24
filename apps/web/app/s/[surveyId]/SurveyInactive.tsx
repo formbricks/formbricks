@@ -10,7 +10,7 @@ const SurveyInactive = ({
   surveyClosedMessage,
 }: {
   status: string;
-  surveyClosedMessage?: { heading: string; subheading: string };
+  surveyClosedMessage?: { heading?: string | undefined; subheading?: string | undefined };
 }) => {
   const icons = {
     "not found": <QuestionMarkCircleIcon className="h-20 w-20" />,
