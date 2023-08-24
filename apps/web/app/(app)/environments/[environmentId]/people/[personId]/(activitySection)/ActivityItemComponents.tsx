@@ -11,23 +11,40 @@ import {
 } from "@heroicons/react/24/solid";
 import { formatDistance } from "date-fns";
 
-export const ActivityItemIcon = ({ activityItem }: { activityItem: TActivityFeedItem }) => (
-  <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
-    {activityItem.type === "attribute" ? (
-      <TagIcon />
-    ) : activityItem.type === "display" ? (
-      <EyeIcon />
-    ) : activityItem.type === "event" ? (
-      <div>
-        {activityItem.actionType === "code" && <CodeBracketIcon />}
-        {activityItem.actionType === "noCode" && <CursorArrowRaysIcon />}
-        {activityItem.actionType === "automatic" && <SparklesIcon />}
-      </div>
-    ) : (
-      <QuestionMarkCircleIcon />
-    )}
-  </div>
-);
+export const ActivityItemIcon = ({
+  count,
+  activityItem,
+}: {
+  count: number;
+  activityItem: TActivityFeedItem;
+}) => {
+  const displayOnlyIcon = count == 1;
+  return (
+    <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
+      {activityItem.type === "attribute" ? (
+        <>{displayOnlyIcon ? <TagIcon /> : <div className="text-lg font-bold">{count}x</div>}</>
+      ) : activityItem.type === "display" ? (
+        <>{displayOnlyIcon ? <EyeIcon /> : <div className="text-lg font-bold">{count}x</div>}</>
+      ) : activityItem.type === "event" ? (
+        <div>
+          {activityItem.actionType === "code" && (
+            <>{displayOnlyIcon ? <CodeBracketIcon /> : <div className="text-lg font-bold">{count}x</div>}</>
+          )}
+          {activityItem.actionType === "noCode" && (
+            <>
+              {displayOnlyIcon ? <CursorArrowRaysIcon /> : <div className="text-lg font-bold">{count}x</div>}
+            </>
+          )}
+          {activityItem.actionType === "automatic" && (
+            <>{displayOnlyIcon ? <SparklesIcon /> : <div className="text-lg font-bold">{count}x</div>}</>
+          )}
+        </div>
+      ) : (
+        <QuestionMarkCircleIcon />
+      )}
+    </div>
+  );
+};
 
 export const ActivityItemContent = ({ activityItem }: { activityItem: TActivityFeedItem }) => (
   <div>
