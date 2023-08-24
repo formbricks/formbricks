@@ -6,7 +6,7 @@ import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import TabOption from "@/components/preview/TabOption";
 import ThankYouCard from "@/components/preview/ThankYouCard";
-import type { Logic, Question } from "@formbricks/types/questions";
+import type { Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { TSurveyLogic, TSurveyQuestion } from "@formbricks/types/v1/surveys";
@@ -329,7 +329,7 @@ export default function PreviewSurvey({
 
   function resetQuestionProgress() {
     if (progress === 0) {
-      const currentPreviewMode = previewMode
+      const currentPreviewMode = previewMode;
       setPreviewMode("none");
       setTimeout(() => {
         setPreviewMode(currentPreviewMode);
@@ -337,9 +337,8 @@ export default function PreviewSurvey({
     }
     setProgress(0);
     setActiveQuestionId(questions[0].id);
-    setStoredResponse({}) 
-    setStoredResponseValue("")
-
+    setStoredResponse({});
+    setStoredResponseValue("");
   }
 
   useEffect(() => {

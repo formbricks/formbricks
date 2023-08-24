@@ -287,8 +287,8 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(updatedSurvey:TSurvey):Promise<TSurvey> {
-  const surveyId = updatedSurvey.id 
+export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+  const surveyId = updatedSurvey.id;
   let data: any = {};
   let survey: Partial<any> = { ...updatedSurvey };
 
@@ -441,18 +441,17 @@ export async function updateSurvey(updatedSurvey:TSurvey):Promise<TSurvey> {
     delete survey.attributeFilters;
   }
 
-
   data = {
     ...data,
     ...survey,
   };
 
   try {
-    const prismaSurvey  = await prisma.survey.update({
+    const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
     });
-    
+
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers, // Include triggers from updatedSurvey
