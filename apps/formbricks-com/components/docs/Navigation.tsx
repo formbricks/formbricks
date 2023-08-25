@@ -235,15 +235,6 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "API",
-    links: [
-      { title: "Overview", href: "/docs/api/overview" },
-      { title: "API Key Setup", href: "/docs/api/api-key-setup" },
-      { title: "Survey Response", href: "/docs/api/survey-response" },
-      { title: "Webhook", href: "/docs/api/webhook" },
-    ],
-  },
-  {
     title: "Self-hosting",
     links: [
       { title: "Deployment", href: "/docs/self-hosting/deployment" },
@@ -259,6 +250,15 @@ export const navigation: Array<NavGroup> = [
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
+    ],
+  },
+  {
+    title: "API",
+    links: [
+      { title: "Overview", href: "/docs/api/overview" },
+      { title: "API Key Setup", href: "/docs/api/api-key-setup" },
+      { title: "Responses", href: "/docs/api/responses" },
+      { title: "Webhook", href: "/docs/api/webhooks" },
     ],
   },
 ];
