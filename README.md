@@ -48,7 +48,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 - 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code
 - 🔗 Create shareable **link surveys**
 - 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys
-- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier and more**
+- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier, n8n and more**
 - 🔒 All **open source**, transparent and self-hostable
 
 ### Built on Open Source
