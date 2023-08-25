@@ -137,12 +137,12 @@ export function WebhookSettings({ pipeline, setPipeline }) {
               Événements
             </div>
             <div className="mt-4 space-y-4">
-              {eventTypes.map((eventType) => (
+              {eventTypes.map((eventType, index) => (
                 <div key={eventType.id}>
                   <div className="relative flex items-start">
                     <div className="flex items-center h-5">
                       <input
-                        id="comments"
+                        id={`comments-${index}`}
                         name="comments"
                         type="checkbox"
                         checked={pipeline.events.includes(eventType.id)}
@@ -152,7 +152,7 @@ export function WebhookSettings({ pipeline, setPipeline }) {
                     </div>
                     <div className="ml-3 text-sm">
                       <label
-                        htmlFor="comments"
+                        htmlFor={`comments-${index}`}
                         className="font-medium text-gray-700"
                       >
                         {eventType.name}
