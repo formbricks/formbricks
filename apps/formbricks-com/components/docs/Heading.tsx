@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import Link from "next/link";
 import { useInView } from "framer-motion";
+import Link from "next/link";
+import { useEffect, useRef } from "react";
 
+import { remToPx } from "@/lib/remToPx";
 import { useSectionStore } from "./SectionProvider";
 import { Tag } from "./Tag";
-import { remToPx } from "@/lib/remToPx";
+import { usePathname } from "next/navigation";
 
 function AnchorIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   return (
@@ -45,7 +46,7 @@ function Anchor({ id, inView, children }: { id: string; inView: boolean; childre
   );
 }
 
-export function Heading<Level extends 2 | 3>({
+export function HeadingDocs<Level extends 2 | 3>({
   children,
   tag,
   label,
@@ -89,4 +90,41 @@ export function Heading<Level extends 2 | 3>({
       </Component>
     </>
   );
+}
+
+export function HeadingContent<Level extends 2 | 3>({
+  children,
+  tag,
+  label,
+  level,
+  anchor = true,
+  ...props
+}: React.ComponentPropsWithoutRef<`h${Level}`> & {
+  id: string;
+  tag?: string;
+  label?: string;
+  level?: Level;
+  anchor?: boolean;
+}) {
+  level = level ?? (2 as Level);
+  let Component = `h${level}` as "h2" | "h3";
+  let ref = useRef<HTMLHeadingElement>(null);
+
+  return (
+    <>
+      <Eyebrow tag={tag} label={label} />
+      <Component ref={ref} className={tag || label ? "mt-2 scroll-mt-32" : "scroll-mt-24"} {...props}>
+        {children}
+      </Component>
+    </>
+  );
+}
+
+export function Heading(props: any) {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/docs")) {
+    return <HeadingDocs {...props} />;
+  } else {
+    return <HeadingContent {...props} />;
+  }
 }
