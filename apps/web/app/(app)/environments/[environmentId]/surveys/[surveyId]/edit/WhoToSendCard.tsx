@@ -1,12 +1,13 @@
 "use client";
 
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
+import SaveAsNewSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SaveAsNewSegmentModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
+import { TBaseFilterGroupItem, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 import {
   Badge,
   Button,
@@ -39,6 +40,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     useAttributeClasses(environmentId);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
+  const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
@@ -101,7 +103,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     return <div>Error</div>;
   }
 
-  console.log(localSurvey.userSegment?.filters);
+  const parsedRes = ZUserSegmentFilterGroup.safeParse(localSurvey.userSegment?.filters);
+  // console.log(parsedRes);
 
   return (
     <>
@@ -166,7 +169,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
           <div className="p-6">
             <div className="rounded-lg border-2 border-slate-300 p-4">
-              <p className="text-sm font-semibold">Send survey to audience who match...</p>
+              <p className="mb-4 text-sm font-semibold">Send survey to audience who match...</p>
               {!!localSurvey.userSegment?.filters && (
                 <>
                   <SegmentFilters
@@ -184,8 +187,25 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                     open={addFilterModalOpen}
                     setOpen={setAddFilterModalOpen}
                   />
+
+                  <SaveAsNewSegmentModal
+                    open={saveAsNewSegmentModalOpen}
+                    setOpen={setSaveAsNewSegmentModalOpen}
+                    localSurvey={localSurvey}
+                  />
                 </>
               )}
+            </div>
+
+            <div className="mt-6 flex w-full gap-4">
+              <Button
+                variant="minimal"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                <div className="h-4 w-4 rounded-full bg-slate-300" />
+                <p className="text-sm text-slate-500">Save as new Segment</p>
+              </Button>
             </div>
           </div>
 

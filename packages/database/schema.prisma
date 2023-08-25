@@ -485,7 +485,7 @@ model UserSegment {
   updatedAt     DateTime    @updatedAt @map(name: "updated_at")
   title         String
   description   String?
-  private       Boolean     @default(true)
+  isPrivate     Boolean     @default(true)
   filters       Json        @default("[]")
   environmentId String
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)

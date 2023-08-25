@@ -44,7 +44,14 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   useEffect(() => {
     const createUserSegment = async () => {
       try {
-        await createUserSegmentAction(environmentId, surveyId, "", "", sampleUserSegment.filters);
+        await createUserSegmentAction({
+          title: "",
+          description: "",
+          environmentId,
+          surveyId,
+          filters: [],
+          isPrivate: true,
+        });
         setIsCreatingUserSegment(false);
         mutateSurvey();
       } catch (err) {

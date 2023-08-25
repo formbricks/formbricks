@@ -32,6 +32,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
+  SelectValue,
   TabBar,
 } from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
@@ -44,7 +45,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
-import { produce } from "immer";
+import { original, produce } from "immer";
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 
 const isResourceFilter = (
@@ -217,6 +218,7 @@ const AttributeSegmentFilter = ({
           updateAttributeClassIdInLocalSurvey(resource.id, value);
         }}>
         <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
+          <SelectValue />
           <div className="flex items-center gap-1">
             <TagIcon className="h-4 w-4 text-sm" />
             <p>{attributeClass}</p>
@@ -238,6 +240,7 @@ const AttributeSegmentFilter = ({
           updateOperatorInLocalSurvey(resource.id, operator);
         }}>
         <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
+          <SelectValue className="hidden" />
           <p>{operatorText}</p>
         </SelectTrigger>
 
@@ -404,14 +407,14 @@ const ActionSegmentFilter = ({
         onValueChange={(value) => {
           updateActionClassIdInLocalSurvey(resource.id, value);
         }}>
-        <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
+        <SelectTrigger className="w-[210px] items-center justify-center capitalize" hideArrow>
+          <SelectValue />
           <div className="flex items-center gap-1">
             <MousePointerClick className="h-4 w-4 text-sm" />
             <p>{attributeClass}</p>
           </div>
         </SelectTrigger>
-
-        <SelectContent>
+        <SelectContent className="bottom-0">
           {eventClasses
             .filter((eventClass) => !eventClass.archived)
             .map((eventClass) => (
@@ -425,8 +428,8 @@ const ActionSegmentFilter = ({
         onValueChange={(value: TActionMetric) => {
           updateActionMetricInLocalSurvey(resource.id, value);
         }}>
-        <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
-          <p>{qualifierMetric}</p>
+        <SelectTrigger className="flex w-[210px] items-center justify-center capitalize" hideArrow>
+          <SelectValue />
         </SelectTrigger>
 
         <SelectContent>
@@ -441,7 +444,8 @@ const ActionSegmentFilter = ({
         onValueChange={(operator: TBaseOperator) => {
           updateOperatorInLocalSurvey(resource.id, operator);
         }}>
-        <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
+        <SelectTrigger className="flex w-full max-w-[40px] items-center justify-center text-center" hideArrow>
+          <SelectValue />
           <p>{operatorText}</p>
         </SelectTrigger>
 
@@ -520,7 +524,7 @@ const AddNewFilterItem = ({
               resource.root = filter.root;
               resource.value = filter.value;
 
-              resource.selectNewFilter = false;
+              resource.isPlaceholder = false;
               break;
             }
           } else {
@@ -672,7 +676,7 @@ const SegmentFilterItem = ({
     setConnectorState("and");
   };
 
-  if (resource.selectNewFilter) {
+  if ((resource as TUserSegmentFilter).isPlaceholder) {
     return (
       <AddNewFilterItem
         environmentId={environmentId}
@@ -825,7 +829,7 @@ const SegmentFilters = ({
                 root: { type: "attribute", attributeClassId: "" },
                 qualifier: { operator: "endsWith" },
                 value: "",
-                selectNewFilter: true,
+                isPlaceholder: true,
               };
 
               group.splice(i + 1, 0, { id: createId(), resource: newFilter, connector: "and" });
@@ -838,18 +842,12 @@ const SegmentFilters = ({
               const newFilter: TBaseFilterGroupItem = {
                 id: createId(),
                 connector: "and",
-                // resource: {
-                //   id: createId(),
-                //   root: { type: "attribute", attributeClassId: "" },
-                //   qualifier: { operator: "endsWith" },
-                //   value: "",
-                // },
                 resource: {
                   id: createId(),
                   root: { type: "attribute", attributeClassId: "" },
                   qualifier: { operator: "endsWith" },
                   value: "",
-                  selectNewFilter: true,
+                  isPlaceholder: true,
                 },
               };
 
@@ -882,6 +880,7 @@ const SegmentFilters = ({
                 root: { type: "attribute", attributeClassId: "" },
                 qualifier: { operator: "endsWith" },
                 value: "",
+                isPlaceholder: true,
               };
 
               const newGroupToAdd: TBaseFilterGroupItem = {
@@ -916,6 +915,7 @@ const SegmentFilters = ({
                   root: { type: "attribute", attributeClassId: "" },
                   qualifier: { operator: "endsWith" },
                   value: "",
+                  isPlaceholder: true,
                 },
               };
 
@@ -1028,9 +1028,17 @@ const SegmentFilters = ({
           if (isResourceFilter(resource) && resource.id === resourceId) {
             group.splice(i, 1);
 
+            if (group.length) {
+              group[0].connector = null;
+            }
+
             break;
           } else if (!isResourceFilter(resource) && group[i].id === resourceId) {
             group.splice(i, 1);
+
+            if (group.length) {
+              group[0].connector = null;
+            }
 
             break;
           } else if (!isResourceFilter(resource)) {

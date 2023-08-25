@@ -6,6 +6,7 @@ export const createUserSegment = async (
   surveyId: string,
   title: string,
   description: string,
+  isPrivate: boolean,
   filters: TBaseFilterGroup
 ) => {
   const userSegment = await prisma.userSegment.create({
@@ -13,6 +14,7 @@ export const createUserSegment = async (
       environmentId,
       title,
       description,
+      isPrivate,
       filters,
       surveys: {
         connect: {

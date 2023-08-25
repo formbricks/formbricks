@@ -16,7 +16,7 @@ type TAddFilterModalProps = {
 };
 
 const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilterModalProps) => {
-  const [activeTabId, setActiveTabId] = useState("all");
+  const [activeTabId, setActiveTabId] = useState("actions");
 
   const { attributeClasses } = useAttributeClasses(environmentId);
   const { eventClasses } = useEventClasses(environmentId);
@@ -36,7 +36,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
       <DialogTrigger className="max-w-[160px]">
-        <button className="flex items-center gap-2 text-sm">
+        <button className="mt-4 flex items-center gap-2 text-sm">
           <PlusCircleIcon className="h-4 w-4" />
           <p>Add filter</p>
         </button>

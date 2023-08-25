@@ -80,6 +80,8 @@ export const ZUserSegmentAttributeFilter = z.object({
   qualifier: z.object({
     operator: ZAttributeOperator,
   }),
+
+  isPlaceholder: z.boolean().optional(),
 });
 export type TUserSegmentAttributeFilter = z.infer<typeof ZUserSegmentAttributeFilter>;
 
@@ -94,6 +96,8 @@ export const ZUserSegmentActionFilter = z.object({
     metric: z.enum(ACTION_METRICS),
     operator: ZBaseOperator,
   }),
+
+  isPlaceholder: z.boolean().optional(),
 });
 export type TUserSegmentActionFilter = z.infer<typeof ZUserSegmentActionFilter>;
 
@@ -107,6 +111,8 @@ export const ZUserSegmentSegmentFilter = z.object({
   qualifier: z.object({
     operator: ZSegmentOperator,
   }),
+
+  isPlaceholder: z.boolean().optional(),
 });
 export type TUserSegmentSegmentFilter = z.infer<typeof ZUserSegmentSegmentFilter>;
 
@@ -120,7 +126,10 @@ export const ZUserSegmentDeviceFilter = z.object({
   qualifier: z.object({
     operator: ZDeviceOperator,
   }),
+
+  isPlaceholder: z.boolean().optional(),
 });
+
 export type TUserSegmentDeviceFilter = z.infer<typeof ZUserSegmentDeviceFilter>;
 
 export const ZUserSegmentFilter = z
@@ -160,22 +169,29 @@ export type TBaseFilterGroupItem = {
 export type TBaseFilterGroup = TBaseFilterGroupItem[];
 
 const refineFilterGroup = (filterGroup: TBaseFilterGroup): boolean => {
-  let isValid = true;
+  let result = true;
 
   for (let i = 0; i < filterGroup.length; i++) {
     const group = filterGroup[i];
 
     if (Array.isArray(group.resource)) {
-      isValid = refineFilterGroup(group.resource);
-    }
+      result = refineFilterGroup(group.resource);
+    } else {
+      // if the connector for a "first" group is not null, it's invalid
+      if (i === 0 && group.connector !== null) {
+        result = false;
+        break;
+      }
 
-    if (i === 0 && group.connector !== null) {
-      isValid = false;
-      break;
+      // if a filter is a placeholder, it's invalid
+      if (group.resource.isPlaceholder) {
+        result = false;
+        break;
+      }
     }
   }
 
-  return isValid;
+  return result;
 };
 
 export const ZUserSegmentFilterGroup: z.ZodType<TBaseFilterGroup> = z
@@ -188,13 +204,15 @@ export const ZUserSegmentFilterGroup: z.ZodType<TBaseFilterGroup> = z
       })
     )
   )
-  .refine(refineFilterGroup, { message: "First filter group must not have connector" });
+  .refine(refineFilterGroup, {
+    message: "Invalid filters applied",
+  });
 
 export const ZUserSegment = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
-  private: z.boolean().default(true),
+  isPrivate: z.boolean().default(true),
   filters: ZUserSegmentFilterGroup,
   environmentId: z.string(),
 
@@ -217,7 +235,7 @@ export const convertOperatorToText = (operator: TAllOperators) => {
     case "greaterEqual":
       return ">=";
     case "contains":
-      return "contains";
+      return "contains ";
     case "doesNotContain":
       return "does not contain";
     case "startsWith":
@@ -263,7 +281,7 @@ export const sampleUserSegment: TUserSegment = {
   id: "segment123",
   name: "Sample User Segment",
   description: "A sample user segment description",
-  private: false,
+  isPrivate: false,
   filters: [
     {
       id: createId(),
