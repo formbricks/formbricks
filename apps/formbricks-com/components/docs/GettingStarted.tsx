@@ -3,7 +3,7 @@ import { Heading } from "./Heading";
 
 const gettingStarted = [
   {
-    href: "/docs/getting-started/quickstart",
+    href: "/docs/getting-started/quickstart-in-app-survey",
     name: "Quickstart",
     description: "Get up and running with our cloud and JavaScript widget",
   },

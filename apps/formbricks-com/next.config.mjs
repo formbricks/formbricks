@@ -60,6 +60,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/quickstart",
+        destination: "/docs/quickstart-in-app-survey",
+        permanent: true,
+      },
+      {
         source: "/docs/getting-started/nextjs",
         destination: "/docs/getting-started/nextjs-app",
         permanent: true,
