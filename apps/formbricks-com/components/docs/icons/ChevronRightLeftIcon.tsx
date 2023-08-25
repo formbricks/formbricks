@@ -1,6 +1,4 @@
-export function ChevronRightLeftIcon(
-  props: React.ComponentPropsWithoutRef<'svg'>,
-) {
+export function ChevronRightLeftIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
       <path
@@ -15,5 +13,5 @@ export function ChevronRightLeftIcon(
         d="m7.5 7.5-3 2.5 3 2.5M12.5 7.5l3 2.5-3 2.5"
       />
     </svg>
-  )
+  );
 }
