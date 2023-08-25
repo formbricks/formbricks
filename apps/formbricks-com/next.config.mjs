@@ -60,8 +60,14 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/docs",
+        destination: "/docs/introduction/what-is-formbricks",
+        permanent: true,
+      },
+
+      {
         source: "/docs/quickstart",
-        destination: "/docs/quickstart-in-app-survey",
+        destination: "/docs/getting-started/quickstart-in-app-survey",
         permanent: true,
       },
       {
