@@ -115,6 +115,11 @@
   color: blue;
 }
 
+.form-description a {
+  text-decoration: underline;
+  color: blue;
+}
+
 button.MuiButtonBase-root.MuiButton-root.MuiButton-text.MuiButton-textPrimary.MuiButton-sizeSmall.MuiButton-textSizeSmall.MuiButton-root.MuiButton-text.MuiButton-textPrimary.MuiButton-sizeSmall.MuiButton-textSizeSmall.css-1knaqv7-MuiButtonBase-root-MuiButton-root {
   color: #f24563 !important;
   font-weight: 600;
