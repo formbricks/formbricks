@@ -27,8 +27,8 @@ import {
   CustomersIcon,
   DashboardIcon,
   FilterIcon,
-  FormIcon,Popover, 
-  PopoverContent, 
+  FormIcon, Popover,
+  PopoverContent,
   PopoverTrigger,
   ProfileAvatar,
   SettingsIcon,
@@ -227,8 +227,7 @@ export default function Navigation({ environment, memberships, team, session }: 
               <div className="flex space-x-4 py-2">
                 <Link
                   href={`/environments/${environment.id}/surveys/`}
-                  className=" flex items-center justify-center rounded-md bg-gradient-to-b text-white transition-all ease-in-out hover:scale-105">
-                  {/* <PlusIcon className="h-6 w-6" /> */}
+                  className="flex items-center justify-center rounded-md bg-gradient-to-b text-white transition-all ease-in-out hover:scale-105">
                   <Image src={FaveIcon} width={30} height={30} alt="faveicon" />
                 </Link>
 
@@ -243,7 +242,7 @@ export default function Navigation({ environment, memberships, team, session }: 
                         item.current
                           ? "bg-slate-100 text-slate-900"
                           : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
-                        "hidden items-center rounded-md px-2 py-1 text-sm font-medium sm:inline-flex"
+                        "hidden items-center rounded-md px-2 py-1 text-sm font-medium lg:inline-flex"
                       )}
                       aria-current={item.current ? "page" : undefined}>
                       <IconComponent className="mr-3 h-5 w-5" />
@@ -253,7 +252,8 @@ export default function Navigation({ environment, memberships, team, session }: 
                 })}
               </div>
 
-              <div className="flex items-center sm:hidden">
+              {/* Mobile Menu */}
+              <div className="flex items-center lg:hidden">
                 <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
                   <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
                     <span>
@@ -280,7 +280,8 @@ export default function Navigation({ environment, memberships, team, session }: 
                 </Popover>
               </div>
 
-              <div className="hidden sm:ml-6 sm:flex sm:items-center">
+              {/* User Dropdown */}
+              <div className="hidden lg:ml-6 lg:flex lg:items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <div className="flex cursor-pointer flex-row items-center space-x-5">

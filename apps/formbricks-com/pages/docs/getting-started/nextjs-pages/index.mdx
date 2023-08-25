@@ -22,7 +22,7 @@ Before getting started, make sure you have:
 
 <Image src={SetupChecklist} alt="Step 2 - Setup Checklist" quality="100" className="rounded-lg" />
 
-## Installing Formbricks SDK
+## 1. Installing Formbricks SDK
 
 First, you need to install the Formbricks SDK using one of the following commands:
 
@@ -34,7 +34,7 @@ yarn add @formbricks/js
 pnpm add @formbricks/js
 ```
 
-## Integrating with Next.js 13 Pages Directory
+## 2. Integrating with Next.js 13 Pages Directory
 
 Update your Pages component in the \_app.ts file like so:
 
@@ -75,7 +75,7 @@ export default function Pages({ Component, pageProps }: PagesProps) {
 1. First we need to initialize the Formbricks SDK, making sure it only runs on the client side.
 2. To connect the Next.js router to Formbricks and ensure the SDK can keep track of every page change, we are registering the route change event.
 
-## Validate your setup
+## 3. Validate your setup
 
 Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:
 

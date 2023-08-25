@@ -1,9 +1,10 @@
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
 import { Question } from "@formbricks/types/questions";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 
 type SubmitButtonProps = {
-  question: Question;
+  question: Question | TSurveyQuestion;
   lastQuestion: boolean;
   brandColor: string;
 };
