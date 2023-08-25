@@ -7,7 +7,7 @@ import { ZEnvironment } from "@formbricks/types/v1/environment";
 import type { TEnvironment, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 import { cache } from "react";
 
-export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
+export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment> => {
   let environmentPrisma;
   try {
     environmentPrisma = await prisma.environment.findUnique({
