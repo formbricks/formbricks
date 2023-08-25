@@ -33,337 +33,310 @@ Before getting started, make sure you have:
 
 ## Formbricks x HTML
 
-<Row>
-  <Col>
-    All you need to do is copy a `<script>` tag to your HTML head, and that’s about it!
+All you need to do is copy a `<script>` tag to your HTML head, and that’s about it!
 
-    ### Required Customizations to be Made
+<CodeGroup title="HTML">
+```html {{ title: '<your-main-file>.html' }}
+<script type="text/javascript">
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="./dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("<environment-id>","<api-host>")},500)}();
+</script>
+```
+</CodeGroup>
 
-    <Properties>
-      <Property name="environment-id" type="string">
-        Formbricks Environment ID.<br/>
-        _Get this from the Setup Checklist inside the Settings page of Formbricks dashboard_
-      </Property>
-    </Properties>
-    <Properties>
-      <Property name="api-host" type="string">
-        URL of the hosted Formbricks instance.<br/>
-        _If you're using the cloud app, please use `"https://app.formbricks.com`"_
-      </Property>
-    </Properties>
+### Required Customizations to be Made
 
-    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
+<Properties>
+  <Property name="environment-id" type="string">
+    Formbricks Environment ID.
+  </Property>
+</Properties>
+<Properties>
+  <Property name="api-host" type="string">
+    URL of the hosted Formbricks instance.
+  </Property>
+</Properties>
 
-  </Col>
-  <Col sticky>
-    <CodeGroup title="HTML">
-    ```html {{ title: '<your-main-file>.html' }}
-    <script type="text/javascript">
-    !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="./dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("<environment-id>","<api-host>")},500)}();
-    </script>
-    ```
-    </CodeGroup>
-  </Col>
-</Row>
+Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
 ## Formbricks x ReactJS
 
-<Row>
-  <Col>
-  
-    Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`.<br/>
-    Now, update your App.js/ts file to initialise Formbricks.
+Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`.
 
-    ### Required Customizations to be Made
+<CodeGroup title="Install Formbricks">
+```sh {{ title: 'npm' }}
+npm install --save @formbricks/js
+```
+```sh {{ title: 'pnpm' }}
+pnpm add @formbricks/js
+```
+```sh {{ title: 'yarn' }}
+yarn add @formbricks/js
+```
+</CodeGroup>
 
-    <Properties>
-      <Property name="environment-id" type="string">
-        Formbricks Environment ID.<br/>
-        _Get this from the Setup Checklist inside the Settings page of Formbricks dashboard_
-      </Property>
-    </Properties>
-    <Properties>
-      <Property name="api-host" type="string">
-        URL of the hosted Formbricks instance.<br/>
-        _If you're using the cloud app, please use `"https://app.formbricks.com`"_
-      </Property>
-    </Properties>
+Now, update your App.js/ts file to initialise Formbricks.
 
-    ### What are we doing here?
+<CodeGroup title="app.js">
 
-    The app initializes 'formbricks' when it's loaded in a browser environment (due to the typeof window !== "undefined" check) and then renders your components or content.
+```js
 
-    <Image
-      src={ReactApp}
-      alt="In app survey in React app for micro surveys"
-      quality="100"
-      className="rounded-lg max-w-full sm:max-w-lg"
-    />
+// other imports
+import formbricks from "@formbricks/js";
 
-    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "<environment-id>",
+    apiHost: "<api-host>",
+    debug: true, // remove when in production
+  });
+}
 
-  </Col>
-  <Col sticky>
-    <CodeGroup title="Install Formbricks">
-    ```sh {{ title: 'npm' }}
-    npm install --save @formbricks/js
-    ```
-    ```sh {{ title: 'pnpm' }}
-    pnpm add @formbricks/js
-    ```
-    ```sh {{ title: 'yarn' }}
-    yarn add @formbricks/js
-    ```
-    </CodeGroup>
-    <CodeGroup title="Initialise Formbricks in your App">
-    ```js {{ title: 'app.js' }}
-    // other imports
-    import formbricks from "@formbricks/js";
+function App() {
+  // your own app
+}
 
-    if (typeof window !== "undefined") {
-      formbricks.init({
-        environmentId: "<environment-id>",
-        apiHost: "<api-host>",
-        debug: true, // remove when in production
-      });
-    }
+export default App;
+```
 
-    function App() {
-      // your own app
-    }
+</CodeGroup>
 
-    export default App;
-    ```
-    </CodeGroup>
+### Required Customizations to be Made
 
-  </Col>
-</Row>
+<Properties>
+  <Property name="environment-id" type="string">
+    Formbricks Environment ID.
+  </Property>
+</Properties>
+<Properties>
+  <Property name="api-host" type="string">
+    URL of the hosted Formbricks instance.
+  </Property>
+</Properties>
+
+### What are we doing here?
+
+The app initializes 'formbricks' when it's loaded in a browser environment (due to the typeof window !== "undefined" check) and then renders your components or content.
+
+<Image
+  src={ReactApp}
+  alt="In app survey in React app for micro surveys"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-lg"
+/>
+
+Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
 ## Formbricks x NextJS
 
-<Row>
-  <Col>
+NextJs projects typically follow two main conventions: the App Directory and the Pages Directory.
+To ensure smooth integration with the Formbricks SDK, which operates solely on the client side, follow the
+guidelines for each convention below:
 
-    NextJs projects typically follow two main conventions: the App Directory and the Pages Directory.
-    To ensure smooth integration with the Formbricks SDK, which operates solely on the client side, follow the
-    guidelines for each convention below:
+- App directory: You will have to define a new component in `app/formbricks.tsx` file and call it in your `app/layout.tsx` file.
+- Pages directory: You will have to visit your `_app.tsx` and just initialise Formbricks there.
 
-    - App directory: You will have to define a new component in `app/formbricks.tsx` file and call it in your `app/layout.tsx` file.
-    - Pages directory: You will have to visit your `_app.tsx` and just initialise Formbricks there.
+Code snippets for the integration for both conventions are provided to further assist you.
 
-    Code snippets for the integration for both conventions are provided to further assist you.
+<CodeGroup title="Install Formbricks JS library">
+```shell {{ title: 'npm' }}
+npm install --save @formbricks/js
+```
+```shell {{ title: 'pnpm' }}
+pnpm add @formbricks/js
+```
+```shell {{ title: 'yarn' }}
+yarn add @formbricks/js
+```
 
+</CodeGroup>
 
-    ### Required Customizations to be Made
+### App Directory
 
-    <Properties>
-      <Property name="environment-id" type="string">
-        Formbricks Environment ID.<br/>
-        _Get this from the Setup Checklist inside the Settings page of Formbricks dashboard_
-      </Property>
-    </Properties>
-    <Properties>
-      <Property name="api-host" type="string">
-        URL of the hosted Formbricks instance.<br/>
-        _If you're using the cloud app, please use `"https://app.formbricks.com`"_
-      </Property>
-    </Properties>
+<CodeGroup title="app/formbricks.tsx">
+```tsx {{title: 'Typescript'}}
+"use client";
+import formbricks from "@formbricks/js";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
-    ### Optional Customizations to be Made
+export default function FormbricksProvider() {
+const pathname = usePathname();
+const searchParams = useSearchParams();
 
-    <Properties>
-      <Property name="debug" type="boolean">
-        Whether you want to see debug messages from Formbricks on your client-side console.
-      </Property>
-    </Properties>
+useEffect(() => {
+  formbricks.init({
+    environmentId: "<environment-id>",
+    apiHost: "<api-host>",
+    debug: true, // remove when in production
+  });
+}, []);
 
-    ### What are we doing here?
+useEffect(() => {
+  formbricks?.registerRouteChange();
+}, [pathname, searchParams]);
 
-    First we need to initialize the Formbricks SDK, making sure it only runs on the client side.
-    To connect the Next.js router to Formbricks and ensure the SDK can keep track of every page change, we are registering the route change event.
+return null;
+}
+```
+</CodeGroup>
 
-    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
+<CodeGroup title="app/layout.tsx">
+```tsx {{title: 'Typescript'}}
+import FormbricksProvider from "./formbricks";
+import "./globals.css";
 
-  </Col>
-  <Col sticky>
-    <CodeGroup title="Install Formbricks JS library">
-    ```shell {{ title: 'npm' }}
-    npm install --save @formbricks/js
-    ```
-    ```shell {{ title: 'pnpm' }}
-    pnpm add @formbricks/js
-    ```
-    ```shell {{ title: 'yarn' }}
-    yarn add @formbricks/js
-    ```
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+return (
+  <html lang="en">
+    <FormbricksProvider />
+    <body>{children}</body>
+  </html>
+);
+}
+```
 
-    </CodeGroup>
-    <CodeGroup title="NextJs Structure: App Directory">
-    ```tsx {{ title: 'app/formbricks.tsx' }}
-    "use client";
-    import formbricks from "@formbricks/js";
-    import { usePathname, useSearchParams } from "next/navigation";
-    import { useEffect } from "react";
+</CodeGroup>
 
-    export default function FormbricksProvider() {
-      const pathname = usePathname();
-      const searchParams = useSearchParams();
+### Pages Directory
 
-      useEffect(() => {
-        formbricks.init({
-          environmentId: "<environment-id>",
-          apiHost: "<api-host>",
-          debug: true, // remove when in production
-        });
-      }, []);
+<CodeGroup title="_app.tsx">
+```tsx {{ title: 'Typescript' }}
+import "@/styles/globals.css";
+import type { PagesProps } from "next/app";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import formbricks from "@formbricks/js";
 
-      useEffect(() => {
-        formbricks?.registerRouteChange();
-      }, [pathname, searchParams]);
+if (typeof window !== "undefined") {
+formbricks.init({
+  environmentId: "your-environment-id",
+  apiHost: "your-api-host", // e.g. https://app.formbricks.com
+  debug: true, // remove when in production
+});
+}
 
-      return null;
-    }
-    ```
+export default function Pages({ Component, pageProps }: PagesProps) {
+const router = useRouter();
 
-    ```js {{ title: 'app/layout.tsx' }}
-    import FormbricksProvider from "./formbricks";
-    import "./globals.css";
+useEffect(() => {
+  // Connect next.js router to Formbricks
+  const handleRouteChange = formbricks?.registerRouteChange;
+  router.events.on("routeChangeComplete", handleRouteChange);
 
-    export default function RootLayout({ children }: { children: React.ReactNode }) {
-      return (
-        <html lang="en">
-          <FormbricksProvider />
-          <body>{children}</body>
-        </html>
-      );
-    }
-    ```
+  return () => {
+    router.events.off("routeChangeComplete", handleRouteChange);
+  };
+}, []);
 
-    </CodeGroup>
+return <Component {...pageProps} />;
+}
+```
+</CodeGroup>
 
-    <CodeGroup title="NextJs Structure: Pages Directory">
-    ```tsx {{ title: '_app.tsx' }}
-    import "@/styles/globals.css";
-    import type { PagesProps } from "next/app";
-    import { useEffect } from "react";
-    import { useRouter } from "next/router";
-    import formbricks from "@formbricks/js";
+### Required Customizations to be Made
 
-    if (typeof window !== "undefined") {
-      formbricks.init({
-        environmentId: "your-environment-id",
-        apiHost: "your-api-host", // e.g. https://app.formbricks.com
-        debug: true, // remove when in production
-      });
-    }
+<Properties>
+<Property name="environment-id" type="string">
+  Formbricks Environment ID.
+</Property>
+</Properties>
+<Properties>
+<Property name="api-host" type="string">
+  URL of the hosted Formbricks instance.
+</Property>
+</Properties>
 
-    export default function Pages({ Component, pageProps }: PagesProps) {
-      const router = useRouter();
+### Optional Customizations to be Made
 
-      useEffect(() => {
-        // Connect next.js router to Formbricks
-        const handleRouteChange = formbricks?.registerRouteChange;
-        router.events.on("routeChangeComplete", handleRouteChange);
+<Properties>
+<Property name="debug" type="boolean">
+  Whether you want to see debug messages from Formbricks on your client-side console.
+</Property>
+</Properties>
 
-        return () => {
-          router.events.off("routeChangeComplete", handleRouteChange);
-        };
-      }, []);
+### What are we doing here?
 
-      return <Component {...pageProps} />;
-    }
-    ```
-    </CodeGroup>
+First we need to initialize the Formbricks SDK, making sure it only runs on the client side.
+To connect the Next.js router to Formbricks and ensure the SDK can keep track of every page change, we are registering the route change event.
 
-  </Col>
-</Row>
+Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
 ## Formbricks x VueJs
 
-<Row>
-  <Col>
+Integrating the Formbricks SDK with Vue.js is a straightforward process.
+We will make sure the SDK is only loaded and used on the client side, as it's not intended for server-side usage.
 
-    Integrating the Formbricks SDK with Vue.js is a straightforward process.
-    We will make sure the SDK is only loaded and used on the client side, as it's not intended for server-side usage.
+<CodeGroup title="Install Formbricks JS library">
+```shell {{ title: 'npm' }}
+npm install --save @formbricks/js
+```
+```shell {{ title: 'pnpm' }}
+pnpm add @formbricks/js
+```
+```shell {{ title: 'yarn' }}
+yarn add @formbricks/js
+```
 
-    ### Required Customizations to be Made
+</CodeGroup>
 
-    <Properties>
-      <Property name="environment-id" type="string">
-        Formbricks Environment ID.<br/>
-        _Get this from the Setup Checklist inside the Settings page of Formbricks dashboard_
-      </Property>
-    </Properties>
-    <Properties>
-      <Property name="api-host" type="string">
-        URL of the hosted Formbricks instance.<br/>
-        _If you're using the cloud app, please use `"https://app.formbricks.com`"_
-      </Property>
-    </Properties>
+<CodeGroup title="src/formbricks.js">
+```js
+import formbricks from "@formbricks/js";
 
-    ### Optional Customizations to be Made
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "<environment-id>",
+    apiHost: "<api-host>",
+  });
+}
 
-    <Properties>
-      <Property name="debug" type="boolean">
-        Whether you want to see debug messages from Formbricks on your client-side console.
-      </Property>
-    </Properties>
+export default formbricks;
+```
 
-    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
+```js {{ title: 'main.js' }}
+// other imports
+import Vue from "vue";
+import VueRouter from "vue-router";
+import formbricks from "@/formbricks";
 
-  </Col>
-  <Col sticky>
-    <CodeGroup title="Install Formbricks JS library">
-    ```shell {{ title: 'npm' }}
-    npm install --save @formbricks/js
-    ```
-    ```shell {{ title: 'pnpm' }}
-    pnpm add @formbricks/js
-    ```
-    ```shell {{ title: 'yarn' }}
-    yarn add @formbricks/js
-    ```
+Vue.use(VueRouter);
 
-    </CodeGroup>
-    <CodeGroup title="Initialise Formbricks">
-    ```js {{ title: 'src/formbricks.js' }}
-    import formbricks from "@formbricks/js";
+const router = new VueRouter({
+  // Your router configuration here
+});
 
-    if (typeof window !== "undefined") {
-      formbricks.init({
-        environmentId: "<environment-id>",
-        apiHost: "<api-host>",
-      });
-    }
+// Add a global navigation guard
+router.afterEach((to, from) => {
+  if (typeof formbricks !== "undefined") {
+    formbricks.registerRouteChange();
+  }
+});
+```
 
-    export default formbricks;
-    ```
+</CodeGroup>
 
-    ```js {{ title: 'main.js' }}
-    // other imports
-    import Vue from "vue";
-    import VueRouter from "vue-router";
-    import formbricks from "@/formbricks";
+### Required Customizations to be Made
 
+<Properties>
+  <Property name="environment-id" type="string">
+    Formbricks Environment ID.
+  </Property>
+</Properties>
+<Properties>
+  <Property name="api-host" type="string">
+    URL of the hosted Formbricks instance.
+  </Property>
+</Properties>
 
-    Vue.use(VueRouter);
+### Optional Customizations to be Made
 
-    const router = new VueRouter({
-      // Your router configuration here
-    });
+<Properties>
+  <Property name="debug" type="boolean">
+    Whether you want to see debug messages from Formbricks on your client-side console.
+  </Property>
+</Properties>
 
-    // Add a global navigation guard
-    router.afterEach((to, from) => {
-      if (typeof formbricks !== "undefined") {
-        formbricks.registerRouteChange();
-      }
-    });
-    ```
-
-    </CodeGroup>
-
-  </Col>
-</Row>
+Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
 ## Validate your setup
 
@@ -386,4 +359,3 @@ To this:
 />
 
 **Can’t figure it out? [Join our Discord!](https://formbricks.com/discord)**
-

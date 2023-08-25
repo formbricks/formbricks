@@ -239,26 +239,8 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Overview", href: "/docs/api/overview" },
       { title: "API Key Setup", href: "/docs/api/api-key-setup" },
-      { title: "Get Responses", href: "/docs/api/get-responses" },
-    ],
-  },
-  {
-    title: " Client API",
-    links: [
-      { title: "Overview", href: "/docs/client-api/overview" },
-      { title: "Create Response", href: "/docs/client-api/create-response" },
-      { title: "Update Response", href: "/docs/client-api/update-response" },
-    ],
-  },
-  {
-    title: "Webhook API",
-    links: [
-      { title: "Overview", href: "/docs/webhook-api/overview" },
-      { title: "List Webhooks", href: "/docs/webhook-api/list-webhooks" },
-      { title: "Get Webhook", href: "/docs/webhook-api/get-webhook" },
-      { title: "Create Webhook", href: "/docs/webhook-api/create-webhook" },
-      { title: "Delete Webhook", href: "/docs/webhook-api/delete-webhook" },
-      { title: "Webhook Payload", href: "/docs/webhook-api/webhook-payload" },
+      { title: "Survey Response", href: "/docs/api/survey-response" },
+      { title: "Webhook", href: "/docs/api/webhook" },
     ],
   },
   {

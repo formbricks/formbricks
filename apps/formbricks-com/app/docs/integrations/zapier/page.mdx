@@ -26,7 +26,7 @@ export const meta = {
 Zapier is a powerful ally. Hook up Formbricks with Zapier and you can send your data to 5000+ other apps. Here is how to do it.
 
 <Note>
-  ## Nail down your survey first? {{ class: "text-white" }}
+  ### Nail down your survey first? {{ class: "text-white" }}
   Any changes in the survey cause additional work in the Zap. It makes sense to first settle on the survey you
   want to run and then get to setting up Zapier.
 </Note>
@@ -45,7 +45,7 @@ When setting up the Zap your life will be easier when you change the `questionId
 _In every question card in the Advanced Settings you find the Question ID field. Update it so that you’ll recognize the response tied to this question._
 
 <Note>
-  ## Already published? Duplicate survey {{ class: "text-white" }}
+  ### Already published? Duplicate survey {{ class: "text-white" }}
   You can only update the questionId when the survey was not yet published. Already published it? Just **duplicate
   it** to update the questionIds.
   <Image
@@ -56,7 +56,7 @@ _In every question card in the Advanced Settings you find the Question ID field.
   />
 </Note>
 
-## Step 3: Send a test response
+## Step 2: Send a test response
 
 In order to set up Zapier you’ll need a test response. This allows you to select the individual values of each response in your Zap. If you have Formbricks running locally and you want to set up an in-app survey, you can use our [Demo App](/docs/contributing/demo) to trigger a survey and submit a response.
 
@@ -67,7 +67,7 @@ In order to set up Zapier you’ll need a test response. This allows you to sele
   className="rounded-lg max-w-full sm:max-w-3xl"
 />
 
-## Step 4: Setup your Zap
+## Step 3: Setup your Zap
 
 Go to [zapier.com](https://zapier.com) and create a new Zap. Search for “Formbricks” to get started:
 
@@ -77,7 +77,7 @@ Then, choose the event you want to trigger the Zap on:
 
 <Image src={ChooseEvent} alt="Choose Event" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 
-## Step 5: Connect Formbricks with Zapier
+## Step 4: Connect Formbricks with Zapier
 
 Now, you have to connect Zapier with Formbricks via an API Key:
 
@@ -105,13 +105,13 @@ Once you copied it in the newly opened Zapier window, you will be connected:
   className="rounded-lg max-w-full sm:max-w-3xl"
 />
 
-## Step 6: Select Survey
+## Step 5: Select Survey
 
 Next, you can choose from all the surveys you have created in this environment:
 
 <Image src={SelectSurvey} alt="Select Survey" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 
-## Step 7: Test your trigger
+## Step 6: Test your trigger
 
 Once you hit “Test” you will see the three most recent submissions for this survey. If you don’t have any submissions in the survey, submit one to continue setting up your Zap:
 
@@ -123,7 +123,7 @@ Once you hit “Test” you will see the three most recent submissions for this 
 />
 _Now you're happy that you updated the questionId's_
 
-## Step 8: Set up your Zap
+## Step 7: Set up your Zap
 
 Now you have all the data you need at hand. The next steps depend on what you want to do with it. In this tutorial, we will send submissions to a Slack channel:
 
