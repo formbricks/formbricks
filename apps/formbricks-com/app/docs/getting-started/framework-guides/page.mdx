@@ -17,6 +17,8 @@ for something else, please [join our Discord!](https://formbricks.com/discord) a
 
 <Libraries />
 
+---
+
 ## Prerequisites
 
 Before getting started, make sure you have:
@@ -31,12 +33,38 @@ Before getting started, make sure you have:
   className="rounded-lg max-w-full sm:max-w-3xl"
 />
 
-## Formbricks x HTML
+---
+
+## Validate your setup
+
+Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:
+
+<Image
+  src={WidgetNotConnected}
+  alt="Widget isnt connected"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
+
+To this:
+
+<Image
+  src={WidgetConnected}
+  alt="Widget is connected"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
+
+**Can’t figure it out? [Join our Discord!](https://formbricks.com/discord)**
+
+---
+
+## HTML
 
 All you need to do is copy a `<script>` tag to your HTML head, and that’s about it!
 
 <CodeGroup title="HTML">
-```html {{ title: '<your-main-file>.html' }}
+```html {{ title: 'index.html' }}
 <script type="text/javascript">
 !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="./dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("<environment-id>","<api-host>")},500)}();
 </script>
@@ -58,17 +86,25 @@ All you need to do is copy a `<script>` tag to your HTML head, and that’s abou
 
 Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
-## Formbricks x ReactJS
+---
+
+## ReactJS
 
 Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`.
 
-<CodeGroup title="Install Formbricks">
-  ```sh {{ title: "npm" }}
-  npm install --save @formbricks/js ``` ```sh {{ title: "pnpm" }}
-  pnpm add @formbricks/js ``` ```sh {{ title: "yarn" }}
-  yarn add @formbricks/js ```
-</CodeGroup>
+<CodeGroup title="Install Formbricks JS library">
+```shell {{ title: 'npm' }}
+npm install --save @formbricks/js
+```
+```shell {{ title: 'pnpm' }}
+pnpm add @formbricks/js
+```
+```shell {{ title: 'yarn' }}
+yarn add @formbricks/js
+```
 
+</CodeGroup>
+ 
 Now, update your App.js/ts file to initialise Formbricks.
 
 <CodeGroup title="app.js">
@@ -120,7 +156,9 @@ The app initializes 'formbricks' when it's loaded in a browser environment (due 
 
 Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
-## Formbricks x NextJS
+---
+
+## NextJS
 
 NextJs projects typically follow two main conventions: the App Directory and the Pages Directory.
 To ensure smooth integration with the Formbricks SDK, which operates solely on the client side, follow the
@@ -257,7 +295,9 @@ To connect the Next.js router to Formbricks and ensure the SDK can keep track of
 
 Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
-## Formbricks x VueJs
+---
+
+## VueJs
 
 Integrating the Formbricks SDK with Vue.js is a straightforward process.
 We will make sure the SDK is only loaded and used on the client side, as it's not intended for server-side usage.
@@ -335,25 +375,3 @@ router.afterEach((to, from) => {
 </Properties>
 
 Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
-
-## Validate your setup
-
-Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:
-
-<Image
-  src={WidgetNotConnected}
-  alt="Widget isnt connected"
-  quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
-/>
-
-To this:
-
-<Image
-  src={WidgetConnected}
-  alt="Widget is connected"
-  quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
-/>
-
-**Can’t figure it out? [Join our Discord!](https://formbricks.com/discord)**

@@ -24,7 +24,7 @@ export const meta = {
 
 In app surveys have 6-10x better conversion rates than emailed out surveys. This tutorial explains how to run an in app survey in your web app in 10 to 15 minutes. Let’s go!
 
-## 1. Create a free Formbricks Cloud account
+## Create a free Formbricks Cloud account
 
 While you can [self-host](/docs/self-hosting/deployment) Formbricks, the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and click through the onboarding, until you’re here:
 
@@ -35,7 +35,7 @@ While you can [self-host](/docs/self-hosting/deployment) Formbricks, the quickes
   className="max-w-full sm:max-w-3xl rounded-lg "
 />
 
-## 2. Create your first survey
+## Create your first survey
 
 To be able to see a survey in your app, you need to create one. We’ll choose one of the templates and head over to the survey settings:
 
@@ -84,7 +84,7 @@ Now hit **Publish** and you’ll be forwarded to the Summary Page. This is where
   className="rounded-lg max-w-full sm:max-w-3xl"
 />
 
-## 3. Set up the Formbricks Widget in your app
+## Set up the Formbricks Widget in your app
 
 On the Setup Checklist you have two elements. At the top you find the Widget Status Indicator. Once your app is connected to Formbricks Cloud successfully, this will turn green:
 
@@ -116,7 +116,7 @@ In a local instance of your app, you'll embed the Formbricks Widget. Dependent o
 - [React (Create React App)](/docs/getting-started/react)
 - [Vue.JS](/docs/getting-started/vuejs)
 
-## 4. Restart your app and open browser console
+## Restart your app and open browser console
 
 Now, restart your app in your terminal to make sure the widget is loaded. Once its loaded, open the browser console to see the Formbricks debug logs. If you did everything right, you should now see your survey in the lower right corner:
 
@@ -127,11 +127,11 @@ Now, restart your app in your terminal to make sure the widget is loaded. Once i
   className="rounded-lg max-w-full sm:max-w-3xl"
 />
 
-## 5. Most frequent errors and how to debug them
+## Most frequent errors and how to debug them
 
 In case you don’t see your survey right away, here's what you can do. Go through these in orderly to find the error fast:
 
-### A. Formbricks Cloud and your app are not connected properly.
+### Formbricks Cloud and your app are not connected properly.
 
 Go back to [app.formbricks.com](http://app.formbricks.com) and go to the Setup Checklist in the Settings. If the status is still indicated as “Not connected” your app hasn't yet pinged the Formbricks Cloud:
 
@@ -147,7 +147,7 @@ Go back to [app.formbricks.com](http://app.formbricks.com) and go to the Setup C
 
 ---
 
-### B. Survey not loaded
+### Survey not loaded
 
 If your app is connected with Formbricks Cloud, the survey might have not been loaded properly. Check the debug logs and search for the list of surveys loaded. It should look like so:
 
@@ -171,7 +171,7 @@ The widget only loads surveys which are **public** and **in progress**. Go to Fo
 
 ---
 
-### C. Survey not triggered
+### Survey not triggered
 
 If the survey is loaded by the widget it might not have been triggered properly.
 
