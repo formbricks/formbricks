@@ -3,6 +3,7 @@ import Image from "next/image";
 import SetupChecklist from "./env-id.webp";
 import WidgetNotConnected from "./widget-not-connected.webp";
 import WidgetConnected from "./widget-connected.webp";
+import ReactApp from "./react-in-app-survey-app-popup-form.webp";
 
 export const metadata = {
   title: "Framework Overview",
@@ -51,10 +52,12 @@ Before getting started, make sure you have:
       </Property>
     </Properties>
 
+    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
+
   </Col>
   <Col sticky>
     <CodeGroup title="HTML">
-    ```html {{ title: 'HTML' }}
+    ```html {{ title: '<your-main-file>.html' }}
     <script type="text/javascript">
     !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="./dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("<environment-id>","<api-host>")},500)}();
     </script>
@@ -67,6 +70,9 @@ Before getting started, make sure you have:
 
 <Row>
   <Col>
+  
+    Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`.<br/>
+    Now, update your App.js/ts file to initialise Formbricks.
 
     ### Required Customizations to be Made
 
@@ -83,17 +89,34 @@ Before getting started, make sure you have:
       </Property>
     </Properties>
 
-    For detailed setup, please visit our [VueJs Setup Guide](/docs/getting-started/vuejs) page.
+    ### What are we doing here?
+
+    The app initializes 'formbricks' when it's loaded in a browser environment (due to the typeof window !== "undefined" check) and then renders your components or content.
+
+    <Image
+      src={ReactApp}
+      alt="In app survey in React app for micro surveys"
+      quality="100"
+      className="rounded-lg max-w-full sm:max-w-lg"
+    />
+
+    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
   </Col>
   <Col sticky>
-    <CodeGroup title="Install Formbricks JS library">
-    ```shell {{ title: 'JS lib from npm' }}
-    npm install @formbricks/js
+    <CodeGroup title="Install Formbricks">
+    ```sh {{ title: 'npm' }}
+    npm install --save @formbricks/js
+    ```
+    ```sh {{ title: 'pnpm' }}
+    pnpm add @formbricks/js
+    ```
+    ```sh {{ title: 'yarn' }}
+    yarn add @formbricks/js
     ```
     </CodeGroup>
     <CodeGroup title="Initialise Formbricks in your App">
-    ```js {{ title: 'ReactJs' }}
+    ```js {{ title: 'app.js' }}
     // other imports
     import formbricks from "@formbricks/js";
 
@@ -121,8 +144,15 @@ Before getting started, make sure you have:
 <Row>
   <Col>
 
-    This is a quick setup for the App directory structure of Nextjs, if you have the Pages directory,
-    refer to this [NextJs Pages Directory Setup Guide](/docs/getting-started/nextjs-pages).
+    NextJs projects typically follow two main conventions: the App Directory and the Pages Directory.
+    To ensure smooth integration with the Formbricks SDK, which operates solely on the client side, follow the
+    guidelines for each convention below:
+
+    - App directory: You will have to define a new component in `app/formbricks.tsx` file and call it in your `app/layout.tsx` file.
+    - Pages directory: You will have to visit your `_app.tsx` and just initialise Formbricks there.
+
+    Code snippets for the integration for both conventions are provided to further assist you.
+
 
     ### Required Customizations to be Made
 
@@ -147,7 +177,12 @@ Before getting started, make sure you have:
       </Property>
     </Properties>
 
-    For detailed setup, please visit our [NextJs App Directory Setup Guide](/docs/getting-started/nextjs-app).
+    ### What are we doing here?
+
+    First we need to initialize the Formbricks SDK, making sure it only runs on the client side.
+    To connect the Next.js router to Formbricks and ensure the SDK can keep track of every page change, we are registering the route change event.
+
+    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
   </Col>
   <Col sticky>
@@ -163,7 +198,7 @@ Before getting started, make sure you have:
     ```
 
     </CodeGroup>
-    <CodeGroup title="Initialise Formbricks">
+    <CodeGroup title="NextJs Structure: App Directory">
     ```tsx {{ title: 'app/formbricks.tsx' }}
     "use client";
     import formbricks from "@formbricks/js";
@@ -206,6 +241,40 @@ Before getting started, make sure you have:
 
     </CodeGroup>
 
+    <CodeGroup title="NextJs Structure: Pages Directory">
+    ```tsx {{ title: '_app.tsx' }}
+    import "@/styles/globals.css";
+    import type { PagesProps } from "next/app";
+    import { useEffect } from "react";
+    import { useRouter } from "next/router";
+    import formbricks from "@formbricks/js";
+
+    if (typeof window !== "undefined") {
+      formbricks.init({
+        environmentId: "your-environment-id",
+        apiHost: "your-api-host", // e.g. https://app.formbricks.com
+        debug: true, // remove when in production
+      });
+    }
+
+    export default function Pages({ Component, pageProps }: PagesProps) {
+      const router = useRouter();
+
+      useEffect(() => {
+        // Connect next.js router to Formbricks
+        const handleRouteChange = formbricks?.registerRouteChange;
+        router.events.on("routeChangeComplete", handleRouteChange);
+
+        return () => {
+          router.events.off("routeChangeComplete", handleRouteChange);
+        };
+      }, []);
+
+      return <Component {...pageProps} />;
+    }
+    ```
+    </CodeGroup>
+
   </Col>
 </Row>
 
@@ -213,6 +282,9 @@ Before getting started, make sure you have:
 
 <Row>
   <Col>
+
+    Integrating the Formbricks SDK with Vue.js is a straightforward process.
+    We will make sure the SDK is only loaded and used on the client side, as it's not intended for server-side usage.
 
     ### Required Customizations to be Made
 
@@ -237,7 +309,7 @@ Before getting started, make sure you have:
       </Property>
     </Properties>
 
-    For detailed setup, please visit our [NextJs App Directory Setup Guide](/docs/getting-started/nextjs-app).
+    Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
   </Col>
   <Col sticky>
@@ -312,3 +384,6 @@ To this:
   quality="100"
   className="rounded-lg max-w-full sm:max-w-3xl"
 />
+
+**Can’t figure it out? [Join our Discord!](https://formbricks.com/discord)**
+
