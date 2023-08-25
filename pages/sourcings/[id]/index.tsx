@@ -200,7 +200,7 @@ function NoCodeFormPublic() {
               )}
 
               <div
-                className="text-sm mb-3 ml-12  mr-11"
+                className="text-sm mb-3 ml-12  mr-11 form-description"
                 dangerouslySetInnerHTML={{
                   __html: noCodeForm.form.description,
                 }}
