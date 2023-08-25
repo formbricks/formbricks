@@ -6,7 +6,7 @@ import type { Session } from "next-auth";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getMemberships } from "@formbricks/lib/services/membership";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
-import NavbarLoading from "@/app/(app)/environments/[environmentId]/NavbarLoading";
+import { ErrorComponent } from "@formbricks/ui";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -21,7 +21,7 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
   ]);
 
   if (!team || !environment || !memberships) {
-    return <NavbarLoading />;
+    return <ErrorComponent />;
   }
 
   return <Navigation environment={environment} team={team} memberships={memberships} session={session} />;
