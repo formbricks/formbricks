@@ -72,7 +72,7 @@ const nextConfig = {
       },
       {
         source: "/docs/getting-started/nextjs",
-        destination: "/docs/getting-started/nextjs-app",
+        destination: "/docs/getting-started/framework-guides#next-js",
         permanent: true,
       },
       {

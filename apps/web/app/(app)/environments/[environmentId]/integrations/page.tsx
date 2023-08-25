@@ -11,7 +11,7 @@ export default function IntegrationsPage({ params }) {
       <p className="mb-6 text-slate-500">Connect Formbricks with your favorite tools.</p>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card
-          docsHref="https://formbricks.com/docs/getting-started/nextjs-app"
+          docsHref="https://formbricks.com/docs/getting-started/framework-guides#next-js"
           docsText="Docs"
           docsNewTab={true}
           label="Javascript Widget"

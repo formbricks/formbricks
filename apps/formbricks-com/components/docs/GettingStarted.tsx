@@ -8,7 +8,7 @@ const gettingStarted = [
     description: "Get up and running with our cloud and JavaScript widget",
   },
   {
-    href: "/docs/getting-started/nextjs-app",
+    href: "/docs/getting-started/framework-guides#next-js",
     name: "Next.js App",
     description: "Integrate the Formbricks SDK into a Next.js application with the new app directory",
   },

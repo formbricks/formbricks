@@ -8,26 +8,26 @@ import logoVueJs from "@/images/logos/vuejs.svg";
 
 const libraries = [
   {
-    href: "#formbricks-x-html",
+    href: "#html",
     name: "HTML",
     description: "All you need to do is add 3 lines of code to your HTML script and thats it, you're done!",
     logo: logoHtml,
   },
   {
-    href: "#formbricks-x-react-js",
+    href: "#react-js",
     name: "React.js",
     description: "Load the our Js library with your environment ID and you're ready to go!",
     logo: logoReactJs,
   },
   {
-    href: "#formbricks-x-next-js",
+    href: "#next-js",
     name: "Next.js",
     description:
       "Natively add us to your NextJs project with support for both App as well as Pages project structure!",
     logo: logoNextjs,
   },
   {
-    href: "#formbricks-x-vue-js",
+    href: "#vue-js",
     name: "Vue.js",
     description: "Simply add us to your router change and sit back!",
     logo: logoVueJs,
