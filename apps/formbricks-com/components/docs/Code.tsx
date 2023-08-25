@@ -153,7 +153,7 @@ function CodeGroupHeader({
   children: React.ReactNode;
   selectedIndex: number;
 }) {
-  let hasTabs = Children.count(children) > 1;
+  let hasTabs = Children.count(children) >= 1;
 
   if (!title && !hasTabs) {
     return null;
@@ -182,7 +182,7 @@ function CodeGroupHeader({
 }
 
 function CodeGroupPanels({ children, ...props }: React.ComponentPropsWithoutRef<typeof CodePanel>) {
-  let hasTabs = Children.count(children) > 1;
+  let hasTabs = Children.count(children) >= 1;
 
   if (hasTabs) {
     return (
@@ -278,7 +278,7 @@ export function CodeGroup({
   let languages =
     Children.map(children, (child) => getPanelTitle(isValidElement(child) ? child.props : {})) ?? [];
   let tabGroupProps = useTabGroupProps(languages);
-  let hasTabs = Children.count(children) > 1;
+  let hasTabs = Children.count(children) >= 1;
 
   let containerClassName =
     "not-prose my-6 overflow-hidden rounded-2xl bg-zinc-900 shadow-md dark:ring-1 dark:ring-white/10";

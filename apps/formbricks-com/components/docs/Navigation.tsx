@@ -193,10 +193,6 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
-      { title: "Next.js App Dir", href: "/docs/getting-started/nextjs-app" },
-      { title: "Next.js Pages Dir", href: "/docs/getting-started/nextjs-pages" },
-      { title: "React.js", href: "/docs/getting-started/react" },
-      { title: "Setup with Vue.js", href: "/docs/getting-started/vuejs" },
     ],
   },
   {
