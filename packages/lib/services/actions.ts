@@ -5,7 +5,7 @@ import { TAction } from "@formbricks/types/v1/actions";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 
-export const getActions = cache(async (environmentId: string, limit? : number): Promise<any> => {
+export const getActions = cache(async (environmentId: string, limit? : number): Promise<TAction[]> => {
   try {
     const actionsPrisma = await prisma.event.findMany({
       where: {
@@ -21,8 +21,18 @@ export const getActions = cache(async (environmentId: string, limit? : number): 
         eventClass: true,
       },
     });
-
-    return actionsPrisma;
+    const actions : TAction[] = [] 
+    // transforming response to type TAction[] 
+    actionsPrisma.forEach((action)=>{
+      actions.push({
+        id: action.id,
+        createdAt: action.createdAt,
+        sessionId: action.sessionId,
+        properties: action.properties,
+        actionClass : action.eventClass
+      })
+    })
+    return actions;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

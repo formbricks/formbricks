@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SurveysPage({ params }) {
-  const [environment, events] = await Promise.all([
+  const [environment, actions] = await Promise.all([
     getEnvironment(params.environmentId),
     getActions(params.environmentId),
   ]);
@@ -25,7 +25,7 @@ export default async function SurveysPage({ params }) {
       {environment && (
         <WidgetStatusIndicator
           environment={environment}
-          events={events}
+          actions={actions}
           type="mini"
           updateEnvironmentAction={updateEnvironmentAction}
         />

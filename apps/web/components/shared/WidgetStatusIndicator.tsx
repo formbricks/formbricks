@@ -1,8 +1,8 @@
 "use client";
 
 import { timeSince } from "@formbricks/lib/time";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TEvent } from "@formbricks/types/v1/events";
+import { TAction } from "@formbricks/types/v1/actions";
+import { TEnvironment, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 import { Confetti } from "@formbricks/ui";
 import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
@@ -12,23 +12,23 @@ import { useEffect, useMemo, useState } from "react";
 interface WidgetStatusIndicatorProps {
   environment: TEnvironment;
   type: "large" | "mini";
-  events: TEvent[];
-  updateEnvironmentAction: (nvironmentId: string, data: any) => Promise<TEnvironment>;
+  actions: TAction[];
+  updateEnvironmentAction: (environmentId: string, data: Partial<TEnvironmentUpdateInput>) => Promise<TEnvironment>;
 }
 
 export default function WidgetStatusIndicator({
   environment,
   type,
-  events,
+  actions,
   updateEnvironmentAction,
 }: WidgetStatusIndicatorProps) {
   const [confetti, setConfetti] = useState(false);
 
   useEffect(() => {
-    if (!environment?.widgetSetupCompleted && events && events.length > 0) {
+    if (!environment?.widgetSetupCompleted && actions && actions.length > 0) {
       updateEnvironmentAction(environment.id, { widgetSetupCompleted: true });
     }
-  }, [environment, events]);
+  }, [environment, actions]);
 
   const stati = {
     notImplemented: {
@@ -47,8 +47,8 @@ export default function WidgetStatusIndicator({
   };
 
   const status = useMemo(() => {
-    if (events && events.length > 0) {
-      const lastEvent = events[0];
+    if (actions && actions.length > 0) {
+      const lastEvent = actions[0];
       const currentTime = new Date();
       const lastEventTime = new Date(lastEvent.createdAt);
       const timeDifference = currentTime.getTime() - lastEventTime.getTime();
@@ -62,7 +62,7 @@ export default function WidgetStatusIndicator({
     } else {
       return "notImplemented";
     }
-  }, [events]);
+  }, [actions]);
 
   const currentStatus = stati[status];
 
@@ -87,7 +87,7 @@ export default function WidgetStatusIndicator({
         <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
         <p className="text-sm text-slate-700">
           {currentStatus.subtitle}{" "}
-          {status !== "notImplemented" && <span>{timeSince(events[0].createdAt.toISOString())}</span>}
+          {status !== "notImplemented" && <span>{timeSince(actions[0].createdAt.toISOString())}</span>}
         </p>
         {confetti && <Confetti />}
       </div>
@@ -100,7 +100,7 @@ export default function WidgetStatusIndicator({
           <div className=" flex rounded-full bg-slate-100 px-2 py-1">
             <p className="mr-2 text-sm text-slate-400 group-hover:underline">
               {currentStatus.subtitle}{" "}
-              {status !== "notImplemented" && <span>{timeSince(events[0].createdAt.toISOString())}</span>}
+              {status !== "notImplemented" && <span>{timeSince(actions[0].createdAt.toISOString())}</span>}
             </p>
             <div
               className={clsx(

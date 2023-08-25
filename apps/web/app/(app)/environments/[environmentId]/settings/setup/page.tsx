@@ -12,7 +12,7 @@ import { updateEnvironmentAction } from "@/app/(app)/environments/[environmentId
 import { ErrorComponent } from "@formbricks/ui";
 
 export default async function ProfileSettingsPage({ params }) {
-  const [environment, events] = await Promise.all([
+  const [environment, actions] = await Promise.all([
     getEnvironment(params.environmentId),
     getActions(params.environmentId),
   ]);
@@ -33,7 +33,7 @@ export default async function ProfileSettingsPage({ params }) {
             description="Check if the Formbricks widget is alive and kicking.">
             <WidgetStatusIndicator
               environment={environment}
-              events={events}
+              actions={actions}
               type="large"
               updateEnvironmentAction={updateEnvironmentAction}
             />
