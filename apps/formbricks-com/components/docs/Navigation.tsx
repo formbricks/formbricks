@@ -186,13 +186,13 @@ export const navigation: Array<NavGroup> = [
       { title: "What is Formbricks?", href: "/docs/introduction/what-is-formbricks" },
       { title: "Why is it better?", href: "/docs/introduction/why-is-it-better" },
       { title: "How does it work?", href: "/docs/introduction/how-it-works" },
-      { title: "How to integrate Formbricks?", href: "/docs/introduction/framework-overview" },
     ],
   },
   {
     title: "Getting Started",
     links: [
       { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
+      { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
       { title: "Next.js App Dir", href: "/docs/getting-started/nextjs-app" },
       { title: "Next.js Pages Dir", href: "/docs/getting-started/nextjs-pages" },
       { title: "React.js", href: "/docs/getting-started/react" },
