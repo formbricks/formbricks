@@ -29,8 +29,6 @@
     "@sindresorhus/slugify": "^2.2.1",
     "@tailwindcss/typography": "^0.5.9",
     "@types/node": "20.5.6",
-    "@types/react": "18.2.21",
-    "@types/react-dom": "18.2.7",
     "@types/react-highlight-words": "^0.16.4",
     "acorn": "^8.10.0",
     "autoprefixer": "^10.4.15",
@@ -62,14 +60,12 @@
     "shiki": "^0.14.3",
     "simple-functional-loader": "^1.2.1",
     "tailwindcss": "^3.3.3",
-    "typescript": "5.2.2",
     "unist-util-filter": "^5.0.0",
     "unist-util-visit": "^5.0.0",
     "zustand": "^4.4.1"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint-config-formbricks": "workspace:*",
-    "sharp": "^0.32.5"
+    "eslint-config-formbricks": "workspace:*"
   }
 }

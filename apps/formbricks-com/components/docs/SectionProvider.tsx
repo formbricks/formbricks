@@ -59,7 +59,7 @@ function useVisibleSections(sectionStore: StoreApi<SectionState>) {
   useEffect(() => {
     function checkVisibleSections() {
       let { innerHeight, scrollY } = window;
-      let newVisibleSections = [];
+      let newVisibleSections: string[] = []; // Explicitly type the array here
 
       for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
         let { id, headingRef, offsetRem = 0 } = sections[sectionIndex];
