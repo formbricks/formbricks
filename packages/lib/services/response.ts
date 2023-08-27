@@ -18,6 +18,7 @@ const responseSelection = {
   data: true,
   meta: true,
   personAttributes: true,
+  suId: true,
   person: {
     select: {
       id: true,
@@ -88,6 +89,38 @@ export const getResponsesByPersonId = async (personId: string): Promise<Array<TR
     });
 
     return responses;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const getResponseBySingleUseId = async (
+  surveyId: string,
+  singleUseId: string
+): Promise<TResponse | null> => {
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        surveyId_suId: { surveyId, suId: singleUseId },
+      },
+      select: responseSelection,
+    });
+
+    if (!responsePrisma) {
+      return null;
+    }
+
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+
+    return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
