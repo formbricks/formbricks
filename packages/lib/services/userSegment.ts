@@ -27,6 +27,16 @@ export const createUserSegment = async (
   return userSegment;
 };
 
+export const getAllUserSegment = async (environmentId: string) => {
+  const userSegments = await prisma.userSegment.findMany({
+    where: {
+      environmentId,
+    },
+  });
+
+  return userSegments;
+};
+
 export const updateUserSegment = async (segmentId: string, data: TUserSegmentUpdateInput) => {
   const userSegment = await prisma.userSegment.update({
     where: {

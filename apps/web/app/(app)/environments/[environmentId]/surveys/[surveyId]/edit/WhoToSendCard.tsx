@@ -3,6 +3,7 @@
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import SaveAsNewSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SaveAsNewSegmentModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
@@ -41,6 +42,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
+  const [resetAllFiltersModalOpen, setRestAllFiltersModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
@@ -168,8 +170,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
           </div>
 
           <div className="p-6">
-            <div className="rounded-lg border-2 border-slate-300 p-4">
-              <p className="mb-4 text-sm font-semibold">Send survey to audience who match...</p>
+            <div className="flex flex-col gap-6 rounded-lg border-2 border-slate-300 p-4">
+              <p className="text-sm font-semibold">Send survey to audience who match...</p>
               {!!localSurvey.userSegment?.filters && (
                 <>
                   <SegmentFilters
@@ -193,11 +195,33 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                     setOpen={setSaveAsNewSegmentModalOpen}
                     localSurvey={localSurvey}
                   />
+
+                  <ConfirmDialog
+                    open={resetAllFiltersModalOpen}
+                    setOpen={setRestAllFiltersModalOpen}
+                    title="Reset all filters"
+                    description="Are you sure you want to reset all filters?"
+                    primaryAction={() => {
+                      const updatedLocalSurvey = produce(localSurvey, (draft) => {
+                        if (draft.userSegment?.filters) {
+                          draft.userSegment.filters = [];
+                        }
+                      });
+
+                      setLocalSurvey(updatedLocalSurvey);
+                      setRestAllFiltersModalOpen(false);
+                    }}
+                    secondaryAction={() => {
+                      setRestAllFiltersModalOpen(false);
+                    }}
+                    primaryActionText="Reset"
+                    secondaryActionText="Cancel"
+                  />
                 </>
               )}
             </div>
 
-            <div className="mt-6 flex w-full gap-4">
+            <div className="flex w-full gap-4">
               <Button
                 variant="minimal"
                 size="sm"
@@ -205,6 +229,15 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 onClick={() => setSaveAsNewSegmentModalOpen(true)}>
                 <div className="h-4 w-4 rounded-full bg-slate-300" />
                 <p className="text-sm text-slate-500">Save as new Segment</p>
+              </Button>
+
+              <Button
+                variant="minimal"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => setRestAllFiltersModalOpen(true)}>
+                <div className="h-4 w-4 rounded-full bg-slate-300" />
+                <p className="text-sm text-slate-500">Reset all filters</p>
               </Button>
             </div>
           </div>

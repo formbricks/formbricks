@@ -45,9 +45,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
-import { original, produce } from "immer";
+import { produce } from "immer";
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 
+// type guard to check if the resource is a filter or a filter group
 const isResourceFilter = (
   resource: TUserSegmentFilter | TBaseFilterGroup
 ): resource is TUserSegmentFilter => {

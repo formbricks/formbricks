@@ -228,10 +228,39 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       data.surveyClosedMessage = prismaClient.JsonNull;
     }
 
-    const prismaRes = await prisma.survey.update({
-      where: { id: surveyId },
-      data,
-    });
+    let prismaRes;
+
+    const userSegmentId = data.userSegmentId;
+    const userSegment = data.userSegment;
+
+    if (userSegmentId && userSegment) {
+      delete data.userSegmentId;
+      delete data.userSegment;
+
+      try {
+        await prisma.userSegment.update({
+          where: {
+            id: userSegmentId,
+          },
+          data: userSegment,
+        });
+      } catch (err) {
+        console.log({ err });
+        throw new Error("Error updating survey");
+      }
+    }
+
+    try {
+      prismaRes = await prisma.survey.update({
+        where: { id: surveyId },
+        data: {
+          ...data,
+        },
+      });
+    } catch (err) {
+      console.log({ err });
+    }
+
     return res.json(prismaRes);
   }
 
