@@ -6,9 +6,17 @@ import LegalFooter from "@/app/s/[surveyId]/LegalFooter";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
+import { getResponseBySingleUseId } from "@formbricks/lib/services/response";
+import SurveyLinkUsed from "@/app/s/[surveyId]/SurveyLinkUsed";
 
-export default async function LinkSurveyPage({ params }) {
+type LinkSurveyPageProps = {
+  params: { surveyId: string };
+  searchParams: { suId: string | undefined };
+};
+
+export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
+  const singleUseId = searchParams.suId;
 
   if (!survey || survey.type !== "link") {
     return <SurveyInactive status="not found" />;
@@ -16,6 +24,14 @@ export default async function LinkSurveyPage({ params }) {
 
   if (survey && survey.status !== "inProgress") {
     return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
+  }
+
+  if (survey && singleUseId && survey.singleUse?.enabled) {
+    // todo: check if singleUseId is present.
+    const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUseId);
+    if (singleUseResponse) {
+      return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
+    }
   }
 
   const product = await getProductByEnvironmentId(survey.environmentId);
