@@ -62,7 +62,7 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
 });
 
 export const updateProduct = cache(
-  async (productId: string, data: Prisma.ProductUpdateInput): Promise<TProduct> => {
+  async (productId: string, data: Partial<TProductUpdateInput>): Promise<TProduct> => {
     try {
       const updatedProduct = await prisma.product.update({
         where: {
@@ -82,7 +82,7 @@ export const updateProduct = cache(
   }
 );
 
-export const getAvailableProducts = cache(async (teamId: string): Promise<TProduct[]> => {
+export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
   const products = await prisma.product.findMany({
     where: {
       teamId,

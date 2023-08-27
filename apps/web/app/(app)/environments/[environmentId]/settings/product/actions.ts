@@ -1,6 +1,6 @@
 "use server";
 
-import { deleteProduct, getAvailableProducts, updateProduct } from "@formbricks/lib/services/product";
+import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/services/product";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { getServerSession } from "next-auth";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/errors";
@@ -73,7 +73,7 @@ export const deleteProductAction = async (environmentId: string, userId: string,
     throw new AuthenticationError("You are not allowed to delete products.");
   }
 
-  const availableProducts = team ? await getAvailableProducts(team.id) : null;
+  const availableProducts = team ? await getProducts(team.id) : null;
 
   if (!!availableProducts && availableProducts?.length <= 1) {
     throw new Error("You can't delete the last product in the environment.");

@@ -1,4 +1,4 @@
-import { getAvailableProducts } from "@formbricks/lib/services/product";
+import { getProducts } from "@formbricks/lib/services/product";
 import { getProfile } from "@formbricks/lib/services/profile";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { getMembersByTeamId } from "@formbricks/lib/services/membership";
@@ -18,7 +18,7 @@ export default async function DeleteProduct({ environmentId, product }: DeletePr
   const profile = session ? await getProfile(session.user.id) : null;
   const team = await getTeamByEnvironmentId(environmentId);
 
-  const availableProducts = team ? await getAvailableProducts(team.id) : null;
+  const availableProducts = team ? await getProducts(team.id) : null;
   const members = team ? await getMembersByTeamId(team.id) : null;
 
   const availableProductsLength = availableProducts ? availableProducts.length : 0;

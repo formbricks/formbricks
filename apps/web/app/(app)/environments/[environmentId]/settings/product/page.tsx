@@ -9,11 +9,13 @@ import DeleteProduct from "./DeleteProduct";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const environment = await getEnvironment(params.environmentId);
-  const product = environment ? await getProductByEnvironmentId(params.environmentId) : null;
+  const [, product] = await Promise.all([
+    getEnvironment(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
 
   if (!product) {
-    return null;
+    throw new Error("Product not found");
   }
 
   return (

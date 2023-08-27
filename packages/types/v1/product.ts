@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -20,4 +19,11 @@ export const ZProduct = z.object({
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
-export type TProductUpdateInput = Prisma.ProductUpdateInput;
+
+export const ZProductUpdateInput = ZProduct.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;
