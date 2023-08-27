@@ -6,9 +6,10 @@ import NPSQuestion from "./NPSQuestion";
 import CTAQuestion from "./CTAQuestion";
 import RatingQuestion from "./RatingQuestion";
 import ConsentQuestion from "./ConsentQuestion";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 
 interface QuestionConditionalProps {
-  question: Question;
+  question: Question | TSurveyQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

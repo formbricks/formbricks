@@ -7,25 +7,29 @@ import type { Survey } from "@formbricks/types/surveys";
 import { ErrorComponent } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
-import SettingsView from "./SettingsView";
-import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
+import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
+import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { useEnvironment } from "@/lib/environments/environments";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SurveyEditorProps {
   environmentId: string;
   surveyId: string;
+  environment: TEnvironment;
 }
 
-export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps): JSX.Element {
+export default function SurveyEditor({
+  environmentId,
+  surveyId,
+  environment,
+}: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId, true);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
   useEffect(() => {
     if (survey) {
@@ -37,11 +41,11 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  if (isLoadingSurvey || isLoadingProduct || isLoadingEnvironment || !localSurvey) {
+  if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurvey || isErrorProduct || isErrorEnvironment) {
+  if (isErrorSurvey || isErrorProduct) {
     return <ErrorComponent />;
   }
 
@@ -52,6 +56,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         localSurvey={localSurvey}
         survey={survey}
         environmentId={environmentId}
+        environment={environment}
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidQuestions={setInvalidQuestions}

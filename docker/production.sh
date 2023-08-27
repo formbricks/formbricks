@@ -108,6 +108,9 @@ cat <<EOT >docker-compose.yml
 version: "3.3"
 x-environment: &environment
   environment:
+    # The url of your Formbricks instance used in the admin panel
+    WEBAPP_URL: "https://$domain_name"
+
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 

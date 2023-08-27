@@ -14,10 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */
-import { UserGroupIcon, FunnelIcon } from "@heroicons/react/24/solid";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -107,9 +106,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             </div>
             <div>
               <p className="font-semibold text-slate-800">Target Audience</p>
-              <p className="mt-1 truncate text-sm text-slate-500">
-                Pre-segment your users with attributes filters.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
             </div>
             {localSurvey.type === "link" && (
               <div className="flex w-full items-center justify-end pr-2">

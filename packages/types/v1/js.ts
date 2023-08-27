@@ -19,6 +19,7 @@ export const ZJsSyncInput = z.object({
   environmentId: z.string().cuid2(),
   personId: z.string().cuid2().optional(),
   sessionId: z.string().cuid2().optional(),
+  jsVersion: z.string().optional(),
 });
 
 export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
