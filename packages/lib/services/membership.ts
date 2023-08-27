@@ -2,7 +2,7 @@ import { prisma } from "@formbricks/database";
 import { TMember, TMembership } from "@formbricks/types/v1/memberships";
 import { cache } from "react";
 
-export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[]> => {
+export const getMembers = cache(async (teamId: string): Promise<TMember[]> => {
   const membersData = await prisma.membership.findMany({
     where: { teamId },
     select: {
