@@ -78,6 +78,7 @@ export const selectSurvey = {
   delay: true,
   autoComplete: true,
   redirectUrl: true,
+  singleUse: true,
   triggers: {
     select: {
       eventClass: {
