@@ -1,6 +1,6 @@
 "use client";
 
-import type { Survey } from "@formbricks/types/surveys";
+import type { Survey, SurveyClosedMessage, SurveySingleUse } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle, DatePicker, Input, Label } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -24,6 +24,11 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     heading: "Survey Completed",
     subheading: "This free & open-source survey has been closed",
   });
+  const [singleUseMessage, setSingleUseMessage] = useState({
+    heading: "This survey link has already been used.",
+    subheading: "Thanks for sharing your feedback!",
+  });
+
   const [closeOnDate, setCloseOnDate] = useState<Date>();
 
   const handleRedirectCheckMark = () => {
@@ -72,13 +77,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey({ ...localSurvey, closeOnDate: date ?? null });
   };
 
-  const handleClosedSurveyMessageChange = ({
-    heading,
-    subheading,
-  }: {
-    heading?: string;
-    subheading?: string;
-  }) => {
+  const handleClosedSurveyMessageChange = ({ heading, subheading }: SurveyClosedMessage) => {
     const message = {
       heading: heading ?? surveyClosedMessage.heading,
       subheading: subheading ?? surveyClosedMessage.subheading,
@@ -86,6 +85,25 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
     setSurveyClosedMessage(message);
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
+  };
+
+  const handleSingleUseSurveyToggle = () => {
+    if (!localSurvey.singleUse?.enabled) {
+      setLocalSurvey({ ...localSurvey, singleUse: { enabled: true, ...singleUseMessage } });
+    } else {
+      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false } });
+    }
+  };
+
+  const handleSingleUseSurveyMessageChange = ({ heading, subheading }: Omit<SurveySingleUse, "enabled">) => {
+    const message = {
+      heading: heading ?? singleUseMessage.heading,
+      subheading: subheading ?? singleUseMessage.subheading,
+    };
+
+    const localSurveySingleUseEnabled = localSurvey.singleUse?.enabled ?? false;
+    setSingleUseMessage(message);
+    setLocalSurvey({ ...localSurvey, singleUse: { enabled: localSurveySingleUseEnabled, ...message } });
   };
 
   useEffect(() => {
@@ -100,6 +118,13 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
         subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
       });
       setSurveyClosedMessageToggle(true);
+    }
+
+    if (localSurvey.singleUse?.enabled) {
+      setSingleUseMessage({
+        heading: localSurvey.singleUse.heading ?? singleUseMessage.heading,
+        subheading: localSurvey.singleUse.subheading ?? singleUseMessage.subheading,
+      });
     }
 
     if (localSurvey.closeOnDate) {
@@ -253,6 +278,38 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       name="subheading"
                       defaultValue={surveyClosedMessage.subheading}
                       onChange={(e) => handleClosedSurveyMessageChange({ subheading: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+
+              {/* Single User Survey Options */}
+              <AdvancedOptionToggle
+                htmlId="singleUserSurveyOptions"
+                isChecked={localSurvey.singleUse?.enabled ?? false}
+                onToggle={handleSingleUseSurveyToggle}
+                title="Single-Use Survey Links"
+                description="Allow only 1 response per survey link."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
+                    <Input
+                      autoFocus
+                      id="heading"
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      defaultValue={singleUseMessage.heading}
+                      onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
+                    />
+
+                    <Label htmlFor="headline">Additional Note</Label>
+                    <Input
+                      className="mt-2 bg-white"
+                      id="subheading"
+                      name="subheading"
+                      defaultValue={singleUseMessage.subheading}
+                      onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
                   </div>
                 </div>

@@ -11,6 +11,12 @@ export interface SurveyClosedMessage {
   subheading?: string;
 }
 
+export interface SurveySingleUse {
+  enabled: boolean;
+  heading?: string;
+  subheading?: string;
+}
+
 export interface Survey {
   id: string;
   createdAt: string;
@@ -33,6 +39,7 @@ export interface Survey {
   autoComplete: number | null;
   surveyClosedMessage: SurveyClosedMessage | null;
   closeOnDate: Date | null;
+  singleUse: SurveySingleUse | null;
   _count: { responses: number | null } | null;
 }
 
