@@ -58,6 +58,7 @@ export const ZResponse = z.object({
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
   meta: ZResponseMeta.nullable(),
+  suId: z.string().nullable(),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
