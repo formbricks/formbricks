@@ -35,7 +35,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       include: {
         triggers: true,
         attributeFilters: true,
-        userSegment: true,
+        userSegment: {
+          include: {
+            surveys: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
         _count: analytics ? { select: { responses: { where: { finished: true } } } } : false,
       },
     });
@@ -70,6 +78,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         condition: f.condition,
         value: f.value,
       })),
+      ...(surveyData.userSegment && {
+        userSegment: {
+          ...surveyData.userSegment,
+          surveys: surveyData.userSegment.surveys.map((segment) => segment.id),
+        },
+      }),
     });
   }
 
@@ -243,6 +257,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
       if (!parseSegmentFilters.success) {
         throw new Error("Error parsing user segment");
+      }
+
+      if (userSegment.surveys) {
+        delete userSegment.surveys;
       }
 
       try {

@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { TBaseFilterGroup, TUserSegmentUpdateInput } from "@formbricks/types/v1/userSegment";
 
 export const createUserSegment = async (
@@ -93,4 +94,40 @@ export const loadNewUserSegment = async (surveyId: string, newSegmentId: string)
     userSegment,
     updatedSurvey,
   };
+};
+
+export const cloneUserSegment = async (segmentId: string, surveyId: string) => {
+  const userSegment = await prisma.userSegment.findUnique({
+    where: {
+      id: segmentId,
+    },
+  });
+
+  if (!userSegment) {
+    throw new ResourceNotFoundError("userSegment", segmentId);
+  }
+
+  try {
+    const clonedUserSegment = await prisma.userSegment.create({
+      data: {
+        title: `Copy of ${userSegment.title}`,
+        description: userSegment.description,
+        isPrivate: userSegment.isPrivate,
+        environmentId: userSegment.environmentId,
+        surveys: {
+          connect: {
+            id: surveyId,
+          },
+        },
+      },
+    });
+
+    if (clonedUserSegment.id) {
+      clonedUserSegment.filters = userSegment.filters;
+    }
+
+    return clonedUserSegment;
+  } catch (err) {
+    throw new DatabaseError("Error cloning user segment");
+  }
 };

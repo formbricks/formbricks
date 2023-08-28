@@ -4,9 +4,11 @@ import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[su
 import LoadSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SaveAsNewSegmentModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
+import { cloneUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
+import { useSurvey } from "@/lib/surveys/surveys";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
@@ -23,7 +25,8 @@ import {
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -40,6 +43,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [open, setOpen] = useState(false);
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
     useAttributeClasses(environmentId);
+  const { mutateSurvey } = useSurvey(environmentId, localSurvey.id);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
@@ -47,6 +51,31 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(localSurvey.userSegment?.isPrivate);
+  const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
+
+  const isSegmentUsedInOtherSurveys = useMemo(
+    () => (localSurvey?.userSegment ? localSurvey.userSegment?.surveys?.length > 1 : false),
+    [localSurvey.userSegment]
+  );
+
+  const handleCloneSegment = async () => {
+    if (!localSurvey.userSegment) return;
+
+    try {
+      const clonedUserSegment = await cloneUserSegmentAction(localSurvey.userSegment?.id, localSurvey.id);
+      mutateSurvey();
+
+      setLocalSurvey({
+        ...localSurvey,
+        userSegment: {
+          ...clonedUserSegment,
+          surveys: [localSurvey.id],
+        },
+      });
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
@@ -108,74 +137,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   if (isErrorAttributeClasses) {
     return <div>Error</div>;
   }
-
-  // const parsedRes = ZUserSegmentFilterGroup.safeParse(localSurvey.userSegment?.filters);
-  // console.log(parsedRes);
-
-  const SegmentEditor = () => {
-    return (
-      <>
-        <p className="text-sm font-semibold">Send survey to audience who match...</p>
-        {!!localSurvey.userSegment?.filters && (
-          <>
-            <SegmentFilters
-              group={localSurvey.userSegment.filters}
-              environmentId={environmentId}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-            />
-
-            <AddFilterModal
-              environmentId={environmentId}
-              onAddFilter={(filter) => {
-                handleAddFilterInGroup(filter);
-              }}
-              open={addFilterModalOpen}
-              setOpen={setAddFilterModalOpen}
-            />
-
-            <SaveAsNewSegmentModal
-              open={saveAsNewSegmentModalOpen}
-              setOpen={setSaveAsNewSegmentModalOpen}
-              localSurvey={localSurvey}
-            />
-
-            <ConfirmDialog
-              open={resetAllFiltersModalOpen}
-              setOpen={setRestAllFiltersModalOpen}
-              title="Reset all filters"
-              description="Are you sure you want to reset all filters?"
-              primaryAction={() => {
-                const updatedLocalSurvey = produce(localSurvey, (draft) => {
-                  if (draft.userSegment?.filters) {
-                    draft.userSegment.filters = [];
-                  }
-                });
-
-                setLocalSurvey(updatedLocalSurvey);
-                setRestAllFiltersModalOpen(false);
-              }}
-              secondaryAction={() => {
-                setRestAllFiltersModalOpen(false);
-              }}
-              primaryActionText="Reset"
-              secondaryActionText="Cancel"
-            />
-
-            <LoadSegmentModal
-              open={loadSegmentModalOpen}
-              setOpen={setLoadSegmentModalOpen}
-              environmentId={localSurvey.environmentId}
-              step={loadSegmentModalStep}
-              setStep={setLoadSegmentModalStep}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-            />
-          </>
-        )}
-      </>
-    );
-  };
 
   return (
     <>
@@ -240,12 +201,86 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
           <div className="p-6">
             <div className="flex flex-col gap-6 rounded-lg border-2 border-slate-300 p-4">
+              {segmentUsedModalOpen && (
+                <ConfirmDialog
+                  open={segmentUsedModalOpen}
+                  setOpen={setSegmentUsedModalOpen}
+                  title="Forward to Segments View"
+                  description="This Segment is used in other surveys. To assure consistent data you cannot edit it here."
+                  primaryAction={() => {}}
+                  primaryActionText="Go to Segments"
+                  secondaryAction={() => {
+                    setSegmentUsedModalOpen(false);
+                  }}
+                  secondaryActionText="Cancel"
+                />
+              )}
+
+              {loadSegmentModalOpen && (
+                <LoadSegmentModal
+                  open={loadSegmentModalOpen}
+                  setOpen={setLoadSegmentModalOpen}
+                  environmentId={localSurvey.environmentId}
+                  step={loadSegmentModalStep}
+                  setStep={setLoadSegmentModalStep}
+                  localSurvey={localSurvey}
+                  setLocalSurvey={setLocalSurvey}
+                />
+              )}
+
               {isSegmentEditorOpen ? (
-                <SegmentEditor />
+                <>
+                  <p className="text-sm font-semibold">Send survey to audience who match...</p>
+                  {!!localSurvey.userSegment?.filters && (
+                    <>
+                      <SegmentFilters
+                        group={localSurvey.userSegment.filters}
+                        environmentId={environmentId}
+                        localSurvey={localSurvey}
+                        setLocalSurvey={setLocalSurvey}
+                      />
+
+                      <AddFilterModal
+                        environmentId={environmentId}
+                        onAddFilter={(filter) => {
+                          handleAddFilterInGroup(filter);
+                        }}
+                        open={addFilterModalOpen}
+                        setOpen={setAddFilterModalOpen}
+                      />
+
+                      <SaveAsNewSegmentModal
+                        open={saveAsNewSegmentModalOpen}
+                        setOpen={setSaveAsNewSegmentModalOpen}
+                        localSurvey={localSurvey}
+                      />
+
+                      <ConfirmDialog
+                        open={resetAllFiltersModalOpen}
+                        setOpen={setRestAllFiltersModalOpen}
+                        title="Reset all filters"
+                        description="Are you sure you want to reset all filters?"
+                        primaryAction={() => {
+                          const updatedLocalSurvey = produce(localSurvey, (draft) => {
+                            if (draft.userSegment?.filters) {
+                              draft.userSegment.filters = [];
+                            }
+                          });
+
+                          setLocalSurvey(updatedLocalSurvey);
+                          setRestAllFiltersModalOpen(false);
+                        }}
+                        secondaryAction={() => {
+                          setRestAllFiltersModalOpen(false);
+                        }}
+                        primaryActionText="Reset"
+                        secondaryActionText="Cancel"
+                      />
+                    </>
+                  )}
+                </>
               ) : (
-                <div
-                  onClick={() => setIsSegmentEditorOpen(true)}
-                  className="flex flex-col gap-4 rounded-lg p-2">
+                <div className="flex flex-col gap-4 rounded-lg p-2">
                   <div>
                     <h3 className="font-medium">{localSurvey.userSegment?.title}</h3>
                     <p className="text-slate-500">{localSurvey.userSegment?.description}</p>
@@ -261,20 +296,27 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                       <p className="text-sm text-slate-500">View Filters</p>
                     </Button>
 
+                    {isSegmentUsedInOtherSurveys && (
+                      <Button
+                        variant="minimal"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={() => handleCloneSegment()}>
+                        <div className="h-4 w-4 rounded-full bg-slate-300" />
+                        <p className="text-sm text-slate-500">Clone segment and edit</p>
+                      </Button>
+                    )}
                     <Button
                       variant="minimal"
                       size="sm"
                       className="flex items-center gap-2"
-                      onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-                      <div className="h-4 w-4 rounded-full bg-slate-300" />
-                      <p className="text-sm text-slate-500">Clone segment and edit</p>
-                    </Button>
-
-                    <Button
-                      variant="minimal"
-                      size="sm"
-                      className="flex items-center gap-2"
-                      onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                      onClick={() => {
+                        if (isSegmentUsedInOtherSurveys) {
+                          setSegmentUsedModalOpen(true);
+                        } else {
+                          setIsSegmentEditorOpen(true);
+                        }
+                      }}>
                       <div className="h-4 w-4 rounded-full bg-slate-300" />
                       <p className="text-sm text-slate-500">Edit segment</p>
                     </Button>

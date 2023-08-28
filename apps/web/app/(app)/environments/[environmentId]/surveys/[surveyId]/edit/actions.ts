@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  cloneUserSegment,
   createUserSegment,
   loadNewUserSegment,
   updateUserSegment,
@@ -48,4 +49,13 @@ export const updateUserSegmentAction = async (segmentId: string, data: TUserSegm
 
 export const loadNewUserSegmentAction = async (surveyId: string, segmentId: string) => {
   return await loadNewUserSegment(surveyId, segmentId);
+};
+
+export const cloneUserSegmentAction = async (segmentId: string, surveyId: string) => {
+  try {
+    const clonedUserSegment = await cloneUserSegment(segmentId, surveyId);
+    return clonedUserSegment;
+  } catch (err) {
+    throw new Error(err);
+  }
 };
