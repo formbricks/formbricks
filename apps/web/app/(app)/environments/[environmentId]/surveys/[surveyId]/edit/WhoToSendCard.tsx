@@ -45,6 +45,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     useAttributeClasses(environmentId);
   const { mutateSurvey } = useSurvey(environmentId, localSurvey.id);
 
+  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
+
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [resetAllFiltersModalOpen, setRestAllFiltersModalOpen] = useState(false);
@@ -52,6 +54,16 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(localSurvey.userSegment?.isPrivate);
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
+
+  useEffect(() => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      draft.userSegment = userSegment;
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setLocalSurvey, userSegment]);
 
   const isSegmentUsedInOtherSurveys = useMemo(
     () => (localSurvey?.userSegment ? localSurvey.userSegment?.surveys?.length > 1 : false),
@@ -116,18 +128,18 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   };
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
-      if (draft?.userSegment?.filters?.length === 0) {
-        draft.userSegment?.filters.push({
+    const updatedUserSegment = produce(userSegment, (draft) => {
+      if (draft?.filters?.length === 0) {
+        draft.filters.push({
           ...filter,
           connector: null,
         });
       } else {
-        draft.userSegment?.filters.push(filter);
+        draft?.filters.push(filter);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   if (isLoadingAttributeClasses) {
@@ -137,6 +149,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   if (isErrorAttributeClasses) {
     return <div>Error</div>;
   }
+
+  console.log("djfhdwilh", userSegment);
 
   return (
     <>
@@ -231,13 +245,14 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
               {isSegmentEditorOpen ? (
                 <>
                   <p className="text-sm font-semibold">Send survey to audience who match...</p>
-                  {!!localSurvey.userSegment?.filters && (
+                  {!!localSurvey.userSegment?.filters && userSegment && (
                     <>
                       <SegmentFilters
-                        group={localSurvey.userSegment.filters}
+                        key={userSegment.filters.toString()}
+                        group={userSegment.filters}
                         environmentId={environmentId}
-                        localSurvey={localSurvey}
-                        setLocalSurvey={setLocalSurvey}
+                        userSegment={userSegment}
+                        setUserSegment={setUserSegment}
                       />
 
                       <AddFilterModal
@@ -253,6 +268,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                         open={saveAsNewSegmentModalOpen}
                         setOpen={setSaveAsNewSegmentModalOpen}
                         localSurvey={localSurvey}
+                        userSegment={userSegment}
                       />
 
                       <ConfirmDialog

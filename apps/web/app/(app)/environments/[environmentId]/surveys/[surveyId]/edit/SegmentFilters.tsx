@@ -1,7 +1,6 @@
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
-import { Survey } from "@formbricks/types/surveys";
 import {
   TBaseFilterGroup,
   TUserSegmentFilter,
@@ -20,7 +19,7 @@ import {
   TActionMetric,
   TUserSegmentSegmentFilter,
   TSegmentOperator,
-  SEGMENT_OPERATORS,
+  TUserSegment,
 } from "@formbricks/types/v1/userSegment";
 import {
   DropdownMenu,
@@ -63,8 +62,8 @@ type SegmentFilterItemProps = {
   connector: TUserSegmentConnector;
   resource: TUserSegmentFilter;
   environmentId: string;
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  userSegment: TUserSegment;
+  setUserSegment: (userSegment: TUserSegment) => void;
   onAddFilterBelow: (filterId: string) => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
@@ -73,17 +72,17 @@ type SegmentFilterItemProps = {
 
 const SegmentFilterItemConnector = ({
   connector,
-  localSurvey,
-  setLocalSurvey,
+  userSegment,
+  setUserSegment,
   filterId,
 }: {
   connector: TUserSegmentConnector;
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  userSegment: TUserSegment;
+  setUserSegment: (userSegment: TUserSegment) => void;
   filterId: string;
 }) => {
   const updateLocalSurvey = (newConnector: TUserSegmentConnector) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -98,12 +97,12 @@ const SegmentFilterItemConnector = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const onConnectorChange = () => {
@@ -133,13 +132,13 @@ const AttributeSegmentFilter = ({
   environmentId,
   connector,
   resource,
-  localSurvey,
-  setLocalSurvey,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
   onMoveFilter,
   updateValueInLocalSurvey,
+  userSegment,
+  setUserSegment,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassId } = resource.root;
   const { attributeClasses } = useAttributeClasses(environmentId);
@@ -157,7 +156,7 @@ const AttributeSegmentFilter = ({
   )?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -173,16 +172,16 @@ const AttributeSegmentFilter = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const updateAttributeClassIdInLocalSurvey = (filterId: string, newAttributeClassId: string) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -198,12 +197,12 @@ const AttributeSegmentFilter = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   return (
@@ -212,8 +211,8 @@ const AttributeSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        setUserSegment={setUserSegment}
+        userSegment={userSegment}
       />
 
       <Select
@@ -296,8 +295,8 @@ const ActionSegmentFilter = ({
   environmentId,
   connector,
   resource,
-  localSurvey,
-  setLocalSurvey,
+  userSegment,
+  setUserSegment,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
@@ -321,8 +320,8 @@ const ActionSegmentFilter = ({
 
   const attributeClass = eventClasses.find((eventClass) => eventClass.id === actionClassId)?.name;
 
-  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TBaseOperator) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+  const updateOperatorInUserSegment = (filterId: string, newOperator: TBaseOperator) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -338,16 +337,16 @@ const ActionSegmentFilter = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
-  const updateActionClassIdInLocalSurvey = (filterId: string, actionClassId: string) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+  const updateActionClassIdInUserSegment = (filterId: string, actionClassId: string) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -363,16 +362,16 @@ const ActionSegmentFilter = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const updateActionMetricInLocalSurvey = (filterId: string, newMetric: TActionMetric) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -388,12 +387,12 @@ const ActionSegmentFilter = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   return (
@@ -402,14 +401,14 @@ const ActionSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
       />
 
       <Select
         value={attributeClass}
         onValueChange={(value) => {
-          updateActionClassIdInLocalSurvey(resource.id, value);
+          updateActionClassIdInUserSegment(resource.id, value);
         }}>
         <SelectTrigger className="w-[210px] items-center justify-center capitalize" hideArrow>
           <SelectValue />
@@ -446,7 +445,7 @@ const ActionSegmentFilter = ({
       <Select
         value={operatorText}
         onValueChange={(operator: TBaseOperator) => {
-          updateOperatorInLocalSurvey(resource.id, operator);
+          updateOperatorInUserSegment(resource.id, operator);
         }}>
         <SelectTrigger className="flex w-full max-w-[40px] items-center justify-center text-center" hideArrow>
           <SelectValue />
@@ -499,13 +498,13 @@ type TUserSegmentFilterProps = SegmentFilterItemProps & {
 const UserSegmentFilter = ({
   connector,
   environmentId,
-  localSurvey,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
   onMoveFilter,
   resource,
-  setLocalSurvey,
+  userSegment,
+  setUserSegment,
 }: TUserSegmentFilterProps) => {
   const { userSegmentId } = resource.root;
   const { userSegments } = useUserSegments(environmentId);
@@ -513,8 +512,8 @@ const UserSegmentFilter = ({
 
   const currentUserSegment = userSegments?.find((segment) => segment.id === userSegmentId);
 
-  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TSegmentOperator) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+  const updateOperatorInUserSegment = (filterId: string, newOperator: TSegmentOperator) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -530,16 +529,16 @@ const UserSegmentFilter = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
-  const updateSegmentIdInLocalSurvey = (filterId: string, newSegmentId: string) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+  const updateSegmentIdInUserSegment = (filterId: string, newSegmentId: string) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -556,23 +555,23 @@ const UserSegmentFilter = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const toggleSegmentOperator = () => {
     if (!resource.qualifier.operator) return;
 
     if (resource.qualifier.operator === "userIsIn") {
-      updateOperatorInLocalSurvey(resource.id, "userIsNotIn");
+      updateOperatorInUserSegment(resource.id, "userIsNotIn");
       return;
     }
 
-    updateOperatorInLocalSurvey(resource.id, "userIsIn");
+    updateOperatorInUserSegment(resource.id, "userIsIn");
   };
 
   return (
@@ -581,8 +580,8 @@ const UserSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
       />
 
       <div>
@@ -598,7 +597,7 @@ const UserSegmentFilter = ({
       <Select
         value={currentUserSegment?.id}
         onValueChange={(value) => {
-          updateSegmentIdInLocalSurvey(resource.id, value);
+          updateSegmentIdInUserSegment(resource.id, value);
         }}>
         <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
           <div className="flex items-center gap-1">
@@ -645,17 +644,17 @@ type TAddNewFilterItemProps = {
   connector: TUserSegmentConnector;
   filterId: string;
   environmentId: string;
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
   onDeleteFilter: (filterId: string) => void;
+  userSegment: TUserSegment;
+  setUserSegment: (userSegment: TUserSegment) => void;
 };
 const AddNewFilterItem = ({
   connector,
   filterId,
   environmentId,
   onDeleteFilter,
-  localSurvey,
-  setLocalSurvey,
+  userSegment,
+  setUserSegment,
 }: TAddNewFilterItemProps) => {
   const [activeTabId, setActiveId] = useState("actions");
   const { attributeClasses } = useAttributeClasses(environmentId);
@@ -669,7 +668,7 @@ const AddNewFilterItem = ({
   ];
 
   const onAddFilter = (filter: TUserSegmentFilter) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -689,12 +688,12 @@ const AddNewFilterItem = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   return (
@@ -702,8 +701,8 @@ const AddNewFilterItem = ({
       <SegmentFilterItemConnector
         connector={connector}
         filterId={filterId}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
       />
       <Popover>
         <PopoverTrigger>
@@ -818,8 +817,8 @@ const SegmentFilterItem = ({
   resource,
   connector,
   environmentId,
-  localSurvey,
-  setLocalSurvey,
+  userSegment,
+  setUserSegment,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
@@ -827,8 +826,8 @@ const SegmentFilterItem = ({
 }: SegmentFilterItemProps) => {
   const [connectorState, setConnectorState] = useState(connector);
 
-  const updateFilterValueInLocalSurvey = (filterId: string, newValue: string | number) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+  const updateFilterValueInUserSegment = (filterId: string, newValue: string | number) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -845,12 +844,12 @@ const SegmentFilterItem = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const onConnectorChange = () => {
@@ -873,8 +872,8 @@ const SegmentFilterItem = ({
         connector={connector}
         filterId={resource.id}
         onDeleteFilter={onDeleteFilter}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
       />
     );
   }
@@ -887,13 +886,13 @@ const SegmentFilterItem = ({
         connector={connector}
         resource={resource as TUserSegmentActionFilter}
         environmentId={environmentId}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
         onAddFilterBelow={onAddFilterBelow}
         onCreateGroup={onCreateGroup}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
-        updateValueInLocalSurvey={updateFilterValueInLocalSurvey}
+        updateValueInLocalSurvey={updateFilterValueInUserSegment}
       />
     );
   }
@@ -906,13 +905,13 @@ const SegmentFilterItem = ({
         connector={connector}
         resource={resource as TUserSegmentAttributeFilter}
         environmentId={environmentId}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
         onAddFilterBelow={onAddFilterBelow}
         onCreateGroup={onCreateGroup}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
-        updateValueInLocalSurvey={updateFilterValueInLocalSurvey}
+        updateValueInLocalSurvey={updateFilterValueInUserSegment}
       />
     );
   }
@@ -925,8 +924,8 @@ const SegmentFilterItem = ({
         connector={connector}
         resource={resource as TUserSegmentSegmentFilter}
         environmentId={environmentId}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
         onAddFilterBelow={onAddFilterBelow}
         onCreateGroup={onCreateGroup}
         onDeleteFilter={onDeleteFilter}
@@ -977,18 +976,18 @@ const SegmentFilterItem = ({
 const SegmentFilters = ({
   group,
   environmentId,
-  localSurvey,
-  setLocalSurvey,
+  setUserSegment,
+  userSegment,
 }: {
   group: TBaseFilterGroup;
   environmentId: string;
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  userSegment: TUserSegment;
+  setUserSegment: (userSegment: TUserSegment) => void;
 }) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
 
   const handleAddFilterBelow = (resourceId: string) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -1031,16 +1030,16 @@ const SegmentFilters = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const handleCreateGroup = (resourceId: string) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndCreateGroup = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const filterGroup = group[i];
@@ -1106,16 +1105,16 @@ const SegmentFilters = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndCreateGroup(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndCreateGroup(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const moveUp = (group: TBaseFilterGroup, i: number) => {
         if (i === 0) {
           return;
@@ -1182,16 +1181,16 @@ const SegmentFilters = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndMove(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndMove(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const handleDeleteResource = (resourceId: string) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const deleteResource = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -1230,19 +1229,19 @@ const SegmentFilters = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        deleteResource(draft.userSegment.filters);
+      if (draft.filters) {
+        deleteResource(draft.filters);
 
         // check if there are any empty groups and delete them
-        deleteEmptyGroups(draft.userSegment.filters);
+        deleteEmptyGroups(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const toggleGroupConnector = (groupId: string, newConnectorValue: TUserSegmentConnector) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -1257,12 +1256,12 @@ const SegmentFilters = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        searchAndUpdate(draft.userSegment.filters);
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   const onConnectorChange = (groupId: string, connector: TUserSegmentConnector) => {
@@ -1276,7 +1275,7 @@ const SegmentFilters = ({
   };
 
   const handleAddFilterInGroup = (groupId: string, filter: TBaseFilterGroupItem) => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
       const addFilter = (group: TBaseFilterGroup) => {
         for (let i = 0; i < group.length; i++) {
           const { resource } = group[i];
@@ -1306,12 +1305,12 @@ const SegmentFilters = ({
         }
       };
 
-      if (draft.userSegment?.filters) {
-        addFilter(draft.userSegment.filters);
+      if (draft.filters) {
+        addFilter(draft.filters);
       }
     });
 
-    setLocalSurvey(updatedLocalSurvey);
+    setUserSegment(updatedUserSegment);
   };
 
   return (
@@ -1326,8 +1325,8 @@ const SegmentFilters = ({
               connector={connector}
               resource={resource}
               environmentId={environmentId}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
+              userSegment={userSegment}
+              setUserSegment={setUserSegment}
               onAddFilterBelow={(filterId: string) => handleAddFilterBelow(filterId)}
               onCreateGroup={(filterId: string) => handleCreateGroup(filterId)}
               onDeleteFilter={(filterId: string) => handleDeleteResource(filterId)}
@@ -1352,8 +1351,8 @@ const SegmentFilters = ({
                   <SegmentFilters
                     group={resource}
                     environmentId={environmentId}
-                    localSurvey={localSurvey}
-                    setLocalSurvey={setLocalSurvey}
+                    userSegment={userSegment}
+                    setUserSegment={setUserSegment}
                   />
 
                   <AddFilterModal

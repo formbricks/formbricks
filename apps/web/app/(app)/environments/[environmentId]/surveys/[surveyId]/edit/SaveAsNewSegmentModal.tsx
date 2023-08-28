@@ -6,6 +6,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { useSurvey } from "@/lib/surveys/surveys";
 import { Survey } from "@formbricks/types/surveys";
+import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import { Button, Dialog, DialogContent, Input } from "@formbricks/ui";
 import React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -15,6 +16,7 @@ type SaveAsNewSegmentModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   localSurvey: Survey;
+  userSegment: TUserSegment;
 };
 
 type SaveAsNewSegmentModalForm = {
@@ -22,7 +24,12 @@ type SaveAsNewSegmentModalForm = {
   description: string;
 };
 
-const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({ open, setOpen, localSurvey }) => {
+const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
+  open,
+  setOpen,
+  localSurvey,
+  userSegment,
+}) => {
   const {
     register,
     formState: { errors },
@@ -32,18 +39,18 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({ open, set
   const { mutateSurvey } = useSurvey(localSurvey.environmentId, localSurvey.id);
 
   const handleSaveSegment: SubmitHandler<SaveAsNewSegmentModalForm> = async (data) => {
-    if (!localSurvey.userSegment?.filters || !localSurvey.userSegment?.filters.length) return;
+    if (!userSegment || !userSegment?.filters.length) return;
 
     try {
       // if the segment is private, update it to add title, description and make it public
       // otherwise, create a new segment
 
-      if (!!localSurvey.userSegment && localSurvey.userSegment?.isPrivate) {
-        await updateUserSegmentAction(localSurvey.userSegment.id, {
+      if (!!userSegment && userSegment?.isPrivate) {
+        await updateUserSegmentAction(userSegment.id, {
           title: data.title,
           description: data.description,
           isPrivate: false,
-          filters: localSurvey.userSegment?.filters,
+          filters: userSegment?.filters,
         });
 
         toast.success("Segment updated successfully");
@@ -58,7 +65,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({ open, set
         title: data.title,
         description: data.description,
         isPrivate: false,
-        filters: localSurvey.userSegment?.filters,
+        filters: userSegment?.filters,
       });
 
       toast.success("Segment created successfully");
