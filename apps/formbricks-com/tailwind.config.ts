@@ -1,12 +1,12 @@
-const defaultTheme = require("tailwindcss/defaultTheme");
+import headlessuiPlugin from "@headlessui/tailwindcss";
+import typographyPlugin from "@tailwindcss/typography";
+import forms from "@tailwindcss/forms";
+import { type Config } from "tailwindcss";
+import defaultTheme from "tailwindcss/defaultTheme";
+import typographyStyles from "./typography";
 
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    "./pages/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
-    "../../packages/ui/components/**/*.{js,ts,jsx,tsx}",
-  ],
+export default {
+  content: ["./**/*.{js,mjs,jsx,ts,tsx,mdx}"],
   darkMode: "class",
   theme: {
     fontSize: {
@@ -25,6 +25,7 @@ module.exports = {
       "8xl": ["6rem", { lineHeight: "1" }],
       "9xl": ["8rem", { lineHeight: "1" }],
     },
+    typography: typographyStyles,
     extend: {
       boxShadow: {
         glow: "0 0 4px rgb(0 0 0 / 0.1)",
@@ -65,9 +66,5 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require("@tailwindcss/typography"),
-    require("@tailwindcss/forms"),
-    require("@headlessui/tailwindcss"),
-  ],
-};
+  plugins: [typographyPlugin, headlessuiPlugin, forms],
+} satisfies Config;
