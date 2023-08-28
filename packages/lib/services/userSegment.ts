@@ -17,11 +17,13 @@ export const createUserSegment = async (
       description,
       isPrivate,
       filters,
-      surveys: {
-        connect: {
-          id: surveyId,
+      ...(surveyId && {
+        surveys: {
+          connect: {
+            id: surveyId,
+          },
         },
-      },
+      }),
     },
   });
 
