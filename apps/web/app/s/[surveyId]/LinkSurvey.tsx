@@ -17,9 +17,10 @@ import { TProduct } from "@formbricks/types/v1/product";
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
+  singleUseId?: string;
 }
 
-export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
+export default function LinkSurvey({ survey, product, singleUseId }: LinkSurveyProps) {
   const {
     currentQuestion,
     finished,
@@ -34,7 +35,7 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
     goToPreviousQuestion,
     goToNextQuestion,
     storedResponseValue,
-  } = useLinkSurveyUtils(survey);
+  } = useLinkSurveyUtils(survey, singleUseId);
 
   const showBackButton = progress !== 0 && !finished;
   // Create a reference to the top element

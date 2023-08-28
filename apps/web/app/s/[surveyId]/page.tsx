@@ -26,8 +26,10 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
   }
 
-  if (survey && singleUseId && survey.singleUse?.enabled) {
-    // todo: check if singleUseId is present.
+  if (survey && survey.singleUse?.enabled) {
+    if (!singleUseId) {
+      return <SurveyInactive status="invalid link" />;
+    }
     const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUseId);
     if (singleUseResponse) {
       return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
@@ -40,7 +42,11 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     <>
       {survey && (
         <>
-          <LinkSurvey survey={survey} product={product} />
+          <LinkSurvey
+            survey={survey}
+            product={product}
+            singleUseId={survey.singleUse?.enabled ? singleUseId : undefined}
+          />
           <LegalFooter />
         </>
       )}

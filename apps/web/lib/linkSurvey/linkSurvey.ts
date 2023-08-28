@@ -16,11 +16,8 @@ interface StoredResponse {
   history: string[];
 }
 
-export const useLinkSurvey = (surveyId: string, singleUseId?: string) => {
-  const { data, error, mutate, isLoading } = useSWR(
-    `/api/v1/client/surveys/${surveyId}?suId=${singleUseId}`,
-    fetcher
-  );
+export const useLinkSurvey = (surveyId: string) => {
+  const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
 
   return {
     survey: data,
@@ -30,7 +27,7 @@ export const useLinkSurvey = (surveyId: string, singleUseId?: string) => {
   };
 };
 
-export const useLinkSurveyUtils = (survey: TSurvey) => {
+export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
   const [currentQuestion, setCurrentQuestion] = useState<TSurveyQuestion | Question | null>(null);
   const [prefilling, setPrefilling] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
@@ -50,7 +47,6 @@ export const useLinkSurveyUtils = (survey: TSurvey) => {
   const lastQuestion = currentQuestion?.id === survey.questions[survey.questions.length - 1].id;
 
   const userId = URLParams?.get("userId");
-  const singleUseId = URLParams?.get("suId");
   const { person, isLoadingPerson } = useGetOrCreatePerson(survey.environmentId, isPreview ? null : userId);
   const personId = person?.data.person.id ?? null;
 
