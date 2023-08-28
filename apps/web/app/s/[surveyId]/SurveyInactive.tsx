@@ -16,14 +16,14 @@ const SurveyInactive = ({
     "not found": <QuestionMarkCircleIcon className="h-20 w-20" />,
     paused: <PauseCircleIcon className="h-20 w-20" />,
     completed: <CheckCircleIcon className="h-20 w-20" />,
-    "invalid link": <QuestionMarkCircleIcon className="h-20 w-20" />,
+    "link invalid": <QuestionMarkCircleIcon className="h-20 w-20" />,
   };
 
   const descriptions = {
     "not found": "There is not survey with this ID.",
     paused: "This free & open-source survey is temporarily paused.",
     completed: "This free & open-source survey has been closed.",
-    "invalid link": "This survey link is invalid. Please request a valid link from the survey creator.",
+    "link invalid": "This survey link is invalid. Please request a valid link from the survey creator.",
   };
 
   return (
@@ -39,7 +39,7 @@ const SurveyInactive = ({
             ? surveyClosedMessage.subheading
             : descriptions[status]}
         </p>
-        {!(status === "completed" && surveyClosedMessage) && status !== "invalid link" && (
+        {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
           <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
             Create your own
           </Button>

@@ -28,7 +28,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   if (survey && survey.singleUse?.enabled) {
     if (!singleUseId) {
-      return <SurveyInactive status="invalid link" />;
+      return <SurveyInactive status="link invalid" />;
     }
     const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUseId);
     if (singleUseResponse) {
