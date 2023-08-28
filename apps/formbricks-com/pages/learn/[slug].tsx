@@ -1,6 +1,8 @@
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import { FAQPageJsonLd } from "next-seo";
+import Head from "next/head";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import fetch from "node-fetch";
 import ReactMarkdown from "react-markdown";
 
@@ -89,7 +91,11 @@ export async function getStaticProps({ params }) {
 }
 
 export default function ArticlePage({ article = {} }: ArticlePageProps) {
+  const router = useRouter();
   if (!article || !article.attributes) return <div>Loading...</div>;
+
+  // Generate canonical URL
+  const canonicalURL = `https://formbricks.com${router.asPath}`;
 
   // Use next/image to render images in markdown
   const renderers = {
@@ -134,6 +140,9 @@ export default function ArticlePage({ article = {} }: ArticlePageProps) {
     <LayoutMdx meta={meta}>
       <>
         <ReactMarkdown components={renderers}>{text as any}</ReactMarkdown>
+        <Head>
+          <link rel="canonical" href={canonicalURL} />
+        </Head>
         <FAQPageJsonLd mainEntity={faqEntities} />
       </>
     </LayoutMdx>
