@@ -51,7 +51,7 @@ export default function Home({ environmentId, googleSheetIntegration, setOpenAdd
             <div className="flex justify-end w-full">
                 <div className="mr-6 flex items-center">
                     <span className="w-4 h-4 rounded-full bg-green-600 mr-4"></span>
-                    <span className="text-slate-500 cursor-pointer" onClick={() => { setIsDeleteIntegrationModalOpen(true) }}>Connected with dhruwangajariwala18@gmail.com</span>
+                    <span className="text-slate-500 cursor-pointer" onClick={() => { setIsDeleteIntegrationModalOpen(true) }}>Connected with {googleSheetIntegration.config.email}</span>
                 </div>
                 <Button variant="darkCTA" onClick={() => {
                     setSelectedIntegration(null)

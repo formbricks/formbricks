@@ -27,17 +27,34 @@ export async function GET(req: NextRequest) {
     if (!redirect_uri) return NextResponse.json({"Error":"Google redirect url is missing"}, { status: 400 })
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
 
-    let key = "";
+    let key
+    let userEmail 
 
     if (code) {
         const token = await oAuth2Client.getToken(code);
         key = token.res?.data;
+    
+        // Set credentials using the provided token
+        oAuth2Client.setCredentials({
+            access_token: key.access_token
+        });
+    
+        // Fetch user's email
+        const oauth2 = google.oauth2({
+            auth: oAuth2Client,
+            version: 'v2'
+        });
+        const userInfo = await oauth2.userinfo.get();
+        userEmail = userInfo.data.email;
     }
+    
+
     const googleSheetIntegration = {
         type: "googleSheets" as "googleSheets",
         environment: environmentId,
         config: {
-          key
+          key,
+          email : userEmail
         }
       }
 

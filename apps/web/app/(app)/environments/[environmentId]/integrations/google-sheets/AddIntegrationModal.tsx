@@ -49,6 +49,7 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
     environment: environmentId,
     config: {
       key: googleSheetIntegration?.config?.key,
+      email: googleSheetIntegration.config.email,
       data: existingIntegrationData || []
     }
   }
@@ -155,7 +156,7 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
 
   const DropdownSelector = ({ label, items, selectedItem, setSelectedItem }) => {
     return (
-      <div className="col-span-1">
+      <div className="col-span-1 mb-4">
         <Label htmlFor={label}>{label}</Label>
         <div className="mt-1 flex">
           <DropdownMenu.Root>

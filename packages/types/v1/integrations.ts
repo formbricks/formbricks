@@ -29,7 +29,8 @@ export const ZGoogleSheetsConfigData = z.object({
 
 const ZGoogleSheetsConfig =z.object({
     key: ZGoogleCredential,
-    data: z.array(ZGoogleSheetsConfigData)
+    data: z.array(ZGoogleSheetsConfigData),
+    email: z.string()
 })
 
 // Define a dynamic schema for config based on integration type
