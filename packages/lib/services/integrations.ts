@@ -3,16 +3,16 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/errors";
-// import { cache } from "react"; 
+import { TIntegration } from "@formbricks/types/v1/integrations";
+import { cache } from "react"; 
 
-export async function createOrUpdateIntegration(environmentId: string, integrationData: any): Promise<any> {
+export async function createOrUpdateIntegration(environmentId: string, integrationData: any): Promise<TIntegration> {
     try {
-        console.log(integrationData)
         const result = await prisma.integration.upsert({
             where:{
                 type_environmentId:{
                     environmentId,
-                    type : "googleSheets"
+                    type : integrationData.type
                 }
             },
             update: {
@@ -24,7 +24,6 @@ export async function createOrUpdateIntegration(environmentId: string, integrati
                 environment: { connect: { id: environmentId } },
             }
         });
-        console.log(result)
         return result;
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -35,7 +34,7 @@ export async function createOrUpdateIntegration(environmentId: string, integrati
     }
 }
 
-export async function getIntegrations(environmentId: string): Promise<any> {
+export const getIntegrations = cache(async(environmentId: string): Promise<TIntegration[]> => {
     try {
         const result = await prisma.integration.findMany({
             where: {
@@ -49,7 +48,7 @@ export async function getIntegrations(environmentId: string): Promise<any> {
         }
         throw error;
     }
-}
+})
 
 export const deleteIntegration = async (integrationId: string): Promise<void> => {
     try {

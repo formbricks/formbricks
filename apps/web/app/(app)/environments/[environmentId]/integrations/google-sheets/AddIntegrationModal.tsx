@@ -1,7 +1,7 @@
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button, Checkbox, Input, Label } from "@formbricks/ui";
+import { TGoogleSheetIntegration, TGoogleSheetsConfigData, TGoogleSpreadsheet } from "@formbricks/types/v1/integrations";
+import { Button, Checkbox, Label } from "@formbricks/ui";
 import GoogleSheetLogo from "@/images/google-sheets-small.png"
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -10,21 +10,21 @@ import Modal from "@/components/shared/Modal";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import Link from "next/link";
 
 interface AddWebhookModalProps {
   environmentId: string;
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
-  spreadsheets: any;
-  integrations: any[]
+  spreadsheets: TGoogleSpreadsheet[];
+  googleSheetIntegration: TGoogleSheetIntegration;
+  selectedIntegration?: TGoogleSheetsConfigData & { index: number } | null;
 }
 
-export default function AddIntegrationModal({ environmentId, surveys, open, setOpen, spreadsheets, integrations }: AddWebhookModalProps) {
+export default function AddIntegrationModal({ environmentId, surveys, open, setOpen, spreadsheets, googleSheetIntegration, selectedIntegration }: AddWebhookModalProps) {
   const {
     handleSubmit,
-    reset,
-    register
   } = useForm();
 
   const integrationData = {
@@ -33,7 +33,7 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
     surveyId: "",
     surveyName: "",
     questionIds: [""],
-    questions:"",
+    questions: "",
     createdAt: new Date()
   };
 
@@ -41,43 +41,84 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
   const [isLinkingSheet, setIsLinkingSheet] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
-  const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>();
-  const existingIntegrationData = integrations.find((integration) => { return integration.type === "googleSheets" })?.config.data
-  const googleSheetIntegration = {
+  const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState<any>(null);
+  const existingIntegrationData = googleSheetIntegration?.config?.data
+  const googleSheetIntegrationData = {
     type: "googleSheets",
     environment: environmentId,
     config: {
+      key: googleSheetIntegration?.config?.key,
       data: existingIntegrationData || []
     }
   }
+
+  useEffect(() => {
+    console.log(googleSheetIntegration)
+  }, [])
+
+
+
   useEffect(() => {
     if (selectedSurvey) {
       const questionIds = selectedSurvey.questions.map((question) => question.id);
-      setSelectedQuestions(questionIds);
+      if (!selectedIntegration) {
+        setSelectedQuestions(questionIds);
+      }
     }
   }, [selectedSurvey])
 
-
-  const linkSheet = () => {
-    setIsLinkingSheet(true)
-    integrationData.spreadsheetId = selectedSpreadsheet ? selectedSpreadsheet.id : "";
-    integrationData.spreadsheetName = selectedSpreadsheet ? selectedSpreadsheet.name : "NA";
-    integrationData.surveyId = selectedSurvey ? selectedSurvey.id : "";
-    integrationData.surveyName = selectedSurvey ? selectedSurvey.name : "";
-    integrationData.questionIds = selectedQuestions;
-    integrationData.questions = selectedQuestions.length === selectedSurvey?.questions.length ? "All questions" : "Selected questions"
-    integrationData.createdAt = new Date()
-    googleSheetIntegration.config.data.push(integrationData);
-    console.log(googleSheetIntegration)
-    upsertIntegrationAction(environmentId, googleSheetIntegration)
-      .then(() => {
-        reset()
-        setIsLinkingSheet(false)
-        setOpen(false)
+  useEffect(() => {
+    if (selectedIntegration) {
+      setSelectedSpreadsheet({
+        id: selectedIntegration.spreadsheetId,
+        name: selectedIntegration.spreadsheetName
       })
-      .catch((error) => {
-        console.log(error)
-      });
+      setSelectedSurvey(surveys.find((survey) => { return survey.id === selectedIntegration.surveyId })!)
+      setSelectedQuestions(selectedIntegration.questionIds)
+      return
+    }
+    resetForm()
+  }, [selectedIntegration])
+
+  const linkSheet = async () => {
+    try {
+      if (!selectedSpreadsheet) {
+        throw new Error("Please select a spreadsheet");
+      }
+      if (!selectedSurvey) {
+        throw new Error("Please select a survey");
+      }
+
+      if (selectedQuestions.length === 0) {
+        throw new Error("Please select at least one question");
+      }
+      setIsLinkingSheet(true)
+      integrationData.spreadsheetId = selectedSpreadsheet.id
+      integrationData.spreadsheetName = selectedSpreadsheet.name
+      integrationData.surveyId = selectedSurvey.id
+      integrationData.surveyName = selectedSurvey.name
+      integrationData.questionIds = selectedQuestions;
+      integrationData.questions = selectedQuestions.length === selectedSurvey?.questions.length ? "All questions" : "Selected questions"
+      integrationData.createdAt = new Date()
+      if (selectedIntegration) {
+        // update action 
+        googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData
+      }
+      else {
+        // create action 
+        googleSheetIntegrationData.config.data.push(integrationData);
+      }
+      await upsertIntegrationAction(environmentId, googleSheetIntegrationData)
+      toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`)
+      resetForm()
+      setOpen(false)
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setIsLinkingSheet(false);
+
+    }
   }
 
   const handleCheckboxChange = (questionId: string) => {
@@ -92,9 +133,85 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
     setOpen(isOpen);
   };
 
+  const resetForm = () => {
+    setIsLinkingSheet(false)
+    setSelectedSpreadsheet("")
+    setSelectedSurvey(null)
+  }
+
+  const deleteLink = async () => {
+    googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1)
+    try {
+      setIsDeleting(true)
+      await upsertIntegrationAction(environmentId, googleSheetIntegrationData)
+      toast.success("Integration removed successfully")
+      setOpen(false)
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const DropdownSelector = ({ label, items, selectedItem, setSelectedItem }) => {
+    return (
+      <div className="col-span-1">
+        <Label htmlFor={label}>{label}</Label>
+        <div className="mt-1 flex">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
+              >
+                <span className="flex flex-1">
+                  <span>{selectedItem ? selectedItem.name : `Select ${label}`}</span>
+                </span>
+                <span className="flex h-full items-center border-l pl-3">
+                  <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                </span>
+              </button>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className="min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md z-50"
+                align="start"
+              >
+                {label === "Select Survey" && items.length === 0 &&
+                  <DropdownMenu.Item
+                    className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                  ><Link href={`/environments/${environmentId}/surveys/templates`}>
+                    + Create a Survey
+                  </Link>
+                  </DropdownMenu.Item>
+                }
+                {label === "Select Spreadsheet" && items.length === 0 &&
+                  <DropdownMenu.Item
+                    className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                  >
+                    No Spreadsheets found
+                  </DropdownMenu.Item>
+                }
+                {items && items.map((item) => (
+                  <DropdownMenu.Item
+                    key={item.id}
+                    className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                    onSelect={() => setSelectedItem(item)}
+                  >
+                    {item.name}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
-      {console.log(open)!}
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -112,83 +229,19 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
         <form onSubmit={handleSubmit(linkSheet)}>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
-              <div className="col-span-1">
-                <Label htmlFor="name">Select Survey</Label>
-                <div className="mt-1 flex">
-                  <DropdownMenu.Root>
-                    <DropdownMenu.Trigger asChild>
-                      <button
-                        type="button"
-                        className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
-                        <span className="flex flex-1">
-                          <span>{selectedSurvey ? selectedSurvey.name : "Select Survey"}</span>
-                        </span>
-                        <span className="flex h-full items-center border-l pl-3">
-                          <ChevronDownIcon className="h-4 w-4 text-gray-500" />
-                        </span>
-                      </button>
-                    </DropdownMenu.Trigger>
-
-                    <DropdownMenu.Portal>
-                      <DropdownMenu.Content
-                        className="min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md z-50"
-                        align="start">
-                        {
-                          surveys.map((survey) => {
-                            return <DropdownMenu.Item
-                              key="test"
-                              className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                              onSelect={() => {
-                                setSelectedSurvey(survey)
-                              }
-                              }>
-                              {survey.name}
-                            </DropdownMenu.Item>
-                          })
-                        }
-
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Portal>
-                  </DropdownMenu.Root>
-                </div>
-              </div>
-              <div className="col-span-1">
-                <Label htmlFor="spreadsheet">Select Spreadsheet</Label>
-                <div className="mt-1 flex">
-                  <DropdownMenu.Root>
-                    <DropdownMenu.Trigger asChild>
-                      <button
-                        type="button"
-                        className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
-                        <span className="flex flex-1">
-                          <span>{selectedSpreadsheet ? selectedSpreadsheet.name : "Select Spreadsheet"}</span>
-                        </span>
-                        <span className="flex h-full items-center border-l pl-3">
-                          <ChevronDownIcon className="h-4 w-4 text-gray-500" />
-                        </span>
-                      </button>
-                    </DropdownMenu.Trigger>
-                    <DropdownMenu.Portal>
-                      <DropdownMenu.Content
-                        className="min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md z-50"
-                        align="start">
-                        {
-                          spreadsheets.map((spreadsheet) => {
-                            return <DropdownMenu.Item
-                              key="test"
-                              className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                              onSelect={() => {
-                                setSelectedSpreadsheet(spreadsheet)
-                              }
-                              }>
-                              {spreadsheet.name}
-                            </DropdownMenu.Item>
-                          })
-                        }
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Portal>
-                  </DropdownMenu.Root>
-                </div>
+              <div>
+                <DropdownSelector
+                  label="Select Spreadsheet"
+                  items={spreadsheets}
+                  selectedItem={selectedSpreadsheet}
+                  setSelectedItem={setSelectedSpreadsheet}
+                />
+                <DropdownSelector
+                  label="Select Survey"
+                  items={surveys}
+                  selectedItem={selectedSurvey}
+                  setSelectedItem={setSelectedSurvey}
+                />
               </div>
               {selectedSurvey && <div>
                 <Label htmlFor="Surveys">Questions</Label>
@@ -218,16 +271,26 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">
             <div className="flex space-x-2">
-              <Button
+              {selectedIntegration ? <Button
+                type="button"
+                variant="warn"
+                loading={isDeleting}
+                onClick={() => {
+                  deleteLink()
+                }}>
+                Delete
+              </Button> : <Button
                 type="button"
                 variant="minimal"
                 onClick={() => {
                   setOpen(false);
+                  resetForm()
                 }}>
                 Cancel
               </Button>
+              }
               <Button variant="darkCTA" type="submit" loading={isLinkingSheet}>
-                Link Sheet
+                {selectedIntegration ? "Update" : "Link Sheet"}
               </Button>
             </div>
           </div>

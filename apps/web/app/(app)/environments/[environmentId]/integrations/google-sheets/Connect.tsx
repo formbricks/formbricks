@@ -3,19 +3,18 @@ import FormbricksLogo from "@/images/logo.svg"
 import GoogleSheetLogo from "@/images/google-sheets-small.png"
 import Image from 'next/image'
 import { useState } from 'react'
-import { authorize } from '@formbricks/lib/services/google'
-import { authorizeAction } from '@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions'
+import { authorize } from '@formbricks/lib/client/google'
+import { WEBAPP_URL } from '@formbricks/lib/constants'
 
 
-export default function Connect({environmentId,setIsConnected}) {
+export default function Connect({ environmentId }: { environmentId: string }) {
 
     const [isConnecting, setIsConnecting] = useState(false)
     const handleGoogleLogin = async () => {
         setIsConnecting(true)
-        authorizeAction().then((res) => {
-            if (res.ok) {
-                setIsConnected(true)
-                setIsConnecting(false)
+        authorize(environmentId, WEBAPP_URL).then((url:string) => {
+            if (url) {
+                window.location.replace(url);
             }
         })
     }

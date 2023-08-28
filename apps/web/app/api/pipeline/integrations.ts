@@ -1,4 +1,4 @@
-import { writeData } from "@/pages/api/v1/environments/[environmentId]/google/spreadsheets"
+import { writeData } from "@formbricks/lib/services/googleSheet";
 export async function handleIntegrations(integrations:any,data:any){
     integrations.forEach((integration) =>{
         if(integration.type==='googleSheets'){
@@ -8,7 +8,7 @@ export async function handleIntegrations(integrations:any,data:any){
                 const values = extractResponses(data, element.questionIds)
                 console.log(values)
                 console.log(element.spreadsheetId)
-                writeData(element.spreadsheetId,[values])
+                writeData(integration.config.key,element.spreadsheetId,[values])
               }
             });
           } 
