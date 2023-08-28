@@ -451,7 +451,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
-                <div className="flex w-full flex-grow p-4 flex-col items-center justify-center bg-white py-6">
+                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
                   <div className="w-full max-w-md">
                     <QuestionRenderer
                       activeQuestionId={activeQuestionId}
@@ -498,7 +498,7 @@ function ResetProgressButton({ resetQuestionProgress }) {
   return (
     <Button
       variant="minimal"
-      className="py-0.2 bg-white mr-2 px-2 text-sm text-slate-500 font-sans"
+      className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
       onClick={resetQuestionProgress}>
       Restart
       <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
