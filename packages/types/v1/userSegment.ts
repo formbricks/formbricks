@@ -23,11 +23,11 @@ export const ATTRIBUTE_OPERATORS = [
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
 export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
 
-const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
+export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
 export const ZSegmentOperator = z.enum(SEGMENT_OPERATORS);
 export type TSegmentOperator = z.infer<typeof ZSegmentOperator>;
 
-const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
+export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
 export const ZDeviceOperator = z.enum(DEVICE_OPERATORS);
 export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
 
@@ -210,7 +210,7 @@ export const ZUserSegmentFilterGroup: z.ZodType<TBaseFilterGroup> = z
 
 export const ZUserSegment = z.object({
   id: z.string(),
-  name: z.string(),
+  title: z.string(),
   description: z.string().optional(),
   isPrivate: z.boolean().default(true),
   filters: ZUserSegmentFilterGroup,
@@ -279,7 +279,7 @@ export type TUserSegmentUpdateInput = Omit<
 
 export const sampleUserSegment: TUserSegment = {
   id: "segment123",
-  name: "Sample User Segment",
+  title: "Sample User Segment",
   description: "A sample user segment description",
   isPrivate: false,
   filters: [

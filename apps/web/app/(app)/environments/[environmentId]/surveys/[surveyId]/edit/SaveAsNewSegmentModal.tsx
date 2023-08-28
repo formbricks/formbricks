@@ -57,7 +57,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({ open, set
         surveyId: localSurvey.id,
         title: data.title,
         description: data.description,
-        isPrivate: true,
+        isPrivate: false,
         filters: localSurvey.userSegment?.filters,
       });
 

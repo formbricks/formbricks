@@ -1,6 +1,7 @@
 "use client";
 
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
+import LoadSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SaveAsNewSegmentModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
@@ -8,7 +9,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { TBaseFilterGroupItem, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
+import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
 import {
   Badge,
   Button,
@@ -22,7 +23,7 @@ import {
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
-import { useEffect, useState } from "react"; /*  */
+import { useEffect, useState } from "react";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -43,6 +44,9 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [resetAllFiltersModalOpen, setRestAllFiltersModalOpen] = useState(false);
+  const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
+  const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
+  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(localSurvey.userSegment?.isPrivate);
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
@@ -105,8 +109,73 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     return <div>Error</div>;
   }
 
-  const parsedRes = ZUserSegmentFilterGroup.safeParse(localSurvey.userSegment?.filters);
+  // const parsedRes = ZUserSegmentFilterGroup.safeParse(localSurvey.userSegment?.filters);
   // console.log(parsedRes);
+
+  const SegmentEditor = () => {
+    return (
+      <>
+        <p className="text-sm font-semibold">Send survey to audience who match...</p>
+        {!!localSurvey.userSegment?.filters && (
+          <>
+            <SegmentFilters
+              group={localSurvey.userSegment.filters}
+              environmentId={environmentId}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+            />
+
+            <AddFilterModal
+              environmentId={environmentId}
+              onAddFilter={(filter) => {
+                handleAddFilterInGroup(filter);
+              }}
+              open={addFilterModalOpen}
+              setOpen={setAddFilterModalOpen}
+            />
+
+            <SaveAsNewSegmentModal
+              open={saveAsNewSegmentModalOpen}
+              setOpen={setSaveAsNewSegmentModalOpen}
+              localSurvey={localSurvey}
+            />
+
+            <ConfirmDialog
+              open={resetAllFiltersModalOpen}
+              setOpen={setRestAllFiltersModalOpen}
+              title="Reset all filters"
+              description="Are you sure you want to reset all filters?"
+              primaryAction={() => {
+                const updatedLocalSurvey = produce(localSurvey, (draft) => {
+                  if (draft.userSegment?.filters) {
+                    draft.userSegment.filters = [];
+                  }
+                });
+
+                setLocalSurvey(updatedLocalSurvey);
+                setRestAllFiltersModalOpen(false);
+              }}
+              secondaryAction={() => {
+                setRestAllFiltersModalOpen(false);
+              }}
+              primaryActionText="Reset"
+              secondaryActionText="Cancel"
+            />
+
+            <LoadSegmentModal
+              open={loadSegmentModalOpen}
+              setOpen={setLoadSegmentModalOpen}
+              environmentId={localSurvey.environmentId}
+              step={loadSegmentModalStep}
+              setStep={setLoadSegmentModalStep}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+            />
+          </>
+        )}
+      </>
+    );
+  };
 
   return (
     <>
@@ -171,74 +240,80 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
           <div className="p-6">
             <div className="flex flex-col gap-6 rounded-lg border-2 border-slate-300 p-4">
-              <p className="text-sm font-semibold">Send survey to audience who match...</p>
-              {!!localSurvey.userSegment?.filters && (
-                <>
-                  <SegmentFilters
-                    group={localSurvey.userSegment.filters}
-                    environmentId={environmentId}
-                    localSurvey={localSurvey}
-                    setLocalSurvey={setLocalSurvey}
-                  />
+              {isSegmentEditorOpen ? (
+                <SegmentEditor />
+              ) : (
+                <div
+                  onClick={() => setIsSegmentEditorOpen(true)}
+                  className="flex flex-col gap-4 rounded-lg p-2">
+                  <div>
+                    <h3 className="font-medium">{localSurvey.userSegment?.title}</h3>
+                    <p className="text-slate-500">{localSurvey.userSegment?.description}</p>
+                  </div>
 
-                  <AddFilterModal
-                    environmentId={environmentId}
-                    onAddFilter={(filter) => {
-                      handleAddFilterInGroup(filter);
-                    }}
-                    open={addFilterModalOpen}
-                    setOpen={setAddFilterModalOpen}
-                  />
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="minimal"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                      <div className="h-4 w-4 rounded-full bg-slate-300" />
+                      <p className="text-sm text-slate-500">View Filters</p>
+                    </Button>
 
-                  <SaveAsNewSegmentModal
-                    open={saveAsNewSegmentModalOpen}
-                    setOpen={setSaveAsNewSegmentModalOpen}
-                    localSurvey={localSurvey}
-                  />
+                    <Button
+                      variant="minimal"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                      <div className="h-4 w-4 rounded-full bg-slate-300" />
+                      <p className="text-sm text-slate-500">Clone segment and edit</p>
+                    </Button>
 
-                  <ConfirmDialog
-                    open={resetAllFiltersModalOpen}
-                    setOpen={setRestAllFiltersModalOpen}
-                    title="Reset all filters"
-                    description="Are you sure you want to reset all filters?"
-                    primaryAction={() => {
-                      const updatedLocalSurvey = produce(localSurvey, (draft) => {
-                        if (draft.userSegment?.filters) {
-                          draft.userSegment.filters = [];
-                        }
-                      });
-
-                      setLocalSurvey(updatedLocalSurvey);
-                      setRestAllFiltersModalOpen(false);
-                    }}
-                    secondaryAction={() => {
-                      setRestAllFiltersModalOpen(false);
-                    }}
-                    primaryActionText="Reset"
-                    secondaryActionText="Cancel"
-                  />
-                </>
+                    <Button
+                      variant="minimal"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                      <div className="h-4 w-4 rounded-full bg-slate-300" />
+                      <p className="text-sm text-slate-500">Edit segment</p>
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
             <div className="flex w-full gap-4">
-              <Button
-                variant="minimal"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-                <div className="h-4 w-4 rounded-full bg-slate-300" />
-                <p className="text-sm text-slate-500">Save as new Segment</p>
-              </Button>
+              {isSegmentEditorOpen && (
+                <Button
+                  variant="minimal"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                  <div className="h-4 w-4 rounded-full bg-slate-300" />
+                  <p className="text-sm text-slate-500">Save as new Segment</p>
+                </Button>
+              )}
 
               <Button
                 variant="minimal"
                 size="sm"
                 className="flex items-center gap-2"
-                onClick={() => setRestAllFiltersModalOpen(true)}>
+                onClick={() => setLoadSegmentModalOpen(true)}>
                 <div className="h-4 w-4 rounded-full bg-slate-300" />
-                <p className="text-sm text-slate-500">Reset all filters</p>
+                <p className="text-sm text-slate-500">Load Segment</p>
               </Button>
+
+              {isSegmentEditorOpen && (
+                <Button
+                  variant="minimal"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setRestAllFiltersModalOpen(true)}>
+                  <div className="h-4 w-4 rounded-full bg-slate-300" />
+                  <p className="text-sm text-slate-500">Reset all filters</p>
+                </Button>
+              )}
             </div>
           </div>
 

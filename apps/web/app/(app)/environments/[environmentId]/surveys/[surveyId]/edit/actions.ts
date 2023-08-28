@@ -1,6 +1,10 @@
 "use server";
 
-import { createUserSegment, updateUserSegment } from "@formbricks/lib/services/userSegment";
+import {
+  createUserSegment,
+  loadNewUserSegment,
+  updateUserSegment,
+} from "@formbricks/lib/services/userSegment";
 import {
   TBaseFilterGroup,
   TUserSegmentUpdateInput,
@@ -40,4 +44,8 @@ export const updateUserSegmentAction = async (segmentId: string, data: TUserSegm
   }
 
   return await updateUserSegment(segmentId, data);
+};
+
+export const loadNewUserSegmentAction = async (surveyId: string, segmentId: string) => {
+  return await loadNewUserSegment(surveyId, segmentId);
 };

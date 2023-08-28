@@ -3,6 +3,8 @@ import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { Prisma as prismaClient } from "@prisma/client/";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { ZUserSegment, ZUserSegmentFilter, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
+import { transformErrorToDetails } from "@/lib/api/validator";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -236,6 +238,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (userSegmentId && userSegment) {
       delete data.userSegmentId;
       delete data.userSegment;
+
+      const parseSegmentFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+
+      if (!parseSegmentFilters.success) {
+        throw new Error("Error parsing user segment");
+      }
 
       try {
         await prisma.userSegment.update({

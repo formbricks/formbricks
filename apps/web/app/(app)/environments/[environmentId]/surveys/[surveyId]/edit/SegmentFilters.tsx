@@ -18,6 +18,9 @@ import {
   TBaseOperator,
   ACTION_METRICS,
   TActionMetric,
+  TUserSegmentSegmentFilter,
+  TSegmentOperator,
+  SEGMENT_OPERATORS,
 } from "@formbricks/types/v1/userSegment";
 import {
   DropdownMenu,
@@ -47,6 +50,7 @@ import {
 import { useState } from "react";
 import { produce } from "immer";
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
+import { useUserSegments } from "@/lib/userSegments/userSegments";
 
 // type guard to check if the resource is a filter or a filter group
 const isResourceFilter = (
@@ -55,9 +59,8 @@ const isResourceFilter = (
   return (resource as TUserSegmentFilter).root !== undefined;
 };
 
-type TConnector = "and" | "or" | null;
 type SegmentFilterItemProps = {
-  connector: TConnector;
+  connector: TUserSegmentConnector;
   resource: TUserSegmentFilter;
   environmentId: string;
   localSurvey: Survey;
@@ -490,27 +493,179 @@ const ActionSegmentFilter = ({
   );
 };
 
-type AddNewFilterItemProps = {
-  environmentId: string;
+type TUserSegmentFilterProps = SegmentFilterItemProps & {
+  resource: TUserSegmentSegmentFilter;
+};
+const UserSegmentFilter = ({
+  connector,
+  environmentId,
+  localSurvey,
+  onAddFilterBelow,
+  onCreateGroup,
+  onDeleteFilter,
+  onMoveFilter,
+  resource,
+  setLocalSurvey,
+}: TUserSegmentFilterProps) => {
+  const { userSegmentId } = resource.root;
+  const { userSegments } = useUserSegments(environmentId);
+  const operatorText = convertOperatorToText(resource.qualifier.operator);
+
+  const currentUserSegment = userSegments?.find((segment) => segment.id === userSegmentId);
+
+  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TSegmentOperator) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              resource.qualifier.operator = newOperator;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const updateSegmentIdInLocalSurvey = (filterId: string, newSegmentId: string) => {
+    const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              (resource as TUserSegmentSegmentFilter).root.userSegmentId = newSegmentId;
+              resource.value = newSegmentId;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.userSegment?.filters) {
+        searchAndUpdate(draft.userSegment.filters);
+      }
+    });
+
+    setLocalSurvey(updatedLocalSurvey);
+  };
+
+  const toggleSegmentOperator = () => {
+    if (!resource.qualifier.operator) return;
+
+    if (resource.qualifier.operator === "userIsIn") {
+      updateOperatorInLocalSurvey(resource.id, "userIsNotIn");
+      return;
+    }
+
+    updateOperatorInLocalSurvey(resource.id, "userIsIn");
+  };
+
+  return (
+    <div className="flex items-center gap-4 text-sm">
+      <SegmentFilterItemConnector
+        key={connector}
+        connector={connector}
+        filterId={resource.id}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+      />
+
+      <div>
+        <span
+          className="cursor-pointer underline"
+          onClick={() => {
+            toggleSegmentOperator();
+          }}>
+          {operatorText}
+        </span>
+      </div>
+
+      <Select
+        value={currentUserSegment?.id}
+        onValueChange={(value) => {
+          updateSegmentIdInLocalSurvey(resource.id, value);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
+          <div className="flex items-center gap-1">
+            <TagIcon className="h-4 w-4 text-sm" />
+            <SelectValue />
+          </div>
+        </SelectTrigger>
+
+        <SelectContent>
+          {userSegments
+            ?.filter((segment) => !segment.isPrivate)
+            .map((segment) => (
+              <SelectItem value={segment.id}>{segment.title}</SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <MoreVertical className="h-4 w-4" />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => onAddFilterBelow(resource.id)}>
+              add filter below
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => onCreateGroup(resource.id)}>create group</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "up")}>move up</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "down")}>move down</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <button onClick={() => onDeleteFilter(resource.id)}>
+          <Trash2 className="h-4 w-4 cursor-pointer"></Trash2>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+type TAddNewFilterItemProps = {
   connector: TUserSegmentConnector;
   filterId: string;
+  environmentId: string;
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
+  onDeleteFilter: (filterId: string) => void;
 };
 const AddNewFilterItem = ({
   connector,
   filterId,
   environmentId,
+  onDeleteFilter,
   localSurvey,
   setLocalSurvey,
-}: AddNewFilterItemProps) => {
+}: TAddNewFilterItemProps) => {
   const [activeTabId, setActiveId] = useState("actions");
   const { attributeClasses } = useAttributeClasses(environmentId);
   const { eventClasses } = useEventClasses(environmentId);
+  const { userSegments } = useUserSegments(environmentId);
 
   const tabs = [
     { id: "actions", label: "Actions" },
     { id: "attributes", label: "Attributes" },
+    { id: "segments", label: "Segments" },
   ];
 
   const onAddFilter = (filter: TUserSegmentFilter) => {
@@ -558,15 +713,15 @@ const AddNewFilterItem = ({
         </PopoverTrigger>
 
         <PopoverContent className="bg-slate-50">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col">
             <TabBar activeId={activeTabId} setActiveId={setActiveId} tabs={tabs} />
 
             <div className="max-h-96 overflow-auto">
               {activeTabId === "actions" && (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col">
                   {eventClasses.map((eventClass) => (
                     <div
-                      className="flex cursor-pointer items-center gap-2"
+                      className="flex cursor-pointer items-center gap-2 p-1"
                       onClick={() => {
                         const filter: TUserSegmentFilter = {
                           id: "sample",
@@ -591,10 +746,10 @@ const AddNewFilterItem = ({
               )}
 
               {activeTabId === "attributes" && (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col">
                   {attributeClasses.map((attributeClass) => (
                     <div
-                      className="flex cursor-pointer items-center gap-2"
+                      className="flex cursor-pointer items-center gap-2 p-1"
                       onClick={() => {
                         const filter: TUserSegmentFilter = {
                           id: "sample",
@@ -616,10 +771,45 @@ const AddNewFilterItem = ({
                   ))}
                 </div>
               )}
+
+              {activeTabId === "segments" && !!userSegments && (
+                <div className="flex flex-col">
+                  {userSegments
+                    .filter((segment) => !segment.isPrivate)
+                    .map((segment) => (
+                      <div
+                        className="flex cursor-pointer items-center gap-2 p-1"
+                        onClick={() => {
+                          const filter: TUserSegmentFilter = {
+                            id: "sample",
+                            root: {
+                              type: "segment",
+                              userSegmentId: segment.id,
+                            },
+                            qualifier: {
+                              operator: "userIsIn",
+                            },
+                            value: segment.id,
+                          };
+
+                          onAddFilter(filter);
+                        }}>
+                        <Users2Icon className="h-4 w-4" />
+                        <span>{segment.title}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         </PopoverContent>
       </Popover>
+
+      <div className="flex items-center gap-2">
+        <button onClick={() => onDeleteFilter(filterId)}>
+          <Trash2 className="h-4 w-4 cursor-pointer"></Trash2>
+        </button>
+      </div>
     </div>
   );
 };
@@ -636,9 +826,6 @@ const SegmentFilterItem = ({
   onMoveFilter,
 }: SegmentFilterItemProps) => {
   const [connectorState, setConnectorState] = useState(connector);
-  const [userSegmentOperator, setUserSegmentOperator] = useState(
-    resource.root.type === "segment" ? resource.qualifier.operator : ""
-  );
 
   const updateFilterValueInLocalSurvey = (filterId: string, newValue: string | number) => {
     const updatedLocalSurvey = produce(localSurvey, (draft) => {
@@ -677,12 +864,15 @@ const SegmentFilterItem = ({
     setConnectorState("and");
   };
 
+  // placeholder UI
+
   if ((resource as TUserSegmentFilter).isPlaceholder) {
     return (
       <AddNewFilterItem
         environmentId={environmentId}
         connector={connector}
         filterId={resource.id}
+        onDeleteFilter={onDeleteFilter}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
       />
@@ -730,42 +920,22 @@ const SegmentFilterItem = ({
   // segment UI
 
   if (resource.root.type === "segment") {
-    const onSegmentChange = () => {
-      if (!userSegmentOperator) return;
-
-      if (userSegmentOperator === "userIsIn") {
-        setUserSegmentOperator("userIsNotIn");
-        return;
-      }
-
-      setUserSegmentOperator("userIsIn");
-    };
-
     return (
-      <div className="flex items-center gap-4">
-        {/* Connector */}
-        <span
-          className={cn(!!connectorState && "cursor-pointer text-sm underline")}
-          onClick={onConnectorChange}>
-          {!!connectorState ? connectorState : "Where"}
-        </span>
-
-        {/* Segment */}
-        <span className={cn("cursor-pointer text-sm underline")} onClick={onSegmentChange}>
-          {convertOperatorToText(userSegmentOperator)}
-        </span>
-
-        <Select value={resource.value.toString()}>
-          <SelectTrigger className="flex w-auto items-center justify-center text-center capitalize" hideArrow>
-            <div className="flex items-center gap-1">
-              <Users2Icon className="h-4 w-4" />
-              <p>{resource.value}</p>
-            </div>
-          </SelectTrigger>
-        </Select>
-      </div>
+      <UserSegmentFilter
+        connector={connector}
+        resource={resource as TUserSegmentSegmentFilter}
+        environmentId={environmentId}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        onAddFilterBelow={onAddFilterBelow}
+        onCreateGroup={onCreateGroup}
+        onDeleteFilter={onDeleteFilter}
+        onMoveFilter={onMoveFilter}
+      />
     );
   }
+
+  // device UI
 
   if (resource.root.type === "device") {
     const deviceType = resource.root.deviceType;

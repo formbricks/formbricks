@@ -7,6 +7,7 @@ import { MonitorSmartphoneIcon, MousePointerClick, PlusCircleIcon, TagIcon, User
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { createId } from "@paralleldrive/cuid2";
+import { useUserSegments } from "@/lib/userSegments/userSegments";
 
 type TAddFilterModalProps = {
   open: boolean;
@@ -20,6 +21,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
   const { attributeClasses } = useAttributeClasses(environmentId);
   const { eventClasses } = useEventClasses(environmentId);
+  const { userSegments } = useUserSegments(environmentId);
 
   const tabs: {
     id: string;
@@ -116,6 +118,42 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                   </div>
                 );
               })}
+            </>
+          )}
+
+          {activeTabId === "segments" && (
+            <>
+              {userSegments
+                ?.filter((segment) => !segment.isPrivate)
+                ?.map((userSegment) => {
+                  return (
+                    <div
+                      onClick={() => {
+                        const newFilter: TBaseFilterGroupItem = {
+                          id: createId(),
+                          connector: "and",
+                          resource: {
+                            id: createId(),
+                            root: {
+                              type: "segment",
+                              userSegmentId: userSegment.id,
+                            },
+                            qualifier: {
+                              operator: "userIsIn",
+                            },
+                            value: userSegment.id,
+                          },
+                        };
+
+                        onAddFilter(newFilter);
+                        setOpen(false);
+                      }}
+                      className="flex cursor-pointer items-center gap-4 text-sm">
+                      <Users2Icon className="h-4 w-4" />
+                      <p>{userSegment.title}</p>
+                    </div>
+                  );
+                })}
             </>
           )}
         </div>

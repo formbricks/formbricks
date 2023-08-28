@@ -1,5 +1,6 @@
 import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
+import { getAllUserSegments } from "@formbricks/lib/services/userSegment";
 import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -16,14 +17,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // GET
   if (req.method === "GET") {
-    const userSegments = await prisma.userSegment.findMany({
-      where: {
-        environment: {
-          id: environmentId,
-        },
-      },
-    });
-
+    const userSegments = await getAllUserSegments(environmentId);
     return res.json(userSegments);
   }
 
