@@ -1,4 +1,4 @@
-export const handleFeedbackSubmit = async (YesNo, pageUrl) => {
+export const handleFeedbackSubmit = async (YesNo: string, pageUrl: string | null) => {
   const response_data = {
     data: {
       isHelpful: YesNo,
@@ -34,7 +34,7 @@ export const handleFeedbackSubmit = async (YesNo, pageUrl) => {
   }
 };
 
-export const updateFeedback = async (freeText, responseId) => {
+export const updateFeedback = async (freeText: string, responseId: string) => {
   if (!responseId) {
     console.error("No response ID available");
     return;

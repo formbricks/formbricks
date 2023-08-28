@@ -19,7 +19,7 @@ export default function MetaInformation({
   section,
   tags,
 }: Props) {
-  const pageTitle = `${title} | Open-Source Experience Management, Privacy-first`;
+  const pageTitle = `${title}`;
   return (
     <Head>
       <title>{pageTitle}</title>
@@ -27,7 +27,7 @@ export default function MetaInformation({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={`https://${process.env.VERCEL_URL}/social-image.png`} />
-      <meta property="og:image:alt" content="Formbricks - Open Source Experience Management, Privacy-first" />
+      <meta property="og:image:alt" content="Open Source Experience Management, Privacy-first" />
       <meta property="og:image:type" content="image/png" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
