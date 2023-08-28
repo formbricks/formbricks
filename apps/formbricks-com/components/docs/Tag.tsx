@@ -26,10 +26,10 @@ const colorStyles = {
     medium:
       "ring-rose-200 bg-rose-50 text-red-500 dark:ring-rose-500/20 dark:bg-rose-400/10 dark:text-rose-400",
   },
-  zinc: {
-    small: "text-zinc-400 dark:text-zinc-500",
+  slate: {
+    small: "text-slate-400 dark:text-slate-500",
     medium:
-      "ring-zinc-200 bg-zinc-50 text-zinc-500 dark:ring-zinc-500/20 dark:bg-zinc-400/10 dark:text-zinc-400",
+      "ring-slate-200 bg-slate-50 text-slate-500 dark:ring-slate-500/20 dark:bg-slate-400/10 dark:text-slate-400",
   },
 };
 

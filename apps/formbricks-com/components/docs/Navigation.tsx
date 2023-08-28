@@ -30,7 +30,7 @@ function TopLevelNavItem({ href, children }: { href: string; children: React.Rea
     <li className="md:hidden">
       <Link
         href={href}
-        className="block py-1 text-sm text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+        className="block py-1 text-sm text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         {children}
       </Link>
     </li>
@@ -58,12 +58,12 @@ function NavLink({
         "flex justify-between gap-2 py-1 pr-3 text-sm transition",
         isAnchorLink ? "pl-7" : "pl-4",
         active
-          ? "text-zinc-900 dark:text-white"
-          : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+          ? "text-slate-900 dark:text-white"
+          : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       )}>
       <span className="truncate">{children}</span>
       {tag && (
-        <Tag variant="small" color="zinc">
+        <Tag variant="small" color="slate">
           {tag}
         </Tag>
       )}
@@ -94,7 +94,7 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { delay: 0.2 } }}
       exit={{ opacity: 0 }}
-      className="bg-zinc-800/2.5 dark:bg-white/2.5 absolute inset-x-0 top-0 will-change-transform"
+      className="bg-slate-800/2.5 dark:bg-white/2.5 absolute inset-x-0 top-0 will-change-transform"
       style={{ borderRadius: 8, height, top }}
     />
   );
@@ -131,14 +131,14 @@ function NavigationGroup({ group, className }: { group: NavGroup; className?: st
 
   return (
     <li className={clsx("relative mt-6", className)}>
-      <motion.h2 layout="position" className="text-xs font-semibold text-zinc-900 dark:text-white">
+      <motion.h2 layout="position" className="text-xs font-semibold text-slate-900 dark:text-white">
         {group.title}
       </motion.h2>
       <div className="relative mt-3 pl-2">
         <AnimatePresence initial={!isInsideMobileNavigation}>
           {isActiveGroup && <VisibleSectionHighlight group={group} pathname={pathname || "/docs"} />}
         </AnimatePresence>
-        <motion.div layout className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5" />
+        <motion.div layout className="absolute inset-y-0 left-2 w-px bg-slate-900/10 dark:bg-white/5" />
         <AnimatePresence initial={false}>
           {isActiveGroup && <ActivePageMarker group={group} pathname={pathname || "/docs"} />}
         </AnimatePresence>

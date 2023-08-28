@@ -3,12 +3,12 @@ import glob from "fast-glob";
 import { Providers } from "@/app/providers";
 import { Layout } from "@/components/docs/Layout";
 
-import { type Metadata } from "next";
 import { type Section } from "@/components/docs/SectionProvider";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: "Formbricks – Experience Management for B2B SaaS",
+    template: "Formbricks – Open Source Experience Management",
     default: "Formbricks Docs",
   },
 };

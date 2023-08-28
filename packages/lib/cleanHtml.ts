@@ -19,11 +19,11 @@ export function cleanHtml(str: string): string {
    * Remove <script> elements
    * @param  {Node} html The HTML
    */
-  function removeScripts(html) {
+  function removeScripts(html: Element) {
     let scripts = html.querySelectorAll("script");
-    for (let script of scripts) {
+    scripts.forEach((script) => {
       script.remove();
-    }
+    });
   }
 
   /**
@@ -32,23 +32,33 @@ export function cleanHtml(str: string): string {
    * @param  {String}  value The attribute value
    * @return {Boolean}       If true, the attribute is potentially dangerous
    */
-  function isPossiblyDangerous(name, value) {
+  /**
+   * Check if the attribute is potentially dangerous
+   */
+  function isPossiblyDangerous(name: string, value: string): boolean {
     let val = value.replace(/\s+/g, "").toLowerCase();
-    if (["src", "href", "xlink:href"].includes(name)) {
-      if (val.includes("javascript:") || val.includes("data:")) return true;
+    if (
+      ["src", "href", "xlink:href"].includes(name) &&
+      (val.includes("javascript:") || val.includes("data:"))
+    ) {
+      return true;
     }
-    if (name.startsWith("on")) return true;
+    if (name.startsWith("on")) {
+      return true;
+    }
+    return false;
   }
 
   /**
    * Remove potentially dangerous attributes from an element
    * @param  {Node} elem The element
    */
-  function removeAttributes(elem) {
+  function removeAttributes(elem: Element) {
     // Loop through each attribute
     // If it's dangerous, remove it
     let atts = elem.attributes;
-    for (let { name, value } of atts) {
+    for (let i = 0; i < atts.length; i++) {
+      let { name, value } = atts[i];
       if (!isPossiblyDangerous(name, value)) continue;
       elem.removeAttribute(name);
     }
@@ -58,8 +68,12 @@ export function cleanHtml(str: string): string {
    * Remove dangerous stuff from the HTML document's nodes
    * @param  {Node} html The HTML document
    */
-  function clean(html) {
-    let nodes = html.children;
+  /**
+   * Clean the HTML nodes recursively
+   * @param  {Element} html The HTML element
+   */
+  function clean(html: Element) {
+    let nodes = Array.from(html.children);
     for (let node of nodes) {
       removeAttributes(node);
       clean(node);
