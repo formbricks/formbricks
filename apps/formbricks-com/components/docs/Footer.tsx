@@ -28,7 +28,7 @@ function PageLink({
         href={page.href}
         tabIndex={-1}
         aria-hidden="true"
-        className="text-base font-semibold text-zinc-900 transition hover:text-zinc-600 dark:text-white dark:hover:text-zinc-300">
+        className="text-base font-semibold text-slate-900 transition hover:text-slate-600 dark:text-white dark:hover:text-slate-300">
         {page.title}
       </Link>
     </>
@@ -107,15 +107,15 @@ function SocialLink({
   return (
     <Link href={href} className="group">
       <span className="sr-only">{children}</span>
-      <Icon className="h-5 w-5 fill-zinc-700 transition group-hover:fill-zinc-900 dark:group-hover:fill-zinc-500" />
+      <Icon className="h-5 w-5 fill-slate-700 transition group-hover:fill-slate-900 dark:group-hover:fill-slate-500" />
     </Link>
   );
 }
 
 function SmallPrint() {
   return (
-    <div className="flex flex-col items-center justify-between gap-5 border-t border-zinc-900/5 pt-8 dark:border-white/5 sm:flex-row">
-      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+    <div className="flex flex-col items-center justify-between gap-5 border-t border-slate-900/5 pt-8 dark:border-white/5 sm:flex-row">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         Formbricks GmbH &copy; 2023. All rights reserved.
       </p>
       <div className="flex gap-4">
