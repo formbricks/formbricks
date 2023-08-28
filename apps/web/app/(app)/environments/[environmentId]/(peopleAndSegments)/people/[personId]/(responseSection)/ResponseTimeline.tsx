@@ -1,6 +1,6 @@
 "use client";
 
-import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponsesFeed";
+import ResponseFeed from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/(responseSection)/ResponsesFeed";
 import { TResponseWithSurvey } from "@formbricks/types/v1/responses";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";

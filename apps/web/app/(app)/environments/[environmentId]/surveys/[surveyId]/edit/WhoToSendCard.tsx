@@ -150,8 +150,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     return <div>Error</div>;
   }
 
-  console.log("djfhdwilh", userSegment);
-
   return (
     <>
       <Collapsible.Root

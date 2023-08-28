@@ -1,4 +1,4 @@
-import ResponseTimeline from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponseTimeline";
+import ResponseTimeline from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/(responseSection)/ResponseTimeline";
 import { getResponsesByPersonId } from "@formbricks/lib/services/response";
 import { getSurveys } from "@formbricks/lib/services/survey";
 import { TResponseWithSurvey } from "@formbricks/types/v1/responses";

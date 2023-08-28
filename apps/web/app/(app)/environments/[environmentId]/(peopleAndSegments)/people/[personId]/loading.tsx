@@ -2,7 +2,7 @@ import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   ActivityItemPopover,
   ActivityItemIcon,
-} from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivityItemComponents";
+} from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/(activitySection)/ActivityItemComponents";
 import { BackIcon } from "@formbricks/ui";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
 

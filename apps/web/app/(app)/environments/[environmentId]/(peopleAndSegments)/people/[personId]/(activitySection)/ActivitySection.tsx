@@ -1,4 +1,4 @@
-import ActivityTimeline from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivityTimeline";
+import ActivityTimeline from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/(activitySection)/ActivityTimeline";
 import { getActivityTimeline } from "@formbricks/lib/services/activity";
 
 export default async function ActivitySection({

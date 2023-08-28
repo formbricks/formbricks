@@ -1,6 +1,6 @@
 "use client";
 
-import ActivityFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivityFeed";
+import ActivityFeed from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/(activitySection)/ActivityFeed";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
