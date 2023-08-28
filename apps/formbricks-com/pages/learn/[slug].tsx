@@ -67,7 +67,7 @@ export async function getStaticPaths() {
   const articles = (await response.json()) as ArticleResponse;
 
   const paths = articles.data.map((article) => ({
-    params: { slug: article.attributes.slug },
+    params: { slug: article.attributes?.slug },
   }));
 
   return { paths, fallback: true };
@@ -109,23 +109,23 @@ export default function ArticlePage({ article = {} }: ArticlePageProps) {
       author,
       publishedAt,
       text,
-      faq,
+      faq = [],
       meta: {
-        title,
-        description,
-        section,
+        title = "",
+        description = "",
+        section = "",
         tags = [], // default empty array if tags are not provided
       } = {}, // default empty object if meta is not provided
     } = {}, // default empty object if attributes are not provided
   } = article;
 
-  const metaTags = tags.map((tag) => tag.tag);
+  const metaTags = tags.map((tag) => tag.tag || "").filter((t) => t !== "");
 
   const meta = {
     title,
     description,
-    publishedTime: publishedAt,
-    authors: [author],
+    publishedTime: publishedAt || Date.now().toString(),
+    authors: [author || "Formbricks"],
     section,
     tags: metaTags,
   };
@@ -139,10 +139,10 @@ export default function ArticlePage({ article = {} }: ArticlePageProps) {
   return (
     <LayoutMdx meta={meta}>
       <>
+        <ReactMarkdown components={renderers}>{text as any}</ReactMarkdown>
         <Head>
           <link rel="canonical" href={canonicalURL} />
         </Head>
-        <ReactMarkdown components={renderers}>{text}</ReactMarkdown>
         <FAQPageJsonLd mainEntity={faqEntities} />
       </>
     </LayoutMdx>
