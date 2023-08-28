@@ -5,10 +5,11 @@ import CodeBlock from "@/components/shared/CodeBlock";
 import { Dialog, DialogContent } from "@formbricks/ui";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { CodeBracketIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
+import cuid2 from "@paralleldrive/cuid2";
 
 interface LinkSurveyModalProps {
   survey: TSurvey;
@@ -17,8 +18,14 @@ interface LinkSurveyModalProps {
 }
 
 export default function LinkSurveyModal({ survey, open, setOpen }: LinkSurveyModalProps) {
+  const defaultSurveyUrl = `${window.location.protocol}//${window.location.host}/s/${survey.id}`;
+  const isSingleUseSurvey = !!survey.singleUse?.enabled;
+
   const linkTextRef = useRef(null);
   const [showEmbed, setShowEmbed] = useState(false);
+  const [singleUseId, setSingleUseId] = useState(cuid2.createId());
+
+  const surveyUrl = `${defaultSurveyUrl}${isSingleUseSurvey ? `?suId=${singleUseId}` : ""}`;
 
   const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; 
 overflow:auto;"> 
@@ -67,31 +74,47 @@ top:0; width:100%; height:100%; border:0;">
                 <span
                   style={{
                     wordBreak: "break-all",
-                  }}>{`${window.location.protocol}//${window.location.host}/s/${survey.id}`}</span>
+                  }}>
+                  {surveyUrl}
+                </span>
               </div>
             </div>
           )}
           <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row sm:justify-end">
-            <Button
-              variant="secondary"
-              title="Embed survey in your website"
-              aria-label="Embed survey in your website"
-              className="flex justify-center"
-              onClick={() => {
-                setShowEmbed(true);
-                navigator.clipboard.writeText(iframeCode);
-                toast.success("iframe code copied to clipboard!");
-              }}
-              EndIcon={CodeBracketIcon}>
-              Embed
-            </Button>
+            {!isSingleUseSurvey ? (
+              <Button
+                variant="secondary"
+                title="Embed survey in your website"
+                aria-label="Embed survey in your website"
+                className="flex justify-center"
+                onClick={() => {
+                  setShowEmbed(true);
+                  navigator.clipboard.writeText(iframeCode);
+                  toast.success("iframe code copied to clipboard!");
+                }}
+                EndIcon={CodeBracketIcon}>
+                Embed
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                title="Generate new single-use survey link"
+                aria-label="Generate new single-use survey link"
+                className="flex justify-center"
+                onClick={() => {
+                  const newSingleUseSurveyId = cuid2.createId();
+                  setSingleUseId(newSingleUseSurveyId);
+                  toast.success("New single-use survey link generated!");
+                }}
+                EndIcon={LinkIcon}>
+                Generate
+              </Button>
+            )}
             <Button
               variant="secondary"
               onClick={() => {
                 setShowEmbed(false);
-                navigator.clipboard.writeText(
-                  `${window.location.protocol}//${window.location.host}/s/${survey.id}`
-                );
+                navigator.clipboard.writeText(surveyUrl);
                 toast.success("URL copied to clipboard!");
               }}
               title="Copy survey link to clipboard"
@@ -105,7 +128,7 @@ top:0; width:100%; height:100%; border:0;">
               title="Preview survey"
               aria-label="Preview survey"
               className="flex justify-center"
-              href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
+              href={`${surveyUrl}?preview=true`}
               target="_blank"
               EndIcon={EyeIcon}>
               Preview

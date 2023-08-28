@@ -24,6 +24,7 @@ export const selectSurveyWithAnalytics = {
   delay: true,
   autoComplete: true,
   redirectUrl: true,
+  singleUse: true,
   triggers: {
     select: {
       eventClass: {

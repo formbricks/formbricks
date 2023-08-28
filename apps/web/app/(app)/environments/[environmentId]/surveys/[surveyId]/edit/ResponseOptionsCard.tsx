@@ -286,7 +286,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               {/* Single User Survey Options */}
               <AdvancedOptionToggle
                 htmlId="singleUserSurveyOptions"
-                isChecked={localSurvey.singleUse?.enabled ?? false}
+                isChecked={!!localSurvey.singleUse?.enabled}
                 onToggle={handleSingleUseSurveyToggle}
                 title="Single-Use Survey Links"
                 description="Allow only 1 response per survey link."
