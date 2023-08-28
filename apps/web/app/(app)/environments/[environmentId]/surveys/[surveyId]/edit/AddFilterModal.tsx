@@ -19,9 +19,9 @@ type TAddFilterModalProps = {
 const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilterModalProps) => {
   const [activeTabId, setActiveTabId] = useState("actions");
 
-  const { attributeClasses } = useAttributeClasses(environmentId);
-  const { eventClasses } = useEventClasses(environmentId);
-  const { userSegments } = useUserSegments(environmentId);
+  const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
+  const { eventClasses, isLoadingEventClasses } = useEventClasses(environmentId);
+  const { userSegments, isLoadingUserSegments } = useUserSegments(environmentId);
 
   const tabs: {
     id: string;
@@ -34,6 +34,10 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
     { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
   ];
+
+  if (isLoadingAttributeClasses || isLoadingEventClasses || isLoadingUserSegments) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
