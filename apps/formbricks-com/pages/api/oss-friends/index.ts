@@ -102,7 +102,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         {
           name: "Tolgee",
           description: "Software localization from A to Z made really easy.",
-          href: "https://tolgee.io/",
+          href: "https://tolgee.io",
         },
         {
           name: "Trigger.dev",
