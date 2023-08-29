@@ -5,14 +5,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { SurveySingleUse } from "@formbricks/types/surveys";
 
-const SurveyLinkUsed = ({ singleUseMessage }: { singleUseMessage: Omit<SurveySingleUse, "enabled"> }) => {
+type SurveyLinkUsedProps = {
+  singleUseMessage?: Omit<SurveySingleUse, "enabled">;
+};
+
+const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
+  const defaultHeading = "This survey link has already been used.";
+  const defaultSubheading = "Thanks for sharing your feedback!";
   return (
     <div className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-tr from-slate-200 to-slate-50 py-8 text-center">
       <div></div>
       <div className="flex flex-col items-center space-y-3 text-slate-300">
         <CheckCircleIcon className="h-20 w-20" />
-        <h1 className="text-4xl font-bold text-slate-800">{singleUseMessage.heading}</h1>
-        <p className="text-lg leading-10 text-gray-500">{singleUseMessage.subheading}</p>
+        <h1 className="text-4xl font-bold text-slate-800">{singleUseMessage?.heading ?? defaultHeading}</h1>
+        <p className="text-lg leading-10 text-gray-500">
+          {singleUseMessage?.subheading ?? defaultSubheading}
+        </p>
       </div>
       <div>
         <Link href="https://formbricks.com">
