@@ -16,6 +16,7 @@ export default async function SegmentsPage({ params }) {
 
   return (
     <>
+      <CreateSegmentModal environmentId={params.environmentId} />
       {segments.length === 0 ? (
         <EmptySpaceFiller
           type="table"
@@ -24,7 +25,6 @@ export default async function SegmentsPage({ params }) {
         />
       ) : (
         <>
-          <CreateSegmentModal environmentId={params.environmentId} />
           <div className="rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-4 pl-6">Title</div>
@@ -52,15 +52,17 @@ export default async function SegmentsPage({ params }) {
                     </div>
                   </div>
                   <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                    <div className="ph-no-capture font-medium text-slate-900">1</div>
+                    <div className="ph-no-capture font-medium text-slate-900">{segment.surveys?.length}</div>
                   </div>
                   <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
                     <div className="ph-no-capture font-medium text-slate-900">
-                      {formatDistanceToNow(segment.updatedAt)}
+                      {formatDistanceToNow(segment.updatedAt, {
+                        addSuffix: true,
+                      }).replace("about", "")}
                     </div>
                   </div>
                   <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-                    <div className="ph-no-capture text-slate-900">
+                    <div className="ph-no-capture font-medium text-slate-900">
                       {format(segment.createdAt, "do 'of' MMMM, yyyy")}
                     </div>
                   </div>

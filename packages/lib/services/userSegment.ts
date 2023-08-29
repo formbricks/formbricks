@@ -35,6 +35,13 @@ export const getAllUserSegments = async (environmentId: string) => {
     where: {
       environmentId,
     },
+    include: {
+      surveys: {
+        select: {
+          id: true,
+        },
+      },
+    },
   });
 
   return userSegments;
@@ -90,12 +97,20 @@ export const loadNewUserSegment = async (surveyId: string, newSegmentId: string)
         },
       },
     },
+    include: {
+      userSegment: {
+        include: {
+          surveys: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
   });
 
-  return {
-    userSegment,
-    updatedSurvey,
-  };
+  return updatedSurvey;
 };
 
 export const cloneUserSegment = async (segmentId: string, surveyId: string) => {

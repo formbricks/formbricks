@@ -249,6 +249,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const userSegmentId = data.userSegmentId;
     const userSegment = data.userSegment;
 
+    let updatedUserSegment;
+
     if (userSegmentId && userSegment) {
       delete data.userSegmentId;
       delete data.userSegment;
@@ -264,9 +266,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }
 
       try {
-        await prisma.userSegment.update({
+        console.log({ userSegment });
+        updatedUserSegment = await prisma.userSegment.update({
           where: {
-            id: userSegmentId,
+            id: userSegment.id,
           },
           data: userSegment,
         });
@@ -285,6 +288,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
     } catch (err) {
       console.log({ err });
+    }
+
+    if (updatedUserSegment) {
+      prismaRes.userSegment = updatedUserSegment;
     }
 
     return res.json(prismaRes);

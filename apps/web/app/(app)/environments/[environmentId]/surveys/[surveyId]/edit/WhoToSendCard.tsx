@@ -26,7 +26,6 @@ import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
 import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -43,7 +42,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [open, setOpen] = useState(false);
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
     useAttributeClasses(environmentId);
-  const { mutateSurvey } = useSurvey(environmentId, localSurvey.id);
 
   const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
 
@@ -54,6 +52,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(localSurvey.userSegment?.isPrivate);
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
+  const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(false);
 
   useEffect(() => {
     const updatedLocalSurvey = produce(localSurvey, (draft) => {
@@ -73,20 +72,20 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const handleCloneSegment = async () => {
     if (!localSurvey.userSegment) return;
 
-    try {
-      const clonedUserSegment = await cloneUserSegmentAction(localSurvey.userSegment?.id, localSurvey.id);
-      mutateSurvey();
+    // try {
+    //   const clonedUserSegment = await cloneUserSegmentAction(localSurvey.userSegment?.id, localSurvey.id);
+    //   mutateSurvey();
 
-      setLocalSurvey({
-        ...localSurvey,
-        userSegment: {
-          ...clonedUserSegment,
-          surveys: [localSurvey.id],
-        },
-      });
-    } catch (err) {
-      toast.error(err.message);
-    }
+    //   setLocalSurvey({
+    //     ...localSurvey,
+    //     userSegment: {
+    //       ...clonedUserSegment,
+    //       surveys: [localSurvey.id],
+    //     },
+    //   });
+    // } catch (err) {
+    //   toast.error(err.message);
+    // }
   };
 
   useEffect(() => {
@@ -228,16 +227,29 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 />
               )}
 
-              {loadSegmentModalOpen && (
+              {loadSegmentModalOpen && userSegment && (
                 <LoadSegmentModal
                   open={loadSegmentModalOpen}
                   setOpen={setLoadSegmentModalOpen}
+                  surveyId={localSurvey.id}
                   environmentId={localSurvey.environmentId}
                   step={loadSegmentModalStep}
                   setStep={setLoadSegmentModalStep}
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
+                  userSegment={userSegment}
+                  setUserSegment={setUserSegment}
                 />
+              )}
+
+              {segmentEditorViewOnly && userSegment && (
+                <div className="pointer-events-none opacity-60">
+                  <SegmentFilters
+                    key={userSegment.filters.toString()}
+                    group={userSegment.filters}
+                    environmentId={environmentId}
+                    userSegment={userSegment}
+                    setUserSegment={setUserSegment}
+                  />
+                </div>
               )}
 
               {isSegmentEditorOpen ? (
@@ -305,7 +317,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                       variant="minimal"
                       size="sm"
                       className="flex items-center gap-2"
-                      onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                      onClick={() => setSegmentEditorViewOnly(true)}>
                       <div className="h-4 w-4 rounded-full bg-slate-300" />
                       <p className="text-sm text-slate-500">View Filters</p>
                     </Button>
@@ -329,6 +341,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                           setSegmentUsedModalOpen(true);
                         } else {
                           setIsSegmentEditorOpen(true);
+                          setSegmentEditorViewOnly(false);
                         }
                       }}>
                       <div className="h-4 w-4 rounded-full bg-slate-300" />
