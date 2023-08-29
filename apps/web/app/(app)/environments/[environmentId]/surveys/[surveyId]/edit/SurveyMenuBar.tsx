@@ -94,6 +94,11 @@ export default function SurveyMenuBar({
   };
 
   const validateSurvey = (survey) => {
+    if (localSurvey.questions.length === 0) {
+      toast.error("Please add at least one question");
+      return;
+    }
+
     faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
@@ -125,6 +130,11 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = (shouldNavigateBack = false) => {
+    if (localSurvey.questions.length === 0) {
+      toast.error("Please add at least one question");
+      return;
+    }
+
     // variable named strippedSurvey that is a copy of localSurvey with isDraft removed from every question
     const strippedSurvey = {
       ...localSurvey,
