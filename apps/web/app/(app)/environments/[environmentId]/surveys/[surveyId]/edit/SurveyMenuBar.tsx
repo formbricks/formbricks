@@ -154,6 +154,7 @@ export default function SurveyMenuBar({
           } else {
             router.push(`/environments/${environmentId}/surveys`);
           }
+          router.refresh();
         }
       })
       .catch(() => {
