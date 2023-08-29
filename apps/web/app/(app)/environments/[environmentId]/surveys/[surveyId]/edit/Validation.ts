@@ -1,6 +1,7 @@
 // extend this object in order to add more validation rules
 
 import {
+  ConsentQuestion,
   MultipleChoiceMultiQuestion,
   MultipleChoiceSingleQuestion,
   Question,
@@ -12,6 +13,9 @@ const validationRules = {
   },
   multipleChoiceSingle: (question: MultipleChoiceSingleQuestion) => {
     return !question.choices.some((element) => element.label.trim() === "");
+  },
+  consent: (question: ConsentQuestion) => {
+    return question.label.trim() !== "";
   },
   defaultValidation: (question: Question) => {
     return question.headline.trim() !== "";
