@@ -8,20 +8,20 @@ import { createHash, randomBytes } from "crypto";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
 import { cache } from "react";
 
-export const getApiKey = async (apiKey: string): Promise<TApiKey | null> => {
-  if (!apiKey) {
+export const getApiKeyFromId = async (apiKeyId: string): Promise<TApiKey | null> => {
+  if (!apiKeyId) {
     throw new InvalidInputError("API key cannot be null or undefined.");
   }
 
   try {
     const apiKeyData = await prisma.apiKey.findUnique({
       where: {
-        hashedKey: getHash(apiKey),
+        id: apiKeyId,
       },
     });
 
     if (!apiKeyData) {
-      throw new ResourceNotFoundError("API Key", apiKey);
+      throw new ResourceNotFoundError("API Key from ID", apiKeyId );
     }
 
     return apiKeyData;
