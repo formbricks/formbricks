@@ -108,6 +108,7 @@ model Response {
   /// @zod.custom(imports.ZResponsePersonAttributes)
   /// [ResponsePersonAttributes]
   personAttributes Json?
+  // singleUseId, used to prevent multiple responses
   suId             String?
 
   @@unique([surveyId, suId])
