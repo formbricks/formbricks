@@ -2,7 +2,7 @@
 
 import type { Survey, SurveyClosedMessage, SurveySingleUse } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle, DatePicker, Input, Label } from "@formbricks/ui";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -293,6 +293,19 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <div className="row mb-2 flex cursor-default items-center space-x-2">
+                      <Label htmlFor="howItWorks">How it works</Label>
+                      {/* To implement after docs is written about single-use survey*/}
+                      {/* <ArrowTopRightOnSquareIcon className="h-4 w-4 cursor-pointer" /> */}
+                    </div>
+                    <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
+                      <li className="text-sm text-slate-600">
+                        Blocks survey if the survey URL has no suId (single use Id).
+                      </li>
+                      <li className="text-sm text-slate-600">
+                        Blocks survey if a submission with the suid (single use Id) in the URL exists already.
+                      </li>
+                    </ul>
                     <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
                     <Input
                       autoFocus
