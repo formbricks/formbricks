@@ -17,6 +17,7 @@ type LinkSurveyPageProps = {
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
   const singleUseId = searchParams.suId;
+  const isSingleUseSurvey = survey?.singleUse?.enabled;
 
   if (!survey || survey.type !== "link") {
     return <SurveyInactive status="not found" />;
@@ -26,14 +27,14 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
   }
 
-  if (survey && survey.singleUse?.enabled) {
-    if (!singleUseId) {
-      return <SurveyInactive status="link invalid" />;
-    }
-    const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUseId);
-    if (singleUseResponse) {
-      return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
-    }
+  if (isSingleUseSurvey && !singleUseId) {
+    return <SurveyInactive status="link invalid" />;
+  }
+
+  const singleUseResponse = singleUseId ? await getResponseBySingleUseId(survey.id, singleUseId) : null;
+
+  if (isSingleUseSurvey && singleUseResponse) {
+    return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
 
   const product = await getProductByEnvironmentId(survey.environmentId);
