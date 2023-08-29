@@ -6,7 +6,7 @@ import Link from "next/link";
 import { SurveySingleUse } from "@formbricks/types/surveys";
 
 type SurveyLinkUsedProps = {
-  singleUseMessage?: Omit<SurveySingleUse, "enabled">;
+  singleUseMessage: Omit<SurveySingleUse, "enabled"> | null;
 };
 
 const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {

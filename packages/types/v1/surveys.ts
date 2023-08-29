@@ -21,7 +21,7 @@ export const ZSurveySingleUse = z
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
   })
-  .optional();
+  .nullable();
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
