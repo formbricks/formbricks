@@ -3,8 +3,7 @@
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL")
-  url      = "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
