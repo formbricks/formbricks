@@ -33,7 +33,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const singleUseResponse = singleUseId ? await getResponseBySingleUseId(survey.id, singleUseId) : null;
 
-  if (isSingleUseSurvey && singleUseResponse) {
+  if (isSingleUseSurvey && singleUseResponse?.finished && singleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
 
