@@ -135,7 +135,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Spark.NET",
-          description: "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
+          description:
+            "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
           href: "https://spark-framework.net",
         },
       ],
