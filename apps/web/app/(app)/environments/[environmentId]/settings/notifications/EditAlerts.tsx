@@ -22,20 +22,21 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
             <p className="text-slate-800">{membership.team.name}</p>
           </div>
           <div className="mb-6 rounded-lg border border-slate-200">
-            <div className="grid h-12 grid-cols-4 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2">Survey</div>
-              <div className="col-span-1">Product</div>
+            <div className="grid h-12 grid-cols-3 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
+              <div className="col-span-2 flex items-center">Survey</div>
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="col-span-1 cursor-default text-center">
-                      Every Response <QuestionMarkCircleIcon className="mb-1 inline h-4 w-4 text-slate-500" />
+                    <div className="col-span-1 flex cursor-default items-center justify-center">
+                      <span className="">Every Response</span>
+                      <QuestionMarkCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Sends complete responses, no partials.</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
+
             {membership.team.products.some((product) =>
               product.environments.some((environment) => environment.surveys.length > 0)
             ) ? (
@@ -46,13 +47,11 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
                       <div key={environment.id}>
                         {environment.surveys.map((survey) => (
                           <div
-                            className="grid h-auto w-full cursor-pointer grid-cols-4 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
+                            className="grid h-auto w-full cursor-pointer grid-cols-3 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
                             key={survey.name}>
-                            <div className=" col-span-2 flex items-center ">
-                              <p className="text-slate-800">{survey.name}</p>
-                            </div>
-                            <div className="col-span-1 flex flex-col justify-center break-all">
-                              {product?.name}
+                            <div className="col-span-2 text-left">
+                              <div className="font-medium text-slate-900">{survey.name}</div>
+                              <div className="text-xs text-slate-400">{product.name}</div>
                             </div>
                             <div className="col-span-1 text-center">
                               <NotificationSwitch
