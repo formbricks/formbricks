@@ -1,3 +1,4 @@
+import SlideInBanner from "@/components/shared/SlideInBanner";
 import { useEffect } from "react";
 import Footer from "./Footer";
 import Header from "./Header";
@@ -60,6 +61,7 @@ export default function LayoutMdx({ meta, children }: Props) {
           )}
           <Prose className="">{children}</Prose>
         </article>
+        <SlideInBanner delay={5000} scrollPercentage={10} UTMSource="learnArticle" />
       </main>
       <Footer />
     </div>

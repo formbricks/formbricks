@@ -1,0 +1,131 @@
+import Image from "next/image";
+
+import QuestionId from "./question-id.webp";
+
+export const meta = {
+  title: "Data Prefilling in Link Surveys",
+  description: "Prefill data in your surveys to make it easier for your users to provide feedback.",
+};
+
+#### Link Surveys
+
+# Data Prefilling in Link Surveys
+
+Data prefilling via the URL allows you to increase conversion rate by prefilling data you already have in a different system.
+
+## Purpose
+
+URL prefilling of data comes in handy when you:
+
+- Have data for some of the respondents, but not all
+- Have data in a different system (e.g. your database) and want to add it to the user profile in Formbricks
+- Want to embed the first question in an email and increase conversion by prefilling the choice
+
+## Quick Example
+
+<CodeGroup title="Example URL">
+
+```sh
+https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id=5
+```
+
+</CodeGroup>
+
+## How it works
+
+To prefill the first question of a survey, append `?question_id=answer` at the end of the survey URL. The answer has to match the expected type of the question. For example, if the first question is a rating question, the answer has to be a number. If the first question is a single select question, the answer has to be a string.
+
+Please make sure the answer is [URL encoded](https://www.urlencoder.org/).
+
+<Note>
+  ## Prefill only the first question {{ class: "text-white" }}
+  Currently, you can only prefill the first question of a link survey.
+</Note>
+
+## Where do I find my question Id?
+
+You find the `questionId` in the Advanced Settings at the bottom of each question card in the Survey Editor. As you see, you can update the `questionId` to any string you like. However, once you published your survey, this `questionId` cannot be updated anymore:
+
+<Image
+  src={QuestionId}
+  alt="The question Id is located at the bottom of each question card in the survey editor."
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
+
+## Examples
+
+Here are a few examples to get you started:
+
+### Rating Question
+
+<CodeGroup title="Translates to 5 stars / points / emojis">
+
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
+```
+
+</CodeGroup>
+
+### NPS Question
+
+<CodeGroup title="Translates to an NPS rating of 10">
+
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
+```
+
+</CodeGroup>
+
+### Single Select Question (Radio)
+
+<CodeGroup title="Chooses the option 'Very disappointed' in the single select question. The string has to be identical to the option in your question">
+
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id=Very%20disappointed
+```
+
+</CodeGroup>
+
+### Multi Select Question (Checkbox)
+
+<CodeGroup title="Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question">
+
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=Sun%2CPalms%2CBeach
+```
+
+</CodeGroup>
+
+### Open Text Question
+
+<CodeGroup title="Adds 'I love Formbricks' as the answer to the open text question">
+
+```sh
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
+```
+
+</CodeGroup>
+
+### CTA Question
+
+<CodeGroup title="Adds 'clicked' as the answer to the CTA question. Alternatively, you can set it to 'dismissed' to skip the question.">
+
+```txt
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=clicked
+```
+
+</CodeGroup>
+
+## Validation
+
+Make sure that the answer in the URL matches the expected type for the first question.
+
+The URL validation works as follows:
+
+- For Rating or NPS questions, the response is parsed as a number and verified if it's accepted by the schema.
+- For CTA type questions, the valid values are "clicked" (main CTA) and "dismissed" (skip CTA).
+- For Consent type questions, the valid values are "accepted" (consent given) and "dismissed" (consent not given).
+- All other question types are strings.
+
+### You’re good to go! 🎉
