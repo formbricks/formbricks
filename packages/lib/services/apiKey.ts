@@ -7,8 +7,9 @@ import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
 import { cache } from "react";
+import { hasUserEnvironmentAccess } from "../../../apps/web/lib/api/apiHelper";
 
-export const getApiKeyFromId = async (apiKeyId: string): Promise<TApiKey | null> => {
+export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
   if (!apiKeyId) {
     throw new InvalidInputError("API key cannot be null or undefined.");
   }
@@ -21,7 +22,7 @@ export const getApiKeyFromId = async (apiKeyId: string): Promise<TApiKey | null>
     });
 
     if (!apiKeyData) {
-      throw new ResourceNotFoundError("API Key from ID", apiKeyId );
+      throw new ResourceNotFoundError("API Key from ID", apiKeyId);
     }
 
     return apiKeyData;
@@ -111,4 +112,16 @@ export const deleteApiKey = async (id: string): Promise<void> => {
 
     throw error;
   }
+};
+
+export const canUserAccessApiKey = async (session, apiKeyId: string): Promise<boolean> => {
+  if (!session) return false;
+
+  const apiKeyFromServer = await getApiKey(apiKeyId);
+  if (!apiKeyFromServer) return false;
+
+  const hasAccessToEnvironment = await hasUserEnvironmentAccess(session.user, apiKeyFromServer.environmentId);
+  if (!hasAccessToEnvironment) return false;
+
+  return true;
 };
