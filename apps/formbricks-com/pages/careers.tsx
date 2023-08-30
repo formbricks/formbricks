@@ -1,20 +1,21 @@
 import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
+import Link from "next/link";
 
-/* const Roles = [
+const Roles = [
   {
     name: "Full-Stack Engineer",
     description: "Join early and be a part of our journey from start to IPO 🚀",
     location: "Worldwide",
     workplace: "Remote",
-  },
+  } /*
   {
     name: "Junior Full-Stack Engineer",
     description: "All you want is write code and learn? You're exactly right!",
     location: "Worldwide",
     workplace: "Remote",
-  },
-]; */
+  },*/,
+];
 
 export default function CareersPage() {
   return (
@@ -27,10 +28,9 @@ export default function CareersPage() {
         headingPt2="decisions."
         subheading="We are currently not hiring. Contributions are always welcome!"
       />
-      {/*
+
       <div className="mx-auto w-3/4">
- 
-         {Roles.map((role) => (
+        {Roles.map((role) => (
           <Link
             href="https://formbricks.notion.site/Work-at-Formbricks-6c3ad218b2c7461ca2714ce2101730e4?pvs=4"
             target="_blank"
@@ -41,7 +41,7 @@ export default function CareersPage() {
             </div>
           </Link>
         ))}
-      </div>*/}
+      </div>
     </Layout>
   );
 }
