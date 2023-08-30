@@ -14,6 +14,7 @@ interface StoredResponse {
   id: string | null;
   data: { [x: string]: any };
   history: string[];
+  singleUseId: string | null;
 }
 
 export const useLinkSurvey = (surveyId: string) => {
@@ -49,11 +50,23 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
   const userId = URLParams?.get("userId");
   const { person, isLoadingPerson } = useGetOrCreatePerson(survey.environmentId, isPreview ? null : userId);
   const personId = person?.data.person.id ?? null;
+  const isSingleUse = survey.singleUse?.enabled ?? false;
 
   useEffect(() => {
-    const storedResponse = getStoredResponse(survey.id);
+    const storedResponse = getStoredResponse(survey.id, isSingleUse ? singleUseId : null);
     const questionKeys = survey.questions.map((question) => question.id);
     if (storedResponse) {
+      // Checks if the stored response is for the same single use id
+      if (isSingleUse && storedResponse.singleUseId !== singleUseId) {
+        // If not, clear the stored response
+        setStoredResponseValue(null);
+        setResponseId(null);
+        setHistory([]);
+        // isSingleUse is used saving the response in local storage
+        // with a single use id, even if users set it manually
+        clearStoredResponses(survey.id, isSingleUse ? singleUseId : null);
+        return;
+      }
       if (storedResponse.id) {
         setResponseId(storedResponse.id);
       }
@@ -68,11 +81,14 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
         }
         return acc;
       }, 0);
-      if (lastStoredQuestionIndex > 0 && survey.questions.length > lastStoredQuestionIndex + 1) {
+
+      if (survey.questions.length > lastStoredQuestionIndex + 1) {
         const nextQuestion = survey.questions[lastStoredQuestionIndex];
         setCurrentQuestion(nextQuestion);
         setProgress(calculateProgress(nextQuestion, survey));
-        setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
+        setStoredResponseValue(
+          getStoredResponseValue(survey.id, nextQuestion.id, isSingleUse ? singleUseId : null)
+        );
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,7 +96,7 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
 
   useEffect(() => {
     if (!isLoadingPerson) {
-      const storedResponse = getStoredResponse(survey.id);
+      const storedResponse = getStoredResponse(survey.id, isSingleUse ? singleUseId : null);
       if (survey && !storedResponse) {
         setCurrentQuestion(survey.questions[0]);
 
@@ -94,6 +110,7 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
         );
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey, isPreview, isLoadingPerson]);
 
   useEffect(() => {
@@ -162,14 +179,14 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
         markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
       }
       setResponseId(response.id);
-      storeResponse(survey.id, response.data, response.id, history);
+      storeResponse(survey.id, response.data, response.id, history, isSingleUse ? singleUseId : null);
     } else if (responseId && !isPreview) {
       await updateResponse(
         responseRequest,
         responseId,
         `${window.location.protocol}//${window.location.host}`
       );
-      storeResponse(survey.id, data, responseId, history);
+      storeResponse(survey.id, data, responseId, history, isSingleUse ? singleUseId : null);
     }
 
     setLoadingElement(false);
@@ -229,10 +246,12 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
     if (!previousQuestion) throw new Error("Question not found");
 
     if (answer) {
-      storeResponse(survey.id, answer);
+      storeResponse(survey.id, answer, null, [], isSingleUse ? singleUseId : null);
     }
 
-    setStoredResponseValue(getStoredResponseValue(survey.id, previousQuestion.id));
+    setStoredResponseValue(
+      getStoredResponseValue(survey.id, previousQuestion.id, isSingleUse ? singleUseId : null)
+    );
     setCurrentQuestion(previousQuestion);
     setLoadingElement(false);
   };
@@ -245,7 +264,7 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
       setLoadingElement(false);
       setProgress(1);
       setFinished(true);
-      clearStoredResponses(survey.id);
+      clearStoredResponses(survey.id, isSingleUse ? singleUseId : null);
       if (survey.redirectUrl && Object.values(answer)[0] !== "dismissed") {
         handleRedirect(survey.redirectUrl);
       }
@@ -258,13 +277,15 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
     }
     setHistory(newHistory);
 
-    storeResponse(survey.id, answer, null, newHistory);
+    storeResponse(survey.id, answer, null, newHistory, isSingleUse ? singleUseId : null);
 
     const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
 
     if (!nextQuestion) throw new Error("Question not found");
 
-    setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
+    setStoredResponseValue(
+      getStoredResponseValue(survey.id, nextQuestion.id, isSingleUse ? singleUseId : null)
+    );
     setCurrentQuestion(nextQuestion);
     setLoadingElement(false);
   };
@@ -290,9 +311,11 @@ const storeResponse = (
   surveyId: string,
   responseData: Response["data"],
   responseId: string | null = null,
-  history: string[] = []
+  history: string[] = [],
+  singleUseId: string | null = null
 ) => {
-  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-response`);
+  const localStorageKey = `formbricks-${surveyId}-response${singleUseId ? `-${singleUseId}` : ""}`;
+  const storedResponses = localStorage.getItem(localStorageKey);
   if (storedResponses) {
     const existingResponse = JSON.parse(storedResponses);
     if (responseId) {
@@ -300,27 +323,33 @@ const storeResponse = (
     }
     existingResponse.data = { ...existingResponse.data, ...responseData };
     existingResponse.history = history;
-    localStorage.setItem(`formbricks-${surveyId}-response`, JSON.stringify(existingResponse));
+    localStorage.setItem(localStorageKey, JSON.stringify(existingResponse));
   } else {
     const response = {
       id: responseId,
       data: responseData,
       history,
+      singleUseId,
     };
-    localStorage.setItem(`formbricks-${surveyId}-response`, JSON.stringify(response));
+    localStorage.setItem(localStorageKey, JSON.stringify(response));
   }
 };
 
-const getStoredResponse = (surveyId: string): StoredResponse | null => {
-  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-response`);
+const getStoredResponse = (surveyId: string, singleUseId: string | null = null): StoredResponse | null => {
+  const localStorageKey = `formbricks-${surveyId}-response${singleUseId ? `-${singleUseId}` : ""}`;
+  const storedResponses = localStorage.getItem(localStorageKey);
   if (storedResponses) {
     return JSON.parse(storedResponses);
   }
   return null;
 };
 
-const getStoredResponseValue = (surveyId: string, questionId: string): string | null => {
-  const storedResponse = getStoredResponse(surveyId);
+const getStoredResponseValue = (
+  surveyId: string,
+  questionId: string,
+  singleUseId: string | null = null
+): string | null => {
+  const storedResponse = getStoredResponse(surveyId, singleUseId);
 
   if (storedResponse && typeof storedResponse.data === "object") {
     return storedResponse.data[questionId];
@@ -328,8 +357,9 @@ const getStoredResponseValue = (surveyId: string, questionId: string): string | 
   return null;
 };
 
-const clearStoredResponses = (surveyId: string) => {
-  localStorage.removeItem(`formbricks-${surveyId}-response`);
+const clearStoredResponses = (surveyId: string, singleUseId: string | null = null) => {
+  const localStorageKey = `formbricks-${surveyId}-response${singleUseId ? `-${singleUseId}` : ""}`;
+  localStorage.removeItem(localStorageKey);
 };
 
 const checkValidity = (question: TSurveyQuestion | Question, answer: any): boolean => {
