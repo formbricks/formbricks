@@ -1,8 +1,9 @@
 <p align="center">
-<a href="https://github.com/formbricks/formbricks">
-    <img src="https://user-images.githubusercontent.com/675065/203262290-3c2bc5b8-839c-468a-b675-e26a369c7fe2.png" alt="Logo" width="500">
+<a href="https://formbricks.com">
+    <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
   </a>
   <h3 align="center">Formbricks</h3>
+
 
   <p align="center">
     The Open Source Survey & Experience Management solution for fast growing companies
