@@ -1,21 +1,31 @@
 "use client";
 
 import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponsesFeed";
-import { TResponseWithSurvey } from "@formbricks/types/v1/responses";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
 export default function ResponseTimeline({
-  environmentId,
+  surveys,
   responses,
+  environmentId
 }: {
-  environmentId: string;
-  responses: TResponseWithSurvey[];
+  surveys: TSurvey[];
+  responses: TResponse[];
+  environmentId : string
 }) {
-  const [responsesAscending, setResponsesAscending] = useState(true);
+  const [responsesAscending, setResponsesAscending] = useState(false);
+  const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
     setResponsesAscending(!responsesAscending);
   };
+
+
+  useEffect(() => {
+    setSortedResponses(responsesAscending ? [...responses].reverse() : responses);
+  }, [responsesAscending])
+  
 
   return (
     <div className="md:col-span-2">
@@ -29,7 +39,7 @@ export default function ResponseTimeline({
           </button>
         </div>
       </div>
-      <ResponseFeed responses={responses} sortByDate={responsesAscending} environmentId={environmentId} />
+      <ResponseFeed responses={sortedResponses} environmentId={environmentId} surveys={surveys} />
     </div>
   );
 }

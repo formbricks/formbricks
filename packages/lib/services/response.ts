@@ -286,3 +286,19 @@ export const updateResponse = async (
     throw error;
   }
 };
+
+export const deleteResponse = async (responseId: string): Promise<void> => {
+  try {
+    await prisma.response.delete({
+      where: {
+        id: responseId,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
