@@ -139,6 +139,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
           href: "https://spark-framework.net",
         },
+        {
+          name: "Revert",
+          description:
+            "The open-source unified API to build B2B integrations remarkably fast",
+          href: "https://revert.dev",
+        },
       ],
     });
   }
