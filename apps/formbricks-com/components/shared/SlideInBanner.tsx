@@ -46,7 +46,10 @@ const SlideInBanner: React.FC<Props> = ({ delay = 5000, scrollPercentage = 10, U
           Did you know? Formbricks is the only open source Experience Management solution: free &
           privacy-first!
         </p>
-        <Button size="sm" href={`https://formbricks.com?utm_source=${UTMSource}`}>
+        <Button
+          size="sm"
+          href={`https://formbricks.com?utm_source=${UTMSource}`}
+          className="whitespace-nowrap">
           Learn more
         </Button>
       </div>
