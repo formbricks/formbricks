@@ -5,7 +5,7 @@ import Link from "next/link";
 const Roles = [
   {
     name: "Full-Stack Engineer",
-    description: "Join early and be a part of our journey from start to IPO 🚀",
+    description: "Join early and be a part of our journey right from the start 🚀",
     location: "Worldwide",
     workplace: "Remote",
   } /*
@@ -21,12 +21,12 @@ export default function CareersPage() {
   return (
     <Layout
       title="Careers"
-      description="Work with us on helping teams make customer-centric decisions - all privacy-focused.">
+      description="Work with us on helping teams make truly customer-centric decisions - all privacy-focused.">
       <HeroTitle
-        headingPt1="Help teams make"
-        headingTeal="customer-centric"
-        headingPt2="decisions."
-        subheading="We are currently not hiring. Contributions are always welcome!"
+        headingPt1="Life is too short for"
+        headingTeal="crappy UX."
+        headingPt2=""
+        subheading="Empower teams to build exactly what their users need."
       />
 
       <div className="mx-auto w-3/4">
