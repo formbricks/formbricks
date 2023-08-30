@@ -26,7 +26,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   });
   const [singleUseMessage, setSingleUseMessage] = useState({
     heading: "This survey link has already been used.",
-    subheading: "Thanks for sharing your feedback!",
+    subheading: "You can only use this link once.",
   });
 
   const [closeOnDate, setCloseOnDate] = useState<Date>();
@@ -298,10 +298,10 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                     </div>
                     <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
                       <li className="text-sm text-slate-600">
-                        Blocks survey if the survey URL has no suId (single use Id).
+                        Blocks survey if the survey URL has no Single Use Id (suId).
                       </li>
                       <li className="text-sm text-slate-600">
-                        Blocks survey if a submission with the suid (single use Id) in the URL exists already.
+                        Blocks survey if a submission with the Single Use Id (suId) in the URL exists already.
                       </li>
                     </ul>
                     <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
@@ -314,7 +314,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
                     />
 
-                    <Label htmlFor="headline">Additional Note</Label>
+                    <Label htmlFor="headline">Subheading</Label>
                     <Input
                       className="mt-2 bg-white"
                       id="subheading"

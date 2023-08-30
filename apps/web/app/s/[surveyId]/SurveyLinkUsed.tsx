@@ -1,9 +1,8 @@
-import React from "react";
+import { SurveySingleUse } from "@formbricks/types/surveys";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import footerLogo from "./footerlogo.svg";
 import Image from "next/image";
 import Link from "next/link";
-import { SurveySingleUse } from "@formbricks/types/surveys";
+import footerLogo from "./footerlogo.svg";
 
 type SurveyLinkUsedProps = {
   singleUseMessage: Omit<SurveySingleUse, "enabled"> | null;
@@ -11,7 +10,7 @@ type SurveyLinkUsedProps = {
 
 const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
   const defaultHeading = "This survey link has already been used.";
-  const defaultSubheading = "Thanks for sharing your feedback!";
+  const defaultSubheading = "You can only use this link once.";
   return (
     <div className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-tr from-slate-200 to-slate-50 py-8 text-center">
       <div></div>
