@@ -225,7 +225,10 @@ export const navigation: Array<NavGroup> = [
   },
   {
     title: "Integrations",
-    links: [{ title: "Zapier", href: "/docs/integrations/zapier" }],
+    links: [
+      { title: "Zapier", href: "/docs/integrations/zapier" },
+      { title: "n8n", href: "/docs/integrations/n8n" },
+    ],
   },
   {
     title: "Link Surveys",
