@@ -121,6 +121,14 @@ export default function SurveyMenuBar({
       return false;
     }
 
+    if (
+      survey.redirectUrl &&
+      !survey.redirectUrl.includes("https://") &&
+      !survey.redirectUrl.includes("http://")
+    ) {
+      toast.error("Please enter a valid URL for redirecting respondents");
+      return false;
+    }
     return true;
   };
 
