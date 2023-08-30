@@ -3,8 +3,7 @@ import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { Prisma as prismaClient } from "@prisma/client/";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { ZUserSegment, ZUserSegmentFilter, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -266,7 +265,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }
 
       try {
-        console.log({ userSegment });
         updatedUserSegment = await prisma.userSegment.update({
           where: {
             id: userSegment.id,

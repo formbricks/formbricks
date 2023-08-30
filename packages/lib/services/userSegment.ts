@@ -1,6 +1,26 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TBaseFilterGroup, TUserSegmentUpdateInput } from "@formbricks/types/v1/userSegment";
+import {
+  TActionMetric,
+  TAllOperators,
+  TBaseFilterGroup,
+  TUserSegmentActionFilter,
+  TUserSegmentAttributeFilter,
+  TUserSegmentConnector,
+  TUserSegmentDeviceFilter,
+  TUserSegmentSegmentFilter,
+  TUserSegmentUpdateInput,
+  ZUserSegmentFilterGroup,
+  isResourceFilter,
+} from "@formbricks/types/v1/userSegment";
+import {
+  getFirstOccurrenceDaysAgo,
+  getLastMonthEventCount,
+  getLastOccurrenceDaysAgo,
+  getLastQuarterEventCount,
+  getLastWeekEventCount,
+  getTotalOccurrences,
+} from "./actions";
 
 export const createUserSegment = async (
   environmentId: string,
@@ -148,3 +168,247 @@ export const cloneUserSegment = async (segmentId: string, surveyId: string) => {
     throw new DatabaseError("Error cloning user segment");
   }
 };
+
+type UserAttributeData = {
+  [attributeClassId: string]: string | number;
+};
+
+type UserData = {
+  personId: string;
+  environmentId: string;
+  attributes: UserAttributeData;
+  actionIds: string[];
+  devices: { [deviceType: string]: string };
+};
+
+const evaluateAttributeFilter = (
+  attributes: UserAttributeData,
+  filter: TUserSegmentAttributeFilter
+): boolean => {
+  const { value, qualifier, root } = filter;
+  const { attributeClassId } = root;
+
+  const attributeValue = attributes[attributeClassId];
+
+  if (!attributeValue) {
+    return false;
+  }
+
+  const attResult = compareValues(attributeValue, value, qualifier.operator);
+  return attResult;
+};
+
+const getResolvedActionValue = async (
+  actiondClassId: string,
+  personId: string,
+  environmentId: string,
+  metric: TActionMetric
+) => {
+  if (metric === "lastQuarterCount") {
+    const lastQuarterCount = await getLastQuarterEventCount(environmentId, personId, actiondClassId);
+    return lastQuarterCount;
+  }
+
+  if (metric === "lastMonthCount") {
+    const lastMonthCount = await getLastMonthEventCount(environmentId, personId, actiondClassId);
+    return lastMonthCount;
+  }
+
+  if (metric === "lastWeekCount") {
+    const lastWeekCount = await getLastMonthEventCount(environmentId, personId, actiondClassId);
+    return lastWeekCount;
+  }
+
+  if (metric === "lastOccurranceDaysAgo") {
+    const lastOccurranceDaysAgo = await getLastOccurrenceDaysAgo(environmentId, personId, actiondClassId);
+    return lastOccurranceDaysAgo;
+  }
+
+  if (metric === "firstOccurranceDaysAgo") {
+    const firstOccurranceDaysAgo = await getFirstOccurrenceDaysAgo(environmentId, personId, actiondClassId);
+    return firstOccurranceDaysAgo;
+  }
+
+  if (metric === "occuranceCount") {
+    const occuranceCount = await getTotalOccurrences(environmentId, personId, actiondClassId);
+    return occuranceCount;
+  }
+};
+
+const evaluateActionFilter = async (
+  actionIds: string[],
+  filter: TUserSegmentActionFilter,
+  personId: string,
+  environmentId: string
+): Promise<boolean> => {
+  const { value, qualifier, root } = filter;
+  const { actionClassId } = root;
+  const { metric } = qualifier;
+
+  // there could be a case when the actionIds do not have the actionClassId
+  // in such a case, we return false
+
+  const actionClassIdIndex = actionIds.findIndex((actionId) => actionId === actionClassId);
+  if (actionClassIdIndex === -1) {
+    return false;
+  }
+
+  // we have the action metric and we'll need to find out the values for those metrics from the db
+
+  const actionValue = await getResolvedActionValue(actionClassId, personId, environmentId, metric);
+
+  const actionResult =
+    actionValue !== undefined && compareValues(actionValue ?? 0, value, qualifier.operator);
+
+  return actionResult;
+};
+
+const evaluateSegmentFilter = async (
+  userData: UserData,
+  filter: TUserSegmentSegmentFilter
+): Promise<boolean> => {
+  const { qualifier, root } = filter;
+  const { userSegmentId } = root;
+  const { operator } = qualifier;
+
+  const userSegment = await getUserSegment(userSegmentId);
+
+  if (!userSegment) {
+    return false;
+  }
+
+  const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+  if (!parsedFilters.success) {
+    return false;
+  }
+
+  const isInSegment = await evaluateSegment(userData, parsedFilters.data);
+
+  if (operator === "userIsIn") {
+    return isInSegment;
+  }
+
+  if (operator === "userIsNotIn") {
+    return !isInSegment;
+  }
+
+  return false;
+};
+
+const evaluateDeviceFilter = (
+  devices: { [deviceType: string]: string },
+  filter: TUserSegmentDeviceFilter
+): boolean => {
+  const { value, root, qualifier } = filter;
+  const { deviceType } = root;
+
+  const deviceValue = devices[deviceType];
+
+  return compareValues(deviceValue, value, qualifier.operator);
+};
+
+export const compareValues = (
+  a: string | number | undefined,
+  b: string | number,
+  operator: TAllOperators
+): boolean => {
+  switch (operator) {
+    case "equals":
+      return a === b;
+    case "notEquals":
+      return a !== b;
+    case "lessThan":
+      return (a as number) < (b as number);
+    case "lessEqual":
+      return (a as number) <= (b as number);
+    case "greaterThan":
+      return (a as number) > (b as number);
+    case "greaterEqual":
+      return (a as number) >= (b as number);
+    case "contains":
+      return (a as string).includes(b as string);
+    case "doesNotContain":
+      return !(a as string).includes(b as string);
+    case "startsWith":
+      return (a as string).startsWith(b as string);
+    case "endsWith":
+      return (a as string).endsWith(b as string);
+    default:
+      throw new Error(`Unexpected operator: ${operator}`);
+  }
+};
+
+type ResultConnectorPair = {
+  result: boolean;
+  connector: TUserSegmentConnector;
+};
+
+export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilterGroup): Promise<boolean> {
+  let resultPairs: ResultConnectorPair[] = [];
+
+  for (let filterItem of filterGroup) {
+    const { resource } = filterItem;
+
+    let result: boolean;
+
+    if (isResourceFilter(resource)) {
+      const { root } = resource;
+      const { type } = root;
+
+      if (type === "attribute") {
+        result = evaluateAttributeFilter(userData.attributes, resource as TUserSegmentAttributeFilter);
+        resultPairs.push({
+          result,
+          connector: filterItem.connector,
+        });
+      }
+
+      if (type === "action") {
+        result = await evaluateActionFilter(
+          userData.actionIds,
+          resource as TUserSegmentActionFilter,
+          userData.personId,
+          userData.environmentId
+        );
+        resultPairs.push({
+          result,
+          connector: filterItem.connector,
+        });
+      }
+
+      if (type === "segment") {
+        result = await evaluateSegmentFilter(userData, resource as TUserSegmentSegmentFilter);
+        resultPairs.push({
+          result,
+          connector: filterItem.connector,
+        });
+      }
+
+      if (type === "device") {
+        result = evaluateDeviceFilter(userData.devices, resource as TUserSegmentDeviceFilter);
+        resultPairs.push({
+          result,
+          connector: filterItem.connector,
+        });
+      }
+    } else {
+      result = await evaluateSegment(userData, resource);
+    }
+  }
+
+  // Given that the first filter in every group/sub-group always has a connector value of "null",
+  // we initialize the finalResult with the result of the first filter.
+  let finalResult = resultPairs[0].result;
+
+  for (let i = 1; i < resultPairs.length; i++) {
+    const { result, connector } = resultPairs[i];
+
+    if (connector === "and") {
+      finalResult = finalResult && result;
+    } else if (connector === "or") {
+      finalResult = finalResult || result;
+    }
+  }
+
+  return finalResult;
+}

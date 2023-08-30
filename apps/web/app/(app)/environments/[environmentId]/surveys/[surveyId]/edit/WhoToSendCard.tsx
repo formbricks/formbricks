@@ -8,7 +8,6 @@ import { cloneUserSegmentAction } from "@/app/(app)/environments/[environmentId]
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
-import { useSurvey } from "@/lib/surveys/surveys";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";

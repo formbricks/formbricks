@@ -20,6 +20,7 @@ import {
   TUserSegmentSegmentFilter,
   TSegmentOperator,
   TUserSegment,
+  isResourceFilter,
 } from "@formbricks/types/v1/userSegment";
 import {
   DropdownMenu,
@@ -50,13 +51,6 @@ import { useState } from "react";
 import { produce } from "immer";
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import { useUserSegments } from "@/lib/userSegments/userSegments";
-
-// type guard to check if the resource is a filter or a filter group
-const isResourceFilter = (
-  resource: TUserSegmentFilter | TBaseFilterGroup
-): resource is TUserSegmentFilter => {
-  return (resource as TUserSegmentFilter).root !== undefined;
-};
 
 type SegmentFilterItemProps = {
   connector: TUserSegmentConnector;

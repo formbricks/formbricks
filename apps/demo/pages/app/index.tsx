@@ -92,6 +92,13 @@ export default function AppPage({}) {
           <div className="p-6">
             <div>
               <button
+                onClick={() => formbricks.setAttribute("Role", "SDE")}
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600">
+                Set Role to SDE
+              </button>
+            </div>
+            <div>
+              <button
                 onClick={() => formbricks.setAttribute("Name", "Name")}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600">
                 Set Name to Name

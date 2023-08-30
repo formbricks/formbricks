@@ -337,9 +337,9 @@ export const sampleUserSegment: TUserSegment = {
                 },
                 qualifier: {
                   metric: "occuranceCount",
-                  operator: "greaterThan",
+                  operator: "lessThan",
                 },
-                value: 3,
+                value: 2,
               },
             },
             {
@@ -379,4 +379,11 @@ export const sampleUserSegment: TUserSegment = {
   ],
   surveys: ["survey123", "survey456"],
   environmentId: "env123",
+};
+
+// type guard to check if a resource is a filter
+export const isResourceFilter = (
+  resource: TUserSegmentFilter | TBaseFilterGroup
+): resource is TUserSegmentFilter => {
+  return (resource as TUserSegmentFilter).root !== undefined;
 };

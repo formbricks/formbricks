@@ -2,6 +2,8 @@ import { prisma } from "@formbricks/database";
 import { selectSurvey } from "@formbricks/lib/services/survey";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
+import { evaluateSegment } from "@formbricks/lib/services/userSegment";
+import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 
 export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
   // get recontactDays from product
@@ -21,6 +23,38 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
   if (!product) {
     throw new Error("Product not found");
   }
+
+  // get the attribute class ids that are used in the user segment
+  const personAttributeClasses = await prisma.person.findUnique({
+    where: {
+      id: person.id,
+    },
+    include: {
+      attributes: true,
+    },
+  });
+
+  const personActions = await prisma.event.findMany({
+    where: {
+      session: {
+        personId: person.id,
+      },
+      eventClass: {
+        environmentId,
+      },
+    },
+  });
+
+  const personAttributeClassIds = personAttributeClasses?.attributes?.reduce(
+    (acc: Record<string, string>, attribute) => {
+      acc[attribute.attributeClassId] = attribute.value;
+      return acc;
+    },
+    {}
+  );
+
+  const personActionClassIds = Array.from(new Set(personActions?.map((action) => action.eventClassId ?? "")));
+
   // get all surveys that meet the displayOption criteria
   const potentialSurveys = await prisma.survey.findMany({
     where: {
@@ -74,6 +108,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
           createdAt: true,
         },
       },
+      userSegment: true,
     },
   });
 
@@ -90,24 +125,62 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
     },
   });
 
-  // filter surveys that meet the attributeFilters criteria
-  const potentialSurveysWithAttributes = potentialSurveys.filter((survey) => {
-    const attributeFilters = survey.attributeFilters;
-    if (attributeFilters.length === 0) {
-      return true;
-    }
-    // check if meets all attribute filters criterias
-    return attributeFilters.every((attributeFilter) => {
-      const personAttributeValue = person.attributes[attributeFilter.attributeClass.name];
-      if (attributeFilter.condition === "equals") {
-        return personAttributeValue === attributeFilter.value;
-      } else if (attributeFilter.condition === "notEquals") {
-        return personAttributeValue !== attributeFilter.value;
-      } else {
-        throw Error("Invalid attribute filter condition");
+  // // filter surveys that meet the attributeFilters criteria
+  // const potentialSurveysWithAttributes = potentialSurveys.filter((survey) => {
+  //   const attributeFilters = survey.attributeFilters;
+  //   if (attributeFilters.length === 0) {
+  //     return true;
+  //   }
+  //   // check if meets all attribute filters criterias
+  //   return attributeFilters.every((attributeFilter) => {
+  //     const personAttributeValue = person.attributes[attributeFilter.attributeClass.name];
+  //     if (attributeFilter.condition === "equals") {
+  //       return personAttributeValue === attributeFilter.value;
+  //     } else if (attributeFilter.condition === "notEquals") {
+  //       return personAttributeValue !== attributeFilter.value;
+  //     } else {
+  //       throw Error("Invalid attribute filter condition");
+  //     }
+  //   });
+  // });
+
+  let potentialSurveysWithAttributes: typeof potentialSurveys = [];
+
+  if (!potentialSurveys.every((survey) => !survey.userSegment)) {
+    // map over the potentialSurveys, creating a new array of promises
+    const surveyPromises = potentialSurveys.map(async (survey) => {
+      const { userSegment } = survey;
+
+      if (userSegment) {
+        const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+        if (!parsedFilters.success) {
+          throw new Error("Invalid user segment filters");
+        }
+
+        const result = await evaluateSegment(
+          {
+            attributes: personAttributeClassIds ?? {},
+            actionIds: personActionClassIds,
+            devices: {},
+            environmentId,
+            personId: person.id,
+          },
+          parsedFilters.data
+        );
+
+        if (result) {
+          return survey;
+        }
       }
+
+      return null; // return null for surveys that don't match the criteria
     });
-  });
+
+    // Wait for all promises to resolve and then filter out any null values
+    potentialSurveysWithAttributes = (await Promise.all(surveyPromises)).filter((survey) => survey !== null);
+  } else {
+    potentialSurveysWithAttributes = potentialSurveys;
+  }
 
   // filter surveys that meet the recontactDays criteria
   const surveys: TSurvey[] = potentialSurveysWithAttributes
