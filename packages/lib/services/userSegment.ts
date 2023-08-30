@@ -215,7 +215,7 @@ const getResolvedActionValue = async (
   }
 
   if (metric === "lastWeekCount") {
-    const lastWeekCount = await getLastMonthEventCount(environmentId, personId, actiondClassId);
+    const lastWeekCount = await getLastWeekEventCount(environmentId, personId, actiondClassId);
     return lastWeekCount;
   }
 
@@ -393,6 +393,12 @@ export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilt
       }
     } else {
       result = await evaluateSegment(userData, resource);
+
+      // this is a sub-group and we need to evaluate the sub-group
+      resultPairs.push({
+        result,
+        connector: filterItem.connector,
+      });
     }
   }
 

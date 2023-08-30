@@ -67,28 +67,24 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
 
       {open && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="relative overflow-hidden bg-slate-50 sm:!max-w-2xl" hideCloseButton>
-            <div className="absolute left-0 right-0 top-0 h-16 bg-slate-200 p-4">
-              <div className="flex items-center gap-4">
-                <UserGroupIcon className="h-6 w-6" />
-
-                <div className="flex flex-1 flex-col">
-                  <h3 className="text-base font-medium">Create Segment</h3>
-
-                  <p className="text-xs text-slate-600">
-                    Segments help you target the users with the same characteristics easily.
-                  </p>
-                </div>
-
-                <div>
-                  <Button variant="darkCTA" onClick={() => handleCreateSegment()}>
-                    Save
-                  </Button>
+          <DialogContent className="relative overflow-hidden bg-slate-50 p-0 sm:!max-w-2xl">
+            <div className="rounded-t-lg bg-slate-100">
+              <div className="flex w-full items-center justify-between p-6">
+                <div className="flex items-center space-x-2">
+                  <div className="mr-1.5 h-6 w-6 text-slate-500">
+                    <UserGroupIcon />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-medium">Create Segment</h3>
+                    <p className="text-sm text-slate-600">
+                      Segments help you target the users with the same characteristics easily.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-16 flex flex-col rounded-lg">
+            <div className="flex flex-col rounded-lg px-6 pb-6">
               <div className="flex w-full items-center gap-4">
                 <div className="flex w-1/2 flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">Title</label>
