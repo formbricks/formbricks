@@ -11,12 +11,7 @@ interface ResponseTimelineProps {
   survey: TSurvey;
 }
 
-export default function ResponseTimeline({
-  environmentId,
-  responses,
-  survey,
-}: ResponseTimelineProps) {
-
+export default function ResponseTimeline({ environmentId, responses, survey }: ResponseTimelineProps) {
   return (
     <div className="space-y-4">
       {responses.length === 0 ? (
@@ -28,13 +23,7 @@ export default function ResponseTimeline({
       ) : (
         <div>
           {responses.map((response) => {
-            return (
-              <SingleResponseCard
-                survey={survey}
-                response={response}
-                pageType="response"
-              />
-            );
+            return <SingleResponseCard survey={survey} response={response} pageType="response" />;
           })}
         </div>
       )}

@@ -6,22 +6,26 @@ import SingleResponseCard from "@/components/shared/SingleResponseCard";
 export default function ResponseFeed({
   responses,
   environmentId,
-  surveys
+  surveys,
 }: {
   responses: TResponse[];
   environmentId: string;
-  surveys: TSurvey[]
+  surveys: TSurvey[];
 }) {
   return (
     <>
       {responses.length === 0 ? (
         <EmptySpaceFiller type="response" environmentId={environmentId} />
       ) : (
-        responses.map((response,idx)=>{
-          const survey = surveys.find((survey)=>{return survey.id === response.surveyId})
-          return(<div key={idx}>
-          {survey && <SingleResponseCard response={response} survey={survey} pageType="people"/>}
-          </div>)
+        responses.map((response, idx) => {
+          const survey = surveys.find((survey) => {
+            return survey.id === response.surveyId;
+          });
+          return (
+            <div key={idx}>
+              {survey && <SingleResponseCard response={response} survey={survey} pageType="people" />}
+            </div>
+          );
         })
       )}
     </>

@@ -14,7 +14,11 @@ export default async function ResponseSection({
   const surveyIds = responses?.map((response) => response.surveyId) || [];
   const surveys: TSurvey[] = surveyIds.length === 0 ? [] : (await getSurveys(environmentId)) ?? [];
 
-  return<>
-  {responses && <ResponseTimeline surveys={surveys} responses={responses} environmentId={environmentId}/>}
-  </>
+  return (
+    <>
+      {responses && (
+        <ResponseTimeline surveys={surveys} responses={responses} environmentId={environmentId} />
+      )}
+    </>
+  );
 }

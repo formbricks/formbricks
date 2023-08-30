@@ -4,16 +4,16 @@ import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[perso
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 
 export default function ResponseTimeline({
   surveys,
   responses,
-  environmentId
+  environmentId,
 }: {
   surveys: TSurvey[];
   responses: TResponse[];
-  environmentId : string
+  environmentId: string;
 }) {
   const [responsesAscending, setResponsesAscending] = useState(false);
   const [sortedResponses, setSortedResponses] = useState(responses);
@@ -21,11 +21,9 @@ export default function ResponseTimeline({
     setResponsesAscending(!responsesAscending);
   };
 
-
   useEffect(() => {
     setSortedResponses(responsesAscending ? [...responses].reverse() : responses);
-  }, [responsesAscending])
-  
+  }, [responsesAscending]);
 
   return (
     <div className="md:col-span-2">

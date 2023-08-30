@@ -22,10 +22,9 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 
 export interface SingleResponseCardProps {
-  survey: TSurvey,
-  response: TResponse,
-  pageType: string
-
+  survey: TSurvey;
+  response: TResponse;
+  pageType: string;
 }
 
 function findEmail(person) {
@@ -55,10 +54,14 @@ function TooltipRenderer(props: TooltipRendererProps) {
 }
 
 export default function SingleResponseCard({ survey, response, pageType }: SingleResponseCardProps) {
-  const environmentId = survey.environmentId
+  const environmentId = survey.environmentId;
   const router = useRouter();
   const email = response.person && findEmail(response.person);
-  const displayIdentifier = response.person?.attributes.userId || email || (response.person && truncate(response.person.id, 16)) || null;
+  const displayIdentifier =
+    response.person?.attributes.userId ||
+    email ||
+    (response.person && truncate(response.person.id, 16)) ||
+    null;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -75,21 +78,18 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
           temp = [];
         }
       }
-    })
-  }
-  else {
+    });
+  } else {
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      if (!(response.data[question.id])) {
-        temp.push(question.id)
-      }
-      else {
+      if (!response.data[question.id]) {
+        temp.push(question.id);
+      } else {
         if (temp.length > 0) {
           skippedQuestions.push([...temp]);
           temp = [];
         }
       }
-
     }
   }
 
@@ -114,7 +114,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       toast.success("Submission deleted successfully.");
       setDeleteDialogOpen(false);
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     } finally {
       setIsDeleting(false);
     }
@@ -122,7 +122,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
 
   const renderTooltip = Boolean(
     (response.personAttributes && Object.keys(response.personAttributes).length > 0) ||
-    (response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0)
+      (response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
 
   const tooltipContent = (
@@ -132,7 +132,8 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
           <p className="py-1 font-bold text-slate-700">Person attributes:</p>
           {Object.keys(response.personAttributes).map((key) => (
             <p key={key}>
-              {key}: <span className="font-bold">{response.personAttributes && response.personAttributes[key]}</span>
+              {key}:{" "}
+              <span className="font-bold">{response.personAttributes && response.personAttributes[key]}</span>
             </p>
           ))}
         </div>
@@ -147,7 +148,10 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
           {response.meta?.userAgent?.browser && <p>Browser: {response.meta.userAgent.browser}</p>}
           {response.meta?.userAgent?.os && <p>OS: {response.meta.userAgent.os}</p>}
           {response.meta?.userAgent && (
-            <p>Device: {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}</p>
+            <p>
+              Device:{" "}
+              {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
+            </p>
           )}
         </div>
       )}
@@ -159,43 +163,45 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       <div
         className={clsx(
           "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
-          pageType === "response" && (isOpen ? "w-3/4" : response.notes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]")
+          pageType === "response" &&
+            (isOpen ? "w-3/4" : response.notes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]")
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
-            {pageType === "response" && <div>
-            {response.person?.id ? (
-              <Link
-                className="group flex items-center"
-                href={`/environments/${environmentId}/people/${response.person.id}`}>
-                <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                  <PersonAvatar personId={response.person.id} />
-                </TooltipRenderer>
-                <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
-                  {displayIdentifier}
-                </h3>
-              </Link>
-              ) : (
-              <div className="group flex items-center">
-                <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                  <PersonAvatar personId="anonymous" />
-                </TooltipRenderer>
-                <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
+            {pageType === "response" && (
+              <div>
+                {response.person?.id ? (
+                  <Link
+                    className="group flex items-center"
+                    href={`/environments/${environmentId}/people/${response.person.id}`}>
+                    <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                      <PersonAvatar personId={response.person.id} />
+                    </TooltipRenderer>
+                    <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                      {displayIdentifier}
+                    </h3>
+                  </Link>
+                ) : (
+                  <div className="group flex items-center">
+                    <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                      <PersonAvatar personId="anonymous" />
+                    </TooltipRenderer>
+                    <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
+                  </div>
+                )}
               </div>
             )}
-            </div>}
-            
-            {pageType === "people" && <div className="flex items-center space-x-2 justify-center rounded-full p-1 px-2 text-sm text-slate-600 bg-slate-100 rounded-xl">
-              <SurveyStatusIndicator
-                status={survey.status}
-                environmentId={environmentId}
-              />
-              <Link
-                className="hover:underline"
-                href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
-                {survey.name}
-              </Link>
-            </div>}
+
+            {pageType === "people" && (
+              <div className="flex items-center justify-center space-x-2 rounded-full rounded-xl bg-slate-100 p-1 px-2 text-sm text-slate-600">
+                <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+                <Link
+                  className="hover:underline"
+                  href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
+                  {survey.name}
+                </Link>
+              </div>
+            )}
 
             <div className="flex space-x-4 text-sm">
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
@@ -212,43 +218,63 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
         </div>
         <div className="space-y-6 rounded-b-lg bg-white p-6">
           {survey.questions.map((question) => {
-            const skipped = skippedQuestions.find((skippedQuestionElement) => skippedQuestionElement.includes(question.id));
+            const skipped = skippedQuestions.find((skippedQuestionElement) =>
+              skippedQuestionElement.includes(question.id)
+            );
 
             // If found, remove it from the list
             if (skipped) {
-              skippedQuestions = skippedQuestions.filter(item => item !== skipped);
+              skippedQuestions = skippedQuestions.filter((item) => item !== skipped);
             }
 
             return (
               <div key={`${question.id}`}>
-                {response.data[question.id]
-                  ? <p className="text-sm text-slate-500">{question.headline}</p>
-                  : <QuestionSkip skippedQuestions={skipped} questions={survey.questions} status={response.finished || (skippedQuestions.length > 0 && !skippedQuestions[skippedQuestions.length - 1].includes(question.id)) ? "skipped" : "aborted"} />
-                }
-                {typeof response.data[question.id] !== "object"
-                  ? (
-                    question.type === QuestionType.Rating
-                      ? <div className="h-8"><RatingResponse scale={question.scale} answer={String(response.data[question.id])} range={question.range} /></div>
-                      : <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.data[question.id]}</p>
-                  )
-                  : <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                {response.data[question.id] ? (
+                  <p className="text-sm text-slate-500">{question.headline}</p>
+                ) : (
+                  <QuestionSkip
+                    skippedQuestions={skipped}
+                    questions={survey.questions}
+                    status={
+                      response.finished ||
+                      (skippedQuestions.length > 0 &&
+                        !skippedQuestions[skippedQuestions.length - 1].includes(question.id))
+                        ? "skipped"
+                        : "aborted"
+                    }
+                  />
+                )}
+                {typeof response.data[question.id] !== "object" ? (
+                  question.type === QuestionType.Rating ? (
+                    <div className="h-8">
+                      <RatingResponse
+                        scale={question.scale}
+                        answer={String(response.data[question.id])}
+                        range={question.range}
+                      />
+                    </div>
+                  ) : (
                     <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                      {
-                        handleArray(response.data[question.id])
-                      }
+                      {response.data[question.id]}
                     </p>
-
+                  )
+                ) : (
+                  <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                      {handleArray(response.data[question.id])}
+                    </p>
                   </p>
-                }
+                )}
               </div>
             );
           })}
-          {response.finished && <div className="flex">
-            <CheckCircleIcon className="w-6 h-6 text-slate-500" />
-            <p className="rounded-lg text-slate-700 bg-slate-100 mx-2 px-2">Completed</p>
-          </div>}
+          {response.finished && (
+            <div className="flex">
+              <CheckCircleIcon className="h-6 w-6 text-slate-500" />
+              <p className="mx-2 rounded-lg bg-slate-100 px-2 text-slate-700">Completed</p>
+            </div>
+          )}
         </div>
-
 
         <ResponseTagsWrapper
           environmentId={environmentId}
@@ -266,14 +292,16 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
           isDeleting={isDeleting}
         />
       </div>
-      {pageType === "response" && <ResponseNote
-        responseId={response.id}
-        notes={response.notes}
-        environmentId={environmentId}
-        surveyId={survey.id}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-      />}
+      {pageType === "response" && (
+        <ResponseNote
+          responseId={response.id}
+          notes={response.notes}
+          environmentId={environmentId}
+          surveyId={survey.id}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+        />
+      )}
     </div>
   );
 }

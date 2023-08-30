@@ -4,7 +4,6 @@
   </a>
   <h3 align="center">Formbricks</h3>
 
-
   <p align="center">
     The Open Source Survey & Experience Management solution for fast growing companies
     <br />
