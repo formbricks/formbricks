@@ -45,7 +45,7 @@ interface QuestionCardProps {
 function BackButtonInput({ value, onChange }) {
   return (
     <div className="mt-4 w-full">
-      <Label htmlFor="backButtonLabel">Back</Label>
+      <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
       <div className="mt-2">
         <Input
           id="backButtonLabel"
