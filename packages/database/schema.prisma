@@ -281,14 +281,20 @@ model EventClass {
   @@unique([name, environmentId])
 }
 
+enum DeviceType {
+  phone
+  desktop
+}
+
 model Session {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  expiresAt DateTime @default(now())
-  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId  String
-  events    Event[]
+  id         String      @id @default(cuid())
+  createdAt  DateTime    @default(now()) @map(name: "created_at")
+  updatedAt  DateTime    @updatedAt @map(name: "updated_at")
+  expiresAt  DateTime    @default(now())
+  person     Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId   String
+  events     Event[]
+  deviceType DeviceType?
 }
 
 enum EnvironmentType {

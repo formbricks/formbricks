@@ -21,6 +21,9 @@ import {
   TSegmentOperator,
   TUserSegment,
   isResourceFilter,
+  TUserSegmentDeviceFilter,
+  TDeviceOperator,
+  DEVICE_OPERATORS,
 } from "@formbricks/types/v1/userSegment";
 import {
   DropdownMenu,
@@ -634,6 +637,154 @@ const UserSegmentFilter = ({
   );
 };
 
+type TDeviceFilterProps = SegmentFilterItemProps & {
+  resource: TUserSegmentDeviceFilter;
+};
+const DeviceFilter = ({
+  connector,
+  onAddFilterBelow,
+  onCreateGroup,
+  onDeleteFilter,
+  onMoveFilter,
+  resource,
+  userSegment,
+  setUserSegment,
+}: TDeviceFilterProps) => {
+  const { value } = resource;
+
+  const operatorText = convertOperatorToText(resource.qualifier.operator);
+  const operatorArr = DEVICE_OPERATORS.map((operator) => ({
+    id: operator,
+    name: convertOperatorToText(operator),
+  }));
+
+  const updateOperatorInUserSegment = (filterId: string, newOperator: TDeviceOperator) => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              resource.qualifier.operator = newOperator;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
+      }
+    });
+
+    setUserSegment(updatedUserSegment);
+  };
+
+  const updateValueInUserSegment = (filterId: string, newValue: "phone" | "desktop") => {
+    const updatedUserSegment = produce(userSegment, (draft) => {
+      const searchAndUpdate = (group: TBaseFilterGroup) => {
+        for (let i = 0; i < group.length; i++) {
+          const { resource } = group[i];
+
+          if (isResourceFilter(resource)) {
+            if (resource.id === filterId) {
+              (resource as TUserSegmentDeviceFilter).root.deviceType = newValue;
+              resource.value = newValue;
+              break;
+            }
+          } else {
+            searchAndUpdate(resource);
+          }
+        }
+      };
+
+      if (draft.filters) {
+        searchAndUpdate(draft.filters);
+      }
+    });
+
+    setUserSegment(updatedUserSegment);
+  };
+
+  return (
+    <div className="flex items-center gap-4 text-sm">
+      <SegmentFilterItemConnector
+        key={connector}
+        connector={connector}
+        filterId={resource.id}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
+      />
+
+      <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2">
+        <MousePointerClick className="h-4 w-4" />
+        <p>Device</p>
+      </div>
+
+      <Select
+        value={operatorText}
+        onValueChange={(operator: TDeviceOperator) => {
+          updateOperatorInUserSegment(resource.id, operator);
+        }}>
+        <SelectTrigger className="flex w-full max-w-[40px] items-center justify-center text-center" hideArrow>
+          <SelectValue />
+          <p>{operatorText}</p>
+        </SelectTrigger>
+
+        <SelectContent>
+          {operatorArr.map((operator) => (
+            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={value as "phone" | "desktop"}
+        onValueChange={(value: "phone" | "desktop") => {
+          updateValueInUserSegment(resource.id, value);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
+          <SelectValue />
+        </SelectTrigger>
+
+        <SelectContent>
+          {[
+            { id: "desktop", name: "Desktop" },
+            { id: "phone", name: "Phone" },
+          ].map((operator) => (
+            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <MoreVertical className="h-4 w-4" />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => onAddFilterBelow(resource.id)}>
+              add filter below
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => onCreateGroup(resource.id)}>create group</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "up")}>move up</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onMoveFilter(resource.id, "down")}>move down</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <button onClick={() => onDeleteFilter(resource.id)}>
+          <Trash2 className="h-4 w-4 cursor-pointer"></Trash2>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 type TAddNewFilterItemProps = {
   connector: TUserSegmentConnector;
   filterId: string;
@@ -659,6 +810,12 @@ const AddNewFilterItem = ({
     { id: "actions", label: "Actions" },
     { id: "attributes", label: "Attributes" },
     { id: "segments", label: "Segments" },
+    { id: "devices", label: "Devices" },
+  ];
+
+  const devices = [
+    { id: "phone", name: "Phone" },
+    { id: "desktop", name: "Desktop" },
   ];
 
   const onAddFilter = (filter: TUserSegmentFilter) => {
@@ -705,7 +862,7 @@ const AddNewFilterItem = ({
           </div>
         </PopoverTrigger>
 
-        <PopoverContent className="bg-slate-50">
+        <PopoverContent className="w-full max-w-lg bg-slate-50">
           <div className="flex flex-col">
             <TabBar activeId={activeTabId} setActiveId={setActiveId} tabs={tabs} />
 
@@ -793,6 +950,35 @@ const AddNewFilterItem = ({
                     ))}
                 </div>
               )}
+
+              {activeTabId === "devices" && (
+                <div className="flex flex-col">
+                  {devices.map((deviceType) => (
+                    <div
+                      key={deviceType.id}
+                      className="flex cursor-pointer items-center gap-2 p-1"
+                      onClick={() => {
+                        const filter: TUserSegmentFilter = {
+                          id: "sample",
+                          root: {
+                            type: "device",
+                            deviceType: deviceType.id,
+                          },
+                          qualifier: {
+                            operator: "equals",
+                          },
+                          value: deviceType.id,
+                          // isPlaceholder: true,
+                        };
+
+                        onAddFilter(filter);
+                      }}>
+                      <MonitorSmartphoneIcon className="h-4 w-4" />
+                      <span>{deviceType.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </PopoverContent>
@@ -818,8 +1004,6 @@ const SegmentFilterItem = ({
   onDeleteFilter,
   onMoveFilter,
 }: SegmentFilterItemProps) => {
-  const [connectorState, setConnectorState] = useState(connector);
-
   const updateFilterValueInUserSegment = (filterId: string, newValue: string | number) => {
     const updatedUserSegment = produce(userSegment, (draft) => {
       const searchAndUpdate = (group: TBaseFilterGroup) => {
@@ -844,17 +1028,6 @@ const SegmentFilterItem = ({
     });
 
     setUserSegment(updatedUserSegment);
-  };
-
-  const onConnectorChange = () => {
-    if (!connectorState) return;
-
-    if (connectorState === "and") {
-      setConnectorState("or");
-      return;
-    }
-
-    setConnectorState("and");
   };
 
   // placeholder UI
@@ -931,38 +1104,18 @@ const SegmentFilterItem = ({
   // device UI
 
   if (resource.root.type === "device") {
-    const deviceType = resource.root.deviceType;
-    const operatorText = convertOperatorToText(resource.qualifier.operator);
-
     return (
-      <div className="flex items-center gap-4 text-sm">
-        <div className="w-[40px]">
-          <span className={cn(!!connectorState && "cursor-pointer underline")} onClick={onConnectorChange}>
-            {!!connectorState ? connectorState : "Where"}
-          </span>
-        </div>
-
-        <Select value="device">
-          <SelectTrigger className="flex w-auto items-center justify-center capitalize" hideArrow>
-            <div className="flex items-center gap-1">
-              <MonitorSmartphoneIcon className="h-4 w-4 text-sm" />
-              <p>Device</p>
-            </div>
-          </SelectTrigger>
-        </Select>
-
-        <Select value={operatorText}>
-          <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
-            <p>{operatorText}</p>
-          </SelectTrigger>
-        </Select>
-
-        <Select value={resource.value.toString()}>
-          <SelectTrigger className="flex w-auto items-center justify-center text-center capitalize" hideArrow>
-            <p>{resource.value}</p>
-          </SelectTrigger>
-        </Select>
-      </div>
+      <DeviceFilter
+        connector={connector}
+        resource={resource as TUserSegmentDeviceFilter}
+        environmentId={environmentId}
+        userSegment={userSegment}
+        setUserSegment={setUserSegment}
+        onAddFilterBelow={onAddFilterBelow}
+        onCreateGroup={onCreateGroup}
+        onDeleteFilter={onDeleteFilter}
+        onMoveFilter={onMoveFilter}
+      />
     );
   }
 };

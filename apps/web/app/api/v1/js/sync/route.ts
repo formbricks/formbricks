@@ -11,6 +11,8 @@ import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSession } from "@formbricks/types/v1/sessions";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { deviceType } from "@formbricks/lib/utils/headers";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
@@ -22,6 +24,10 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {
+    const headersList = headers();
+    const userAgent = headersList.get("user-agent");
+    const device = deviceType(userAgent ?? "");
+
     const jsonInput = await req.json();
 
     // validate using zod
@@ -51,9 +57,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       // create a new person
       const person = await createPerson(environmentId);
       // get/create rest of the state
-      const [session, surveys, noCodeActionClasses, product] = await Promise.all([
-        createSession(person.id),
-        getSurveys(environmentId, person),
+      const session = await createSession(person.id, device);
+      const [surveys, noCodeActionClasses, product] = await Promise.all([
+        // createSession(person.id, device),
+        getSurveys(environmentId, person, session.id),
         getActionClasses(environmentId),
         getProductByEnvironmentId(environmentId),
       ]);
@@ -79,10 +86,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         // create a new person
         person = await createPerson(environmentId);
       }
+      const session = await createSession(person.id, device);
       // get/create rest of the state
-      const [session, surveys, noCodeActionClasses, product] = await Promise.all([
-        createSession(person.id),
-        getSurveys(environmentId, person),
+      const [surveys, noCodeActionClasses, product] = await Promise.all([
+        // createSession(person.id, device),
+        getSurveys(environmentId, person, session.id),
         getActionClasses(environmentId),
         getProductByEnvironmentId(environmentId),
       ]);
@@ -114,7 +122,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         person = await createPerson(environmentId);
       }
       // create a new session
-      session = await createSession(person.id);
+      session = await createSession(person.id, device);
       captureNewSessionTelemetry(inputValidation.data.jsVersion);
     } else {
       // session exists
@@ -123,12 +131,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!person) {
         // create a new person & session
         person = await createPerson(environmentId);
-        session = await createSession(person.id);
+        session = await createSession(person.id, device);
       } else {
         // check if session is expired
         if (session.expiresAt < new Date()) {
           // create a new session
-          session = await createSession(person.id);
+          session = await createSession(person.id, device);
           captureNewSessionTelemetry(inputValidation.data.jsVersion);
         } else {
           // extend session
@@ -139,7 +147,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // get/create rest of the state
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSurveys(environmentId, person),
+      getSurveys(environmentId, person, session.id),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

@@ -5,7 +5,11 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { evaluateSegment } from "@formbricks/lib/services/userSegment";
 import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 
-export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+export const getSurveys = async (
+  environmentId: string,
+  person: TPerson,
+  sessionId: string
+): Promise<TSurvey[]> => {
   // get recontactDays from product
   const product = await prisma.product.findFirst({
     where: {
@@ -23,6 +27,22 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
   if (!product) {
     throw new Error("Product not found");
   }
+
+  // get user's device type
+  const session = await prisma.session.findUnique({
+    where: {
+      id: sessionId,
+    },
+    select: {
+      deviceType: true,
+    },
+  });
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  const { deviceType } = session;
 
   // get the attribute class ids that are used in the user segment
   const personAttributeClasses = await prisma.person.findUnique({
@@ -160,7 +180,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
           {
             attributes: personAttributeClassIds ?? {},
             actionIds: personActionClassIds,
-            devices: {},
+            deviceType: deviceType ?? "desktop",
             environmentId,
             personId: person.id,
           },

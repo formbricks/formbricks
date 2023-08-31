@@ -104,7 +104,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     // get/create rest of the state
     const [session, surveys, noCodeActionClasses, product] = await Promise.all([
       extendSession(sessionId),
-      getSurveys(environmentId, person),
+      getSurveys(environmentId, person, sessionId),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

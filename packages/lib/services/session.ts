@@ -88,7 +88,7 @@ export const getSessionCount = cache(async (personId: string): Promise<number> =
   }
 });
 
-export const createSession = async (personId: string): Promise<TSession> => {
+export const createSession = async (personId: string, deviceType: "phone" | "desktop"): Promise<TSession> => {
   try {
     const session = await prisma.session.create({
       data: {
@@ -97,6 +97,7 @@ export const createSession = async (personId: string): Promise<TSession> => {
             id: personId,
           },
         },
+        deviceType,
         expiresAt: new Date(Date.now() + oneHour),
       },
       select,

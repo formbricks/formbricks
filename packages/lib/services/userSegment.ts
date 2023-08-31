@@ -178,7 +178,7 @@ type UserData = {
   environmentId: string;
   attributes: UserAttributeData;
   actionIds: string[];
-  devices: { [deviceType: string]: string };
+  deviceType: "phone" | "desktop";
 };
 
 const evaluateAttributeFilter = (
@@ -295,16 +295,9 @@ const evaluateSegmentFilter = async (
   return false;
 };
 
-const evaluateDeviceFilter = (
-  devices: { [deviceType: string]: string },
-  filter: TUserSegmentDeviceFilter
-): boolean => {
-  const { value, root, qualifier } = filter;
-  const { deviceType } = root;
-
-  const deviceValue = devices[deviceType];
-
-  return compareValues(deviceValue, value, qualifier.operator);
+const evaluateDeviceFilter = (device: "phone" | "desktop", filter: TUserSegmentDeviceFilter): boolean => {
+  const { value, qualifier } = filter;
+  return compareValues(device, value, qualifier.operator);
 };
 
 export const compareValues = (
@@ -385,7 +378,7 @@ export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilt
       }
 
       if (type === "device") {
-        result = evaluateDeviceFilter(userData.devices, resource as TUserSegmentDeviceFilter);
+        result = evaluateDeviceFilter(userData.deviceType, resource as TUserSegmentDeviceFilter);
         resultPairs.push({
           result,
           connector: filterItem.connector,
