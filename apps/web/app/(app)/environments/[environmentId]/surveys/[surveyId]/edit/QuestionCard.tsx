@@ -42,9 +42,9 @@ interface QuestionCardProps {
   isInValid: boolean;
 }
 
-function BackButtonInput({ value, onChange }) {
+export function BackButtonInput({ value, onChange }) {
   return (
-    <div className="mt-4 w-full">
+    <div className="w-full">
       <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
       <div className="mt-2">
         <Input
@@ -213,16 +213,6 @@ export default function QuestionCard({
                   isInValid={isInValid}
                 />
               ) : null}
-
-              {(question.type === QuestionType.NPS ||
-                question.type === QuestionType.Rating ||
-                question.type === QuestionType.CTA) &&
-                questionIdx !== 0 && (
-                  <BackButtonInput
-                    value={question.backButtonLabel}
-                    onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
-                  />
-                )}
               <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
                   <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700">
@@ -238,8 +228,8 @@ export default function QuestionCard({
                     {question.type !== QuestionType.NPS &&
                     question.type !== QuestionType.Rating &&
                     question.type !== QuestionType.CTA ? (
-                      <div className="flex space-x-2">
-                        <div className="mt-4 w-full">
+                      <div className="mt-4 flex space-x-2">
+                        <div className="w-full">
                           <Label htmlFor="buttonLabel">Button Label</Label>
                           <div className="mt-2">
                             <Input
@@ -259,6 +249,15 @@ export default function QuestionCard({
                         )}
                       </div>
                     ) : null}
+                    {(question.type === QuestionType.Rating || question.type === QuestionType.NPS) &&
+                      questionIdx !== 0 && (
+                        <div className="mt-4">
+                          <BackButtonInput
+                            value={question.backButtonLabel}
+                            onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+                          />
+                        </div>
+                      )}
 
                     <AdvancedSettings
                       question={question}
