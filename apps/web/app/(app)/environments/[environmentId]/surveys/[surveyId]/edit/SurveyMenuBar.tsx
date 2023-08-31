@@ -115,6 +115,19 @@ export default function SurveyMenuBar({
       return false;
     }
 
+    for (const question of survey.questions) {
+      for (const logic of question.logic || []) {
+        const validFields = ["condition", "destination", "value"].filter(
+          (field) => logic[field] !== undefined
+        ).length;
+
+        if (validFields < 2) {
+          toast.error("Please fill all the opened Logic Jumps or delete them!");
+          return false;
+        }
+      }
+    }
+
     /*
      Check whether the count for autocomplete responses is not less 
      than the current count of accepted response and also it is not set to 0
