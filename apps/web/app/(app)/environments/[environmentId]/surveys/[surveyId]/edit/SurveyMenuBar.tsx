@@ -44,6 +44,8 @@ export default function SurveyMenuBar({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const { product } = useProduct(environmentId);
   let faultyQuestions: String[] = [];
+  const existingLogicConditions = new Set();
+
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -125,6 +127,13 @@ export default function SurveyMenuBar({
           toast.error("Please fill all the opened Logic Jumps or delete them!");
           return false;
         }
+
+        const thisLogic = `${logic.condition}-${logic.value}`;
+        if (existingLogicConditions.has(thisLogic)) {
+          toast.error("You have 2 exactly same logic conditons!");
+          return false;
+        }
+        existingLogicConditions.add(thisLogic);
       }
     }
 
