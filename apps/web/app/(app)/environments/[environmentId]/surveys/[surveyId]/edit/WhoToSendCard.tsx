@@ -24,8 +24,8 @@ import {
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -39,6 +39,7 @@ interface WhoToSendCardProps {
 }
 
 export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
     useAttributeClasses(environmentId);
@@ -214,7 +215,9 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                   setOpen={setSegmentUsedModalOpen}
                   title="Forward to Segments View"
                   description="This Segment is used in other surveys. To assure consistent data you cannot edit it here."
-                  primaryAction={() => {}}
+                  primaryAction={() => {
+                    router.push(`/environments/${environmentId}/segments`);
+                  }}
                   primaryActionText="Go to Segments"
                   secondaryAction={() => {
                     setSegmentUsedModalOpen(false);

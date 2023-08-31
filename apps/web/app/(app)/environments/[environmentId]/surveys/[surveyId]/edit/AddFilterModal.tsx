@@ -1,6 +1,6 @@
 "use client";
 
-import { TBaseFilterGroupItem, TUserSegmentFilter } from "@formbricks/types/v1/userSegment";
+import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
 import React, { useState } from "react";
 import { Dialog, DialogTrigger, DialogContent, Input, TabBar } from "@formbricks/ui";
 import { MonitorSmartphoneIcon, MousePointerClick, PlusCircleIcon, TagIcon, Users2Icon } from "lucide-react";
