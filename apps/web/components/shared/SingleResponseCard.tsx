@@ -1,25 +1,25 @@
 "use client";
 
+import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/RatingResponse";
+import ResponseNote from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/ResponseNote";
+import ResponseTagsWrapper from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/ResponseTagsWrapper";
+import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 import DeleteDialog from "@/components/shared/DeleteDialog";
+import QuestionSkip from "@/components/shared/QuestionSkip";
+import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
-import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/RatingResponse";
-import ResponseNote from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/ResponseNote";
-import ResponseTagsWrapper from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/ResponseTagsWrapper";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import QuestionSkip from "@/components/shared/QuestionSkip";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -193,7 +193,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
             )}
 
             {pageType === "people" && (
-              <div className="flex items-center justify-center space-x-2 rounded-full rounded-xl bg-slate-100 p-1 px-2 text-sm text-slate-600">
+              <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
                 <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
                 <Link
                   className="hover:underline"
@@ -270,7 +270,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
           })}
           {response.finished && (
             <div className="flex">
-              <CheckCircleIcon className="h-6 w-6 text-slate-500" />
+              <CheckCircleIcon className="h-6 w-6 text-slate-400" />
               <p className="mx-2 rounded-lg bg-slate-100 px-2 text-slate-700">Completed</p>
             </div>
           )}
