@@ -83,6 +83,7 @@ export default function OpenTextQuestion({
       <div className="mt-4 flex w-full justify-between">
         {goToPreviousQuestion && (
           <BackButton
+            backButtonLabel={question.backButtonLabel}
             onClick={() => {
               goToPreviousQuestion({
                 [question.id]: value,

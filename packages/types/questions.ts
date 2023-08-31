@@ -29,6 +29,7 @@ export interface IQuestion<T extends Logic> {
   subheader?: string;
   required: boolean;
   buttonLabel?: string;
+  backButtonLabel?: string;
   logic?: T[];
   isDraft?: boolean;
 }
