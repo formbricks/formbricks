@@ -1,6 +1,6 @@
 "use client";
 
-import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
+import { TBaseFilterGroupItem, TUserSegmentFilter } from "@formbricks/types/v1/userSegment";
 import React, { useState } from "react";
 import { Dialog, DialogTrigger, DialogContent, Input, TabBar } from "@formbricks/ui";
 import { MonitorSmartphoneIcon, MousePointerClick, PlusCircleIcon, TagIcon, Users2Icon } from "lucide-react";
@@ -33,6 +33,11 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
     { id: "attributes", label: "Attributes", icon: <TagIcon className="h-4 w-4" /> },
     { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
+  ];
+
+  const devices = [
+    { id: "phone", name: "Phone" },
+    { id: "desktop", name: "Desktop" },
   ];
 
   if (isLoadingAttributeClasses || isLoadingEventClasses || isLoadingUserSegments) {
@@ -159,6 +164,39 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                   );
                 })}
             </>
+          )}
+
+          {activeTabId === "devices" && (
+            <div className="flex flex-col">
+              {devices.map((deviceType) => (
+                <div
+                  key={deviceType.id}
+                  className="flex cursor-pointer items-center gap-2 p-1"
+                  onClick={() => {
+                    const filter: TBaseFilterGroupItem = {
+                      id: createId(),
+                      connector: "and",
+                      resource: {
+                        id: createId(),
+                        root: {
+                          type: "device",
+                          deviceType: deviceType.id,
+                        },
+                        qualifier: {
+                          operator: "equals",
+                        },
+                        value: deviceType.id,
+                      },
+                    };
+
+                    onAddFilter(filter);
+                    setOpen(false);
+                  }}>
+                  <MonitorSmartphoneIcon className="h-4 w-4" />
+                  <span>{deviceType.name}</span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </DialogContent>

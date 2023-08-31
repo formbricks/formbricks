@@ -720,7 +720,7 @@ const DeviceFilter = ({
       />
 
       <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2">
-        <MousePointerClick className="h-4 w-4" />
+        <MonitorSmartphoneIcon className="h-4 w-4" />
         <p>Device</p>
       </div>
 
@@ -968,7 +968,6 @@ const AddNewFilterItem = ({
                             operator: "equals",
                           },
                           value: deviceType.id,
-                          // isPlaceholder: true,
                         };
 
                         onAddFilter(filter);

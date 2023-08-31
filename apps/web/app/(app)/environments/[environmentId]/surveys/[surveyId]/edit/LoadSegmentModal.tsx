@@ -50,7 +50,6 @@ const SegmentDetails = ({
     const parsedFilters = ZUserSegmentFilterGroup.safeParse(updatedSurvey.userSegment.filters);
 
     if (!parsedFilters.success) {
-      console.log(parsedFilters.error);
       toast.error("Error loading segment");
       return;
     }
