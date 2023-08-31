@@ -25,6 +25,7 @@ import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -69,19 +70,15 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   );
 
   const handleCloneSegment = async () => {
+    console.log("handleCloneSegment");
     if (!localSurvey.userSegment) return;
 
     // try {
-    //   const clonedUserSegment = await cloneUserSegmentAction(localSurvey.userSegment?.id, localSurvey.id);
-    //   mutateSurvey();
-
-    //   setLocalSurvey({
-    //     ...localSurvey,
-    //     userSegment: {
-    //       ...clonedUserSegment,
-    //       surveys: [localSurvey.id],
-    //     },
-    //   });
+    //   // const clonedUserSegment = await cloneUserSegmentAction(localSurvey.userSegment?.id, localSurvey.id);
+    //   // setUserSegment({
+    //   //   ...clonedUserSegment,
+    //   //   surveys: clonedUserSegment.surveys.map((survey) => survey.id),
+    //   // });
     // } catch (err) {
     //   toast.error(err.message);
     // }

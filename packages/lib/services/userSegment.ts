@@ -157,6 +157,9 @@ export const cloneUserSegment = async (segmentId: string, surveyId: string) => {
           },
         },
       },
+      include: {
+        surveys: { select: { id: true } },
+      },
     });
 
     if (clonedUserSegment.id) {
