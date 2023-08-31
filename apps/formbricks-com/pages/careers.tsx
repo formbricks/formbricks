@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const Roles = [
   {
-    name: "Full-Stack Engineer",
+    name: "(Senior) Full-Stack Engineer",
     description: "Join early and be a part of our journey right from the start 🚀",
     location: "Worldwide",
     workplace: "Remote",
