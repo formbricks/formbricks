@@ -71,37 +71,47 @@ These variables must also be provided at runtime.
 | GOOGLE_CLIENT_ID          | Client ID for Google.                                                                        | optional (required if Google auth is enabled)           |                                                                         |
 | GOOGLE_CLIENT_SECRET      | Secret for Google.                                                                           | optional (required if Google auth is enabled)           |                                                                         |
 | CRON_SECRET               | Secret for running cron jobs.                                                                | optional                                                |                                                                         |
-
-| STRIPE_SECRET_KEY | Secret key for Stripe integration. | optional | |
-| STRIPE_WEBHOOK_SECRET | Webhook secret for Stripe integration. | optional | |
-
-| SENTRY_IGNORE_API_RESOLUTION_ERROR | Disables Sentry warning if set to `1`. | optional | |
+| STRIPE_SECRET_KEY         | Secret key for Stripe integration.                                                           | optional                                                |                                                                         |
+| STRIPE_WEBHOOK_SECRET     | Webhook secret for Stripe integration.                                                       | optional                                                |                                                                         |
+| TELEMETRY_DISABLED        | Disables telemetry if set to `1`.                                                            | optional                                                |                                                                         |
+| NODE_ENV                  | Node environment.                                                                            | optional                                                | `production`                                                            |
+| INSTANCE_ID               | Instance ID for Formbricks Cloud to be sent to Telemetry.                                    | optional                                                |                                                                         |
+| INTERNAL_SECRET           | Internal Secret. (Currently we do not use this anywhere)                                     | optional                                                |                                                                         |
+| RENDER_EXTERNAL_URL       | External URL for rendering.                                                                  | optional                                                |                                                                         |
+| HEROKU_APP_NAME           | Heroku app name.                                                                             | optional                                                |                                                                         |
+| RAILWAY_STATIC_URL        | Railway static URL.                                                                          | optional                                                |                                                                         |
+| NEXT_PUBLIC_VERCEL_URL    | Vercel URL.                                                                                  | optional                                                |                                                                         |
+| STRAPI_API_KEY            | API key for Strapi                                                                           | optional                                                |                                                                         |
 
 ### Build-time Variables
 
 These variables must be provided at the time of the docker build and can be provided by updating the `.env` file.
 
-| Variable                                    | Description                                                                | Required               | Default                 |
-| ------------------------------------------- | -------------------------------------------------------------------------- | ---------------------- | ----------------------- | --- |
-| NEXT_PUBLIC_WEBAPP_URL                      | Base URL injected into static files.                                       | required               | `http://localhost:3000` |
-| NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED     | Disables email verification if set to `1`.                                 | optional               |                         |
-| NEXT_PUBLIC_PASSWORD_RESET_DISABLED         | Disables password reset functionality if set to `1`.                       | optional               |                         |
-| NEXT_PUBLIC_SIGNUP_DISABLED                 | Disables the ability for new users to create an account if set to `1`.     | optional               |                         |
-| NEXT_PUBLIC_INVITE_DISABLED                 | Disables the ability for invited users to create an account if set to `1`. | optional               |                         |
-| NEXT_PUBLIC_PRIVACY_URL                     | URL for privacy policy.                                                    | optional               |                         |
-| NEXT_PUBLIC_TERMS_URL                       | URL for terms of service.                                                  | optional               |                         |
-| NEXT_PUBLIC_IMPRINT_URL                     | URL for imprint.                                                           | optional               |                         |
-| NEXT_PUBLIC_GITHUB_AUTH_ENABLED             | Enables GitHub login if set to `1`.                                        | optional               |                         |
-| NEXT_PUBLIC_GOOGLE_AUTH_ENABLED             | Enables Google login if set to `1`.                                        | optional               |                         |
-| NEXT_PUBLIC_FORMBRICKS_API_HOST             | Host for the Formbricks API.                                               | optional               |                         |
-| NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID       | If you already have a preset environment ID of the environment.            | optional               |                         |
-| NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID | If you already have an onboarding survey ID to show new users.             | optional               |                         |
-| NEXT_PUBLIC_IS_FORMBRICKS_CLOUD             | Uses Formbricks Cloud if set to `1`                                        | optional               |                         |
-| NEXT_PUBLIC_POSTHOG_API_KEY                 | API key for PostHog analytics.                                             | optional               |                         |
-| NEXT_PUBLIC_POSTHOG_API_HOST                | Host for PostHog analytics.                                                | optional               |                         |
-| NEXT_PUBLIC_SENTRY_DSN                      | DSN for Sentry error tracking.                                             | optional               |                         |
-
-Please refer to the [Formbricks Instructions](https://github.com/formbricks/formbricks) for more details on generating these variables.
+| Variable                                           | Description                                                                | Required | Default                 |
+| -------------------------------------------------- | -------------------------------------------------------------------------- | -------- | ----------------------- |
+| NEXT_PUBLIC_WEBAPP_URL                             | Base URL injected into static files.                                       | required | `http://localhost:3000` |
+| NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED            | Disables email verification if set to `1`.                                 | optional |                         |
+| NEXT_PUBLIC_PASSWORD_RESET_DISABLED                | Disables password reset functionality if set to `1`.                       | optional |                         |
+| NEXT_PUBLIC_SIGNUP_DISABLED                        | Disables the ability for new users to create an account if set to `1`.     | optional |                         |
+| NEXT_PUBLIC_INVITE_DISABLED                        | Disables the ability for invited users to create an account if set to `1`. | optional |                         |
+| NEXT_PUBLIC_PRIVACY_URL                            | URL for privacy policy.                                                    | optional |                         |
+| NEXT_PUBLIC_TERMS_URL                              | URL for terms of service.                                                  | optional |                         |
+| NEXT_PUBLIC_IMPRINT_URL                            | URL for imprint.                                                           | optional |                         |
+| NEXT_PUBLIC_GITHUB_AUTH_ENABLED                    | Enables GitHub login if set to `1`.                                        | optional |                         |
+| NEXT_PUBLIC_GOOGLE_AUTH_ENABLED                    | Enables Google login if set to `1`.                                        | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_API_HOST                    | Host for the Formbricks API.                                               | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID              | If you already have a preset environment ID of the environment.            | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID        | If you already have an onboarding survey ID to show new users.             | optional |                         |
+| NEXT_PUBLIC_IS_FORMBRICKS_CLOUD                    | Uses Formbricks Cloud if set to `1`                                        | optional |                         |
+| NEXT_PUBLIC_POSTHOG_API_KEY                        | API key for PostHog analytics.                                             | optional |                         |
+| NEXT_PUBLIC_POSTHOG_API_HOST                       | Host for PostHog analytics.                                                | optional |                         |
+| NEXT_PUBLIC_SENTRY_DSN                             | DSN for Sentry error tracking.                                             | optional |                         |
+| NEXT_PUBLIC_DOCSEARCH_APP_ID                       | ID of the DocSearch application.                                           | optional |                         |
+| NEXT_PUBLIC_DOCSEARCH_API_KEY                      | API key of the DocSearch application.                                      | optional |                         |
+| NEXT_PUBLIC_DOCSEARCH_INDEX_NAME                   | Name of the DocSearch index.                                               | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID          | Environment ID for Formbricks (if you already have one)                    | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID | Survey ID for the feedback survey on the docs site.                        | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_COM_API_HOST                | Host for the Formbricks API.                                               | optional |                         |
 
 ## Debugging
 
