@@ -402,8 +402,13 @@ export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilt
     }
   }
 
+  if (!resultPairs.length) {
+    return false;
+  }
+
   // Given that the first filter in every group/sub-group always has a connector value of "null",
   // we initialize the finalResult with the result of the first filter.
+
   let finalResult = resultPairs[0].result;
 
   for (let i = 1; i < resultPairs.length; i++) {

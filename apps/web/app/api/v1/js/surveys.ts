@@ -3,7 +3,7 @@ import { selectSurvey } from "@formbricks/lib/services/survey";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { evaluateSegment } from "@formbricks/lib/services/userSegment";
-import { ZUserSegmentFilterGroup, isResourceFilter } from "@formbricks/types/v1/userSegment";
+import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 
 export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
   // get recontactDays from product
@@ -144,10 +144,9 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
   //   });
   // });
 
-  let potentialSurveysWithAttributes: typeof potentialSurveys = [];
+  let potentialSurveysFiltered: typeof potentialSurveys = [];
 
-  if (!potentialSurveys.every((survey) => !survey.userSegment)) {
-    // map over the potentialSurveys, creating a new array of promises
+  if (!potentialSurveys.every((survey) => !survey.userSegment?.filters?.length)) {
     const surveyPromises = potentialSurveys.map(async (survey) => {
       const { userSegment } = survey;
 
@@ -169,7 +168,6 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
         );
 
         if (result) {
-          console.log("RESULT: ", result);
           return survey;
         }
       }
@@ -178,13 +176,13 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
     });
 
     // Wait for all promises to resolve and then filter out any null values
-    potentialSurveysWithAttributes = (await Promise.all(surveyPromises)).filter((survey) => survey !== null);
+    potentialSurveysFiltered = (await Promise.all(surveyPromises)).filter((survey) => survey !== null);
   } else {
-    potentialSurveysWithAttributes = potentialSurveys;
+    potentialSurveysFiltered = potentialSurveys;
   }
 
   // filter surveys that meet the recontactDays criteria
-  const surveys: TSurvey[] = potentialSurveysWithAttributes
+  const surveys: TSurvey[] = potentialSurveysFiltered
     .filter((survey) => {
       if (!lastDisplayPerson) {
         // no display yet - always display

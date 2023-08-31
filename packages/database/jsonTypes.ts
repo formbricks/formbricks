@@ -2,6 +2,7 @@ import { TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
 import { TResponsePersonAttributes, TResponseData, TResponseMeta } from "@formbricks/types/v1/responses";
 import { TSurveyClosedMessage, TSurveyQuestions, TSurveyThankYouCard } from "@formbricks/types/v1/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/v1/users";
+import { TBaseFilterGroup } from "@formbricks/types/v1/userSegment";
 
 declare global {
   namespace PrismaJson {
@@ -14,5 +15,6 @@ declare global {
     export type SurveyThankYouCard = TSurveyThankYouCard;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type UserNotificationSettings = TUserNotificationSettings;
+    export type UserSegmentFilter = TBaseFilterGroup;
   }
 }

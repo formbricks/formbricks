@@ -8,3 +8,5 @@ export { ZResponseData, ZResponsePersonAttributes, ZResponseMeta } from "@formbr
 export { ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyClosedMessage } from "@formbricks/types/v1/surveys";
 
 export { ZUserNotificationSettings } from "@formbricks/types/v1/users";
+
+export { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
