@@ -163,10 +163,20 @@ export const cloneUserSegment = async (segmentId: string, surveyId: string) => {
     });
 
     if (clonedUserSegment.id) {
-      clonedUserSegment.filters = userSegment.filters;
+      // parse the filters and update the user segment
+      const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+      if (!parsedFilters.success) {
+        throw new Error("Invalid filters");
+      }
+
+      clonedUserSegment.filters = parsedFilters.data;
     }
 
-    return clonedUserSegment;
+    return {
+      ...clonedUserSegment,
+      description: clonedUserSegment.description ?? "",
+      surveys: clonedUserSegment.surveys.map((survey) => survey.id),
+    };
   } catch (err) {
     throw new DatabaseError("Error cloning user segment");
   }

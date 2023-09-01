@@ -26,6 +26,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -72,17 +73,15 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
   const handleCloneSegment = async () => {
     console.log("handleCloneSegment");
-    if (!localSurvey.userSegment) return;
+    if (!userSegment) return;
 
-    // try {
-    //   // const clonedUserSegment = await cloneUserSegmentAction(localSurvey.userSegment?.id, localSurvey.id);
-    //   // setUserSegment({
-    //   //   ...clonedUserSegment,
-    //   //   surveys: clonedUserSegment.surveys.map((survey) => survey.id),
-    //   // });
-    // } catch (err) {
-    //   toast.error(err.message);
-    // }
+    try {
+      const clonedUserSegment = await cloneUserSegmentAction(userSegment.id, localSurvey.id);
+
+      setUserSegment(clonedUserSegment);
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   useEffect(() => {
