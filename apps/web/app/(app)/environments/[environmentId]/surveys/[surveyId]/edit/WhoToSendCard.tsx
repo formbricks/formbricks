@@ -72,7 +72,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   );
 
   const handleCloneSegment = async () => {
-    console.log("handleCloneSegment");
     if (!userSegment) return;
 
     try {
@@ -161,7 +160,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             localSurvey.type !== "link"
               ? "cursor-pointer hover:bg-slate-50"
               : "cursor-not-allowed bg-slate-50",
-            "h-full w-full rounded-lg "
+            "h-full w-full rounded-lg"
           )}>
           <div className="inline-flex px-4 py-6">
             <div className="flex items-center pl-2 pr-5">
@@ -180,7 +179,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             )}
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="">
+        <Collapsible.CollapsibleContent className="min-w-full overflow-auto">
           <hr className="py-1 text-slate-600" />
 
           <div className="mx-6 flex items-center rounded-lg border border-slate-200 p-4 text-slate-800">
@@ -207,7 +206,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
           </div>
 
           <div className="p-6">
-            <div className="flex flex-col gap-6 rounded-lg border-2 border-slate-300 p-4">
+            <div className="flex flex-col gap-6 overflow-auto rounded-lg border-2 border-slate-300 bg-white p-4">
               {segmentUsedModalOpen && (
                 <ConfirmDialog
                   open={segmentUsedModalOpen}

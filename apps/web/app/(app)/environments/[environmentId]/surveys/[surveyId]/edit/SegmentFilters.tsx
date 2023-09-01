@@ -315,7 +315,7 @@ const ActionSegmentFilter = ({
     name: convertMetricToText(metric),
   }));
 
-  const attributeClass = eventClasses.find((eventClass) => eventClass.id === actionClassId)?.name;
+  const actionClass = eventClasses.find((eventClass) => eventClass.id === actionClassId)?.name;
 
   const updateOperatorInUserSegment = (filterId: string, newOperator: TBaseOperator) => {
     const updatedUserSegment = produce(userSegment, (draft) => {
@@ -403,15 +403,15 @@ const ActionSegmentFilter = ({
       />
 
       <Select
-        value={attributeClass}
+        value={actionClass}
         onValueChange={(value) => {
           updateActionClassIdInUserSegment(resource.id, value);
         }}>
-        <SelectTrigger className="w-[210px] items-center justify-center capitalize" hideArrow>
+        <SelectTrigger className="w-auto items-center justify-center whitespace-nowrap capitalize" hideArrow>
           <SelectValue />
           <div className="flex items-center gap-1">
             <MousePointerClick className="h-4 w-4 text-sm" />
-            <p>{attributeClass}</p>
+            <p>{actionClass}</p>
           </div>
         </SelectTrigger>
         <SelectContent className="bottom-0">
@@ -428,7 +428,9 @@ const ActionSegmentFilter = ({
         onValueChange={(value: TActionMetric) => {
           updateActionMetricInLocalSurvey(resource.id, value);
         }}>
-        <SelectTrigger className="flex w-[210px] items-center justify-center capitalize" hideArrow>
+        <SelectTrigger
+          className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
+          hideArrow>
           <SelectValue />
         </SelectTrigger>
 
@@ -1460,7 +1462,7 @@ const SegmentFilters = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg">
+    <div className="flex flex-col gap-4 rounded-lg bg-white">
       {group?.map((groupItem) => {
         const { connector, resource, id: groupId } = groupItem;
 
@@ -1483,9 +1485,9 @@ const SegmentFilters = ({
           );
         } else {
           return (
-            <div key={groupId} className="flex flex-col gap-1">
+            <div key={groupId}>
               <div className="flex items-start gap-2">
-                <div key={connector} className="w-[40px]">
+                <div key={connector} className="w-auto">
                   <span
                     className={cn(!!connector && "cursor-pointer underline")}
                     onClick={() => onConnectorChange(groupId, connector)}>
@@ -1493,7 +1495,7 @@ const SegmentFilters = ({
                   </span>
                 </div>
 
-                <div className="rounded-lg border-2 border-slate-300 p-4">
+                <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
                   <SegmentFilters
                     group={resource}
                     environmentId={environmentId}
