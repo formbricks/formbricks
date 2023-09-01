@@ -18,12 +18,12 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
     // calculate progress
     setProgress(calculateProgress(questionId, survey, progress));
 
-    function calculateProgress(currentQuestionId: string, survey: TSurvey, currentProgress: number) {
-      if (currentQuestionId === "end") return 1;
+    function calculateProgress(questionId: string, survey: TSurvey, progress: number) {
+      if (questionId === "end") return 1;
 
-      const progressArray: number[] = new Array(survey.questions.length).fill(undefined);
-      const currentprevQuestionIdx = survey.questions.findIndex((e) => e.id === currentQuestionId);
-      const currentQuestion = survey.questions[currentprevQuestionIdx];
+      let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);
+      if (currentQustionIdx === -1) currentQustionIdx = 0;
+      const currentQuestion = survey.questions[currentQustionIdx];
       const surveyLength = survey.questions.length;
       const middleIdx = Math.floor(surveyLength / 2);
       const possibleNextQuestions = currentQuestion.logic?.map((l) => l.destination) || [];
@@ -36,7 +36,7 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
         return survey.questions.findIndex((e) => e.id === lastQuestion?.id);
       };
 
-      let elementIdx = currentprevQuestionIdx || 0.5;
+      let elementIdx = currentQustionIdx || 0.5;
       const lastprevQuestionIdx = getLastQuestionIndex();
 
       if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
@@ -45,24 +45,19 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
       const newProgress = elementIdx / survey.questions.length;
 
       // Determine if user went backwards in the survey
-      const didUserGoBackwards = currentprevQuestionIdx < prevQuestionIdx;
+      const didUserGoBackwards = currentQustionIdx < prevQuestionIdx;
 
       // Update the progress array based on user's navigation
-      let updatedProgress = currentProgress;
+      let updatedProgress = progress;
       if (didUserGoBackwards) {
-        if (!progressArray[currentprevQuestionIdx]) {
-          progressArray[currentprevQuestionIdx] = currentProgress - PROGRESS_INCREMENT;
-        }
-        updatedProgress = progressArray[currentprevQuestionIdx];
-      } else if (newProgress > currentProgress) {
-        progressArray[currentprevQuestionIdx] = newProgress;
+        updatedProgress = progress - PROGRESS_INCREMENT;
+      } else if (newProgress > progress) {
         updatedProgress = newProgress;
-      } else if (newProgress <= currentProgress && currentProgress + PROGRESS_INCREMENT <= 1) {
-        progressArray[currentprevQuestionIdx] = currentProgress + PROGRESS_INCREMENT;
-        updatedProgress = currentProgress + PROGRESS_INCREMENT;
+      } else if (newProgress <= progress && progress + PROGRESS_INCREMENT <= 1) {
+        updatedProgress = progress + PROGRESS_INCREMENT;
       }
 
-      setPrevQuestionIdx(currentprevQuestionIdx);
+      setPrevQuestionIdx(currentQustionIdx);
       return updatedProgress;
     }
   }, [questionId, survey, setPrevQuestionIdx]);

@@ -128,7 +128,7 @@ export function Survey({
               )
             )}
           </div>
-          <div className="h-20">
+          <div className="mt-5 h-20">
             {formbricksSignature && <FormbricksSignature />}
             <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
           </div>
