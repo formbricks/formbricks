@@ -37,6 +37,7 @@ export const renderWidget = (survey: TSurvey) => {
       onResponseSendingFailed: (response) => {
         alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
       },
+      personId: config.get().state.person.id,
     },
     surveyState
   );

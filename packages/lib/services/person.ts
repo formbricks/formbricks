@@ -144,3 +144,28 @@ export const deletePerson = async (personId: string): Promise<void> => {
     throw error;
   }
 };
+
+export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> => {
+  const personPrisma = await prisma.person.findFirst({
+    where: {
+      environmentId,
+      attributes: {
+        some: {
+          attributeClass: {
+            name: "userId",
+          },
+          value: userId,
+        },
+      },
+    },
+    select: selectPerson,
+  });
+
+  if (personPrisma) {
+    const person = transformPrismaPerson(personPrisma);
+    return person;
+  } else {
+    const newPerson = await createPerson(environmentId);
+    return newPerson;
+  }
+};

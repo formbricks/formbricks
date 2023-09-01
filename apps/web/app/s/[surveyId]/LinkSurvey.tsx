@@ -3,7 +3,6 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { SurveyInline } from "@/components/shared/Survey";
 import { createDisplay } from "@formbricks/lib/client/display";
-import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
@@ -11,14 +10,15 @@ import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
+  personId?: string;
 }
 
-export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
+export default function LinkSurvey({ survey, product, personId }: LinkSurveyProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
@@ -34,6 +34,7 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
           },
           setSurveyState: setSurveyState,
+          personId,
         },
         surveyState
       ),
