@@ -23,6 +23,7 @@ export const selectSurveyWithAnalytics = {
   closeOnDate: true,
   delay: true,
   autoComplete: true,
+  verifyEmail: true,
   redirectUrl: true,
   triggers: {
     select: {
@@ -77,6 +78,7 @@ export const selectSurvey = {
   closeOnDate: true,
   delay: true,
   autoComplete: true,
+  verifyEmail: true,
   redirectUrl: true,
   triggers: {
     select: {
@@ -152,6 +154,7 @@ export const getSurveyWithAnalytics = cache(
       const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
       return survey;
     } catch (error) {
+      console.log(error)
       if (error instanceof z.ZodError) {
         console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
       }

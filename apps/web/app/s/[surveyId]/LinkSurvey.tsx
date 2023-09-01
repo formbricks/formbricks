@@ -13,6 +13,8 @@ import { useEffect, useRef, useState } from "react";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import Loading from "@/app/s/[surveyId]/loading";
 import { TProduct } from "@formbricks/types/v1/product";
+import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
+
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -40,6 +42,7 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
   // Create a reference to the top element
   const topRef = useRef<HTMLDivElement>(null);
   const [autoFocus, setAutofocus] = useState(false);
+  const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
@@ -61,6 +64,10 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
         <Loading />
       </div>
     );
+  }
+
+  if(survey.verifyEmail && URLParams.get("userId")===null){
+    return <VerifyEmail questions={survey.questions}/>
   }
 
   return (

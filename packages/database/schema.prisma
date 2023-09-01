@@ -240,6 +240,7 @@ model Survey {
   /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
+  verifyEmail         Json?
 }
 
 model Event {

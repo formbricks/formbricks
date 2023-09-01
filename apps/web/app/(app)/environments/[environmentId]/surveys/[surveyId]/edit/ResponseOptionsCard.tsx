@@ -20,9 +20,16 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
+  const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
+
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: "Survey Completed",
     subheading: "This free & open-source survey has been closed",
+  });
+
+  const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
+    name: "",
+    subheading: "",
   });
   const [closeOnDate, setCloseOnDate] = useState<Date>();
 
@@ -63,6 +70,14 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     }
   };
 
+  const handleVerifyEmailToogle = () => {
+    setVerifyEmailToggle((prev) => !prev);
+
+    if (verifyEmailToggle && localSurvey.verifyEmail) {
+      setLocalSurvey({ ...localSurvey, verifyEmail: null }); 
+    }
+  };
+
   const handleCloseOnDateChange = (date: Date) => {
     const equivalentDate = date?.getDate();
     date?.setUTCHours(0, 0, 0, 0);
@@ -88,6 +103,22 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
   };
 
+  const handleVerifyEmailSurveyDetailsChange = ({
+    name,
+    subheading,
+  }: {
+    name?: string;
+    subheading?: string;
+  }) => {
+    const message = {
+      name: name || verifyEmailSurveyDetails.name ,
+      subheading: subheading || verifyEmailSurveyDetails.subheading,
+    };
+
+    setVerifyEmailSurveyDetails(message)
+    setLocalSurvey({...localSurvey, verifyEmail: message})
+  };
+
   useEffect(() => {
     if (localSurvey.redirectUrl) {
       setRedirectUrl(localSurvey.redirectUrl);
@@ -100,6 +131,14 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
         subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
       });
       setSurveyClosedMessageToggle(true);
+    }
+
+    if(localSurvey.verifyEmail){
+      setVerifyEmailSurveyDetails({
+        name: localSurvey.verifyEmail.name!,
+        subheading: localSurvey.verifyEmail.subheading!
+      })
+      setVerifyEmailToggle(true)
     }
 
     if (localSurvey.closeOnDate) {
@@ -257,6 +296,42 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                   </div>
                 </div>
               </AdvancedOptionToggle>
+
+              <AdvancedOptionToggle
+                htmlId="verifyEmailBeforeSubmission"
+                isChecked={verifyEmailToggle}
+                onToggle={handleVerifyEmailToogle}
+                title="Verify email before submission"
+                description="Only let people with a real email respond."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <p className="text-md font-semibold">How it works</p>
+                    <p className="text-sm mt-2 mb-4 text-slate-500">Respondants will receive the survey link via email.</p>
+                    <Label htmlFor="headline">Survey Name (Public)</Label>
+                    <Input
+                      autoFocus
+                      id="heading"
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      placeholder="Job Application Form"
+                      defaultValue={verifyEmailSurveyDetails.name}
+                      onChange={(e) => handleVerifyEmailSurveyDetailsChange({ name: e.target.value })}
+                    />
+
+                    <Label htmlFor="headline">Subheader (Public)</Label>
+                    <Input
+                      className="mt-2 bg-white"
+                      id="subheading"
+                      name="subheading"
+                      placeholder="Thanks for applying as a full stack engineer"
+                      defaultValue={verifyEmailSurveyDetails.subheading}
+                      onChange={(e) => handleVerifyEmailSurveyDetailsChange({ subheading: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+              {console.log(localSurvey)}
             </>
           )}
         </div>

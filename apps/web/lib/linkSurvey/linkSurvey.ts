@@ -75,6 +75,9 @@ export const useLinkSurveyUtils = (survey: TSurvey) => {
         setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
       }
     }
+      if(survey.verifyEmail){
+        handleEmailVerification()
+      }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -134,6 +137,10 @@ export const useLinkSurveyUtils = (survey: TSurvey) => {
     setProgress(0);
     setFinished(false);
   };
+
+  const handleEmailVerification = ()=>{
+    console.log(URLParams.get("userId"))
+  }
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
