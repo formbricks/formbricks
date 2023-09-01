@@ -45,8 +45,8 @@ export default function SurveyMenuBar({
   const { product } = useProduct(environmentId);
   let faultyQuestions: String[] = [];
   const existingLogicConditions = new Set();
+  const existingQuestionIds = new Set();
 
-  
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
       setAudiencePrompt(false);
@@ -118,6 +118,11 @@ export default function SurveyMenuBar({
     }
 
     for (const question of survey.questions) {
+      if (existingQuestionIds.has(question.id)) {
+        toast.error("You cannot have 2 same question IDs, please change one!");
+        return false;
+      }
+      existingQuestionIds.add(question.id);
       for (const logic of question.logic || []) {
         if (question.required && logic.condition === "skipped") {
           toast.error("User cannot skip a required question, please change the logic jump!");
