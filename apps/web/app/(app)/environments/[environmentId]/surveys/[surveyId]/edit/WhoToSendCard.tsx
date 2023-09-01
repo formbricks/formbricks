@@ -14,24 +14,24 @@ import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSeg
 import {
   Badge,
   Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  // Input,
+  // Select,
+  // SelectContent,
+  // SelectItem,
+  // SelectTrigger,
+  // SelectValue,
 } from "@formbricks/ui";
-import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-const filterConditions = [
-  { id: "equals", name: "equals" },
-  { id: "notEquals", name: "not equals" },
-];
+// const filterConditions = [
+//   { id: "equals", name: "equals" },
+//   { id: "notEquals", name: "not equals" },
+// ];
 
 interface WhoToSendCardProps {
   localSurvey: Survey;
@@ -42,8 +42,8 @@ interface WhoToSendCardProps {
 export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
-    useAttributeClasses(environmentId);
+  // const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
+  //   useAttributeClasses(environmentId);
 
   const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
 
@@ -83,15 +83,21 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     }
   };
 
-  useEffect(() => {
-    if (!isLoadingAttributeClasses) {
-      if (localSurvey.attributeFilters?.length > 0) {
-        setOpen(true);
-      }
-    }
+  // useEffect(() => {
+  //   if (!isLoadingAttributeClasses) {
+  //     if (localSurvey.attributeFilters?.length > 0) {
+  //       setOpen(true);
+  //     }
+  //   }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingAttributeClasses]);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isLoadingAttributeClasses]);
+
+  useEffect(() => {
+    if (!!userSegment && userSegment?.filters?.length > 0) {
+      setOpen(true);
+    }
+  }, [userSegment, userSegment?.filters?.length]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -99,29 +105,29 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     }
   }, [localSurvey.type]);
 
-  const addAttributeFilter = () => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.attributeFilters = [
-      ...localSurvey.attributeFilters,
-      { attributeClassId: "", condition: filterConditions[0].id, value: "" },
-    ];
-    setLocalSurvey(updatedSurvey);
-  };
+  // const addAttributeFilter = () => {
+  //   const updatedSurvey = { ...localSurvey };
+  //   updatedSurvey.attributeFilters = [
+  //     ...localSurvey.attributeFilters,
+  //     { attributeClassId: "", condition: filterConditions[0].id, value: "" },
+  //   ];
+  //   setLocalSurvey(updatedSurvey);
+  // };
 
-  const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.attributeFilters[idx] = { attributeClassId, condition, value };
-    setLocalSurvey(updatedSurvey);
-  };
+  // const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
+  //   const updatedSurvey = { ...localSurvey };
+  //   updatedSurvey.attributeFilters[idx] = { attributeClassId, condition, value };
+  //   setLocalSurvey(updatedSurvey);
+  // };
 
-  const removeAttributeFilter = (idx: number) => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.attributeFilters = [
-      ...localSurvey.attributeFilters.slice(0, idx),
-      ...localSurvey.attributeFilters.slice(idx + 1),
-    ];
-    setLocalSurvey(updatedSurvey);
-  };
+  // const removeAttributeFilter = (idx: number) => {
+  //   const updatedSurvey = { ...localSurvey };
+  //   updatedSurvey.attributeFilters = [
+  //     ...localSurvey.attributeFilters.slice(0, idx),
+  //     ...localSurvey.attributeFilters.slice(idx + 1),
+  //   ];
+  //   setLocalSurvey(updatedSurvey);
+  // };
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
     const updatedUserSegment = produce(userSegment, (draft) => {
@@ -137,14 +143,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
     setUserSegment(updatedUserSegment);
   };
-
-  if (isLoadingAttributeClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorAttributeClasses) {
-    return <div>Error</div>;
-  }
 
   return (
     <>
@@ -184,31 +182,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
         <Collapsible.CollapsibleContent className="min-w-full overflow-auto">
           <hr className="py-1 text-slate-600" />
 
-          <div className="mx-6 flex items-center rounded-lg border border-slate-200 p-4 text-slate-800">
-            <div>
-              {localSurvey.attributeFilters?.length === 0 ? (
-                <UserGroupIcon className="mr-4 h-6 w-6 text-slate-600" />
-              ) : (
-                <FunnelIcon className="mr-4 h-6 w-6 text-slate-600" />
-              )}
-            </div>
-            <div>
-              <p className="">
-                Current:{" "}
-                <span className="font-semibold text-slate-900">
-                  {localSurvey.attributeFilters?.length === 0 ? "All users" : "Filtered"}
-                </span>
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                {localSurvey.attributeFilters?.length === 0
-                  ? "All users can see the survey."
-                  : "Only users who match the attribute filter will see the survey."}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="flex flex-col gap-6 overflow-auto rounded-lg border-2 border-slate-300 bg-white p-4">
+          <div className="flex flex-col gap-2 p-6">
+            <div className="flex flex-col gap-4 overflow-auto rounded-lg border-2 border-slate-300 bg-white p-4">
               {segmentUsedModalOpen && (
                 <ConfirmDialog
                   open={segmentUsedModalOpen}
@@ -254,7 +229,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
               {isSegmentEditorOpen ? (
                 <>
                   <p className="text-sm font-semibold">Send survey to audience who match...</p>
-                  {!!localSurvey.userSegment?.filters && userSegment && (
+                  {!!userSegment?.filters?.length && (
                     <>
                       <SegmentFilters
                         key={userSegment.filters.toString()}
@@ -263,46 +238,48 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                         userSegment={userSegment}
                         setUserSegment={setUserSegment}
                       />
-
-                      <AddFilterModal
-                        environmentId={environmentId}
-                        onAddFilter={(filter) => {
-                          handleAddFilterInGroup(filter);
-                        }}
-                        open={addFilterModalOpen}
-                        setOpen={setAddFilterModalOpen}
-                      />
-
-                      <SaveAsNewSegmentModal
-                        open={saveAsNewSegmentModalOpen}
-                        setOpen={setSaveAsNewSegmentModalOpen}
-                        localSurvey={localSurvey}
-                        userSegment={userSegment}
-                      />
-
-                      <ConfirmDialog
-                        open={resetAllFiltersModalOpen}
-                        setOpen={setRestAllFiltersModalOpen}
-                        title="Reset all filters"
-                        description="Are you sure you want to reset all filters?"
-                        primaryAction={() => {
-                          const updatedLocalSurvey = produce(localSurvey, (draft) => {
-                            if (draft.userSegment?.filters) {
-                              draft.userSegment.filters = [];
-                            }
-                          });
-
-                          setLocalSurvey(updatedLocalSurvey);
-                          setRestAllFiltersModalOpen(false);
-                        }}
-                        secondaryAction={() => {
-                          setRestAllFiltersModalOpen(false);
-                        }}
-                        primaryActionText="Reset"
-                        secondaryActionText="Cancel"
-                      />
                     </>
                   )}
+
+                  <>
+                    <AddFilterModal
+                      environmentId={environmentId}
+                      onAddFilter={(filter) => {
+                        handleAddFilterInGroup(filter);
+                      }}
+                      open={addFilterModalOpen}
+                      setOpen={setAddFilterModalOpen}
+                    />
+
+                    <SaveAsNewSegmentModal
+                      open={saveAsNewSegmentModalOpen}
+                      setOpen={setSaveAsNewSegmentModalOpen}
+                      localSurvey={localSurvey}
+                      userSegment={userSegment}
+                    />
+
+                    <ConfirmDialog
+                      open={resetAllFiltersModalOpen}
+                      setOpen={setRestAllFiltersModalOpen}
+                      title="Reset all filters"
+                      description="Are you sure you want to reset all filters?"
+                      primaryAction={() => {
+                        const updatedLocalSurvey = produce(localSurvey, (draft) => {
+                          if (draft.userSegment?.filters) {
+                            draft.userSegment.filters = [];
+                          }
+                        });
+
+                        setLocalSurvey(updatedLocalSurvey);
+                        setRestAllFiltersModalOpen(false);
+                      }}
+                      secondaryAction={() => {
+                        setRestAllFiltersModalOpen(false);
+                      }}
+                      primaryActionText="Reset"
+                      secondaryActionText="Cancel"
+                    />
+                  </>
                 </>
               ) : (
                 <div className="flex flex-col gap-4 rounded-lg p-2">
@@ -383,78 +360,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 </Button>
               )}
             </div>
-          </div>
-
-          {localSurvey.attributeFilters?.map((attributeFilter, idx) => (
-            <div className="mt-4 px-5" key={idx}>
-              <div className="justify-left flex items-center space-x-3">
-                <p className={cn(idx !== 0 && "ml-5", "text-right text-sm")}>{idx === 0 ? "Where" : "and"}</p>
-                <Select
-                  value={attributeFilter.attributeClassId}
-                  onValueChange={(attributeClassId) =>
-                    setAttributeFilter(
-                      idx,
-                      attributeClassId,
-                      attributeFilter.condition,
-                      attributeFilter.value
-                    )
-                  }>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {attributeClasses
-                      .filter((attributeClass) => !attributeClass.archived)
-                      .map((attributeClass) => (
-                        <SelectItem value={attributeClass.id}>{attributeClass.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={attributeFilter.condition}
-                  onValueChange={(condition) =>
-                    setAttributeFilter(
-                      idx,
-                      attributeFilter.attributeClassId,
-                      condition,
-                      attributeFilter.value
-                    )
-                  }>
-                  <SelectTrigger className="w-[210px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filterConditions.map((filterCondition) => (
-                      <SelectItem value={filterCondition.id}>{filterCondition.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={attributeFilter.value}
-                  onChange={(e) =>
-                    setAttributeFilter(
-                      idx,
-                      attributeFilter.attributeClassId,
-                      attributeFilter.condition,
-                      e.target.value
-                    )
-                  }
-                />
-                <button onClick={() => removeAttributeFilter(idx)}>
-                  <TrashIcon className="h-4 w-4 text-slate-400" />
-                </button>
-              </div>
-            </div>
-          ))}
-          <div className="px-6 py-4">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                addAttributeFilter();
-              }}>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add filter
-            </Button>
           </div>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
