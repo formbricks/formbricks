@@ -303,16 +303,18 @@ const AttributeSegmentFilter = ({
         </SelectContent>
       </Select>
 
-      <div className="flex flex-col gap-1">
+      <div className="relative flex flex-col gap-1">
         <Input
           value={valueInput}
           onChange={(e) => {
             checkValue(e);
           }}
-          className={cn("w-auto", valueError && "border border-red-500")}
+          className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
         />
 
-        {valueError && <p className="text-xs text-red-500">{valueError}</p>}
+        {valueError && (
+          <p className="absolute -bottom-1.5 right-1 bg-white text-xs text-red-500">{valueError}</p>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -541,15 +543,18 @@ const ActionSegmentFilter = ({
         </SelectContent>
       </Select>
 
-      <div className="flex flex-col gap-1">
+      <div className="relative flex flex-col gap-1">
         <Input
           value={valueInput}
           onChange={(e) => {
             checkValue(e);
           }}
-          className={cn("w-auto", valueError && "border border-red-500")}
+          className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
         />
-        {valueError && <p className="text-xs text-red-500">{valueError}</p>}
+
+        {valueError && (
+          <p className="absolute -bottom-1.5 right-1 bg-white text-xs text-red-500">{valueError}</p>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
