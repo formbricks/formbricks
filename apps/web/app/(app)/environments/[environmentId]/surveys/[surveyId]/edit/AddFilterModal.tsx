@@ -1,7 +1,7 @@
 "use client";
 
 import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Dialog, DialogTrigger, DialogContent, Input, TabBar } from "@formbricks/ui";
 import { MonitorSmartphoneIcon, MousePointerClick, PlusCircleIcon, TagIcon, Users2Icon } from "lucide-react";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
@@ -16,12 +16,16 @@ type TAddFilterModalProps = {
   environmentId: string;
 };
 
+type TFilterType = "action" | "attribute" | "segment" | "device";
+
 const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilterModalProps) => {
   const [activeTabId, setActiveTabId] = useState("actions");
 
   const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
   const { eventClasses, isLoadingEventClasses } = useEventClasses(environmentId);
   const { userSegments, isLoadingUserSegments } = useUserSegments(environmentId);
+
+  const [searchValue, setSearchValue] = useState("");
 
   const tabs: {
     id: string;
@@ -40,9 +44,160 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
     { id: "desktop", name: "Desktop" },
   ];
 
-  if (isLoadingAttributeClasses || isLoadingEventClasses || isLoadingUserSegments) {
-    return <div>Loading...</div>;
-  }
+  const actionClassesFiltered = useMemo(() => {
+    if (!eventClasses) return [];
+
+    if (!searchValue) return eventClasses;
+
+    return eventClasses.filter((eventClass) =>
+      eventClass.name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [eventClasses, searchValue]);
+
+  const attributeClassesFiltered = useMemo(() => {
+    if (!attributeClasses) return [];
+
+    if (!searchValue) return attributeClasses;
+
+    return attributeClasses.filter((attributeClass) =>
+      attributeClass.name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [attributeClasses, searchValue]);
+
+  const userSegmentsFiltered = useMemo(() => {
+    if (!userSegments) return [];
+
+    if (!searchValue) return userSegments;
+
+    return userSegments.filter((userSegment) =>
+      userSegment.title.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [userSegments, searchValue]);
+
+  const deviceTypesFiltered = useMemo(() => {
+    if (!searchValue) return devices;
+
+    return devices.filter((deviceType) => deviceType.name.toLowerCase().includes(searchValue.toLowerCase()));
+  }, [devices, searchValue]);
+
+  const allFiltersFiltered = useMemo(
+    () => [
+      {
+        attributes: attributeClassesFiltered,
+        actions: actionClassesFiltered,
+        segments: userSegmentsFiltered,
+        devices: deviceTypesFiltered,
+      },
+    ],
+    [actionClassesFiltered, attributeClassesFiltered, deviceTypesFiltered, userSegmentsFiltered]
+  );
+
+  const handleAddFilter = ({
+    type,
+    attributeClassId,
+    deviceType,
+    eventClassId,
+    userSegmentId,
+  }: {
+    type: TFilterType;
+    eventClassId?: string;
+    attributeClassId?: string;
+    userSegmentId?: string;
+    deviceType?: string;
+  }) => {
+    if (type === "action") {
+      if (!eventClassId) return;
+
+      const newFilter: TBaseFilterGroupItem = {
+        id: createId(),
+        connector: "and",
+        resource: {
+          id: createId(),
+          root: {
+            type: type,
+            actionClassId: eventClassId,
+          },
+          qualifier: {
+            metric: "occuranceCount",
+            operator: "equals",
+          },
+          value: "",
+        },
+      };
+
+      onAddFilter(newFilter);
+      setOpen(false);
+    }
+
+    if (type === "attribute") {
+      if (!attributeClassId) return;
+
+      const newFilter: TBaseFilterGroupItem = {
+        id: createId(),
+        connector: "and",
+        resource: {
+          id: createId(),
+          root: {
+            type: type,
+            attributeClassId,
+          },
+          qualifier: {
+            operator: "equals",
+          },
+          value: "",
+        },
+      };
+
+      onAddFilter(newFilter);
+      setOpen(false);
+    }
+
+    if (type === "segment") {
+      if (!userSegmentId) return;
+
+      const newFilter: TBaseFilterGroupItem = {
+        id: createId(),
+        connector: "and",
+        resource: {
+          id: createId(),
+          root: {
+            type: type,
+            userSegmentId,
+          },
+          qualifier: {
+            operator: "equals",
+          },
+          value: "",
+        },
+      };
+
+      onAddFilter(newFilter);
+      setOpen(false);
+    }
+
+    if (type === "device") {
+      if (!deviceType) return;
+
+      const newFilter: TBaseFilterGroupItem = {
+        id: createId(),
+        connector: "and",
+        resource: {
+          id: createId(),
+          root: {
+            type: type,
+            deviceType,
+          },
+          qualifier: {
+            operator: "equals",
+          },
+          value: deviceType,
+        },
+      };
+
+      onAddFilter(newFilter);
+      setOpen(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
@@ -55,37 +210,96 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
       <DialogContent className="w-[600px] bg-slate-100 sm:max-w-2xl" hideCloseButton>
         <div className="flex w-auto flex-col">
-          <Input placeholder="Browse filters..." autoFocus />
+          <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
 
           <TabBar className="bg-slate-100" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+          {activeTabId === "all" && (
+            <>
+              {allFiltersFiltered.map((filterGroup) => {
+                return (
+                  <>
+                    {filterGroup.actions.map((eventClass) => {
+                      return (
+                        <div
+                          onClick={() => {
+                            handleAddFilter({
+                              type: "action",
+                              eventClassId: eventClass.id,
+                            });
+                          }}
+                          className="flex cursor-pointer items-center gap-4 text-sm">
+                          <MousePointerClick className="h-4 w-4" />
+                          <p>{eventClass.name}</p>
+                        </div>
+                      );
+                    })}
+
+                    {filterGroup.attributes.map((attributeClass) => {
+                      return (
+                        <div
+                          onClick={() => {
+                            handleAddFilter({
+                              type: "attribute",
+                              attributeClassId: attributeClass.id,
+                            });
+                          }}
+                          className="flex cursor-pointer items-center gap-4 text-sm">
+                          <TagIcon className="h-4 w-4" />
+                          <p>{attributeClass.name}</p>
+                        </div>
+                      );
+                    })}
+
+                    {filterGroup.segments.map((userSegment) => {
+                      return (
+                        <div
+                          onClick={() => {
+                            handleAddFilter({
+                              type: "segment",
+                              userSegmentId: userSegment.id,
+                            });
+                          }}
+                          className="flex cursor-pointer items-center gap-4 text-sm">
+                          <Users2Icon className="h-4 w-4" />
+                          <p>{userSegment.title}</p>
+                        </div>
+                      );
+                    })}
+
+                    {filterGroup.devices.map((deviceType) => (
+                      <div
+                        key={deviceType.id}
+                        className="flex cursor-pointer items-center gap-2 p-1"
+                        onClick={() => {
+                          handleAddFilter({
+                            type: "device",
+                            deviceType: deviceType.id,
+                          });
+                        }}>
+                        <MonitorSmartphoneIcon className="h-4 w-4" />
+                        <span>{deviceType.name}</span>
+                      </div>
+                    ))}
+                  </>
+                );
+              })}
+            </>
+          )}
+
           {activeTabId === "actions" && (
             <>
-              {eventClasses.map((eventClass) => {
+              {isLoadingEventClasses && <div>Loading...</div>}
+              {actionClassesFiltered.map((eventClass) => {
                 return (
                   <div
                     onClick={() => {
-                      const newFilter: TBaseFilterGroupItem = {
-                        id: createId(),
-                        connector: "and",
-                        resource: {
-                          id: createId(),
-                          root: {
-                            type: "action",
-                            actionClassId: eventClass.id,
-                          },
-                          qualifier: {
-                            metric: "occuranceCount",
-                            operator: "equals",
-                          },
-                          value: "",
-                        },
-                      };
-
-                      onAddFilter(newFilter);
-                      setOpen(false);
+                      handleAddFilter({
+                        type: "action",
+                        eventClassId: eventClass.id,
+                      });
                     }}
                     className="flex cursor-pointer items-center gap-4 text-sm">
                     <MousePointerClick className="h-4 w-4" />
@@ -98,28 +312,15 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
           {activeTabId === "attributes" && (
             <>
-              {attributeClasses.map((attributeClass) => {
+              {isLoadingAttributeClasses && <div>Loading...</div>}
+              {attributeClassesFiltered.map((attributeClass) => {
                 return (
                   <div
                     onClick={() => {
-                      const newFilter: TBaseFilterGroupItem = {
-                        id: createId(),
-                        connector: "and",
-                        resource: {
-                          id: createId(),
-                          root: {
-                            type: "attribute",
-                            attributeClassId: attributeClass.id,
-                          },
-                          qualifier: {
-                            operator: "equals",
-                          },
-                          value: "",
-                        },
-                      };
-
-                      onAddFilter(newFilter);
-                      setOpen(false);
+                      handleAddFilter({
+                        type: "attribute",
+                        attributeClassId: attributeClass.id,
+                      });
                     }}
                     className="flex cursor-pointer items-center gap-4 text-sm">
                     <TagIcon className="h-4 w-4" />
@@ -132,30 +333,17 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
           {activeTabId === "segments" && (
             <>
-              {userSegments
+              {isLoadingUserSegments && <div>Loading...</div>}
+              {userSegmentsFiltered
                 ?.filter((segment) => !segment.isPrivate)
                 ?.map((userSegment) => {
                   return (
                     <div
                       onClick={() => {
-                        const newFilter: TBaseFilterGroupItem = {
-                          id: createId(),
-                          connector: "and",
-                          resource: {
-                            id: createId(),
-                            root: {
-                              type: "segment",
-                              userSegmentId: userSegment.id,
-                            },
-                            qualifier: {
-                              operator: "userIsIn",
-                            },
-                            value: userSegment.id,
-                          },
-                        };
-
-                        onAddFilter(newFilter);
-                        setOpen(false);
+                        handleAddFilter({
+                          type: "segment",
+                          userSegmentId: userSegment.id,
+                        });
                       }}
                       className="flex cursor-pointer items-center gap-4 text-sm">
                       <Users2Icon className="h-4 w-4" />
@@ -168,29 +356,15 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
           {activeTabId === "devices" && (
             <div className="flex flex-col">
-              {devices.map((deviceType) => (
+              {deviceTypesFiltered.map((deviceType) => (
                 <div
                   key={deviceType.id}
                   className="flex cursor-pointer items-center gap-2 p-1"
                   onClick={() => {
-                    const filter: TBaseFilterGroupItem = {
-                      id: createId(),
-                      connector: "and",
-                      resource: {
-                        id: createId(),
-                        root: {
-                          type: "device",
-                          deviceType: deviceType.id,
-                        },
-                        qualifier: {
-                          operator: "equals",
-                        },
-                        value: deviceType.id,
-                      },
-                    };
-
-                    onAddFilter(filter);
-                    setOpen(false);
+                    handleAddFilter({
+                      type: "device",
+                      deviceType: deviceType.id,
+                    });
                   }}>
                   <MonitorSmartphoneIcon className="h-4 w-4" />
                   <span>{deviceType.name}</span>
