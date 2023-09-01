@@ -46,7 +46,7 @@ export default function SurveyMenuBar({
   let faultyQuestions: String[] = [];
   const existingLogicConditions = new Set();
 
-
+  
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
       setAudiencePrompt(false);
@@ -119,6 +119,11 @@ export default function SurveyMenuBar({
 
     for (const question of survey.questions) {
       for (const logic of question.logic || []) {
+        if (question.required && logic.condition === "skipped") {
+          toast.error("User cannot skip a required question, please change the logic jump!");
+          return false;
+        }
+
         const validFields = ["condition", "destination", "value"].filter(
           (field) => logic[field] !== undefined
         ).length;
