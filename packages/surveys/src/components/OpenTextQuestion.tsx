@@ -14,6 +14,7 @@ interface OpenTextQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
+  autoFocus?: boolean;
 }
 
 export default function OpenTextQuestion({
@@ -25,6 +26,7 @@ export default function OpenTextQuestion({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  autoFocus = true,
 }: OpenTextQuestionProps) {
   return (
     <form
@@ -46,6 +48,7 @@ export default function OpenTextQuestion({
             onInput={(e) => {
               onChange({ [question.id]: e.currentTarget.value });
             }}
+            autoFocus={autoFocus}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
           />
         ) : (
@@ -59,6 +62,7 @@ export default function OpenTextQuestion({
             onInput={(e) => {
               onChange({ [question.id]: e.currentTarget.value });
             }}
+            autoFocus={autoFocus}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
         )}
       </div>

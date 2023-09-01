@@ -11,7 +11,7 @@ import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -40,14 +40,14 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
     []
   );
 
-  /* const [autoFocus, setAutofocus] = useState(false);
+  const [autoFocus, setAutofocus] = useState(false);
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
     if (window.self === window.top) {
       setAutofocus(true);
     }
-  }, []); */
+  }, []);
 
   return (
     <>
@@ -73,6 +73,7 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}
+          autoFocus={autoFocus}
         />
       </ContentWrapper>
     </>

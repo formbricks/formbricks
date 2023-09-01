@@ -18,6 +18,7 @@ interface QuestionConditionalProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
+  autoFocus?: boolean;
 }
 
 export default function QuestionConditional({
@@ -29,6 +30,7 @@ export default function QuestionConditional({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  autoFocus = true,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
@@ -40,6 +42,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      autoFocus={autoFocus}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion

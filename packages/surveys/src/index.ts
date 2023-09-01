@@ -14,6 +14,7 @@ interface BaseProps {
   onResponse?: (response: Partial<TResponse>) => void;
   onClose?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
+  autoFocus?: boolean;
 }
 
 interface RenderSurveyInlineProps extends BaseProps {

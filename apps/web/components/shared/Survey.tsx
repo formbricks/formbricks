@@ -15,6 +15,7 @@ interface SurveyProps {
   onResponse?: (response: TResponseUpdate) => void;
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
+  autoFocus?: boolean;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -33,6 +34,7 @@ export const SurveyInline = ({
   onResponse = () => {},
   onActiveQuestionChange = () => {},
   onClose = () => {},
+  autoFocus,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -46,6 +48,7 @@ export const SurveyInline = ({
       onClose,
       activeQuestionId,
       onActiveQuestionChange,
+      autoFocus,
     });
   }, [
     activeQuestionId,
@@ -57,6 +60,7 @@ export const SurveyInline = ({
     onDisplay,
     onResponse,
     survey,
+    autoFocus,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -74,6 +78,7 @@ export const SurveyModal = ({
   onResponse = () => {},
   onActiveQuestionChange = () => {},
   onClose = () => {},
+  autoFocus,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -89,6 +94,7 @@ export const SurveyModal = ({
       onClose,
       activeQuestionId,
       onActiveQuestionChange,
+      autoFocus,
     });
   }, [
     activeQuestionId,
@@ -103,6 +109,7 @@ export const SurveyModal = ({
     onResponse,
     placement,
     survey,
+    autoFocus,
   ]);
   return <div id="formbricks-survey"></div>;
 };
