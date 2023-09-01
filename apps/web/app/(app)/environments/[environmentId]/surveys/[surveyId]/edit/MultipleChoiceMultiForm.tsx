@@ -199,7 +199,15 @@ export default function MultipleChoiceMultiForm({
                   className={cn(choice.id === "other" && "border-dashed")}
                   placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
-                  isInvalid={isInValid && choice.label.trim() === ""}
+                  isInvalid={
+                    isInValid &&
+                    (choice.label.trim() === "" ||
+                      question.choices.some((element, index) =>
+                        question.choices
+                          .slice(index + 1)
+                          .some((nextElement) => nextElement.label.trim() === element.label.trim())
+                      ))
+                  }
                 />
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon

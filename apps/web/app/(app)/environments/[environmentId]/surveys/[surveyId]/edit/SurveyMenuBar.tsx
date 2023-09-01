@@ -44,8 +44,6 @@ export default function SurveyMenuBar({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const { product } = useProduct(environmentId);
   let faultyQuestions: String[] = [];
-  const existingLogicConditions = new Set();
-  const existingQuestionIds = new Set();
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -96,6 +94,9 @@ export default function SurveyMenuBar({
   };
 
   const validateSurvey = (survey) => {
+    const existingLogicConditions = new Set();
+    const existingQuestionIds = new Set();
+
     if (localSurvey.questions.length === 0) {
       toast.error("Please add at least one question");
       return;

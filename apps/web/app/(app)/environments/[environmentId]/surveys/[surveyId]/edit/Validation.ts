@@ -9,7 +9,14 @@ import {
 
 const validationRules = {
   multipleChoiceMulti: (question: MultipleChoiceMultiQuestion) => {
-    return !question.choices.some((element) => element.label.trim() === "");
+    return !(
+      question.choices.some((element) => element.label.trim() === "") ||
+      question.choices.some((element, index) =>
+        question.choices
+          .slice(index + 1)
+          .some((nextElement) => nextElement.label.trim() === element.label.trim())
+      )
+    );
   },
   multipleChoiceSingle: (question: MultipleChoiceSingleQuestion) => {
     return !(
