@@ -10,6 +10,10 @@ export const BASE_OPERATORS = [
   "greaterThan",
   "greaterEqual",
 ] as const;
+export const ARITHMETIC_OPERATORS = BASE_OPERATORS;
+export type TArithmeticOperator = (typeof ARITHMETIC_OPERATORS)[number];
+export const STRING_OPERATORS = ["contains", "doesNotContain", "startsWith", "endsWith"] as const;
+export type TStringOperator = (typeof STRING_OPERATORS)[number];
 export const ZBaseOperator = z.enum(BASE_OPERATORS);
 export type TBaseOperator = z.infer<typeof ZBaseOperator>;
 
@@ -150,7 +154,32 @@ export const ZUserSegmentFilter = z
       return true;
     },
     {
-      message: "Metric is required for action filter",
+      message: "Metric operator must be specified for action filters",
+    }
+  )
+  .refine(
+    (filter) => {
+      console.log(filter.qualifier.operator, filter.value, typeof filter.value);
+      // if the operator is an arithmentic operator, the value must be a number
+      if (
+        ARITHMETIC_OPERATORS.includes(filter.qualifier.operator as (typeof ARITHMETIC_OPERATORS)[number]) &&
+        typeof filter.value !== "number"
+      ) {
+        return false;
+      }
+
+      // if the operator is a string operator, the value must be a string
+      if (
+        STRING_OPERATORS.includes(filter.qualifier.operator as (typeof STRING_OPERATORS)[number]) &&
+        typeof filter.value !== "string"
+      ) {
+        return false;
+      }
+
+      return true;
+    },
+    {
+      message: "Value must be a string for string operators and a number for arithmetic operators",
     }
   );
 

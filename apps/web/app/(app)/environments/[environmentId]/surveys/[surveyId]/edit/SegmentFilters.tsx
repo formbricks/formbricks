@@ -24,6 +24,10 @@ import {
   TUserSegmentDeviceFilter,
   TDeviceOperator,
   DEVICE_OPERATORS,
+  ARITHMETIC_OPERATORS,
+  STRING_OPERATORS,
+  TArithmeticOperator,
+  TStringOperator,
 } from "@formbricks/types/v1/userSegment";
 import {
   DropdownMenu,
@@ -54,6 +58,7 @@ import { useState } from "react";
 import { produce } from "immer";
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import { useUserSegments } from "@/lib/userSegments/userSegments";
+import z from "zod";
 
 type SegmentFilterItemProps = {
   connector: TUserSegmentConnector;
@@ -138,8 +143,15 @@ const AttributeSegmentFilter = ({
   setUserSegment,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassId } = resource.root;
-  const { attributeClasses } = useAttributeClasses(environmentId);
+  const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
+
+  const [valueInput, setValueInput] = useState(resource.value);
+  const [valueError, setValueError] = useState("");
+
+  if (isLoadingAttributeClasses) {
+    return <div>Loading...</div>;
+  }
 
   const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
     return {
@@ -148,8 +160,8 @@ const AttributeSegmentFilter = ({
     };
   });
 
-  const attributeClass = attributeClasses.find(
-    (attributeClass) => attributeClass.id === attributeClassId
+  const attributeClass = attributeClasses?.find(
+    (attributeClass) => attributeClass?.id === attributeClassId
   )?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
@@ -202,6 +214,46 @@ const AttributeSegmentFilter = ({
     setUserSegment(updatedUserSegment);
   };
 
+  const checkValue = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setValueInput(value);
+
+    if (!value) {
+      setValueError("Value cannot be empty");
+      return;
+    }
+
+    const { operator } = resource.qualifier;
+
+    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+      const isNumber = z.coerce.number().safeParse(value);
+
+      if (isNumber.success) {
+        setValueError("");
+        updateValueInLocalSurvey(resource.id, parseInt(value, 10));
+      } else {
+        setValueError("Value must be a number");
+        updateValueInLocalSurvey(resource.id, value);
+      }
+
+      return;
+    }
+
+    if (STRING_OPERATORS.includes(operator as TStringOperator)) {
+      const isString = z.coerce.string().safeParse(value);
+
+      if (isString.success) {
+        setValueError("");
+        updateValueInLocalSurvey(resource.id, value);
+      } else {
+        setValueError("Value must be a string");
+        updateValueInLocalSurvey(resource.id, value);
+      }
+
+      return;
+    }
+  };
+
   return (
     <div className="flex items-center gap-4 text-sm">
       <SegmentFilterItemConnector
@@ -227,8 +279,8 @@ const AttributeSegmentFilter = ({
 
         <SelectContent>
           {attributeClasses
-            .filter((attributeClass) => !attributeClass.archived)
-            .map((attributeClass) => (
+            ?.filter((attributeClass) => !attributeClass.archived)
+            ?.map((attributeClass) => (
               <SelectItem value={attributeClass.id}>{attributeClass.name}</SelectItem>
             ))}
         </SelectContent>
@@ -251,13 +303,17 @@ const AttributeSegmentFilter = ({
         </SelectContent>
       </Select>
 
-      <Input
-        value={resource.value.toString()}
-        onChange={(e) => {
-          updateValueInLocalSurvey(resource.id, e.target.value);
-        }}
-        className="w-auto"
-      />
+      <div className="flex flex-col gap-1">
+        <Input
+          value={valueInput}
+          onChange={(e) => {
+            checkValue(e);
+          }}
+          className={cn("w-auto", valueError && "border border-red-500")}
+        />
+
+        {valueError && <p className="text-xs text-red-500">{valueError}</p>}
+      </div>
 
       <div className="flex items-center gap-2">
         <DropdownMenu>
@@ -301,9 +357,16 @@ const ActionSegmentFilter = ({
   updateValueInLocalSurvey,
 }: TActionSegmentFilterProps) => {
   const { actionClassId } = resource.root;
-  const { eventClasses } = useEventClasses(environmentId);
+  const { eventClasses, isLoadingEventClasses } = useEventClasses(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
   const qualifierMetric = resource.qualifier.metric;
+
+  const [valueInput, setValueInput] = useState(resource.value);
+  const [valueError, setValueError] = useState("");
+
+  if (isLoadingEventClasses) {
+    return <div>Loading...</div>;
+  }
 
   const operatorArr = BASE_OPERATORS.map((operator) => ({
     id: operator,
@@ -392,6 +455,26 @@ const ActionSegmentFilter = ({
     setUserSegment(updatedUserSegment);
   };
 
+  const checkValue = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setValueInput(value);
+
+    if (!value) {
+      setValueError("Value cannot be empty");
+      return;
+    }
+
+    const isNumber = z.coerce.number().safeParse(value);
+
+    if (isNumber.success) {
+      setValueError("");
+      updateValueInLocalSurvey(resource.id, parseInt(value, 10));
+    } else {
+      setValueError("Value must be a number");
+      updateValueInLocalSurvey(resource.id, value);
+    }
+  };
+
   return (
     <div className="flex items-center gap-4 text-sm">
       <SegmentFilterItemConnector
@@ -458,13 +541,16 @@ const ActionSegmentFilter = ({
         </SelectContent>
       </Select>
 
-      <Input
-        value={resource.value.toString()}
-        onChange={(e) => {
-          updateValueInLocalSurvey(resource.id, e.target.value);
-        }}
-        className="w-auto"
-      />
+      <div className="flex flex-col gap-1">
+        <Input
+          value={valueInput}
+          onChange={(e) => {
+            checkValue(e);
+          }}
+          className={cn("w-auto", valueError && "border border-red-500")}
+        />
+        {valueError && <p className="text-xs text-red-500">{valueError}</p>}
+      </div>
 
       <div className="flex items-center gap-2">
         <DropdownMenu>
@@ -506,8 +592,12 @@ const UserSegmentFilter = ({
   setUserSegment,
 }: TUserSegmentFilterProps) => {
   const { userSegmentId } = resource.root;
-  const { userSegments } = useUserSegments(environmentId);
+  const { userSegments, isLoadingUserSegments } = useUserSegments(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
+
+  if (isLoadingUserSegments) {
+    return <div>Loading...</div>;
+  }
 
   const currentUserSegment = userSegments?.find((segment) => segment.id === userSegmentId);
 
