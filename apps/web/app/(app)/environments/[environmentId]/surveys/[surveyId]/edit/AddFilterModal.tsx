@@ -39,6 +39,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
   ];
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const devices = [
     { id: "phone", name: "Phone" },
     { id: "desktop", name: "Desktop" },

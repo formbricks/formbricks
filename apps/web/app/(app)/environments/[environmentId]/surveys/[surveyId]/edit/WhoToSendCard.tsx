@@ -89,6 +89,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
         setOpen(true);
       }
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingAttributeClasses]);
 
   useEffect(() => {
