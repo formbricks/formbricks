@@ -100,6 +100,8 @@ export default function Modal({
     };
   }, [highlightBorderColor]);
 
+  if (!show) return null;
+
   return (
     <div
       aria-live="assertive"
@@ -110,7 +112,7 @@ export default function Modal({
       <div
         className={cn(
           "relative h-full w-full",
-          show && isCenter
+          isCenter
             ? darkOverlay
               ? "sm:bg-gray-700/80"
               : "sm:bg-white/50"
@@ -125,23 +127,25 @@ export default function Modal({
             isMobile ? "top-full" : "",
             handleMobileClasses(isMobile, show)
           )}>
-          <div class="absolute right-0 top-0 block pr-4 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              class="relative rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
-              <span class="sr-only">Close</span>
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          {!isCenter && (
+            <div class="absolute right-0 top-0 block pr-4 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                class="relative rounded-md text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+                <span class="sr-only">Close</span>
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
           <div style={highlightBorderColorStyle}>{children}</div>
         </div>
       </div>

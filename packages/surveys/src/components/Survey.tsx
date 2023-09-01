@@ -102,7 +102,7 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
-        <div className="flex h-full w-full flex-col justify-between bg-white px-6 py-3">
+        <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-5">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {questionId === "end" && survey.thankYouCard.enabled ? (
               <ThankYouCard
@@ -128,7 +128,7 @@ export function Survey({
               )
             )}
           </div>
-          <div className="mt-5 h-20">
+          <div className="mt-8">
             {formbricksSignature && <FormbricksSignature />}
             <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
           </div>
