@@ -14,7 +14,7 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import Loading from "@/app/s/[surveyId]/loading";
 import { TProduct } from "@formbricks/types/v1/product";
 import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
-
+import { verifyTokenAction } from "@/app/s/[surveyId]/actions";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -43,6 +43,33 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
   const topRef = useRef<HTMLDivElement>(null);
   const [autoFocus, setAutofocus] = useState(false);
   const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const [shouldRenderVerifyEmail, setShouldRenderVerifyEmail] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState(true);
+
+  const checkUserId = async (userId: string): Promise<boolean> => {
+    try {
+      const result = await verifyTokenAction(userId, survey.id);
+      return result;
+    } catch (error) {
+      return false;
+    }
+  };
+  useEffect(() => {
+    if (survey.verifyEmail) {
+      setShouldRenderVerifyEmail(true);
+    }
+    if (URLParams.get("userId")) {
+      const userId = URLParams.get("userId")!;
+      checkUserId(userId)
+        .then((result) => {
+          setIsTokenValid(result);
+          setShouldRenderVerifyEmail(!result); // Set shouldRenderVerifyEmail based on result
+        })
+        .catch((error) => {
+          console.error("Error checking user ID:", error);
+        });
+    }
+  }, []);
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
@@ -66,8 +93,11 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
     );
   }
 
-  if(survey.verifyEmail && URLParams.get("userId")===null){
-    return <VerifyEmail questions={survey.questions}/>
+  if (shouldRenderVerifyEmail) {
+    if (!isTokenValid) {
+      return <VerifyEmail survey={survey} isErrorComponent={true} />;
+    }
+    return <VerifyEmail survey={survey} />;
   }
 
   return (

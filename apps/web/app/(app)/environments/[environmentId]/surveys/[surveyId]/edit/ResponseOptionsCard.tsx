@@ -74,7 +74,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setVerifyEmailToggle((prev) => !prev);
 
     if (verifyEmailToggle && localSurvey.verifyEmail) {
-      setLocalSurvey({ ...localSurvey, verifyEmail: null }); 
+      setLocalSurvey({ ...localSurvey, verifyEmail: null });
     }
   };
 
@@ -111,12 +111,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     subheading?: string;
   }) => {
     const message = {
-      name: name || verifyEmailSurveyDetails.name ,
+      name: name || verifyEmailSurveyDetails.name,
       subheading: subheading || verifyEmailSurveyDetails.subheading,
     };
 
-    setVerifyEmailSurveyDetails(message)
-    setLocalSurvey({...localSurvey, verifyEmail: message})
+    setVerifyEmailSurveyDetails(message);
+    setLocalSurvey({ ...localSurvey, verifyEmail: message });
   };
 
   useEffect(() => {
@@ -133,12 +133,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       setSurveyClosedMessageToggle(true);
     }
 
-    if(localSurvey.verifyEmail){
+    if (localSurvey.verifyEmail) {
       setVerifyEmailSurveyDetails({
         name: localSurvey.verifyEmail.name!,
-        subheading: localSurvey.verifyEmail.subheading!
-      })
-      setVerifyEmailToggle(true)
+        subheading: localSurvey.verifyEmail.subheading!,
+      });
+      setVerifyEmailToggle(true);
     }
 
     if (localSurvey.closeOnDate) {
@@ -307,7 +307,9 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center  bg-slate-50">
                     <p className="text-md font-semibold">How it works</p>
-                    <p className="text-sm mt-2 mb-4 text-slate-500">Respondants will receive the survey link via email.</p>
+                    <p className="mb-4 mt-2 text-sm text-slate-500">
+                      Respondants will receive the survey link via email.
+                    </p>
                     <Label htmlFor="headline">Survey Name (Public)</Label>
                     <Input
                       autoFocus

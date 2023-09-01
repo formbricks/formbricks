@@ -233,7 +233,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (data.verifyEmail === null) {
       data.verifyEmail = prismaClient.JsonNull;
     }
-    
 
     const prismaRes = await prisma.survey.update({
       where: { id: surveyId },
