@@ -28,7 +28,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   });
 
   const [singleUseMessage, setSingleUseMessage] = useState({
-    heading: "This survey link has already been used.",
+    heading: "The survey has already been answered.",
     subheading: "You can only use this link once.",
   });
 

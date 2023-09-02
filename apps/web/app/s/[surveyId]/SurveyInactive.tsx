@@ -23,7 +23,7 @@ const SurveyInactive = ({
     "not found": "There is no survey with this ID.",
     paused: "This free & open-source survey is temporarily paused.",
     completed: "This free & open-source survey has been closed.",
-    "link invalid": "This survey link is invalid. Please request a valid link from the survey creator.",
+    "link invalid": "This survey can only be taken by invitation.",
   };
 
   return (
