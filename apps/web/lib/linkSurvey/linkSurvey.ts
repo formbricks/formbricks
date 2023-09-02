@@ -97,7 +97,7 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
   useEffect(() => {
     if (!isLoadingPerson) {
       const storedResponse = getStoredResponse(survey.id, isSingleUse ? singleUseId : null);
-      if (survey && !storedResponse) {
+      if (survey && !storedResponse && !finished) {
         setCurrentQuestion(survey.questions[0]);
 
         if (isPreview) return;
@@ -114,7 +114,7 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
   }, [survey, isPreview, isLoadingPerson]);
 
   useEffect(() => {
-    if (currentQuestion && survey && !finished) {
+    if (currentQuestion && survey) {
       setProgress(calculateProgress(currentQuestion, survey));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

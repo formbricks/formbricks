@@ -14,15 +14,16 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import Loading from "@/app/s/[surveyId]/loading";
 import { TProduct } from "@formbricks/types/v1/product";
 import SurveyLinkUsed from "@/app/s/[surveyId]/SurveyLinkUsed";
+import { TResponse } from "@formbricks/types/v1/responses";
 
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
   singleUseId?: string;
-  hasSingUseResponse?: boolean;
+  singleUseResponse?: TResponse;
 }
 
-export default function LinkSurvey({ survey, product, singleUseId, hasSingUseResponse }: LinkSurveyProps) {
+export default function LinkSurvey({ survey, product, singleUseId, singleUseResponse }: LinkSurveyProps) {
   const {
     currentQuestion,
     finished,
@@ -44,8 +45,11 @@ export default function LinkSurvey({ survey, product, singleUseId, hasSingUseRes
   const topRef = useRef<HTMLDivElement>(null);
   const [autoFocus, setAutofocus] = useState(false);
 
-  const memoizedHasSingUseResponse = useMemo(() => {
-    return hasSingUseResponse;
+  const hasFinishedSingleUseResponse = useMemo(() => {
+    if (singleUseResponse && singleUseResponse.finished) {
+      return true;
+    }
+    return false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -63,7 +67,7 @@ export default function LinkSurvey({ survey, product, singleUseId, hasSingUseRes
     }
   }, [currentQuestion]);
 
-  if (!finished && memoizedHasSingUseResponse) {
+  if (!finished && hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
 

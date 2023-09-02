@@ -41,7 +41,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
             survey={survey}
             product={product}
             singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-            hasSingUseResponse={isSingleUseSurvey ? !!singleUseResponse : undefined}
+            singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
           />
           <LegalFooter />
         </>
