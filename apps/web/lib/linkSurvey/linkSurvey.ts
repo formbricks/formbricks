@@ -114,7 +114,7 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
   }, [survey, isPreview, isLoadingPerson]);
 
   useEffect(() => {
-    if (currentQuestion && survey) {
+    if (currentQuestion && survey && !finished) {
       setProgress(calculateProgress(currentQuestion, survey));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
