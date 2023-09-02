@@ -3,6 +3,7 @@ import { TResponsePersonAttributes, TResponseData, TResponseMeta } from "@formbr
 import {
   TSurveyClosedMessage,
   TSurveyQuestions,
+  TSurveySingleUse,
   TSurveyThankYouCard,
   TSurveyVerifyEmail,
 } from "@formbricks/types/v1/surveys";
@@ -18,6 +19,7 @@ declare global {
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyThankYouCard = TSurveyThankYouCard;
     export type SurveyClosedMessage = TSurveyClosedMessage;
+    export type SurveySingleUse = TSurveySingleUse;
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
     export type UserNotificationSettings = TUserNotificationSettings;
   }
