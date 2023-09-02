@@ -11,7 +11,7 @@ export interface SurveyClosedMessage {
   subheading?: string;
 }
 
-export interface verifyEmail {
+export interface VerifyEmail {
   name?: string;
   subheading?: string;
 }
@@ -37,7 +37,7 @@ export interface Survey {
   delay: number;
   autoComplete: number | null;
   surveyClosedMessage: SurveyClosedMessage | null;
-  verifyEmail: verifyEmail | null;
+  verifyEmail: VerifyEmail | null;
   closeOnDate: Date | null;
   _count: { responses: number | null } | null;
 }

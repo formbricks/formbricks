@@ -15,12 +15,14 @@ export const ZSurveyClosedMessage = z
   })
   .optional();
 
-export const ZVerifyEmail = z
+export const ZSurveyVerifyEmail = z
   .object({
     name: z.optional(z.string()),
     subheading: z.optional(z.string()),
   })
   .optional();
+
+export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
