@@ -7,7 +7,6 @@ import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/s
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import QuestionSkip from "@/components/shared/QuestionSkip";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
@@ -20,15 +19,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
+import { personIndetifier } from "@/lib/people/people";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
   pageType: string;
-}
-
-function findEmail(person) {
-  return person.attributes?.email || null;
 }
 
 interface TooltipRendererProps {
@@ -56,21 +52,25 @@ function TooltipRenderer(props: TooltipRendererProps) {
 export default function SingleResponseCard({ survey, response, pageType }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
-  const email = response.person && findEmail(response.person);
-  const displayIdentifier =
-    response.person?.attributes.userId ||
-    email ||
-    (response.person && truncate(response.person.id, 16)) ||
-    null;
+  const displayIdentifier = personIndetifier(response.person)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
 
+
+  function isValidValue(value) {
+    return (
+        (typeof value === 'string' && value.trim() !== '') ||
+        (Array.isArray(value) && value.length > 0) ||
+        typeof value === 'number'
+    );
+}
+
   if (response.finished) {
     survey.questions.forEach((question) => {
-      if (response.data[question.id] === "") {
+      if (!isValidValue(response[question.id]) ) {
         temp.push(question.id);
       } else {
         if (temp.length > 0) {
@@ -97,6 +97,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
   if (temp.length > 0) {
     skippedQuestions.push(temp);
   }
+  console.log(skippedQuestions)
 
   function handleArray(data: string | number | string[]): string {
     if (Array.isArray(data)) {
@@ -105,6 +106,10 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       return String(data);
     }
   }
+
+
+
+
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
@@ -229,7 +234,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
 
             return (
               <div key={`${question.id}`}>
-                {response.data[question.id] ? (
+                {isValidValue(response.data[question.id]) ? (
                   <p className="text-sm text-slate-500">{question.headline}</p>
                 ) : (
                   <QuestionSkip
@@ -249,7 +254,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
                     <div className="h-8">
                       <RatingResponse
                         scale={question.scale}
-                        answer={String(response.data[question.id])}
+                        answer={Number(response.data[question.id])}
                         range={question.range}
                       />
                     </div>

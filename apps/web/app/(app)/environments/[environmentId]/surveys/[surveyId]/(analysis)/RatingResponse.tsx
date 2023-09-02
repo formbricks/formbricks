@@ -16,7 +16,7 @@ import { StarIcon } from "@heroicons/react/24/solid";
 interface RatingResponseProps {
   scale?: "number" | "star" | "smiley";
   range?: number;
-  answer: string;
+  answer: number;
 }
 
 export const RatingResponse: React.FC<RatingResponseProps> = ({ scale, range, answer }) => {
@@ -27,7 +27,7 @@ export const RatingResponse: React.FC<RatingResponseProps> = ({ scale, range, an
     // show number of stars according to answer value
     const stars: any = [];
     for (let i = 0; i < range; i++) {
-      if (i < parseInt(answer)) {
+      if (i < answer) {
         stars.push(<StarIcon className="h-7 text-yellow-400" />);
       } else {
         stars.push(<StarIcon className="h-7 text-gray-300" />);
