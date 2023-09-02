@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
 import { Button, Input } from "@formbricks/ui";
@@ -16,12 +17,15 @@ export default function VerifyEmail({
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const validateEmail = (inputEmail) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputEmail);
 
   const submitEmail = async (email) => {
+    setIsLoading(true);
     if (!validateEmail(email)) {
       toast.error("Please enter a valid email");
+      setIsLoading(false);
       return;
     }
     const data = {
@@ -35,6 +39,7 @@ export default function VerifyEmail({
     } catch (error) {
       toast.error(error.message);
     }
+    setIsLoading(false);
   };
 
   const handlePreviewClick = () => {
@@ -74,7 +79,7 @@ export default function VerifyEmail({
               value={email || ""}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <Button variant="darkCTA" onClick={() => submitEmail(email)}>
+            <Button variant="darkCTA" onClick={() => submitEmail(email)} loading={isLoading}>
               Verify
             </Button>
           </div>
