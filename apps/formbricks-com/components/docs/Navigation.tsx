@@ -258,6 +258,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Overview", href: "/docs/api/overview" },
       { title: "API Key Setup", href: "/docs/api/api-key-setup" },
       { title: "Responses", href: "/docs/api/responses" },
+      { title: "Surveys", href: "/docs/api/surveys" },
       { title: "Webhook", href: "/docs/api/webhooks" },
     ],
   },
