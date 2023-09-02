@@ -224,10 +224,8 @@ model Survey {
   environmentId       String
   status              SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyQuestions)
-  /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions           Json                    @default("[]")
-  /// @zod.custom(imports.ZSurveyThankYouCard)
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard        Json                    @default("{\"enabled\": false}")
@@ -245,6 +243,9 @@ model Survey {
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   singleUse           Json?                   @default("{\"enabled\": false}")
+  /// @zod.custom(imports.ZSurveyVerifyEmail)
+  /// [SurveyVerifyEmail]
+  verifyEmail         Json?
 }
 
 model Event {

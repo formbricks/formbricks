@@ -23,6 +23,17 @@ export const ZSurveySingleUse = z
   })
   .nullable();
 
+export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
+
+export const ZSurveyVerifyEmail = z
+  .object({
+    name: z.optional(z.string()),
+    subheading: z.optional(z.string()),
+  })
+  .optional();
+
+export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
+
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
 export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
@@ -248,6 +259,7 @@ export const ZSurvey = z.object({
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage,
   singleUse: ZSurveySingleUse,
+  verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
