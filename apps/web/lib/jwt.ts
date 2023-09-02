@@ -5,6 +5,21 @@ import { env } from "@/env.mjs";
 export function createToken(userId, userEmail, options = {}) {
   return jwt.sign({ id: userId }, env.NEXTAUTH_SECRET + userEmail, options);
 }
+export function createTokenForLinkSurvey(surveyId, userEmail) {
+  return jwt.sign({ email: userEmail }, env.NEXTAUTH_SECRET + surveyId);
+}
+
+export function verifyTokenForLinkSurvey(token, surveyId): Promise<boolean> {
+  return new Promise((resolve) => {
+    jwt.verify(token, env.NEXTAUTH_SECRET + surveyId, function (err) {
+      if (err) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+}
 
 export async function verifyToken(token, userEmail = "") {
   if (!userEmail) {

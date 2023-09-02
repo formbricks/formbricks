@@ -129,6 +129,7 @@ export default function SurveyMenuBar({
       toast.error("Please enter a valid URL for redirecting respondents");
       return false;
     }
+
     return true;
   };
 
@@ -164,7 +165,8 @@ export default function SurveyMenuBar({
           }
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log(error);
         toast.error(`Error saving changes`);
       });
   };
