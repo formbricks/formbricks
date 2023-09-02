@@ -5,7 +5,7 @@ import CodeBlock from "@/components/shared/CodeBlock";
 import { Dialog, DialogContent } from "@formbricks/ui";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
-import { CheckIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { CodeBracketIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -106,8 +106,8 @@ top:0; width:100%; height:100%; border:0;">
                   setSingleUseId(singleUseId);
                   toast.success("New single-use survey link generated!");
                 }}
-                EndIcon={LinkIcon}>
-                Generate
+                EndIcon={ArrowPathIcon}>
+                Regenerate
               </Button>
             )}
             <Button
