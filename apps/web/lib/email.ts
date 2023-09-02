@@ -61,7 +61,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data) => {
   const email = data.email;
   const surveyData = data.surveyData;
   const token = createTokenForLinkSurvey(surveyId, email);
-  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?userId=${encodeURIComponent(token)}`;
+  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   await sendEmail({
     to: data.email,
     subject: "Your Formbricks Survey",

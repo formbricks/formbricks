@@ -46,9 +46,9 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
   const [shouldRenderVerifyEmail, setShouldRenderVerifyEmail] = useState(false);
   const [isTokenValid, setIsTokenValid] = useState(true);
 
-  const checkUserId = async (userId: string): Promise<boolean> => {
+  const checkVerifyToken = async (verifyToken: string): Promise<boolean> => {
     try {
-      const result = await verifyTokenAction(userId, survey.id);
+      const result = await verifyTokenAction(verifyToken, survey.id);
       return result;
     } catch (error) {
       return false;
@@ -58,15 +58,15 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
     if (survey.verifyEmail) {
       setShouldRenderVerifyEmail(true);
     }
-    if (URLParams.get("userId")) {
-      const userId = URLParams.get("userId")!;
-      checkUserId(userId)
+    const verifyToken = URLParams.get("verify");
+    if (verifyToken) {
+      checkVerifyToken(verifyToken)
         .then((result) => {
           setIsTokenValid(result);
           setShouldRenderVerifyEmail(!result); // Set shouldRenderVerifyEmail based on result
         })
         .catch((error) => {
-          console.error("Error checking user ID:", error);
+          console.error("Error checking verify token:", error);
         });
     }
   }, []);

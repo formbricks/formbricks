@@ -27,7 +27,7 @@ export default function VerifyEmail({
     const data = {
       surveyId: survey.id,
       email: email,
-      surveyData: survey.verifyEmail!,
+      surveyData: survey.verifyEmail,
     };
     try {
       await sendLinkSurveyEmailAction(data);
