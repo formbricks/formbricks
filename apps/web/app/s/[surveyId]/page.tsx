@@ -7,7 +7,6 @@ import { getSurvey } from "@formbricks/lib/services/survey";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
 import { getResponseBySingleUseId } from "@formbricks/lib/services/response";
-import SurveyLinkUsed from "@/app/s/[surveyId]/SurveyLinkUsed";
 
 type LinkSurveyPageProps = {
   params: { surveyId: string };
@@ -31,13 +30,8 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     return <SurveyInactive status="link invalid" />;
   }
 
-  const singleUseResponse = singleUseId ? await getResponseBySingleUseId(survey.id, singleUseId) : null;
-
-  if (isSingleUseSurvey && singleUseResponse?.finished && singleUseResponse) {
-    return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
-  }
-
   const product = await getProductByEnvironmentId(survey.environmentId);
+  const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUseId);
 
   return (
     <>
@@ -46,7 +40,8 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           <LinkSurvey
             survey={survey}
             product={product}
-            singleUseId={survey.singleUse?.enabled ? singleUseId : undefined}
+            singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+            hasSingUseResponse={isSingleUseSurvey ? !!singleUseResponse : undefined}
           />
           <LegalFooter />
         </>

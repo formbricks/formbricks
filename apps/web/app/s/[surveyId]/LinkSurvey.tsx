@@ -9,18 +9,20 @@ import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import Loading from "@/app/s/[surveyId]/loading";
 import { TProduct } from "@formbricks/types/v1/product";
+import SurveyLinkUsed from "@/app/s/[surveyId]/SurveyLinkUsed";
 
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
   singleUseId?: string;
+  hasSingUseResponse?: boolean;
 }
 
-export default function LinkSurvey({ survey, product, singleUseId }: LinkSurveyProps) {
+export default function LinkSurvey({ survey, product, singleUseId, hasSingUseResponse }: LinkSurveyProps) {
   const {
     currentQuestion,
     finished,
@@ -42,6 +44,11 @@ export default function LinkSurvey({ survey, product, singleUseId }: LinkSurveyP
   const topRef = useRef<HTMLDivElement>(null);
   const [autoFocus, setAutofocus] = useState(false);
 
+  const memoizedHasSingUseResponse = useMemo(() => {
+    return hasSingUseResponse;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
     if (window.self === window.top) {
@@ -55,6 +62,10 @@ export default function LinkSurvey({ survey, product, singleUseId }: LinkSurveyP
       topRef.current.scrollTop = 0;
     }
   }, [currentQuestion]);
+
+  if (!finished && memoizedHasSingUseResponse) {
+    return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
+  }
 
   if (!currentQuestion || prefilling) {
     return (

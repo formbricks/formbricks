@@ -98,37 +98,39 @@ export const getResponsesByPersonId = async (personId: string): Promise<Array<TR
   }
 };
 
-export const getResponseBySingleUseId = async (
-  surveyId: string,
-  singleUseId: string
-): Promise<TResponse | null> => {
-  try {
-    const responsePrisma = await prisma.response.findUnique({
-      where: {
-        surveyId_suId: { surveyId, suId: singleUseId },
-      },
-      select: responseSelection,
-    });
+export const getResponseBySingleUseId = cache(
+  async (surveyId: string, singleUseId?: string): Promise<TResponse | null> => {
+    try {
+      if (!singleUseId) {
+        return null;
+      }
+      const responsePrisma = await prisma.response.findUnique({
+        where: {
+          surveyId_suId: { surveyId, suId: singleUseId },
+        },
+        select: responseSelection,
+      });
 
-    if (!responsePrisma) {
-      return null;
+      if (!responsePrisma) {
+        return null;
+      }
+
+      const response: TResponse = {
+        ...responsePrisma,
+        person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      };
+
+      return response;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Database operation failed");
+      }
+
+      throw error;
     }
-
-    const response: TResponse = {
-      ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
   }
-};
+);
 
 export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
   captureTelemetry("response created");
