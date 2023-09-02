@@ -248,7 +248,7 @@ export const ZSurvey = z.object({
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage,
-  verifyEmail: ZVerifyEmail.nullable(),
+  verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
