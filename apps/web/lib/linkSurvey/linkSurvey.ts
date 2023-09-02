@@ -62,8 +62,8 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
         setStoredResponseValue(null);
         setResponseId(null);
         setHistory([]);
-        // isSingleUse is used saving the response in local storage
-        // with a single use id, even if users set it manually
+        // isSingleUse is used to prevent saving the response in local storage
+        // when single use is diabled, even if users manually add the suId query parameter
         clearStoredResponses(survey.id, isSingleUse ? singleUseId : null);
         return;
       }
