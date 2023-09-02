@@ -81,8 +81,7 @@ export const useLinkSurveyUtils = (survey: TSurvey, singleUseId?: string) => {
         }
         return acc;
       }, 0);
-
-      if (survey.questions.length > lastStoredQuestionIndex + 1) {
+      if (survey.questions.length > lastStoredQuestionIndex) {
         const nextQuestion = survey.questions[lastStoredQuestionIndex];
         setCurrentQuestion(nextQuestion);
         setProgress(calculateProgress(nextQuestion, survey));
