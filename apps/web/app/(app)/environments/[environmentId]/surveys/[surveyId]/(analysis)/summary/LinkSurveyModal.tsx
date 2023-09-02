@@ -102,8 +102,8 @@ top:0; width:100%; height:100%; border:0;">
                 aria-label="Generate new single-use survey link"
                 className="flex justify-center"
                 onClick={() => {
-                  const newSingleUseSurveyId = cuid2.createId();
-                  setSingleUseId(newSingleUseSurveyId);
+                  const singleUseId = cuid2.createId();
+                  setSingleUseId(singleUseId);
                   toast.success("New single-use survey link generated!");
                 }}
                 EndIcon={LinkIcon}>

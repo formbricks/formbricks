@@ -25,6 +25,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
+import cuid2 from "@paralleldrive/cuid2";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -151,7 +152,11 @@ export default function SurveyDropDownMenu({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`/s/${survey.id}?preview=true`}
+                    href={
+                      survey.singleUse?.enabled
+                        ? `/s/${survey.id}?suId=${cuid2.createId()}%preview=true`
+                        : `/s/${survey.id}?preview=true`
+                    }
                     target="_blank">
                     <EyeIcon className="mr-2 h-4 w-4" />
                     Preview Survey
@@ -161,8 +166,13 @@ export default function SurveyDropDownMenu({
                   <button
                     className="flex w-full items-center"
                     onClick={() => {
+                      const singleUseId = cuid2.createId();
+                      const defaultSurveyUrl = `${window.location.protocol}//${window.location.host}/s/${survey.id}`;
+
                       navigator.clipboard.writeText(
-                        `${window.location.protocol}//${window.location.host}/s/${survey.id}`
+                        survey.singleUse?.enabled
+                          ? `${defaultSurveyUrl}?suId=${singleUseId}`
+                          : defaultSurveyUrl
                       );
                       toast.success("Copied link to clipboard");
                     }}>
