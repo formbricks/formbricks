@@ -333,7 +333,6 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                   </div>
                 </div>
               </AdvancedOptionToggle>
-              {console.log(localSurvey)}
             </>
           )}
         </div>
