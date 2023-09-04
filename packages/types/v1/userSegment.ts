@@ -10,7 +10,7 @@ export const BASE_OPERATORS = [
   "greaterThan",
   "greaterEqual",
 ] as const;
-export const ARITHMETIC_OPERATORS = BASE_OPERATORS;
+export const ARITHMETIC_OPERATORS = ["lessThan", "lessEqual", "greaterThan", "greaterEqual"] as const;
 export type TArithmeticOperator = (typeof ARITHMETIC_OPERATORS)[number];
 export const STRING_OPERATORS = ["contains", "doesNotContain", "startsWith", "endsWith"] as const;
 export type TStringOperator = (typeof STRING_OPERATORS)[number];

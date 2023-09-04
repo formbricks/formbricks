@@ -239,19 +239,8 @@ const AttributeSegmentFilter = ({
       return;
     }
 
-    if (STRING_OPERATORS.includes(operator as TStringOperator)) {
-      const isString = z.coerce.string().safeParse(value);
-
-      if (isString.success) {
-        setValueError("");
-        updateValueInLocalSurvey(resource.id, value);
-      } else {
-        setValueError("Value must be a string");
-        updateValueInLocalSurvey(resource.id, value);
-      }
-
-      return;
-    }
+    setValueError("");
+    updateValueInLocalSurvey(resource.id, value);
   };
 
   return (

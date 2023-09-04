@@ -68,11 +68,11 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
   const userSegmentsFiltered = useMemo(() => {
     if (!userSegments) return [];
 
-    if (!searchValue) return userSegments;
+    if (!searchValue) return userSegments.filter((userSegment) => !userSegment.isPrivate);
 
-    return userSegments.filter((userSegment) =>
-      userSegment.title.toLowerCase().includes(searchValue.toLowerCase())
-    );
+    return userSegments
+      .filter((userSegment) => !userSegment.isPrivate)
+      .filter((userSegment) => userSegment.title.toLowerCase().includes(searchValue.toLowerCase()));
   }, [userSegments, searchValue]);
 
   const deviceTypesFiltered = useMemo(() => {
