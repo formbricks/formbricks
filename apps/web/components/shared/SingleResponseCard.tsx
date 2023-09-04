@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
-import { personIndetifier } from "@/lib/people/people";
+import { getPersonIdentifier } from "@formbricks/lib/helpers/people";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -52,7 +52,7 @@ function TooltipRenderer(props: TooltipRendererProps) {
 export default function SingleResponseCard({ survey, response, pageType }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
-  const displayIdentifier = personIndetifier(response.person)
+  const displayIdentifier = response.person ? getPersonIdentifier (response.person) : null
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -70,7 +70,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
 
   if (response.finished) {
     survey.questions.forEach((question) => {
-      if (!isValidValue(response[question.id]) ) {
+      if ((question.id in response.data) && !isValidValue(response.data[question.id]) ) {
         temp.push(question.id);
       } else {
         if (temp.length > 0) {
@@ -80,24 +80,29 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       }
     });
   } else {
-    for (let index = 0; index < survey.questions.length; index++) {
+    for (let index = survey.questions.length-1; index >= 0; index--) {
       const question = survey.questions[index];
-      if (!response.data[question.id]) {
-        temp.push(question.id);
+      if (!(response.data[question.id])) {
+        if(skippedQuestions.length === 0){
+          temp.push(question.id);
+        }
+        else if(skippedQuestions.length>0 && (question.id in response.data) && !isValidValue(response.data[question.id])){
+          temp.push(question.id)
+        }
+        
       } else {
         if (temp.length > 0) {
+          temp.reverse()
           skippedQuestions.push([...temp]);
           temp = [];
         }
       }
     }
   }
-
   // Handle the case where the last entries are empty
   if (temp.length > 0) {
     skippedQuestions.push(temp);
   }
-  console.log(skippedQuestions)
 
   function handleArray(data: string | number | string[]): string {
     if (Array.isArray(data)) {
@@ -106,10 +111,6 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       return String(data);
     }
   }
-
-
-
-
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
@@ -164,7 +165,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
   );
 
   return (
-    <div key={response.id} className={clsx("group relative", isOpen && "min-h-[300px]")}>
+    <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
         className={clsx(
           "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
@@ -251,10 +252,10 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
                 )}
                 {typeof response.data[question.id] !== "object" ? (
                   question.type === QuestionType.Rating ? (
-                    <div className="h-8">
+                    <div>
                       <RatingResponse
                         scale={question.scale}
-                        answer={Number(response.data[question.id])}
+                        answer={response.data[question.id]}
                         range={question.range}
                       />
                     </div>
@@ -264,14 +265,12 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
                     </p>
                   )
                 ) : (
-                  <p className="ph-no-capture my-1 font-semibold text-slate-700">
                     <p className="ph-no-capture my-1 font-semibold text-slate-700">
                       {handleArray(response.data[question.id])}
                     </p>
-                  </p>
                 )}
               </div>
-            );
+            )
           })}
           {response.finished && (
             <div className="flex">
@@ -308,5 +307,5 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
         />
       )}
     </div>
-  );
+  )
 }

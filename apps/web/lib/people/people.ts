@@ -53,11 +53,3 @@ export const useGetOrCreatePerson = (environmentId: string, personId?: string | 
     isLoadingPerson: isLoading,
   };
 };
-
-export const personIndetifier = (person) => {
-  if(person){
-    const email = person.attributes?.email || null;
-  return person.attributes.userId || email || person.id || null;
-  }
- 
-}

@@ -31,7 +31,7 @@ export default function QuestionSkip({ skippedQuestions, status, questions }) {
                 {skippedQuestions &&
                   skippedQuestions.map((questionId) => {
                     return (
-                      <p className="my-2">
+                      <p className="my-2" key={questionId}>
                         {questions.find((question) => question.id === questionId).headline}
                       </p>
                     );
@@ -56,7 +56,7 @@ export default function QuestionSkip({ skippedQuestions, status, questions }) {
                 {skippedQuestions &&
                   skippedQuestions.map((questionId) => {
                     return (
-                      <p className="my-2">
+                      <p className="my-2" key={questionId}>
                         {questions.find((question) => question.id === questionId).headline}
                       </p>
                     );

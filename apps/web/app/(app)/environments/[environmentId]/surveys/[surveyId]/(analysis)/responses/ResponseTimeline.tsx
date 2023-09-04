@@ -23,7 +23,9 @@ export default function ResponseTimeline({ environmentId, responses, survey }: R
       ) : (
         <div>
           {responses.map((response) => {
-            return <SingleResponseCard survey={survey} response={response} pageType="response" />;
+            return<div key={response.id}>
+             <SingleResponseCard survey={survey} response={response} pageType="response" />
+            </div>
           })}
         </div>
       )}

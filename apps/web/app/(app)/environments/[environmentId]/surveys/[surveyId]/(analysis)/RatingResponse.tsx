@@ -16,7 +16,7 @@ import { StarIcon } from "@heroicons/react/24/solid";
 interface RatingResponseProps {
   scale?: "number" | "star" | "smiley";
   range?: number;
-  answer: number;
+  answer: string | number | string[];
 }
 
 export const RatingResponse: React.FC<RatingResponseProps> = ({ scale, range, answer }) => {

@@ -1,5 +1,4 @@
-import { personIndetifier } from "@/lib/people/people";
-import { truncate } from "@/lib/utils";
+import { getPersonIdentifier } from "@formbricks/lib/helpers/people";
 import { timeSince } from "@formbricks/lib/time";
 import { OpenTextQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
@@ -41,7 +40,7 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
         </div>
         {questionSummary.responses.map((response) => {
           const email = response.person && findEmail(response.person);
-          const displayIdentifier = personIndetifier(response.person)
+          const displayIdentifier = getPersonIdentifier (response.person)
           return (
             <div
               key={response.id}

@@ -8,7 +8,7 @@ import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
-import { personIndetifier } from "@/lib/people/people";
+import { getPersonIdentifier } from "@formbricks/lib/helpers/people";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: QuestionSummary<MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion>;
@@ -56,7 +56,7 @@ export default function MultipleChoiceSummary({
     const addOtherChoice = (response, value) => {
       for (const key in resultsDict) {
         if (resultsDict[key].id === "other" && value !== "") {
-          const displayIdentifier = personIndetifier(response.person)
+          const displayIdentifier = getPersonIdentifier (response.person)
           resultsDict[key].otherValues?.push({
             value,
             person: {
@@ -191,7 +191,7 @@ export default function MultipleChoiceSummary({
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                             {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{personIndetifier(otherValue.person)}</span>
+                            <span>{getPersonIdentifier (otherValue.person)}</span>
                           </div>
                         </Link>
                       )}
