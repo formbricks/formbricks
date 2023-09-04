@@ -251,7 +251,29 @@ export const ZSurvey = z.object({
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
+export const ZSurveyInput = z.object({
+  name: z.string(),
+  type: z.enum(["web", "email", "link", "mobile"]),
+  status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
+  attributeFilters: z.optional(z.array(ZSurveyAttributeFilter)),
+  displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
+  autoClose: z.union([z.number(), z.null()]),
+  triggers: z.optional(z.array(ZActionClass)),
+  redirectUrl: z.string().url().nullable(),
+  recontactDays: z.union([z.number(), z.null()]),
+  questions: ZSurveyQuestions,
+  thankYouCard: ZSurveyThankYouCard,
+  delay: z.number(),
+  autoComplete: z.union([z.number(), z.null()]),
+  closeOnDate: z.date().nullable(),
+  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+  verifyEmail: ZSurveyVerifyEmail.nullable(),
+});
+
+
 export type TSurvey = z.infer<typeof ZSurvey>;
+export type TSurveyInput = z.infer<typeof ZSurveyInput>;
+
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({
