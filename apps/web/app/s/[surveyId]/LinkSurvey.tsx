@@ -11,6 +11,8 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
+import { verifyTokenAction } from "@/app/s/[surveyId]/actions";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -42,6 +44,34 @@ export default function LinkSurvey({ survey, product, personId }: LinkSurveyProp
   );
 
   const [autoFocus, setAutofocus] = useState(false);
+  const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const [shouldRenderVerifyEmail, setShouldRenderVerifyEmail] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState(true);
+
+  const checkVerifyToken = async (verifyToken: string): Promise<boolean> => {
+    try {
+      const result = await verifyTokenAction(verifyToken, survey.id);
+      return result;
+    } catch (error) {
+      return false;
+    }
+  };
+  useEffect(() => {
+    if (survey.verifyEmail) {
+      setShouldRenderVerifyEmail(true);
+    }
+    const verifyToken = URLParams.get("verify");
+    if (verifyToken) {
+      checkVerifyToken(verifyToken)
+        .then((result) => {
+          setIsTokenValid(result);
+          setShouldRenderVerifyEmail(!result); // Set shouldRenderVerifyEmail based on result
+        })
+        .catch((error) => {
+          console.error("Error checking verify token:", error);
+        });
+    }
+  }, []);
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
@@ -49,6 +79,14 @@ export default function LinkSurvey({ survey, product, personId }: LinkSurveyProp
       setAutofocus(true);
     }
   }, []);
+
+
+  if (shouldRenderVerifyEmail) {
+    if (!isTokenValid) {
+      return <VerifyEmail survey={survey} isErrorComponent={true} />;
+    }
+    return <VerifyEmail survey={survey} />;
+  }
 
   return (
     <>
