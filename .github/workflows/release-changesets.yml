@@ -14,7 +14,7 @@ env:
 jobs:
   release:
     name: Release
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

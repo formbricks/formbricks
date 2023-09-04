@@ -16,7 +16,7 @@ jobs:
   analyze:
     needs: build
     if: always()
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     steps:
       - name: Upload bundle
         uses: actions/upload-artifact@v2
