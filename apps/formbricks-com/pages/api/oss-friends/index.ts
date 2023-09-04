@@ -95,8 +95,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Rivet",
-          description:
-            "Open-source solution to deploy, scale, and operate your multiplayer game.",
+          description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",
         },
         {

@@ -114,6 +114,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       if (!body.surveyClosedMessage) {
         body.surveyClosedMessage = prismaClient.JsonNull;
       }
+
+      if (!body.verifyEmail) {
+        body.verifyEmail = prismaClient.JsonNull;
+      }
     }
 
     if (body.triggers) {
@@ -275,6 +279,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         console.log({ err });
         throw new Error("Error updating survey");
       }
+    }
+
+    if (data.verifyEmail === null) {
+      data.verifyEmail = prismaClient.JsonNull;
     }
 
     try {
