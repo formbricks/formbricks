@@ -22,7 +22,7 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
       if (questionId === "end") return 1;
 
       let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);
-      if(progress> 0 && currentQustionIdx === prevQuestionIdx) return progress;
+      if (progress > 0 && currentQustionIdx === prevQuestionIdx) return progress;
       if (currentQustionIdx === -1) currentQustionIdx = 0;
       const currentQuestion = survey.questions[currentQustionIdx];
       const surveyLength = survey.questions.length;
@@ -51,7 +51,7 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
       // Update the progress array based on user's navigation
       let updatedProgress = progress;
       if (didUserGoBackwards) {
-        updatedProgress = progress - (prevQuestionIdx-currentQustionIdx)*PROGRESS_INCREMENT;
+        updatedProgress = progress - (prevQuestionIdx - currentQustionIdx) * PROGRESS_INCREMENT;
       } else if (newProgress > progress) {
         updatedProgress = newProgress;
       } else if (newProgress <= progress && progress + PROGRESS_INCREMENT <= 1) {

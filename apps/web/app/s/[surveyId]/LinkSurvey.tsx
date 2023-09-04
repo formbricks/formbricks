@@ -17,7 +17,7 @@ interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
   personId?: string;
-  emailVerificationStatus?: string | null
+  emailVerificationStatus?: string | null;
 }
 
 export default function LinkSurvey({ survey, product, personId, emailVerificationStatus }: LinkSurveyProps) {
@@ -52,8 +52,7 @@ export default function LinkSurvey({ survey, product, personId, emailVerificatio
     }
   }, []);
 
-
-  if (emailVerificationStatus && emailVerificationStatus!== "verified") {
+  if (emailVerificationStatus && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
       return <VerifyEmail survey={survey} isErrorComponent={true} />;
     }
