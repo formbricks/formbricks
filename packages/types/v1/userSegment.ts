@@ -159,7 +159,6 @@ export const ZUserSegmentFilter = z
   )
   .refine(
     (filter) => {
-      console.log(filter.qualifier.operator, filter.value, typeof filter.value);
       // if the operator is an arithmentic operator, the value must be a number
       if (
         ARITHMETIC_OPERATORS.includes(filter.qualifier.operator as (typeof ARITHMETIC_OPERATORS)[number]) &&
