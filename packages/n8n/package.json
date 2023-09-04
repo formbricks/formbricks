@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/n8n-nodes-formbricks",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A n8n node to connect Formbricks and send survey data to hundreds of other apps.",
   "keywords": [
     "n8n-community-node-package",
