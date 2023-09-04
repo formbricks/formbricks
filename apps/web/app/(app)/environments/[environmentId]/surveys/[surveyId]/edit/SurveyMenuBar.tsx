@@ -159,6 +159,15 @@ export default function SurveyMenuBar({
       return false;
     }
 
+    if (
+      survey.redirectUrl &&
+      !survey.redirectUrl.includes("https://") &&
+      !survey.redirectUrl.includes("http://")
+    ) {
+      toast.error("Please enter a valid URL for redirecting respondents");
+      return false;
+    }
+
     return true;
   };
 
@@ -199,7 +208,8 @@ export default function SurveyMenuBar({
           }
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log(error);
         toast.error(`Error saving changes`);
       });
   };

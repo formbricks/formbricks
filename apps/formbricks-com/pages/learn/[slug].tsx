@@ -100,7 +100,7 @@ export default function ArticlePage({ article = {} }: ArticlePageProps) {
   // Use next/image to render images in markdown
   const renderers = {
     img: (image) => {
-      return <Image src={image.src} alt={image.alt} width={1000} height={500} />;
+      return <Image src={image.src} alt={image.alt} width={1000} height={500} className="rounded-lg" />;
     },
   };
 

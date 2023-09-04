@@ -32,10 +32,68 @@ The API requests are authorized with a personal API key. This API key gives you 
    />
 
 <Note>
-  ## Store API key safely {{ class: "text-white" }}
-  Anyone who has your API key has full control over your account. For security reasons, you cannot view the API
-  key again.
+  ### Store API key safely
+  Anyone who has your API key has full control over your account.
+  For security reasons, you cannot view the API key again.
 </Note>
+
+### Test your API Key
+
+Hit the below request to verify that you are authenticated with your API Key and the server is responding. 
+
+## Get My Profile {{ tag: 'GET', label: '/api/v1/me' }}
+
+<Row>
+  <Col>
+
+    Get the product details and environment type of your account.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/me">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/me' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "id": "cll2m30r70004mx0huqkitgqv",
+      "createdAt": "2023-08-08T18:04:59.922Z",
+      "updatedAt": "2023-08-08T18:04:59.922Z",
+      "type": "production",
+      "product": {
+          "id": "cll2m30r60003mx0hnemjfckr",
+          "name": "My Product"
+      },
+      "widgetSetupCompleted": false
+    }
+    ```
+    ```json {{ title: '401 Not Authenticated' }}
+    Not authenticated
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
 
 ### Delete a personal API key
 
