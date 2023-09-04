@@ -1,5 +1,5 @@
 {
-  "name": "turbo",
+  "name": "formbricks",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
@@ -24,7 +24,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=js... && changeset publish",
+    "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
     "test": "turbo run test",
     "prepare": "husky install"
   },
