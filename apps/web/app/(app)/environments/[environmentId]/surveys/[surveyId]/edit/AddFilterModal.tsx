@@ -166,9 +166,9 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
             userSegmentId,
           },
           qualifier: {
-            operator: "equals",
+            operator: "userIsIn",
           },
-          value: "",
+          value: userSegmentId,
         },
       };
 

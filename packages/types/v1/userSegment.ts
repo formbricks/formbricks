@@ -194,7 +194,6 @@ export type TBaseFilterGroupItem = {
   connector: TUserSegmentConnector;
   resource: TUserSegmentFilter | TBaseFilterGroup;
 };
-
 export type TBaseFilterGroup = TBaseFilterGroupItem[];
 
 const refineFilterGroup = (filterGroup: TBaseFilterGroup): boolean => {
