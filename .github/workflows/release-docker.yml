@@ -7,8 +7,9 @@ on:
 
 jobs:
   release-image-on-dockerhub:
-    name: Release
-    runs-on: ubuntu-latest
+    name: Release image on Dockerhub
+    runs-on: buildjet-4vcpu-ubuntu-2204
+    timeout-minutes: 30
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
