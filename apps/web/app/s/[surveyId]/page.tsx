@@ -17,10 +17,11 @@ export default async function LinkSurveyPage({ params, searchParams }) {
   if (survey && survey.status !== "inProgress") {
     return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
   }
+  
 
   const product = await getProductByEnvironmentId(survey.environmentId);
+  const userId = (searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("userId")) ? searchParams?.get("userId") : undefined 
 
-  const userId = searchParams?.get("userId");
   const person = await getOrCreatePersonByUserId(userId, survey.environmentId);
 
   return <LinkSurvey survey={survey} product={product} personId={person?.id} />;
