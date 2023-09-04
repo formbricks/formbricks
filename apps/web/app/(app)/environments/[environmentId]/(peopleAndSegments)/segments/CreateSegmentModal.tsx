@@ -26,6 +26,8 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [userSegment, setUserSegment] = useState<TUserSegment>(initialSegmentState);
+  const [titleError, setTitleError] = useState("");
+  const [descriptionError, setDescriptionError] = useState("");
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
     const updatedUserSegment = produce(userSegment, (draft) => {
@@ -43,14 +45,30 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
   };
 
   const handleCreateSegment = async () => {
-    await createUserSegmentAction({
-      title: userSegment.title,
-      description: userSegment.description ?? "",
-      isPrivate: userSegment.isPrivate,
-      filters: userSegment.filters,
-      environmentId,
-      surveyId: "",
-    });
+    if (!userSegment.title) {
+      setTitleError("Title is required");
+      return;
+    }
+
+    if (!userSegment.description) {
+      setDescriptionError("Description is required");
+      return;
+    }
+
+    try {
+      await createUserSegmentAction({
+        title: userSegment.title,
+        description: userSegment.description ?? "",
+        isPrivate: userSegment.isPrivate,
+        filters: userSegment.filters,
+        environmentId,
+        surveyId: "",
+      });
+
+      toast.success("Segment created successfully!");
+    } catch (err) {
+      toast.error(`${err.message}`);
+    }
 
     setOpen(false);
     toast.success("Segment created successfully!");
@@ -69,7 +87,7 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="relative overflow-hidden bg-slate-50 p-0 sm:!max-w-2xl">
             <div className="rounded-t-lg bg-slate-100">
-              <div className="flex w-full items-center justify-between p-6">
+              <div className="flex w-full items-center gap-4 p-6">
                 <div className="flex items-center space-x-2">
                   <div className="mr-1.5 h-6 w-6 text-slate-500">
                     <UserGroupIcon />
@@ -81,13 +99,20 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
                     </p>
                   </div>
                 </div>
+
+                <div>
+                  <Button variant="darkCTA" onClick={handleCreateSegment}>
+                    Save
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col rounded-lg px-6 pb-6">
+            <div className="flex flex-col overflow-auto px-6 pb-6">
               <div className="flex w-full items-center gap-4">
                 <div className="flex w-1/2 flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">Title</label>
+                  {titleError && <div className="text-sm text-red-500">{titleError}</div>}
                   <Input
                     placeholder="Ex. Power Users"
                     onChange={(e) => {
@@ -101,6 +126,7 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
 
                 <div className="flex w-1/2 flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">Description</label>
+                  {descriptionError && <div className="text-sm text-red-500">{descriptionError}</div>}
                   <Input
                     placeholder="Ex. Fully activated recurring users"
                     onChange={(e) => {
@@ -114,7 +140,7 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
               </div>
 
               <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
-              <div className="flex flex-col gap-4 rounded-lg border border-slate-700 p-4">
+              <div className="flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
                 <SegmentFilters
                   environmentId={environmentId}
                   userSegment={userSegment}
