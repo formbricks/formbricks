@@ -34,6 +34,7 @@ export default function MultipleChoiceMultiForm({
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
+  const [isInvalidValue, setIsInvalidValue] = useState<string>("");
 
   const shuffleOptionsTypes = {
     none: {
@@ -75,6 +76,17 @@ export default function MultipleChoiceMultiForm({
       newLogic.push({ ...logic, value: newL });
     });
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+  };
+
+  const findDuplicateLabel = () => {
+    for (let i = 0; i < question.choices.length; i++) {
+      for (let j = i + 1; j < question.choices.length; j++) {
+        if (question.choices[i].label.trim() === question.choices[j].label.trim()) {
+          return question.choices[i].label.trim(); // Return the duplicate label
+        }
+      }
+    }
+    return null;
   };
 
   const addChoice = (choiceIdx?: number) => {
@@ -199,14 +211,17 @@ export default function MultipleChoiceMultiForm({
                   className={cn(choice.id === "other" && "border-dashed")}
                   placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
+                  onBlur={() => {
+                    const duplicateLabel = findDuplicateLabel();
+                    if (duplicateLabel) {
+                      setIsInvalidValue(duplicateLabel);
+                    } else {
+                      setIsInvalidValue("");
+                    }
+                  }}
                   isInvalid={
-                    isInValid &&
-                    (choice.label.trim() === "" ||
-                      question.choices.some((element, index) =>
-                        question.choices
-                          .slice(index + 1)
-                          .some((nextElement) => nextElement.label.trim() === element.label.trim())
-                      ))
+                    (isInValid != null && question.choices[choiceIdx].label.trim() === "") ||
+                    (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim())
                   }
                 />
                 {question.choices && question.choices.length > 2 && (

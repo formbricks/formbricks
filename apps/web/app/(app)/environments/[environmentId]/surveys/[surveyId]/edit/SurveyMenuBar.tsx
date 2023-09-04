@@ -126,6 +126,7 @@ export default function SurveyMenuBar({
       existingQuestionIds.add(question.id);
       for (const logic of question.logic || []) {
         if (question.required && logic.condition === "skipped") {
+          setInvalidQuestions([question.id]);
           toast.error("Your logic jumps a required question. Please update the logic settings.");
           return false;
         }
@@ -135,12 +136,14 @@ export default function SurveyMenuBar({
         ).length;
 
         if (validFields < 2) {
+          setInvalidQuestions([question.id]);
           toast.error("Incomplete logic jumps detected: Please fill or delete them.");
           return false;
         }
 
         const thisLogic = `${logic.condition}-${logic.value}`;
         if (existingLogicConditions.has(thisLogic)) {
+          setInvalidQuestions([question.id]);
           toast.error("You have 2 competing logic conditons. Please update or delete one.");
           return false;
         }
