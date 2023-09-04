@@ -1,5 +1,6 @@
-name: Checks
-on: [push]
+name: Lint
+on:
+  workflow_call:
 jobs:
   build:
     name: Build, lint, and test on Node ${{ matrix.node }} and ${{ matrix.os }}
@@ -24,14 +25,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
 
-      - name: Build formbricks-js dependencies
-        run: pnpm build --filter=js
-
-      - name: create .env
-        run: cp .env.example .env
-
       - name: Lint
         run: pnpm lint
-
-      #- name: Test
-      #  run: pnpm test
