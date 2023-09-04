@@ -7,6 +7,7 @@ import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
@@ -14,7 +15,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
-import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -114,19 +114,19 @@ export default function SurveyMenuBar({
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
-      toast.error("Please fill required fields");
+      toast.error("Please fill all required fields.");
       return false;
     }
 
     for (const question of survey.questions) {
       if (existingQuestionIds.has(question.id)) {
-        toast.error("You cannot have 2 same question IDs, please change one!");
+        toast.error("There are 2 identical question IDs. Please update one.");
         return false;
       }
       existingQuestionIds.add(question.id);
       for (const logic of question.logic || []) {
         if (question.required && logic.condition === "skipped") {
-          toast.error("User cannot skip a required question, please change the logic jump!");
+          toast.error("Your logic jumps a required question. Please update the logic settings.");
           return false;
         }
 
@@ -135,13 +135,13 @@ export default function SurveyMenuBar({
         ).length;
 
         if (validFields < 2) {
-          toast.error("Please fill all the opened Logic Jumps or delete them!");
+          toast.error("Incomplete logic jumps detected: Please fill or delete them.");
           return false;
         }
 
         const thisLogic = `${logic.condition}-${logic.value}`;
         if (existingLogicConditions.has(thisLogic)) {
-          toast.error("You have 2 exactly same logic conditons!");
+          toast.error("You have 2 competing logic conditons. Please update or delete one.");
           return false;
         }
         existingLogicConditions.add(thisLogic);
@@ -164,7 +164,7 @@ export default function SurveyMenuBar({
       !survey.redirectUrl.includes("https://") &&
       !survey.redirectUrl.includes("http://")
     ) {
-      toast.error("Please enter a valid URL for redirecting respondents");
+      toast.error("Please enter a valid URL for redirecting respondents.");
       return false;
     }
 
@@ -173,7 +173,7 @@ export default function SurveyMenuBar({
 
   const saveSurveyAction = (shouldNavigateBack = false) => {
     if (localSurvey.questions.length === 0) {
-      toast.error("Please add at least one question");
+      toast.error("Please add at least one question.");
       return;
     }
 

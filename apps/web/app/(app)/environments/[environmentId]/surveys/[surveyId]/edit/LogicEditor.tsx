@@ -148,7 +148,9 @@ export default function LogicEditor({
           logic.condition === undefined && logic.value === undefined && logic.destination === undefined
       );
       if (hasUndefinedLogic) {
-        toast.error("Please fill the existing logic jump first!");
+        toast("Please fill current logic jumps first.", {
+          icon: "🤓",
+        });
         return;
       }
     }
