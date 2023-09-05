@@ -5788,8 +5788,8 @@ packages:
       '@types/node': 20.5.6
     dev: true
 
-  /@types/caseless@0.12.3:
-    resolution: {integrity: sha512-ZD/NsIJYq/2RH+hY7lXmstfp/v9djGt9ah+xRQ3pcgR79qiKsG4pLl25AI7IcXxVO8dH9GiBE5rAknC0ePntlw==}
+  /@types/caseless@0.12.2:
+    resolution: {integrity: sha512-6ckxMjBBD8URvjB6J3NcnuAn5Pkl7t3TizAg+xdlzzQGSPSmBcXf8KoIH0ua/i+tio+ZRUHEXp0HEmvaR4kt0w==}
     dev: true
 
   /@types/connect-history-api-fallback@1.3.5:
@@ -6075,7 +6075,7 @@ packages:
   /@types/request@2.48.8:
     resolution: {integrity: sha512-whjk1EDJPcAR2kYHRbFl/lKeeKYTi05A15K9bnLInCVroNDCtXce57xKdI0/rQaA3K+6q0eFyUBPmqfSndUZdQ==}
     dependencies:
-      '@types/caseless': 0.12.3
+      '@types/caseless': 0.12.2
       '@types/node': 20.5.6
       '@types/tough-cookie': 4.0.2
       form-data: 2.5.1
@@ -12803,14 +12803,6 @@ packages:
       strip-ansi: 6.0.1
       through: 2.3.8
     dev: false
-
-  /internal-slot@1.0.3:
-    resolution: {integrity: sha512-O0DB1JC/sPyZl7cIo78n5dR7eUSwwpYPiXRhTzNxZVAMUuB8vlnRFyLxdrVToks6XPLVnFfbzaVd5WLjhgg+vA==}
-    engines: {node: '>= 0.4'}
-    dependencies:
-      get-intrinsic: 1.2.1
-      has: 1.0.3
-      side-channel: 1.0.4
 
   /internal-slot@1.0.5:
     resolution: {integrity: sha512-Y+R5hJrzs52QCG2laLn4udYVnxsfny9CpOhNhUvk/SSSVyF6T27FzRbF0sroPidSu3X8oEAkOn2K804mjpt6UQ==}
@@ -20823,7 +20815,7 @@ packages:
       es-abstract: 1.20.4
       get-intrinsic: 1.2.1
       has-symbols: 1.0.3
-      internal-slot: 1.0.3
+      internal-slot: 1.0.5
       regexp.prototype.flags: 1.5.0
       side-channel: 1.0.4
 
