@@ -31,17 +31,21 @@ export default function EnvironmentNotice({
   if (pageType === "apiSettings") {
     return (
       <div>
-        {environment.type === "production" && (
-          <div className="flex items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
-            <LightBulbIcon className="mr-3 h-8 w-8 text-blue-400" />
-            <p>
-              You&apos;re currently in the production environment, so you can only create production API keys.
-              <a onClick={() => changeEnvironment("development")} className="ml-1 cursor-pointer underline">
-                Switch to Development now.
-              </a>
-            </p>
-          </div>
-        )}
+        <div className="flex items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
+          <LightBulbIcon className="mr-3 h-8 w-8 text-blue-400" />
+          <p>
+            {environment.type === "production"
+              ? "You're currently in the production environment, so you can only create production API keys. "
+              : "You're currently in the development environment, so you can only create development API keys. "}
+            <a
+              onClick={() =>
+                changeEnvironment(environment.type === "production" ? "development" : "production")
+              }
+              className="ml-1 cursor-pointer underline">
+              Switch to {environment.type === "production" ? "Development" : "Production"} now.
+            </a>
+          </p>
+        </div>
       </div>
     );
   }
