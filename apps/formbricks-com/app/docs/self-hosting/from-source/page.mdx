@@ -32,6 +32,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
 2.  **Modify the `.env.docker` file as required by your setup.** <br/> This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
 
         <Note>
+           ## Editing a NEXT_PUBLIC_* variable?
           Note: All environment variables starting with `NEXT_PUBLIC_` are used at build time. When you change
           environment variables later, you need to rebuild the image with `docker compose build` for the changes
           to take effect.
