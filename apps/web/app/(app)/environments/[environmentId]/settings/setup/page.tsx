@@ -1,7 +1,7 @@
 import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import EnvironmentNotice from "./EnvironmentNotice";
+import EnvironmentNotice from "../../../../../../components/shared/EnvironmentNotice";
 import SetupInstructions from "./SetupInstructions";
 
 export default function ProfileSettingsPage({ params }) {
@@ -12,7 +12,7 @@ export default function ProfileSettingsPage({ params }) {
         <WidgetStatusIndicator environmentId={params.environmentId} type="large" />
       </SettingsCard>
 
-      <EnvironmentNotice environmentId={params.environmentId} pageType="setupChecklist"/>
+      <EnvironmentNotice environmentId={params.environmentId} pageType="setupChecklist" />
       <SettingsCard
         title="How to setup"
         description="Follow these steps to setup the Formbricks widget within your app"

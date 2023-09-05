@@ -15,12 +15,12 @@ export default function EditAPIKeys({
   environmentTypeId,
   environmentType,
   apiKeys,
-  environmentId
+  environmentId,
 }: {
   environmentTypeId: string;
   environmentType: string;
   apiKeys: TApiKey[];
-  environmentId: string
+  environmentId: string;
 }) {
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
@@ -54,7 +54,7 @@ export default function EditAPIKeys({
       <div className="mb-6 text-right">
         <Button
           variant="darkCTA"
-          disabled={environmentId!==environmentTypeId}
+          disabled={environmentId !== environmentTypeId}
           onClick={() => {
             setOpenAddAPIKeyModal(true);
           }}>
