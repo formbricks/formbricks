@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
+    "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
     "lint-staged": "^14.0.1",
     "rimraf": "^5.0.1",

@@ -50,8 +50,6 @@
     "eslint-plugin-n8n-nodes-base": "^1.11.0",
     "gulp": "^4.0.2",
     "n8n-core": "legacy",
-    "n8n-workflow": "legacy",
-    "prettier": "^2.7.1",
-    "typescript": "~4.8.4"
+    "n8n-workflow": "legacy"
   }
 }
