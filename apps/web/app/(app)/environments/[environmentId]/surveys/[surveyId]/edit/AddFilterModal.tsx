@@ -1,13 +1,13 @@
 "use client";
 
-import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
-import React, { useMemo, useState } from "react";
-import { Dialog, DialogContent, Input, TabBar } from "@formbricks/ui";
-import { MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { createId } from "@paralleldrive/cuid2";
 import { useUserSegments } from "@/lib/userSegments/userSegments";
+import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
+import { Dialog, DialogContent, Input, TabBar } from "@formbricks/ui";
+import { createId } from "@paralleldrive/cuid2";
+import { MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
+import React, { useMemo, useState } from "react";
 
 type TAddFilterModalProps = {
   open: boolean;
@@ -202,14 +202,14 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
-      <DialogContent className="w-[600px] bg-slate-100 sm:max-w-2xl" hideCloseButton>
+      <DialogContent className="w-[600px] bg-white sm:max-w-2xl" hideCloseButton>
         <div className="flex w-auto flex-col">
           <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
 
-          <TabBar className="bg-slate-100" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
+          <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
         </div>
 
-        <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+        <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
           {activeTabId === "all" && (
             <>
               {allFiltersFiltered.map((filterGroup) => {
@@ -224,7 +224,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                               eventClassId: eventClass.id,
                             });
                           }}
-                          className="flex cursor-pointer items-center gap-4 text-sm">
+                          className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                           <MousePointerClick className="h-4 w-4" />
                           <p>{eventClass.name}</p>
                         </div>
@@ -240,7 +240,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                               attributeClassId: attributeClass.id,
                             });
                           }}
-                          className="flex cursor-pointer items-center gap-4 text-sm">
+                          className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                           <TagIcon className="h-4 w-4" />
                           <p>{attributeClass.name}</p>
                         </div>
@@ -256,7 +256,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                               userSegmentId: userSegment.id,
                             });
                           }}
-                          className="flex cursor-pointer items-center gap-4 text-sm">
+                          className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                           <Users2Icon className="h-4 w-4" />
                           <p>{userSegment.title}</p>
                         </div>
@@ -266,7 +266,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                     {filterGroup.devices.map((deviceType) => (
                       <div
                         key={deviceType.id}
-                        className="flex cursor-pointer items-center gap-2 p-1"
+                        className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                         onClick={() => {
                           handleAddFilter({
                             type: "device",
@@ -295,7 +295,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                         eventClassId: eventClass.id,
                       });
                     }}
-                    className="flex cursor-pointer items-center gap-4 text-sm">
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                     <MousePointerClick className="h-4 w-4" />
                     <p>{eventClass.name}</p>
                   </div>
@@ -316,7 +316,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                         attributeClassId: attributeClass.id,
                       });
                     }}
-                    className="flex cursor-pointer items-center gap-4 text-sm">
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                     <TagIcon className="h-4 w-4" />
                     <p>{attributeClass.name}</p>
                   </div>
@@ -339,7 +339,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
                           userSegmentId: userSegment.id,
                         });
                       }}
-                      className="flex cursor-pointer items-center gap-4 text-sm">
+                      className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                       <Users2Icon className="h-4 w-4" />
                       <p>{userSegment.title}</p>
                     </div>
@@ -353,7 +353,7 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
               {deviceTypesFiltered.map((deviceType) => (
                 <div
                   key={deviceType.id}
-                  className="flex cursor-pointer items-center gap-2 p-1"
+                  className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
                   onClick={() => {
                     handleAddFilter({
                       type: "device",

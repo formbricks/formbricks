@@ -79,25 +79,23 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-sm bg-slate-50 p-8 sm:max-w-md">
+      <DialogContent className="max-w-sm bg-white p-8 sm:max-w-md">
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(handleSaveSegment)}>
-          <h3 className="text-base font-semibold text-slate-900">New Segment</h3>
+          <h3 className="text-base font-semibold text-slate-900">Save as New Segment</h3>
 
-          <p className="font-medium text-slate-500">
-            Save Segments to target the same Segment in other surveys.
-          </p>
+          <p className=" text-slate-500">Save your filters as a Segment to use it in other surveys:</p>
 
           <div className="flex flex-col gap-4">
             <Input
               {...register("title", {
                 required: {
                   value: true,
-                  message: "Title is required",
+                  message: "Name is required",
                 },
               })}
               type="text"
-              placeholder="Title"
-              className="w-full rounded-xl border-2 border-slate-700 p-2"
+              placeholder="Name e.g. Power Users"
+              className="w-full rounded-lg border-2 border-slate-700 p-2"
             />
             {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
             <Input
@@ -108,8 +106,8 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
                 },
               })}
               type="text"
-              placeholder="Description"
-              className="w-full rounded-xl border-2 border-slate-700 p-2"
+              placeholder="Most active users in the last 30 days"
+              className="w-full rounded-lg border-2 border-slate-700 p-2"
             />
             {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
           </div>

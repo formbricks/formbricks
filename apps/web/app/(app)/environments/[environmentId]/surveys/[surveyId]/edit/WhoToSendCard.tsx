@@ -6,21 +6,10 @@ import SaveAsNewSegmentModal from "@/app/(app)/environments/[environmentId]/surv
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import { cloneUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
-import {
-  Badge,
-  Button,
-  // Input,
-  // Select,
-  // SelectContent,
-  // SelectItem,
-  // SelectTrigger,
-  // SelectValue,
-} from "@formbricks/ui";
+import { Badge, Button } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
