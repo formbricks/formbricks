@@ -88,18 +88,37 @@ export const ZUserSegmentAttributeFilter = z.object({
 });
 export type TUserSegmentAttributeFilter = z.infer<typeof ZUserSegmentAttributeFilter>;
 
-export const ZUserSegmentActionFilter = z.object({
-  id: z.string().cuid2(),
-  root: z.object({
-    type: z.literal("action"),
-    actionClassId: z.string(),
-  }),
-  value: ZUserSegmentFilterValue,
-  qualifier: z.object({
-    metric: z.enum(ACTION_METRICS),
-    operator: ZBaseOperator,
-  }),
-});
+export const ZUserSegmentActionFilter = z
+  .object({
+    id: z.string().cuid2(),
+    root: z.object({
+      type: z.literal("action"),
+      actionClassId: z.string(),
+    }),
+    value: ZUserSegmentFilterValue,
+    qualifier: z.object({
+      metric: z.enum(ACTION_METRICS),
+      operator: ZBaseOperator,
+    }),
+  })
+  .refine(
+    (actionFilter) => {
+      const { value } = actionFilter;
+
+      // if the value is not type of number, it's invalid
+
+      const isValueNumber = typeof value === "number";
+
+      if (!isValueNumber) {
+        return false;
+      }
+
+      return true;
+    },
+    {
+      message: "Value must be a number for action filters",
+    }
+  );
 export type TUserSegmentActionFilter = z.infer<typeof ZUserSegmentActionFilter>;
 
 export const ZUserSegmentSegmentFilter = z.object({

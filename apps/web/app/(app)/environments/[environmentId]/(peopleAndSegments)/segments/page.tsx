@@ -15,7 +15,6 @@ export default async function SegmentsPage({ params }) {
   }
 
   const segments = fetchedSegments.filter((segment) => !segment.isPrivate);
-
   return (
     <>
       <CreateSegmentModal environmentId={params.environmentId} />

@@ -3,12 +3,13 @@
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import Modal from "@/components/shared/Modal";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
-import { Button, Dialog, DialogContent, Input } from "@formbricks/ui";
+import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/20/solid";
 import { produce } from "immer";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
@@ -26,11 +27,15 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [userSegment, setUserSegment] = useState<TUserSegment>(initialSegmentState);
+  const [isCreatingSegment, setIsCreatingSegment] = useState(false);
+
   const [titleError, setTitleError] = useState("");
   const [descriptionError, setDescriptionError] = useState("");
 
-  // reset state if `open` changes
-  useEffect(() => setUserSegment(initialSegmentState), [open]);
+  const handleResetState = () => {
+    setUserSegment(initialSegmentState);
+    setOpen(false);
+  };
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
     const updatedUserSegment = produce(userSegment, (draft) => {
@@ -59,6 +64,7 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
     }
 
     try {
+      setIsCreatingSegment(true);
       await createUserSegmentAction({
         title: userSegment.title,
         description: userSegment.description ?? "",
@@ -68,13 +74,16 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
         surveyId: "",
       });
 
+      setIsCreatingSegment(false);
       toast.success("Segment created successfully!");
     } catch (err) {
       toast.error(`${err.message}`);
+      setIsCreatingSegment(false);
+      return;
     }
 
-    setOpen(false);
-    toast.success("Segment created successfully!");
+    handleResetState();
+    setIsCreatingSegment(false);
     router.refresh();
   };
 
@@ -86,90 +95,110 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
         </Button>
       </div>
 
-      {open && (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="relative overflow-hidden bg-slate-50 p-0 sm:!max-w-2xl">
-            <div className="rounded-t-lg bg-slate-100">
-              <div className="flex w-full items-center gap-4 p-6">
-                <div className="flex items-center space-x-2">
-                  <div className="mr-1.5 h-6 w-6 text-slate-500">
-                    <UserGroupIcon />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-medium">Create Segment</h3>
-                    <p className="text-sm text-slate-600">
-                      Segments help you target the users with the same characteristics easily.
-                    </p>
-                  </div>
+      <Modal
+        open={open}
+        setOpen={() => {
+          handleResetState();
+        }}
+        noPadding
+        closeOnOutsideClick={false}>
+        <div className="rounded-lg bg-slate-50 p-0">
+          <div className="rounded-t-lg bg-slate-100">
+            <div className="flex w-full items-center gap-4 p-6">
+              <div className="flex items-center space-x-2">
+                <div className="mr-1.5 h-6 w-6 text-slate-500">
+                  <UserGroupIcon />
                 </div>
-
                 <div>
-                  <Button variant="darkCTA" onClick={handleCreateSegment}>
-                    Save
-                  </Button>
+                  <h3 className="text-base font-medium">Create Segment</h3>
+                  <p className="text-sm text-slate-600">
+                    Segments help you target the users with the same characteristics easily.
+                  </p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-col overflow-auto px-6 pb-6">
-              <div className="flex w-full items-center gap-4">
-                <div className="flex w-1/2 flex-col gap-2">
-                  <label className="text-sm font-medium text-slate-900">Title</label>
-                  {titleError && <div className="text-sm text-red-500">{titleError}</div>}
-                  <Input
-                    placeholder="Ex. Power Users"
-                    onChange={(e) => {
-                      setUserSegment((prev) => ({
-                        ...prev,
-                        title: e.target.value,
-                      }));
-                    }}
-                  />
-                </div>
-
-                <div className="flex w-1/2 flex-col gap-2">
-                  <label className="text-sm font-medium text-slate-900">Description</label>
-                  {descriptionError && <div className="text-sm text-red-500">{descriptionError}</div>}
-                  <Input
-                    placeholder="Ex. Fully activated recurring users"
-                    onChange={(e) => {
-                      setUserSegment((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }));
-                    }}
-                  />
-                </div>
-              </div>
-
-              <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
-              <div className="flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
-                <SegmentFilters
-                  environmentId={environmentId}
-                  userSegment={userSegment}
-                  setUserSegment={setUserSegment}
-                  group={userSegment.filters}
-                />
-
-                <div>
-                  <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
-                    Add Filter
-                  </Button>
-                </div>
-
-                <AddFilterModal
-                  environmentId={environmentId}
-                  onAddFilter={(filter) => {
-                    handleAddFilterInGroup(filter);
+          <div className="flex flex-col overflow-auto rounded-lg bg-white p-6">
+            <div className="flex w-full items-center gap-4">
+              <div className="flex w-1/2 flex-col gap-2">
+                <label className="text-sm font-medium text-slate-900">Title</label>
+                {titleError && <div className="text-sm text-red-500">{titleError}</div>}
+                <Input
+                  placeholder="Ex. Power Users"
+                  onChange={(e) => {
+                    setUserSegment((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }));
                   }}
-                  open={addFilterModalOpen}
-                  setOpen={setAddFilterModalOpen}
+                />
+              </div>
+
+              <div className="flex w-1/2 flex-col gap-2">
+                <label className="text-sm font-medium text-slate-900">Description</label>
+                {descriptionError && <div className="text-sm text-red-500">{descriptionError}</div>}
+                <Input
+                  placeholder="Ex. Fully activated recurring users"
+                  onChange={(e) => {
+                    setUserSegment((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }));
+                  }}
                 />
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+
+            <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
+            <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
+              <SegmentFilters
+                environmentId={environmentId}
+                userSegment={userSegment}
+                setUserSegment={setUserSegment}
+                group={userSegment.filters}
+              />
+
+              <div>
+                <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                  Add Filter
+                </Button>
+              </div>
+
+              <AddFilterModal
+                environmentId={environmentId}
+                onAddFilter={(filter) => {
+                  handleAddFilterInGroup(filter);
+                }}
+                open={addFilterModalOpen}
+                setOpen={setAddFilterModalOpen}
+              />
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <div className="flex space-x-2">
+                <Button
+                  type="button"
+                  variant="minimal"
+                  onClick={() => {
+                    handleResetState();
+                  }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="darkCTA"
+                  type="submit"
+                  loading={isCreatingSegment}
+                  onClick={() => {
+                    handleCreateSegment();
+                  }}>
+                  Create Segment
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

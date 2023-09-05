@@ -30,7 +30,9 @@ export const createUserSegmentAction = async ({
   const parsedFilters = ZUserSegmentFilterGroup.safeParse(filters);
 
   if (!parsedFilters.success) {
-    throw new Error("Invalid filters");
+    const errMsg =
+      parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+    throw new Error(errMsg);
   }
 
   return await createUserSegment(environmentId, surveyId, title, description, isPrivate, filters);
@@ -41,7 +43,7 @@ export const updateUserSegmentAction = async (segmentId: string, data: TUserSegm
   const parsedFilters = ZUserSegmentFilterGroup.safeParse(filters);
 
   if (!parsedFilters.success) {
-    throw new Error("Invalid filters");
+    throw new Error(parsedFilters.error.message);
   }
 
   return await updateUserSegment(segmentId, data);
