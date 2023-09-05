@@ -148,6 +148,12 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
                   group={userSegment.filters}
                 />
 
+                <div>
+                  <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                    Add Filter
+                  </Button>
+                </div>
+
                 <AddFilterModal
                   environmentId={environmentId}
                   onAddFilter={(filter) => {

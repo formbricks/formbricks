@@ -19,6 +19,7 @@ export type TBaseOperator = z.infer<typeof ZBaseOperator>;
 
 export const ATTRIBUTE_OPERATORS = [
   ...BASE_OPERATORS,
+  "isSet",
   "contains",
   "doesNotContain",
   "startsWith",
@@ -247,6 +248,8 @@ export const convertOperatorToText = (operator: TAllOperators) => {
       return ">";
     case "greaterEqual":
       return ">=";
+    case "isSet":
+      return "is set";
     case "contains":
       return "contains ";
     case "doesNotContain":
