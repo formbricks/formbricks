@@ -12,7 +12,7 @@ export default function ProfileSettingsPage({ params }) {
         <WidgetStatusIndicator environmentId={params.environmentId} type="large" />
       </SettingsCard>
 
-      <EnvironmentNotice environmentId={params.environmentId} />
+      <EnvironmentNotice environmentId={params.environmentId} pageType="setupChecklist"/>
       <SettingsCard
         title="How to setup"
         description="Follow these steps to setup the Formbricks widget within your app"

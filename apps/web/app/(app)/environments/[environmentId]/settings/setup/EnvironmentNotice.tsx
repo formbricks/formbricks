@@ -6,7 +6,7 @@ import { ErrorComponent } from "@formbricks/ui";
 import { LightBulbIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 
-export default function EnvironmentNotice({ environmentId }: { environmentId: string }) {
+export default function EnvironmentNotice({ environmentId,pageType }: { environmentId: string, pageType:string }) {
   const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
   const router = useRouter();
 
@@ -22,7 +22,18 @@ export default function EnvironmentNotice({ environmentId }: { environmentId: st
   if (isErrorEnvironment) {
     return <ErrorComponent />;
   }
+  if(pageType==="apiSettings"){
+    return (<div>
+        <div className="flex items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
+          <LightBulbIcon className="mr-3 h-8 w-8 text-blue-400" />
+          <p>
+            Production environment API keys can exclusively be generated and utilized within the production environment, and similarly, development API keys follow the same pattern.
+          </p>
+        </div>
+    </div>)
+  }
 
+if(pageType==="setupChecklist")
   return (
     <div>
       {environment.type === "production" && !environment.widgetSetupCompleted && (
