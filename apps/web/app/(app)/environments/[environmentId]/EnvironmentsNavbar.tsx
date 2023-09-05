@@ -311,9 +311,10 @@ export default function EnvironmentsNavbar({
             </Popover>
           </div>
 
-          {/* Notifications */}
-          <div className="hidden lg:flex lg:items-center">
-            <div className="relative">
+          {/* User Dropdown */}
+          <div className="hidden lg:ml-6 lg:flex lg:items-center">
+            {/* Notifications */}
+            <div className="relative mr-8">
               <Popover>
                 <PopoverTrigger>
                   <div className="flex cursor-pointer items-center space-x-2">
@@ -327,13 +328,12 @@ export default function EnvironmentsNavbar({
                   <div className="flex flex-col">
                     {notifications?.length > 0 ? (
                       notifications?.map((notification) => (
-                        <Link
-                          href={`/environments/${environmentId}/surveys/${notification.surveyId}`}
-                          key={notification.id}>
-                          <div className="flex items-center space-x-2 rounded-md p-2">
-                            <span className="font-medium text-slate-600">{notification.title}</span>
-                          </div>
-                        </Link>
+                        <div className="items-left flex flex-col space-y-2 rounded-md p-2">
+                          <span className="text-sm font-medium text-slate-600">
+                            {notification.data.title}
+                          </span>
+                          <span className="text-xs font-medium text-slate-600">{notification.data.body}</span>
+                        </div>
                       ))
                     ) : (
                       <div className="flex items-center space-x-2 rounded-md p-2">
@@ -344,10 +344,7 @@ export default function EnvironmentsNavbar({
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
 
-          {/* User Dropdown */}
-          <div className="hidden lg:ml-6 lg:flex lg:items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="flex cursor-pointer flex-row items-center space-x-5">

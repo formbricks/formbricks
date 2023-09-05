@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 
 export function getNotifications(userId) {
-  const data = prisma.notifications.findMany({
+  const data = prisma.notification.findMany({
     where: {
       userId,
     },
