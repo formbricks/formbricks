@@ -486,4 +486,5 @@ model Notification {
   userId    String
   type      String
   data      Json
+  read      Boolean  @default(true)
 }
