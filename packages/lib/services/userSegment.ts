@@ -64,7 +64,15 @@ export const getAllUserSegments = async (environmentId: string) => {
     },
   });
 
-  return userSegments;
+  if (!userSegments) {
+    return [];
+  }
+
+  return userSegments.map((userSegment) => ({
+    ...userSegment,
+    description: userSegment.description ?? "",
+    surveys: userSegment.surveys.map((survey) => survey.id),
+  }));
 };
 
 export const getUserSegment = async (userSegmentId: string) => {

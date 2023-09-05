@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { createId } from "@paralleldrive/cuid2";
 
 export const BASE_OPERATORS = [
   "lessThan",
@@ -248,6 +247,8 @@ export const ZUserSegment = z.object({
   isPrivate: z.boolean().default(true),
   filters: ZUserSegmentFilterGroup,
   environmentId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 
   // describes which surveys is this segment applicable to
   surveys: z.array(z.string()),
@@ -344,110 +345,6 @@ export type TUserSegmentUpdateInput = Omit<
   Prisma.UserSegmentUpdateInput,
   "id" | "createdAt" | "updatedAt" | "environmentId"
 >;
-
-export const sampleUserSegment: TUserSegment = {
-  id: "segment123",
-  title: "Sample User Segment",
-  description: "A sample user segment description",
-  isPrivate: false,
-  filters: [
-    {
-      id: createId(),
-      connector: null,
-      resource: {
-        id: createId(),
-        root: {
-          type: "attribute",
-          attributeClassId: "cllkgdvdn000k195wxygd0ua6",
-        },
-        value: "free",
-        qualifier: {
-          operator: "equals",
-        },
-      },
-    },
-    {
-      id: createId(),
-      connector: "and",
-      resource: {
-        id: createId(),
-        root: { type: "attribute", attributeClassId: "cllkgdvdn000l195w5olqltq7" },
-        qualifier: { operator: "equals" },
-        value: 3,
-      },
-    },
-    {
-      id: createId(),
-      connector: "or",
-      resource: [
-        {
-          id: createId(),
-          connector: null,
-          resource: {
-            id: createId(),
-            root: { type: "attribute", attributeClassId: "cllkgdvdn000l195w5olqltq7" },
-            qualifier: { operator: "equals" },
-            value: 3,
-          },
-        },
-        {
-          id: createId(),
-          connector: "and",
-          resource: [
-            {
-              id: createId(),
-              connector: null,
-              resource: {
-                id: createId(),
-                root: {
-                  type: "action",
-                  actionClassId: "cllkgdvdn000i195wkdnvccun",
-                },
-                qualifier: {
-                  metric: "occuranceCount",
-                  operator: "lessThan",
-                },
-                value: 2,
-              },
-            },
-            {
-              id: createId(),
-              connector: "or",
-              resource: {
-                id: createId(),
-                root: {
-                  type: "attribute",
-                  attributeClassId: "cllkgdveb000y195w8roob8xp",
-                },
-                qualifier: {
-                  operator: "equals",
-                },
-                value: "free",
-              },
-            },
-          ],
-        },
-        {
-          id: createId(),
-          connector: "and",
-          resource: {
-            id: createId(),
-            root: {
-              type: "attribute",
-              attributeClassId: "cllkgdveb000y195w8roob8xp",
-            },
-            qualifier: {
-              operator: "equals",
-            },
-            value: "free",
-          },
-        },
-      ],
-    },
-  ],
-  surveys: ["survey123", "survey456"],
-  environmentId: "env123",
-};
 
 // type guard to check if a resource is a filter
 export const isResourceFilter = (
