@@ -8,7 +8,7 @@ import { Button, Dialog, DialogContent, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/20/solid";
 import { produce } from "immer";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
@@ -28,6 +28,9 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
   const [userSegment, setUserSegment] = useState<TUserSegment>(initialSegmentState);
   const [titleError, setTitleError] = useState("");
   const [descriptionError, setDescriptionError] = useState("");
+
+  // reset state if `open` changes
+  useEffect(() => setUserSegment(initialSegmentState), [open]);
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
     const updatedUserSegment = produce(userSegment, (draft) => {

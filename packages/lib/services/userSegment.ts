@@ -331,6 +331,8 @@ export const compareValues = (
       return (a as number) > (b as number);
     case "greaterEqual":
       return (a as number) >= (b as number);
+    case "isSet":
+      return a !== undefined;
     case "contains":
       return (a as string).includes(b as string);
     case "doesNotContain":

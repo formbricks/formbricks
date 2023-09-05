@@ -8,11 +8,13 @@ import { format, formatDistanceToNow } from "date-fns";
 import CreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/CreateSegmentModal";
 
 export default async function SegmentsPage({ params }) {
-  const segments = await getAllUserSegments(params.environmentId);
+  const fetchedSegments = await getAllUserSegments(params.environmentId);
 
-  if (!segments) {
+  if (!fetchedSegments) {
     throw new Error("Failed to fetch segments");
   }
+
+  const segments = fetchedSegments.filter((segment) => !segment.isPrivate);
 
   return (
     <>
@@ -21,7 +23,7 @@ export default async function SegmentsPage({ params }) {
         <EmptySpaceFiller
           type="table"
           environmentId={params.environmentId}
-          emptyMessage="Your users will appear here as soon as they use your app ⏲️"
+          emptyMessage="Your segments will appear here as soon as you add them ⏲️"
         />
       ) : (
         <>

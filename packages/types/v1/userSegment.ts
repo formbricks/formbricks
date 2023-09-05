@@ -3,12 +3,12 @@ import { z } from "zod";
 import { createId } from "@paralleldrive/cuid2";
 
 export const BASE_OPERATORS = [
-  "equals",
-  "notEquals",
   "lessThan",
   "lessEqual",
   "greaterThan",
   "greaterEqual",
+  "equals",
+  "notEquals",
 ] as const;
 export const ARITHMETIC_OPERATORS = ["lessThan", "lessEqual", "greaterThan", "greaterEqual"] as const;
 export type TArithmeticOperator = (typeof ARITHMETIC_OPERATORS)[number];
@@ -258,6 +258,39 @@ export const convertOperatorToText = (operator: TAllOperators) => {
       return "starts with";
     case "endsWith":
       return "ends with";
+    case "userIsIn":
+      return "User is in";
+    case "userIsNotIn":
+      return "User is not in";
+    default:
+      return operator;
+  }
+};
+
+export const convertOperatorToTitle = (operator: TAllOperators) => {
+  switch (operator) {
+    case "equals":
+      return "Equals";
+    case "notEquals":
+      return "Not equals to";
+    case "lessThan":
+      return "Less than";
+    case "lessEqual":
+      return "Less than or equal to";
+    case "greaterThan":
+      return "Greater than";
+    case "greaterEqual":
+      return "Greater than or equal to";
+    case "isSet":
+      return "Is set";
+    case "contains":
+      return "Contains";
+    case "doesNotContain":
+      return "Does not contain";
+    case "startsWith":
+      return "Starts with";
+    case "endsWith":
+      return "Ends with";
     case "userIsIn":
       return "User is in";
     case "userIsNotIn":

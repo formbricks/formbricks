@@ -1,4 +1,5 @@
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { useUserSegments } from "@/lib/userSegments/userSegments";
@@ -27,6 +28,7 @@ import {
   TUserSegmentSegmentFilter,
   convertMetricToText,
   convertOperatorToText,
+  convertOperatorToTitle,
   isResourceFilter,
 } from "@formbricks/types/v1/userSegment";
 import {
@@ -175,7 +177,11 @@ const AttributeSegmentFilter = ({
   const [valueError, setValueError] = useState("");
 
   if (isLoadingAttributeClasses) {
-    return <div>Loading...</div>;
+    return (
+      <div className="h-10 w-10">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
@@ -314,24 +320,28 @@ const AttributeSegmentFilter = ({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+            <SelectItem value={operator.id} title={convertOperatorToTitle(operator.id)}>
+              {operator.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <div className="relative flex flex-col gap-1">
-        <Input
-          value={valueInput}
-          onChange={(e) => {
-            checkValue(e);
-          }}
-          className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
-        />
+      {resource.qualifier.operator !== "isSet" && (
+        <div className="relative flex flex-col gap-1">
+          <Input
+            value={valueInput}
+            onChange={(e) => {
+              checkValue(e);
+            }}
+            className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
+          />
 
-        {valueError && (
-          <p className="absolute -bottom-1.5 right-1 bg-white text-xs text-red-500">{valueError}</p>
-        )}
-      </div>
+          {valueError && (
+            <p className="absolute -bottom-1.5 right-1 bg-white text-xs text-red-500">{valueError}</p>
+          )}
+        </div>
+      )}
 
       <SegmentFilterItemContextMenu
         filterId={resource.id}
@@ -370,7 +380,11 @@ const ActionSegmentFilter = ({
   const [valueError, setValueError] = useState("");
 
   if (isLoadingEventClasses) {
-    return <div>Loading...</div>;
+    return (
+      <div className="h-10 w-10">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   const operatorArr = BASE_OPERATORS.map((operator) => ({
@@ -541,7 +555,9 @@ const ActionSegmentFilter = ({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+            <SelectItem value={operator.id} title={convertOperatorToTitle(operator.id)}>
+              {operator.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
