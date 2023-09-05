@@ -7,5 +7,8 @@ export function getNotifications(userId) {
       userId,
     },
   });
+  if (!data) {
+    throw new Error("No notifications found");
+  }
   return data;
 }
