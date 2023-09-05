@@ -28,6 +28,18 @@
   border: 3px solid #cbd5e1;
 }
 
+.filter-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-track {
+  border-radius: 8px;
+}
+
 input:focus {
   --tw-ring-color: none;
   --tw-ring-offset-color: none;

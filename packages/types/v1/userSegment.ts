@@ -84,8 +84,6 @@ export const ZUserSegmentAttributeFilter = z.object({
   qualifier: z.object({
     operator: ZAttributeOperator,
   }),
-
-  isPlaceholder: z.boolean().optional(),
 });
 export type TUserSegmentAttributeFilter = z.infer<typeof ZUserSegmentAttributeFilter>;
 
@@ -100,8 +98,6 @@ export const ZUserSegmentActionFilter = z.object({
     metric: z.enum(ACTION_METRICS),
     operator: ZBaseOperator,
   }),
-
-  isPlaceholder: z.boolean().optional(),
 });
 export type TUserSegmentActionFilter = z.infer<typeof ZUserSegmentActionFilter>;
 
@@ -115,8 +111,6 @@ export const ZUserSegmentSegmentFilter = z.object({
   qualifier: z.object({
     operator: ZSegmentOperator,
   }),
-
-  isPlaceholder: z.boolean().optional(),
 });
 export type TUserSegmentSegmentFilter = z.infer<typeof ZUserSegmentSegmentFilter>;
 
@@ -130,8 +124,6 @@ export const ZUserSegmentDeviceFilter = z.object({
   qualifier: z.object({
     operator: ZDeviceOperator,
   }),
-
-  isPlaceholder: z.boolean().optional(),
 });
 
 export type TUserSegmentDeviceFilter = z.infer<typeof ZUserSegmentDeviceFilter>;
@@ -206,12 +198,6 @@ const refineFilterGroup = (filterGroup: TBaseFilterGroup): boolean => {
     } else {
       // if the connector for a "first" group is not null, it's invalid
       if (i === 0 && group.connector !== null) {
-        result = false;
-        break;
-      }
-
-      // if a filter is a placeholder, it's invalid
-      if (group.resource.isPlaceholder) {
         result = false;
         break;
       }

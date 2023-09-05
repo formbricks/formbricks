@@ -24,9 +24,11 @@ import {
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
+import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 
 // const filterConditions = [
 //   { id: "equals", name: "equals" },
@@ -183,7 +185,21 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
           <hr className="py-1 text-slate-600" />
 
           <div className="flex flex-col gap-2 p-6">
-            <div className="flex flex-col gap-4 overflow-auto rounded-lg border-2 border-slate-300 bg-white p-4">
+            {!userSegment?.filters?.length && (
+              <div className="mb-4 flex w-full items-center gap-4 rounded-lg border border-yellow-500 bg-yellow-50 p-6">
+                <ExclamationCircleIcon className="h-6 w-6 text-orange-400" />
+                <div className="flex flex-col">
+                  <h3 className="text-base font-semibold text-yellow-800">
+                    Currently, all users are targeted.
+                  </h3>
+                  <p className="text-sm text-yellow-700">
+                    Without a filter, all of your users can be surveyed.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border-2 border-slate-300 bg-white p-4">
               {segmentUsedModalOpen && (
                 <ConfirmDialog
                   open={segmentUsedModalOpen}
@@ -227,10 +243,13 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
               )}
 
               {isSegmentEditorOpen ? (
-                <>
-                  <p className="text-sm font-semibold">Send survey to audience who match...</p>
+                <div className="w-full">
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold">Send survey to audience who match...</p>
+                    <p className="text-sm">Without a filter, all of your users can be surveyed.</p>
+                  </div>
                   {!!userSegment?.filters?.length && (
-                    <>
+                    <div className="w-full">
                       <SegmentFilters
                         key={userSegment.filters.toString()}
                         group={userSegment.filters}
@@ -238,8 +257,14 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                         userSegment={userSegment}
                         setUserSegment={setUserSegment}
                       />
-                    </>
+                    </div>
                   )}
+
+                  <div className="mt-4">
+                    <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                      Add filter
+                    </Button>
+                  </div>
 
                   <>
                     <AddFilterModal
@@ -250,13 +275,14 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                       open={addFilterModalOpen}
                       setOpen={setAddFilterModalOpen}
                     />
-
-                    <SaveAsNewSegmentModal
-                      open={saveAsNewSegmentModalOpen}
-                      setOpen={setSaveAsNewSegmentModalOpen}
-                      localSurvey={localSurvey}
-                      userSegment={userSegment}
-                    />
+                    {!!userSegment && (
+                      <SaveAsNewSegmentModal
+                        open={saveAsNewSegmentModalOpen}
+                        setOpen={setSaveAsNewSegmentModalOpen}
+                        localSurvey={localSurvey}
+                        userSegment={userSegment}
+                      />
+                    )}
 
                     <ConfirmDialog
                       open={resetAllFiltersModalOpen}
@@ -264,13 +290,13 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                       title="Reset all filters"
                       description="Are you sure you want to reset all filters?"
                       primaryAction={() => {
-                        const updatedLocalSurvey = produce(localSurvey, (draft) => {
-                          if (draft.userSegment?.filters) {
-                            draft.userSegment.filters = [];
+                        const updatedUserSegment = produce(userSegment, (draft) => {
+                          if (draft?.filters) {
+                            draft.filters = [];
                           }
                         });
 
-                        setLocalSurvey(updatedLocalSurvey);
+                        setUserSegment(updatedUserSegment);
                         setRestAllFiltersModalOpen(false);
                       }}
                       secondaryAction={() => {
@@ -280,7 +306,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                       secondaryActionText="Cancel"
                     />
                   </>
-                </>
+                </div>
               ) : (
                 <div className="flex flex-col gap-4 rounded-lg p-2">
                   <div>
@@ -290,26 +316,24 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
                   <div className="flex items-center gap-4">
                     <Button
-                      variant="minimal"
+                      variant="secondary"
                       size="sm"
                       className="flex items-center gap-2"
                       onClick={() => setSegmentEditorViewOnly(true)}>
-                      <div className="h-4 w-4 rounded-full bg-slate-300" />
-                      <p className="text-sm text-slate-500">View Filters</p>
+                      <p className="text-sm">View Filters</p>
                     </Button>
 
                     {isSegmentUsedInOtherSurveys && (
                       <Button
-                        variant="minimal"
+                        variant="secondary"
                         size="sm"
                         className="flex items-center gap-2"
                         onClick={() => handleCloneSegment()}>
-                        <div className="h-4 w-4 rounded-full bg-slate-300" />
-                        <p className="text-sm text-slate-500">Clone segment and edit</p>
+                        <p className="text-sm">Clone segment and edit</p>
                       </Button>
                     )}
                     <Button
-                      variant="minimal"
+                      variant="secondary"
                       size="sm"
                       className="flex items-center gap-2"
                       onClick={() => {
@@ -320,43 +344,39 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                           setSegmentEditorViewOnly(false);
                         }
                       }}>
-                      <div className="h-4 w-4 rounded-full bg-slate-300" />
-                      <p className="text-sm text-slate-500">Edit segment</p>
+                      <p className="text-sm">Edit segment</p>
                     </Button>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="flex w-full gap-4">
-              {isSegmentEditorOpen && (
+            <div className="mt-4 flex w-full gap-4">
+              {isSegmentEditorOpen && !!userSegment?.filters?.length && (
                 <Button
-                  variant="minimal"
+                  variant="secondary"
                   size="sm"
                   className="flex items-center gap-2"
                   onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-                  <div className="h-4 w-4 rounded-full bg-slate-300" />
-                  <p className="text-sm text-slate-500">Save as new Segment</p>
+                  <p className="text-sm">Save as new Segment</p>
                 </Button>
               )}
 
               <Button
-                variant="minimal"
+                variant="secondary"
                 size="sm"
                 className="flex items-center gap-2"
                 onClick={() => setLoadSegmentModalOpen(true)}>
-                <div className="h-4 w-4 rounded-full bg-slate-300" />
-                <p className="text-sm text-slate-500">Load Segment</p>
+                <p className="text-sm">Load Segment</p>
               </Button>
 
-              {isSegmentEditorOpen && (
+              {isSegmentEditorOpen && !!userSegment?.filters?.length && (
                 <Button
-                  variant="minimal"
+                  variant="secondary"
                   size="sm"
                   className="flex items-center gap-2"
                   onClick={() => setRestAllFiltersModalOpen(true)}>
-                  <div className="h-4 w-4 rounded-full bg-slate-300" />
-                  <p className="text-sm text-slate-500">Reset all filters</p>
+                  <p className="text-sm">Reset all filters</p>
                 </Button>
               )}
             </div>

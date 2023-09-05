@@ -2,8 +2,8 @@
 
 import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
 import React, { useMemo, useState } from "react";
-import { Dialog, DialogTrigger, DialogContent, Input, TabBar } from "@formbricks/ui";
-import { MonitorSmartphoneIcon, MousePointerClick, PlusCircleIcon, TagIcon, Users2Icon } from "lucide-react";
+import { Dialog, DialogContent, Input, TabBar } from "@formbricks/ui";
+import { MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { createId } from "@paralleldrive/cuid2";
@@ -202,13 +202,6 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
-      <DialogTrigger className="max-w-[160px]">
-        <button className="mt-4 flex items-center gap-2 text-sm">
-          <PlusCircleIcon className="h-4 w-4" />
-          <p>Add filter</p>
-        </button>
-      </DialogTrigger>
-
       <DialogContent className="w-[600px] bg-slate-100 sm:max-w-2xl" hideCloseButton>
         <div className="flex w-auto flex-col">
           <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
