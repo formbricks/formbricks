@@ -7,7 +7,6 @@ import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
 import { cache } from "react";
-import { hasUserEnvironmentAccess } from "../../../apps/web/lib/api/apiHelper";
 
 export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
   if (!apiKeyId) {
@@ -112,16 +111,4 @@ export const deleteApiKey = async (id: string): Promise<void> => {
 
     throw error;
   }
-};
-
-export const canUserAccessApiKey = async (session, apiKeyId: string): Promise<boolean> => {
-  if (!session) return false;
-
-  const apiKeyFromServer = await getApiKey(apiKeyId);
-  if (!apiKeyFromServer) return false;
-
-  const hasAccessToEnvironment = await hasUserEnvironmentAccess(session.user, apiKeyFromServer.environmentId);
-  if (!hasAccessToEnvironment) return false;
-
-  return true;
 };

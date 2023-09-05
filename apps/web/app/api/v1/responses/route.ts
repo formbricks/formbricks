@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
+import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { getEnvironmentResponses, getSurveyResponses } from "@formbricks/lib/services/response";
 import { headers } from "next/headers";
 import { DatabaseError } from "@formbricks/errors";

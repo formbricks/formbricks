@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import FormbricksClient from "../../FormbricksClient";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
