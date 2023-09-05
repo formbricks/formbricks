@@ -6,6 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import FormbricksClient from "../../FormbricksClient";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { getNotifications } from "@formbricks/lib/services/notification";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
@@ -16,13 +17,18 @@ export default async function EnvironmentLayout({ children, params }) {
   if (!hasAccess) {
     throw new Error("User does not have access to this environment");
   }
+  const notifications = await getNotifications(session.user.id);
 
   return (
     <>
       <ResponseFilterProvider>
         <FormbricksClient session={session} />
         <ToasterClient />
-        <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
+        <EnvironmentsNavbar
+          environmentId={params.environmentId}
+          session={session}
+          notifications={notifications}
+        />
         <main className="h-full flex-1 overflow-y-auto bg-slate-50">
           {children}
           <main />

@@ -71,12 +71,33 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
 
+const BellIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className="h-6 w-6">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+    />
+  </svg>
+);
+
 interface EnvironmentsNavbarProps {
   environmentId: string;
   session: Session;
+  notifications: any;
 }
 
-export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
+export default function EnvironmentsNavbar({
+  environmentId,
+  session,
+  notifications,
+}: EnvironmentsNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -288,6 +309,41 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 </div>
               </PopoverContent>
             </Popover>
+          </div>
+
+          {/* Notifications */}
+          <div className="hidden lg:flex lg:items-center">
+            <div className="relative">
+              <Popover>
+                <PopoverTrigger>
+                  <div className="flex cursor-pointer items-center space-x-2">
+                    <BellIcon />
+                    {notifications?.length > 0 && (
+                      <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500"></span>
+                    )}
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="flex flex-col">
+                    {notifications?.length > 0 ? (
+                      notifications?.map((notification) => (
+                        <Link
+                          href={`/environments/${environmentId}/surveys/${notification.surveyId}`}
+                          key={notification.id}>
+                          <div className="flex items-center space-x-2 rounded-md p-2">
+                            <span className="font-medium text-slate-600">{notification.title}</span>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="flex items-center space-x-2 rounded-md p-2">
+                        <span className="font-medium text-slate-600">No notifications</span>
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           {/* User Dropdown */}

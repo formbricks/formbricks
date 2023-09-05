@@ -6,7 +6,11 @@ export function getNotifications(userId) {
     where: {
       userId,
     },
+    include: {
+      user: true,
+    },
   });
+  console.log(data);
   if (!data) {
     throw new Error("No notifications found");
   }
