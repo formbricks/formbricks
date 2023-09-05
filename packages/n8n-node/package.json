@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/n8n-nodes-formbricks",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A n8n node to connect Formbricks and send survey data to hundreds of other apps.",
   "keywords": [
     "n8n-community-node-package",
@@ -24,11 +24,12 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && gulp build:icons",
+    "clean": "rimraf .turbo node_modules dist",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
     "lintfix": "eslint nodes credentials package.json --fix",
-    "prepublishOnly": "npm run build && npm run lint -c .eslintrc.prepublish.js nodes credentials package.json"
+    "prepublishOnly": "pnpm run build && pnpm run lint -c .eslintrc.prepublish.js nodes credentials package.json"
   },
   "files": [
     "dist"
@@ -43,13 +44,11 @@
     ]
   },
   "devDependencies": {
-    "@types/express": "^4.17.6",
     "@types/request-promise-native": "~1.0.15",
     "@typescript-eslint/parser": "~5.45",
     "eslint-plugin-n8n-nodes-base": "^1.11.0",
     "gulp": "^4.0.2",
-    "n8n-core": "*",
-    "n8n-workflow": "*",
-    "typescript": "~4.8.4"
+    "n8n-core": "^1.1.1",
+    "n8n-workflow": "^1.1.1"
   }
 }
