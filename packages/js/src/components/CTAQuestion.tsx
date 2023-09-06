@@ -31,7 +31,11 @@ export default function CTAQuestion({
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-        <div>{goToPreviousQuestion && <BackButton onClick={() => goToPreviousQuestion()} />}</div>
+        <div>
+          {goToPreviousQuestion && (
+            <BackButton backButtonLabel={question.backButtonLabel} onClick={() => goToPreviousQuestion()} />
+          )}
+        </div>
         <div className="fb-flex fb-justify-end">
           {(!question.required || storedResponseValue) && (
             <button
