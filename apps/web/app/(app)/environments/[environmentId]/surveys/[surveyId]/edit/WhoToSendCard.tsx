@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import AlertDialog from "@/components/shared/AlertDialog";
 
 // const filterConditions = [
 //   { id: "equals", name: "equals" },
@@ -39,7 +40,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
-  const [resetAllFiltersModalOpen, setRestAllFiltersModalOpen] = useState(false);
+  const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(localSurvey.userSegment?.isPrivate);
@@ -270,12 +271,16 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                       />
                     )}
 
-                    <ConfirmDialog
+                    <AlertDialog
+                      confirmWhat="Reset all filters"
                       open={resetAllFiltersModalOpen}
-                      setOpen={setRestAllFiltersModalOpen}
-                      title="Reset all filters"
-                      description="Are you sure you want to reset all filters?"
-                      primaryAction={() => {
+                      setOpen={setResetAllFiltersModalOpen}
+                      text="Are you sure you want to reset all filters?"
+                      useSaveInsteadOfCancel
+                      onDiscard={() => {
+                        setResetAllFiltersModalOpen(false);
+                      }}
+                      onSave={() => {
                         const updatedUserSegment = produce(userSegment, (draft) => {
                           if (draft?.filters) {
                             draft.filters = [];
@@ -283,13 +288,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                         });
 
                         setUserSegment(updatedUserSegment);
-                        setRestAllFiltersModalOpen(false);
+                        setResetAllFiltersModalOpen(false);
                       }}
-                      secondaryAction={() => {
-                        setRestAllFiltersModalOpen(false);
-                      }}
-                      primaryActionText="Reset"
-                      secondaryActionText="Cancel"
                     />
                   </>
                 </div>
@@ -361,7 +361,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                   variant="secondary"
                   size="sm"
                   className="flex items-center gap-2"
-                  onClick={() => setRestAllFiltersModalOpen(true)}>
+                  onClick={() => setResetAllFiltersModalOpen(true)}>
                   <p className="text-sm">Reset all filters</p>
                 </Button>
               )}
