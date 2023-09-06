@@ -5,7 +5,6 @@ import LoadSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[
 import SaveAsNewSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SaveAsNewSegmentModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import { cloneUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
@@ -18,6 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import AlertDialog from "@/components/shared/AlertDialog";
+import SegmentAlreadyUsedModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentAlreadyUsedModal";
 
 // const filterConditions = [
 //   { id: "equals", name: "equals" },
@@ -177,36 +177,21 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
           <div className="flex flex-col gap-2 p-6">
             {!userSegment?.filters?.length && (
-              <div className="mb-4 flex w-full items-center gap-4 rounded-lg border border-yellow-500 bg-yellow-50 p-6">
-                <ExclamationCircleIcon className="h-6 w-6 text-orange-400" />
+              <div className="mb-4 flex w-full items-center gap-4 rounded-lg border border-amber-200 bg-amber-100 p-6 text-amber-700">
+                <ExclamationCircleIcon className="h-6 w-6 text-amber-400" />
                 <div className="flex flex-col">
-                  <h3 className="text-base font-semibold text-yellow-800">
-                    Currently, all users are targeted.
-                  </h3>
-                  <p className="text-sm text-yellow-700">
-                    Without a filter, all of your users can be surveyed.
-                  </p>
+                  <h3 className="text-base font-semibold">Currently, all users are targeted.</h3>
+                  <p className="text-sm">Without a filter, all of your users can be surveyed.</p>
                 </div>
               </div>
             )}
 
             <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border-2 border-slate-300 bg-white p-4">
-              {segmentUsedModalOpen && (
-                <ConfirmDialog
-                  open={segmentUsedModalOpen}
-                  setOpen={setSegmentUsedModalOpen}
-                  title="Forward to Segments View"
-                  description="This Segment is used in other surveys. To assure consistent data you cannot edit it here."
-                  primaryAction={() => {
-                    router.push(`/environments/${environmentId}/segments`);
-                  }}
-                  primaryActionText="Go to Segments"
-                  secondaryAction={() => {
-                    setSegmentUsedModalOpen(false);
-                  }}
-                  secondaryActionText="Cancel"
-                />
-              )}
+              <SegmentAlreadyUsedModal
+                open={segmentUsedModalOpen}
+                setOpen={setSegmentUsedModalOpen}
+                environmentId={environmentId}
+              />
 
               {!!userSegment && (
                 <LoadSegmentModal
@@ -322,7 +307,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                         size="sm"
                         className="flex items-center gap-2"
                         onClick={() => handleCloneSegment()}>
-                        <p className="text-sm">Clone segment and edit</p>
+                        <p className="text-sm">Clone segment</p>
                       </Button>
                     )}
                     <Button
