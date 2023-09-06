@@ -232,9 +232,8 @@ export default function MultipleChoiceSingleForm({
                   }}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
                   isInvalid={
-                    isInValid &&
-                    ((isInvalidValue === "" && choice.label.trim() === "") ||
-                      (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim()))
+                    (isInvalidValue === "" && choice.label.trim() === "") ||
+                    (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim())
                   }
                 />
                 {question.choices && question.choices.length > 2 && (
