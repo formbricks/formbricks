@@ -225,7 +225,10 @@ export const navigation: Array<NavGroup> = [
   },
   {
     title: "Integrations",
-    links: [{ title: "Zapier", href: "/docs/integrations/zapier" }],
+    links: [
+      { title: "Zapier", href: "/docs/integrations/zapier" },
+      { title: "n8n", href: "/docs/integrations/n8n" },
+    ],
   },
   {
     title: "Link Surveys",
@@ -257,6 +260,8 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Overview", href: "/docs/api/overview" },
       { title: "API Key Setup", href: "/docs/api/api-key-setup" },
+      { title: "Displays", href: "/docs/api/display" },
+      { title: "People", href: "/docs/api/people" },
       { title: "Responses", href: "/docs/api/responses" },
       { title: "Surveys", href: "/docs/api/surveys" },
       { title: "Webhook", href: "/docs/api/webhooks" },

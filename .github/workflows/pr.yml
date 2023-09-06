@@ -1,0 +1,45 @@
+name: PR Update
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - ".github/CODEOWNERS"
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit tests
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  lint:
+    name: Linters
+    uses: ./.github/workflows/lint.yml
+    secrets: inherit
+
+  build-production:
+    name: Production build (without database)
+    uses: ./.github/workflows/build-production.yml
+    secrets: inherit
+
+  analyze:
+    needs: build-production
+    uses: ./.github/workflows/nextjs-bundle-analysis.yml
+    secrets: inherit
+
+  required:
+    needs: [lint, test, build-production]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: fail if conditional jobs failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled')
+        run: exit 1

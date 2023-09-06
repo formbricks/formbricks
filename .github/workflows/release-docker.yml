@@ -1,4 +1,4 @@
-name: Release Formbricks Image on Dockerhub
+name: Release on Dockerhub
 
 on:
   push:
@@ -7,8 +7,11 @@ on:
 
 jobs:
   release-image-on-dockerhub:
-    name: Release
+    name: Release on Dockerhub
     runs-on: ubuntu-latest
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
