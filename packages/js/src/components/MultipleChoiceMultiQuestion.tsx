@@ -91,7 +91,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
+    if (!!storedResponseValue && symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }
