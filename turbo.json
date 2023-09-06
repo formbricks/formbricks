@@ -13,9 +13,7 @@
     "@formbricks/demo#go": {
       "cache": false,
       "persistent": true,
-      "dependsOn": [
-        "@formbricks/js#build"
-      ]
+      "dependsOn": ["@formbricks/js#build"]
     },
     "@formbricks/api#build": {
       "outputs": ["dist/**"],
