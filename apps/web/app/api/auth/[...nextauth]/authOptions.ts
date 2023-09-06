@@ -44,20 +44,17 @@ export const authOptions: NextAuthOptions = {
           throw Error("Internal server error. Please try again later");
         }
 
-        if (!user) {
-          throw new Error("User not found");
-        }
-        if (!credentials) {
-          throw new Error("No credentials");
+        if (!user || !credentials) {
+          throw new Error("No user matches the provided credentials");
         }
         if (!user.password) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         return {
@@ -94,11 +91,11 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (e) {
           console.error(e);
-          throw new Error("Token is not valid or expired");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (!user) {
-          throw new Error("User not found");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (user.emailVerified) {
