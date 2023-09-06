@@ -23,7 +23,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
       toast.error("IDs have to be unique per survey.");
     } else if (currentValue.trim() === "" || currentValue.includes(" ")) {
       setIsInputInvalid(true);
-      toast.error("ID should not contain space.");
+      toast.error("ID should not be empty.");
     } else {
       setIsInputInvalid(false);
       toast.success("Question ID updated.");
