@@ -13,16 +13,19 @@ export default async function ProfileSettingsPage({ params }) {
     <div>
       <SettingsTitle title="API Keys" />
       <EnvironmentNotice environment={environment} />
-      <SettingsCard
-        title="Development Env Keys"
-        description="Add and remove API keys for your Development environment.">
-        <ApiKeyList environmentId={params.environmentId} environmentType="development" />
-      </SettingsCard>
-      <SettingsCard
-        title="Production Env Keys"
-        description="Add and remove API keys for your Production environment.">
-        <ApiKeyList environmentId={params.environmentId} environmentType="production" />
-      </SettingsCard>
+      {environment.type === "development" ? (
+        <SettingsCard
+          title="Development Env Keys"
+          description="Add and remove API keys for your Development environment.">
+          <ApiKeyList environmentId={params.environmentId} environmentType="development" />
+        </SettingsCard>
+      ) : (
+        <SettingsCard
+          title="Production Env Keys"
+          description="Add and remove API keys for your Production environment.">
+          <ApiKeyList environmentId={params.environmentId} environmentType="production" />
+        </SettingsCard>
+      )}
     </div>
   );
 }

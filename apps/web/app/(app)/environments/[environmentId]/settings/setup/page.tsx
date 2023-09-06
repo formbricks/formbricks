@@ -26,6 +26,7 @@ export default async function ProfileSettingsPage({ params }) {
       {environment && (
         <div className="space-y-4">
           <SettingsTitle title="Setup Checklist" />
+          <EnvironmentNotice environment={environment} />
           <SettingsCard
             title="Widget Status"
             description="Check if the Formbricks widget is alive and kicking.">
@@ -37,7 +38,6 @@ export default async function ProfileSettingsPage({ params }) {
             />
           </SettingsCard>
 
-          <EnvironmentNotice environment={environment} />
           <SettingsCard
             title="How to setup"
             description="Follow these steps to setup the Formbricks widget within your app"
