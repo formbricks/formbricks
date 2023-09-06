@@ -8,6 +8,7 @@ interface ModalWithTabsProps {
   label?: string;
   description?: string;
   tabs: TabProps[];
+  closeOnOutsideClick?: boolean;
 }
 
 type TabProps = {
@@ -15,7 +16,15 @@ type TabProps = {
   children: React.ReactNode;
 };
 
-export default function ModalWithTabs({ open, setOpen, tabs, icon, label, description }: ModalWithTabsProps) {
+export default function ModalWithTabs({
+  open,
+  setOpen,
+  tabs,
+  icon,
+  label,
+  description,
+  closeOnOutsideClick,
+}: ModalWithTabsProps) {
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabClick = (index: number) => {
@@ -29,7 +38,7 @@ export default function ModalWithTabs({ open, setOpen, tabs, icon, label, descri
   }, [open]);
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding>
+    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={closeOnOutsideClick}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">

@@ -117,7 +117,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         current: pathname?.includes("/surveys"),
       },
       {
-        name: "People",
+        name: "People & Segments",
         href: `/environments/${environmentId}/people`,
         icon: CustomersIcon,
         current: pathname?.includes("/people"),

@@ -1,5 +1,6 @@
 "use client";
 
+import SegmentActivityTab from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentActivityTab";
 import SegmentSettingsTab from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentSettingsTab";
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
@@ -16,7 +17,7 @@ export default function EditSegmentModal({ environmentId, open, setOpen, segment
   const tabs = [
     {
       title: "Activity",
-      children: <div>hello</div>,
+      children: <SegmentActivityTab environmentId={environmentId} segment={segment} />,
     },
     {
       title: "Settings",
@@ -35,6 +36,7 @@ export default function EditSegmentModal({ environmentId, open, setOpen, segment
         icon={<UserGroupIcon />}
         label={segment.title}
         description={segment.description || ""}
+        closeOnOutsideClick={false}
       />
     </>
   );

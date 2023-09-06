@@ -23,7 +23,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // POST
   if (req.method === "POST") {
-    console.log(req.body);
     const { title, surveyId, filters } = req.body;
 
     // parsing filters

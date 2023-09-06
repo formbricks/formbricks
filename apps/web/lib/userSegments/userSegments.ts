@@ -15,3 +15,16 @@ export const useUserSegments = (environmentId: string) => {
     mutateUserSegments: mutate,
   };
 };
+
+export const useUserSegment = (environmentId: string, userSegmentId: string) => {
+  const { data, isLoading, error, mutate } = useSWR<
+    TUserSegment & { activeSurveys: string[]; inactiveSurveys: string[] }
+  >(`/api/v1/environments/${environmentId}/user-segments/${userSegmentId}`, fetcher);
+
+  return {
+    userSegment: data,
+    isLoadingUserSegment: isLoading,
+    isErrorUserSegment: error,
+    mutateUserSegment: mutate,
+  };
+};

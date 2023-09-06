@@ -239,7 +239,7 @@ model Survey {
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   userSegmentId       String?
-  userSegment         UserSegment?            @relation(fields: [userSegmentId], references: [id], onDelete: Cascade)
+  userSegment         UserSegment?            @relation(fields: [userSegmentId], references: [id])
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail         Json?

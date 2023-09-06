@@ -96,6 +96,27 @@ export const updateUserSegment = async (segmentId: string, data: TUserSegmentUpd
   return userSegment;
 };
 
+export const deleteUserSegment = async (segmentId: string) => {
+  // unset the user segment from all the surveys
+
+  await prisma.survey.updateMany({
+    where: {
+      userSegmentId: segmentId,
+    },
+    data: {
+      userSegmentId: null,
+    },
+  });
+
+  await prisma.userSegment.delete({
+    where: {
+      id: segmentId,
+    },
+  });
+
+  return true;
+};
+
 export const loadNewUserSegment = async (surveyId: string, newSegmentId: string) => {
   const userSegment = await prisma.userSegment.findUnique({
     where: {

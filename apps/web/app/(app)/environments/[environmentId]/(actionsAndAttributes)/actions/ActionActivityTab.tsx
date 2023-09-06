@@ -65,7 +65,7 @@ export default function EventActivityTab({ environmentId, actionClassId }: Activ
           </p>
         </div>{" "}
         <div>
-          <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
+          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
           <p className=" text-xs text-slate-700">
             {convertDateTimeStringShort(eventClass.updatedAt?.toString())}
           </p>

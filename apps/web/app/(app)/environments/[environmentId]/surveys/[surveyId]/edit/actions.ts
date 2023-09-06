@@ -5,6 +5,8 @@ import {
   createUserSegment,
   loadNewUserSegment,
   updateUserSegment,
+  deleteUserSegment,
+  getUserSegment,
 } from "@formbricks/lib/services/userSegment";
 import {
   TBaseFilterGroup,
@@ -60,4 +62,14 @@ export const cloneUserSegmentAction = async (segmentId: string, surveyId: string
   } catch (err) {
     throw new Error(err);
   }
+};
+
+export const deleteUserSegmentAction = async (segmentId: string) => {
+  const foundSegment = await getUserSegment(segmentId);
+
+  if (!foundSegment) {
+    throw new Error(`Segment with id ${segmentId} not found`);
+  }
+
+  return await deleteUserSegment(segmentId);
 };

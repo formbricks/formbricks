@@ -45,7 +45,14 @@ import {
 } from "@formbricks/ui";
 
 import { produce } from "immer";
-import { MonitorSmartphoneIcon, MoreVertical, MousePointerClick, TagIcon, Trash2 } from "lucide-react";
+import {
+  MonitorSmartphoneIcon,
+  MoreVertical,
+  MousePointerClick,
+  TagIcon,
+  Trash2,
+  Users2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import z from "zod";
 
@@ -703,7 +710,7 @@ const UserSegmentFilter = ({
           className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
           hideArrow>
           <div className="flex items-center gap-1">
-            <TagIcon className="h-4 w-4 text-sm" />
+            <Users2Icon className="h-4 w-4 text-sm" />
             <SelectValue />
           </div>
         </SelectTrigger>
