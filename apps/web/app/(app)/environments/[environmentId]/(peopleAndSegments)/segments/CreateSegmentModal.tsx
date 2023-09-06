@@ -104,7 +104,7 @@ const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
         }}
         noPadding
         closeOnOutsideClick={false}>
-        <div className="rounded-lg bg-slate-50 p-0">
+        <div className="rounded-lg bg-slate-50">
           <div className="rounded-t-lg bg-slate-100">
             <div className="flex w-full items-center gap-4 p-6">
               <div className="flex items-center space-x-2">
