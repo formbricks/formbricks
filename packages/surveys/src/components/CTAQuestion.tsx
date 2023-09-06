@@ -30,7 +30,7 @@ export default function CTAQuestion({
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && <BackButton onClick={() => onBack()} />}
+        {!isFirstQuestion && <BackButton backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />}
         <div className="flex justify-end">
           {!question.required && (
             <button

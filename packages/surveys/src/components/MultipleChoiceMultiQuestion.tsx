@@ -170,7 +170,7 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && <BackButton onClick={onBack} />}
+        {!isFirstQuestion && <BackButton backButtonLabel={question.backButtonLabel} onClick={onBack} />}
         <div></div>
         <SubmitButton
           question={question}

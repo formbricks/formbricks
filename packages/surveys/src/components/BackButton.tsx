@@ -2,9 +2,10 @@ import { cn } from "../../../lib/cn";
 
 interface BackButtonProps {
   onClick: () => void;
+  backButtonLabel?: string;
 }
 
-export function BackButton({ onClick }: BackButtonProps) {
+export function BackButton({ onClick, backButtonLabel }: BackButtonProps) {
   return (
     <button
       type={"button"}
@@ -12,7 +13,7 @@ export function BackButton({ onClick }: BackButtonProps) {
         "flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
       )}
       onClick={onClick}>
-      Back
+      {backButtonLabel || "Back"}
     </button>
   );
 }

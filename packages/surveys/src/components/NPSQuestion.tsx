@@ -76,6 +76,7 @@ export default function NPSQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
+          backButtonLabel={question.backButtonLabel}
             onClick={() => {
               onBack();
             }}

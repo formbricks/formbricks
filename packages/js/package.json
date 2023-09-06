@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "keywords": [
     "Formbricks",
