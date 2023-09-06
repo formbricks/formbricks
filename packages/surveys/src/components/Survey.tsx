@@ -26,10 +26,10 @@ export function Survey({
   brandColor,
   formbricksSignature,
   activeQuestionId,
-  onDisplay = () => { },
-  onActiveQuestionChange = () => { },
-  onResponse = () => { },
-  onClose = () => { },
+  onDisplay = () => {},
+  onActiveQuestionChange = () => {},
+  onResponse = () => {},
+  onClose = () => {},
 }: SurveyProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
   const [loadingElement, setLoadingElement] = useState(false);
@@ -38,8 +38,12 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-  const firstQuestionPrefill = URLParams.has(survey.questions[0].id) ? URLParams.get(survey.questions[0].id) : null;
-  const isPrefilledAnswerValid =firstQuestionPrefill? checkValidity(survey.questions[0],firstQuestionPrefill):false
+  const firstQuestionPrefill = URLParams.has(survey.questions[0].id)
+    ? URLParams.get(survey.questions[0].id)
+    : null;
+  const isPrefilledAnswerValid = firstQuestionPrefill
+    ? checkValidity(survey.questions[0], firstQuestionPrefill)
+    : false;
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -47,8 +51,8 @@ export function Survey({
   }, [activeQuestionId]);
 
   useEffect(() => {
-    if(firstQuestionPrefill && isPrefilledAnswerValid){
-      handlePrefilling( currentQuestion, survey, firstQuestionPrefill, onSubmit);
+    if (firstQuestionPrefill && isPrefilledAnswerValid) {
+      handlePrefilling(currentQuestion, survey, firstQuestionPrefill, onSubmit);
     }
   }, [handlePrefilling]);
 
@@ -102,7 +106,7 @@ export function Survey({
     console.log(JSON.stringify(history, null, 2));
     const newHistory = [...history];
     const prevQuestionId = newHistory.pop();
-    if (isPrefilledAnswerValid && firstQuestionPrefill && prevQuestionId === survey.questions[0].id) return
+    if (isPrefilledAnswerValid && firstQuestionPrefill && prevQuestionId === survey.questions[0].id) return;
     if (!prevQuestionId) throw new Error("Question not found");
     setHistory(newHistory);
     setQuestionId(prevQuestionId);

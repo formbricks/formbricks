@@ -69,7 +69,7 @@ export default function OpenTextQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-          backButtonLabel={question.backButtonLabel}
+            backButtonLabel={question.backButtonLabel}
             onClick={() => {
               onBack();
             }}

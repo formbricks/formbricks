@@ -61,7 +61,9 @@ export default function ConsentQuestion({
         </label>
 
         <div className="mt-4 flex w-full justify-between">
-          {!isFirstQuestion && <BackButton backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />}
+          {!isFirstQuestion && (
+            <BackButton backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
+          )}
           <div />
           <SubmitButton
             brandColor={brandColor}

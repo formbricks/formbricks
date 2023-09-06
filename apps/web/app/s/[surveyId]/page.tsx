@@ -9,11 +9,8 @@ import { getSurvey } from "@formbricks/lib/services/survey";
 import { verifyTokenForLinkSurvey } from "@/lib/jwt";
 
 export default async function LinkSurveyPage({ params, searchParams }) {
-
   const survey = await getSurvey(params.surveyId);
   let emailVerificationStatus: string | null = null;
-
-  
 
   if (!survey || survey.type !== "link") {
     return <SurveyInactive status="not found" />;
