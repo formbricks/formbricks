@@ -5,12 +5,14 @@ import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import ApiKeyList from "./ApiKeyList";
 import EnvironmentNotice from "@/components/shared/EnvironmentNotice";
+import { getEnvironment } from "@formbricks/lib/services/environment";
 
 export default async function ProfileSettingsPage({ params }) {
+  const environment = await getEnvironment(params.environmentId);
   return (
     <div>
       <SettingsTitle title="API Keys" />
-      <EnvironmentNotice environmentId={params.environmentId} pageType="apiSettings" />
+      <EnvironmentNotice environment={environment} />
       <SettingsCard
         title="Development Env Keys"
         description="Add and remove API keys for your Development environment.">

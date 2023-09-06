@@ -1,13 +1,13 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
+import { updateEnvironmentAction } from "@/app/(app)/environments/[environmentId]/settings/setup/actions";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
-import SurveysList from "./SurveyList";
-import { Metadata } from "next";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { getActionsByEnvironmentId } from "@formbricks/lib/services/actions";
 import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getActions } from "@formbricks/lib/services/actions";
-import { updateEnvironmentAction } from "@/app/(app)/environments/[environmentId]/settings/setup/actions";
+import { Metadata } from "next";
+import SurveysList from "./SurveyList";
 
 export const metadata: Metadata = {
   title: "Your Surveys",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function SurveysPage({ params }) {
   const [environment, actions] = await Promise.all([
     getEnvironment(params.environmentId),
-    getActions(params.environmentId),
+    getActionsByEnvironmentId(params.environmentId),
   ]);
 
   return (
