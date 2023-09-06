@@ -52,25 +52,25 @@ function TooltipRenderer(props: TooltipRendererProps) {
 export default function SingleResponseCard({ survey, response, pageType }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
-  const displayIdentifier = response.person ? getPersonIdentifier (response.person) : null
+  const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
 
-
   function isValidValue(value) {
     return (
-        (typeof value === 'string' && value.trim() !== '') ||
-        (Array.isArray(value) && value.length > 0) ||
-        typeof value === 'number'
+      (typeof value === "string" && value.trim() !== "") ||
+      (Array.isArray(value) && value.length > 0) ||
+      typeof value === "number"
     );
-}
+  }
 
   if (response.finished) {
     survey.questions.forEach((question) => {
-      if ((question.id in response.data) && !isValidValue(response.data[question.id]) ) {
+      if (question.id in response.data && !isValidValue(response.data[question.id])) {
         temp.push(question.id);
       } else {
         if (temp.length > 0) {
@@ -80,19 +80,21 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       }
     });
   } else {
-    for (let index = survey.questions.length-1; index >= 0; index--) {
+    for (let index = survey.questions.length - 1; index >= 0; index--) {
       const question = survey.questions[index];
-      if (!(response.data[question.id])) {
-        if(skippedQuestions.length === 0){
+      if (!response.data[question.id]) {
+        if (skippedQuestions.length === 0) {
+          temp.push(question.id);
+        } else if (
+          skippedQuestions.length > 0 &&
+          question.id in response.data &&
+          !isValidValue(response.data[question.id])
+        ) {
           temp.push(question.id);
         }
-        else if(skippedQuestions.length>0 && (question.id in response.data) && !isValidValue(response.data[question.id])){
-          temp.push(question.id)
-        }
-        
       } else {
         if (temp.length > 0) {
-          temp.reverse()
+          temp.reverse();
           skippedQuestions.push([...temp]);
           temp = [];
         }
@@ -131,6 +133,13 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       (response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
 
+  function isSubmissionTimeLessThan5Minutes(submissionTimeISOString: Date) {
+    const submissionTime: Date = new Date(submissionTimeISOString);
+    const currentTime: Date = new Date();
+    const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
+    return timeDifference < 5;
+  }
+
   const tooltipContent = (
     <>
       {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
@@ -163,6 +172,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       )}
     </>
   );
+  const deleteSubmissionToolTip = <>This submission is in progress.</>;
 
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
@@ -213,12 +223,20 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
-              <button
-                onClick={() => {
-                  setDeleteDialogOpen(true);
-                }}>
-                <TrashIcon className="h-4 w-4 text-slate-500 hover:text-red-700" />
-              </button>
+              <TooltipRenderer shouldRender={isSubmissionFresh} tooltipContent={deleteSubmissionToolTip}>
+                <TrashIcon
+                  onClick={() => {
+                    if (!isSubmissionFresh) {
+                      setDeleteDialogOpen(true);
+                    }
+                  }}
+                  className={`h-4 w-4 ${
+                    isSubmissionFresh
+                      ? "cursor-not-allowed text-gray-400"
+                      : "text-slate-500 hover:text-red-700"
+                  } `}
+                />
+              </TooltipRenderer>
             </div>
           </div>
         </div>
@@ -265,12 +283,12 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
                     </p>
                   )
                 ) : (
-                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                      {handleArray(response.data[question.id])}
-                    </p>
+                  <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                    {handleArray(response.data[question.id])}
+                  </p>
                 )}
               </div>
-            )
+            );
           })}
           {response.finished && (
             <div className="flex">
@@ -307,5 +325,5 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
         />
       )}
     </div>
-  )
+  );
 }
