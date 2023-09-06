@@ -1,10 +1,10 @@
 "use client";
 
 import { loadNewUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import Modal from "@/components/shared/Modal";
 import { useUserSegments } from "@/lib/userSegments/userSegments";
 import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
-import { Dialog, DialogContent } from "@formbricks/ui";
+import { Button } from "@formbricks/ui";
 import React from "react";
 import toast from "react-hot-toast";
 
@@ -68,21 +68,27 @@ const SegmentDetails = ({
     return <div>Loading...</div>;
   }
 
+  const userSegmentsArray = userSegments?.filter(
+    (segment) => segment.id !== userSegment.id && !segment.isPrivate
+  );
+
   return (
     <div className="flex flex-col">
-      {userSegments
-        ?.filter((segment) => segment.id !== userSegment.id)
-        ?.map((segment) => (
-          <div
-            key={segment.id}
-            className="flex cursor-pointer flex-col gap-2 rounded-lg p-2 hover:bg-slate-100"
-            onClick={() => {
-              handleLoadNewSegment(segment.id);
-            }}>
-            <div className="text-base font-medium">{segment.title}</div>
-            <div className="text-sm text-slate-500">{segment.description}</div>
-          </div>
-        ))}
+      {!userSegmentsArray?.length && (
+        <div className="text-center text-base font-medium">You have not created a segment yet</div>
+      )}
+
+      {userSegmentsArray?.map((segment) => (
+        <div
+          key={segment.id}
+          className="flex cursor-pointer flex-col gap-2 rounded-lg p-2 hover:bg-slate-100"
+          onClick={() => {
+            handleLoadNewSegment(segment.id);
+          }}>
+          <div className="text-base font-medium">{segment.title}</div>
+          <div className="text-sm text-slate-500">{segment.description}</div>
+        </div>
+      ))}
     </div>
   );
 };
@@ -97,40 +103,50 @@ const LoadSegmentModal = ({
   userSegment,
   setUserSegment,
 }: LoadSegmentModalProps) => {
+  const handleResetState = () => {
+    setStep("initial");
+    setOpen(false);
+  };
+
   return (
-    <div>
-      {step === "initial" ? (
-        <ConfirmDialog
-          open={open}
-          setOpen={setOpen}
-          title="Overwrite current filters"
-          description="Loading a Segment will overwrite all current filters. This can not be undone."
-          primaryAction={() => {
-            setStep("load");
-          }}
-          secondaryAction={() => setOpen(false)}
-          primaryActionText="Load Segment anyways"
-          secondaryActionText="Cancel"
-        />
-      ) : (
-        <Dialog
-          open={open}
-          onOpenChange={(open) => {
-            setOpen(open);
-            setStep("initial");
-          }}>
-          <DialogContent hideCloseButton className="bg-slate-50">
-            <SegmentDetails
-              surveyId={surveyId}
-              environmentId={environmentId}
-              setOpen={setOpen}
-              userSegment={userSegment}
-              setUserSegment={setUserSegment}
-            />
-          </DialogContent>
-        </Dialog>
+    <Modal
+      open={open}
+      setOpen={() => {
+        handleResetState();
+      }}
+      title="Load Segment">
+      {step === "initial" && (
+        <div>
+          <p>Loading a Segment will overwrite all current filters. This can not be undone.</p>
+          <div className="space-x-2 text-right">
+            <Button
+              variant="warn"
+              onClick={() => {
+                handleResetState();
+              }}>
+              Cancel
+            </Button>
+            <Button
+              variant="darkCTA"
+              onClick={() => {
+                setStep("load");
+              }}>
+              Load Segment anyways
+            </Button>
+          </div>
+        </div>
       )}
-    </div>
+
+      {step === "load" && (
+        <SegmentDetails
+          environmentId={environmentId}
+          surveyId={surveyId}
+          setOpen={setOpen}
+          setUserSegment={setUserSegment}
+          userSegment={userSegment}
+        />
+      )}
+    </Modal>
   );
 };
 

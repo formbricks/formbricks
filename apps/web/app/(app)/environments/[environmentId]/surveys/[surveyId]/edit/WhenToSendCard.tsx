@@ -41,9 +41,16 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
   };
 
   const setTriggerEvent = (idx: number, eventClassId: string) => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = eventClassId;
-    setLocalSurvey(updatedSurvey);
+    // TODO: DEBUG ME
+
+    // const updatedSurvey = { ...localSurvey };
+    // updatedSurvey.triggers[idx] = eventClassId;
+    // setLocalSurvey(updatedSurvey);
+
+    setLocalSurvey({
+      ...localSurvey,
+      triggers: [...localSurvey.triggers.slice(0, idx), eventClassId, ...localSurvey.triggers.slice(idx + 1)],
+    });
   };
 
   const removeTriggerEvent = (idx: number) => {

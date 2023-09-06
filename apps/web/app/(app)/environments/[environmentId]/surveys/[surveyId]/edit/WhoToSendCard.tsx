@@ -205,18 +205,16 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 />
               )}
 
-              {loadSegmentModalOpen && userSegment && (
-                <LoadSegmentModal
-                  open={loadSegmentModalOpen}
-                  setOpen={setLoadSegmentModalOpen}
-                  surveyId={localSurvey.id}
-                  environmentId={localSurvey.environmentId}
-                  step={loadSegmentModalStep}
-                  setStep={setLoadSegmentModalStep}
-                  userSegment={userSegment}
-                  setUserSegment={setUserSegment}
-                />
-              )}
+              <LoadSegmentModal
+                open={loadSegmentModalOpen && !!userSegment}
+                setOpen={setLoadSegmentModalOpen}
+                surveyId={localSurvey.id}
+                environmentId={localSurvey.environmentId}
+                step={loadSegmentModalStep}
+                setStep={setLoadSegmentModalStep}
+                userSegment={userSegment}
+                setUserSegment={setUserSegment}
+              />
 
               {segmentEditorViewOnly && userSegment && (
                 <div className="pointer-events-none opacity-60">
