@@ -1,3 +1,9 @@
+-- CreateEnum
+CREATE TYPE "DeviceType" AS ENUM ('phone', 'desktop');
+
+-- AlterTable
+ALTER TABLE "Session" ADD COLUMN     "deviceType" "DeviceType";
+
 -- AlterTable
 ALTER TABLE "Survey" ADD COLUMN     "userSegmentId" TEXT;
 
@@ -8,7 +14,7 @@ CREATE TABLE "UserSegment" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
-    "private" BOOLEAN NOT NULL DEFAULT true,
+    "isPrivate" BOOLEAN NOT NULL DEFAULT true,
     "filters" JSONB NOT NULL DEFAULT '[]',
     "environmentId" TEXT NOT NULL,
 
@@ -16,7 +22,7 @@ CREATE TABLE "UserSegment" (
 );
 
 -- AddForeignKey
-ALTER TABLE "Survey" ADD CONSTRAINT "Survey_userSegmentId_fkey" FOREIGN KEY ("userSegmentId") REFERENCES "UserSegment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Survey" ADD CONSTRAINT "Survey_userSegmentId_fkey" FOREIGN KEY ("userSegmentId") REFERENCES "UserSegment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserSegment" ADD CONSTRAINT "UserSegment_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
