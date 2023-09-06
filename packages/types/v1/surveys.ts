@@ -8,6 +8,10 @@ export const ZSurveyThankYouCard = z.object({
   subheader: z.optional(z.string()),
 });
 
+export const ZPrefilledAnswerObj = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
+
+export type TPrefilledAnswerObj = z.infer<typeof ZPrefilledAnswerObj>;
+
 export const ZSurveyClosedMessage = z
   .object({
     heading: z.optional(z.string()),

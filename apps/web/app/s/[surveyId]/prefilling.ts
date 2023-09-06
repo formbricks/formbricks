@@ -1,14 +1,12 @@
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyQuestion, TPrefilledAnswerObj } from "@formbricks/types/v1/surveys";
 import { Question } from "@formbricks/types/questions";
 import { QuestionType } from "@formbricks/types/questions";
-import { TResponseData } from "@formbricks/types/v1/responses";
 
-export async function handlePrefilling(
+export function handlePrefilling(
   currentQuestion: TSurveyQuestion,
   survey: TSurvey,
-  firstQuestionPrefill: string,
-  submitResponse: (data: TResponseData) => void
-) {
+  firstQuestionPrefill: string
+): TPrefilledAnswerObj | undefined {
   try {
     if (firstQuestionPrefill) {
       if (!currentQuestion) return;
@@ -19,7 +17,7 @@ export async function handlePrefilling(
 
       const answer = createAnswer(question, firstQuestionPrefill || "");
       const answerObj = { [firstQuestionId]: answer };
-      await submitResponse(answerObj);
+      return answerObj;
     }
   } catch (error) {
     console.log(error);
@@ -84,7 +82,10 @@ export const checkValidity = (question: TSurveyQuestion | Question, answer: any)
   }
 };
 
-const createAnswer = (question: TSurveyQuestion | Question, answer: string): string | number | string[] => {
+export const createAnswer = (
+  question: TSurveyQuestion | Question,
+  answer: string
+): string | number | string[] => {
   switch (question.type) {
     case QuestionType.OpenText:
     case QuestionType.MultipleChoiceSingle:

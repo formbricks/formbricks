@@ -1,5 +1,5 @@
 import type { TResponse, TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurvey } from "@formbricks/types/v1/surveys";
+import type { TPrefilledAnswerObj, TSurvey } from "@formbricks/types/v1/surveys";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
@@ -8,7 +8,6 @@ import FormbricksSignature from "./FormbricksSignature";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
-import { checkValidity, handlePrefilling } from "../lib/prefilling";
 
 interface SurveyProps {
   survey: TSurvey;
@@ -19,6 +18,7 @@ interface SurveyProps {
   onActiveQuestionChange?: (questionId: string) => void;
   onResponse?: (response: Partial<TResponse>) => void;
   onClose?: () => void;
+  prefilledObject?: TPrefilledAnswerObj;
 }
 
 export function Survey({
@@ -30,6 +30,7 @@ export function Survey({
   onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
+  prefilledObject,
 }: SurveyProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
   const [loadingElement, setLoadingElement] = useState(false);
@@ -37,24 +38,11 @@ export function Survey({
   const [responseData, setResponseData] = useState<TResponseData>({});
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
-  const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-  const firstQuestionPrefill = URLParams.has(survey.questions[0].id)
-    ? URLParams.get(survey.questions[0].id)
-    : null;
-  const isPrefilledAnswerValid = firstQuestionPrefill
-    ? checkValidity(survey.questions[0], firstQuestionPrefill)
-    : false;
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setQuestionId(activeQuestionId || survey.questions[0].id);
   }, [activeQuestionId]);
-
-  useEffect(() => {
-    if (firstQuestionPrefill && isPrefilledAnswerValid) {
-      handlePrefilling(currentQuestion, survey, firstQuestionPrefill, onSubmit);
-    }
-  }, [handlePrefilling]);
 
   useEffect(() => {
     // scroll to top when question changes
@@ -66,6 +54,9 @@ export function Survey({
   // call onDisplay when component is mounted
   useEffect(() => {
     onDisplay();
+    if (prefilledObject) {
+      onSubmit(prefilledObject);
+    }
   }, []);
 
   function getNextQuestionId(data: TResponseData): string {
@@ -106,7 +97,7 @@ export function Survey({
     console.log(JSON.stringify(history, null, 2));
     const newHistory = [...history];
     const prevQuestionId = newHistory.pop();
-    if (isPrefilledAnswerValid && firstQuestionPrefill && prevQuestionId === survey.questions[0].id) return;
+    if (prefilledObject && prevQuestionId === survey.questions[0].id) return;
     if (!prevQuestionId) throw new Error("Question not found");
     setHistory(newHistory);
     setQuestionId(prevQuestionId);

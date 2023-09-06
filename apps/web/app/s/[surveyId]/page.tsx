@@ -7,9 +7,14 @@ import { getOrCreatePersonByUserId } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { verifyTokenForLinkSurvey } from "@/lib/jwt";
+import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 
 export default async function LinkSurveyPage({ params, searchParams }) {
   const survey = await getSurvey(params.surveyId);
+  const firstQuestionPrefill = searchParams[survey!.questions[0].id];
+  const isPrefilledAnswerValid = firstQuestionPrefill
+    ? checkValidity(survey!.questions[0], firstQuestionPrefill)
+    : false;
   let emailVerificationStatus: string | null = null;
 
   if (!survey || survey.type !== "link") {
@@ -54,6 +59,7 @@ export default async function LinkSurveyPage({ params, searchParams }) {
       product={product}
       personId={person?.id}
       emailVerificationStatus={emailVerificationStatus}
+      firstQuestionPrefill={isPrefilledAnswerValid ? firstQuestionPrefill : null}
     />
   );
 }

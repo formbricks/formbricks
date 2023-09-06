@@ -1,7 +1,7 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
 import { Survey } from "@formbricks/types/surveys";
 import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TPrefilledAnswerObj, TSurvey } from "@formbricks/types/v1/surveys";
 import { useEffect, useMemo } from "react";
 
 const createContainerId = () => `formbricks-survey-container`;
@@ -16,6 +16,7 @@ interface SurveyProps {
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
   autoFocus?: boolean;
+  prefilledObject?: TPrefilledAnswerObj;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -35,6 +36,7 @@ export const SurveyInline = ({
   onActiveQuestionChange = () => {},
   onClose = () => {},
   autoFocus,
+  prefilledObject,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -49,6 +51,7 @@ export const SurveyInline = ({
       activeQuestionId,
       onActiveQuestionChange,
       autoFocus,
+      prefilledObject,
     });
   }, [
     activeQuestionId,
@@ -127,6 +130,7 @@ export const SurveyModalInline = ({
   onResponse = () => {},
   onActiveQuestionChange = () => {},
   onClose = () => {},
+  prefilledObject,
 }: SurveyModalProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -144,6 +148,7 @@ export const SurveyModalInline = ({
       onClose,
       activeQuestionId,
       onActiveQuestionChange,
+      prefilledObject,
     });
   }, [
     activeQuestionId,
