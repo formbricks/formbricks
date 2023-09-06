@@ -15,6 +15,15 @@ export const ZSurveyClosedMessage = z
   })
   .optional();
 
+export const ZSurveyVerifyEmail = z
+  .object({
+    name: z.optional(z.string()),
+    subheading: z.optional(z.string()),
+  })
+  .optional();
+
+export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
+
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
 export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
@@ -240,6 +249,7 @@ export const ZSurvey = z.object({
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage,
+  verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
