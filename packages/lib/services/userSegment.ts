@@ -45,6 +45,13 @@ export const createUserSegment = async (
         },
       }),
     },
+    include: {
+      surveys: {
+        select: {
+          id: true,
+        },
+      },
+    },
   });
 
   return userSegment;
@@ -91,6 +98,13 @@ export const updateUserSegment = async (segmentId: string, data: TUserSegmentUpd
       id: segmentId,
     },
     data,
+    include: {
+      surveys: {
+        select: {
+          id: true,
+        },
+      },
+    },
   });
 
   return userSegment;

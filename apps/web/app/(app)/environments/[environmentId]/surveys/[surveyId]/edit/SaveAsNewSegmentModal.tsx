@@ -5,12 +5,11 @@ import {
   updateUserSegmentAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Modal from "@/components/shared/Modal";
-import { useSurvey } from "@/lib/surveys/surveys";
 import { Survey } from "@formbricks/types/surveys";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
-import React from "react";
+import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -19,6 +18,8 @@ type SaveAsNewSegmentModalProps = {
   setOpen: (open: boolean) => void;
   localSurvey: Survey;
   userSegment: TUserSegment;
+  setUserSegment: (userSegment: TUserSegment) => void;
+  setIsSegmentEditorOpen: (isOpen: boolean) => void;
 };
 
 type SaveAsNewSegmentModalForm = {
@@ -31,14 +32,23 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
   setOpen,
   localSurvey,
   userSegment,
+  setUserSegment,
+  setIsSegmentEditorOpen,
 }) => {
   const {
     register,
     formState: { errors },
     handleSubmit,
+    setValue,
   } = useForm<SaveAsNewSegmentModalForm>();
 
-  const { mutateSurvey } = useSurvey(localSurvey.environmentId, localSurvey.id);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleReset = () => {
+    setValue("title", "");
+    setValue("description", "");
+    setOpen(false);
+  };
 
   const handleSaveSegment: SubmitHandler<SaveAsNewSegmentModalForm> = async (data) => {
     if (!userSegment || !userSegment?.filters.length) return;
@@ -47,8 +57,9 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
       // if the segment is private, update it to add title, description and make it public
       // otherwise, create a new segment
 
+      setIsLoading(true);
       if (!!userSegment && userSegment?.isPrivate) {
-        await updateUserSegmentAction(userSegment.id, {
+        const updatedUserSegment = await updateUserSegmentAction(userSegment.id, {
           title: data.title,
           description: data.description,
           isPrivate: false,
@@ -56,12 +67,18 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
         });
 
         toast.success("Segment updated successfully");
-        mutateSurvey();
-        setOpen(false);
+
+        setUserSegment({
+          ...updatedUserSegment,
+          description: updatedUserSegment.description || "",
+          surveys: updatedUserSegment.surveys.map((survey) => survey.id),
+        });
+        setIsSegmentEditorOpen(false);
+        handleReset();
         return;
       }
 
-      await createUserSegmentAction({
+      const createdUserSegment = await createUserSegmentAction({
         environmentId: localSurvey.environmentId,
         surveyId: localSurvey.id,
         title: data.title,
@@ -70,17 +87,29 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
         filters: userSegment?.filters,
       });
 
+      setUserSegment({
+        ...createdUserSegment,
+        description: createdUserSegment.description || "",
+        surveys: createdUserSegment.surveys.map((survey) => survey.id),
+      });
+
+      setIsSegmentEditorOpen(false);
+      setIsLoading(false);
       toast.success("Segment created successfully");
-      mutateSurvey();
-      setOpen(false);
+      handleReset();
     } catch (err) {
-      console.log(err);
       toast.error(err.message);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding>
+    <Modal
+      open={open}
+      setOpen={() => {
+        handleReset();
+      }}
+      noPadding>
       <div className="rounded-t-lg bg-slate-100">
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
@@ -145,11 +174,11 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
                 type="button"
                 variant="minimal"
                 onClick={() => {
-                  setOpen(false);
+                  handleReset();
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit">
+              <Button variant="darkCTA" type="submit" loading={isLoading}>
                 Save
               </Button>
             </div>

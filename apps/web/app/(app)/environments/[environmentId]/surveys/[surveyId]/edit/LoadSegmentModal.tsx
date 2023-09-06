@@ -1,6 +1,7 @@
 "use client";
 
 import { loadNewUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Modal from "@/components/shared/Modal";
 import { useUserSegments } from "@/lib/userSegments/userSegments";
 import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
@@ -17,6 +18,7 @@ type LoadSegmentModalProps = {
   setStep: (step: "initial" | "load") => void;
   userSegment: TUserSegment;
   setUserSegment: (userSegment: TUserSegment) => void;
+  setIsSegmentEditorOpen: (isOpen: boolean) => void;
 };
 
 const SegmentDetails = ({
@@ -25,48 +27,53 @@ const SegmentDetails = ({
   setOpen,
   setUserSegment,
   userSegment,
+  setIsSegmentEditorOpen,
 }: {
   environmentId: string;
   surveyId: string;
   userSegment: TUserSegment;
   setUserSegment: (userSegment: TUserSegment) => void;
   setOpen: (open: boolean) => void;
+  setIsSegmentEditorOpen: (isOpen: boolean) => void;
 }) => {
   const { userSegments, isLoadingUserSegments } = useUserSegments(environmentId);
 
-  const handleLoadNewSegment = async (segmentId: string) => {
-    const updatedSurvey = await loadNewUserSegmentAction(surveyId, segmentId);
-
-    if (!updatedSurvey.id) {
-      toast.error("Error loading segment");
-      return;
-    }
-
-    if (!updatedSurvey.userSegment) {
-      toast.error("Error loading segment");
-      return;
-    }
-
-    const parsedFilters = ZUserSegmentFilterGroup.safeParse(updatedSurvey.userSegment.filters);
-
-    if (!parsedFilters.success) {
-      toast.error("Error loading segment");
-      return;
-    }
-
-    setUserSegment({
-      ...updatedSurvey.userSegment,
-      description: updatedSurvey.userSegment.description || "",
-      filters: parsedFilters.data,
-      surveys: updatedSurvey.userSegment.surveys.map((survey) => survey.id),
-    });
-
-    setOpen(false);
-  };
-
   if (isLoadingUserSegments) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
+
+  const handleLoadNewSegment = async (segmentId: string) => {
+    try {
+      const updatedSurvey = await loadNewUserSegmentAction(surveyId, segmentId);
+
+      if (!updatedSurvey?.id) {
+        throw new Error("Error loading segment");
+      }
+
+      if (!updatedSurvey.userSegment) {
+        throw new Error("Error loading segment");
+      }
+
+      const parsedFilters = ZUserSegmentFilterGroup.safeParse(updatedSurvey?.userSegment?.filters);
+
+      if (!parsedFilters.success) {
+        throw new Error("Invalid segment filters");
+      }
+
+      setUserSegment({
+        ...updatedSurvey.userSegment,
+        description: updatedSurvey.userSegment.description || "",
+        filters: parsedFilters.data,
+        surveys: updatedSurvey.userSegment.surveys.map((survey) => survey.id),
+      });
+
+      setIsSegmentEditorOpen(false);
+      setOpen(false);
+    } catch (err) {
+      toast.error(err.message);
+      setOpen(false);
+    }
+  };
 
   const userSegmentsArray = userSegments?.filter(
     (segment) => segment.id !== userSegment.id && !segment.isPrivate
@@ -102,6 +109,7 @@ const LoadSegmentModal = ({
   step,
   userSegment,
   setUserSegment,
+  setIsSegmentEditorOpen,
 }: LoadSegmentModalProps) => {
   const handleResetState = () => {
     setStep("initial");
@@ -144,6 +152,7 @@ const LoadSegmentModal = ({
           setOpen={setOpen}
           setUserSegment={setUserSegment}
           userSegment={userSegment}
+          setIsSegmentEditorOpen={setIsSegmentEditorOpen}
         />
       )}
     </Modal>

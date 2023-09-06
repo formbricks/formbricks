@@ -45,7 +45,7 @@ export const updateUserSegmentAction = async (segmentId: string, data: TUserSegm
   const parsedFilters = ZUserSegmentFilterGroup.safeParse(filters);
 
   if (!parsedFilters.success) {
-    throw new Error(parsedFilters.error.message);
+    throw new Error("Invalid filters");
   }
 
   return await updateUserSegment(segmentId, data);

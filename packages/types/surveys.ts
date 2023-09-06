@@ -34,6 +34,7 @@ export interface Survey {
   responseRate: number;
   displayOption: "displayOnce" | "displayMultiple" | "respondMultiple";
   attributeFilters: AttributeFilter[];
+  userSegmentId: string | null;
   userSegment: TUserSegment | null;
   autoClose: number | null;
   delay: number;

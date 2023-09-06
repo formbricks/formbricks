@@ -47,8 +47,10 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(false);
 
+  // sync local survey with user segment
   useEffect(() => {
     const updatedLocalSurvey = produce(localSurvey, (draft) => {
+      draft.userSegmentId = userSegment?.id ?? null;
       draft.userSegment = userSegment;
     });
 
@@ -206,16 +208,19 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 />
               )}
 
-              <LoadSegmentModal
-                open={loadSegmentModalOpen && !!userSegment}
-                setOpen={setLoadSegmentModalOpen}
-                surveyId={localSurvey.id}
-                environmentId={localSurvey.environmentId}
-                step={loadSegmentModalStep}
-                setStep={setLoadSegmentModalStep}
-                userSegment={userSegment}
-                setUserSegment={setUserSegment}
-              />
+              {!!userSegment && (
+                <LoadSegmentModal
+                  open={loadSegmentModalOpen}
+                  setOpen={setLoadSegmentModalOpen}
+                  surveyId={localSurvey.id}
+                  environmentId={localSurvey.environmentId}
+                  step={loadSegmentModalStep}
+                  setStep={setLoadSegmentModalStep}
+                  userSegment={userSegment}
+                  setUserSegment={setUserSegment}
+                  setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+                />
+              )}
 
               {segmentEditorViewOnly && userSegment && (
                 <div className="pointer-events-none opacity-60">
@@ -268,6 +273,8 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                         setOpen={setSaveAsNewSegmentModalOpen}
                         localSurvey={localSurvey}
                         userSegment={userSegment}
+                        setUserSegment={setUserSegment}
+                        setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                       />
                     )}
 
