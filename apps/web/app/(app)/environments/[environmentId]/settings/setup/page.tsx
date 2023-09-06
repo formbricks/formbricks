@@ -4,7 +4,7 @@ import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import EnvironmentNotice from "./EnvironmentNotice";
+import EnvironmentNotice from "@/components/shared/EnvironmentNotice";
 import SetupInstructions from "./SetupInstructions";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
 import { getActions } from "@formbricks/lib/services/actions";
@@ -19,8 +19,8 @@ export default async function ProfileSettingsPage({ params }) {
   const environments = await getEnvironments(environment!.productId);
   const devEnvironmentId = environments.find((e) => e.type === "development")?.id;
 
-  if(!environment){
-    return <ErrorComponent />
+  if (!environment) {
+    return <ErrorComponent />;
   }
 
   return (
@@ -39,7 +39,7 @@ export default async function ProfileSettingsPage({ params }) {
             />
           </SettingsCard>
 
-          <EnvironmentNotice environment={environment} devEnvironmentId={devEnvironmentId!}/>
+          <EnvironmentNotice environment={environment} devEnvironmentId={devEnvironmentId!} />
           <SettingsCard
             title="How to setup"
             description="Follow these steps to setup the Formbricks widget within your app"
