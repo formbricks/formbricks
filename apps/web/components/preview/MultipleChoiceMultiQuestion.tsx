@@ -191,6 +191,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4 flex w-full justify-between">
         {goToPreviousQuestion && (
           <BackButton
+            backButtonLabel={question.backButtonLabel}
             onClick={() => {
               if (otherSpecified.length > 0 && showOther) {
                 selectedChoices.push(otherSpecified);

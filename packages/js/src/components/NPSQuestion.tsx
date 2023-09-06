@@ -97,6 +97,7 @@ export default function NPSQuestion({
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         {goToPreviousQuestion && (
           <BackButton
+            backButtonLabel={question.backButtonLabel}
             onClick={() => {
               goToPreviousQuestion(
                 storedResponseValue !== selectedChoice

@@ -91,7 +91,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
+    if (!!storedResponseValue && symmetricDifference(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }
@@ -186,6 +186,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         {goToPreviousQuestion && (
           <BackButton
+            backButtonLabel={question.backButtonLabel}
             onClick={() => {
               if (otherSpecified.length > 0 && showOther) {
                 selectedChoices.push(otherSpecified);
