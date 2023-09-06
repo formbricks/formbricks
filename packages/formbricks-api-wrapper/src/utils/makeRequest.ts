@@ -3,12 +3,12 @@ import fetch from "node-fetch";
 import { Result, err, ok, wrapThrows } from "@formbricks/errors";
 import { NetworkError, ApiResponse } from "../types/index";
 
-export async function makeRequest<T = any, E = any>(
+export async function makeRequest<T>(
   apiHost: string,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
   data?: any
-): Promise<Result<T, E | NetworkError | Error>> {
+): Promise<Result<T, NetworkError | Error>> {
   const url = new URL(endpoint, apiHost);
   const body = JSON.stringify(data);
 
