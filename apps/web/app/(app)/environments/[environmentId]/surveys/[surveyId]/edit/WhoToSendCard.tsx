@@ -8,8 +8,8 @@ import { cloneUserSegmentAction } from "@/app/(app)/environments/[environmentId]
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
-import { Badge, Button } from "@formbricks/ui";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { Badge, Button, Switch } from "@formbricks/ui";
+import { CheckCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import AlertDialog from "@/components/shared/AlertDialog";
 import SegmentAlreadyUsedModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentAlreadyUsedModal";
+import { Users2Icon } from "lucide-react";
 
 // const filterConditions = [
 //   { id: "equals", name: "equals" },
@@ -237,10 +238,20 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                     </div>
                   )}
 
-                  <div className="mt-4">
+                  <div className="mt-4 flex items-center gap-4">
                     <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                       Add filter
                     </Button>
+
+                    {isSegmentEditorOpen && !!userSegment?.filters?.length && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={() => setResetAllFiltersModalOpen(true)}>
+                        <p className="text-sm">Reset all filters</p>
+                      </Button>
+                    )}
                   </div>
 
                   <>
@@ -287,19 +298,24 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 </div>
               ) : (
                 <div className="flex flex-col gap-4 rounded-lg p-2">
-                  <div>
-                    <h3 className="font-medium">{localSurvey.userSegment?.title}</h3>
-                    <p className="text-slate-500">{localSurvey.userSegment?.description}</p>
+                  <div className="flex items-center gap-6">
+                    <UserGroupIcon className="h-6 w-6" />
+                    <div className="flex flex-col">
+                      <h3 className="font-medium">{localSurvey.userSegment?.title}</h3>
+                      <p className="text-slate-500">{localSurvey.userSegment?.description}</p>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="flex items-center gap-2"
-                      onClick={() => setSegmentEditorViewOnly(true)}>
-                      <p className="text-sm">View Filters</p>
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={segmentEditorViewOnly}
+                        onCheckedChange={(checked) => {
+                          setSegmentEditorViewOnly(checked);
+                        }}
+                      />
+                      <p className="text-sm font-medium">{segmentEditorViewOnly ? "Hide" : "View"} Filters</p>
+                    </div>
 
                     {isSegmentUsedInOtherSurveys && (
                       <Button
@@ -348,7 +364,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 <p className="text-sm">Load Segment</p>
               </Button>
 
-              {isSegmentEditorOpen && !!userSegment?.filters?.length && (
+              {/* {isSegmentEditorOpen && !!userSegment?.filters?.length && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -356,7 +372,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                   onClick={() => setResetAllFiltersModalOpen(true)}>
                   <p className="text-sm">Reset all filters</p>
                 </Button>
-              )}
+              )} */}
             </div>
           </div>
         </Collapsible.CollapsibleContent>
