@@ -88,7 +88,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                       key={`survey-${survey.id}`}
                       environmentId={environmentId}
                       environment={environment}
-                      otherEnvironment={otherEnvironment}
+                      otherEnvironment={otherEnvironment!}
                     />
                   </div>
                 </div>

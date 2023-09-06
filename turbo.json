@@ -13,9 +13,7 @@
     "@formbricks/demo#go": {
       "cache": false,
       "persistent": true,
-      "dependsOn": [
-        "@formbricks/js#build"
-      ]
+      "dependsOn": ["@formbricks/js#build"]
     },
     "@formbricks/api#build": {
       "outputs": ["dist/**"],
@@ -49,7 +47,6 @@
         "NEXT_PUBLIC_INVITE_DISABLED",
         "NEXT_PUBLIC_SIGNUP_DISABLED",
         "NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID",
-        "NEXT_PUBLIC_STRIPE_PUBLIC_KEY",
         "NEXT_PUBLIC_TERMS_URL",
         "NEXTAUTH_SECRET",
         "NEXTAUTH_URL",

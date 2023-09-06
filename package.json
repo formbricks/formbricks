@@ -17,7 +17,7 @@
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",
-    "go": "turbo run go --concurrency 17",
+    "go": "turbo run go --concurrency 20",
     "dev": "turbo run dev --parallel",
     "pre-commit": "lint-staged",
     "start": "turbo run start --parallel",
@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
+    "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
     "lint-staged": "^14.0.1",
     "rimraf": "^5.0.1",

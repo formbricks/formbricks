@@ -1,5 +1,11 @@
 # @formbricks/js
 
+## 1.0.5
+
+### Patch Changes
+
+- bea1f993: Fix submit error in multiple choice questions
+
 ## 1.0.4
 
 ### Patch Changes
