@@ -7,6 +7,7 @@ import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
@@ -14,7 +15,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
-import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -264,16 +264,18 @@ export default function SurveyMenuBar({
           onSave={() => saveSurveyAction(true)}
         />
         <AlertDialog
-          confirmWhat="Survey changes"
+          headerText="Confirm Survey Changes"
           open={isConfirmDialogOpen}
           setOpen={setConfirmDialogOpen}
-          onDiscard={() => {
+          mainText="You have unsaved changes in your survey. Would you like to save them before leaving?"
+          declineBtnLabel="Discard"
+          declineBtnVariant="warn"
+          onFirstBtnClick={() => {
             setConfirmDialogOpen(false);
             router.back();
           }}
-          text="You have unsaved changes in your survey. Would you like to save them before leaving?"
-          useSaveInsteadOfCancel={true}
-          onSave={() => saveSurveyAction(true)}
+          confirmBtnLabel="Save"
+          onSecondBtnClick={() => saveSurveyAction(true)}
         />
       </div>
     </>

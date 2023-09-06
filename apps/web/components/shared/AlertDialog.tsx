@@ -6,38 +6,43 @@ import { Button } from "@formbricks/ui";
 interface AlertDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  confirmWhat: string;
-  onDiscard: () => void;
-  text?: string;
-  useSaveInsteadOfCancel?: boolean;
-  onSave?: () => void;
+  headerText: string;
+  mainText: string;
+  confirmBtnLabel: string;
+  declineBtnLabel: string;
+  declineBtnVariant?: "warn" | "minimal";
+  onFirstBtnClick: () => void;
+  onSecondBtnClick?: () => void;
 }
 
 export default function AlertDialog({
   open,
   setOpen,
-  confirmWhat,
-  onDiscard,
-  text,
-  useSaveInsteadOfCancel = false,
-  onSave,
+  headerText,
+  mainText = "Are you sure? This action cannot be undone.",
+  declineBtnLabel,
+  onFirstBtnClick,
+  confirmBtnLabel,
+  declineBtnVariant = "minimal",
+  onSecondBtnClick,
 }: AlertDialogProps) {
   return (
-    <Modal open={open} setOpen={setOpen} title={`Confirm ${confirmWhat}`}>
-      <p>{text || "Are you sure? This action cannot be undone."}</p>
+    <Modal open={open} setOpen={setOpen} title={headerText}>
+      <p>{mainText}</p>
       <div className="space-x-2 text-right">
-        <Button variant="warn" onClick={onDiscard}>
-          Discard
+        <Button variant={declineBtnVariant} onClick={onFirstBtnClick}>
+          {declineBtnLabel}
         </Button>
         <Button
           variant="darkCTA"
           onClick={() => {
-            if (useSaveInsteadOfCancel && onSave) {
-              onSave();
+            if (onSecondBtnClick) {
+              onSecondBtnClick();
+            } else {
+              setOpen(false);
             }
-            setOpen(false);
           }}>
-          {useSaveInsteadOfCancel ? "Save" : "Cancel"}
+          {confirmBtnLabel}
         </Button>
       </div>
     </Modal>

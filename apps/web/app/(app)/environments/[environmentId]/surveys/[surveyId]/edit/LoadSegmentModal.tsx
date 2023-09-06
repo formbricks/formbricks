@@ -6,7 +6,6 @@ import Modal from "@/components/shared/Modal";
 import { useUserSegments } from "@/lib/userSegments/userSegments";
 import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 import { Button } from "@formbricks/ui";
-import React from "react";
 import toast from "react-hot-toast";
 
 type LoadSegmentModalProps = {
@@ -82,17 +81,17 @@ const SegmentDetails = ({
   return (
     <div className="flex flex-col">
       {!userSegmentsArray?.length && (
-        <div className="text-center text-base font-medium">You have not created a segment yet</div>
+        <div className="my-12 text-center text-base text-slate-600">You have not created a segment yet</div>
       )}
 
       {userSegmentsArray?.map((segment) => (
         <div
           key={segment.id}
-          className="flex cursor-pointer flex-col gap-2 rounded-lg p-2 hover:bg-slate-100"
+          className="flex cursor-pointer flex-col gap-1 rounded-lg px-4 py-3 hover:bg-slate-100"
           onClick={() => {
             handleLoadNewSegment(segment.id);
           }}>
-          <div className="text-base font-medium">{segment.title}</div>
+          <div className="text-base font-medium text-slate-900">{segment.title}</div>
           <div className="text-sm text-slate-500">{segment.description}</div>
         </div>
       ))}
@@ -125,10 +124,10 @@ const LoadSegmentModal = ({
       title="Load Segment">
       {step === "initial" && (
         <div>
-          <p>Loading a Segment will overwrite all current filters. This can not be undone.</p>
-          <div className="space-x-2 text-right">
+          <p className="text-slate-600">Loading a Segment overwrites all current filters.</p>
+          <div className="mt-3 space-x-2 text-right">
             <Button
-              variant="warn"
+              variant="minimal"
               onClick={() => {
                 handleResetState();
               }}>
@@ -139,7 +138,7 @@ const LoadSegmentModal = ({
               onClick={() => {
                 setStep("load");
               }}>
-              Load Segment anyways
+              Load Segment
             </Button>
           </div>
         </div>
