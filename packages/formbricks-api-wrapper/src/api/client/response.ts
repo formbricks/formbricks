@@ -1,11 +1,11 @@
-import { makeRequest } from "../utils/makeRequest";
-import { NetworkError } from "../types";
+import { makeRequest } from "../../utils/makeRequest";
+import { NetworkError } from "../../types";
 import { Result } from "@formbricks/errors";
 import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 
 type TResponseUpdateInputWithResponseId = TResponseUpdateInput & { responseId: string };
 
-export class ResponsesAPI {
+export class ResponseAPI {
   private apiHost: string;
 
   constructor(apiHost: string) {

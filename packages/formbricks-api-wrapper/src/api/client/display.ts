@@ -1,9 +1,9 @@
 import { Result } from "@formbricks/errors";
-import { NetworkError } from "../types";
-import { makeRequest } from "../utils/makeRequest";
+import { NetworkError } from "../../types";
+import { makeRequest } from "../../utils/makeRequest";
 import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
 
-export class DisplaysAPI {
+export class DisplayAPI {
   private apiHost: string;
 
   constructor(baseUrl: string) {
