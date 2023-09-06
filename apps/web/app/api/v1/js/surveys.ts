@@ -132,6 +132,8 @@ export const getSurveys = async (
     },
   });
 
+  type TPotentialSurvey = (typeof potentialSurveys)[number];
+
   // get last display for this person
   const lastDisplayPerson = await prisma.display.findFirst({
     where: {
@@ -145,26 +147,7 @@ export const getSurveys = async (
     },
   });
 
-  // // filter surveys that meet the attributeFilters criteria
-  // const potentialSurveysWithAttributes = potentialSurveys.filter((survey) => {
-  //   const attributeFilters = survey.attributeFilters;
-  //   if (attributeFilters.length === 0) {
-  //     return true;
-  //   }
-  //   // check if meets all attribute filters criterias
-  //   return attributeFilters.every((attributeFilter) => {
-  //     const personAttributeValue = person.attributes[attributeFilter.attributeClass.name];
-  //     if (attributeFilter.condition === "equals") {
-  //       return personAttributeValue === attributeFilter.value;
-  //     } else if (attributeFilter.condition === "notEquals") {
-  //       return personAttributeValue !== attributeFilter.value;
-  //     } else {
-  //       throw Error("Invalid attribute filter condition");
-  //     }
-  //   });
-  // });
-
-  let potentialSurveysFiltered: typeof potentialSurveys = [];
+  let potentialSurveysFiltered: TPotentialSurvey[] = [];
 
   if (!potentialSurveys.every((survey) => !survey.userSegment?.filters?.length)) {
     const surveyPromises = potentialSurveys.map(async (survey) => {
@@ -196,7 +179,10 @@ export const getSurveys = async (
     });
 
     // Wait for all promises to resolve and then filter out any null values
-    potentialSurveysFiltered = (await Promise.all(surveyPromises)).filter((survey) => survey !== null);
+    const promisesResult = await Promise.all(surveyPromises);
+    const filteredResult = promisesResult.filter((survey) => !!survey);
+
+    potentialSurveysFiltered = filteredResult as TPotentialSurvey[];
   } else {
     potentialSurveysFiltered = potentialSurveys;
   }

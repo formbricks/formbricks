@@ -163,10 +163,17 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
       surveyClosedMessage: existingSurvey.surveyClosedMessage
         ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
         : prismaClient.JsonNull,
-
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : prismaClient.JsonNull,
+      userSegmentId: undefined, // userSegmentId is set below
+      ...(existingSurvey.userSegmentId && {
+        userSegment: {
+          connect: {
+            id: existingSurvey.userSegmentId,
+          },
+        },
+      }),
     },
   });
   return newSurvey;
@@ -266,6 +273,65 @@ export async function copyToOtherEnvironmentAction(
     }
   }
 
+  // if the userSegment exists in the target environment, connect it
+  // otherwise, create it
+
+  // let newUserSegment: TUserSegment | null = null;
+
+  // if (existingSurvey.userSegmentId) {
+  //   const existingUserSegment = await prisma.userSegment.findFirst({
+  //     where: {
+  //       id: existingSurvey.userSegmentId,
+  //     },
+  //   });
+
+  //   const userSegmentInTargetEnvironment = await prisma.userSegment.findFirst({
+  //     where: {
+  //       title: existingUserSegment?.title,
+  //       filters: {
+  //         path: ["filters"],
+  //         equals: existingUserSegment?.filters,
+  //       },
+  //       environment: {
+  //         id: targetEnvironmentId,
+  //       },
+  //     },
+  //     include: {
+  //       surveys: { select: { id: true } },
+  //     },
+  //   });
+
+  //   console.log({ userSegmentInTargetEnvironment, existingUserSegment });
+
+  //   if (!userSegmentInTargetEnvironment && existingUserSegment) {
+  //     const createdUserSegment = await prisma.userSegment.create({
+  //       data: {
+  //         title: existingUserSegment.title,
+  //         description: existingUserSegment?.description,
+  //         filters: JSON.parse(JSON.stringify(existingUserSegment?.filters)),
+  //         isPrivate: existingUserSegment.isPrivate,
+  //         environment: {
+  //           connect: {
+  //             id: targetEnvironmentId,
+  //           },
+  //         },
+  //       },
+  //     });
+
+  //     newUserSegment = {
+  //       ...createdUserSegment,
+  //       description: createdUserSegment?.description ?? "",
+  //       surveys: [],
+  //     };
+  //   } else {
+  //     newUserSegment = {
+  //       ...userSegmentInTargetEnvironment,
+  //       description: userSegmentInTargetEnvironment?.description ?? "",
+  //       surveys: userSegmentInTargetEnvironment?.surveys.map((survey) => survey.id) ?? [],
+  //     };
+  //   }
+  // }
+
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
     data: {
@@ -295,8 +361,19 @@ export async function copyToOtherEnvironmentAction(
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
+      userSegmentId: undefined,
+
+      // userSegmentId: undefined, // userSegmentId is set below
+      // ...(newUserSegment && {
+      //   userSegment: {
+      //     connect: {
+      //       id: newUserSegment.id,
+      //     },
+      //   },
+      // }),
     },
   });
+
   return newSurvey;
 }
 

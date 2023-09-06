@@ -249,6 +249,7 @@ export const ZSurvey = z.object({
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage,
   verifyEmail: ZSurveyVerifyEmail.nullable(),
+  userSegmentId: z.string().nullable().optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

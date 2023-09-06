@@ -14,7 +14,6 @@ import { Badge, Button } from "@formbricks/ui";
 import { CheckCircleIcon, ExclamationCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -30,7 +29,6 @@ interface WhoToSendCardProps {
 }
 
 export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   // const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
   //   useAttributeClasses(environmentId);
@@ -363,16 +361,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                   <p className="text-sm">Save as new Segment</p>
                 </Button>
               )}
-
-              {/* {isSegmentEditorOpen && !!userSegment?.filters?.length && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => setResetAllFiltersModalOpen(true)}>
-                  <p className="text-sm">Reset all filters</p>
-                </Button>
-              )} */}
             </div>
           </div>
         </Collapsible.CollapsibleContent>

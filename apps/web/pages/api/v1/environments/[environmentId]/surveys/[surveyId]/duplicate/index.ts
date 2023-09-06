@@ -67,6 +67,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
         verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
+        userSegmentId: undefined,
+        ...(existingSurvey.userSegmentId && {
+          userSegment: {
+            connect: {
+              id: existingSurvey.userSegmentId,
+            },
+          },
+        }),
       },
     });
 

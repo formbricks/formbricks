@@ -103,6 +103,7 @@ export const selectSurvey = {
       value: true,
     },
   },
+  userSegmentId: true,
 };
 
 export const preloadSurveyWithAnalytics = (surveyId: string) => {

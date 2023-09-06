@@ -99,6 +99,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         },
       });
+
       if (!targetEnvironmentAttributeClass) {
         const newAttributeClass = await prisma.attributeClass.create({
           data: {
@@ -147,6 +148,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
         verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
+        userSegmentId: undefined,
       },
     });
 
