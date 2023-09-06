@@ -241,15 +241,18 @@ export default function LogicEditor({
                   <SelectValue placeholder="Select condition" className="text-xs lg:text-sm" />
                 </SelectTrigger>
                 <SelectContent>
-                  {conditions[question.type].map((condition) => (
-                    <SelectItem
-                      key={condition}
-                      value={condition}
-                      title={logicConditions[condition].label}
-                      className="text-xs lg:text-sm">
-                      {logicConditions[condition].label}
-                    </SelectItem>
-                  ))}
+                  {conditions[question.type].map(
+                    (condition) =>
+                      !(question.required && condition === "skipped") && (
+                        <SelectItem
+                          key={condition}
+                          value={condition}
+                          title={logicConditions[condition].label}
+                          className="text-xs lg:text-sm">
+                          {logicConditions[condition].label}
+                        </SelectItem>
+                      )
+                  )}
                 </SelectContent>
               </Select>
 

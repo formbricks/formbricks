@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
+import { QuestionType } from "@formbricks/types/questions";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -124,13 +125,26 @@ export default function SurveyMenuBar({
         return false;
       }
       existingQuestionIds.add(question.id);
-      for (const logic of question.logic || []) {
-        if (question.required && logic.condition === "skipped") {
-          setInvalidQuestions([question.id]);
-          toast.error("Your logic jumps a required question. Please update the logic settings.");
+
+      if (
+        question.type === QuestionType.MultipleChoiceSingle ||
+        question.type === QuestionType.MultipleChoiceMulti
+      ) {
+        const haveSameChoices =
+          question.choices.some((element) => element.label.trim() === "") ||
+          question.choices.some((element, index) =>
+            question.choices
+              .slice(index + 1)
+              .some((nextElement) => nextElement.label.trim() === element.label.trim())
+          );
+
+        if (haveSameChoices) {
+          toast.error("You have 2 same choices. Please update or delete one.");
           return false;
         }
+      }
 
+      for (const logic of question.logic || []) {
         const validFields = ["condition", "destination", "value"].filter(
           (field) => logic[field] !== undefined
         ).length;
@@ -138,6 +152,11 @@ export default function SurveyMenuBar({
         if (validFields < 2) {
           setInvalidQuestions([question.id]);
           toast.error("Incomplete logic jumps detected: Please fill or delete them.");
+          return false;
+        }
+
+        if (question.required && logic.condition === "skipped") {
+          toast.error("You have a missing logic condition. Please update or delete it.");
           return false;
         }
 
