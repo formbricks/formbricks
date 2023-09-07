@@ -6,6 +6,7 @@ import { Button } from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";
+import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkSingleUseSurveyModal";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
@@ -14,6 +15,7 @@ interface LinkSurveyShareButtonProps {
 
 export default function LinkSurveyShareButton({ survey, className }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const isSingleUse = survey.singleUse?.enabled ?? false;
 
   return (
     <>
@@ -26,7 +28,11 @@ export default function LinkSurveyShareButton({ survey, className }: LinkSurveyS
         onClick={() => setShowLinkModal(true)}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
+      {showLinkModal && isSingleUse ? (
+        <LinkSingleUseSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />
+      ) : (
+        <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />
+      )}
     </>
   );
 }
