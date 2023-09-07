@@ -54,7 +54,7 @@ export default function IntegrationsPage({ params }) {
           icon={<Image src={n8nLogo} alt="n8n Logo" />}
         />
         <Card
-          docsHref="https://formbricks.com/docs/integrations/make.com"
+          docsHref="https://formbricks.com/docs/integrations/make"
           docsText="Docs"
           docsNewTab={true}
           connectHref="https://www.make.com/en/hq/app-invitation/67538c04a8ed934e86d4ba8cdd8f8732"
