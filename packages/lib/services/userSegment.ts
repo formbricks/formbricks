@@ -20,7 +20,7 @@ import {
   getLastQuarterEventCount,
   getLastWeekEventCount,
   getTotalOccurrences,
-} from "./actions";
+} from "./actionsHelpers";
 
 export const createUserSegment = async (
   environmentId: string,

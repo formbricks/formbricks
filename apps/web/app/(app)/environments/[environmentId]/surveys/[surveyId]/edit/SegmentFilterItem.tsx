@@ -53,7 +53,7 @@ import {
   Trash2,
   Users2Icon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import z from "zod";
 
 type SegmentFilterItemProps = {
@@ -180,8 +180,22 @@ const AttributeSegmentFilter = ({
   const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
-  const [valueInput, setValueInput] = useState(resource.value);
   const [valueError, setValueError] = useState("");
+
+  // when the operator changes, we need to check if the value is valid
+  useEffect(() => {
+    const { operator } = resource.qualifier;
+
+    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+      const isNumber = z.coerce.number().safeParse(resource.value);
+
+      if (isNumber.success) {
+        setValueError("");
+      } else {
+        setValueError("Value must be a number");
+      }
+    }
+  }, [resource.qualifier, resource.value]);
 
   if (isLoadingAttributeClasses) {
     return (
@@ -252,9 +266,9 @@ const AttributeSegmentFilter = ({
     setUserSegment(updatedUserSegment);
   };
 
-  const checkValue = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    setValueInput(value);
+    updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
       setValueError("Value cannot be empty");
@@ -337,10 +351,8 @@ const AttributeSegmentFilter = ({
       {resource.qualifier.operator !== "isSet" && (
         <div className="relative flex flex-col gap-1">
           <Input
-            value={valueInput}
-            onChange={(e) => {
-              checkValue(e);
-            }}
+            value={resource.value}
+            onChange={checkValueAndUpdate}
             className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
           />
 
@@ -383,7 +395,6 @@ const ActionSegmentFilter = ({
   const operatorText = convertOperatorToText(resource.qualifier.operator);
   const qualifierMetric = resource.qualifier.metric;
 
-  const [valueInput, setValueInput] = useState(resource.value);
   const [valueError, setValueError] = useState("");
 
   if (isLoadingEventClasses) {
@@ -481,9 +492,9 @@ const ActionSegmentFilter = ({
     setUserSegment(updatedUserSegment);
   };
 
-  const checkValue = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    setValueInput(value);
+    updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
       setValueError("Value cannot be empty");
@@ -571,10 +582,8 @@ const ActionSegmentFilter = ({
 
       <div className="relative flex flex-col gap-1">
         <Input
-          value={valueInput}
-          onChange={(e) => {
-            checkValue(e);
-          }}
+          value={resource.value}
+          onChange={checkValueAndUpdate}
           className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
         />
 

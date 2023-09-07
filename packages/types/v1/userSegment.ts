@@ -191,7 +191,22 @@ export const ZUserSegmentFilter = z
     {
       message: "Value must be a string for string operators and a number for arithmetic operators",
     }
-  );
+  )
+  .refine((filter) => {
+    const { value, qualifier } = filter;
+    const { operator } = qualifier;
+
+    // if the operator is "isSet", the value doesn't matter
+    if (operator === "isSet") {
+      return true;
+    }
+
+    if (typeof value === "string") {
+      return value.length > 0;
+    }
+
+    return true;
+  });
 
 export type TUserSegmentFilter = z.infer<typeof ZUserSegmentFilter>;
 
