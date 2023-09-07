@@ -29,6 +29,7 @@
       "env": [
         "CRON_SECRET",
         "PRISMA_GENERATE_DATAPROXY",
+        "FORMBRICKS_ENCRYPTION_KEY",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
