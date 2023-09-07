@@ -57,7 +57,7 @@ export default function IntegrationsPage({ params }) {
           docsHref="https://formbricks.com/docs/integrations/make"
           docsText="Docs"
           docsNewTab={true}
-          connectHref="https://www.make.com/en/hq/app-invitation/67538c04a8ed934e86d4ba8cdd8f8732"
+          connectHref="https://www.make.com/en/integrations/formbricks"
           connectText="Connect"
           connectNewTab={true}
           label="Make.com"

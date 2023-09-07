@@ -358,7 +358,7 @@ enum MembershipRole {
   owner
   admin
   editor
-  developerF
+  developer
   viewer
 }
 
