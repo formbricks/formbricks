@@ -1,7 +1,7 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
 import { Survey } from "@formbricks/types/surveys";
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import { TPrefilledAnswerObj, TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useEffect, useMemo } from "react";
 
 const createContainerId = () => `formbricks-survey-container`;
@@ -16,7 +16,7 @@ interface SurveyProps {
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
   autoFocus?: boolean;
-  prefilledObject?: TPrefilledAnswerObj;
+  prefillResponseData?: TResponseData;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -36,7 +36,7 @@ export const SurveyInline = ({
   onActiveQuestionChange = () => {},
   onClose = () => {},
   autoFocus,
-  prefilledObject,
+  prefillResponseData,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -51,7 +51,7 @@ export const SurveyInline = ({
       activeQuestionId,
       onActiveQuestionChange,
       autoFocus,
-      prefilledObject,
+      prefillResponseData,
     });
   }, [
     activeQuestionId,
@@ -64,6 +64,7 @@ export const SurveyInline = ({
     onResponse,
     survey,
     autoFocus,
+    prefillResponseData,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -130,7 +131,7 @@ export const SurveyModalInline = ({
   onResponse = () => {},
   onActiveQuestionChange = () => {},
   onClose = () => {},
-  prefilledObject,
+  prefillResponseData,
 }: SurveyModalProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -148,7 +149,7 @@ export const SurveyModalInline = ({
       onClose,
       activeQuestionId,
       onActiveQuestionChange,
-      prefilledObject,
+      prefillResponseData,
     });
   }, [
     activeQuestionId,
@@ -164,6 +165,7 @@ export const SurveyModalInline = ({
     onResponse,
     placement,
     survey,
+    prefillResponseData,
   ]);
   return <div id={containerId}></div>;
 };

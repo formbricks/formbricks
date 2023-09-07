@@ -1,5 +1,5 @@
 import { sendInviteAcceptedEmail } from "@/lib/email";
-import { verifyInviteToken } from "@/lib/jwt";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
 import { env } from "process";

@@ -1,5 +1,5 @@
 import type { TResponse, TResponseData } from "@formbricks/types/v1/responses";
-import type { TPrefilledAnswerObj, TSurvey } from "@formbricks/types/v1/surveys";
+import type { TSurvey } from "@formbricks/types/v1/surveys";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
@@ -18,7 +18,7 @@ interface SurveyProps {
   onActiveQuestionChange?: (questionId: string) => void;
   onResponse?: (response: Partial<TResponse>) => void;
   onClose?: () => void;
-  prefilledObject?: TPrefilledAnswerObj;
+  prefillResponseData?: TResponseData;
 }
 
 export function Survey({
@@ -30,7 +30,7 @@ export function Survey({
   onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
-  prefilledObject,
+  prefillResponseData,
 }: SurveyProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
   const [loadingElement, setLoadingElement] = useState(false);
@@ -42,7 +42,7 @@ export function Survey({
 
   useEffect(() => {
     setQuestionId(activeQuestionId || survey.questions[0].id);
-  }, [activeQuestionId]);
+  }, [activeQuestionId, survey.questions]);
 
   useEffect(() => {
     // scroll to top when question changes
@@ -54,8 +54,8 @@ export function Survey({
   // call onDisplay when component is mounted
   useEffect(() => {
     onDisplay();
-    if (prefilledObject) {
-      onSubmit(prefilledObject);
+    if (prefillResponseData) {
+      onSubmit(prefillResponseData);
     }
   }, []);
 
@@ -94,10 +94,9 @@ export function Survey({
   };
 
   const onBack = (): void => {
-    console.log(JSON.stringify(history, null, 2));
     const newHistory = [...history];
     const prevQuestionId = newHistory.pop();
-    if (prefilledObject && prevQuestionId === survey.questions[0].id) return;
+    if (prefillResponseData && prevQuestionId === survey.questions[0].id) return;
     if (!prevQuestionId) throw new Error("Question not found");
     setHistory(newHistory);
     setQuestionId(prevQuestionId);

@@ -7,19 +7,20 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/v1/product";
-import { TPrefilledAnswerObj, TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
-import { handlePrefilling } from "@/app/s/[surveyId]/prefilling";
+import { getPrefillResponseData } from "@/app/s/[surveyId]/prefilling";
+import { TResponseData } from "@formbricks/types/v1/responses";
 
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
   personId?: string;
-  emailVerificationStatus?: string | null;
-  firstQuestionPrefill?: string;
+  emailVerificationStatus?: string;
+  prefillAnswer?: string;
 }
 
 export default function LinkSurvey({
@@ -27,14 +28,14 @@ export default function LinkSurvey({
   product,
   personId,
   emailVerificationStatus,
-  firstQuestionPrefill,
+  prefillAnswer,
 }: LinkSurveyProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
-  const prefilledObject: TPrefilledAnswerObj | undefined = firstQuestionPrefill
-    ? handlePrefilling(survey.questions[0], survey, firstQuestionPrefill)
+  const prefillResponseData: TResponseData | undefined = prefillAnswer
+    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
 
   const responseQueue = useMemo(
@@ -95,7 +96,7 @@ export default function LinkSurvey({
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
-          prefilledObject={prefilledObject}
+          prefillResponseData={prefillResponseData}
         />
       </ContentWrapper>
     </>

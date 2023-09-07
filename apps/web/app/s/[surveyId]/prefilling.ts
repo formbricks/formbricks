@@ -1,12 +1,12 @@
-import { TSurvey, TSurveyQuestion, TPrefilledAnswerObj } from "@formbricks/types/v1/surveys";
-import { Question } from "@formbricks/types/questions";
 import { QuestionType } from "@formbricks/types/questions";
+import { TResponseData } from "@formbricks/types/v1/responses";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 
-export function handlePrefilling(
+export function getPrefillResponseData(
   currentQuestion: TSurveyQuestion,
   survey: TSurvey,
   firstQuestionPrefill: string
-): TPrefilledAnswerObj | undefined {
+): TResponseData | undefined {
   try {
     if (firstQuestionPrefill) {
       if (!currentQuestion) return;
@@ -15,7 +15,7 @@ export function handlePrefilling(
       const question = survey?.questions.find((q: any) => q.id === firstQuestionId);
       if (!question) throw new Error("Question not found");
 
-      const answer = createAnswer(question, firstQuestionPrefill || "");
+      const answer = transformAnswer(question, firstQuestionPrefill || "");
       const answerObj = { [firstQuestionId]: answer };
       return answerObj;
     }
@@ -25,7 +25,7 @@ export function handlePrefilling(
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }
 
-export const checkValidity = (question: TSurveyQuestion | Question, answer: any): boolean => {
+export const checkValidity = (question: TSurveyQuestion, answer: any): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
@@ -82,10 +82,7 @@ export const checkValidity = (question: TSurveyQuestion | Question, answer: any)
   }
 };
 
-export const createAnswer = (
-  question: TSurveyQuestion | Question,
-  answer: string
-): string | number | string[] => {
+export const transformAnswer = (question: TSurveyQuestion, answer: string): string | number | string[] => {
   switch (question.type) {
     case QuestionType.OpenText:
     case QuestionType.MultipleChoiceSingle:

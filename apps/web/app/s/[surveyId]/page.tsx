@@ -6,46 +6,35 @@ import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { getSurvey } from "@formbricks/lib/services/survey";
-import { verifyTokenForLinkSurvey } from "@/lib/jwt";
+import { getEmailVerificationStatus } from "./helpers";
 import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 
 export default async function LinkSurveyPage({ params, searchParams }) {
   const survey = await getSurvey(params.surveyId);
-  const firstQuestionPrefill = searchParams[survey!.questions[0].id];
-  const isPrefilledAnswerValid = firstQuestionPrefill
-    ? checkValidity(survey!.questions[0], firstQuestionPrefill)
-    : false;
-  let emailVerificationStatus: string | null = null;
 
   if (!survey || survey.type !== "link") {
     return <SurveyInactive status="not found" />;
   }
 
+  // question pre filling: Check if the first question is prefilled and if it is valid
+  const prefillAnswer = searchParams[survey.questions[0].id];
+  const isPrefilledAnswerValid = prefillAnswer ? checkValidity(survey!.questions[0], prefillAnswer) : false;
+
   if (survey && survey.status !== "inProgress") {
     return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
   }
 
+  // verify email: Check if the survey requires email verification
+  let emailVerificationStatus;
   if (survey.verifyEmail) {
     const token =
       searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("verify")
         ? searchParams.verify
         : undefined;
-    if (!token) {
-      emailVerificationStatus = "not-verified";
-    } else {
-      try {
-        const validateToken = await verifyTokenForLinkSurvey(token, survey.id);
-        if (validateToken) {
-          emailVerificationStatus = "verified";
-        } else {
-          emailVerificationStatus = "fishy";
-        }
-      } catch (error) {
-        emailVerificationStatus = "not-verified";
-      }
-    }
+    emailVerificationStatus = await getEmailVerificationStatus(survey.id, token);
   }
 
+  // get product and person
   const product = await getProductByEnvironmentId(survey.environmentId);
   const userId =
     searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("userId")
@@ -59,7 +48,7 @@ export default async function LinkSurveyPage({ params, searchParams }) {
       product={product}
       personId={person?.id}
       emailVerificationStatus={emailVerificationStatus}
-      firstQuestionPrefill={isPrefilledAnswerValid ? firstQuestionPrefill : null}
+      prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
     />
   );
 }

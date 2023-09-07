@@ -1,4 +1,4 @@
-import { TResponse } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseData } from "@formbricks/types/v1/responses";
 import { h, render } from "preact";
 import { TSurvey } from "../../types/v1/surveys";
 import { Survey } from "./components/Survey";
@@ -15,6 +15,7 @@ interface BaseProps {
   onClose?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
   autoFocus?: boolean;
+  prefillResponseData?: TResponseData;
 }
 
 interface RenderSurveyInlineProps extends BaseProps {
