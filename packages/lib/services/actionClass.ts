@@ -34,6 +34,21 @@ export const getActionClasses = async (environmentId: string): Promise<TActionCl
   }
 };
 
+export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> => {
+  try {
+    let actionClass = await prisma.eventClass.findUnique({
+      where: {
+        id: actionClassId,
+      },
+      select,
+    });
+
+    return actionClass;
+  } catch (error) {
+    throw new DatabaseError(`Database error when fetching action`);
+  }
+};
+
 export const deleteActionClass = async (
   environmentId: string,
   actionClassId: string

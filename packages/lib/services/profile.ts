@@ -139,3 +139,30 @@ export const deleteProfile = async (personId: string): Promise<void> => {
     throw error;
   }
 };
+export async function getUserIdFromEnvironment(environmentId: string) {
+  const environment = await prisma.environment.findUnique({
+    where: { id: environmentId },
+    select: {
+      product: {
+        select: {
+          team: {
+            select: {
+              memberships: {
+                select: {
+                  user: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Assuming each team has only one owner or you're interested in the first user in the team
+  return environment?.product.team.memberships[0].user.id;
+}

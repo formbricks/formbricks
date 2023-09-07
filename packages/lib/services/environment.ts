@@ -6,6 +6,11 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { ZEnvironment } from "@formbricks/types/v1/environment";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { cache } from "react";
+import { Session } from "next-auth";
+import { EnvironmentType } from "@prisma/client";
+import { populateEnvironment } from "@/lib/populate";
+
+
 
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
   let environmentPrisma;
@@ -75,3 +80,91 @@ export const getEnvironments = cache(async (productId: string): Promise<TEnviron
     throw new ValidationError("Data validation of environments array failed");
   }
 });
+
+
+export const getEnvironmentBySession = cache(async (user: any): Promise<any> => {
+  // find first production enviroment of the user
+  const firstMembership = await prisma.membership.findFirst({
+      where: {
+          userId: user.id,
+      },
+      select: {
+          teamId: true,
+      },
+  });
+
+  if (!firstMembership) {
+      // create a new team and return environment
+      const membership = await prisma.membership.create({
+          data: {
+              accepted: true,
+              role: "owner",
+              user: { connect: { id: user.id } },
+              team: {
+                  create: {
+                      name: `${user.name}'s Team`,
+                      products: {
+                          create: {
+                              name: "My Product",
+                              environments: {
+                                  create: [
+                                      {
+                                          type: EnvironmentType.production,
+                                          ...populateEnvironment,
+                                      },
+                                      {
+                                          type: EnvironmentType.development,
+                                          ...populateEnvironment,
+                                      },
+                                  ],
+                              },
+                          },
+                      },
+                  },
+              },
+          },
+          include: {
+              team: {
+                  include: {
+                      products: {
+                          include: {
+                              environments: true,
+                          },
+                      },
+                  },
+              },
+          },
+      });
+
+      const environment = membership.team.products[0].environments[0];
+      console.log(environment)
+      return environment;
+      // return res.status(404).json({ message: "No memberships found" });
+  }
+
+  const firstProduct = await prisma.product.findFirst({
+      where: {
+          teamId: firstMembership.teamId,
+      },
+      select: {
+          id: true,
+      },
+  });
+  if (firstProduct === null) {
+      return null
+  }
+  const firstEnvironment = await prisma.environment.findFirst({
+      where: {
+          productId: firstProduct.id,
+          type: "production",
+      },
+      select: {
+          id: true,
+      },
+  });
+  if (firstEnvironment === null) {
+      return null
+  }
+  console.log(firstEnvironment)
+  return firstEnvironment
+})

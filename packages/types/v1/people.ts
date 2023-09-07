@@ -10,4 +10,9 @@ export const ZPerson = z.object({
   updatedAt: z.date(),
 });
 
+export const ZPersonUpdateInput = z.object({
+  attributes: ZPersonAttributes,
+});
+
+export type TPersonUpdateInput = z.infer<typeof ZPersonUpdateInput>;
 export type TPerson = z.infer<typeof ZPerson>;

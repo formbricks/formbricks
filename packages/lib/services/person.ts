@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TPerson, TPersonUpdateInput } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 
@@ -136,6 +136,30 @@ export const deletePerson = async (personId: string): Promise<void> => {
         id: personId,
       },
     });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const updatePeople = async (
+  personId: string,
+  personInput: TPersonUpdateInput
+): Promise<TPerson> => {
+  try {
+    const personPrisma = await prisma.person.update({
+      where: {
+        id: personId,
+      },
+      data: personInput,
+      select: selectPerson
+    });
+
+    const person = transformPrismaPerson(personPrisma);
+    return person;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

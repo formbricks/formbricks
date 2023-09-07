@@ -5,10 +5,26 @@ export const ZAttributeClass = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
+  description: z.string().nullable(),
+  type: z.enum(["code", "noCode", "automatic"]),
+  environmentId: z.string(),
+  archived: z.boolean(),
+});
+
+export const ZAttributeClassInput = z.object({
+  name: z.string(),
   description: z.string(),
   type: z.enum(["code", "noCode", "automatic"]),
   environmentId: z.string(),
   archived: z.boolean(),
 });
+
+export const ZAttributeClassUpdateInput = z.object({
+  description: z.string(),
+  archived: z.boolean(),
+});
+export type TAttributeClassUpdateInput = z.infer<typeof ZAttributeClassUpdateInput>;
+
+export type TAttributeClassInput = z.infer<typeof ZAttributeClassInput>;
 
 export type TAttributeClass = z.infer<typeof ZAttributeClass>;
