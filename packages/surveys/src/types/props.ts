@@ -8,9 +8,11 @@ export interface SurveyBaseProps {
   activeQuestionId?: string;
   onDisplay?: () => void;
   onResponse?: (response: Partial<TResponse>) => void;
+  onFinished?: () => void;
   onClose?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
   autoFocus?: boolean;
+  isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
 }
 

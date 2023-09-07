@@ -11,6 +11,7 @@ export function SurveyModal({
   onResponse = () => {},
   onClose = () => {},
   prefillResponseData,
+  isRedirectDisabled = false,
 }: SurveyInlineProps) {
   return (
     <div id="fbjs">
@@ -24,6 +25,7 @@ export function SurveyModal({
         onResponse={onResponse}
         onClose={onClose}
         prefillResponseData={prefillResponseData}
+        isRedirectDisabled={isRedirectDisabled}
       />
     </div>
   );

@@ -1,13 +1,22 @@
 import Headline from "./Headline";
+import RedirectCountDown from "./RedirectCountdown";
 import Subheader from "./Subheader";
 
 interface ThankYouCardProps {
   headline?: string;
   subheader?: string;
   brandColor: string;
+  redirectUrl: string | null;
+  isRedirectDisabled: boolean;
 }
 
-export default function ThankYouCard({ headline, subheader, brandColor }: ThankYouCardProps) {
+export default function ThankYouCard({
+  headline,
+  subheader,
+  brandColor,
+  redirectUrl,
+  isRedirectDisabled,
+}: ThankYouCardProps) {
   return (
     <div className="text-center">
       <div className="flex items-center justify-center" style={{ color: brandColor }}>
@@ -31,6 +40,7 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
       <div>
         <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />
         <Subheader subheader={subheader} questionId="thankYouCard" />
+        <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
       </div>
     </div>
   );

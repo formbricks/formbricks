@@ -16,6 +16,8 @@ export function SurveyModal({
   onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
+  onFinished = () => {},
+  isRedirectDisabled = false,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -44,6 +46,15 @@ export function SurveyModal({
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
           onClose={onClose}
+          onFinished={() => {
+            onFinished();
+            setTimeout(() => {
+              if (!survey.redirectUrl) {
+                close();
+              }
+            }, 4000); // close modal automatically after 4 seconds
+          }}
+          isRedirectDisabled={isRedirectDisabled}
         />
       </Modal>
     </div>

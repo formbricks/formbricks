@@ -13,10 +13,12 @@ interface SurveyProps {
   activeQuestionId?: string;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
+  onFinished?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
+  isRedirectDisabled?: boolean;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -37,6 +39,7 @@ export const SurveyInline = ({
   onClose = () => {},
   autoFocus,
   prefillResponseData,
+  isRedirectDisabled,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -52,6 +55,7 @@ export const SurveyInline = ({
       onActiveQuestionChange,
       autoFocus,
       prefillResponseData,
+      isRedirectDisabled,
     });
   }, [
     activeQuestionId,
@@ -65,6 +69,7 @@ export const SurveyInline = ({
     survey,
     autoFocus,
     prefillResponseData,
+    isRedirectDisabled,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -83,6 +88,7 @@ export const SurveyModal = ({
   onActiveQuestionChange = () => {},
   onClose = () => {},
   autoFocus,
+  isRedirectDisabled,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -99,6 +105,7 @@ export const SurveyModal = ({
       activeQuestionId,
       onActiveQuestionChange,
       autoFocus,
+      isRedirectDisabled,
     });
   }, [
     activeQuestionId,
@@ -114,6 +121,7 @@ export const SurveyModal = ({
     placement,
     survey,
     autoFocus,
+    isRedirectDisabled,
   ]);
   return <div id="formbricks-survey"></div>;
 };

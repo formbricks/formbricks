@@ -18,6 +18,8 @@ export function Survey({
   onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
+  onFinished = () => {},
+  isRedirectDisabled = false,
   prefillResponseData,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
@@ -73,7 +75,11 @@ export function Survey({
   const onSubmit = (responseData: TResponseData) => {
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
-    onResponse({ data: responseData, finished: nextQuestionId === "end" }); // Mark as finished if next question is "end"
+    const finished = nextQuestionId === "end";
+    onResponse({ data: responseData, finished });
+    if (finished) {
+      onFinished();
+    }
     setQuestionId(nextQuestionId);
     // add to history
     setHistory([...history, questionId]);
@@ -101,6 +107,8 @@ export function Survey({
                 headline={survey.thankYouCard.headline}
                 subheader={survey.thankYouCard.subheader}
                 brandColor={brandColor}
+                redirectUrl={survey.redirectUrl}
+                isRedirectDisabled={isRedirectDisabled}
               />
             ) : (
               survey.questions.map(

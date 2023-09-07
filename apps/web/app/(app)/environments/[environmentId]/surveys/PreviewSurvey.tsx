@@ -91,6 +91,7 @@ export default function PreviewSurvey({
                     activeQuestionId={activeQuestionId || undefined}
                     formbricksSignature={product.formbricksSignature}
                     onActiveQuestionChange={setActiveQuestionId}
+                    isRedirectDisabled={true}
                   />
                 </Modal>
               ) : (
@@ -139,6 +140,7 @@ export default function PreviewSurvey({
                   activeQuestionId={activeQuestionId || undefined}
                   formbricksSignature={product.formbricksSignature}
                   onActiveQuestionChange={setActiveQuestionId}
+                  isRedirectDisabled={true}
                 />
               </Modal>
             ) : (
@@ -151,6 +153,7 @@ export default function PreviewSurvey({
                       activeQuestionId={activeQuestionId || undefined}
                       formbricksSignature={product.formbricksSignature}
                       onActiveQuestionChange={setActiveQuestionId}
+                      isRedirectDisabled={true}
                     />
                   </div>
                 </div>
