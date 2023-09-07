@@ -8,8 +8,6 @@ import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
 import { resetPerson, setPersonAttribute, setPersonUserId, getPerson, logoutPerson } from "./lib/person";
 
-export type { EnvironmentId, KeyValueData, PersonId, ResponseId, SurveyId } from "@formbricks/api";
-
 const logger = Logger.getInstance();
 
 logger.debug("Create command queue");
