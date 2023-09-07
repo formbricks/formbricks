@@ -1,7 +1,7 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { sendToPipeline } from "@/lib/pipelines";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { updateResponse } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { ZResponseUpdateInput } from "@formbricks/types/v1/responses";

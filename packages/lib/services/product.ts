@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { ZProduct } from "@formbricks/types/v1/product";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { cache } from "react";
