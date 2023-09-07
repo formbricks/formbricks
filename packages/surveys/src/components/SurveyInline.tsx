@@ -1,18 +1,5 @@
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TPrefilledAnswerObj, TSurvey } from "@formbricks/types/v1/surveys";
+import { SurveyInlineProps } from "../types/props";
 import { Survey } from "./Survey";
-
-interface SurveyModalProps {
-  survey: TSurvey;
-  brandColor: string;
-  formbricksSignature: boolean;
-  activeQuestionId?: string;
-  onDisplay?: () => void;
-  onActiveQuestionChange?: (questionId: string) => void;
-  onResponse?: (response: Partial<TResponse>) => void;
-  onClose?: () => void;
-  prefilledObject?: TPrefilledAnswerObj;
-}
 
 export function SurveyModal({
   survey,
@@ -23,8 +10,8 @@ export function SurveyModal({
   onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
-  prefilledObject,
-}: SurveyModalProps) {
+  prefillResponseData,
+}: SurveyInlineProps) {
   return (
     <div id="fbjs">
       <Survey
@@ -36,7 +23,7 @@ export function SurveyModal({
         onActiveQuestionChange={onActiveQuestionChange}
         onResponse={onResponse}
         onClose={onClose}
-        prefilledObject={prefilledObject}
+        prefillResponseData={prefillResponseData}
       />
     </div>
   );

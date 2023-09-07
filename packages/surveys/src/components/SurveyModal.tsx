@@ -1,23 +1,7 @@
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Survey } from "./Survey";
-import Modal from "./Modal";
 import { useState } from "preact/hooks";
-
-interface SurveyModalProps {
-  survey: TSurvey;
-  brandColor: string;
-  formbricksSignature: boolean;
-  activeQuestionId?: string;
-  placement: "topRight" | "bottomRight" | "bottomLeft" | "topLeft" | "center";
-  clickOutside: boolean;
-  darkOverlay: boolean;
-  highlightBorderColor: string | null;
-  onDisplay?: () => void;
-  onActiveQuestionChange?: (questionId: string) => void;
-  onResponse?: (response: Partial<TResponse>) => void;
-  onClose?: () => void;
-}
+import { SurveyModalProps } from "../types/props";
+import Modal from "./Modal";
+import { Survey } from "./Survey";
 
 export function SurveyModal({
   survey,

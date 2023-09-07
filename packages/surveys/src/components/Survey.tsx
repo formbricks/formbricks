@@ -1,25 +1,13 @@
-import type { TResponse, TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurvey } from "@formbricks/types/v1/surveys";
+import type { TResponseData } from "@formbricks/types/v1/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
+import { SurveyBaseProps } from "../types/props";
 import { AutoCloseWrapper } from "./AutoCloseWrapper";
 import FormbricksSignature from "./FormbricksSignature";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
-
-interface SurveyProps {
-  survey: TSurvey;
-  brandColor: string;
-  formbricksSignature: boolean;
-  activeQuestionId?: string;
-  onDisplay?: () => void;
-  onActiveQuestionChange?: (questionId: string) => void;
-  onResponse?: (response: Partial<TResponse>) => void;
-  onClose?: () => void;
-  prefillResponseData?: TResponseData;
-}
 
 export function Survey({
   survey,
@@ -31,7 +19,7 @@ export function Survey({
   onResponse = () => {},
   onClose = () => {},
   prefillResponseData,
-}: SurveyProps) {
+}: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
