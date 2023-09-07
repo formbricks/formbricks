@@ -5,6 +5,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
+import { getAttributeClassByName } from "./attributeClass";
 
 export const selectPerson = {
   id: true,
@@ -146,6 +147,7 @@ export const deletePerson = async (personId: string): Promise<void> => {
 };
 
 export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> => {
+  // Check if a person with the userId attribute exists
   const personPrisma = await prisma.person.findFirst({
     where: {
       environmentId,
@@ -165,7 +167,35 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
     const person = transformPrismaPerson(personPrisma);
     return person;
   } else {
-    const newPerson = await createPerson(environmentId);
-    return newPerson;
+    // Create a new person with the userId attribute
+    const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
+
+    if (!userIdAttributeClass) {
+      throw new Error("Attribute class not found for the given environmentId");
+    }
+
+    const personPrisma = await prisma.person.create({
+      data: {
+        environment: {
+          connect: {
+            id: environmentId,
+          },
+        },
+        attributes: {
+          create: [
+            {
+              attributeClass: {
+                connect: {
+                  id: userIdAttributeClass.id,
+                },
+              },
+              value: userId,
+            },
+          ],
+        },
+      },
+      select: selectPerson,
+    });
+    return transformPrismaPerson(personPrisma);
   }
 };

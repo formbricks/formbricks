@@ -36,11 +36,11 @@ export default async function LinkSurveyPage({ params, searchParams }) {
 
   // get product and person
   const product = await getProductByEnvironmentId(survey.environmentId);
-  const userId =
-    searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("userId")
-      ? searchParams.userId
-      : undefined;
-  const person = await getOrCreatePersonByUserId(userId, survey.environmentId);
+  const userId = searchParams.userId;
+  let person;
+  if (userId) {
+    person = await getOrCreatePersonByUserId(userId, survey.environmentId);
+  }
 
   return (
     <LinkSurvey
