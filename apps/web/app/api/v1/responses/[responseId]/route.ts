@@ -1,47 +1,71 @@
 import { responses } from "@/lib/api/response";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
-import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/services/response";
-import { ZResponseUpdateInput } from "@formbricks/types/v1/responses";
+import { TResponse, ZResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { getAuthentication } from "@/app/api/v1/auth";
+import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { getSurvey } from "@formbricks/lib/services/survey";
 
-
-export async function GET(request : Request, { params }: { params: { responseId: string } }
-): Promise<NextResponse> {
-  const authentication = await getAuthentication(request)
+async function authenticateRequest(request: Request): Promise<any> {
+  const authentication = await getAuthentication(request);
   if (!authentication) {
-    return responses.notAuthenticatedResponse();
+    throw new Error("NotAuthenticated");
   }
+  return authentication;
+}
+
+async function fetchAndValidateResponse(authentication: any, responseId: string): Promise<TResponse> {
+  const response = await getResponse(responseId);
+  if (!response || !(await canUserAccessResponse(authentication, response))) {
+    throw new Error("Unauthorized");
+  }
+  return response;
+}
+
+const canUserAccessResponse = async (authentication: any, response: TResponse): Promise<boolean> => {
+  if (!authentication) return false;
+
+  const survey = await getSurvey(response.surveyId);
+  if (!survey) return false;
+
+  if (authentication.type === "session") {
+    return await hasUserEnvironmentAccess(authentication.session.user, survey.environmentId);
+  } else if (authentication.type === "apiKey") {
+    return survey.environmentId === authentication.environmentId;
+  } else {
+    throw Error("Unknown authentication type");
+  }
+};
+
+export async function GET(
+  request: Request,
+  { params }: { params: { responseId: string } }
+): Promise<NextResponse> {
   try {
+    const authentication = await authenticateRequest(request);
+    await fetchAndValidateResponse(authentication, params.responseId);
     const response = await getResponse(params.responseId);
-    if (!response) {
-      return responses.notFoundResponse("Response", params.responseId);
+    if (response) {
+      return responses.successResponse(response);
     }
-    return responses.successResponse(response);
+    return responses.notFoundResponse("Response", params.responseId);
   } catch (error) {
     return handleErrorResponse(error);
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { responseId: string } }) {
-  const apiKey = headers().get("x-api-key");
-  if (!apiKey) {
-    return responses.notAuthenticatedResponse();
-  }
-  const apiKeyData = await getApiKeyFromKey(apiKey);
-  if (!apiKeyData) {
-    return responses.notAuthenticatedResponse();
-  }
-
-  // delete webhook from database
+export async function DELETE(
+  request: Request,
+  { params }: { params: { responseId: string } }
+): Promise<NextResponse> {
   try {
-    const response = await deleteResponse(params.responseId);
-    return responses.successResponse(response);
-  } catch (e) {
-    return responses.notFoundResponse("Response", params.responseId);
+    const authentication = await authenticateRequest(request);
+    await fetchAndValidateResponse(authentication, params.responseId);
+    return responses.successResponse(await deleteResponse(params.responseId));
+  } catch (error) {
+    return handleErrorResponse(error);
   }
 }
 
@@ -49,44 +73,38 @@ export async function PUT(
   request: Request,
   { params }: { params: { responseId: string } }
 ): Promise<NextResponse> {
-  const { responseId } = params;
-
-  if (!responseId) {
-    return responses.badRequestResponse("responseId ID is missing", undefined, true);
-  }
-
-  const responseUpdate = await request.json();
-  const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
-
-  if (!inputValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(inputValidation.error),
-      true
-    );
-  }
-
-  // update response
-  let response;
   try {
-    response = await updateResponse(responseId, inputValidation.data);
+    const authentication = await authenticateRequest(request);
+    await fetchAndValidateResponse(authentication, params.responseId);
+
+    const responseUpdate = await request.json();
+    const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
+    if (!inputValidation.success) {
+      return responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(inputValidation.error)
+      );
+    }
+    return responses.successResponse(await updateResponse(params.responseId, inputValidation.data));
   } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      return responses.notFoundResponse("Response", responseId, true);
-    }
-    if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
-    }
-    if (error instanceof DatabaseError) {
-      return responses.internalServerErrorResponse(error.message);
-    }
+    return handleErrorResponse(error);
   }
-  return responses.successResponse(response, true);
 }
 
 function handleErrorResponse(error: any): NextResponse {
-  if (error instanceof DatabaseError) {
-    return responses.badRequestResponse(error.message);
+  switch (error.message) {
+    case "NotAuthenticated":
+      return responses.notAuthenticatedResponse();
+    case "Unauthorized":
+      return responses.unauthorizedResponse();
+    default:
+      if (
+        error instanceof DatabaseError ||
+        error instanceof InvalidInputError ||
+        error instanceof ResourceNotFoundError
+      ) {
+        return responses.badRequestResponse(error.message);
+      }
+      return responses.internalServerErrorResponse("Some error occured");
   }
-  return responses.notAuthenticatedResponse();
 }

@@ -17,6 +17,7 @@ const responseSelection = {
   finished: true,
   data: true,
   meta: true,
+  environmentId: true,
   personAttributes: true,
   person: {
     select: {
@@ -292,7 +293,7 @@ export async function deleteResponse(responseId: string) {
     const deletedResponse = await prisma.response.delete({
       where: {
         id: responseId,
-      }
+      },
     });
     return deletedResponse;
   } catch (error) {
@@ -302,6 +303,4 @@ export async function deleteResponse(responseId: string) {
 
     throw error;
   }
-  
-
 }
