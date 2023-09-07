@@ -1,27 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { NPSQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { Response } from "@formbricks/types/js";
+import { BackButton } from "@/components/preview/BackButton";
+import { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
 
 interface NPSQuestionProps {
-  question: NPSQuestion;
+  question: NPSQuestion | TSurveyNPSQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  storedResponseValue: number | null;
+  goToNextQuestion: (answer: Response["data"]) => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
-export default function NPSQuestion({ question, onSubmit, lastQuestion, brandColor }: NPSQuestionProps) {
+export default function NPSQuestion({
+  question,
+  onSubmit,
+  lastQuestion,
+  brandColor,
+  storedResponseValue,
+  goToNextQuestion,
+  goToPreviousQuestion,
+}: NPSQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+
+  useEffect(() => {
+    setSelectedChoice(storedResponseValue);
+  }, [storedResponseValue, question]);
+
+  const handleSubmit = (value: number | null) => {
+    const data = {
+      [question.id]: value ?? null,
+    };
+    if (storedResponseValue === value) {
+      setSelectedChoice(null);
+      goToNextQuestion(data);
+      return;
+    }
+    setSelectedChoice(null);
+    onSubmit(data);
+  };
 
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
     if (question.required) {
-      setSelectedChoice(null);
-      onSubmit({
-        [question.id]: number,
-      });
+      handleSubmit(number);
     }
   };
 
@@ -29,14 +57,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
     <form
       onSubmit={(e) => {
         e.preventDefault();
-
-        const data = {
-          [question.id]: selectedChoice,
-        };
-
-        setSelectedChoice(null);
-        onSubmit(data);
-        // reset form
+        handleSubmit(selectedChoice);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -55,6 +76,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
                   type="radio"
                   name="nps"
                   value={number}
+                  checked={selectedChoice === number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
                   onClick={() => handleSelect(number)}
                   required={question.required}
@@ -69,12 +91,26 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
           </div>
         </fieldset>
       </div>
-      {!question.required && (
-        <div className="mt-4 flex w-full justify-between">
-          <div></div>
+      <div className="mt-4 flex w-full justify-between">
+        {goToPreviousQuestion && (
+          <BackButton
+            backButtonLabel={question.backButtonLabel}
+            onClick={() => {
+              goToPreviousQuestion(
+                storedResponseValue !== selectedChoice
+                  ? {
+                      [question.id]: selectedChoice,
+                    }
+                  : undefined
+              );
+            }}
+          />
+        )}
+        <div></div>
+        {(!question.required || storedResponseValue) && (
           <SubmitButton {...{ question, lastQuestion, brandColor }} />
-        </div>
-      )}
+        )}
+      </div>
     </form>
   );
 }

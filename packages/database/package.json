@@ -17,11 +17,12 @@
     "db:up": "docker-compose up -d",
     "db:setup": "pnpm db:up && pnpm db:migrate:dev",
     "db:start": "pnpm db:setup",
+    "db:down": "docker-compose down",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
-    "prebuild": "npm run generate",
-    "predev": "npm run generate"
+    "post-install": "pnpm generate",
+    "predev": "pnpm generate"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",

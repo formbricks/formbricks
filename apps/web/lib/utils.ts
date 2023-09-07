@@ -1,4 +1,7 @@
-export function capitalizeFirstLetter(string = "") {
+export function capitalizeFirstLetter(string: string | null = "") {
+  if (string === null) {
+    return "";
+  }
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
@@ -50,7 +53,7 @@ const shuffle = (array: any[]) => {
   }
 };
 
-export const shuffleArray = (array: any[], shuffleOption: string) => {
+export const shuffleArray = (array: any[], shuffleOption: string | undefined) => {
   const arrayCopy = [...array];
   const otherIndex = arrayCopy.findIndex((element) => element.id === "other");
   const otherElement = otherIndex !== -1 ? arrayCopy.splice(otherIndex, 1)[0] : null;

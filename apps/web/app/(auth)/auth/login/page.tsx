@@ -1,6 +1,12 @@
 import { SigninForm } from "@/components/auth/SigninForm";
 import Testimonial from "@/components/auth/Testimonial";
 import FormWrapper from "@/components/auth/FormWrapper";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Login",
+  description: "Open-source Experience Management. Free & open source.",
+};
 
 export default function SignInPage() {
   return (

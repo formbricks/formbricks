@@ -7,7 +7,7 @@ import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 export default function DocsFeedbackPage() {
   return (
     <Layout
-      title="Feedback Box"
+      title="Docs Feedback"
       description="The better your docs, the higher your user adoption. Measure granularly how clear your documentation is.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">

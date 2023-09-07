@@ -2,6 +2,7 @@ import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
+import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -43,20 +44,17 @@ export const authOptions: NextAuthOptions = {
           throw Error("Internal server error. Please try again later");
         }
 
-        if (!user) {
-          throw new Error("User not found");
-        }
-        if (!credentials) {
-          throw new Error("No credentials");
+        if (!user || !credentials) {
+          throw new Error("No user matches the provided credentials");
         }
         if (!user.password) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         return {
@@ -93,11 +91,11 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (e) {
           console.error(e);
-          throw new Error("Token is not valid or expired");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (!user) {
-          throw new Error("User not found");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (user.emailVerified) {
@@ -254,7 +252,7 @@ export const authOptions: NextAuthOptions = {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        await prisma.user.create({
+        const createdUser = await prisma.user.create({
           data: {
             name: user.name,
             email: user.email,
@@ -362,7 +360,20 @@ export const authOptions: NextAuthOptions = {
               ],
             },
           },
+          include: {
+            memberships: true,
+          },
         });
+
+        const teamId = createdUser.memberships?.[0]?.teamId;
+        if (teamId) {
+          fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
+            method: "POST",
+            headers: {
+              "x-api-key": INTERNAL_SECRET,
+            },
+          });
+        }
 
         return true;
       }

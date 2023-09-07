@@ -1,51 +1,13 @@
-export { PersonAvatar, ProfileAvatar } from "./components/Avatars";
+export { AdvancedOptionToggle } from "./components/AdvancedOptionToggle";
 export { Alert, AlertDescription, AlertTitle } from "./components/Alert";
+export { PersonAvatar, ProfileAvatar } from "./components/Avatars";
 export { Badge } from "./components/Badge";
 export { Button } from "./components/Button";
+export { Calendar } from "./components/Calendar";
 export { Card } from "./components/Card";
 export type { CardProps } from "./components/Card";
 export { Checkbox } from "./components/Checkbox";
 export { ColorPicker } from "./components/ColorPicker";
-export { Confetti } from "./components/Confetti";
-export {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  DropdownMenuRadioItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuGroup,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuRadioGroup,
-} from "./components/DropdownMenu";
-export { Editor, AddVariablesDropdown } from "./components/editor";
-export { ErrorComponent } from "./components/ErrorComponent";
-export { Input } from "./components/Input";
-export { PasswordInput } from "./components/PasswordInput";
-export { Label } from "./components/Label";
-export { Popover, PopoverTrigger, PopoverContent } from "./components/Popover";
-export { ProgressBar, HalfCircle } from "./components/ProgressBar";
-export { RadioGroup, RadioGroupItem } from "./components/RadioGroup";
-export { ResponsiveVideo } from "./components/ResponsiveVideo";
-export {
-  Select,
-  SelectGroup,
-  SelectValue,
-  SelectTrigger,
-  SelectContent,
-  SelectLabel,
-  SelectItem,
-  SelectSeparator,
-} from "./components/Select";
-export { Switch } from "./components/Switch";
-export { TabBar } from "./components/TabBar";
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./components/Tooltip";
 export {
   Command,
   CommandDialog,
@@ -57,12 +19,61 @@ export {
   CommandSeparator,
   CommandShortcut,
 } from "./components/Command";
-export { Calendar } from "./components/Calendar";
+export { Confetti } from "./components/Confetti";
 export { DatePicker } from "./components/DatePicker";
+export {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./components/Dialog";
+export {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "./components/DropdownMenu";
+export { ErrorComponent } from "./components/ErrorComponent";
+export { Input } from "./components/Input";
+export { Label } from "./components/Label";
+export { PasswordInput } from "./components/PasswordInput";
+export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";
+export { HalfCircle, ProgressBar } from "./components/ProgressBar";
+export { RadioGroup, RadioGroupItem } from "./components/RadioGroup";
+export { ResponsiveVideo } from "./components/ResponsiveVideo";
+export { SearchBox } from "./components/SearchBox";
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "./components/Select";
+export { Switch } from "./components/Switch";
+export { TabBar } from "./components/TabBar";
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/Tooltip";
+export { AddVariablesDropdown, Editor } from "./components/editor";
 
 /* Icons */
-export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";
 export { AngryBirdRage2Icon } from "./components/icons/AngryBirdRage2Icon";
+export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";
 export { AppPieChartIcon } from "./components/icons/AppPieChartIcon";
 export { ArchiveIcon } from "./components/icons/ArchiveIcon";
 export { ArrowRightCircleIcon } from "./components/icons/ArrowRightCircleIcon";
@@ -71,8 +82,8 @@ export { BackIcon } from "./components/icons/BackIcon";
 export { BaseballIcon } from "./components/icons/BaseballIcon";
 export { BellIcon } from "./components/icons/BellIcon";
 export { BrainIcon } from "./components/icons/BrainIcon";
-export { BugIcon } from "./components/icons/BugIcon";
 export { BugBlueIcon } from "./components/icons/BugBlueIcon";
+export { BugIcon } from "./components/icons/BugIcon";
 export { CancelSubscriptionIcon } from "./components/icons/CancelSubscriptionIcon";
 export { CashCalculatorIcon } from "./components/icons/CashCalculatorIcon";
 export { CheckMarkIcon } from "./components/icons/CheckMarkIcon";
@@ -91,14 +102,15 @@ export { EyeIcon } from "./components/icons/EyeIcon";
 export { FeatureRequestIcon } from "./components/icons/FeatureRequestIcon";
 export { FeedbackIcon } from "./components/icons/FeedbackIcon";
 export { FilterIcon } from "./components/icons/FilterIcon";
-export { FounderIcon } from "./components/icons/FounderIcon";
 export { FormIcon } from "./components/icons/FormIcon";
+export { FounderIcon } from "./components/icons/FounderIcon";
 export { GaugeSpeedFastIcon } from "./components/icons/GaugeSpeedFastIcon";
 export { HandPuzzleIcon } from "./components/icons/HandPuzzleIcon";
 export { HeartCommentIcon } from "./components/icons/HeartCommentIcon";
 export { InterviewPromptIcon } from "./components/icons/InterviewPromptIcon";
 export { LaptopWorkerIcon } from "./components/icons/LaptopWorkerIcon";
 export { LoadingBarIcon } from "./components/icons/LoadingBarIcon";
+export { NetPromoterScoreIcon } from "./components/icons/NetPromoterScoreIcon";
 export { NotDisappointedIcon } from "./components/icons/NotDisappointedIcon";
 export { OnboardingIcon } from "./components/icons/OnboardingIcon";
 export { PMFIcon } from "./components/icons/PMFIcon";
@@ -114,4 +126,3 @@ export { UserGroupIcon } from "./components/icons/UserGroupIcon";
 export { UserSearchGlasIcon } from "./components/icons/UserSearchGlasIcon";
 export { VeryDisappointedIcon } from "./components/icons/VeryDisappointedIcon";
 export { VideoTabletAdjustIcon } from "./components/icons/VideoTabletAdjustIcon";
-export { NetPromoterScoreIcon } from "./components/icons/NetPromoterScoreIcon";

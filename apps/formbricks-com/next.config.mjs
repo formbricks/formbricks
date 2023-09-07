@@ -1,14 +1,32 @@
-/** @type {import('next').NextConfig} */
-
 import nextMDX from "@next/mdx";
-import { withPlausibleProxy } from "next-plausible";
-import remarkGfm from "remark-gfm";
-import rehypePrism from "@mapbox/rehype-prism";
 
+import { withPlausibleProxy } from "next-plausible";
+import { recmaPlugins } from "./mdx/recma.mjs";
+import { rehypePlugins } from "./mdx/rehype.mjs";
+import { remarkPlugins } from "./mdx/remark.mjs";
+import withSearch from "./mdx/search.mjs";
+
+const withMDX = nextMDX({
+  options: {
+    remarkPlugins,
+    rehypePlugins,
+    recmaPlugins,
+  },
+});
+
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
+  pageExtensions: ["js", "jsx", "ts", "tsx", "mdx"],
   transpilePackages: ["@formbricks/ui", "@formbricks/lib"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "seo-strapi-aws-s3.s3.eu-central-1.amazonaws.com",
+        port: "",
+      },
+    ],
+  },
   async redirects() {
     return [
       {
@@ -46,9 +64,15 @@ const nextConfig = {
         destination: "/docs/introduction/what-is-formbricks",
         permanent: true,
       },
+
+      {
+        source: "/docs/quickstart",
+        destination: "/docs/getting-started/quickstart-in-app-survey",
+        permanent: true,
+      },
       {
         source: "/docs/getting-started/nextjs",
-        destination: "/docs/getting-started/nextjs-app",
+        destination: "/docs/getting-started/framework-guides#next-js",
         permanent: true,
       },
       {
@@ -91,27 +115,25 @@ const nextConfig = {
         destination: "/docs/actions/code",
         permanent: true,
       },
-
+      {
+        source: "/docs/quickstart",
+        destination: "/docs/quickstart-in-app-survey",
+        permanent: true,
+      },
       {
         source: "/pmf",
         destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/blog/v1-and-how-we-got-here",
+        destination: "/blog/experience-management-open-source",
         permanent: true,
       },
     ];
   },
 };
 
-const withMDX = nextMDX({
-  extension: /\.mdx?$/,
-  options: {
-    // If you use remark-gfm, you'll need to use next.config.mjs
-    // as the package is ESM only
-    // https://github.com/remarkjs/remark-gfm#install
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [rehypePrism],
-    // If you use `MDXProvider`, uncomment the following line.
-    // providerImportSource: "@mdx-js/react",
-  },
-});
-
-export default withPlausibleProxy({ customDomain: "https://plausible.formbricks.com" })(withMDX(nextConfig));
+export default withPlausibleProxy({ customDomain: "https://plausible.formbricks.com" })(
+  withSearch(withMDX(nextConfig))
+);

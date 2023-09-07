@@ -1,18 +1,23 @@
-import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
+import { Response } from "@formbricks/types/js";
 import { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { TSurveyChoice } from "@formbricks/types/v1/surveys";
+import { TSurveyChoice, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
+import { Input } from "@formbricks/ui";
 import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { BackButton } from "@/components/preview/BackButton";
 
 interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestion;
+  question: MultipleChoiceSingleQuestion | TSurveyMultipleChoiceSingleQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  storedResponseValue: string | null;
+  goToNextQuestion: (answer: Response["data"]) => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -20,8 +25,15 @@ export default function MultipleChoiceSingleQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  storedResponseValue,
+  goToNextQuestion,
+  goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
+  const storedResponseValueValue = question.choices.find(
+    (choice) => choice.label === storedResponseValue
+  )?.id;
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [savedOtherAnswer, setSavedOtherAnswer] = useState<string | null>(null);
   const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
     question.choices
       ? question.shuffleOption && question.shuffleOption !== "none"
@@ -32,10 +44,41 @@ export default function MultipleChoiceSingleQuestion({
   const otherSpecify = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (selectedChoice === "other") {
-      otherSpecify.current?.focus();
+    if (!storedResponseValueValue) {
+      const otherChoiceId = question.choices.find((choice) => choice.id === "other")?.id;
+      if (otherChoiceId && storedResponseValue) {
+        setSelectedChoice(otherChoiceId);
+        setSavedOtherAnswer(storedResponseValue);
+      }
+    } else {
+      setSelectedChoice(storedResponseValueValue);
     }
-  }, [selectedChoice]);
+  }, [question.choices, storedResponseValue, storedResponseValueValue]);
+
+  useEffect(() => {
+    if (selectedChoice === "other" && otherSpecify.current) {
+      otherSpecify.current.value = savedOtherAnswer ?? "";
+      otherSpecify.current.focus();
+    }
+  }, [savedOtherAnswer, selectedChoice]);
+
+  const resetForm = () => {
+    setSelectedChoice(null);
+    setSavedOtherAnswer(null);
+  };
+
+  const handleSubmit = (value: string) => {
+    const data = {
+      [question.id]: value,
+    };
+    if (value === storedResponseValue) {
+      goToNextQuestion(data);
+      resetForm(); // reset form
+      return;
+    }
+    onSubmit(data);
+    resetForm(); // reset form
+  };
 
   useEffect(() => {
     setQuestionChoices(
@@ -52,18 +95,14 @@ export default function MultipleChoiceSingleQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
-        const data = {
-          [question.id]: value,
-        };
-        onSubmit(data);
-        setSelectedChoice(null); // reset form
+        handleSubmit(value);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative space-y-2 rounded-md py-0.5">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
@@ -108,6 +147,23 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
+        {goToPreviousQuestion && (
+          <BackButton
+            backButtonLabel={question.backButtonLabel}
+            onClick={() => {
+              goToPreviousQuestion(
+                selectedChoice === "other"
+                  ? {
+                      [question.id]: otherSpecify.current?.value ?? "",
+                    }
+                  : {
+                      [question.id]:
+                        question.choices.find((choice) => choice.id === selectedChoice)?.label ?? "",
+                    }
+              );
+            }}
+          />
+        )}
         <div></div>
         <SubmitButton {...{ question, lastQuestion, brandColor }} />
       </div>

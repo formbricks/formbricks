@@ -5,6 +5,7 @@ import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
 import SurveyView from "./components/SurveyView";
 import { IErrorHandler } from "./lib/errors";
+import { clearStoredResponse } from "./lib/localStorage";
 
 interface AppProps {
   config: TJsConfig;
@@ -18,6 +19,7 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
 
   const close = () => {
     setIsOpen(false);
+    clearStoredResponse(survey.id);
     setTimeout(() => {
       closeSurvey();
     }, 1000); // wait for animation to finish}
@@ -30,6 +32,7 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
         close={close}
         placement={config.state.product.placement}
         darkOverlay={config.state.product.darkOverlay}
+        highlightBorderColor={config.state.product.highlightBorderColor}
         clickOutside={config.state.product.clickOutsideClose}>
         <SurveyView config={config} survey={survey} close={close} errorHandler={errorHandler} />
       </Modal>

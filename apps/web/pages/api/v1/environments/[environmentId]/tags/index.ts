@@ -1,5 +1,4 @@
-import { captureTelemetry } from "@/../../packages/lib/telemetry";
-import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
+import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
@@ -43,7 +42,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(500).json({ message: "Internal Server Error" });
     }
 
-    captureTelemetry(`tags retrived for ${environmentId}`);
     return res.json(tags);
   }
 

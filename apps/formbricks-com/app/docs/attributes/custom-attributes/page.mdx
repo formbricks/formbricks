@@ -1,0 +1,35 @@
+export const meta = {
+  title: "Setting attributes with code",
+  description:
+    "Set attributes in code using setAttribute function. Enhance user segmentation, target surveys effectively, and gather valuable insights for better decisions. All open-source.",
+};
+
+#### Attributes
+
+# Setting attributes with code
+
+One way to send attributes to Formbricks is in your code. In Formbricks, there are two special attributes for [user identification](/docs/attributes/identify-users)(user ID & email) and custom attributes. An example:
+
+## Setting Custom User Attributes
+
+You can use the setAttribute function to set any custom attribute for the user (e.g. name, plan, etc.):
+
+<CodeGroup title="Setting Plan to Pro">
+
+```javascript
+formbricks.setAttribute("Plan", "Pro");
+```
+
+</CodeGroup>
+
+Generally speaking, the setAttribute function works like this:
+
+<CodeGroup title="Setting Custom Attributes">
+
+```javascript
+formbricks.setAttribute("attribute_key", "attribute_value");
+```
+
+</CodeGroup>
+
+Where `attributeName` is the name of the attribute you want to set, and `attributeValue` is the value of the attribute you want to set.

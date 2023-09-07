@@ -1,13 +1,20 @@
-import useSWR from "swr";
-import { fetcher } from "@formbricks/lib/fetcher";
 import { createDisplay, markDisplayResponded } from "@formbricks/lib/client/display";
 import { createResponse, updateResponse } from "@formbricks/lib/client/response";
-import { QuestionType, type Logic, type Question } from "@formbricks/types/questions";
+import { fetcher } from "@formbricks/lib/fetcher";
+import { Response } from "@formbricks/types/js";
+import { Question, QuestionType } from "@formbricks/types/questions";
 import { TResponseInput } from "@formbricks/types/v1/responses";
-import { useState, useEffect, useCallback } from "react";
-import type { Survey } from "@formbricks/types/surveys";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import useSWR from "swr";
 import { useGetOrCreatePerson } from "../people/people";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+
+interface StoredResponse {
+  id: string | null;
+  data: { [x: string]: any };
+  history: string[];
+}
 
 export const useLinkSurvey = (surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
@@ -20,17 +27,19 @@ export const useLinkSurvey = (surveyId: string) => {
   };
 };
 
-export const useLinkSurveyUtils = (survey: Survey) => {
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+export const useLinkSurveyUtils = (survey: TSurvey) => {
+  const [currentQuestion, setCurrentQuestion] = useState<TSurveyQuestion | Question | null>(null);
   const [prefilling, setPrefilling] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [finished, setFinished] = useState(false);
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
   const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
+  const [storedResponseValue, setStoredResponseValue] = useState<string | null>(null);
   const router = useRouter();
-  const URLParams = new URLSearchParams(window.location.search);
+  const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const isPreview = URLParams.get("preview") === "true";
   const hasFirstQuestionPrefill = URLParams.has(survey.questions[0].id);
   const firstQuestionPrefill = hasFirstQuestionPrefill ? URLParams.get(survey.questions[0].id) : null;
@@ -42,8 +51,37 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const personId = person?.data.person.id ?? null;
 
   useEffect(() => {
+    const storedResponse = getStoredResponse(survey.id);
+    const questionKeys = survey.questions.map((question) => question.id);
+    if (storedResponse) {
+      if (storedResponse.id) {
+        setResponseId(storedResponse.id);
+      }
+      if (storedResponse.history) {
+        setHistory(storedResponse.history);
+      }
+      const storedResponsesKeys = Object.keys(storedResponse.data);
+      // reduce to find the last answered question index
+      const lastStoredQuestionIndex = questionKeys.reduce((acc, key, index) => {
+        if (storedResponsesKeys.includes(key)) {
+          return index;
+        }
+        return acc;
+      }, 0);
+      if (lastStoredQuestionIndex > 0 && survey.questions.length > lastStoredQuestionIndex + 1) {
+        const nextQuestion = survey.questions[lastStoredQuestionIndex];
+        setCurrentQuestion(nextQuestion);
+        setProgress(calculateProgress(nextQuestion, survey));
+        setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!isLoadingPerson) {
-      if (survey) {
+      const storedResponse = getStoredResponse(survey.id);
+      if (survey && !storedResponse) {
         setCurrentQuestion(survey.questions[0]);
 
         if (isPreview) return;
@@ -86,6 +124,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         }
       }
     }
+
     if (lastQuestion) return "end";
     return survey.questions[currentQuestionIndex + 1].id;
   };
@@ -99,9 +138,6 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
 
-    const nextQuestionId = getNextQuestionId(data);
-
-    const finished = nextQuestionId === "end";
     // build response
     const responseRequest: TResponseInput = {
       surveyId: survey.id,
@@ -112,6 +148,10 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         url: window.location.href,
       },
     };
+
+    const nextQuestionId = getNextQuestionId(data);
+    responseRequest.finished = nextQuestionId === "end";
+
     if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,
@@ -121,30 +161,19 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
       }
       setResponseId(response.id);
+      storeResponse(survey.id, response.data, response.id, history);
     } else if (responseId && !isPreview) {
       await updateResponse(
         responseRequest,
         responseId,
         `${window.location.protocol}//${window.location.host}`
       );
+      storeResponse(survey.id, data, responseId, history);
     }
 
     setLoadingElement(false);
 
-    if (!finished && nextQuestionId !== "end") {
-      const question = survey.questions.find((q) => q.id === nextQuestionId);
-
-      if (!question) throw new Error("Question not found");
-
-      setCurrentQuestion(question);
-      // setCurrentQuestion(survey.questions[questionIdx + 1]);
-    } else {
-      setProgress(1);
-      setFinished(true);
-      if (survey.redirectUrl && Object.values(data)[0] !== "dismissed") {
-        handleRedirect(survey.redirectUrl);
-      }
-    }
+    goToNextQuestion(data);
   };
 
   const handleRedirect = (url) => {
@@ -183,6 +212,62 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     handlePrefilling();
   }, [handlePrefilling]);
 
+  const getPreviousQuestionId = (): string => {
+    const newHistory = [...history];
+    const prevQuestionId = newHistory.pop();
+    if (!prevQuestionId) throw new Error("Question not found");
+    setHistory(newHistory);
+    return prevQuestionId;
+  };
+
+  const goToPreviousQuestion = (answer: Response["data"]) => {
+    setLoadingElement(true);
+    const previousQuestionId = getPreviousQuestionId();
+    const previousQuestion = survey.questions.find((q) => q.id === previousQuestionId);
+
+    if (!previousQuestion) throw new Error("Question not found");
+
+    if (answer) {
+      storeResponse(survey.id, answer);
+    }
+
+    setStoredResponseValue(getStoredResponseValue(survey.id, previousQuestion.id));
+    setCurrentQuestion(previousQuestion);
+    setLoadingElement(false);
+  };
+
+  const goToNextQuestion = (answer: Response["data"]) => {
+    setLoadingElement(true);
+    const nextQuestionId = getNextQuestionId(answer);
+
+    if (nextQuestionId === "end") {
+      setLoadingElement(false);
+      setProgress(1);
+      setFinished(true);
+      clearStoredResponses(survey.id);
+      if (survey.redirectUrl && Object.values(answer)[0] !== "dismissed") {
+        handleRedirect(survey.redirectUrl);
+      }
+      return;
+    }
+
+    const newHistory = [...history];
+    if (currentQuestion) {
+      newHistory.push(currentQuestion.id);
+    }
+    setHistory(newHistory);
+
+    storeResponse(survey.id, answer, null, newHistory);
+
+    const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
+
+    if (!nextQuestion) throw new Error("Question not found");
+
+    setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
+    setCurrentQuestion(nextQuestion);
+    setLoadingElement(false);
+  };
+
   return {
     currentQuestion,
     progress,
@@ -194,10 +279,59 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     initiateCountdown,
     submitResponse,
     restartSurvey,
+    goToPreviousQuestion,
+    goToNextQuestion,
+    storedResponseValue,
   };
 };
 
-const checkValidity = (question: Question, answer: any): boolean => {
+const storeResponse = (
+  surveyId: string,
+  responseData: Response["data"],
+  responseId: string | null = null,
+  history: string[] = []
+) => {
+  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-response`);
+  if (storedResponses) {
+    const existingResponse = JSON.parse(storedResponses);
+    if (responseId) {
+      existingResponse.id = responseId;
+    }
+    existingResponse.data = { ...existingResponse.data, ...responseData };
+    existingResponse.history = history;
+    localStorage.setItem(`formbricks-${surveyId}-response`, JSON.stringify(existingResponse));
+  } else {
+    const response = {
+      id: responseId,
+      data: responseData,
+      history,
+    };
+    localStorage.setItem(`formbricks-${surveyId}-response`, JSON.stringify(response));
+  }
+};
+
+const getStoredResponse = (surveyId: string): StoredResponse | null => {
+  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-response`);
+  if (storedResponses) {
+    return JSON.parse(storedResponses);
+  }
+  return null;
+};
+
+const getStoredResponseValue = (surveyId: string, questionId: string): string | null => {
+  const storedResponse = getStoredResponse(surveyId);
+
+  if (storedResponse && typeof storedResponse.data === "object") {
+    return storedResponse.data[questionId];
+  }
+  return null;
+};
+
+const clearStoredResponses = (surveyId: string) => {
+  localStorage.removeItem(`formbricks-${surveyId}-response`);
+};
+
+const checkValidity = (question: TSurveyQuestion | Question, answer: any): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
@@ -254,7 +388,7 @@ const checkValidity = (question: Question, answer: any): boolean => {
   }
 };
 
-const createAnswer = (question: Question, answer: string): string | number | string[] => {
+const createAnswer = (question: TSurveyQuestion | Question, answer: string): string | number | string[] => {
   switch (question.type) {
     case QuestionType.OpenText:
     case QuestionType.MultipleChoiceSingle:
@@ -287,54 +421,54 @@ const createAnswer = (question: Question, answer: string): string | number | str
   }
 };
 
-const evaluateCondition = (logic: Logic, answerValue: any): boolean => {
+const evaluateCondition = (logic: TSurveyLogic, responseValue: any): boolean => {
   switch (logic.condition) {
     case "equals":
       return (
-        (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
-        answerValue.toString() === logic.value
+        (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
+        responseValue.toString() === logic.value
       );
     case "notEquals":
-      return answerValue !== logic.value;
+      return responseValue !== logic.value;
     case "lessThan":
-      return logic.value !== undefined && answerValue < logic.value;
+      return logic.value !== undefined && responseValue < logic.value;
     case "lessEqual":
-      return logic.value !== undefined && answerValue <= logic.value;
+      return logic.value !== undefined && responseValue <= logic.value;
     case "greaterThan":
-      return logic.value !== undefined && answerValue > logic.value;
+      return logic.value !== undefined && responseValue > logic.value;
     case "greaterEqual":
-      return logic.value !== undefined && answerValue >= logic.value;
+      return logic.value !== undefined && responseValue >= logic.value;
     case "includesAll":
       return (
-        Array.isArray(answerValue) &&
+        Array.isArray(responseValue) &&
         Array.isArray(logic.value) &&
-        logic.value.every((v) => answerValue.includes(v))
+        logic.value.every((v) => responseValue.includes(v))
       );
     case "includesOne":
       return (
-        Array.isArray(answerValue) &&
+        Array.isArray(responseValue) &&
         Array.isArray(logic.value) &&
-        logic.value.some((v) => answerValue.includes(v))
+        logic.value.some((v) => responseValue.includes(v))
       );
     case "accepted":
-      return answerValue === "accepted";
+      return responseValue === "accepted";
     case "clicked":
-      return answerValue === "clicked";
+      return responseValue === "clicked";
     case "submitted":
-      if (typeof answerValue === "string") {
-        return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
-      } else if (Array.isArray(answerValue)) {
-        return answerValue.length > 0;
-      } else if (typeof answerValue === "number") {
-        return answerValue !== null;
+      if (typeof responseValue === "string") {
+        return responseValue !== "dismissed" && responseValue !== "" && responseValue !== null;
+      } else if (Array.isArray(responseValue)) {
+        return responseValue.length > 0;
+      } else if (typeof responseValue === "number") {
+        return responseValue !== null;
       }
       return false;
     case "skipped":
       return (
-        (Array.isArray(answerValue) && answerValue.length === 0) ||
-        answerValue === "" ||
-        answerValue === null ||
-        answerValue === "dismissed"
+        (Array.isArray(responseValue) && responseValue.length === 0) ||
+        responseValue === "" ||
+        responseValue === null ||
+        responseValue === "dismissed"
       );
     default:
       return false;

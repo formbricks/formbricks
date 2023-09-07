@@ -6,12 +6,16 @@ import { cn, shuffleArray } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { BackButton } from "./BackButton";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
   onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
+  storedResponseValue: string | null;
+  goToNextQuestion: (answer: TResponseData) => void;
+  goToPreviousQuestion?: (answer: TResponseData) => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -19,8 +23,15 @@ export default function MultipleChoiceSingleQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  storedResponseValue,
+  goToNextQuestion,
+  goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
+  const storedResponseValueValue = question.choices.find(
+    (choice) => choice.label === storedResponseValue
+  )?.id;
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [savedOtherAnswer, setSavedOtherAnswer] = useState<string | null>(null);
   const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
     question.choices
       ? question.shuffleOption && question.shuffleOption !== "none"
@@ -31,10 +42,23 @@ export default function MultipleChoiceSingleQuestion({
   const otherSpecify = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!storedResponseValueValue) {
+      const otherChoiceId = question.choices.find((choice) => choice.id === "other")?.id;
+      if (otherChoiceId && storedResponseValue) {
+        setSelectedChoice(otherChoiceId);
+        setSavedOtherAnswer(storedResponseValue);
+      }
+    } else {
+      setSelectedChoice(storedResponseValueValue);
+    }
+  }, [question.choices, storedResponseValue, storedResponseValueValue]);
+
+  useEffect(() => {
     if (selectedChoice === "other") {
+      otherSpecify.current.value = savedOtherAnswer ?? "";
       otherSpecify.current?.focus();
     }
-  }, [selectedChoice]);
+  }, [savedOtherAnswer, selectedChoice]);
 
   useEffect(() => {
     setQuestionChoices(
@@ -46,25 +70,38 @@ export default function MultipleChoiceSingleQuestion({
     );
   }, [question.choices, question.shuffleOption]);
 
+  const resetForm = () => {
+    setSelectedChoice(null);
+    setSavedOtherAnswer(null);
+  };
+
+  const handleSubmit = (value: string) => {
+    const data = {
+      [question.id]: value,
+    };
+    if (value === storedResponseValue) {
+      goToNextQuestion(data);
+      resetForm(); // reset form
+      return;
+    }
+    onSubmit(data);
+    resetForm(); // reset form
+  };
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
 
         const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
-        const data = {
-          [question.id]: value,
-        };
-
-        onSubmit(data);
-        setSelectedChoice(null); // reset form
+        handleSubmit(value);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="fb-mt-4">
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
-          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
+          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
@@ -72,7 +109,7 @@ export default function MultipleChoiceSingleQuestion({
                   selectedChoice === choice.label
                     ? "fb-z-10 fb-bg-slate-50 fb-border-slate-400"
                     : "fb-border-gray-200",
-                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none hover:bg-slate-50"
+                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none fb-text-slate-800 hover:bg-slate-50"
                 )}>
                 <span className="fb-flex fb-items-center fb-text-sm">
                   <input
@@ -110,6 +147,22 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
+        {goToPreviousQuestion && (
+          <BackButton
+            backButtonLabel={question.backButtonLabel}
+            onClick={() => {
+              goToPreviousQuestion(
+                selectedChoice === "other"
+                  ? {
+                      [question.id]: otherSpecify.current?.value,
+                    }
+                  : {
+                      [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label,
+                    }
+              );
+            }}
+          />
+        )}
         <div></div>
         <SubmitButton
           question={question}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -22,7 +22,19 @@ export function EditProductName({ environmentId }) {
   const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);
   const { mutateEnvironment } = useEnvironment(environmentId);
 
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, control, setValue } = useForm();
+
+  const productName = useWatch({
+    control,
+    name: "name",
+  });
+  const isProductNameInputEmpty = !productName?.trim();
+  const currentProductName = productName?.trim().toLowerCase() ?? "";
+  const previousProductName = product?.name?.trim().toLowerCase() ?? "";
+
+  useEffect(() => {
+    setValue("name", product?.name ?? "");
+  }, [product?.name]);
 
   if (isLoadingProduct) {
     return <LoadingSpinner />;
@@ -45,9 +57,20 @@ export function EditProductName({ environmentId }) {
           });
       })}>
       <Label htmlFor="fullname">What&apos;s your product called?</Label>
-      <Input type="text" id="fullname" defaultValue={product.name} {...register("name")} />
+      <Input
+        type="text"
+        id="fullname"
+        defaultValue={product.name}
+        {...register("name")}
+        className={isProductNameInputEmpty ? "border-red-300 focus:border-red-300" : ""}
+      />
 
-      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProduct}>
+      <Button
+        type="submit"
+        variant="darkCTA"
+        className="mt-4"
+        loading={isMutatingProduct}
+        disabled={isProductNameInputEmpty || currentProductName === previousProductName}>
         Update
       </Button>
     </form>
@@ -102,6 +125,7 @@ export function DeleteProduct({ environmentId }) {
   const router = useRouter();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState(false);
 
   const { profile } = useProfile();
   const { team } = useMembers(environmentId);
@@ -126,7 +150,9 @@ export function DeleteProduct({ environmentId }) {
       setIsDeleteDialogOpen(false);
       return;
     }
+    setDeletingProduct(true);
     const deleteProductRes = await deleteProduct(environmentId);
+    setDeletingProduct(false);
 
     if (deleteProductRes?.id?.length > 0) {
       toast.success("Product deleted successfully.");
@@ -168,6 +194,7 @@ export function DeleteProduct({ environmentId }) {
         deleteWhat="Product"
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
+        isDeleting={deletingProduct}
         onDelete={handleDeleteProduct}
         text={`Are you sure you want to delete "${truncate(
           product?.name,

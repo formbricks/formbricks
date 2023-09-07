@@ -1,10 +1,19 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
+    "@formbricks/database#build": {
+      "cache": false,
+      "dependsOn": ["post-install"]
+    },
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"]
+    },
+    "@formbricks/demo#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/js#build"]
     },
     "@formbricks/api#build": {
       "outputs": ["dist/**"],
@@ -38,7 +47,6 @@
         "NEXT_PUBLIC_INVITE_DISABLED",
         "NEXT_PUBLIC_SIGNUP_DISABLED",
         "NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID",
-        "NEXT_PUBLIC_STRIPE_PUBLIC_KEY",
         "NEXT_PUBLIC_TERMS_URL",
         "NEXTAUTH_SECRET",
         "NEXTAUTH_URL",
@@ -71,22 +79,32 @@
         "RAILWAY_STATIC_URL",
         "RENDER_EXTERNAL_URL",
         "SENTRY_DSN",
+        "STRAPI_API_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
         "TELEMETRY_DISABLED",
-        "VERCEL_URL"
+        "VERCEL_URL",
+        "WEBAPP_URL"
       ]
     },
+    "post-install": {
+      "cache": false,
+      "dependsOn": [],
+      "outputs": [],
+      "inputs": ["./schema.prisma"],
+      "env": ["PRISMA_GENERATE_DATAPROXY"]
+    },
     "db:setup": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:down": {
       "cache": false,
       "outputs": []
     },
     "go": {
       "persistent": true,
       "cache": false
-    },
-    "prebuild": {
-      "outputs": []
     },
     "db:migrate:dev": {
       "outputs": []

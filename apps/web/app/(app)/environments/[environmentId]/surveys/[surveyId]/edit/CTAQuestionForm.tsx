@@ -5,6 +5,7 @@ import type { CTAQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { Editor, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { useState } from "react";
+import { BackButtonInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/QuestionCard";
 
 interface CTAQuestionFormProps {
   localSurvey: Survey;
@@ -80,18 +81,27 @@ export default function CTAQuestionForm({
       </RadioGroup>
 
       <div className="mt-3 flex justify-between gap-8">
-        <div className="flex-1">
-          <Label htmlFor="buttonLabel">Button Label</Label>
-          <div className="mt-2">
-            <Input
-              id="buttonLabel"
-              name="buttonLabel"
-              value={question.buttonLabel}
-              placeholder={lastQuestion ? "Finish" : "Next"}
-              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-            />
+        <div className="flex w-full space-x-2">
+          <div className="w-full">
+            <Label htmlFor="buttonLabel">Button Label</Label>
+            <div className="mt-2">
+              <Input
+                id="buttonLabel"
+                name="buttonLabel"
+                value={question.buttonLabel}
+                placeholder={lastQuestion ? "Finish" : "Next"}
+                onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+              />
+            </div>
           </div>
+          {questionIdx !== 0 && (
+            <BackButtonInput
+              value={question.backButtonLabel}
+              onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+            />
+          )}
         </div>
+
         {question.buttonExternal && (
           <div className="flex-1">
             <Label htmlFor="buttonLabel">Button URL</Label>

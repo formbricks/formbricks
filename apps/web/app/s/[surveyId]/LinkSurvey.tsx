@@ -5,24 +5,23 @@ import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import type { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
-
-type EnhancedSurvey = Survey & {
-  brandColor: string;
-  formbricksSignature: boolean;
-};
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import Loading from "@/app/s/[surveyId]/loading";
+import { TProduct } from "@formbricks/types/v1/product";
+import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
+import { verifyTokenAction } from "@/app/s/[surveyId]/actions";
 
 interface LinkSurveyProps {
-  survey: EnhancedSurvey;
+  survey: TSurvey;
+  product: TProduct;
 }
 
-export default function LinkSurvey({ survey }: LinkSurveyProps) {
+export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
   const {
     currentQuestion,
     finished,
@@ -34,11 +33,43 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     initiateCountdown,
     restartSurvey,
     submitResponse,
+    goToPreviousQuestion,
+    goToNextQuestion,
+    storedResponseValue,
   } = useLinkSurveyUtils(survey);
 
+  const showBackButton = progress !== 0 && !finished;
   // Create a reference to the top element
   const topRef = useRef<HTMLDivElement>(null);
   const [autoFocus, setAutofocus] = useState(false);
+  const URLParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const [shouldRenderVerifyEmail, setShouldRenderVerifyEmail] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState(true);
+
+  const checkVerifyToken = async (verifyToken: string): Promise<boolean> => {
+    try {
+      const result = await verifyTokenAction(verifyToken, survey.id);
+      return result;
+    } catch (error) {
+      return false;
+    }
+  };
+  useEffect(() => {
+    if (survey.verifyEmail) {
+      setShouldRenderVerifyEmail(true);
+    }
+    const verifyToken = URLParams.get("verify");
+    if (verifyToken) {
+      checkVerifyToken(verifyToken)
+        .then((result) => {
+          setIsTokenValid(result);
+          setShouldRenderVerifyEmail(!result); // Set shouldRenderVerifyEmail based on result
+        })
+        .catch((error) => {
+          console.error("Error checking verify token:", error);
+        });
+    }
+  }, []);
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
@@ -57,9 +88,16 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   if (!currentQuestion || prefilling) {
     return (
       <div className="flex h-full flex-1 items-center justify-center">
-        <LoadingSpinner />
+        <Loading />
       </div>
     );
+  }
+
+  if (shouldRenderVerifyEmail) {
+    if (!isTokenValid) {
+      return <VerifyEmail survey={survey} isErrorComponent={true} />;
+    }
+    return <VerifyEmail survey={survey} />;
   }
 
   return (
@@ -84,20 +122,23 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
           )}
           {finished ? (
             <div>
-              <Confetti colors={[survey.brandColor, "#eee"]} />
+              <Confetti colors={[product.brandColor, "#eee"]} />
               <ThankYouCard
                 headline={survey.thankYouCard.headline || "Thank you!"}
                 subheader={survey.thankYouCard.subheader || "Your response has been recorded."}
-                brandColor={survey.brandColor}
+                brandColor={product.brandColor}
                 initiateCountdown={initiateCountdown}
               />
             </div>
           ) : (
             <QuestionConditional
               question={currentQuestion}
-              brandColor={survey.brandColor}
+              brandColor={product.brandColor}
               lastQuestion={lastQuestion}
               onSubmit={submitResponse}
+              storedResponseValue={storedResponseValue}
+              goToNextQuestion={goToNextQuestion}
+              goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
               autoFocus={autoFocus}
             />
           )}
@@ -105,8 +146,8 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">
         <div className="mx-auto max-w-md space-y-6 p-6">
-          <Progress progress={progress} brandColor={survey.brandColor} />
-          {survey.formbricksSignature && <FormbricksSignature />}
+          <Progress progress={progress} brandColor={product.brandColor} />
+          {product.formbricksSignature && <FormbricksSignature />}
         </div>
       </div>
     </>

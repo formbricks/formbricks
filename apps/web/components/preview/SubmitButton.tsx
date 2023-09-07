@@ -1,7 +1,15 @@
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
+import { Question } from "@formbricks/types/questions";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 
-function SubmitButton({ question, lastQuestion, brandColor }) {
+type SubmitButtonProps = {
+  question: Question | TSurveyQuestion;
+  lastQuestion: boolean;
+  brandColor: string;
+};
+
+function SubmitButton({ question, lastQuestion, brandColor }: SubmitButtonProps) {
   return (
     <button
       type="submit"

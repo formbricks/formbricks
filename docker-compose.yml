@@ -16,13 +16,9 @@ services:
     depends_on:
       - postgres
     env_file:
-      - .env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.formbricks.rule=Host(`api.example.com`)" # TODO: Change with your own domain
-      - "traefik.http.routers.formbricks.tls.certresolver=default"
-      - "traefik.http.routers.formbricks.entrypoints=websecure"
-      - "traefik.http.services.formbricks.loadbalancer.server.port=3000"
+      - .env.docker
+    ports:
+      - 3000:3000
 
 volumes:
   postgres:

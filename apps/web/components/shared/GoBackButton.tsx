@@ -1,3 +1,5 @@
+"use client";
+
 import { BackIcon } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
 

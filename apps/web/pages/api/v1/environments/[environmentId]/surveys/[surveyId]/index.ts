@@ -9,6 +9,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const surveyId = req.query.surveyId?.toString();
 
+  const analytics = req.query.analytics?.toString() === "true";
+
   if (environmentId === undefined) {
     return res.status(400).json({ message: "Missing environmentId" });
   }
@@ -31,6 +33,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       include: {
         triggers: true,
         attributeFilters: true,
+        _count: analytics ? { select: { responses: { where: { finished: true } } } } : false,
       },
     });
 
@@ -83,6 +86,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const body = { ...req.body };
 
     delete body.updatedAt;
+    // preventing issue with unknowingly updating analytics
+    delete body._count;
 
     // delete unused fields for link surveys
     if (body.type === "link") {
@@ -91,6 +96,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
       if (!body.surveyClosedMessage) {
         body.surveyClosedMessage = prismaClient.JsonNull;
+      }
+
+      if (!body.verifyEmail) {
+        body.verifyEmail = prismaClient.JsonNull;
       }
     }
 
@@ -219,6 +228,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     if (data.surveyClosedMessage === null) {
       data.surveyClosedMessage = prismaClient.JsonNull;
+    }
+
+    if (data.verifyEmail === null) {
+      data.verifyEmail = prismaClient.JsonNull;
     }
 
     const prismaRes = await prisma.survey.update({

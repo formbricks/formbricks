@@ -1,6 +1,9 @@
 version: "3.3"
 x-environment: &environment
   environment:
+    # The url of your Formbricks instance used in the admin panel
+    WEBAPP_URL:
+
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
@@ -19,14 +22,23 @@ x-environment: &environment
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: http://localhost:3000
 
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
+
+    MAIL_FROM:
+    SMTP_HOST:
+    SMTP_PORT:
+    SMTP_SECURE_ENABLED:
+    SMTP_USER:
+    SMTP_PASSWORD:
+
 services:
   postgres:
     restart: always
     image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=postgres
+    <<: *environment
 
   formbricks:
     restart: always
