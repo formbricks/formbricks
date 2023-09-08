@@ -29,7 +29,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
 
    </CodeGroup>
 
-2.  **Modify the `.env.docker` file as required by your setup.** <br/> This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
+2.  **Modify the `.env.docker` file as required by your setup.** <br/> This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# PASSWORD_RESET_DISABLED=1`)
 
         <Note>
            ## Editing a NEXT_PUBLIC_* variable?
@@ -65,6 +65,7 @@ These variables must also be provided at runtime.
 | TERMS_URL                 | URL for terms of service.                                                                    | optional                                                |                                                                         |
 | IMPRINT_URL               | URL for imprint.                                                                             | optional                                                |                                                                         |
 | SIGNUP_DISABLED           | Disables the ability for new users to create an account if set to `1`.                       | optional                                                |                                                                         |
+| PASSWORD_RESET_DISABLED   | Disables password reset functionality if set to `1`.                                         | optional                                                |                                                                         |
 | MAIL_FROM                 | Email address to send emails from.                                                           | optional (required if email services are to be enabled) |                                                                         |
 | SMTP_HOST                 | Host URL of your SMTP server.                                                                | optional (required if email services are to be enabled) |                                                                         |
 | SMTP_PORT                 | Host Port of your SMTP server.                                                               | optional (required if email services are to be enabled) |                                                                         |
@@ -93,7 +94,6 @@ These variables must be provided at the time of the docker build and can be prov
 | -------------------------------------------------- | -------------------------------------------------------------------------- | -------- | ----------------------- |
 | NEXT_PUBLIC_WEBAPP_URL                             | Base URL injected into static files.                                       | required | `http://localhost:3000` |
 | NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED            | Disables email verification if set to `1`.                                 | optional |                         |
-| NEXT_PUBLIC_PASSWORD_RESET_DISABLED                | Disables password reset functionality if set to `1`.                       | optional |                         |
 | NEXT_PUBLIC_INVITE_DISABLED                        | Disables the ability for invited users to create an account if set to `1`. | optional |                         |
 | NEXT_PUBLIC_GITHUB_AUTH_ENABLED                    | Enables GitHub login if set to `1`.                                        | optional |                         |
 | NEXT_PUBLIC_GOOGLE_AUTH_ENABLED                    | Enables Google login if set to `1`.                                        | optional |                         |

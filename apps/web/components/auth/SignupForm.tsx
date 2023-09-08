@@ -14,9 +14,11 @@ import { GithubButton } from "./GithubButton";
 export const SignupForm = ({
   privacyUrl,
   termsUrl,
+  passwordResetDisabled,
 }: {
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
+  passwordResetDisabled: string | undefined;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -142,7 +144,7 @@ export const SignupForm = ({
                     className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
-                {env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
+                {passwordResetDisabled !== "1" && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"

@@ -33,7 +33,7 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_WEBAPP_URL: z.string().url().optional(),
     NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
+    PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
@@ -92,7 +92,7 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     NEXT_PUBLIC_WEBAPP_URL: process.env.NEXT_PUBLIC_WEBAPP_URL,
     NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED: process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED,
-    NEXT_PUBLIC_PASSWORD_RESET_DISABLED: process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED,
+    PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
     NEXT_PUBLIC_INVITE_DISABLED: process.env.NEXT_PUBLIC_INVITE_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,

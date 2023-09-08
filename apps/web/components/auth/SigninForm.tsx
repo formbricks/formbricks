@@ -10,7 +10,13 @@ import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
-export const SigninForm = ({ publicSignUpDisabled }: { publicSignUpDisabled: string | undefined }) => {
+export const SigninForm = ({
+  publicSignUpDisabled,
+  passwordResetDisabled,
+}: {
+  publicSignUpDisabled: string | undefined;
+  passwordResetDisabled: string | undefined;
+}) => {
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -79,7 +85,7 @@ export const SigninForm = ({ publicSignUpDisabled }: { publicSignUpDisabled: str
                     className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                   />
                 </div>
-                {env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
+                {passwordResetDisabled !== "1" && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
