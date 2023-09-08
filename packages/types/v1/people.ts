@@ -8,7 +8,7 @@ export const ZPerson = z.object({
   attributes: ZPersonAttributes,
   createdAt: z.date(),
   updatedAt: z.date(),
-  environmentId: z.string().cuid2(),
+  environmentId: z.string().cuid2().optional(),
 });
 
 export const ZPersonUpdateInput = z.object({

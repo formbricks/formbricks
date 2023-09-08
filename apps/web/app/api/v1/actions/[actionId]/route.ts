@@ -58,7 +58,7 @@ export async function DELETE(
     if (!action) {
       return responses.notFoundResponse("Survey", params.actionId);
     }
-    const deletedAction = await deleteActionClass(authentication.environmentId, params.actionId);
+    const deletedAction = await deleteActionClass(authentication.environmentId!, params.actionId);
     return responses.successResponse(deletedAction);
   } catch (error) {
     return handleErrorResponse(error);
@@ -66,7 +66,6 @@ export async function DELETE(
 }
 
 function handleErrorResponse(error: any): NextResponse {
-  console.log(error);
   switch (error.message) {
     case "NotAuthenticated":
       return responses.notAuthenticatedResponse();

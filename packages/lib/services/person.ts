@@ -38,7 +38,6 @@ type TransformPersonInput = {
   }[];
   createdAt: Date;
   updatedAt: Date;
-  environmentId: string;
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
@@ -52,7 +51,6 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
     attributes: attributes,
     createdAt: person.createdAt,
     updatedAt: person.updatedAt,
-    environmentId: person.environmentId,
   };
 };
 

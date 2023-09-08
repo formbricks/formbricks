@@ -1,6 +1,6 @@
 import { responses } from "@/lib/api/response";
 import { DatabaseError } from "@formbricks/errors";
-import { authenticateRequest, getAuthentication } from "@/app/api/v1/auth";
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { getProfile, getUserIdFromEnvironment, updateProfile } from "@formbricks/lib/services/profile";

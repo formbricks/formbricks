@@ -457,7 +457,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyInput
       data,
     });
 
-    const modifiedSurvey = {
+    const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers ?? [], // Include triggers from updatedSurvey
       attributeFilters: updatedSurvey.attributeFilters ?? [], // Include attributeFilters from updatedSurvey

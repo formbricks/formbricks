@@ -10,6 +10,7 @@ export const ZSurveyThankYouCard = z.object({
 
 export const ZSurveyClosedMessage = z
   .object({
+    enabled: z.boolean(),
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
   })
@@ -249,7 +250,7 @@ export const ZSurvey = z.object({
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage,
+  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
