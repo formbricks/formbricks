@@ -41,14 +41,14 @@ const SegmentTableDataRow = ({ segment }: TSegmentTableDataRowProps) => {
           <div className="ph-no-capture text-slate-900">{surveys?.length}</div>
         </div>
         <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-          <div className="ph-no-capture  text-slate-900">
+          <div className="ph-no-capture text-slate-900">
             {formatDistanceToNow(updatedAt, {
               addSuffix: true,
             }).replace("about", "")}
           </div>
         </div>
         <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
-          <div className="ph-no-capture  text-slate-900">{format(createdAt, "do 'of' MMMM, yyyy")}</div>
+          <div className="ph-no-capture text-slate-900">{format(createdAt, "do 'of' MMMM, yyyy")}</div>
         </div>
       </div>
     </>
