@@ -4,6 +4,7 @@ import {
   TActionMetric,
   TAllOperators,
   TBaseFilterGroup,
+  TUserSegment,
   TUserSegmentActionFilter,
   TUserSegmentAttributeFilter,
   TUserSegmentConnector,
@@ -29,7 +30,7 @@ export const createUserSegment = async (
   description: string,
   isPrivate: boolean,
   filters: TBaseFilterGroup
-) => {
+): Promise<TUserSegment> => {
   const userSegment = await prisma.userSegment.create({
     data: {
       environmentId,
@@ -54,10 +55,13 @@ export const createUserSegment = async (
     },
   });
 
-  return userSegment;
+  return {
+    ...userSegment,
+    surveys: userSegment.surveys.map((survey) => survey.id),
+  };
 };
 
-export const getAllUserSegments = async (environmentId: string) => {
+export const getUserSegments = async (environmentId: string): Promise<TUserSegment[]> => {
   const userSegments = await prisma.userSegment.findMany({
     where: {
       environmentId,
@@ -77,22 +81,38 @@ export const getAllUserSegments = async (environmentId: string) => {
 
   return userSegments.map((userSegment) => ({
     ...userSegment,
-    description: userSegment.description ?? "",
     surveys: userSegment.surveys.map((survey) => survey.id),
   }));
 };
 
-export const getUserSegment = async (userSegmentId: string) => {
+export const getUserSegment = async (userSegmentId: string): Promise<TUserSegment> => {
   const userSegment = await prisma.userSegment.findUnique({
     where: {
       id: userSegmentId,
     },
+    include: {
+      surveys: {
+        select: {
+          id: true,
+        },
+      },
+    },
   });
 
-  return userSegment;
+  if (!userSegment) {
+    throw new ResourceNotFoundError("userSegment", userSegmentId);
+  }
+
+  return {
+    ...userSegment,
+    surveys: userSegment.surveys.map((survey) => survey.id),
+  };
 };
 
-export const updateUserSegment = async (segmentId: string, data: TUserSegmentUpdateInput) => {
+export const updateUserSegment = async (
+  segmentId: string,
+  data: TUserSegmentUpdateInput
+): Promise<TUserSegment> => {
   const userSegment = await prisma.userSegment.update({
     where: {
       id: segmentId,
@@ -107,10 +127,18 @@ export const updateUserSegment = async (segmentId: string, data: TUserSegmentUpd
     },
   });
 
-  return userSegment;
+  return {
+    ...userSegment,
+    surveys: userSegment.surveys.map((survey) => survey.id),
+  };
 };
 
-export const getUserSegmentActiveInactiveSurveys = async (userSegmentId: string) => {
+export const getUserSegmentActiveInactiveSurveys = async (
+  userSegmentId: string
+): Promise<{
+  activeSurveys: string[];
+  inactiveSurveys: string[];
+}> => {
   const activeSurveysData = await prisma.userSegment.findUnique({
     where: {
       id: userSegmentId,
@@ -149,8 +177,8 @@ export const getUserSegmentActiveInactiveSurveys = async (userSegmentId: string)
   const inactiveSurveys = inactiveSurveysData?.surveys.map((survey) => survey.name);
 
   return {
-    activeSurveys,
-    inactiveSurveys,
+    activeSurveys: activeSurveys ?? [],
+    inactiveSurveys: inactiveSurveys ?? [],
   };
 };
 
@@ -171,8 +199,6 @@ export const deleteUserSegment = async (segmentId: string) => {
       id: segmentId,
     },
   });
-
-  return true;
 };
 
 export const loadNewUserSegment = async (surveyId: string, newSegmentId: string) => {
@@ -220,7 +246,7 @@ export const loadNewUserSegment = async (surveyId: string, newSegmentId: string)
   return updatedSurvey;
 };
 
-export const cloneUserSegment = async (segmentId: string, surveyId: string) => {
+export const cloneUserSegment = async (segmentId: string, surveyId: string): Promise<TUserSegment> => {
   const userSegment = await prisma.userSegment.findUnique({
     where: {
       id: segmentId,
@@ -261,7 +287,6 @@ export const cloneUserSegment = async (segmentId: string, surveyId: string) => {
 
     return {
       ...clonedUserSegment,
-      description: clonedUserSegment.description ?? "",
       surveys: clonedUserSegment.surveys.map((survey) => survey.id),
     };
   } catch (err) {

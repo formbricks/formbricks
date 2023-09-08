@@ -2,12 +2,12 @@ export const revalidate = REVALIDATION_INTERVAL;
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getAllUserSegments } from "@formbricks/lib/services/userSegment";
+import { getUserSegments } from "@formbricks/lib/services/userSegment";
 import CreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/CreateSegmentModal";
 import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTable";
 
 export default async function SegmentsPage({ params }) {
-  const fetchedSegments = await getAllUserSegments(params.environmentId);
+  const fetchedSegments = await getUserSegments(params.environmentId);
 
   if (!fetchedSegments) {
     throw new Error("Failed to fetch segments");

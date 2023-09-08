@@ -258,7 +258,7 @@ export const ZUserSegmentFilterGroup: z.ZodType<TBaseFilterGroup> = z
 export const ZUserSegment = z.object({
   id: z.string(),
   title: z.string(),
-  description: z.string().optional(),
+  description: z.string().nullable(),
   isPrivate: z.boolean().default(true),
   filters: ZUserSegmentFilterGroup,
   environmentId: z.string(),
