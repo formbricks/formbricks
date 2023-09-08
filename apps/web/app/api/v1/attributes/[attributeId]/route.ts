@@ -99,7 +99,6 @@ export async function PUT(
 }
 
 function handleErrorResponse(error: any): NextResponse {
-  console.log(error);
   switch (error.message) {
     case "NotAuthenticated":
       return responses.notAuthenticatedResponse();

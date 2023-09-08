@@ -23,7 +23,6 @@ export async function GET(request: Request) {
       return responses.successResponse(profile);
     }
   } catch (error) {
-    console.log(error);
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);
     }

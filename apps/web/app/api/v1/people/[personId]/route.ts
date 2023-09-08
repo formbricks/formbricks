@@ -61,7 +61,6 @@ export async function DELETE(request: Request, { params }: { params: { personId:
 }
 
 function handleErrorResponse(error: any): NextResponse {
-  console.log(error);
   switch (error.message) {
     case "NotAuthenticated":
       return responses.notAuthenticatedResponse();

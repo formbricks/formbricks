@@ -163,6 +163,5 @@ export async function getUserIdFromEnvironment(environmentId: string) {
     },
   });
 
-  // Assuming each team has only one owner or you're interested in the first user in the team
   return environment?.product.team.memberships[0].user.id;
 }
