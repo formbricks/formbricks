@@ -12,7 +12,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-const CreateSegmentModal = ({ environmentId }: { environmentId: string }) => {
+type TCreateSegmentModalProps = {
+  environmentId: string;
+};
+const CreateSegmentModal = ({ environmentId }: TCreateSegmentModalProps) => {
   const router = useRouter();
   const initialSegmentState = {
     title: "",
