@@ -12,10 +12,11 @@ export default function SignUpPage({
   const inviteToken = searchParams["inviteToken"] ?? null;
   const privacyUrl = env.PRIVACY_URL;
   const termsUrl = env.TERMS_URL;
-  const passwordResetDisabled = env.PASSWORD_RESET_DISABLED;
-  const emailVerificationDisabled = env.EMAIL_VERIFICATION_DISABLED;
-  const googleOAuthEnabled = env.GOOGLE_AUTH_ENABLED;
-  const githubOAuthEnabled = env.GITHUB_AUTH_ENABLED;
+  const passwordResetDisabled = env.PASSWORD_RESET_DISABLED !== "1";
+  const emailVerificationDisabled = env.EMAIL_VERIFICATION_DISABLED === "1";
+  const googleOAuthEnabled = env.GOOGLE_AUTH_ENABLED === "1";
+  const githubOAuthEnabled = env.GITHUB_AUTH_ENABLED === "1";
+
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">

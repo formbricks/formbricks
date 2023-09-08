@@ -15,10 +15,10 @@ export const SigninForm = ({
   googleOAuthEnabled,
   githubOAuthEnabled,
 }: {
-  publicSignUpDisabled: string | undefined;
-  passwordResetDisabled: string | undefined;
-  googleOAuthEnabled: string | undefined;
-  githubOAuthEnabled: string | undefined;
+  publicSignUpDisabled: boolean;
+  passwordResetDisabled: boolean;
+  googleOAuthEnabled: boolean;
+  githubOAuthEnabled: boolean;
 }) => {
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
@@ -88,7 +88,7 @@ export const SigninForm = ({
                     className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                   />
                 </div>
-                {passwordResetDisabled !== "1" && isPasswordFocused && (
+                {passwordResetDisabled && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -118,18 +118,18 @@ export const SigninForm = ({
             </Button>
           </form>
 
-          {googleOAuthEnabled === "1" && (
+          {googleOAuthEnabled && (
             <>
               <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
-          {githubOAuthEnabled === "1" && (
+          {githubOAuthEnabled && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>
-        {publicSignUpDisabled !== "1" && (
+        {publicSignUpDisabled && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />

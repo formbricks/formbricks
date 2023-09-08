@@ -21,10 +21,10 @@ export const SignupForm = ({
 }: {
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
-  passwordResetDisabled: string | undefined;
-  emailVerificationDisabled: string | undefined;
-  googleOAuthEnabled: string | undefined;
-  githubOAuthEnabled: string | undefined;
+  passwordResetDisabled: boolean;
+  emailVerificationDisabled: boolean;
+  googleOAuthEnabled: boolean;
+  githubOAuthEnabled: boolean;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -51,10 +51,9 @@ export const SignupForm = ({
         e.target.elements.password.value,
         inviteToken
       );
-      const url =
-        emailVerificationDisabled === "1"
-          ? `/auth/signup-without-verification-success`
-          : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
+      const url = emailVerificationDisabled
+        ? `/auth/signup-without-verification-success`
+        : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
 
       router.push(url);
     } catch (e: any) {
@@ -150,7 +149,7 @@ export const SignupForm = ({
                     className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
-                {passwordResetDisabled !== "1" && isPasswordFocused && (
+                {passwordResetDisabled && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -182,12 +181,12 @@ export const SignupForm = ({
             </Button>
           </form>
 
-          {googleOAuthEnabled === "1" && (
+          {googleOAuthEnabled && (
             <>
               <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
-          {githubOAuthEnabled === "1" && (
+          {githubOAuthEnabled && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
             </>
