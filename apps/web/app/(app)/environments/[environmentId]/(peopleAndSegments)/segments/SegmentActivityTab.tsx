@@ -2,24 +2,19 @@
 
 import { Label } from "@formbricks/ui";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { useUserSegment } from "@/lib/userSegments/userSegments";
 
 interface SegmentActivityTabProps {
   environmentId: string;
-  segment: TUserSegment;
+  currentSegment: TUserSegment & {
+    activeSurveys: string[];
+    inactiveSurveys: string[];
+  };
 }
 
-export default function SegmentActivityTab({ environmentId, segment }: SegmentActivityTabProps) {
-  const { userSegment, isLoadingUserSegment } = useUserSegment(environmentId, segment.id);
-
-  if (isLoadingUserSegment) {
-    return <LoadingSpinner />;
-  }
-
-  const activeSurveys = userSegment?.activeSurveys;
-  const inactiveSurveys = userSegment?.inactiveSurveys;
+export default function SegmentActivityTab({ currentSegment }: SegmentActivityTabProps) {
+  const activeSurveys = currentSegment?.activeSurveys;
+  const inactiveSurveys = currentSegment?.inactiveSurveys;
 
   return (
     <div className="grid grid-cols-3 pb-2">
@@ -45,13 +40,13 @@ export default function SegmentActivityTab({ environmentId, segment }: SegmentAc
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
           <p className=" text-xs text-slate-700">
-            {convertDateTimeStringShort(segment.createdAt?.toString())}
+            {convertDateTimeStringShort(currentSegment.createdAt?.toString())}
           </p>
         </div>{" "}
         <div>
           <Label className="text-xs font-normal text-slate-500">Last updated</Label>
           <p className=" text-xs text-slate-700">
-            {convertDateTimeStringShort(segment.updatedAt?.toString())}
+            {convertDateTimeStringShort(currentSegment.updatedAt?.toString())}
           </p>
         </div>
       </div>

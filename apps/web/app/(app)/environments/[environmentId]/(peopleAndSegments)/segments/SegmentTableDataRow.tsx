@@ -7,11 +7,14 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
 type TSegmentTableDataRowProps = {
-  segment: TUserSegment;
+  currentSegment: TUserSegment & {
+    activeSurveys: string[];
+    inactiveSurveys: string[];
+  };
 };
 
-const SegmentTableDataRow = ({ segment }: TSegmentTableDataRowProps) => {
-  const { createdAt, environmentId, id, surveys, title, updatedAt, description } = segment;
+const SegmentTableDataRow = ({ currentSegment }: TSegmentTableDataRowProps) => {
+  const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
 
   return (
@@ -20,7 +23,7 @@ const SegmentTableDataRow = ({ segment }: TSegmentTableDataRowProps) => {
         environmentId={environmentId}
         open={isEditSegmentModalOpen}
         setOpen={setIsEditSegmentModalOpen}
-        segment={segment}
+        currentSegment={currentSegment}
       />
       <div
         key={id}

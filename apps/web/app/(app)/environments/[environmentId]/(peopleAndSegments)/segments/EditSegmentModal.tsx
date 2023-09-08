@@ -10,19 +10,27 @@ interface EditSegmentModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  segment: TUserSegment;
+  currentSegment: TUserSegment & {
+    activeSurveys: string[];
+    inactiveSurveys: string[];
+  };
 }
 
-export default function EditSegmentModal({ environmentId, open, setOpen, segment }: EditSegmentModalProps) {
+export default function EditSegmentModal({
+  environmentId,
+  open,
+  setOpen,
+  currentSegment,
+}: EditSegmentModalProps) {
   const tabs = [
     {
       title: "Activity",
-      children: <SegmentActivityTab environmentId={environmentId} segment={segment} />,
+      children: <SegmentActivityTab environmentId={environmentId} currentSegment={currentSegment} />,
     },
     {
       title: "Settings",
       children: (
-        <SegmentSettingsTab setOpen={setOpen} environmentId={environmentId} initialSegment={segment} />
+        <SegmentSettingsTab setOpen={setOpen} environmentId={environmentId} initialSegment={currentSegment} />
       ),
     },
   ];
@@ -34,8 +42,8 @@ export default function EditSegmentModal({ environmentId, open, setOpen, segment
         setOpen={setOpen}
         tabs={tabs}
         icon={<UserGroupIcon />}
-        label={segment.title}
-        description={segment.description || ""}
+        label={currentSegment.title}
+        description={currentSegment.description || ""}
         closeOnOutsideClick={false}
       />
     </>

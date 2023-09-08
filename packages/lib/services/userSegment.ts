@@ -110,6 +110,50 @@ export const updateUserSegment = async (segmentId: string, data: TUserSegmentUpd
   return userSegment;
 };
 
+export const getUserSegmentActiveInactiveSurveys = async (userSegmentId: string) => {
+  const activeSurveysData = await prisma.userSegment.findUnique({
+    where: {
+      id: userSegmentId,
+      surveys: {
+        every: {
+          status: "inProgress",
+        },
+      },
+    },
+    select: {
+      surveys: {
+        select: { name: true },
+      },
+    },
+  });
+
+  const inactiveSurveysData = await prisma.userSegment.findUnique({
+    where: {
+      id: userSegmentId,
+      surveys: {
+        every: {
+          status: {
+            in: ["paused", "completed"],
+          },
+        },
+      },
+    },
+    select: {
+      surveys: {
+        select: { name: true },
+      },
+    },
+  });
+
+  const activeSurveys = activeSurveysData?.surveys.map((survey) => survey.name);
+  const inactiveSurveys = inactiveSurveysData?.surveys.map((survey) => survey.name);
+
+  return {
+    activeSurveys,
+    inactiveSurveys,
+  };
+};
+
 export const deleteUserSegment = async (segmentId: string) => {
   // unset the user segment from all the surveys
 

@@ -1,4 +1,4 @@
-import SegmentTableDataRow from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTableDataRow";
+import SegmentTableDataRowContainer from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTableDataRowContainer";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import React from "react";
 
@@ -15,7 +15,7 @@ const SegmentTable = ({ segments }: TSegmentTableProps) => {
         <div className="col-span-1 hidden text-center sm:block">Created</div>
       </div>
       {segments.map((segment) => (
-        <SegmentTableDataRow key={segment.id} segment={segment} />
+        <SegmentTableDataRowContainer currentSegment={segment} />
       ))}
     </div>
   );
