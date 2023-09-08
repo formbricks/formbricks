@@ -10,7 +10,7 @@ import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
-export const SigninForm = () => {
+export const SigninForm = ({ publicSignUpDisabled }: { publicSignUpDisabled: string | undefined }) => {
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -120,7 +120,7 @@ export const SigninForm = () => {
             </>
           )}
         </div>
-        {env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
+        {publicSignUpDisabled !== "1" && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />

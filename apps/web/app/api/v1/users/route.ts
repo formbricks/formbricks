@@ -9,7 +9,7 @@ import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
-  if (inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.NEXT_PUBLIC_SIGNUP_DISABLED === "1") {
+  if (inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.SIGNUP_DISABLED === "1") {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
   user = { ...user, ...{ email: user.email.toLowerCase() } };

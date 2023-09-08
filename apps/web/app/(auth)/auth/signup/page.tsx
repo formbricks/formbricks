@@ -20,9 +20,7 @@ export default function SignUpPage({
       </div>
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
-          {(
-            inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
-          ) ? (
+          {(inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.SIGNUP_DISABLED === "1") ? (
             <>
               <h1 className="leading-2 mb-4 text-center font-bold">Sign up disabled</h1>
               <p className="text-center">
