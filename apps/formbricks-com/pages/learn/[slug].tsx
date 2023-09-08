@@ -52,6 +52,9 @@ interface ArticleResponse {
 }
 
 export async function getStaticPaths() {
+  if (!process.env.STRAPI_API_KEY) {
+    return { paths: [], fallback: true };
+  }
   const response = await fetch(
     "https://strapi.formbricks.com/api/articles?populate[meta][populate]=*&filters[category][name][$eq]=learn",
     {
@@ -74,6 +77,9 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
+  if (!process.env.STRAPI_API_KEY) {
+    return { props: { article: null } };
+  }
   const res = await fetch(
     `https://strapi.formbricks.com/api/articles?populate[meta][populate]=*&populate[faq][populate]=*&filters[slug][$eq]=${params.slug}`,
     {

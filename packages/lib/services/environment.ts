@@ -4,13 +4,12 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
 import { ZEnvironment } from "@formbricks/types/v1/environment";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TEnvironment, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 import { cache } from "react";
-import { Session } from "next-auth";
 import { EnvironmentType } from "@prisma/client";
 import { populateEnvironment } from "@/lib/populate";
 
-export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
+export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment> => {
   let environmentPrisma;
   try {
     environmentPrisma = await prisma.environment.findUnique({
@@ -134,7 +133,6 @@ export const getEnvironmentBySession = cache(async (user: any): Promise<any> => 
     });
 
     const environment = membership.team.products[0].environments[0];
-    console.log(environment);
     return environment;
     // return res.status(404).json({ message: "No memberships found" });
   }
@@ -162,6 +160,26 @@ export const getEnvironmentBySession = cache(async (user: any): Promise<any> => 
   if (firstEnvironment === null) {
     return null;
   }
-  console.log(firstEnvironment);
   return firstEnvironment;
 });
+export const updateEnvironment = async (
+  environmentId: string,
+  data: Partial<TEnvironmentUpdateInput>
+): Promise<TEnvironment> => {
+  const newData = { ...data, updatedAt: new Date() };
+  let updatedEnvironment;
+  try {
+    updatedEnvironment = await prisma.environment.update({
+      where: {
+        id: environmentId,
+      },
+      data: newData,
+    });
+    return updatedEnvironment;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+};

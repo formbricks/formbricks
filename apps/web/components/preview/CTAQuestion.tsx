@@ -32,7 +32,9 @@ export default function CTAQuestion({
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-end">
-        {goToPreviousQuestion && <BackButton onClick={() => goToPreviousQuestion()} />}
+        {goToPreviousQuestion && (
+          <BackButton backButtonLabel={question.backButtonLabel} onClick={() => goToPreviousQuestion()} />
+        )}
         <div></div>
         {(!question.required || storedResponseValue) && (
           <button
