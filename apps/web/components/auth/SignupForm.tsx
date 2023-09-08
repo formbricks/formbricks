@@ -15,10 +15,12 @@ export const SignupForm = ({
   privacyUrl,
   termsUrl,
   passwordResetDisabled,
+  emailVerificationDisabled,
 }: {
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
   passwordResetDisabled: string | undefined;
+  emailVerificationDisabled: string | undefined;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -46,7 +48,7 @@ export const SignupForm = ({
         inviteToken
       );
       const url =
-        env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
+        emailVerificationDisabled === "1"
           ? `/auth/signup-without-verification-success`
           : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
 

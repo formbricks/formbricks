@@ -189,7 +189,7 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
-        if (!user.emailVerified && env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+        if (!user.emailVerified && env.EMAIL_VERIFICATION_DISABLED !== "1") {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
         }
         return true;

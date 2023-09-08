@@ -13,6 +13,7 @@ export default function SignUpPage({
   const privacyUrl = env.PRIVACY_URL;
   const termsUrl = env.TERMS_URL;
   const passwordResetDisabled = env.PASSWORD_RESET_DISABLED;
+  const emailVerificationDisabled = env.EMAIL_VERIFICATION_DISABLED;
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -39,6 +40,7 @@ export default function SignUpPage({
               termsUrl={termsUrl}
               privacyUrl={privacyUrl}
               passwordResetDisabled={passwordResetDisabled}
+              emailVerificationDisabled={emailVerificationDisabled}
             />
           )}
         </FormWrapper>

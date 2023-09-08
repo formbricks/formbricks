@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       await prisma.invite.delete({ where: { id: inviteId } });
     }
 
-    if (env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+    if (env.EMAIL_VERIFICATION_DISABLED !== "1") {
       await sendVerificationEmail(userData);
     }
     return NextResponse.json(userData);
