@@ -10,13 +10,13 @@ import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
 export const SigninForm = ({
-  publicSignUpDisabled,
-  passwordResetDisabled,
+  publicSignUpEnabled,
+  passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
 }: {
-  publicSignUpDisabled: boolean;
-  passwordResetDisabled: boolean;
+  publicSignUpEnabled: boolean;
+  passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
 }) => {
@@ -88,7 +88,7 @@ export const SigninForm = ({
                     className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                   />
                 </div>
-                {passwordResetDisabled && isPasswordFocused && (
+                {passwordResetEnabled && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -129,7 +129,7 @@ export const SigninForm = ({
             </>
           )}
         </div>
-        {publicSignUpDisabled && (
+        {publicSignUpEnabled && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />

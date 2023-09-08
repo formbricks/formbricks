@@ -12,7 +12,7 @@ export default function SignUpPage({
   const inviteToken = searchParams["inviteToken"] ?? null;
   const privacyUrl = env.PRIVACY_URL;
   const termsUrl = env.TERMS_URL;
-  const passwordResetDisabled = env.PASSWORD_RESET_DISABLED !== "1";
+  const passwordResetEnabled = env.PASSWORD_RESET_DISABLED !== "1";
   const emailVerificationDisabled = env.EMAIL_VERIFICATION_DISABLED === "1";
   const googleOAuthEnabled = env.GOOGLE_AUTH_ENABLED === "1";
   const githubOAuthEnabled = env.GITHUB_AUTH_ENABLED === "1";
@@ -42,7 +42,7 @@ export default function SignUpPage({
             <SignupForm
               termsUrl={termsUrl}
               privacyUrl={privacyUrl}
-              passwordResetDisabled={passwordResetDisabled}
+              passwordResetEnabled={passwordResetEnabled}
               emailVerificationDisabled={emailVerificationDisabled}
               googleOAuthEnabled={googleOAuthEnabled}
               githubOAuthEnabled={githubOAuthEnabled}

@@ -14,14 +14,14 @@ import { GithubButton } from "./GithubButton";
 export const SignupForm = ({
   privacyUrl,
   termsUrl,
-  passwordResetDisabled,
+  passwordResetEnabled,
   emailVerificationDisabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
 }: {
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
-  passwordResetDisabled: boolean;
+  passwordResetEnabled: boolean;
   emailVerificationDisabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
@@ -149,7 +149,7 @@ export const SignupForm = ({
                     className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
-                {passwordResetDisabled && isPasswordFocused && (
+                {passwordResetEnabled && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
