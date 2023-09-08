@@ -25,19 +25,3 @@ export const deleteSubmission = async (environmentId: string, surveyId: string, 
 
   return response.json();
 };
-export const getResponse = async (responseId: string) => {
-  try {
-    const response = await fetch(`/api/v1/people`, {
-      method: "GET",
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status: ${response.status}`);
-    }
-
-    console.log(response)
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    throw error; // Rethrow the error to the caller
-  }
-};

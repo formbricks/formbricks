@@ -4,17 +4,9 @@ import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/services/response";
 import { TResponse, ZResponseUpdateInput } from "@formbricks/types/v1/responses";
-import { getAuthentication } from "@/app/api/v1/auth";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { getSurvey } from "@formbricks/lib/services/survey";
-
-async function authenticateRequest(request: Request): Promise<any> {
-  const authentication = await getAuthentication(request);
-  if (!authentication) {
-    throw new Error("NotAuthenticated");
-  }
-  return authentication;
-}
+import { authenticateRequest } from "@/app/api/v1/auth";
 
 async function fetchAndValidateResponse(authentication: any, responseId: string): Promise<TResponse> {
   const response = await getResponse(responseId);

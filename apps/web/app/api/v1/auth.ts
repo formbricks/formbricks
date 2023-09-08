@@ -1,29 +1,11 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
 import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
-import { Session } from "next-auth";
-import { prisma } from "@formbricks/database";
-import { EnvironmentType } from "@prisma/client";
-import { populateEnvironment } from "@/lib/populate";
 import { getEnvironmentBySession } from "@formbricks/lib/services/environment";
-import { NextResponse } from "next/server";
-
-type TAuthenticationApiKey = {
-  type: "apiKey";
-  environmentId: string;
-};
-
-type TAuthenticationSession = {
-  type: "session";
-  session: Session;
-  environmentId: string | undefined;
-};
-
-type TAuthentication = TAuthenticationApiKey | TAuthenticationSession;
+import { TAuthentication, TAuthenticationApiKey, TAuthenticationSession } from "@formbricks/types/v1/auth";
 
 export async function getAuthentication(request: Request): Promise<TAuthentication | null> {
   const apiKey = request.headers.get("x-api-key");
-  console.log(apiKey);
   const session = await getServerSession(authOptions);
 
   if (apiKey) {
@@ -37,14 +19,19 @@ export async function getAuthentication(request: Request): Promise<TAuthenticati
     }
   } else if (session) {
     const environmentData = await getEnvironmentBySession(session.user);
-    console.log(environmentData);
     const authentication: TAuthenticationSession = {
       type: "session",
       session: session,
       environmentId: environmentData?.id,
     };
-    console.log(authentication);
     return authentication;
   }
   return null;
+}
+export async function authenticateRequest(request: Request): Promise<TAuthentication> {
+  const authentication = await getAuthentication(request);
+  if (!authentication) {
+    throw new Error("NotAuthenticated");
+  }
+  return authentication;
 }

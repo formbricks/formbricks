@@ -1,46 +1,47 @@
 import { responses } from "@/lib/api/response";
-import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
-import { getEnvironmentResponses, getSurveyResponses } from "@formbricks/lib/services/response";
-import { headers } from "next/headers";
+import { createResponse, getEnvironmentResponses } from "@formbricks/lib/services/response";
 import { DatabaseError } from "@formbricks/errors";
-import { getSurvey } from "@formbricks/lib/services/survey";
+import { authenticateRequest } from "@/app/api/v1/auth";
+import { NextResponse } from "next/server";
+import { TResponse, ZResponseInput } from "@formbricks/types/v1/responses";
+import { transformErrorToDetails } from "@/lib/api/validator";
 
 export async function GET(request: Request) {
-  const apiKey = headers().get("x-api-key");
-  if (!apiKey) {
-    return responses.notAuthenticatedResponse();
-  }
-  let apiKeyData;
   try {
-    apiKeyData = await getApiKeyFromKey(apiKey);
-    if (!apiKeyData) {
+    const authentication = await authenticateRequest(request);
+    if (!authentication) {
+      responses.notAuthenticatedResponse();
+    }
+    const responseArray = await getEnvironmentResponses(authentication.environmentId!);
+    return responses.successResponse(responseArray);
+  } catch (error) {
+    if (error instanceof DatabaseError) {
+      return responses.badRequestResponse(error.message);
+    }
+    throw error;
+  }
+}
+
+export async function POST(request: Request): Promise<NextResponse> {
+  try {
+    const authentication = await authenticateRequest(request);
+    if (!authentication) {
       return responses.notAuthenticatedResponse();
     }
-  } catch (error) {
-    return responses.notAuthenticatedResponse();
-  }
 
-  // get surveyId from searchParams
-  const { searchParams } = new URL(request.url);
-  const surveyId = searchParams.get("surveyId");
+    const responseInput = await request.json();
+    const inputValidation = ZResponseInput.safeParse(responseInput);
 
-  // get responses from database
-  try {
-    if (!surveyId) {
-      const environmentResponses = await getEnvironmentResponses(apiKeyData.environmentId);
-      return responses.successResponse(environmentResponses);
+    if (!inputValidation.success) {
+      return responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(inputValidation.error),
+        true
+      );
     }
-    // check if survey is part of environment
-    const survey = await getSurvey(surveyId);
-    if (!survey) {
-      return responses.notFoundResponse(surveyId, "survey");
-    }
-    if (survey.environmentId !== apiKeyData.environmentId) {
-      return responses.notFoundResponse(surveyId, "survey");
-    }
-    // get responses for survey
-    const surveyResponses = await getSurveyResponses(surveyId);
-    return responses.successResponse(surveyResponses);
+
+    const response: TResponse = await createResponse(inputValidation.data);
+    return responses.successResponse(response);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

@@ -17,7 +17,7 @@ export const SigninForm = () => {
   const handleSubmit = async (e) => {
     setLoggingIn(true);
     e.preventDefault();
-    console.log(searchParams?.get("callbackUrl") || "/")
+    console.log(searchParams?.get("callbackUrl") || "/");
     await signIn("credentials", {
       callbackUrl: searchParams?.get("callbackUrl") || "/",
       email: e.target.elements.email.value,

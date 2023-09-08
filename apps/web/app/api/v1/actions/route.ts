@@ -1,6 +1,6 @@
 import { responses } from "@/lib/api/response";
 import { DatabaseError } from "@formbricks/errors";
-import { getAuthentication } from "@/app/api/v1/auth";
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { NextResponse } from "next/server";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { createActionClass, getActionClasses } from "@formbricks/lib/services/actionClass";
@@ -8,8 +8,7 @@ import { transformErrorToDetails } from "@/lib/api/validator";
 
 export async function GET(request: Request) {
   try {
-    const authentication = await getAuthentication(request);
-
+    const authentication = await authenticateRequest(request);
     if (!authentication) {
       return responses.notAuthenticatedResponse();
     }
@@ -25,8 +24,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const authentication = await getAuthentication(request);
-
+    const authentication = await authenticateRequest(request);
     if (!authentication) {
       return responses.notAuthenticatedResponse();
     }

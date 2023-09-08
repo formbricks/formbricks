@@ -112,4 +112,3 @@ export const deleteApiKey = async (id: string): Promise<void> => {
     throw error;
   }
 };
-

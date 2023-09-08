@@ -66,7 +66,6 @@ export const ZResponseInput = z.object({
   surveyId: z.string().cuid2(),
   personId: z.string().cuid2().nullable(),
   finished: z.boolean(),
-  enviironmentId: z.string().cuid2(),
   data: ZResponseData,
   meta: z
     .object({

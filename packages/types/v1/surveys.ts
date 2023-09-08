@@ -222,11 +222,12 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
 export const ZSurveyAttributeFilter = z.object({
-  id: z.string().cuid2(),
-  attributeClassId: z.string(),
+  attributeClassId: z.string().cuid2(),
   condition: z.enum(["equals", "notEquals"]),
   value: z.string(),
 });
+
+export type TSurveyAttributeFilter = z.infer<typeof ZSurveyAttributeFilter>;
 
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
@@ -270,10 +271,8 @@ export const ZSurveyInput = z.object({
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
-
 export type TSurvey = z.infer<typeof ZSurvey>;
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
-
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({

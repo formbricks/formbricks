@@ -17,13 +17,13 @@ const responseSelection = {
   finished: true,
   data: true,
   meta: true,
-  environmentId: true,
   personAttributes: true,
   person: {
     select: {
       id: true,
       createdAt: true,
       updatedAt: true,
+      environmentId: true,
       attributes: {
         select: {
           value: true,

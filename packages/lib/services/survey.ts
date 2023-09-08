@@ -1,6 +1,13 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
-import { TSurvey, TSurveyInput, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyInput,
+  TSurveyWithAnalytics,
+  ZSurvey,
+  ZSurveyWithAnalytics,
+  TSurveyAttributeFilter,
+} from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { Prisma as prismaClient } from "@prisma/client/";
@@ -284,7 +291,7 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(surveyId:string, updatedSurvey: TSurveyInput): Promise<TSurvey> {
+export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyInput): Promise<TSurvey> {
   let data: any = {};
   let survey: Partial<any> = { ...updatedSurvey };
 
@@ -320,7 +327,7 @@ export async function updateSurvey(surveyId:string, updatedSurvey: TSurveyInput)
     delete survey.recontactDays;
     // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
     if (!survey.surveyClosedMessage) {
-      survey.surveyClosedMessage = prismaClient.JsonNull;;
+      survey.surveyClosedMessage = prismaClient.JsonNull;
     }
     if (!survey.verifyEmail) {
       survey.verifyEmail = prismaClient.JsonNull;
@@ -451,7 +458,7 @@ export async function updateSurvey(surveyId:string, updatedSurvey: TSurveyInput)
       data,
     });
 
-    const modifiedSurvey: TSurvey = {
+    const modifiedSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers ?? [], // Include triggers from updatedSurvey
       attributeFilters: updatedSurvey.attributeFilters ?? [], // Include attributeFilters from updatedSurvey

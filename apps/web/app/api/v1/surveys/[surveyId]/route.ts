@@ -1,100 +1,106 @@
 import { responses } from "@/lib/api/response";
-import { DatabaseError,InvalidInputError,ResourceNotFoundError } from "@formbricks/errors";
-import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
-import { getSurvey, updateSurvey } from "@formbricks/lib/services/survey";
-import { headers } from "next/headers";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
 import { NextResponse } from "next/server";
-import { deleteSurvey } from "@formbricks/lib/services/survey";
-import { ZSurveyInput } from "@formbricks/types/v1/surveys";
+import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/services/survey";
+import { TSurvey, ZSurveyInput } from "@formbricks/types/v1/surveys";
 import { transformErrorToDetails } from "@/lib/api/validator";
+import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { authenticateRequest } from "@/app/api/v1/auth";
 
-
-export async function GET(_: Request, { params }: { params: { surveyId: string } }
-): Promise<NextResponse> {
-    const apiKey = headers().get("x-api-key");
-    if (!apiKey) {
-        return responses.notAuthenticatedResponse();
-    }
-    const apiKeyData = await getApiKeyFromKey(apiKey);
-    if (!apiKeyData) {
-        return responses.notAuthenticatedResponse();
-    }
-    try {
-        const survey = await getSurvey(params.surveyId);
-        if (!survey) {
-            return responses.notFoundResponse("Survey", params.surveyId);
-        }
-        if (survey.environmentId !== apiKeyData.environmentId) {
-            return responses.unauthorizedResponse();
-        }
-        return responses.successResponse(survey);
-    } catch (error) {
-        return handleErrorResponse(error);
-    }
+async function fetchAndValidateSurvey(authentication: any, surveyId: string): Promise<TSurvey | null> {
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    return null;
+  }
+  if (!(await canUserAccessSurvey(authentication, survey))) {
+    throw new Error("Unauthorized");
+  }
+  return survey;
 }
 
-export async function DELETE(_: Request, { params }: { params: { surveyId: string } }) {
-    const apiKey = headers().get("x-api-key");
-    if (!apiKey) {
-        return responses.notAuthenticatedResponse();
-    }
-    const apiKeyData = await getApiKeyFromKey(apiKey);
-    if (!apiKeyData) {
-        return responses.notAuthenticatedResponse();
-    }
+const canUserAccessSurvey = async (authentication: any, survey: TSurvey): Promise<boolean> => {
+  if (!authentication) return false;
 
-    // delete webhook from database
-    try {
-        const survey = await deleteSurvey(params.surveyId);
-        return responses.successResponse(survey);
-    } catch (e) {
-        return responses.notFoundResponse("survey", params.surveyId);
+  if (authentication.type === "session") {
+    return await hasUserEnvironmentAccess(authentication.session.user, survey.environmentId);
+  } else if (authentication.type === "apiKey") {
+    return survey.environmentId === authentication.environmentId;
+  } else {
+    throw Error("Unknown authentication type");
+  }
+};
+
+export async function GET(
+  request: Request,
+  { params }: { params: { surveyId: string } }
+): Promise<NextResponse> {
+  try {
+    const authentication = await authenticateRequest(request);
+    const survey = await fetchAndValidateSurvey(authentication, params.surveyId);
+    if (survey) {
+      return responses.successResponse(survey);
     }
+    return responses.notFoundResponse("Survey", params.surveyId);
+  } catch (error) {
+    return handleErrorResponse(error);
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { surveyId: string } }
+): Promise<NextResponse> {
+  try {
+    const authentication = await authenticateRequest(request);
+    const survey = await fetchAndValidateSurvey(authentication, params.surveyId);
+    if (!survey) {
+      return responses.notFoundResponse("Survey", params.surveyId);
+    }
+    const deletedSurvey = await deleteSurvey(params.surveyId);
+    return responses.successResponse(deletedSurvey);
+  } catch (error) {
+    return handleErrorResponse(error);
+  }
 }
 
 export async function PUT(
-    request: Request,
-    { params }: { params: { surveyId: string } }
-  ): Promise<NextResponse> {
-    const { surveyId } = params;
-  
-    if (!surveyId) {
-      return responses.badRequestResponse("surveyId ID is missing", undefined, true);
+  request: Request,
+  { params }: { params: { surveyId: string } }
+): Promise<NextResponse> {
+  try {
+    const authentication = await authenticateRequest(request);
+    const survey = await fetchAndValidateSurvey(authentication, params.surveyId);
+    if (!survey) {
+      return responses.notFoundResponse("Survey", params.surveyId);
     }
-  
     const surveyUpdate = await request.json();
-  
     const inputValidation = ZSurveyInput.safeParse(surveyUpdate);
-  
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
+        transformErrorToDetails(inputValidation.error)
       );
     }
-  
-    // update response
-    let survey;
-    try {
-      survey = await updateSurvey(surveyId,inputValidation.data);
-    } catch (error) {
-      if (error instanceof ResourceNotFoundError) {
-        return responses.notFoundResponse("Survey", surveyId, true);
-      }
-      if (error instanceof InvalidInputError) {
-        return responses.badRequestResponse(error.message);
-      }
-      if (error instanceof DatabaseError) {
-        return responses.internalServerErrorResponse(error.message);
-      }
-    }
-    return responses.successResponse(survey, true);
+    return responses.successResponse(await updateSurvey(params.surveyId, inputValidation.data));
+  } catch (error) {
+    return handleErrorResponse(error);
   }
-  
+}
+
 function handleErrorResponse(error: any): NextResponse {
-    if (error instanceof DatabaseError) {
+  switch (error.message) {
+    case "NotAuthenticated":
+      return responses.notAuthenticatedResponse();
+    case "Unauthorized":
+      return responses.unauthorizedResponse();
+    default:
+      if (
+        error instanceof DatabaseError ||
+        error instanceof InvalidInputError ||
+        error instanceof ResourceNotFoundError
+      ) {
         return responses.badRequestResponse(error.message);
-    }
-    return responses.notAuthenticatedResponse();
+      }
+      return responses.internalServerErrorResponse("Some error occurred");
+  }
 }

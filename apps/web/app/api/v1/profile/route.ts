@@ -1,6 +1,6 @@
 import { responses } from "@/lib/api/response";
 import { DatabaseError } from "@formbricks/errors";
-import { getAuthentication } from "@/app/api/v1/auth";
+import { authenticateRequest, getAuthentication } from "@/app/api/v1/auth";
 import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { getProfile, getUserIdFromEnvironment, updateProfile } from "@formbricks/lib/services/profile";
@@ -8,8 +8,7 @@ import { TProfile, ZProfileUpdateInput } from "@formbricks/types/v1/profile";
 
 export async function GET(request: Request) {
   try {
-    const authentication = await getAuthentication(request);
-
+    const authentication = await authenticateRequest(request);
     if (!authentication) {
       return responses.notAuthenticatedResponse();
     }
@@ -34,8 +33,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request): Promise<NextResponse> {
   try {
-    const authentication = await getAuthentication(request);
-
+    const authentication = await authenticateRequest(request);
     if (!authentication) {
       return responses.notAuthenticatedResponse();
     }

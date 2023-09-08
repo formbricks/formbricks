@@ -1,7 +1,7 @@
 "use client";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import { deleteSubmission,getResponse } from "@/lib/responses/responses";
+import { deleteSubmission } from "@/lib/responses/responses";
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
@@ -12,7 +12,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ReactNode, useState,useEffect } from "react";
+import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
 import ResponseNote from "./ResponseNote";
@@ -66,11 +66,6 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    getResponse("hello")
-  }, [])
-  
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
