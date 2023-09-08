@@ -24,18 +24,9 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CRON_SECRET: z.string().optional(),
-  },
-  /*
-   * Environment variables available on the client (and server).
-   *
-   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
-   */
-  client: {
-    NEXT_PUBLIC_WEBAPP_URL: z.string().url().optional(),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
       .string()
       .url()
@@ -51,8 +42,18 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+    GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+    GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+  },
+
+  /*
+   * Environment variables available on the client (and server).
+   *
+   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
+   */
+  client: {
+    NEXT_PUBLIC_WEBAPP_URL: z.string().url().optional(),
+    NEXT_PUBLIC_INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_FORMBRICKS_API_HOST: z
       .string()
       .url()
@@ -98,8 +99,8 @@ export const env = createEnv({
     PRIVACY_URL: process.env.PRIVACY_URL,
     TERMS_URL: process.env.TERMS_URL,
     IMPRINT_URL: process.env.IMPRINT_URL,
-    NEXT_PUBLIC_GITHUB_AUTH_ENABLED: process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED,
-    NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED,
+    GITHUB_AUTH_ENABLED: process.env.GITHUB_AUTH_ENABLED,
+    GOOGLE_AUTH_ENABLED: process.env.GOOGLE_AUTH_ENABLED,
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,

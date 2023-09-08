@@ -16,11 +16,15 @@ export const SignupForm = ({
   termsUrl,
   passwordResetDisabled,
   emailVerificationDisabled,
+  googleOAuthEnabled,
+  githubOAuthEnabled,
 }: {
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
   passwordResetDisabled: string | undefined;
   emailVerificationDisabled: string | undefined;
+  googleOAuthEnabled: string | undefined;
+  githubOAuthEnabled: string | undefined;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -178,12 +182,12 @@ export const SignupForm = ({
             </Button>
           </form>
 
-          {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
+          {googleOAuthEnabled === "1" && (
             <>
               <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
-          {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          {githubOAuthEnabled === "1" && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
             </>

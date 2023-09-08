@@ -1,7 +1,6 @@
 "use client";
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
-import { env } from "@/env.mjs";
 import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
@@ -13,9 +12,13 @@ import { GithubButton } from "./GithubButton";
 export const SigninForm = ({
   publicSignUpDisabled,
   passwordResetDisabled,
+  googleOAuthEnabled,
+  githubOAuthEnabled,
 }: {
   publicSignUpDisabled: string | undefined;
   passwordResetDisabled: string | undefined;
+  googleOAuthEnabled: string | undefined;
+  githubOAuthEnabled: string | undefined;
 }) => {
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
@@ -115,12 +118,12 @@ export const SigninForm = ({
             </Button>
           </form>
 
-          {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
+          {googleOAuthEnabled === "1" && (
             <>
               <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
-          {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          {githubOAuthEnabled === "1" && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
             </>

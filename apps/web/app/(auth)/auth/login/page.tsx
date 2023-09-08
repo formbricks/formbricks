@@ -12,6 +12,8 @@ export const metadata: Metadata = {
 export default function SignInPage() {
   const publicSignUpDisabled = env.SIGNUP_DISABLED;
   const passwordResetDisabled = env.PASSWORD_RESET_DISABLED;
+  const googleOAuthEnabled = env.GOOGLE_AUTH_ENABLED;
+  const githubOAuthEnabled = env.GITHUB_AUTH_ENABLED;
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -22,6 +24,8 @@ export default function SignInPage() {
           <SigninForm
             publicSignUpDisabled={publicSignUpDisabled}
             passwordResetDisabled={passwordResetDisabled}
+            googleOAuthEnabled={googleOAuthEnabled}
+            githubOAuthEnabled={githubOAuthEnabled}
           />
         </FormWrapper>
       </div>
