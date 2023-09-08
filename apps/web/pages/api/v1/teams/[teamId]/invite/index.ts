@@ -21,7 +21,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "Not authorized" });
   }
 
-  if (env.NEXT_PUBLIC_INVITE_DISABLED === "1") {
+  if (env.INVITE_DISABLED === "1") {
     return res.status(403).json({ message: "Invite Disabled" });
   }
 

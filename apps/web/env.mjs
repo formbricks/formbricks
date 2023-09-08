@@ -44,6 +44,7 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+    INVITE_DISABLED: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -53,7 +54,7 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_WEBAPP_URL: z.string().url().optional(),
-    NEXT_PUBLIC_INVITE_DISABLED: z.enum(["1", "0"]).optional(),
+
     NEXT_PUBLIC_FORMBRICKS_API_HOST: z
       .string()
       .url()
@@ -95,7 +96,7 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
-    NEXT_PUBLIC_INVITE_DISABLED: process.env.NEXT_PUBLIC_INVITE_DISABLED,
+    INVITE_DISABLED: process.env.INVITE_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
     TERMS_URL: process.env.TERMS_URL,
     IMPRINT_URL: process.env.IMPRINT_URL,

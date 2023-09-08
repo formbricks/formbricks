@@ -6,7 +6,6 @@ import CustomDialog from "@/components/shared/CustomDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
-import { env } from "@/env.mjs";
 import {
   addMember,
   deleteInvite,
@@ -44,6 +43,7 @@ import AddMemberModal from "./AddMemberModal";
 
 type EditMembershipsProps = {
   environmentId: string;
+  invitesEnabled: boolean;
 };
 
 interface Role {
@@ -169,7 +169,7 @@ function RoleElement({
   return <Badge text={capitalizeFirstLetter(memberRole)} type="gray" size="tiny" />;
 }
 
-export function EditMemberships({ environmentId }: EditMembershipsProps) {
+export function EditMemberships({ environmentId, invitesEnabled }: EditMembershipsProps) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
 
   const [loading, setLoading] = useState(false);
@@ -279,7 +279,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           }}>
           Create New Team
         </Button>
-        {env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
+        {invitesEnabled && isAdminOrOwner && (
           <Button
             variant="darkCTA"
             onClick={() => {
