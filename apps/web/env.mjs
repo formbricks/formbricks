@@ -36,17 +36,17 @@ export const env = createEnv({
     NEXT_PUBLIC_PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_INVITE_DISABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_PRIVACY_URL: z
+    PRIVACY_URL: z
       .string()
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_TERMS_URL: z
+    TERMS_URL: z
       .string()
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_IMPRINT_URL: z
+    IMPRINT_URL: z
       .string()
       .url()
       .optional()
@@ -95,9 +95,9 @@ export const env = createEnv({
     NEXT_PUBLIC_PASSWORD_RESET_DISABLED: process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED,
     NEXT_PUBLIC_SIGNUP_DISABLED: process.env.NEXT_PUBLIC_SIGNUP_DISABLED,
     NEXT_PUBLIC_INVITE_DISABLED: process.env.NEXT_PUBLIC_INVITE_DISABLED,
-    NEXT_PUBLIC_PRIVACY_URL: process.env.NEXT_PUBLIC_PRIVACY_URL,
-    NEXT_PUBLIC_TERMS_URL: process.env.NEXT_PUBLIC_TERMS_URL,
-    NEXT_PUBLIC_IMPRINT_URL: process.env.NEXT_PUBLIC_IMPRINT_URL,
+    PRIVACY_URL: process.env.PRIVACY_URL,
+    TERMS_URL: process.env.TERMS_URL,
+    IMPRINT_URL: process.env.IMPRINT_URL,
     NEXT_PUBLIC_GITHUB_AUTH_ENABLED: process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED,
     NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED,
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,

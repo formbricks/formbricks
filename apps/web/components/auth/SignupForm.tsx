@@ -11,7 +11,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
-export const SignupForm = () => {
+export const SignupForm = ({
+  privacyUrl,
+  termsUrl,
+}: {
+  privacyUrl: string | undefined;
+  termsUrl: string | undefined;
+}) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
@@ -180,26 +186,18 @@ export const SignupForm = () => {
           )}
         </div>
 
-        {(env.NEXT_PUBLIC_TERMS_URL || env.NEXT_PUBLIC_PRIVACY_URL) && (
+        {(termsUrl || privacyUrl) && (
           <div className="mt-3 text-center text-xs text-slate-500">
             By signing up, you agree to our
             <br />
-            {env.NEXT_PUBLIC_TERMS_URL && (
-              <Link
-                className="font-semibold"
-                href={env.NEXT_PUBLIC_TERMS_URL}
-                rel="noreferrer"
-                target="_blank">
+            {termsUrl && (
+              <Link className="font-semibold" href={termsUrl} rel="noreferrer" target="_blank">
                 Terms of Service
               </Link>
             )}
-            {env.NEXT_PUBLIC_TERMS_URL && env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
-            {env.NEXT_PUBLIC_PRIVACY_URL && (
-              <Link
-                className="font-semibold"
-                href={env.NEXT_PUBLIC_PRIVACY_URL}
-                rel="noreferrer"
-                target="_blank">
+            {termsUrl && privacyUrl && <span> and </span>}
+            {privacyUrl && (
+              <Link className="font-semibold" href={privacyUrl} rel="noreferrer" target="_blank">
                 Privacy Policy.
               </Link>
             )}

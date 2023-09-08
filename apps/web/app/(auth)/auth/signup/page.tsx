@@ -1,15 +1,17 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { SignupForm } from "@/components/auth/SignupForm";
 import FormWrapper from "@/components/auth/FormWrapper";
 import Testimonial from "@/components/auth/Testimonial";
 import { env } from "@/env.mjs";
 
-export default function SignUpPage() {
-  const searchParams = useSearchParams();
-  const inviteToken = searchParams?.get("inviteToken");
+export default function SignUpPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const inviteToken = searchParams["inviteToken"] ?? null;
+  const privacyUrl = env.PRIVACY_URL;
+  const termsUrl = env.TERMS_URL;
 
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
@@ -35,7 +37,7 @@ export default function SignUpPage() {
               </Link>
             </>
           ) : (
-            <SignupForm />
+            <SignupForm termsUrl={termsUrl} privacyUrl={privacyUrl} />
           )}
         </FormWrapper>
       </div>
