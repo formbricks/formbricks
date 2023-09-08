@@ -3,9 +3,11 @@ import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
-import { ZProduct } from "@formbricks/types/v1/product";
+import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 
 const selectProduct = {
   id: true,
@@ -23,9 +25,7 @@ const selectProduct = {
 };
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct> => {
-  if (!environmentId) {
-    throw new ValidationError("EnvironmentId is required");
-  }
+  validateInputs([environmentId, ZId]);
   let productPrisma;
   try {
     productPrisma = await prisma.product.findFirst({
@@ -64,6 +64,7 @@ export const updateProduct = async (
   productId: string,
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
+  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({

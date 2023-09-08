@@ -22,6 +22,8 @@ import {
   populateEnvironment,
   updateEnvironmentArgs,
 } from "../utils/createDemoProductHelpers";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 
 export const select = {
   id: true,
@@ -33,6 +35,7 @@ export const select = {
 };
 
 export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
+  validateInputs([environmentId, ZId]);
   try {
     const team = await prisma.team.findFirst({
       where: {
@@ -60,6 +63,7 @@ export const getTeamByEnvironmentId = cache(async (environmentId: string): Promi
 });
 
 export const deleteTeam = async (teamId: string) => {
+  validateInputs([teamId, ZId]);
   try {
     await prisma.team.delete({
       where: {
@@ -76,6 +80,7 @@ export const deleteTeam = async (teamId: string) => {
 };
 
 export const createDemoProduct = cache(async (teamId: string) => {
+  validateInputs([teamId, ZId]);
   const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({
     include: {
       environments: true,
