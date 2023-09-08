@@ -6,8 +6,9 @@ import qrcode from "qrcode";
 import { authenticator } from "otplib";
 import crypto from "crypto";
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
+import { verifyPassword } from "@/lib/auth";
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return new Response("Not authenticated", {
@@ -32,6 +33,20 @@ export async function POST() {
       status: 400,
     });
   }
+
+  if (!user.password) {
+    throw new Error("User does not have a password set");
+  }
+
+  const body = await req.json();
+
+  if (!body?.password) {
+    return new Response("Password is required", {
+      status: 400,
+    });
+  }
+
+  const isCorrectPassword = verifyPassword(body.password, user.password);
 
   // This generates a secret 32 characters in length. Do not modify the number of
   // bytes without updating the sanity checks in the enable and login endpoints.

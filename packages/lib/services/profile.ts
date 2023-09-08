@@ -10,6 +10,7 @@ const responseSelection = {
   id: true,
   name: true,
   email: true,
+  twoFactorEnabled: true,
   createdAt: true,
   updatedAt: true,
 };

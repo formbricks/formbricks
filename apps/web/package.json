@@ -53,6 +53,7 @@
     "@types/bcryptjs": "^2.4.2",
     "@types/lodash": "^4.14.196",
     "@types/markdown-it": "^12.2.3",
+    "@types/qrcode": "^1.5.2",
     "eslint-config-formbricks": "workspace:*"
   }
 }

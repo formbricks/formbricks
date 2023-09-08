@@ -338,6 +338,9 @@ importers:
       '@types/markdown-it':
         specifier: ^12.2.3
         version: 12.2.3
+      '@types/qrcode':
+        specifier: ^1.5.2
+        version: 1.5.2
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../../packages/eslint-config-formbricks
@@ -6060,6 +6063,12 @@ packages:
 
   /@types/q@1.5.5:
     resolution: {integrity: sha512-L28j2FcJfSZOnL1WBjDYp2vUHCeIFlyYI/53EwD/rKUBQ7MtUUfbQWiyKJGpcnv4/WgrhWsFKrcPstcAt/J0tQ==}
+    dev: true
+
+  /@types/qrcode@1.5.2:
+    resolution: {integrity: sha512-W4KDz75m7rJjFbyCctzCtRzZUj+PrUHV+YjqDp50sSRezTbrtEAIq2iTzC6lISARl3qw+8IlcCyljdcVJE0Wug==}
+    dependencies:
+      '@types/node': 20.5.6
     dev: true
 
   /@types/qs@6.9.7:

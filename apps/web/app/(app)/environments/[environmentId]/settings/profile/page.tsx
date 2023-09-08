@@ -9,6 +9,7 @@ import { DeleteAccount } from "./DeleteAccount";
 import { EditName } from "./EditName";
 import { EditAvatar } from "./EditAvatar";
 import { getProfile } from "@formbricks/lib/services/profile";
+import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/AccountSecurity";
 
 export default async function ProfileSettingsPage() {
   const session = await getServerSession(authOptions);
@@ -24,6 +25,9 @@ export default async function ProfileSettingsPage() {
           </SettingsCard>
           <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
             <EditAvatar session={session} />
+          </SettingsCard>
+          <SettingsCard title="Security" description="Manage your password and other security settings.">
+            <AccountSecurity profile={profile} />
           </SettingsCard>
           <SettingsCard
             title="Delete account"
