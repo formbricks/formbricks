@@ -19,6 +19,7 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
     setProgress(calculateProgress(questionId, survey, progress));
 
     function calculateProgress(questionId: string, survey: TSurvey, progress: number) {
+      if (survey.questions.length === 0) return 0;
       if (questionId === "end") return 1;
 
       let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);

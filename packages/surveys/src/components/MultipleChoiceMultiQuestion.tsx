@@ -46,7 +46,10 @@ export default function MultipleChoiceSingleQuestion({
     return choicesWithoutOther;
   }, [question.choices, question.shuffleOption]);
 
-  const otherOption = useMemo(() => question.choices.find((choice) => choice.id === "other"), []);
+  const otherOption = useMemo(
+    () => question.choices.find((choice) => choice.id === "other"),
+    [question.choices]
+  );
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 
