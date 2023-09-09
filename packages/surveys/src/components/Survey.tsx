@@ -88,11 +88,18 @@ export function Survey({
   };
 
   const onBack = (): void => {
-    const newHistory = [...history];
-    const prevQuestionId = newHistory.pop();
-    if (prefillResponseData && prevQuestionId === survey.questions[0].id) return;
+    let prevQuestionId;
+    // use history if available
+    if (history?.length > 0) {
+      const newHistory = [...history];
+      const prevQuestionId = newHistory.pop();
+      if (prefillResponseData && prevQuestionId === survey.questions[0].id) return;
+      setHistory(newHistory);
+    } else {
+      // otherwise go back to previous question in array
+      prevQuestionId = survey.questions[currentQuestionIndex - 1]?.id;
+    }
     if (!prevQuestionId) throw new Error("Question not found");
-    setHistory(newHistory);
     setQuestionId(prevQuestionId);
     onActiveQuestionChange(prevQuestionId);
   };

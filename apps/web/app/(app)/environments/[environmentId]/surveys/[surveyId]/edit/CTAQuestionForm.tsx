@@ -101,39 +101,37 @@ export default function CTAQuestionForm({
             />
           )}
         </div>
-
-        {question.buttonExternal && (
-          <div className="flex-1">
-            <Label htmlFor="buttonLabel">Button URL</Label>
-            <div className="mt-2">
-              <Input
-                id="buttonUrl"
-                name="buttonUrl"
-                value={question.buttonUrl}
-                placeholder="https://website.com"
-                onChange={(e) => updateQuestion(questionIdx, { buttonUrl: e.target.value })}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className="mt-3">
-        {!question.required && (
-          <div className="flex-1">
-            <Label htmlFor="buttonLabel">Skip Button Label</Label>
-            <div className="mt-2">
-              <Input
-                id="dismissButtonLabel"
-                name="dismissButtonLabel"
-                value={question.dismissButtonLabel}
-                placeholder="Skip"
-                onChange={(e) => updateQuestion(questionIdx, { dismissButtonLabel: e.target.value })}
-              />
-            </div>
+      {question.buttonExternal && (
+        <div className="mt-3 flex-1">
+          <Label htmlFor="buttonLabel">Button URL</Label>
+          <div className="mt-2">
+            <Input
+              id="buttonUrl"
+              name="buttonUrl"
+              value={question.buttonUrl}
+              placeholder="https://website.com"
+              onChange={(e) => updateQuestion(questionIdx, { buttonUrl: e.target.value })}
+            />
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {!question.required && (
+        <div className="mt-3 flex-1">
+          <Label htmlFor="buttonLabel">Skip Button Label</Label>
+          <div className="mt-2">
+            <Input
+              id="dismissButtonLabel"
+              name="dismissButtonLabel"
+              value={question.dismissButtonLabel}
+              placeholder="Skip"
+              onChange={(e) => updateQuestion(questionIdx, { dismissButtonLabel: e.target.value })}
+            />
+          </div>
+        </div>
+      )}
     </form>
   );
 }
