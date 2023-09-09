@@ -1,32 +1,37 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useEnvironment } from "@/lib/environments/environments";
-import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
-import { useEvents } from "@/lib/events/events";
 import { timeSince } from "@formbricks/lib/time";
-import { Confetti, ErrorComponent } from "@formbricks/ui";
+import { TAction } from "@formbricks/types/v1/actions";
+import { TEnvironment, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
+import { Confetti } from "@formbricks/ui";
 import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 interface WidgetStatusIndicatorProps {
-  environmentId: string;
+  environment: TEnvironment;
   type: "large" | "mini";
+  actions: TAction[];
+  updateEnvironmentAction: (
+    environmentId: string,
+    data: Partial<TEnvironmentUpdateInput>
+  ) => Promise<TEnvironment>;
 }
 
-export default function WidgetStatusIndicator({ environmentId, type }: WidgetStatusIndicatorProps) {
-  const { events, isLoadingEvents, isErrorEvents } = useEvents(environmentId);
-  const { triggerEnvironmentMutate } = useEnvironmentMutation(environmentId);
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
+export default function WidgetStatusIndicator({
+  environment,
+  type,
+  actions,
+  updateEnvironmentAction,
+}: WidgetStatusIndicatorProps) {
   const [confetti, setConfetti] = useState(false);
 
   useEffect(() => {
-    if (!environment?.widgetSetupCompleted && events && events.length > 0) {
-      triggerEnvironmentMutate({ widgetSetupCompleted: true });
+    if (!environment?.widgetSetupCompleted && actions && actions.length > 0) {
+      updateEnvironmentAction(environment.id, { widgetSetupCompleted: true });
     }
-  }, [environment, triggerEnvironmentMutate, events]);
+  }, [environment, actions]);
 
   const stati = {
     notImplemented: {
@@ -45,8 +50,8 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
   };
 
   const status = useMemo(() => {
-    if (events && events.length > 0) {
-      const lastEvent = events[0];
+    if (actions && actions.length > 0) {
+      const lastEvent = actions[0];
       const currentTime = new Date();
       const lastEventTime = new Date(lastEvent.createdAt);
       const timeDifference = currentTime.getTime() - lastEventTime.getTime();
@@ -60,21 +65,9 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
     } else {
       return "notImplemented";
     }
-  }, [events]);
+  }, [actions]);
 
   const currentStatus = stati[status];
-
-  if (isLoadingEvents || isLoadingEnvironment) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isErrorEvents || isErrorEnvironment) {
-    return <ErrorComponent />;
-  }
 
   if (type === "large") {
     return (
@@ -97,7 +90,7 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
         <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
         <p className="text-sm text-slate-700">
           {currentStatus.subtitle}{" "}
-          {status !== "notImplemented" && <span>{timeSince(events[0].createdAt)}</span>}
+          {status !== "notImplemented" && <span>{timeSince(actions[0].createdAt.toISOString())}</span>}
         </p>
         {confetti && <Confetti />}
       </div>
@@ -105,12 +98,12 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
   }
   if (type === "mini") {
     return (
-      <Link href={`/environments/${environmentId}/settings/setup`}>
+      <Link href={`/environments/${environment.id}/settings/setup`}>
         <div className="group my-4 flex justify-center">
           <div className=" flex rounded-full bg-slate-100 px-2 py-1">
             <p className="mr-2 text-sm text-slate-400 group-hover:underline">
               {currentStatus.subtitle}{" "}
-              {status !== "notImplemented" && <span>{timeSince(events[0].createdAt)}</span>}
+              {status !== "notImplemented" && <span>{timeSince(actions[0].createdAt.toISOString())}</span>}
             </p>
             <div
               className={clsx(

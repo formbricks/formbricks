@@ -25,6 +25,13 @@ x-environment: &environment
     # PostgreSQL password
     POSTGRES_PASSWORD: postgres
 
+    MAIL_FROM:
+    SMTP_HOST:
+    SMTP_PORT:
+    SMTP_SECURE_ENABLED:
+    SMTP_USER:
+    SMTP_PASSWORD:
+
 services:
   postgres:
     restart: always

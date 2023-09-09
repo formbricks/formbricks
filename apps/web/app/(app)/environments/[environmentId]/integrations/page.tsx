@@ -2,6 +2,7 @@ import JsLogo from "@/images/jslogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import GoogleSheetsLogo from "@/images/google-sheets-small.png";
+import n8nLogo from "@/images/n8n.png";
 import { Card } from "@formbricks/ui";
 import Image from "next/image";
 
@@ -51,6 +52,17 @@ export default function IntegrationsPage({ params }) {
           label="Google Sheets"
           description="Instantly populate your spreadsheets with survey data"
           icon={<Image src={GoogleSheetsLogo} alt="Google sheets Logo" />}
+        />
+        <Card
+          docsHref="https://formbricks.com/docs/integrations/n8n"
+          docsText="Docs"
+          docsNewTab={true}
+          connectHref="https://n8n.io"
+          connectText="Connect"
+          connectNewTab={true}
+          label="n8n"
+          description="Integrate Formbricks with 350+ apps via n8n"
+          icon={<Image src={n8nLogo} alt="n8n Logo" />}
         />
       </div>
     </div>

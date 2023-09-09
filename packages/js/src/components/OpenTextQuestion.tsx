@@ -78,6 +78,7 @@ export default function OpenTextQuestion({
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         {goToPreviousQuestion && (
           <BackButton
+            backButtonLabel={question.backButtonLabel}
             onClick={() => {
               goToPreviousQuestion({
                 [question.id]: value,

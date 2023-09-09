@@ -94,6 +94,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://openbb.co",
         },
         {
+          name: "Rivet",
+          description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
+          href: "https://rivet.gg",
+        },
+        {
           name: "Sniffnet",
           description:
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
@@ -102,7 +107,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         {
           name: "Tolgee",
           description: "Software localization from A to Z made really easy.",
-          href: "https://tolgee.io/",
+          href: "https://tolgee.io",
         },
         {
           name: "Trigger.dev",

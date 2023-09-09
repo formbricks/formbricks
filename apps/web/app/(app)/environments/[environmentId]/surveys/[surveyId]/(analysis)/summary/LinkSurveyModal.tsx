@@ -1,13 +1,12 @@
 "use client";
 
 import CodeBlock from "@/components/shared/CodeBlock";
-// import Modal from "@/components/shared/Modal";
-import { Dialog, DialogContent } from "@formbricks/ui";
+import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui";
+import { Button, Dialog, DialogContent } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { CodeBracketIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 interface LinkSurveyModalProps {
@@ -20,10 +19,12 @@ export default function LinkSurveyModal({ survey, open, setOpen }: LinkSurveyMod
   const linkTextRef = useRef(null);
   const [showEmbed, setShowEmbed] = useState(false);
 
+  const surveyUrl = useMemo(() => SURVEY_BASE_URL + survey.id, [survey]);
+
   const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; 
 overflow:auto;"> 
 <iframe 
-src="${window.location.protocol}//${window.location.host}/s/${survey.id}" 
+src="${surveyUrl}" 
 frameborder="0" style="position: absolute; left:0;
 top:0; width:100%; height:100%; border:0;">
 </iframe></div>`;
@@ -67,7 +68,9 @@ top:0; width:100%; height:100%; border:0;">
                 <span
                   style={{
                     wordBreak: "break-all",
-                  }}>{`${window.location.protocol}//${window.location.host}/s/${survey.id}`}</span>
+                  }}>
+                  {surveyUrl}
+                </span>
               </div>
             </div>
           )}
@@ -89,9 +92,7 @@ top:0; width:100%; height:100%; border:0;">
               variant="secondary"
               onClick={() => {
                 setShowEmbed(false);
-                navigator.clipboard.writeText(
-                  `${window.location.protocol}//${window.location.host}/s/${survey.id}`
-                );
+                navigator.clipboard.writeText(surveyUrl);
                 toast.success("URL copied to clipboard!");
               }}
               title="Copy survey link to clipboard"
@@ -105,7 +106,7 @@ top:0; width:100%; height:100%; border:0;">
               title="Preview survey"
               aria-label="Preview survey"
               className="flex justify-center"
-              href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
+              href={`${surveyUrl}?preview=true`}
               target="_blank"
               EndIcon={EyeIcon}>
               Preview
