@@ -4,7 +4,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { withEmailTemplate } from "./email-template";
-import { createInviteToken, createToken, createTokenForLinkSurvey } from "./jwt";
+import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 
 const nodemailer = require("nodemailer");
 

@@ -17,6 +17,7 @@
     "@formbricks/errors": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/lib": "workspace:*",
+    "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@google-cloud/local-auth": "2.1.0",

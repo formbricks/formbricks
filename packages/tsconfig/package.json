@@ -2,6 +2,7 @@
   "name": "@formbricks/tsconfig",
   "version": "1.0.0",
   "private": true,
+  "sideEffects": false,
   "scripts": {
     "clean": "rimraf node_modules"
   },
