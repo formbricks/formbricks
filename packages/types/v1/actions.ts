@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ZActionClass } from "./actionClasses";
 
-
 export const ZAction = z.object({
   id: z.string(),
   createdAt: z.date(),
@@ -11,4 +10,3 @@ export const ZAction = z.object({
 });
 
 export type TAction = z.infer<typeof ZAction>;
-
