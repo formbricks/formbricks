@@ -11,12 +11,10 @@ import {
   err,
   okVoid,
 } from "./errors";
-import { trackAction } from "./actions";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
 import { resetPerson } from "./person";
 import { isExpired } from "./session";
-import { addStylesToDom } from "./styles";
 import { sync } from "./sync";
 import { addWidgetContainer } from "./widget";
 
@@ -79,7 +77,6 @@ export const initialize = async (
   addWidgetContainer();
 
   logger.debug("Adding styles to DOM");
-  addStylesToDom();
   if (
     config.get().state &&
     config.get().environmentId === c.environmentId &&

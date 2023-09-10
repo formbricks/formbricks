@@ -84,17 +84,13 @@ export default function SurveyEditor({
         </main>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
           <PreviewSurvey
+            survey={localSurvey}
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
-            questions={localSurvey.questions}
-            brandColor={product.brandColor}
             environmentId={environmentId}
             product={product}
             environment={environment}
-            surveyType={localSurvey.type}
-            thankYouCard={localSurvey.thankYouCard}
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
-            autoClose={localSurvey.autoClose}
           />
         </aside>
       </div>
