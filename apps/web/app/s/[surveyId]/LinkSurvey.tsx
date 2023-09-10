@@ -42,7 +42,7 @@ export default function LinkSurvey({
     () =>
       new ResponseQueue(
         {
-          apiHost: typeof window !== "undefined" ? window.location?.origin : WEBAPP_URL,
+          apiHost: WEBAPP_URL,
           retryAttempts: 2,
           onResponseSendingFailed: (response) => {
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
