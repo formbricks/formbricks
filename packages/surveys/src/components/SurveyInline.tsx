@@ -1,7 +1,7 @@
-import { SurveyInlineProps } from "../types/props";
+import { SurveyBaseProps } from "../types/props";
 import { Survey } from "./Survey";
 
-export function SurveyModal({
+export function SurveyInline({
   survey,
   brandColor,
   formbricksSignature,
@@ -12,9 +12,9 @@ export function SurveyModal({
   onClose = () => {},
   prefillResponseData,
   isRedirectDisabled = false,
-}: SurveyInlineProps) {
+}: SurveyBaseProps) {
   return (
-    <div id="fbjs">
+    <div id="fbjs" className="h-full w-full">
       <Survey
         survey={survey}
         brandColor={brandColor}

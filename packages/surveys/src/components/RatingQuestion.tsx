@@ -81,7 +81,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
+                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     className={cn(
@@ -134,7 +134,7 @@ export default function RatingQuestion({
                   <label className="flex h-full w-full justify-center text-slate-800">
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
-                      active={value == number || hoveredNumber == number}
+                      active={value === number || hoveredNumber === number}
                       idx={i}
                       range={question.range}
                     />

@@ -1,7 +1,5 @@
 "use client";
 
-import Headline from "@/components/preview/Headline";
-import Subheader from "@/components/preview/Subheader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
@@ -76,10 +74,12 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
-        <label className="mb-1.5 block text-lg font-semibold leading-6 text-slate-900">
+        <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
           Create your team&apos;s product.
         </label>
-        <Subheader subheader="You can always change these settings later." questionId="none" />
+        <label className="block text-sm font-normal leading-6 text-slate-500">
+          You can always change these settings later.
+        </label>
         <div className="mt-6 flex flex-col gap-2">
           <div className="pb-2">
             <div className="flex justify-between">
@@ -109,7 +109,9 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
             />
             <p className="text-xs text-slate-500">This is what your survey will look like:</p>
             <div className="relative w-full max-w-sm cursor-not-allowed rounded-lg bg-white px-4 py-6 shadow-lg ring-1 ring-black ring-opacity-5 sm:p-6">
-              <Headline headline={`How do you like ${name ? name : "Formbricks"}?`} questionId="none" />
+              <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+                How do you like {name || "Formbricks"}
+              </label>
               <div className="mt-4">
                 <fieldset>
                   <legend className="sr-only">Choices</legend>

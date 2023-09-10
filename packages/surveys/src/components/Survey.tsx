@@ -92,7 +92,7 @@ export function Survey({
     // use history if available
     if (history?.length > 0) {
       const newHistory = [...history];
-      const prevQuestionId = newHistory.pop();
+      prevQuestionId = newHistory.pop();
       if (prefillResponseData && prevQuestionId === survey.questions[0].id) return;
       setHistory(newHistory);
     } else {
@@ -127,7 +127,12 @@ export function Survey({
                       onChange={onChange}
                       onSubmit={onSubmit}
                       onBack={onBack}
-                      isFirstQuestion={idx === 0}
+                      isFirstQuestion={
+                        // if prefillResponseData is provided, check if we're on the first "real" question
+                        history && prefillResponseData
+                          ? history[history.length - 1] === survey.questions[0].id
+                          : idx === 0
+                      }
                       isLastQuestion={idx === survey.questions.length - 1}
                       brandColor={brandColor}
                     />
