@@ -25,7 +25,11 @@ export default function Home({
   setSelectedIntegration,
 }: HomeProps) {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
-  const integrationArray = googleSheetIntegration ? googleSheetIntegration.config.data : [];
+  const integrationArray = googleSheetIntegration
+    ? googleSheetIntegration.config.data
+      ? googleSheetIntegration.config.data
+      : []
+    : [];
   const [isDeleting, setisDeleting] = useState(false);
 
   const handleDeleteIntegration = async () => {
@@ -85,7 +89,7 @@ export default function Home({
         <div className="mt-4 flex w-full flex-col items-center justify-center">
           <div className="mt-6 w-full rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2 pl-6 ">Survey</div>
+              <div className="col-span-2 hidden text-center sm:block">Survey</div>
               <div className="col-span-2 hidden text-center sm:block">Google Sheet Name</div>
               <div className="col-span-2 hidden text-center sm:block">Questions</div>
               <div className="col-span-2 hidden text-center sm:block">Updated At</div>

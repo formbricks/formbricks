@@ -1,7 +1,7 @@
 export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
   const res = await fetch(`${apiHost}/api/google-sheet`, {
     method: "GET",
-    headers: { "environmentId": environmentId },
+    headers: { environmentId: environmentId },
   });
 
   if (!res.ok) {
@@ -9,6 +9,6 @@ export const authorize = async (environmentId: string, apiHost: string): Promise
     throw new Error("Could not create response");
   }
   const resJSON = await res.json();
-  const authUrl = resJSON.authUrl
+  const authUrl = resJSON.authUrl;
   return authUrl;
-}
+};

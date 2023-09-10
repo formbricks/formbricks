@@ -1,7 +1,11 @@
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TGoogleSheetIntegration, TGoogleSheetsConfigData, TGoogleSpreadsheet } from "@formbricks/types/v1/integrations";
+import {
+  TGoogleSheetIntegration,
+  TGoogleSheetsConfigData,
+  TGoogleSpreadsheet,
+} from "@formbricks/types/v1/integrations";
 import { Button, Checkbox, Label } from "@formbricks/ui";
-import GoogleSheetLogo from "@/images/google-sheets-small.png"
+import GoogleSheetLogo from "@/images/google-sheets-small.png";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -19,13 +23,19 @@ interface AddWebhookModalProps {
   setOpen: (v: boolean) => void;
   spreadsheets: TGoogleSpreadsheet[];
   googleSheetIntegration: TGoogleSheetIntegration;
-  selectedIntegration?: TGoogleSheetsConfigData & { index: number } | null;
+  selectedIntegration?: (TGoogleSheetsConfigData & { index: number }) | null;
 }
 
-export default function AddIntegrationModal({ environmentId, surveys, open, setOpen, spreadsheets, googleSheetIntegration, selectedIntegration }: AddWebhookModalProps) {
-  const {
-    handleSubmit,
-  } = useForm();
+export default function AddIntegrationModal({
+  environmentId,
+  surveys,
+  open,
+  setOpen,
+  spreadsheets,
+  googleSheetIntegration,
+  selectedIntegration,
+}: AddWebhookModalProps) {
+  const { handleSubmit } = useForm();
 
   const integrationData = {
     spreadsheetId: "",
@@ -34,31 +44,23 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
     surveyName: "",
     questionIds: [""],
     questions: "",
-    createdAt: new Date()
+    createdAt: new Date(),
   };
 
-
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingSheet, setIsLinkingSheet] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState<any>(null);
-  const existingIntegrationData = googleSheetIntegration?.config?.data
-  const googleSheetIntegrationData = {
+  const existingIntegrationData = googleSheetIntegration?.config?.data;
+  const googleSheetIntegrationData: Partial<TGoogleSheetIntegration> = {
     type: "googleSheets",
-    environment: environmentId,
     config: {
       key: googleSheetIntegration?.config?.key,
       email: googleSheetIntegration.config.email,
-      data: existingIntegrationData || []
-    }
-  }
-
-  useEffect(() => {
-    console.log(googleSheetIntegration)
-  }, [])
-
-
+      data: existingIntegrationData || [],
+    },
+  };
 
   useEffect(() => {
     if (selectedSurvey) {
@@ -67,20 +69,24 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
         setSelectedQuestions(questionIds);
       }
     }
-  }, [selectedSurvey])
+  }, [selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
       setSelectedSpreadsheet({
         id: selectedIntegration.spreadsheetId,
-        name: selectedIntegration.spreadsheetName
-      })
-      setSelectedSurvey(surveys.find((survey) => { return survey.id === selectedIntegration.surveyId })!)
-      setSelectedQuestions(selectedIntegration.questionIds)
-      return
+        name: selectedIntegration.spreadsheetName,
+      });
+      setSelectedSurvey(
+        surveys.find((survey) => {
+          return survey.id === selectedIntegration.surveyId;
+        })!
+      );
+      setSelectedQuestions(selectedIntegration.questionIds);
+      return;
     }
-    resetForm()
-  }, [selectedIntegration])
+    resetForm();
+  }, [selectedIntegration]);
 
   const linkSheet = async () => {
     try {
@@ -94,33 +100,34 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
       if (selectedQuestions.length === 0) {
         throw new Error("Please select at least one question");
       }
-      setIsLinkingSheet(true)
-      integrationData.spreadsheetId = selectedSpreadsheet.id
-      integrationData.spreadsheetName = selectedSpreadsheet.name
-      integrationData.surveyId = selectedSurvey.id
-      integrationData.surveyName = selectedSurvey.name
+      setIsLinkingSheet(true);
+      integrationData.spreadsheetId = selectedSpreadsheet.id;
+      integrationData.spreadsheetName = selectedSpreadsheet.name;
+      integrationData.surveyId = selectedSurvey.id;
+      integrationData.surveyName = selectedSurvey.name;
       integrationData.questionIds = selectedQuestions;
-      integrationData.questions = selectedQuestions.length === selectedSurvey?.questions.length ? "All questions" : "Selected questions"
-      integrationData.createdAt = new Date()
+      integrationData.questions =
+        selectedQuestions.length === selectedSurvey?.questions.length
+          ? "All questions"
+          : "Selected questions";
+      integrationData.createdAt = new Date();
       if (selectedIntegration) {
-        // update action 
-        googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData
+        // update action
+        googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
+      } else {
+        // create action
+        googleSheetIntegrationData.config!.data.push(integrationData);
       }
-      else {
-        // create action 
-        googleSheetIntegrationData.config.data.push(integrationData);
-      }
-      await upsertIntegrationAction(environmentId, googleSheetIntegrationData)
-      toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`)
-      resetForm()
-      setOpen(false)
+      await upsertIntegrationAction(environmentId, googleSheetIntegrationData);
+      toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
+      resetForm();
+      setOpen(false);
     } catch (e) {
       toast.error(e.message);
     } finally {
       setIsLinkingSheet(false);
-
     }
-  }
+  };
 
   const handleCheckboxChange = (questionId: string) => {
     setSelectedQuestions((prevValues) =>
@@ -135,24 +142,24 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
   };
 
   const resetForm = () => {
-    setIsLinkingSheet(false)
-    setSelectedSpreadsheet("")
-    setSelectedSurvey(null)
-  }
+    setIsLinkingSheet(false);
+    setSelectedSpreadsheet("");
+    setSelectedSurvey(null);
+  };
 
   const deleteLink = async () => {
-    googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1)
+    googleSheetIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
-      setIsDeleting(true)
-      await upsertIntegrationAction(environmentId, googleSheetIntegrationData)
-      toast.success("Integration removed successfully")
-      setOpen(false)
+      setIsDeleting(true);
+      await upsertIntegrationAction(environmentId, googleSheetIntegrationData);
+      toast.success("Integration removed successfully");
+      setOpen(false);
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
 
   const DropdownSelector = ({ label, items, selectedItem, setSelectedItem }) => {
     return (
@@ -163,8 +170,7 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
-              >
+                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
                 <span className="flex flex-1">
                   <span>{selectedItem ? selectedItem.name : `Select ${label}`}</span>
                 </span>
@@ -176,40 +182,34 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
 
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className="min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md z-50"
-                align="start"
-              >
-                {label === "Select Survey" && items.length === 0 &&
-                  <DropdownMenu.Item
-                    className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                  ><Link href={`/environments/${environmentId}/surveys/templates`}>
-                    + Create a Survey
-                  </Link>
+                className="z-50 min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md"
+                align="start">
+                {label === "Select Survey" && items.length === 0 && (
+                  <DropdownMenu.Item className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50">
+                    <Link href={`/environments/${environmentId}/surveys/templates`}>+ Create a Survey</Link>
                   </DropdownMenu.Item>
-                }
-                {label === "Select Spreadsheet" && items.length === 0 &&
-                  <DropdownMenu.Item
-                    className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                  >
+                )}
+                {label === "Select Spreadsheet" && items.length === 0 && (
+                  <DropdownMenu.Item className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50">
                     No Spreadsheets found
                   </DropdownMenu.Item>
-                }
-                {items && items.map((item) => (
-                  <DropdownMenu.Item
-                    key={item.id}
-                    className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                    onSelect={() => setSelectedItem(item)}
-                  >
-                    {item.name}
-                  </DropdownMenu.Item>
-                ))}
+                )}
+                {items &&
+                  items.map((item) => (
+                    <DropdownMenu.Item
+                      key={item.id}
+                      className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                      onSelect={() => setSelectedItem(item)}>
+                      {item.name}
+                    </DropdownMenu.Item>
+                  ))}
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
@@ -244,52 +244,57 @@ export default function AddIntegrationModal({ environmentId, surveys, open, setO
                   setSelectedItem={setSelectedSurvey}
                 />
               </div>
-              {selectedSurvey && <div>
-                <Label htmlFor="Surveys">Questions</Label>
-                <div className="mt-1 rounded-lg border border-slate-200">
-                  <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {selectedSurvey?.questions.map((question) => (
-                      <div key={question.id} className="my-1 flex items-center space-x-2">
-                        <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                          <Checkbox
-                            type="button"
-                            id={question.id}
-                            value={question.id}
-                            className="bg-white"
-                            checked={selectedQuestions.includes(question.id)}
-                            onCheckedChange={() => {
-                              handleCheckboxChange(question.id)
-                            }}
-                          />
-                          <span className="ml-2">{question.headline}</span>
-                        </label>
-                      </div>
-                    ))}
+              {selectedSurvey && (
+                <div>
+                  <Label htmlFor="Surveys">Questions</Label>
+                  <div className="mt-1 rounded-lg border border-slate-200">
+                    <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
+                      {selectedSurvey?.questions.map((question) => (
+                        <div key={question.id} className="my-1 flex items-center space-x-2">
+                          <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                            <Checkbox
+                              type="button"
+                              id={question.id}
+                              value={question.id}
+                              className="bg-white"
+                              checked={selectedQuestions.includes(question.id)}
+                              onCheckedChange={() => {
+                                handleCheckboxChange(question.id);
+                              }}
+                            />
+                            <span className="ml-2">{question.headline}</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>}
+              )}
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">
             <div className="flex space-x-2">
-              {selectedIntegration ? <Button
-                type="button"
-                variant="warn"
-                loading={isDeleting}
-                onClick={() => {
-                  deleteLink()
-                }}>
-                Delete
-              </Button> : <Button
-                type="button"
-                variant="minimal"
-                onClick={() => {
-                  setOpen(false);
-                  resetForm()
-                }}>
-                Cancel
-              </Button>
-              }
+              {selectedIntegration ? (
+                <Button
+                  type="button"
+                  variant="warn"
+                  loading={isDeleting}
+                  onClick={() => {
+                    deleteLink();
+                  }}>
+                  Delete
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="minimal"
+                  onClick={() => {
+                    setOpen(false);
+                    resetForm();
+                  }}>
+                  Cancel
+                </Button>
+              )}
               <Button variant="darkCTA" type="submit" loading={isLinkingSheet}>
                 {selectedIntegration ? "Update" : "Link Sheet"}
               </Button>

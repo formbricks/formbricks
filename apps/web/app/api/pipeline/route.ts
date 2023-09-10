@@ -9,7 +9,7 @@ import { NotificationSettings } from "@formbricks/types/users";
 import { ZPipelineInput } from "@formbricks/types/v1/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { handleIntegrations } from "@/app/api/pipeline/integrations";
+import { handleIntegrations } from "../integration/integrations";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -95,10 +95,10 @@ export async function POST(request: Request) {
     const integrations = await prisma.integration.findMany({
       where: {
         environmentId,
-      }
+      },
     });
-    if(integrations.length>0){
-      handleIntegrations(integrations,inputValidation.data)
+    if (integrations.length > 0) {
+      handleIntegrations(integrations, inputValidation.data);
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
@@ -108,8 +108,6 @@ export async function POST(request: Request) {
       }
       return false;
     });
-
-    
 
     if (usersWithNotifications.length > 0) {
       // get survey
