@@ -24,7 +24,6 @@ export class SurveyState {
     const copyInstance = new SurveyState(this.surveyId);
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
-    console.log("copy instance", copyInstance);
     return copyInstance;
   }
 

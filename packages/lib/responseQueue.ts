@@ -40,11 +40,10 @@ export class ResponseQueue {
     while (attempts < this.config.retryAttempts) {
       const success = await this.sendResponse(responseUpdate);
       if (success) {
-        console.log("Successfully sent response.");
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
-      console.log("Failed to send response. Retrying...", attempts);
+      console.log("Formbricks: Failed to send response. Retrying...", attempts);
       attempts++;
     }
 
