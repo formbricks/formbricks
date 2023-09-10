@@ -1,10 +1,11 @@
-import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
-  ActivityItemPopover,
   ActivityItemIcon,
+  ActivityItemPopover,
 } from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivityItemComponents";
-import { BackIcon } from "@formbricks/ui";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { BackIcon } from "@formbricks/ui";
+import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "lucide-react";
 
 export default function Loading() {
   const unifiedList: TActivityFeedItem[] = [

@@ -1,14 +1,11 @@
 "use client"; // Error components must be Client components
 
-import { Button } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
-import { useEffect } from "react";
+import { Button, ErrorComponent } from "@formbricks/ui";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
-  useEffect(() => {
-    // Log the error to an error reporting service
-    console.error(error);
-  }, [error]);
+  if (process.env.NODE_ENV === "development") {
+    console.log(error);
+  }
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">

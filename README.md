@@ -1,6 +1,6 @@
 <p align="center">
-<a href="https://github.com/formbricks/formbricks">
-    <img src="https://user-images.githubusercontent.com/675065/203262290-3c2bc5b8-839c-468a-b675-e26a369c7fe2.png" alt="Logo" width="500">
+<a href="https://formbricks.com">
+    <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
   </a>
   <h3 align="center">Formbricks</h3>
 
@@ -48,7 +48,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 - 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code
 - 🔗 Create shareable **link surveys**
 - 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys
-- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier and more**
+- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier, n8n and more**
 - 🔒 All **open source**, transparent and self-hostable
 
 ### Built on Open Source

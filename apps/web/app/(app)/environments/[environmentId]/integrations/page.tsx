@@ -1,6 +1,7 @@
 import JsLogo from "@/images/jslogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import n8nLogo from "@/images/n8n.png";
 import { Card } from "@formbricks/ui";
 import Image from "next/image";
 
@@ -11,7 +12,7 @@ export default function IntegrationsPage({ params }) {
       <p className="mb-6 text-slate-500">Connect Formbricks with your favorite tools.</p>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card
-          docsHref="https://formbricks.com/docs/getting-started/nextjs-app"
+          docsHref="https://formbricks.com/docs/getting-started/framework-guides#next-js"
           docsText="Docs"
           docsNewTab={true}
           label="Javascript Widget"
@@ -39,6 +40,17 @@ export default function IntegrationsPage({ params }) {
           label="Webhooks"
           description="Trigger Webhooks based on actions in your surveys"
           icon={<Image src={WebhookLogo} alt="Webhook Logo" />}
+        />
+        <Card
+          docsHref="https://formbricks.com/docs/integrations/n8n"
+          docsText="Docs"
+          docsNewTab={true}
+          connectHref="https://n8n.io"
+          connectText="Connect"
+          connectNewTab={true}
+          label="n8n"
+          description="Integrate Formbricks with 350+ apps via n8n"
+          icon={<Image src={n8nLogo} alt="n8n Logo" />}
         />
       </div>
     </div>

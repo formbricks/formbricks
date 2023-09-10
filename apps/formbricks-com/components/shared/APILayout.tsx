@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useState } from "react";

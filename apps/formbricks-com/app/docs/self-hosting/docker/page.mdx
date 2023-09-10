@@ -1,0 +1,176 @@
+export const meta = {
+  title: "Deploying Formbricks with Docker",
+  description:
+    "Utilize Docker-Compose for easy deployment on your machine. Clone the repo, configure settings, and build the image to access the app on localhost.",
+};
+
+#### Self-Hosting
+
+# Running Formbricks with Docker
+
+Quickly set up and start using Formbricks without getting into the technicalities of the build process. You'll be using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container.
+
+This is ideal for those who are testing Formbricks or want to run it with minimal to no modifications. For this we use the [public Docker image](https://hub.docker.com/r/formbricks/formbricks) and a simple docker-compose file.
+
+### Requirements
+
+Ensure `docker` & `docker compose` are installed on your server/system. Both are typically included with Docker utilities, like Docker Desktop and Rancher Desktop.
+
+<Note>
+  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the
+  Docker documentation.
+</Note>
+
+1. **Create a New Directory for Formbricks**
+
+   Open a terminal and create a new directory for Formbricks, then navigate into this new directory:
+
+   <CodeGroup title="Create and cd into the new directory">
+
+   ```bash
+   mkdir formbricks-quickstart && cd formbricks-quickstart
+   ```
+
+   </CodeGroup>
+
+2. **Download the Docker-Compose File**
+
+   Download the docker-compose file directly from the Formbricks repository:
+
+   <CodeGroup title="Download docker compose file">
+
+   ```bash
+   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+   ```
+
+   </CodeGroup>
+
+3. **Generate NextAuth Secret**
+
+   Next, you need to generate a NextAuth secret. This will be used for session signing and encryption. The `sed` command below generates a random string using `openssl`, then replaces the `NEXTAUTH_SECRET:` placeholder in the `docker-compose.yml` file with this generated secret:
+
+   <CodeGroup title="Generate NextAuth Secret">
+
+   ```bash
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)/" docker-compose.yml
+   ```
+
+   </CodeGroup>
+
+4. **Start the Docker Setup**
+
+   You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
+
+   <CodeGroup title="Launch Docker Instance">
+
+   ```bash
+   docker compose up -d
+   ```
+
+   </CodeGroup>
+
+   The `-d` flag will run the containers in detached mode, meaning they'll run in the background.
+
+5. **Visit Formbricks in Your Browser**
+
+   After starting the Docker setup, visit http://localhost:3000 in your browser to interact with the Formbricks application. The first time you access this page, you'll be greeted by a setup wizard. Follow the prompts to define your first user and get started.
+
+## Updating Formbricks
+
+1. Stop the Formbricks stack
+
+   <CodeGroup title="Stop the docker instance">
+
+   ```bash
+   docker compose down
+   ```
+
+   </CodeGroup>
+
+2. Pull the latest changes
+
+   <CodeGroup title="Pull the changes into docker">
+
+   ```bash
+   docker compose pull
+   ```
+
+   </CodeGroup>
+
+3. Update env vars as necessary in the docker-compose file.
+4. Re-start the Formbricks stack
+
+   <CodeGroup title="Relaunch the Docker Instance">
+
+   ```bash
+   docker compose up -d
+   ```
+
+   </CodeGroup>
+
+## Debugging
+
+If you encounter any issues, you can check the logs of the container with:
+
+<CodeGroup title="Look into docker logs">
+
+```bash
+docker compose logs -f
+```
+
+</CodeGroup>
+
+In an ideal case, you should see something like this:
+
+<CodeGroup title="Docker Build Underway">
+
+```bash
+[+] Running 9/16
+⠹ formbricks 15 layers [⣿⣤⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀] 29.78MB/47.76MB Pulling                                                           13.3s
+✔ 7264a8db6415 Already exists                                                                                                 0.0s
+⠋ 751194035c36 Downloading    [===============================>                   ]  29.78MB/47.76...                         8.1s
+✔ eff5dce73b38 Download complete                                                                                              1.7s
+✔ c8ce5be43019 Download complete                                                                                              1.2s
+✔ a2f33c630af5 Download complete                                                                                              5.1s
+✔ e3b64e437860 Download complete                                                                                              3.3s
+✔ a6551ac5f976 Download complete                                                                                              4.9s
+✔ 4f4fb700ef54 Download complete                                                                                              6.0s
+✔ 22163889e16b Download complete                                                                                              6.7s
+✔ dc647bb9eb13 Download complete                                                                                              7.8s
+⠋ 49c2ad494720 Waiting                                                                                                        8.1s
+⠋ 5c797a842dcb Waiting                                                                                                        8.1s
+⠋ 1f231213db04 Waiting                                                                                                        8.1s
+⠋ e407294bdcda Waiting                                                                                                        8.1s
+⠋ 6fd8358dca47 Pulling fs layer                                                                                               8.1s
+
+[+] Running 2/2
+✔ Container formbricks-quickstart-postgres-1    Created                                                                       0.0s
+✔ Container formbricks-quickstart-formbricks-1  Created                                                                       0.0s
+```
+
+</CodeGroup>
+
+And at the tail of the output, you should see something like this:
+
+<CodeGroup title="Docker Build Completed">
+
+```bash
+formbricks-quickstart-formbricks-1  | All migrations have been successfully applied.
+formbricks-quickstart-formbricks-1  |
+formbricks-quickstart-formbricks-1  | - info Loaded env from /home/nextjs/apps/web/.env
+formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random-string>:3000
+```
+
+</CodeGroup>
+
+You can close the logs again with `CTRL + C`.
+
+<Note>
+## Customizing the Build Time variables
+
+To edit any of the variables that start with `NEXT_PUBLIC_`, you need to rebuild the Formbricks Docker from source! It is just one
+more added step and is not as much of a hassle as you think! Please check the [Building from Source](/docs/self-hosting/from-source) section!
+
+</Note>
+
+Still facing issues? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

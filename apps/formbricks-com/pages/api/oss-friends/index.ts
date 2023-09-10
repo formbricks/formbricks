@@ -94,6 +94,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://openbb.co",
         },
         {
+          name: "Rivet",
+          description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
+          href: "https://rivet.gg",
+        },
+        {
           name: "Sniffnet",
           description:
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
@@ -102,7 +107,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         {
           name: "Tolgee",
           description: "Software localization from A to Z made really easy.",
-          href: "https://tolgee.io/",
+          href: "https://tolgee.io",
         },
         {
           name: "Trigger.dev",
@@ -132,6 +137,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Webstudio",
           description: "Webstudio is an open source alternative to Webflow",
           href: "https://webstudio.is",
+        },
+        {
+          name: "Spark.NET",
+          description:
+            "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
+          href: "https://spark-framework.net",
         },
       ],
     });

@@ -22,6 +22,7 @@ export function DeletePersonButton({ environmentId, personId }: DeletePersonButt
     try {
       setIsDeletingPerson(true);
       await deletePersonAction(personId);
+      router.refresh();
       router.push(`/environments/${environmentId}/people`);
       toast.success("Person deleted successfully.");
     } catch (error) {
