@@ -76,7 +76,10 @@ export const getEnvironments = cache(async (productId: string): Promise<TEnviron
   }
 });
 
-export const updateEnvironment = async (environmentId: string, data: Partial<TEnvironmentUpdateInput>): Promise<TEnvironment> => {
+export const updateEnvironment = async (
+  environmentId: string,
+  data: Partial<TEnvironmentUpdateInput>
+): Promise<TEnvironment> => {
   const newData = { ...data, updatedAt: new Date() };
   let updatedEnvironment;
   try {
