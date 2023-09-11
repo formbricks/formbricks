@@ -7,6 +7,7 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
+    WEBAPP_URL: z.string().url(),
     DATABASE_URL: z.string().url(),
     PRISMA_GENERATE_DATAPROXY: z.enum(["true", ""]).optional(),
     NEXTAUTH_SECRET: z.string().min(1),
@@ -53,8 +54,6 @@ export const env = createEnv({
    * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
    */
   client: {
-    NEXT_PUBLIC_WEBAPP_URL: z.string().url().optional(),
-
     NEXT_PUBLIC_FORMBRICKS_API_HOST: z
       .string()
       .url()
@@ -75,6 +74,7 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
     PRISMA_GENERATE_DATAPROXY: process.env.PRISMA_GENERATE_DATAPROXY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
@@ -92,7 +92,6 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
-    NEXT_PUBLIC_WEBAPP_URL: process.env.NEXT_PUBLIC_WEBAPP_URL,
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,

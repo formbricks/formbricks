@@ -16,6 +16,7 @@ export default function SignUpPage({
   const emailVerificationDisabled = env.EMAIL_VERIFICATION_DISABLED === "1";
   const googleOAuthEnabled = env.GOOGLE_AUTH_ENABLED === "1";
   const githubOAuthEnabled = env.GITHUB_AUTH_ENABLED === "1";
+  const webappUrl = env.WEBAPP_URL;
 
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
@@ -40,6 +41,7 @@ export default function SignUpPage({
             </>
           ) : (
             <SignupForm
+              webAppUrl={webappUrl}
               termsUrl={termsUrl}
               privacyUrl={privacyUrl}
               passwordResetEnabled={passwordResetEnabled}

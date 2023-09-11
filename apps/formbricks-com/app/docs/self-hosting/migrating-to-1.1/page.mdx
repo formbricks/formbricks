@@ -16,8 +16,8 @@ Formbricks v1.1 includes a lot of new features and improvements. However, it als
 This was introduced because we got a lot of requests from our users for the ability to define some common environment variables at runtime itself i.e. without having to rebuild the image for the changes to take effect.
 This is now possible with v1.1. However, due to Next.JS best practices, we had to deprecate the prefix **NEXT_PUBLIC_** in the following environment variables:
 
-| till v1.0                               | v1.1                        |
-| --------------------------------------- | --------------------------- |
+| till v1.0                                   | v1.1                        |
+| ------------------------------------------- | --------------------------- |
 | **NEXT_PUBLIC_**EMAIL_VERIFICATION_DISABLED | EMAIL_VERIFICATION_DISABLED |
 | **NEXT_PUBLIC_**PASSWORD_RESET_DISABLED     | PASSWORD_RESET_DISABLED     |
 | **NEXT_PUBLIC_**SIGNUP_DISABLED             | SIGNUP_DISABLED             |
@@ -27,6 +27,7 @@ This is now possible with v1.1. However, due to Next.JS best practices, we had t
 | **NEXT_PUBLIC_**IMPRINT_URL                 | IMPRINT_URL                 |
 | **NEXT_PUBLIC_**GITHUB_AUTH_ENABLED         | GITHUB_AUTH_ENABLED         |
 | **NEXT_PUBLIC_**GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
+| **NEXT_PUBLIC_**WEBAPP_URL                  | WEBAPP_URL                  |
 
 <Note>
 Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated. The other environment variables remain the same as well.
@@ -39,6 +40,7 @@ Please note that their values and the logic remains exactly the same. Only the p
 - **RAILWAY_STATIC_URL**: Was used as Railway Static URL (used instead of WEBAPP_URL), but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **RENDER_EXTERNAL_URL**: Was used as an external URL to Render (used instead of WEBAPP_URL), but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **HEROKU_APP_NAME**: Was used to build the App name on a Heroku hosted webapp, but from v1.1, you can just set the WEBAPP_URL environment variable.
+- **NEXT_PUBLIC_WEBAPP_URL**: Was used for the same purpose as WEBAPP_URL, but from v1.1, you can just set the WEBAPP_URL environment variable.
 
 ## Helper Shell Script
 For a seamless migration, below is a shell script for your self-hosted instance that will automatically update your environment variables to be compliant with the new naming conventions.
@@ -50,7 +52,7 @@ The below script will:
 
 <CodeGroup title="Run the below in your terminal in the directory of your .env">
 ```shell {{ title: '.env file' }}
-for var in NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED NEXT_PUBLIC_PASSWORD_RESET_DISABLED NEXT_PUBLIC_SIGNUP_DISABLED NEXT_PUBLIC_INVITE_DISABLED NEXT_PUBLIC_PRIVACY_URL NEXT_PUBLIC_TERMS_URL NEXT_PUBLIC_IMPRINT_URL NEXT_PUBLIC_GITHUB_AUTH_ENABLED NEXT_PUBLIC_GOOGLE_AUTH_ENABLED; do sed -i.old "s/^$var=/$(echo $var | sed 's/NEXT_PUBLIC_//')=/" .env; done; echo "Formbricks environment variables have been migrated as per v1.1! You are good to go."
+for var in NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED NEXT_PUBLIC_PASSWORD_RESET_DISABLED NEXT_PUBLIC_SIGNUP_DISABLED NEXT_PUBLIC_INVITE_DISABLED NEXT_PUBLIC_PRIVACY_URL NEXT_PUBLIC_TERMS_URL NEXT_PUBLIC_IMPRINT_URL NEXT_PUBLIC_GITHUB_AUTH_ENABLED NEXT_PUBLIC_GOOGLE_AUTH_ENABLED NEXT_PUBLIC_WEBAPP_URL; do sed -i.old "s/^$var=/$(echo $var | sed 's/NEXT_PUBLIC_//')=/" .env; done; echo "Formbricks environment variables have been migrated as per v1.1! You are good to go."
 ```
 </CodeGroup>
 

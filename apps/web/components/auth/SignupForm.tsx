@@ -2,7 +2,6 @@
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import IsPasswordValid from "@/components/auth/IsPasswordValid";
-import { env } from "@/env.mjs";
 import { createUser } from "@/lib/users/users";
 import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
@@ -12,6 +11,7 @@ import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
 export const SignupForm = ({
+  webAppUrl,
   privacyUrl,
   termsUrl,
   passwordResetEnabled,
@@ -19,6 +19,7 @@ export const SignupForm = ({
   googleOAuthEnabled,
   githubOAuthEnabled,
 }: {
+  webAppUrl: string;
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
   passwordResetEnabled: boolean;
@@ -33,7 +34,7 @@ export const SignupForm = ({
   const nameRef = useRef<HTMLInputElement>(null);
 
   const inviteToken = searchParams?.get("inviteToken");
-  const callbackUrl = env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + inviteToken;
+  const callbackUrl = webAppUrl + "/invite?token=" + inviteToken;
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
