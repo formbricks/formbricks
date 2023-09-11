@@ -95,3 +95,10 @@ export const ZResponseWithSurvey = ZResponse.extend({
 });
 
 export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
+
+export const ZResponseUpdate = z.object({
+  finished: z.boolean(),
+  data: ZResponseData,
+});
+
+export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;

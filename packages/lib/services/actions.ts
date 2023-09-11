@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TAction } from "@formbricks/types/v1/actions";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";

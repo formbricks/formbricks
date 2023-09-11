@@ -1,4 +1,4 @@
-import { Result } from "@formbricks/errors";
+import { Result } from "@formbricks/types/v1/errorHandlers";
 import { NetworkError } from "./errors";
 
 // by using Brand, we can check that you can't pass to an environmentId a surveyId
