@@ -164,6 +164,9 @@ export default function ResponseNotes({
                       dateTime={timeSince(note.updatedAt.toISOString())}>
                       {timeSince(note.updatedAt.toISOString())}
                     </time>
+                    {note.isEdited && (
+                      <span className="ml-1 text-[12px] font-normal text-slate-500">{"(edited)"}</span>
+                    )}
                   </span>
                   <div className="flex items-center">
                     <span className="block text-slate-700">{note.text}</span>

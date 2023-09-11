@@ -48,6 +48,7 @@ const responseSelection = {
         },
       },
       isResolved: true,
+      isEdited: true,
     },
   },
   tags: {
