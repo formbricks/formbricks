@@ -3,9 +3,8 @@ export const IS_FORMBRICKS_CLOUD = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD =
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 
 // URLs
-const HEROKU_URL = process.env.HEROKU_APP_NAME ? `https://${process.env.HEROKU_APP_NAME}.herokuapp.com` : "";
 export const WEBAPP_URL =
-  process.env.WEBAPP_URL || process.env.NEXT_PUBLIC_WEBAPP_URL || HEROKU_URL || "http://localhost:3000";
+  process.env.WEBAPP_URL || process.env.NEXT_PUBLIC_WEBAPP_URL || "http://localhost:3000";
 
 export const SURVEY_BASE_URL = process.env.NEXT_PUBLIC_SURVEY_BASE_URL
   ? process.env.NEXT_PUBLIC_SURVEY_BASE_URL + "/"

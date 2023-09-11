@@ -33,7 +33,6 @@
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
-        "HEROKU_APP_NAME",
         "INSTANCE_ID",
         "INTERNAL_SECRET",
         "MAIL_FROM",
