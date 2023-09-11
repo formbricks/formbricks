@@ -14,6 +14,7 @@ export class ResponseQueue {
   private queue: TResponseUpdate[] = [];
   private config: QueueConfig;
   private surveyState: SurveyState;
+  private isRequestInProgress = false;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
@@ -32,7 +33,10 @@ export class ResponseQueue {
   }
 
   async processQueue() {
+    if (this.isRequestInProgress) return;
     if (this.queue.length === 0) return;
+
+    this.isRequestInProgress = true;
 
     const responseUpdate = this.queue[0];
     let attempts = 0;
@@ -57,6 +61,7 @@ export class ResponseQueue {
       this.queue.shift(); // remove the failed response from the queue
     }
 
+    this.isRequestInProgress = false;
     this.processQueue(); // process the next item in the queue if any
   }
 
