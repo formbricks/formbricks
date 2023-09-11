@@ -3,12 +3,13 @@
 import { updateResponseNoteAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 import { useProfile } from "@/lib/profile";
 import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
+import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Button } from "@formbricks/ui";
-import { MinusIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
-import { Maximize2Icon } from "lucide-react";
+import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -35,6 +36,7 @@ export default function ResponseNotes({
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
+  const [isTextAreaOpen, setIsTextAreaOpen] = useState(true);
   const [noteId, setNoteId] = useState("");
   const divRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +55,7 @@ export default function ResponseNotes({
   };
 
   const handleEditPencil = (note: TResponseNote) => {
+    setIsTextAreaOpen(true);
     setNoteText(note.text);
     setIsUpdatingNote(true);
     setNoteId(note.id);
@@ -132,7 +135,7 @@ export default function ResponseNotes({
                 onClick={() => {
                   setIsOpen(!isOpen);
                 }}>
-                <MinusIcon className="h-5 w-5 text-amber-500 hover:text-amber-600" />
+                <Minimize2Icon className="h-5 w-5 text-amber-500 hover:text-amber-600" />
               </button>
             </div>
           </div>
@@ -148,23 +151,36 @@ export default function ResponseNotes({
                   </time>
                 </span>
                 <div className="group/notetext flex items-center">
-                  <span className="block pr-1 text-slate-700">{note.text}</span>
+                  <span className="block pr-2 text-slate-700">{note.text}</span>
                   {profile.id === note.user.id && (
-                    <button onClick={() => handleEditPencil(note)}>
-                      <PencilIcon className=" h-3 w-3 text-gray-500 opacity-0 group-hover/notetext:opacity-100" />
+                    <button
+                      onClick={() => {
+                        handleEditPencil(note);
+                      }}>
+                      <PencilIcon className="h-3 w-3 text-gray-500 opacity-0 group-hover/notetext:opacity-100" />
                     </button>
                   )}
                 </div>
               </div>
             ))}
           </div>
-          <div className="h-[120px]">
+          <div
+            className={cn(
+              "h-[120px] transition-all duration-300",
+              !isTextAreaOpen && "pointer-events-none h-14"
+            )}>
             <div className={clsx("absolute bottom-0 w-full px-3 pb-3", !notes.length && "absolute bottom-0")}>
               <form onSubmit={isUpdatingNote ? handleNoteUpdate : handleNoteSubmission}>
                 <div className="mt-4">
                   <textarea
                     rows={2}
-                    className="block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"
+                    className={cn(
+                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm  focus:border-slate-500 focus:ring-0 sm:text-sm",
+                      !isTextAreaOpen && "scale-y-0 transition-all duration-1000",
+                      !isTextAreaOpen && "translate-y-8 transition-all duration-300",
+                      isTextAreaOpen && "scale-y-1 transition-all duration-1000",
+                      isTextAreaOpen && "translate-y-0 transition-all duration-300"
+                    )}
                     onChange={(e) => setNoteText(e.target.value)}
                     value={noteText}
                     autoFocus
@@ -178,7 +194,16 @@ export default function ResponseNotes({
                     }}
                     required></textarea>
                 </div>
-                <div className="mt-2 flex w-full justify-end">
+                <div className="pointer-events-auto z-10 mt-2 flex w-full items-center justify-end">
+                  <Button
+                    variant="minimal"
+                    type="button"
+                    className={cn("mr-auto p-1 duration-300 ")}
+                    onClick={() => {
+                      setIsTextAreaOpen(!isTextAreaOpen);
+                    }}>
+                    {isTextAreaOpen ? "Hide" : "Show"}
+                  </Button>
                   <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
                     {isUpdatingNote ? "Save" : "Send"}
                   </Button>
