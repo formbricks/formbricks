@@ -141,7 +141,7 @@ export default function ResponseNotes({
           <div className="rounded-t-lg bg-amber-50 px-4 pb-3 pt-4">
             <div className="flex items-center justify-between">
               <div className="group flex items-center">
-                <h3 className="pb-1 text-sm text-slate-500">Note</h3>
+                <h3 className="pb-1 text-sm text-amber-500">Note</h3>
               </div>
               <button
                 className="h-6 w-6 cursor-pointer"
