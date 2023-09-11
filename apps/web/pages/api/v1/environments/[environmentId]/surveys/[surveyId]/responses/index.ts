@@ -72,7 +72,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    if (env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1") {
+    if (env.IS_FORMBRICKS_CLOUD === "1") {
       const plan = await getPlan(req, res);
       if (plan === "free" && responses.length > RESPONSES_LIMIT_FREE) {
         return res.json({

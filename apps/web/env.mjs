@@ -46,6 +46,7 @@ export const env = createEnv({
     GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
+    IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -61,7 +62,6 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
-    NEXT_PUBLIC_IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
@@ -104,7 +104,7 @@ export const env = createEnv({
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
-    NEXT_PUBLIC_IS_FORMBRICKS_CLOUD: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD,
+    IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
   },

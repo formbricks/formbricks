@@ -86,26 +86,26 @@ These variables must also be provided at runtime.
 | TELEMETRY_DISABLED          | Disables telemetry if set to `1`.                                                            | optional                                                |                                                                         |
 | INSTANCE_ID                 | Instance ID for Formbricks Cloud to be sent to Telemetry.                                    | optional                                                |                                                                         |
 | INTERNAL_SECRET             | Internal Secret (Currently we do not use this anywhere).                                     | optional                                                |                                                                         |
+| IS_FORMBRICKS_CLOUD         | Uses Formbricks Cloud if set to `1`                                                          | optional                                                |                                                                         |
 
 ## Build-time Variables
 
 These variables must be provided at the time of the docker build and can be provided by updating the `.env` file.
 
-| Variable                                           | Description                                                     | Required | Default                 |
-| -------------------------------------------------- | --------------------------------------------------------------- | -------- | ----------------------- |
-| NEXT_PUBLIC_FORMBRICKS_API_HOST                    | Host for the Formbricks API.                                    | optional |                         |
-| NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID              | If you already have a preset environment ID of the environment. | optional |                         |
-| NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID        | If you already have an onboarding survey ID to show new users.  | optional |                         |
-| NEXT_PUBLIC_IS_FORMBRICKS_CLOUD                    | Uses Formbricks Cloud if set to `1`                             | optional |                         |
-| NEXT_PUBLIC_POSTHOG_API_KEY                        | API key for PostHog analytics.                                  | optional |                         |
-| NEXT_PUBLIC_POSTHOG_API_HOST                       | Host for PostHog analytics.                                     | optional |                         |
-| NEXT_PUBLIC_SENTRY_DSN                             | DSN for Sentry error tracking.                                  | optional |                         |
-| NEXT_PUBLIC_DOCSEARCH_APP_ID                       | ID of the DocSearch application.                                | optional |                         |
-| NEXT_PUBLIC_DOCSEARCH_API_KEY                      | API key of the DocSearch application.                           | optional |                         |
-| NEXT_PUBLIC_DOCSEARCH_INDEX_NAME                   | Name of the DocSearch index.                                    | optional |                         |
-| NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID          | Environment ID for Formbricks (if you already have one)         | optional |                         |
-| NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID | Survey ID for the feedback survey on the docs site.             | optional |                         |
-| NEXT_PUBLIC_FORMBRICKS_COM_API_HOST                | Host for the Formbricks API.                                    | optional |                         |
+| Variable                                           | Description                                                     | Required | Default |
+| -------------------------------------------------- | --------------------------------------------------------------- | -------- | ------- |
+| NEXT_PUBLIC_FORMBRICKS_API_HOST                    | Host for the Formbricks API.                                    | optional |         |
+| NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID              | If you already have a preset environment ID of the environment. | optional |         |
+| NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID        | If you already have an onboarding survey ID to show new users.  | optional |         |
+| NEXT_PUBLIC_POSTHOG_API_KEY                        | API key for PostHog analytics.                                  | optional |         |
+| NEXT_PUBLIC_POSTHOG_API_HOST                       | Host for PostHog analytics.                                     | optional |         |
+| NEXT_PUBLIC_SENTRY_DSN                             | DSN for Sentry error tracking.                                  | optional |         |
+| NEXT_PUBLIC_DOCSEARCH_APP_ID                       | ID of the DocSearch application.                                | optional |         |
+| NEXT_PUBLIC_DOCSEARCH_API_KEY                      | API key of the DocSearch application.                           | optional |         |
+| NEXT_PUBLIC_DOCSEARCH_INDEX_NAME                   | Name of the DocSearch index.                                    | optional |         |
+| NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID          | Environment ID for Formbricks (if you already have one)         | optional |         |
+| NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID | Survey ID for the feedback survey on the docs site.             | optional |         |
+| NEXT_PUBLIC_FORMBRICKS_COM_API_HOST                | Host for the Formbricks API.                                    | optional |         |
 
 ## Debugging
 

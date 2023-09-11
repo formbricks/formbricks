@@ -1,5 +1,5 @@
 export const RESPONSES_LIMIT_FREE = 100;
-export const IS_FORMBRICKS_CLOUD = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1";
+export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 
 // URLs
