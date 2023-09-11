@@ -17,14 +17,14 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "preact": "^10.16.0",
+    "preact": "^10.17.1",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "^2.5.0",
-    "autoprefixer": "^10.4.14",
+    "autoprefixer": "^10.4.15",
     "eslint-config-formbricks": "workspace:*",
-    "postcss": "^8.4.27",
+    "postcss": "^8.4.29",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9"
   }
 }
