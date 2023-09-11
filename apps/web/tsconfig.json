@@ -8,6 +8,7 @@
     "../../packages/types/*.d.ts",
     "../../packages/lib/jwt.ts"
   ],
+  "exclude": ["../../.env"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
