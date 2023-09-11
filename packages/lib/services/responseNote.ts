@@ -26,6 +26,10 @@ export const updateResponseNote = async (responseId: string, noteId: string, tex
       throw new ResourceNotFoundError("Note", "No Note Found");
     }
 
+    if (currentNote.text === text) {
+      return currentResponse;
+    }
+
     const updatedResponse = await prisma.response.update({
       where: {
         id: responseId,
@@ -39,6 +43,7 @@ export const updateResponseNote = async (responseId: string, noteId: string, tex
             data: {
               text: text,
               updatedAt: new Date(),
+              isEdited: true,
             },
           },
         },
