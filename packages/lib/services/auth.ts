@@ -131,6 +131,7 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
       id: userId,
     },
   });
+
   if (!user) {
     throw new Error("User not found");
   }

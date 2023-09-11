@@ -49,6 +49,7 @@ export {
 } from "./components/DropdownMenu";
 export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
+export { default as OTPInput } from "./components/OTPInput";
 export { Label } from "./components/Label";
 export { PasswordInput } from "./components/PasswordInput";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";

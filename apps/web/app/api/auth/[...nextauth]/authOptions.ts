@@ -3,6 +3,7 @@ import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -30,6 +31,8 @@ export const authOptions: NextAuthOptions = {
           type: "password",
           placeholder: "Your password",
         },
+        totpCode: { label: "Two-factor Code", type: "input", placeholder: "Code from authenticator app" },
+        backupCode: { label: "Backup Code", type: "input", placeholder: "Two-factor backup code" },
       },
       async authorize(credentials, _req) {
         let user;
@@ -55,6 +58,62 @@ export const authOptions: NextAuthOptions = {
 
         if (!isValid) {
           throw new Error("No user matches the provided credentials");
+        }
+
+        if (user.twoFactorEnabled && credentials.backupCode) {
+          if (!process.env.FORMBRICKS_ENCRYPTION_KEY) {
+            console.error("Missing encryption key; cannot proceed with backup code login.");
+            throw new Error("Internal Server Error");
+          }
+
+          if (!user.backupCodes) throw new Error("No backup codes found");
+
+          const backupCodes = JSON.parse(
+            symmetricDecrypt(user.backupCodes, process.env.FORMBRICKS_ENCRYPTION_KEY)
+          );
+
+          // check if user-supplied code matches one
+          const index = backupCodes.indexOf(credentials.backupCode.replaceAll("-", ""));
+          if (index === -1) throw new Error("Invalid backup code");
+
+          // delete verified backup code and re-encrypt remaining
+          backupCodes[index] = null;
+          await prisma.user.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              backupCodes: symmetricEncrypt(
+                JSON.stringify(backupCodes),
+                process.env.FORMBRICKS_ENCRYPTION_KEY
+              ),
+            },
+          });
+        } else if (user.twoFactorEnabled) {
+          if (!credentials.totpCode) {
+            throw new Error("second factor required");
+          }
+
+          if (!user.twoFactorSecret) {
+            throw new Error("Internal Server Error");
+          }
+
+          if (!process.env.FORMBRICKS_ENCRYPTION_KEY) {
+            throw new Error("Internal Server Error");
+          }
+
+          const secret = symmetricDecrypt(user.twoFactorSecret, process.env.FORMBRICKS_ENCRYPTION_KEY);
+          if (secret.length !== 32) {
+            throw new Error("Internal Server Error");
+          }
+
+          const isValidToken = (await import("@formbricks/lib/totp")).totpAuthenticatorCheck(
+            credentials.totpCode,
+            secret
+          );
+          if (!isValidToken) {
+            throw new Error("Invalid second factor code");
+          }
         }
 
         return {

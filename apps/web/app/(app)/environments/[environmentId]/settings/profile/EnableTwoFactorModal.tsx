@@ -5,8 +5,9 @@ import {
   setupTwoFactorAuthAction,
 } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
 import Modal from "@/components/shared/Modal";
-import { PasswordInput, Button } from "@formbricks/ui";
+import { PasswordInput, Button, OTPInput } from "@formbricks/ui";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { SubmitHandler, useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -31,12 +32,14 @@ type TConfirmPasswordFormProps = {
   setBackupCodes: (codes: string[]) => void;
   setDataUri: (dataUri: string) => void;
   setSecret: (secret: string) => void;
+  setOpen: (open: boolean) => void;
 };
 const ConfirmPasswordForm = ({
   setBackupCodes,
   setCurrentStep,
   setDataUri,
   setSecret,
+  setOpen,
 }: TConfirmPasswordFormProps) => {
   const { control, handleSubmit, setError } = useForm<TConfirmPasswordFormState>();
 
@@ -61,7 +64,7 @@ const ConfirmPasswordForm = ({
         <h3 className="text-sm text-slate-700">Confirm your current password to get started.</h3>
       </div>
       <form className="flex flex-col space-y-10" onSubmit={handleSubmit(onSubmit)}>
-        <div className="px-6">
+        <div className="flex flex-col gap-2 px-6">
           <label htmlFor="password" className="text-sm font-medium text-slate-700">
             Password
           </label>
@@ -90,12 +93,14 @@ const ConfirmPasswordForm = ({
           />
         </div>
 
-        <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-6">
-          <Button variant="secondary" type="button">
+        <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+          <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
             Cancel
           </Button>
 
-          <Button variant="darkCTA">Confirm</Button>
+          <Button variant="darkCTA" size="sm">
+            Confirm
+          </Button>
         </div>
       </form>
     </div>
@@ -106,8 +111,9 @@ type TScanQRCodeProps = {
   setCurrentStep: (step: TStep) => void;
   dataUri: string;
   secret: string;
+  setOpen: (open: boolean) => void;
 };
-const ScanQRCode = ({ dataUri, secret, setCurrentStep }: TScanQRCodeProps) => {
+const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: TScanQRCodeProps) => {
   return (
     <div>
       <div className="p-6">
@@ -115,18 +121,18 @@ const ScanQRCode = ({ dataUri, secret, setCurrentStep }: TScanQRCodeProps) => {
         <h3 className="text-sm text-slate-700">Scan the QR code below with your authenticator app.</h3>
       </div>
 
-      <div className="flex flex-col items-center justify-center space-y-6">
+      <div className="mb-4 flex flex-col items-center justify-center space-y-4">
         <Image src={dataUri} alt="QR code" width={200} height={200} />
         <p className="text-sm text-slate-700">Or enter the following code manually:</p>
         <p className="text-sm font-medium text-slate-700">{secret}</p>
       </div>
 
-      <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-6">
-        <Button variant="secondary" type="button">
+      <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+        <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
           Cancel
         </Button>
 
-        <Button variant="darkCTA" onClick={() => setCurrentStep("enterCode")}>
+        <Button variant="darkCTA" size="sm" onClick={() => setCurrentStep("enterCode")}>
           Next
         </Button>
       </div>
@@ -136,15 +142,24 @@ const ScanQRCode = ({ dataUri, secret, setCurrentStep }: TScanQRCodeProps) => {
 
 type TEnableCodeProps = {
   setCurrentStep: (step: TStep) => void;
+  setOpen: (open: boolean) => void;
+  refreshData: () => void;
 };
-const EnterCode = ({ setCurrentStep }: TEnableCodeProps) => {
-  const { control, handleSubmit } = useForm<TEnterCodeFormState>();
+const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) => {
+  const { control, handleSubmit } = useForm<TEnterCodeFormState>({
+    defaultValues: {
+      code: "",
+    },
+  });
 
   const onSubmit: SubmitHandler<TEnterCodeFormState> = async (data) => {
     try {
       const { message } = await enableTwoFactorAuthAction(data.code);
       toast.success(message);
       setCurrentStep("backupCodes");
+
+      // refresh data to update the UI
+      refreshData();
     } catch (err) {
       toast.error(err.message);
     }
@@ -159,7 +174,7 @@ const EnterCode = ({ setCurrentStep }: TEnableCodeProps) => {
         </div>
 
         <form className="flex flex-col space-y-10" onSubmit={handleSubmit(onSubmit)}>
-          <div className="px-6">
+          <div className="flex flex-col gap-2 px-6">
             <label htmlFor="code" className="text-sm font-medium text-slate-700">
               Code
             </label>
@@ -168,14 +183,11 @@ const EnterCode = ({ setCurrentStep }: TEnableCodeProps) => {
               control={control}
               render={({ field, formState: { errors } }) => (
                 <>
-                  <input
-                    id="code"
-                    autoComplete="off"
-                    placeholder="123456"
-                    aria-placeholder="code"
-                    required
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-                    {...field}
+                  <OTPInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    valueLength={6}
+                    containerClassName="justify-start"
                   />
 
                   {errors.code && (
@@ -188,12 +200,14 @@ const EnterCode = ({ setCurrentStep }: TEnableCodeProps) => {
             />
           </div>
 
-          <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-6">
-            <Button variant="secondary" type="button">
+          <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+            <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
               Cancel
             </Button>
 
-            <Button variant="darkCTA">Confirm</Button>
+            <Button variant="darkCTA" size="sm">
+              Confirm
+            </Button>
           </div>
         </form>
       </div>
@@ -203,9 +217,10 @@ const EnterCode = ({ setCurrentStep }: TEnableCodeProps) => {
 
 type TDisplayBackupCodesProps = {
   backupCodes: string[];
+  setOpen: (open: boolean) => void;
 };
 
-const DisplayBackupCodes = ({ backupCodes }: TDisplayBackupCodesProps) => {
+const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) => {
   const formatBackupCode = (code: string) => `${code.slice(0, 5)}-${code.slice(5, 10)}`;
 
   const handleDownloadBackupCode = () => {
@@ -236,13 +251,14 @@ const DisplayBackupCodes = ({ backupCodes }: TDisplayBackupCodesProps) => {
         ))}
       </div>
 
-      <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-6">
-        <Button variant="secondary" type="button">
+      <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+        <Button variant="secondary" type="button" size="sm" onClick={() => setOpen(false)}>
           Close
         </Button>
 
         <Button
           variant="darkCTA"
+          size="sm"
           onClick={() => {
             navigator.clipboard.writeText(backupCodes.map((code) => formatBackupCode(code)).join("\n"));
             toast.success("Copied to clipboard");
@@ -252,6 +268,7 @@ const DisplayBackupCodes = ({ backupCodes }: TDisplayBackupCodesProps) => {
 
         <Button
           variant="darkCTA"
+          size="sm"
           onClick={() => {
             handleDownloadBackupCode();
           }}>
@@ -263,29 +280,45 @@ const DisplayBackupCodes = ({ backupCodes }: TDisplayBackupCodesProps) => {
 };
 
 const EnableTwoFactorModal = ({ open, setOpen }: TEnableTwoFactorModalProps) => {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<TStep>("confirmPassword");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [dataUri, setDataUri] = useState<string>("");
   const [secret, setSecret] = useState<string>("");
 
+  const refreshData = () => {
+    router.refresh();
+  };
+
+  const resetState = () => {
+    setCurrentStep("confirmPassword");
+    setBackupCodes([]);
+    setDataUri("");
+    setSecret("");
+    setOpen(false);
+  };
+
   return (
-    <Modal open={open} setOpen={setOpen} noPadding>
+    <Modal open={open} setOpen={() => resetState()} noPadding>
       {currentStep === "confirmPassword" && (
         <ConfirmPasswordForm
           setBackupCodes={setBackupCodes}
           setCurrentStep={setCurrentStep}
           setDataUri={setDataUri}
           setSecret={setSecret}
+          setOpen={setOpen}
         />
       )}
 
       {currentStep === "scanQRCode" && (
-        <ScanQRCode setCurrentStep={setCurrentStep} dataUri={dataUri} secret={secret} />
+        <ScanQRCode setCurrentStep={setCurrentStep} dataUri={dataUri} secret={secret} setOpen={setOpen} />
       )}
 
-      {currentStep === "enterCode" && <EnterCode setCurrentStep={setCurrentStep} />}
+      {currentStep === "enterCode" && (
+        <EnterCode setCurrentStep={setCurrentStep} setOpen={setOpen} refreshData={refreshData} />
+      )}
 
-      {currentStep === "backupCodes" && <DisplayBackupCodes backupCodes={backupCodes} />}
+      {currentStep === "backupCodes" && <DisplayBackupCodes backupCodes={backupCodes} setOpen={resetState} />}
     </Modal>
   );
 };
