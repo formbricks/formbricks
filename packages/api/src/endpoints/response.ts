@@ -1,4 +1,4 @@
-import { Result, ok } from "@formbricks/errors";
+import { Result, ok } from "@formbricks/types/v1/errorHandlers";
 import { ResponseCreateRequest, ResponseUpdateRequest } from "@formbricks/types/js";
 import {
   CreateResponseResponse,

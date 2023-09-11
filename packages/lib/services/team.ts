@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";

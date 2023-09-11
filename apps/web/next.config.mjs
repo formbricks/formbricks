@@ -17,7 +17,6 @@ const nextConfig = {
     "@formbricks/ee",
     "@formbricks/ui",
     "@formbricks/lib",
-    "@formbricks/errors",
   ],
   images: {
     remotePatterns: [

@@ -1,7 +1,7 @@
 "use server";
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { cache } from "react";
 
