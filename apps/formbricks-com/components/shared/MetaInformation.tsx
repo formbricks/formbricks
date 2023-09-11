@@ -26,7 +26,7 @@ export default function MetaInformation({
       <meta name="description" content={description} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={`https://${process.env.VERCEL_URL}/social-image.png`} />
+      <meta property="og:image" content={`https://${process.env.WEBAPP_URL}/social-image.png`} />
       <meta property="og:image:alt" content="Open Source Experience Management, Privacy-first" />
       <meta property="og:image:type" content="image/png" />
       <meta property="og:image:width" content="1200" />
