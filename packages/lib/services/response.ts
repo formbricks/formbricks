@@ -47,6 +47,7 @@ const responseSelection = {
           name: true,
         },
       },
+      isResolved: true,
     },
   },
   tags: {

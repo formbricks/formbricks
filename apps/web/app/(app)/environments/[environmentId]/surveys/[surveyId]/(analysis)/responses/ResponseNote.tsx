@@ -1,13 +1,16 @@
 "use client";
 
-import { updateResponseNoteAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
+import {
+  resolveResponseNoteAction,
+  updateResponseNoteAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 import { useProfile } from "@/lib/profile";
 import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/v1/responses";
-import { Button } from "@formbricks/ui";
-import { PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -51,6 +54,16 @@ export default function ResponseNotes({
     } catch (e) {
       toast.error("An error occurred creating a new note");
       setIsCreatingNote(false);
+    }
+  };
+
+  const handleResolveNote = (note: TResponseNote) => {
+    try {
+      resolveResponseNoteAction(responseId, note.id);
+      router.refresh();
+    } catch (e) {
+      toast.error("An error occurred resolving a note");
+      setIsUpdatingNote(false);
     }
   };
 
@@ -140,29 +153,50 @@ export default function ResponseNotes({
             </div>
           </div>
           <div className="flex-1 overflow-auto px-4 pt-2" ref={divRef}>
-            {notes.map((note) => (
-              <div className="mb-3" key={note.id}>
-                <span className="block font-semibold text-slate-700">
-                  {note.user.name}
-                  <time
-                    className="ml-2 text-xs font-normal text-slate-500"
-                    dateTime={timeSince(note.updatedAt.toISOString())}>
-                    {timeSince(note.updatedAt.toISOString())}
-                  </time>
-                </span>
-                <div className="group/notetext flex items-center">
-                  <span className="block pr-2 text-slate-700">{note.text}</span>
-                  {profile.id === note.user.id && (
-                    <button
-                      onClick={() => {
-                        handleEditPencil(note);
-                      }}>
-                      <PencilIcon className="h-3 w-3 text-gray-500 opacity-0 group-hover/notetext:opacity-100" />
-                    </button>
-                  )}
+            {notes
+              .filter((note) => !note.isResolved)
+              .map((note) => (
+                <div className="group/notetext mb-3" key={note.id}>
+                  <span className="block font-semibold text-slate-700">
+                    {note.user.name}
+                    <time
+                      className="ml-2 text-xs font-normal text-slate-500"
+                      dateTime={timeSince(note.updatedAt.toISOString())}>
+                      {timeSince(note.updatedAt.toISOString())}
+                    </time>
+                  </span>
+                  <div className="flex items-center">
+                    <span className="block text-slate-700">{note.text}</span>
+                    {profile.id === note.user.id && (
+                      <button
+                        className="ml-auto hidden group-hover/notetext:block"
+                        onClick={() => {
+                          handleEditPencil(note);
+                        }}>
+                        <PencilIcon className="h-3 w-3 text-gray-500" />
+                      </button>
+                    )}
+                    {!note.isResolved && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className="ml-2 hidden group-hover/notetext:block"
+                              onClick={() => {
+                                handleResolveNote(note);
+                              }}>
+                              <CheckIcon className="h-4 w-4 text-gray-500" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
+                            <span className="text-slate-700">Resolve</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
           <div
             className={cn(
@@ -198,15 +232,18 @@ export default function ResponseNotes({
                   <Button
                     variant="minimal"
                     type="button"
-                    className={cn("mr-auto p-1 duration-300 ")}
+                    size="sm"
+                    className={cn("mr-auto duration-300 ")}
                     onClick={() => {
                       setIsTextAreaOpen(!isTextAreaOpen);
                     }}>
                     {isTextAreaOpen ? "Hide" : "Show"}
                   </Button>
-                  <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
-                    {isUpdatingNote ? "Save" : "Send"}
-                  </Button>
+                  {isTextAreaOpen && (
+                    <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
+                      {isUpdatingNote ? "Save" : "Send"}
+                    </Button>
+                  )}
                 </div>
               </form>
             </div>

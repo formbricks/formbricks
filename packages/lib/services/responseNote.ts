@@ -53,3 +53,52 @@ export const updateResponseNote = async (responseId: string, noteId: string, tex
     throw error;
   }
 };
+
+export const resolveResponseNote = async (responseId: string, noteId: string): Promise<void> => {
+  try {
+    const currentResponse = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: {
+        notes: true,
+      },
+    });
+
+    if (!currentResponse) {
+      throw new ResourceNotFoundError("Response", "No Response Found");
+    }
+
+    const currentNote = currentResponse.notes.find((eachnote) => eachnote.id === noteId);
+
+    if (!currentNote) {
+      throw new ResourceNotFoundError("Note", "No Note Found");
+    }
+
+    await prisma.response.update({
+      where: {
+        id: responseId,
+      },
+      data: {
+        notes: {
+          updateMany: {
+            where: {
+              id: noteId,
+            },
+            data: {
+              updatedAt: new Date(),
+              isResolved: true,
+            },
+          },
+        },
+      },
+    });
+    return;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
