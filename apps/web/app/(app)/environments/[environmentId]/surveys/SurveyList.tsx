@@ -14,6 +14,10 @@ import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   const environment = await getEnvironment(environmentId);
   const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
   const environments: TEnvironment[] = await getEnvironments(product.id);
