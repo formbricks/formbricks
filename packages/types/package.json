@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
+  "sideEffects": false,
   "scripts": {
     "clean": "rimraf node_modules .turbo"
   },
@@ -10,6 +11,6 @@
     "@formbricks/tsconfig": "workspace:*"
   },
   "dependencies": {
-    "zod": "^3.21.4"
+    "zod": "^3.22.2"
   }
 }

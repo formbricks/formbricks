@@ -1,7 +1,7 @@
+import { NoCodeConfig } from "@formbricks/types/events";
 import { QuestionType } from "@formbricks/types/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { EventType } from "@prisma/client";
-import { NoCodeConfig } from "@formbricks/types/events";
 
 export const populateEnvironment = {
   eventClasses: {
@@ -698,7 +698,7 @@ export const ChurnSurvey = {
       subheader: "We're sorry to see you leave. Help us do better:",
     },
     {
-      id: "reason-easier-use",
+      id: "easier-to-use",
       type: QuestionType.OpenText,
       logic: [{ condition: "submitted", destination: "end" }],
       headline: "What would have made {{productName}} easier to use?",

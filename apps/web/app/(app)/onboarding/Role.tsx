@@ -1,8 +1,6 @@
 "use client";
 
 import { cn } from "@/../../packages/lib/cn";
-import Headline from "@/components/preview/Headline";
-import Subheader from "@/components/preview/Subheader";
 import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/lib/formbricks";
 import { useProfile } from "@/lib/profile";
@@ -67,8 +65,13 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
-        <Headline headline="What is your role?" questionId="none" />
-        <Subheader subheader="Make your Formbricks experience more personalised." questionId="none" />
+        <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+          What is your role?
+        </label>
+        ∏
+        <label className="block text-sm font-normal leading-6 text-slate-500">
+          Make your Formbricks experience more personalised.
+        </label>
         <div className="mt-4">
           <fieldset>
             <legend className="sr-only">Choices</legend>

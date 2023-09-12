@@ -2,8 +2,14 @@
 
 import { Button, Dialog, DialogContent } from "@formbricks/ui";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { LinkIcon, EnvelopeIcon, CodeBracketIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
-import { useMemo, useState } from "react";
+import {
+  LinkIcon,
+  EnvelopeIcon,
+  CodeBracketIcon,
+  DocumentDuplicateIcon,
+  ArrowUpRightIcon,
+} from "@heroicons/react/24/outline";
+import { useMemo, useRef, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import CodeBlock from "@/components/shared/CodeBlock";
 import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
@@ -28,7 +34,7 @@ export default function EmbedSurveyModal({ survey, open, setOpen }: EmbedSurveyM
   const surveyUrl = useMemo(() => SURVEY_BASE_URL + survey.id, [survey]);
 
   const componentMap = {
-    link: <LinkTab />,
+    link: <LinkTab surveyUrl={surveyUrl} />,
     email: <EmailTab />,
     webpage: <WebpageTab surveyUrl={surveyUrl} />,
   };
@@ -66,8 +72,57 @@ export default function EmbedSurveyModal({ survey, open, setOpen }: EmbedSurveyM
   );
 }
 
-const LinkTab = () => {
-  return <>Link</>;
+const LinkTab = ({ surveyUrl }) => {
+  const linkTextRef = useRef(null);
+
+  const handleTextSelection = () => {
+    if (linkTextRef.current) {
+      const range = document.createRange();
+      range.selectNodeContents(linkTextRef.current);
+
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+  };
+  return (
+    <div className="flex grow flex-col gap-5">
+      <div className="flex justify-between gap-2">
+        <div
+          ref={linkTextRef}
+          className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-slate-800"
+          onClick={() => handleTextSelection()}>
+          <span style={{ wordBreak: "break-all" }}>{surveyUrl}</span>
+        </div>
+        <Button
+          variant="darkCTA"
+          title="Copy survey link to clipboard"
+          aria-label="Copy survey link to clipboard"
+          onClick={() => {
+            navigator.clipboard.writeText(surveyUrl);
+            toast.success("URL copied to clipboard!");
+          }}
+          EndIcon={DocumentDuplicateIcon}>
+          Copy URL
+        </Button>
+      </div>
+      <div className="relative grow rounded-xl border border-gray-200 bg-white px-8 py-10">
+        <Button
+          variant="minimal"
+          className={cn(
+            "absolute bottom-6 left-1/2 -translate-x-1/2 transform rounded-lg border border-slate-200"
+          )}
+          EndIcon={ArrowUpRightIcon}
+          title="Open survey in new tab"
+          aria-label="Open survey in new tab"
+          endIconClassName="h-4 w-4 ">
+          Open in new tab
+        </Button>
+      </div>
+    </div>
+  );
 };
 
 const EmailTab = () => {
@@ -88,10 +143,10 @@ const WebpageTab = ({ surveyUrl }) => {
         <div className=""></div>
         <Button
           variant="darkCTA"
-          title="Copy survey link to clipboard"
-          aria-label="Copy survey link to clipboard"
+          title="Embed survey in your website"
+          aria-label="Embed survey in your website"
           onClick={() => {
-            navigator.clipboard.writeText(surveyUrl);
+            navigator.clipboard.writeText(iframeCode);
             toast.success("Embed code copied to clipboard!");
           }}
           EndIcon={DocumentDuplicateIcon}>

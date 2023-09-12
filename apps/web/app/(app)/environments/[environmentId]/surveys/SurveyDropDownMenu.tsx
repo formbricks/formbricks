@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {
@@ -36,6 +35,7 @@ interface SurveyDropDownMenuProps {
   survey: TSurveyWithAnalytics;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
+  surveyBaseUrl: string;
 }
 
 export default function SurveyDropDownMenu({
@@ -43,12 +43,13 @@ export default function SurveyDropDownMenu({
   survey,
   environment,
   otherEnvironment,
+  surveyBaseUrl,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const surveyUrl = useMemo(() => SURVEY_BASE_URL + survey.id, [survey]);
+  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
 
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);

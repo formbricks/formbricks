@@ -1,65 +1,11 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { TSurvey, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import "server-only";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
-
-export const selectSurveyWithAnalytics = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  name: true,
-  type: true,
-  environmentId: true,
-  status: true,
-  questions: true,
-  thankYouCard: true,
-  displayOption: true,
-  recontactDays: true,
-  autoClose: true,
-  closeOnDate: true,
-  delay: true,
-  autoComplete: true,
-  redirectUrl: true,
-  triggers: {
-    select: {
-      eventClass: {
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          environmentId: true,
-          name: true,
-          description: true,
-          type: true,
-          noCodeConfig: true,
-        },
-      },
-    },
-  },
-  attributeFilters: {
-    select: {
-      id: true,
-      attributeClassId: true,
-      condition: true,
-      value: true,
-    },
-  },
-  displays: {
-    select: {
-      status: true,
-      id: true,
-    },
-  },
-  _count: {
-    select: {
-      responses: true,
-    },
-  },
-};
 
 export const selectSurvey = {
   id: true,
@@ -79,6 +25,7 @@ export const selectSurvey = {
   autoComplete: true,
   verifyEmail: true,
   redirectUrl: true,
+  surveyClosedMessage: true,
   triggers: {
     select: {
       eventClass: {
@@ -101,6 +48,21 @@ export const selectSurvey = {
       attributeClassId: true,
       condition: true,
       value: true,
+    },
+  },
+};
+
+export const selectSurveyWithAnalytics = {
+  ...selectSurvey,
+  displays: {
+    select: {
+      status: true,
+      id: true,
+    },
+  },
+  _count: {
+    select: {
+      responses: true,
     },
   },
 };

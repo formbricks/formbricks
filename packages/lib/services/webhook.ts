@@ -4,7 +4,7 @@ import "server-only";
 import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/errors";
+import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/types/v1/errors";
 
 export const getWebhooks = async (environmentId: string): Promise<TWebhook[]> => {
   try {

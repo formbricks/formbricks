@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Template } from "@formbricks/types/templates";
+import type { TTemplate } from "@formbricks/types/v1/templates";
 import { useEffect } from "react";
 import { replacePresetPlaceholders } from "@/lib/templates";
-import { templates } from "./templates";
+import { minimalSurvey, templates } from "./templates";
 import PreviewSurvey from "../PreviewSurvey";
 import TemplateList from "./TemplateList";
 import type { TProduct } from "@formbricks/types/v1/product";
@@ -22,7 +22,7 @@ export default function TemplateContainerWithPreview({
   product,
   environment,
 }: TemplateContainerWithPreviewProps) {
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
   useEffect(() => {
@@ -68,16 +68,12 @@ export default function TemplateContainerWithPreview({
             <div className="my-6 flex h-full w-full flex-col items-center justify-center">
               <p className="pb-2 text-center text-sm font-normal text-slate-400">Preview</p>
               <PreviewSurvey
+                survey={{ ...minimalSurvey, ...activeTemplate.preset }}
                 activeQuestionId={activeQuestionId}
-                questions={activeTemplate.preset.questions}
-                brandColor={product.brandColor}
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
                 environmentId={environmentId}
-                surveyType={environment?.widgetSetupCompleted ? "web" : "link"}
-                thankYouCard={{ enabled: true }}
-                autoClose={null}
               />
             </div>
           )}

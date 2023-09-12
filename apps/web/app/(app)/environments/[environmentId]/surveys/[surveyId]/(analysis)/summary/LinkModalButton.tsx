@@ -11,9 +11,14 @@ import EmbedSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
+  surveyBaseUrl: string;
 }
 
-export default function LinkSurveyShareButton({ survey, className }: LinkSurveyShareButtonProps) {
+export default function LinkSurveyShareButton({
+  survey,
+  className,
+  surveyBaseUrl,
+}: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
 
   return (
@@ -29,6 +34,14 @@ export default function LinkSurveyShareButton({ survey, className }: LinkSurveyS
       </Button>
       {/* {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />} */}
       {showLinkModal && <EmbedSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
+      {showLinkModal && (
+        <LinkSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          surveyBaseUrl={surveyBaseUrl}
+        />
+      )}
     </>
   );
 }

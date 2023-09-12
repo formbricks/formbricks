@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { TDisplay, TDisplayInput, TDisplaysWithSurveyName } from "@formbricks/types/v1/displays";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { transformPrismaPerson } from "./person";
 
 const selectDisplay = {
