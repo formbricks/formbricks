@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError } from "@formbricks/errors";
+import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
 import { Team } from "@prisma/client";
@@ -163,6 +163,10 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
       surveyClosedMessage: existingSurvey.surveyClosedMessage
         ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
         : prismaClient.JsonNull,
+
+      verifyEmail: existingSurvey.verifyEmail
+        ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
+        : prismaClient.JsonNull,
     },
   });
   return newSurvey;
@@ -290,6 +294,7 @@ export async function copyToOtherEnvironmentAction(
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
+      verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
     },
   });
   return newSurvey;

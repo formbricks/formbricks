@@ -1,44 +1,59 @@
 "use client";
 
-import FormbricksSignature from "@/components/preview/FormbricksSignature";
-import Progress from "@/components/preview/Progress";
-import QuestionConditional from "@/components/preview/QuestionConditional";
-import ThankYouCard from "@/components/preview/ThankYouCard";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
-import { cn } from "@formbricks/lib/cn";
-import { Confetti } from "@formbricks/ui";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useEffect, useRef, useState } from "react";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import Loading from "@/app/s/[surveyId]/loading";
+import { SurveyInline } from "@/components/shared/Survey";
+import { createDisplay } from "@formbricks/lib/client/display";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { ResponseQueue } from "@formbricks/lib/responseQueue";
+import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/v1/product";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
+import { getPrefillResponseData } from "@/app/s/[surveyId]/prefilling";
+import { TResponseData } from "@formbricks/types/v1/responses";
 
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
+  personId?: string;
+  emailVerificationStatus?: string;
+  prefillAnswer?: string;
 }
 
-export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
-  const {
-    currentQuestion,
-    finished,
-    loadingElement,
-    prefilling,
-    progress,
-    isPreview,
-    lastQuestion,
-    initiateCountdown,
-    restartSurvey,
-    submitResponse,
-    goToPreviousQuestion,
-    goToNextQuestion,
-    storedResponseValue,
-  } = useLinkSurveyUtils(survey);
+export default function LinkSurvey({
+  survey,
+  product,
+  personId,
+  emailVerificationStatus,
+  prefillAnswer,
+}: LinkSurveyProps) {
+  const searchParams = useSearchParams();
+  const isPreview = searchParams?.get("preview") === "true";
+  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
+  const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
+  const prefillResponseData: TResponseData | undefined = prefillAnswer
+    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
+    : undefined;
 
-  const showBackButton = progress !== 0 && !finished;
-  // Create a reference to the top element
-  const topRef = useRef<HTMLDivElement>(null);
+  const responseQueue = useMemo(
+    () =>
+      new ResponseQueue(
+        {
+          apiHost: WEBAPP_URL,
+          retryAttempts: 2,
+          onResponseSendingFailed: (response) => {
+            alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+          },
+          setSurveyState: setSurveyState,
+          personId,
+        },
+        surveyState
+      ),
+    []
+  );
   const [autoFocus, setAutofocus] = useState(false);
 
   // Not in an iframe, enable autofocus on input fields.
@@ -48,71 +63,42 @@ export default function LinkSurvey({ survey, product }: LinkSurveyProps) {
     }
   }, []);
 
-  // Scroll to top when the currentQuestion changes
-  useEffect(() => {
-    if (topRef.current) {
-      topRef.current.scrollTop = 0;
+  if (emailVerificationStatus && emailVerificationStatus !== "verified") {
+    if (emailVerificationStatus === "fishy") {
+      return <VerifyEmail survey={survey} isErrorComponent={true} />;
     }
-  }, [currentQuestion]);
-
-  if (!currentQuestion || prefilling) {
-    return (
-      <div className="flex h-full flex-1 items-center justify-center">
-        <Loading />
-      </div>
-    );
+    //emailVerificationStatus === "not-verified"
+    return <VerifyEmail survey={survey} />;
   }
 
   return (
     <>
-      <div
-        ref={topRef}
-        className={cn(
-          loadingElement && "animate-pulse opacity-60",
-          "flex h-full flex-1 items-center overflow-y-auto bg-white"
-        )}>
-        <ContentWrapper className={cn(isPreview && "mt-[44px]", "max-h-full w-full md:max-w-lg")}>
-          {isPreview && (
-            <div className="absolute left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
-              <div className="w-20"></div>
-              <div className="">Survey Preview 👀</div>
-              <button
-                className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
-                onClick={() => restartSurvey()}>
-                Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
-              </button>
-            </div>
-          )}
-          {finished ? (
-            <div>
-              <Confetti colors={[product.brandColor, "#eee"]} />
-              <ThankYouCard
-                headline={survey.thankYouCard.headline || "Thank you!"}
-                subheader={survey.thankYouCard.subheader || "Your response has been recorded."}
-                brandColor={product.brandColor}
-                initiateCountdown={initiateCountdown}
-              />
-            </div>
-          ) : (
-            <QuestionConditional
-              question={currentQuestion}
-              brandColor={product.brandColor}
-              lastQuestion={lastQuestion}
-              onSubmit={submitResponse}
-              storedResponseValue={storedResponseValue}
-              goToNextQuestion={goToNextQuestion}
-              goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
-              autoFocus={autoFocus}
-            />
-          )}
-        </ContentWrapper>
-      </div>
-      <div className="top-0 z-10 w-full border-b bg-white">
-        <div className="mx-auto max-w-md space-y-6 p-6">
-          <Progress progress={progress} brandColor={product.brandColor} />
-          {product.formbricksSignature && <FormbricksSignature />}
-        </div>
-      </div>
+      <ContentWrapper className="h-full w-full p-0 md:max-w-lg">
+        {isPreview && (
+          <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
+            <div />
+            Survey Preview 👀
+            <button
+              className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
+              onClick={() => setActiveQuestionId(survey.questions[0].id)}>
+              Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <SurveyInline
+          survey={survey}
+          brandColor={product.brandColor}
+          formbricksSignature={product.formbricksSignature}
+          onDisplay={() => createDisplay({ surveyId: survey.id }, window?.location?.origin)}
+          onResponse={(responseUpdate) => {
+            responseQueue.add(responseUpdate);
+          }}
+          onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
+          activeQuestionId={activeQuestionId}
+          autoFocus={autoFocus}
+          prefillResponseData={prefillResponseData}
+        />
+      </ContentWrapper>
     </>
   );
 }

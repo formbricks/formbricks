@@ -20,9 +20,16 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
+  const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
+
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: "Survey Completed",
     subheading: "This free & open-source survey has been closed",
+  });
+
+  const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
+    name: "",
+    subheading: "",
   });
   const [closeOnDate, setCloseOnDate] = useState<Date>();
 
@@ -63,6 +70,14 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     }
   };
 
+  const handleVerifyEmailToogle = () => {
+    setVerifyEmailToggle((prev) => !prev);
+
+    if (verifyEmailToggle && localSurvey.verifyEmail) {
+      setLocalSurvey({ ...localSurvey, verifyEmail: null });
+    }
+  };
+
   const handleCloseOnDateChange = (date: Date) => {
     const equivalentDate = date?.getDate();
     date?.setUTCHours(0, 0, 0, 0);
@@ -88,6 +103,22 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
   };
 
+  const handleVerifyEmailSurveyDetailsChange = ({
+    name,
+    subheading,
+  }: {
+    name?: string;
+    subheading?: string;
+  }) => {
+    const message = {
+      name: name || verifyEmailSurveyDetails.name,
+      subheading: subheading || verifyEmailSurveyDetails.subheading,
+    };
+
+    setVerifyEmailSurveyDetails(message);
+    setLocalSurvey({ ...localSurvey, verifyEmail: message });
+  };
+
   useEffect(() => {
     if (localSurvey.redirectUrl) {
       setRedirectUrl(localSurvey.redirectUrl);
@@ -100,6 +131,14 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
         subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
       });
       setSurveyClosedMessageToggle(true);
+    }
+
+    if (localSurvey.verifyEmail) {
+      setVerifyEmailSurveyDetails({
+        name: localSurvey.verifyEmail.name!,
+        subheading: localSurvey.verifyEmail.subheading!,
+      });
+      setVerifyEmailToggle(true);
     }
 
     if (localSurvey.closeOnDate) {
@@ -200,32 +239,32 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           </AdvancedOptionToggle>
 
           {/* Redirect on completion */}
+          <AdvancedOptionToggle
+            htmlId="redirectUrl"
+            isChecked={redirectToggle}
+            onToggle={handleRedirectCheckMark}
+            title="Redirect on completion"
+            description="Redirect user to specified link on survey completion"
+            childBorder={true}>
+            <div className="w-full p-4">
+              <div className="flex w-full cursor-pointer items-center">
+                <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
+                  Redirect respondents here:
+                </p>
+                <Input
+                  autoFocus
+                  className="w-full bg-white"
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                />
+              </div>
+            </div>
+          </AdvancedOptionToggle>
+
           {localSurvey.type === "link" && (
             <>
-              <AdvancedOptionToggle
-                htmlId="redirectUrl"
-                isChecked={redirectToggle}
-                onToggle={handleRedirectCheckMark}
-                title="Redirect on completion"
-                description="Redirect user to specified link on survey completion"
-                childBorder={true}>
-                <div className="w-full p-4">
-                  <div className="flex w-full cursor-pointer items-center">
-                    <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
-                      Redirect respondents here:
-                    </p>
-                    <Input
-                      autoFocus
-                      className="w-full bg-white"
-                      type="url"
-                      placeholder="https://www.example.com"
-                      value={redirectUrl ? redirectUrl : ""}
-                      onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </AdvancedOptionToggle>
-
               {/* Adjust Survey Closed Message */}
               <AdvancedOptionToggle
                 htmlId="adjustSurveyClosedMessage"
@@ -253,6 +292,43 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       name="subheading"
                       defaultValue={surveyClosedMessage.subheading}
                       onChange={(e) => handleClosedSurveyMessageChange({ subheading: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+
+              <AdvancedOptionToggle
+                htmlId="verifyEmailBeforeSubmission"
+                isChecked={verifyEmailToggle}
+                onToggle={handleVerifyEmailToogle}
+                title="Verify email before submission"
+                description="Only let people with a real email respond."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <p className="text-md font-semibold">How it works</p>
+                    <p className="mb-4 mt-2 text-sm text-slate-500">
+                      Respondants will receive the survey link via email.
+                    </p>
+                    <Label htmlFor="headline">Survey Name (Public)</Label>
+                    <Input
+                      autoFocus
+                      id="heading"
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      placeholder="Job Application Form"
+                      defaultValue={verifyEmailSurveyDetails.name}
+                      onChange={(e) => handleVerifyEmailSurveyDetailsChange({ name: e.target.value })}
+                    />
+
+                    <Label htmlFor="headline">Subheader (Public)</Label>
+                    <Input
+                      className="mt-2 bg-white"
+                      id="subheading"
+                      name="subheading"
+                      placeholder="Thanks for applying as a full stack engineer"
+                      defaultValue={verifyEmailSurveyDetails.subheading}
+                      onChange={(e) => handleVerifyEmailSurveyDetailsChange({ subheading: e.target.value })}
                     />
                   </div>
                 </div>

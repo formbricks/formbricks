@@ -26,7 +26,7 @@ import {
 } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
+import { Input } from "../../Input";
 import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
@@ -158,47 +158,28 @@ function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
 
   return (
     <div ref={editorRef} className="link-editor">
-      {isEditMode ? (
-        <input
-          ref={inputRef}
-          className="link-input"
-          value={linkUrl}
-          onChange={(event) => {
-            setLinkUrl(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              if (lastSelection !== null) {
-                if (linkUrl !== "") {
-                  editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
-                }
-                setEditMode(false);
+      <Input
+        className="bg-white"
+        ref={inputRef}
+        value={linkUrl}
+        onChange={(event) => {
+          setLinkUrl(event.target.value);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            if (lastSelection !== null) {
+              if (linkUrl !== "") {
+                editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
               }
-            } else if (event.key === "Escape") {
-              event.preventDefault();
               setEditMode(false);
             }
-          }}
-        />
-      ) : (
-        <>
-          <div className="link-input">
-            <a href={linkUrl} target="_blank" rel="noopener noreferrer">
-              {linkUrl}
-            </a>
-            <div
-              className="link-edit"
-              role="button"
-              tabIndex={0}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                setEditMode(true);
-              }}
-            />
-          </div>
-        </>
-      )}
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            setEditMode(false);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -15,9 +15,18 @@ export const ZSurveyClosedMessage = z
   })
   .optional();
 
+export const ZSurveyVerifyEmail = z
+  .object({
+    name: z.optional(z.string()),
+    subheading: z.optional(z.string()),
+  })
+  .optional();
+
+export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
+
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
-export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
+export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
@@ -122,6 +131,7 @@ const ZSurveyQuestionBase = z.object({
   subheader: z.string().optional(),
   required: z.boolean(),
   buttonLabel: z.string().optional(),
+  backButtonLabel: z.string().optional(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
@@ -238,7 +248,8 @@ export const ZSurvey = z.object({
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage,
+  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+  verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

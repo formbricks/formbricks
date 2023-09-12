@@ -2,7 +2,7 @@
 
 import type { Survey } from "@formbricks/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 import AddQuestionButton from "./AddQuestionButton";
@@ -38,6 +38,8 @@ export default function QuestionsView({
     }, {});
   }, []);
 
+  const [backButtonLabel, setbackButtonLabel] = useState(null);
+
   const handleQuestionLogicChange = (survey: Survey, compareId: string, updatedId: string): Survey => {
     survey.questions.forEach((question) => {
       if (!question.logic) return;
@@ -68,6 +70,7 @@ export default function QuestionsView({
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
@@ -89,6 +92,13 @@ export default function QuestionsView({
       ...updatedSurvey.questions[questionIdx],
       ...updatedAttributes,
     };
+
+    if ("backButtonLabel" in updatedAttributes) {
+      updatedSurvey.questions.forEach((question) => {
+        question.backButtonLabel = updatedAttributes.backButtonLabel;
+      });
+      setbackButtonLabel(updatedAttributes.backButtonLabel);
+    }
     setLocalSurvey(updatedSurvey);
     validateSurvey(updatedSurvey.questions[questionIdx]);
   };
@@ -138,6 +148,9 @@ export default function QuestionsView({
 
   const addQuestion = (question: any) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    if (backButtonLabel) {
+      question.backButtonLabel = backButtonLabel;
+    }
     updatedSurvey.questions.push({ ...question, isDraft: true });
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);

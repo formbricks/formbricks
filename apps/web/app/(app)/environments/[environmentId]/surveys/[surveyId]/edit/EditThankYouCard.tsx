@@ -19,10 +19,10 @@ export default function EditThankYouCard({
   activeQuestionId,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
-  let open = activeQuestionId == "thank-you-card";
+  let open = activeQuestionId == "end";
   const setOpen = (e) => {
     if (e) {
-      setActiveQuestionId("thank-you-card");
+      setActiveQuestionId("end");
     } else {
       setActiveQuestionId(null);
     }

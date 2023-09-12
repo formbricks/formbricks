@@ -19,7 +19,7 @@ export default function WaitlistForm() {
                 name="email"
                 required
                 placeholder="Email"
-                className="block w-full rounded-xl text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
+                className="block w-full rounded-xl px-3 py-2 text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
               />
               <label htmlFor="email" className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
                 Work or personal
@@ -31,7 +31,7 @@ export default function WaitlistForm() {
                 name="name"
                 placeholder="Name"
                 required
-                className="mt-4 block w-full rounded-xl text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
+                className="mt-4 block w-full rounded-xl px-3 py-2 text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
               />
               <label htmlFor="name" className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
                 Optional but appreciated
