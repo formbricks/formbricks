@@ -167,7 +167,9 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
                     <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
                   </div>
                 ) : (
-                  <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
+                  <p className="ph-no-capture my-1 whitespace-pre-wrap font-semibold text-slate-700">
+                    {response.answer}
+                  </p>
                 )
               ) : (
                 <p className="ph-no-capture my-1 font-semibold text-slate-700">
