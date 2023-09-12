@@ -32,6 +32,29 @@ export const select = {
   stripeCustomerId: true,
 };
 
+export const getTeamsByUserId = cache(async (userId: string): Promise<TTeam[]> => {
+  try {
+    const teams = await prisma.team.findMany({
+      where: {
+        memberships: {
+          some: {
+            userId,
+          },
+        },
+      },
+      select,
+    });
+
+    return teams;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
+
 export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
   try {
     const team = await prisma.team.findFirst({

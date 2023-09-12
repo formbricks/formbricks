@@ -17,12 +17,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
-import {
-  changeEnvironment,
-  changeEnvironmentByProduct,
-  changeEnvironmentByTeam,
-} from "@/lib/environments/changeEnvironments";
+import { formbricksLogout } from "@/lib/formbricks";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
+import formbricks from "@formbricks/js";
+import { cn } from "@formbricks/lib/cn";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TTeam } from "@formbricks/types/v1/teams";
 import {
   CustomersIcon,
   DashboardIcon,
@@ -41,6 +43,7 @@ import {
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,
+  ChatBubbleBottomCenterTextIcon,
   ChevronDownIcon,
   CodeBracketIcon,
   CreditCardIcon,
@@ -50,9 +53,9 @@ import {
   PlusIcon,
   UserCircleIcon,
   UsersIcon,
-  ChatBubbleBottomCenterTextIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { MenuIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -60,23 +63,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
-import { formbricksLogout } from "@/lib/formbricks";
-import formbricks from "@formbricks/js";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { MenuIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
-import { TTeam } from "@formbricks/types/v1/teams";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TMembership } from "@formbricks/types/v1/membership";
 
 interface NavigationProps {
   environment: TEnvironment;
-  memberships: TMembership[];
+  teams: TTeam[];
   session: Session;
   team: TTeam;
+  products: TProduct[];
+  environments: TEnvironment[];
 }
 
-export default function Navigation({ environment, memberships, team, session }: NavigationProps) {
+export default function Navigation({
+  environment,
+  teams,
+  team,
+  session,
+  products,
+  environments,
+}: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [currentTeamName, setCurrentTeamName] = useState("");
@@ -84,10 +88,7 @@ export default function Navigation({ environment, memberships, team, session }: 
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-  const membership = memberships.find((membership) => membership.teamId === team.id);
-  const availableProducts = membership!.team.products;
-  const product = availableProducts.find((product) => product.id === environment.productId);
-  const environments = product!.environments;
+  const product = products.find((product) => product.id === environment.productId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -200,15 +201,18 @@ export default function Navigation({ environment, memberships, team, session }: 
   ];
 
   const handleEnvironmentChange = (environmentType: "production" | "development") => {
-    changeEnvironment(environmentType, environments, router);
+    const newEnvironmentId = environments.find((e) => e.type === environmentType)?.id;
+    if (newEnvironmentId) {
+      router.push(`/environments/${newEnvironmentId}/`);
+    }
   };
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
-    changeEnvironmentByProduct(productId, availableProducts, router);
+    router.push(`/products/${productId}/`);
   };
 
   const handleEnvironmentChangeByTeam = (teamId: string) => {
-    changeEnvironmentByTeam(teamId, memberships, router);
+    router.push(`/teams/${teamId}/`);
   };
 
   if (pathname?.includes("/edit")) return null;
@@ -356,7 +360,7 @@ export default function Navigation({ environment, memberships, team, session }: 
                           <DropdownMenuRadioGroup
                             value={product!.id}
                             onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
-                            {availableProducts.map((product) => (
+                            {products.map((product) => (
                               <DropdownMenuRadioItem
                                 value={product.id}
                                 className="cursor-pointer break-all"
@@ -389,12 +393,9 @@ export default function Navigation({ environment, memberships, team, session }: 
                           <DropdownMenuRadioGroup
                             value={currentTeamId}
                             onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                            {memberships?.map((membership) => (
-                              <DropdownMenuRadioItem
-                                value={membership.teamId}
-                                className="cursor-pointer"
-                                key={membership.teamId}>
-                                {membership?.team?.name}
+                            {teams?.map((team) => (
+                              <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
+                                {team.name}
                               </DropdownMenuRadioItem>
                             ))}
                           </DropdownMenuRadioGroup>

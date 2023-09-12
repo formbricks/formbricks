@@ -60,6 +60,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
       captureNewSessionTelemetry(inputValidation.data.jsVersion);
 
+      if (!product) {
+        return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
+      }
+
       // return state
       const state: TJsState = {
         person,
@@ -86,6 +90,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         getActionClasses(environmentId),
         getProductByEnvironmentId(environmentId),
       ]);
+
+      if (!product) {
+        return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
+      }
 
       captureNewSessionTelemetry(inputValidation.data.jsVersion);
 
@@ -143,6 +151,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
+
+    if (!product) {
+      return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
+    }
 
     // return state
     const state: TJsState = {
