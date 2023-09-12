@@ -109,6 +109,10 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       getProductByEnvironmentId(environmentId),
     ]);
 
+    if (!product) {
+      return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
+    }
+
     // return state
     const state: TJsState = {
       person,

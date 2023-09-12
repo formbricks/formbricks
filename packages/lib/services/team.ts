@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
@@ -31,6 +31,29 @@ export const select = {
   plan: true,
   stripeCustomerId: true,
 };
+
+export const getTeamsByUserId = cache(async (userId: string): Promise<TTeam[]> => {
+  try {
+    const teams = await prisma.team.findMany({
+      where: {
+        memberships: {
+          some: {
+            userId,
+          },
+        },
+      },
+      select,
+    });
+
+    return teams;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
 
 export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
   try {

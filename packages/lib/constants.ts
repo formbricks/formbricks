@@ -16,6 +16,10 @@ export const WEBAPP_URL =
   RENDER_URL ||
   "http://localhost:3000";
 
+export const SURVEY_BASE_URL = process.env.NEXT_PUBLIC_SURVEY_BASE_URL
+  ? process.env.NEXT_PUBLIC_SURVEY_BASE_URL + "/"
+  : `${WEBAPP_URL}/s/`;
+
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = process.env.CRON_SECRET;

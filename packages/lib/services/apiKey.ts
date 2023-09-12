@@ -5,7 +5,7 @@ import { TApiKey, TApiKeyCreateInput } from "@formbricks/types/v1/apiKeys";
 import { Prisma } from "@prisma/client";
 import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { cache } from "react";
 
 export const getApiKey = async (apiKey: string): Promise<TApiKey | null> => {
