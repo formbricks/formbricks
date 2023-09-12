@@ -1,37 +1,30 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
-import { fetcher } from "@formbricks/lib/fetcher";
 import { ProgressBar } from "@formbricks/ui";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import useSWR from "swr";
 import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
 import { ResponseId } from "@formbricks/js";
+import { TProfile } from "@formbricks/types/v1/profile";
+import { TProduct } from "@formbricks/types/v1/product";
 
 const MAX_STEPS = 6;
 
 interface OnboardingProps {
   session: Session | null;
+  environmentId: string;
+  profile: TProfile;
+  product: TProduct;
 }
 
-export default function Onboarding({ session }: OnboardingProps) {
-  const {
-    data: environment,
-    error: isErrorEnvironment,
-    isLoading: isLoadingEnvironment,
-  } = useSWR(`/api/v1/environments/find-first`, fetcher);
-
-  const { profile } = useProfile();
-
+export default function Onboarding({ session, environmentId, profile, product }: OnboardingProps) {
   const { triggerProfileMutate } = useProfileMutation();
   const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
@@ -41,18 +34,6 @@ export default function Onboarding({ session }: OnboardingProps) {
   const percent = useMemo(() => {
     return currentStep / MAX_STEPS;
   }, [currentStep]);
-
-  if (!profile || isLoadingEnvironment) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isErrorEnvironment) {
-    return <div className="flex h-full w-full items-center justify-center">An error occurred</div>;
-  }
 
   const skipStep = () => {
     setCurrentStep(currentStep + 1);
@@ -77,8 +58,8 @@ export default function Onboarding({ session }: OnboardingProps) {
       const updatedProfile = { ...profile, onboardingCompleted: true };
       await triggerProfileMutate(updatedProfile);
 
-      if (environment) {
-        router.push(`/environments/${environment.id}/surveys`);
+      if (environmentId) {
+        router.push(`/environments/${environmentId}/surveys`);
         return;
       }
     } catch (e) {
@@ -105,14 +86,23 @@ export default function Onboarding({ session }: OnboardingProps) {
         <div className="col-span-2" />
       </div>
       <div className="flex grow items-center justify-center">
-        {currentStep === 1 && <Greeting next={next} skip={doLater} name={profile.name} session={session} />}
+        {currentStep === 1 && (
+          <Greeting next={next} skip={doLater} name={profile.name ? profile.name : ""} session={session} />
+        )}
         {currentStep === 2 && (
-          <Role next={next} skip={skipStep} setFormbricksResponseId={setFormbricksResponseId} />
+          <Role
+            next={next}
+            skip={skipStep}
+            setFormbricksResponseId={setFormbricksResponseId}
+            profile={profile}
+          />
         )}
         {currentStep === 3 && (
           <Objective next={next} skip={skipStep} formbricksResponseId={formbricksResponseId} />
         )}
-        {currentStep === 4 && <Product done={done} environmentId={environment.id} isLoading={isLoading} />}
+        {currentStep === 4 && (
+          <Product done={done} environmentId={environmentId} isLoading={isLoading} product={product} />
+        )}
       </div>
     </div>
   );
