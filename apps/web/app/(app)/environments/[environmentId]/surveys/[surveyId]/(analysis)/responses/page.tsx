@@ -6,8 +6,10 @@ import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/survey
 import { getServerSession } from "next-auth";
 import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 
 export default async function Page({ params }) {
+  const surveyBaseUrl = SURVEY_BASE_URL;
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
@@ -21,6 +23,7 @@ export default async function Page({ params }) {
         responses={responses}
         survey={survey}
         surveyId={params.surveyId}
+        surveyBaseUrl={surveyBaseUrl}
       />
     </>
   );
