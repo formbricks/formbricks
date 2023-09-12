@@ -1,22 +1,24 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TProduct } from "@formbricks/types/v1/product";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { ErrorComponent } from "@formbricks/ui";
 
 interface SurveyEditorProps {
   survey: TSurveyWithAnalytics;
   product: TProduct;
   environment: TEnvironment;
-  eventClasses: TActionClass[];
+  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
 }
 
@@ -24,21 +26,27 @@ export default function SurveyEditor({
   survey,
   product,
   environment,
-  eventClasses,
+  actionClasses,
   attributeClasses,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics>(survey);
+  const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
 
   useEffect(() => {
     if (survey) {
+      setLocalSurvey(survey);
+
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }
   }, [survey]);
+
+  if (!localSurvey) {
+    return <ErrorComponent />;
+  }
 
   return (
     <>
@@ -47,7 +55,7 @@ export default function SurveyEditor({
           setLocalSurvey={setLocalSurvey}
           localSurvey={localSurvey}
           survey={survey}
-          environmentId={environment.id}
+          environment={environment}
           activeId={activeView}
           setActiveId={setActiveView}
           setInvalidQuestions={setInvalidQuestions}
@@ -71,24 +79,19 @@ export default function SurveyEditor({
                 environment={environment}
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
-                eventClasses={eventClasses}
+                actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
               />
             )}
           </main>
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
             <PreviewSurvey
-              activeQuestionId={activeQuestionId}
+              survey={localSurvey}
               setActiveQuestionId={setActiveQuestionId}
-              questions={localSurvey.questions}
-              brandColor={product.brandColor}
-              environmentId={environment.id}
+              activeQuestionId={activeQuestionId}
               product={product}
               environment={environment}
-              surveyType={localSurvey.type}
-              thankYouCard={localSurvey.thankYouCard}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
-              autoClose={localSurvey.autoClose}
             />
           </aside>
         </div>

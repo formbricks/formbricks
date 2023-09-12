@@ -25,6 +25,11 @@ export default async function ApiKeyList({
   const apiKeys = await getApiKeys(environmentTypeId);
 
   return (
-    <EditApiKeys environmentTypeId={environmentTypeId} environmentType={environmentType} apiKeys={apiKeys} />
+    <EditApiKeys
+      environmentTypeId={environmentTypeId}
+      environmentType={environmentType}
+      apiKeys={apiKeys}
+      environmentId={environmentId}
+    />
   );
 }

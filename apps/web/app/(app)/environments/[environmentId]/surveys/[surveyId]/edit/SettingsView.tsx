@@ -12,7 +12,7 @@ interface SettingsViewProps {
   environment: TEnvironment;
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
-  eventClasses: TActionClass[];
+  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
 }
 
@@ -20,7 +20,7 @@ export default function SettingsView({
   environment,
   localSurvey,
   setLocalSurvey,
-  eventClasses,
+  actionClasses,
   attributeClasses,
 }: SettingsViewProps) {
   return (
@@ -38,7 +38,7 @@ export default function SettingsView({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
-        eventClasses={eventClasses}
+        actionClasses={actionClasses}
       />
 
       <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />

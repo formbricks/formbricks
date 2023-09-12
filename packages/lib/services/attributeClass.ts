@@ -1,11 +1,11 @@
 "use server";
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { cache } from "react";
 
-export const transformPrismaAttributeClass = (attributeClass): TAttributeClass | null => {
+export const transformPrismaAttributeClass = (attributeClass: any): TAttributeClass | null => {
   if (attributeClass === null) {
     return null;
   }
@@ -57,3 +57,15 @@ export const updatetAttributeClass = async (
     throw new DatabaseError(`Database error when updating attribute class with id ${attributeClassId}`);
   }
 };
+
+export const getAttributeClassByName = cache(
+  async (environmentId: string, name: string): Promise<TAttributeClass | null> => {
+    const attributeClass = await prisma.attributeClass.findFirst({
+      where: {
+        environmentId,
+        name,
+      },
+    });
+    return transformPrismaAttributeClass(attributeClass);
+  }
+);

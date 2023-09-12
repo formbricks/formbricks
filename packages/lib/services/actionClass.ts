@@ -2,7 +2,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TActionClass, TActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { cache } from "react";
 

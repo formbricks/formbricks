@@ -24,18 +24,19 @@ interface WhenToSendCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
-  eventClasses: TActionClass[];
+  actionClasses: TActionClass[];
 }
 
 export default function WhenToSendCard({
   environmentId,
   localSurvey,
   setLocalSurvey,
-  eventClasses,
+  actionClasses,
 }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [actionClassArray, setActionClassArray] = useState<TActionClass[]>(actionClasses);
 
   const autoClose = localSurvey.autoClose !== null;
 
@@ -56,10 +57,10 @@ export default function WhenToSendCard({
     setLocalSurvey(updatedSurvey);
   };
 
-  const setTriggerEvent = (idx: number, eventClassId: string) => {
+  const setTriggerEvent = (idx: number, actionClassId: string) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = eventClasses!.find((eventClass) => {
-      return eventClass.id === eventClassId;
+    updatedSurvey.triggers[idx] = actionClassArray!.find((actionClass) => {
+      return actionClass.id === actionClassId;
     })!;
     setLocalSurvey(updatedSurvey);
   };
@@ -95,10 +96,11 @@ export default function WhenToSendCard({
     setLocalSurvey(updatedSurvey);
   };
   useEffect(() => {
+    console.log(actionClassArray);
     if (activeIndex !== null) {
-      setTriggerEvent(activeIndex, eventClasses[eventClasses.length - 1].id);
+      setTriggerEvent(activeIndex, actionClassArray[actionClassArray.length - 1].id);
     }
-  }, [eventClasses]);
+  }, [actionClassArray]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -133,7 +135,7 @@ export default function WhenToSendCard({
           )}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0].id ? (
+              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0]?.id ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"
@@ -171,7 +173,7 @@ export default function WhenToSendCard({
                 <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
                 <Select
                   value={triggerEventClass.id}
-                  onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
+                  onValueChange={(actionClassId) => setTriggerEvent(idx, actionClassId)}>
                   <SelectTrigger className="w-[240px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -187,9 +189,9 @@ export default function WhenToSendCard({
                       Add Action
                     </button>
                     <SelectSeparator />
-                    {eventClasses.map((eventClass) => (
-                      <SelectItem value={eventClass.id} key={eventClass.id}>
-                        {eventClass.name}
+                    {actionClassArray.map((actionClass) => (
+                      <SelectItem value={actionClass.id} key={actionClass.id}>
+                        {actionClass.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -263,6 +265,7 @@ export default function WhenToSendCard({
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
+        setActionClassArray={setActionClassArray}
       />
     </>
   );

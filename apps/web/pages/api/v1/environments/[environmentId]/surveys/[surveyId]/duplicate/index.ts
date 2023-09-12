@@ -66,6 +66,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         },
         surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
+        verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
       },
     });
 
