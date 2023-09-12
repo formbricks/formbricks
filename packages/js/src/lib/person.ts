@@ -186,6 +186,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
   await logoutPerson();
   try {
+    config.allowSync();
     await sync();
     return okVoid();
   } catch (e) {
