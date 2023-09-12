@@ -26,9 +26,12 @@ export default async function ProfileSettingsPage() {
           <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
             <EditAvatar session={session} />
           </SettingsCard>
-          <SettingsCard title="Security" description="Manage your password and other security settings.">
-            <AccountSecurity profile={profile} />
-          </SettingsCard>
+          {profile.identityProvider === "email" && (
+            <SettingsCard title="Security" description="Manage your password and other security settings.">
+              <AccountSecurity profile={profile} />
+            </SettingsCard>
+          )}
+
           <SettingsCard
             title="Delete account"
             description="Delete your account with all of your personal information and data.">

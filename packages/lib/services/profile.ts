@@ -11,6 +11,7 @@ const responseSelection = {
   name: true,
   email: true,
   twoFactorEnabled: true,
+  identityProvider: true,
   createdAt: true,
   updatedAt: true,
 };

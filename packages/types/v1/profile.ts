@@ -5,6 +5,7 @@ export const ZProfile = z.object({
   name: z.string().nullable(),
   email: z.string(),
   twoFactorEnabled: z.boolean(),
+  identityProvider: z.enum(["email", "google", "github"]),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
