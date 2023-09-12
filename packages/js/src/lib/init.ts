@@ -24,7 +24,7 @@ const logger = Logger.getInstance();
 let syncIntervalId: number | null = null;
 
 const addSyncEventListener = (debug?: boolean): void => {
-  const updateInverval = debug ? 1000 * 30 : 1000 * 60 * 2; // 2 minutes in production, 30 seconds in debug mode
+  const updateInverval = debug ? 1000 * 10 : 1000 * 60 * 2; // 2 minutes in production, 30 seconds in debug mode
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined") {
     // clear any existing interval
@@ -33,6 +33,9 @@ const addSyncEventListener = (debug?: boolean): void => {
     }
     syncIntervalId = window.setInterval(async () => {
       logger.debug("Syncing.");
+      if (!config.isSyncAllowed) {
+        return;
+      }
       await sync();
     }, updateInverval);
     // clear interval on page unload
@@ -55,6 +58,7 @@ export const initialize = async (
   ErrorHandler.getInstance().printStatus();
 
   logger.debug("Start initialize");
+  config.allowSync();
 
   if (!c.environmentId) {
     logger.debug("No environmentId provided");
