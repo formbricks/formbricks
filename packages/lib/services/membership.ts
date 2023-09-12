@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { TMembership } from "@formbricks/types/v1/membership";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
 
 export async function getMemberships(userId: string): Promise<TMembership[]> {
