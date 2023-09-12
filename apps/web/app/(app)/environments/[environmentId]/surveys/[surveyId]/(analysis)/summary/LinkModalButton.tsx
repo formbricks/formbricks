@@ -33,7 +33,7 @@ export default function LinkSurveyShareButton({
         <ShareIcon className="h-5 w-5" />
       </Button>
       {/* {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />} */}
-      {showLinkModal && <EmbedSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
+      {/* {showLinkModal && <EmbedSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />} */}
       {showLinkModal && (
         <LinkSurveyModal
           survey={survey}
