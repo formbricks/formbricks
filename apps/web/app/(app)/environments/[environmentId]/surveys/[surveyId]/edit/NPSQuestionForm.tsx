@@ -1,4 +1,3 @@
-import type { NPSQuestion } from "@formbricks/types/questions";
 import { TSurveyNPSQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
@@ -6,7 +5,7 @@ import { useState } from "react";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
-  question: NPSQuestion | TSurveyNPSQuestion;
+  question: TSurveyNPSQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;

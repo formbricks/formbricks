@@ -1,7 +1,6 @@
 "use client";
 
 import { md } from "@formbricks/lib/markdownIt";
-import type { CTAQuestion } from "@formbricks/types/questions";
 import { TSurveyCTAQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Editor, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { useState } from "react";
@@ -9,7 +8,7 @@ import { BackButtonInput } from "@/app/(app)/environments/[environmentId]/survey
 
 interface CTAQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
-  question: CTAQuestion | TSurveyCTAQuestion;
+  question: TSurveyCTAQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;

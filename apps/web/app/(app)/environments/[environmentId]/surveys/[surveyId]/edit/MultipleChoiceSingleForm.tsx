@@ -1,4 +1,3 @@
-import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import {
   Button,
   Input,
@@ -17,7 +16,7 @@ import { TSurveyMultipleChoiceSingleQuestion, TSurveyWithAnalytics } from "@form
 
 interface OpenQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
-  question: MultipleChoiceSingleQuestion | TSurveyMultipleChoiceSingleQuestion;
+  question: TSurveyMultipleChoiceSingleQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
