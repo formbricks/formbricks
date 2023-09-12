@@ -10,6 +10,7 @@ import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
@@ -93,6 +94,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                       environmentId={environmentId}
                       environment={environment}
                       otherEnvironment={otherEnvironment!}
+                      surveyBaseUrl={SURVEY_BASE_URL}
                     />
                   </div>
                 </div>

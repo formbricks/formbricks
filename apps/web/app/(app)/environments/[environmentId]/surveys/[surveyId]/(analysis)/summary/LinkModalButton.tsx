@@ -10,9 +10,14 @@ import clsx from "clsx";
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
+  surveyBaseUrl: string;
 }
 
-export default function LinkSurveyShareButton({ survey, className }: LinkSurveyShareButtonProps) {
+export default function LinkSurveyShareButton({
+  survey,
+  className,
+  surveyBaseUrl,
+}: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
 
   return (
@@ -26,7 +31,14 @@ export default function LinkSurveyShareButton({ survey, className }: LinkSurveyS
         onClick={() => setShowLinkModal(true)}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
+      {showLinkModal && (
+        <LinkSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          surveyBaseUrl={surveyBaseUrl}
+        />
+      )}
     </>
   );
 }
