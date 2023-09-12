@@ -5,7 +5,7 @@ import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/typ
 import { Prisma } from "@prisma/client";
 import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";

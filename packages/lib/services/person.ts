@@ -1,12 +1,13 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { getAttributeClassByName } from "./attributeClass";
 
 export const selectPerson = {
   id: true,
@@ -148,5 +149,59 @@ export const deletePerson = async (personId: string): Promise<void> => {
     }
 
     throw error;
+  }
+};
+
+export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> => {
+  // Check if a person with the userId attribute exists
+  const personPrisma = await prisma.person.findFirst({
+    where: {
+      environmentId,
+      attributes: {
+        some: {
+          attributeClass: {
+            name: "userId",
+          },
+          value: userId,
+        },
+      },
+    },
+    select: selectPerson,
+  });
+
+  if (personPrisma) {
+    const person = transformPrismaPerson(personPrisma);
+    return person;
+  } else {
+    // Create a new person with the userId attribute
+    const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
+
+    if (!userIdAttributeClass) {
+      throw new Error("Attribute class not found for the given environmentId");
+    }
+
+    const personPrisma = await prisma.person.create({
+      data: {
+        environment: {
+          connect: {
+            id: environmentId,
+          },
+        },
+        attributes: {
+          create: [
+            {
+              attributeClass: {
+                connect: {
+                  id: userIdAttributeClass.id,
+                },
+              },
+              value: userId,
+            },
+          ],
+        },
+      },
+      select: selectPerson,
+    });
+    return transformPrismaPerson(personPrisma);
   }
 };

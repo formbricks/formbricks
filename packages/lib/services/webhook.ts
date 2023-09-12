@@ -4,10 +4,10 @@ import "server-only";
 import { TWebhook, TWebhookInput, ZWebhookInput } from "@formbricks/types/v1/webhooks";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/errors";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { cache } from "react";
+import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/types/v1/errors";
 
 export const getWebhooks = cache(async (environmentId: string): Promise<TWebhook[]> => {
   validateInputs([environmentId, ZId]);

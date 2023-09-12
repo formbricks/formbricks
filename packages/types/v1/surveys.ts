@@ -26,7 +26,7 @@ export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
-export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
+export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
@@ -248,7 +248,7 @@ export const ZSurvey = z.object({
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage,
+  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 

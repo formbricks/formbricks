@@ -239,32 +239,32 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           </AdvancedOptionToggle>
 
           {/* Redirect on completion */}
+          <AdvancedOptionToggle
+            htmlId="redirectUrl"
+            isChecked={redirectToggle}
+            onToggle={handleRedirectCheckMark}
+            title="Redirect on completion"
+            description="Redirect user to specified link on survey completion"
+            childBorder={true}>
+            <div className="w-full p-4">
+              <div className="flex w-full cursor-pointer items-center">
+                <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
+                  Redirect respondents here:
+                </p>
+                <Input
+                  autoFocus
+                  className="w-full bg-white"
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                />
+              </div>
+            </div>
+          </AdvancedOptionToggle>
+
           {localSurvey.type === "link" && (
             <>
-              <AdvancedOptionToggle
-                htmlId="redirectUrl"
-                isChecked={redirectToggle}
-                onToggle={handleRedirectCheckMark}
-                title="Redirect on completion"
-                description="Redirect user to specified link on survey completion"
-                childBorder={true}>
-                <div className="w-full p-4">
-                  <div className="flex w-full cursor-pointer items-center">
-                    <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
-                      Redirect respondents here:
-                    </p>
-                    <Input
-                      autoFocus
-                      className="w-full bg-white"
-                      type="url"
-                      placeholder="https://www.example.com"
-                      value={redirectUrl ? redirectUrl : ""}
-                      onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </AdvancedOptionToggle>
-
               {/* Adjust Survey Closed Message */}
               <AdvancedOptionToggle
                 htmlId="adjustSurveyClosedMessage"

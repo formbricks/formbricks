@@ -1,12 +1,6 @@
 import { z } from "zod";
 
-export const ZMembershipRole = z.union([
-  z.literal("owner"),
-  z.literal("admin"),
-  z.literal("editor"),
-  z.literal("developer"),
-  z.literal("viewer"),
-]);
+export const ZMembershipRole = z.enum(["owner", "admin", "editor", "developer", "viewer"]);
 
 export const ZMembership = z.object({
   role: ZMembershipRole,

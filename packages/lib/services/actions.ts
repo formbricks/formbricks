@@ -2,7 +2,7 @@ import "server-only";
 
 import z from "zod";
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TAction } from "@formbricks/types/v1/actions";
 import { ZId } from "@formbricks/types/v1/environment";
 import { Prisma } from "@prisma/client";

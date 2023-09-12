@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
 import { TProfile, ZProfileUpdateInput } from "@formbricks/types/v1/profile";
 import { deleteTeam } from "./team";

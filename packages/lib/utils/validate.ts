@@ -1,13 +1,14 @@
 import z from "zod";
-import { ValidationError } from "@formbricks/errors";
+import { ValidationError } from "@formbricks/types/v1/errors";
 
 type ValidationPair = [any, z.ZodSchema<any>];
 
 export const validateInputs = (...pairs: ValidationPair[]): void => {
   for (const [value, schema] of pairs) {
-    try {
-      schema.parse(value);
-    } catch (error: any) {
+    const inputValidation = schema.safeParse(value);
+
+    if (!inputValidation.success) {
+      console.log(`Validation failed for ${schema}: ${inputValidation.error.message}`);
       throw new ValidationError("Validation failed");
     }
   }

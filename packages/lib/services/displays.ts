@@ -6,7 +6,7 @@ import {
   ZDisplayInput,
 } from "@formbricks/types/v1/displays";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { transformPrismaPerson } from "./person";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
