@@ -11,6 +11,9 @@ import { EditHighlightBorder } from "./EditHighlightBorder";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
   return (
     <div>
       <SettingsTitle title="Look & Feel" />

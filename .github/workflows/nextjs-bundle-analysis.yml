@@ -39,6 +39,9 @@ jobs:
           version: 7
           run_install: true
 
+      - name: create .env
+        run: cp .env.example .env
+
       - name: Restore next build
         uses: actions/cache@v3
         id: restore-build-cache
