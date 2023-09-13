@@ -160,6 +160,13 @@ export default function AddIntegrationModal({
     }
   };
 
+  const hasMatchingId = googleSheetIntegration.config.data.some((configData) => {
+    if (!selectedSpreadsheet) {
+      return false;
+    }
+    return configData.spreadsheetId === selectedSpreadsheet.id;
+  });
+
   const DropdownSelector = ({ label, items, selectedItem, setSelectedItem, disabled }) => {
     return (
       <div className="col-span-1">
@@ -231,6 +238,12 @@ export default function AddIntegrationModal({
                     setSelectedItem={setSelectedSpreadsheet}
                     disabled={spreadsheets.length === 0}
                   />
+                  {selectedSpreadsheet && hasMatchingId && (
+                    <p className="text-xs text-amber-700">
+                      <strong>Warning:</strong> You have already connected one survey with this sheet. Your
+                      data will be inconsistent
+                    </p>
+                  )}
                   <p className="m-1 text-xs text-slate-500">
                     {spreadsheets.length === 0 &&
                       "You have to create at least one spreadshseet to be able to setup this integration"}
