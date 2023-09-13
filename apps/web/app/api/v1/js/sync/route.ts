@@ -10,6 +10,7 @@ import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSession } from "@formbricks/types/v1/sessions";
+import { notFound } from "next/navigation";
 import { NextResponse } from "next/server";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
@@ -21,6 +22,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  notFound(); // hotfix - return not found in sync endpoint to prevent current usage issues
   try {
     const jsonInput = await req.json();
 
