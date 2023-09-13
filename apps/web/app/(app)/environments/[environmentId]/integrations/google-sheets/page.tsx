@@ -8,13 +8,13 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 export default async function GoogleSheet({ params }) {
   const surveys = await getSurveys(params.environmentId);
-  let Spreadsheet: TGoogleSpreadsheet[] = [];
+  let spreadSheetArray: TGoogleSpreadsheet[] = [];
   const integrations = await getIntegrations(params.environmentId);
   const googleSheetIntegration: TGoogleSheetIntegration | undefined = integrations?.find(
     (integration): integration is TGoogleSheetIntegration => integration.type === "googleSheets"
   );
   if (googleSheetIntegration && googleSheetIntegration.config.key) {
-    Spreadsheet = await getSpreadSheets(params.environmentId);
+    spreadSheetArray = await getSpreadSheets(params.environmentId);
   }
   return (
     <>
@@ -23,7 +23,7 @@ export default async function GoogleSheet({ params }) {
         <GoogleSheetWrapper
           environmentId={params.environmentId}
           surveys={surveys}
-          Spreadsheets={Spreadsheet}
+          spreadSheetArray={spreadSheetArray}
           googleSheetIntegration={googleSheetIntegration}
         />
       </div>

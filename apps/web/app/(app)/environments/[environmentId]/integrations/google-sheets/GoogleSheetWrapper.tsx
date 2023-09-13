@@ -10,27 +10,34 @@ import {
   TGoogleSpreadsheet,
 } from "@formbricks/types/v1/integrations";
 import { TSurvey } from "@formbricks/types/v1/surveys";
+import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 
 interface GoogleSheetWrapperProps {
   environmentId: string;
   surveys: TSurvey[];
-  Spreadsheets: TGoogleSpreadsheet[];
+  spreadSheetArray: TGoogleSpreadsheet[];
   googleSheetIntegration: TGoogleSheetIntegration | undefined;
 }
 
 export default function GoogleSheetWrapper({
   environmentId,
   surveys,
-  Spreadsheets,
+  spreadSheetArray,
   googleSheetIntegration,
 }: GoogleSheetWrapperProps) {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
   );
+  const [spreadsheets, setSpreadsheets] = useState(spreadSheetArray);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TGoogleSheetsConfigData & { index: number }) | null
   >(null);
+
+  const refreshSheet = async () => {
+    const latestSpreadsheets = await refreshSheetAction(environmentId);
+    setSpreadsheets(latestSpreadsheets);
+  };
 
   return (
     <>
@@ -41,7 +48,7 @@ export default function GoogleSheetWrapper({
             surveys={surveys}
             open={isModalOpen}
             setOpen={setModalOpen}
-            spreadsheets={Spreadsheets}
+            spreadsheets={spreadsheets}
             googleSheetIntegration={googleSheetIntegration}
             selectedIntegration={selectedIntegration}
           />
@@ -51,6 +58,7 @@ export default function GoogleSheetWrapper({
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
+            refreshSheet={refreshSheet}
           />
         </>
       ) : (

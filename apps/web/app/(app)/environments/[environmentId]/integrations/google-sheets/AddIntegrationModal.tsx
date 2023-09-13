@@ -14,7 +14,6 @@ import Modal from "@/components/shared/Modal";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
-import Link from "next/link";
 
 interface AddWebhookModalProps {
   environmentId: string;
@@ -161,18 +160,19 @@ export default function AddIntegrationModal({
     }
   };
 
-  const DropdownSelector = ({ label, items, selectedItem, setSelectedItem }) => {
+  const DropdownSelector = ({ label, items, selectedItem, setSelectedItem, disabled }) => {
     return (
-      <div className="col-span-1 mb-4">
+      <div className="col-span-1">
         <Label htmlFor={label}>{label}</Label>
         <div className="mt-1 flex">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
+                disabled={disabled ? disabled : false}
                 type="button"
                 className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
                 <span className="flex flex-1">
-                  <span>{selectedItem ? selectedItem.name : `Select ${label}`}</span>
+                  <span>{selectedItem ? selectedItem.name : `${label}`}</span>
                 </span>
                 <span className="flex h-full items-center border-l pl-3">
                   <ChevronDownIcon className="h-4 w-4 text-gray-500" />
@@ -180,31 +180,23 @@ export default function AddIntegrationModal({
               </button>
             </DropdownMenu.Trigger>
 
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="z-50 min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md"
-                align="start">
-                {label === "Select Survey" && items.length === 0 && (
-                  <DropdownMenu.Item className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50">
-                    <Link href={`/environments/${environmentId}/surveys/templates`}>+ Create a Survey</Link>
-                  </DropdownMenu.Item>
-                )}
-                {label === "Select Spreadsheet" && items.length === 0 && (
-                  <DropdownMenu.Item className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50">
-                    No Spreadsheets found
-                  </DropdownMenu.Item>
-                )}
-                {items &&
-                  items.map((item) => (
-                    <DropdownMenu.Item
-                      key={item.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                      onSelect={() => setSelectedItem(item)}>
-                      {item.name}
-                    </DropdownMenu.Item>
-                  ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
+            {!disabled && (
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  className="z-50 min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md"
+                  align="start">
+                  {items &&
+                    items.map((item) => (
+                      <DropdownMenu.Item
+                        key={item.id}
+                        className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                        onSelect={() => setSelectedItem(item)}>
+                        {item.name}
+                      </DropdownMenu.Item>
+                    ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            )}
           </DropdownMenu.Root>
         </div>
       </div>
@@ -231,18 +223,32 @@ export default function AddIntegrationModal({
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
               <div>
-                <DropdownSelector
-                  label="Select Spreadsheet"
-                  items={spreadsheets}
-                  selectedItem={selectedSpreadsheet}
-                  setSelectedItem={setSelectedSpreadsheet}
-                />
-                <DropdownSelector
-                  label="Select Survey"
-                  items={surveys}
-                  selectedItem={selectedSurvey}
-                  setSelectedItem={setSelectedSurvey}
-                />
+                <div className="mb-4">
+                  <DropdownSelector
+                    label="Select Spreadsheet"
+                    items={spreadsheets}
+                    selectedItem={selectedSpreadsheet}
+                    setSelectedItem={setSelectedSpreadsheet}
+                    disabled={spreadsheets.length === 0}
+                  />
+                  <p className="m-1 text-xs text-slate-500">
+                    {spreadsheets.length === 0 &&
+                      "You have to create at least one spreadshseet to be able to setup this integration"}
+                  </p>
+                </div>
+                <div>
+                  <DropdownSelector
+                    label="Select Survey"
+                    items={surveys}
+                    selectedItem={selectedSurvey}
+                    setSelectedItem={setSelectedSurvey}
+                    disabled={surveys.length === 0}
+                  />
+                  <p className="m-1 text-xs text-slate-500">
+                    {surveys.length === 0 &&
+                      "You have to create a survey to be able to setup this integration"}
+                  </p>
+                </div>
               </div>
               {selectedSurvey && (
                 <div>

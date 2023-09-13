@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { cache } from "react";
 import {
   TGoogleCredential,
@@ -52,7 +52,7 @@ function isGoogleSheetIntegration(integration: any): integration is TGoogleSheet
   return integration.type === "googleSheets";
 }
 
-export const getSpreadSheets = cache(async (environmentId: string): Promise<TGoogleSpreadsheet[]> => {
+export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpreadsheet[]> => {
   let spreadsheets: TGoogleSpreadsheet[] = [];
   try {
     const googleIntegration = await getGoogleSheetIntegration(environmentId);
@@ -66,7 +66,7 @@ export const getSpreadSheets = cache(async (environmentId: string): Promise<TGoo
     }
     throw error;
   }
-});
+};
 export async function writeData(credentials: TGoogleCredential, spreadsheetId: string, values: string[][]) {
   try {
     const authClient = authorize(credentials);

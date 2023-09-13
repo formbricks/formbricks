@@ -15,6 +15,7 @@ interface HomeProps {
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
   setSelectedIntegration: (v: (TGoogleSheetsConfigData & { index: number }) | null) => void;
+  refreshSheet: () => void;
 }
 
 export default function Home({
@@ -23,6 +24,7 @@ export default function Home({
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
+  refreshSheet,
 }: HomeProps) {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const integrationArray = googleSheetIntegration
@@ -70,6 +72,7 @@ export default function Home({
         <Button
           variant="darkCTA"
           onClick={() => {
+            refreshSheet();
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>
