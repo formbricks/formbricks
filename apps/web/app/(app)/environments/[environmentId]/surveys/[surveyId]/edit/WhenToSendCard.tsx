@@ -190,7 +190,10 @@ export default function WhenToSendCard({
                     </button>
                     <SelectSeparator />
                     {actionClassArray.map((actionClass) => (
-                      <SelectItem value={actionClass.id} key={actionClass.id}>
+                      <SelectItem
+                        value={actionClass.id}
+                        key={actionClass.id}
+                        title={actionClass.description ? actionClass.description : ""}>
                         {actionClass.name}
                       </SelectItem>
                     ))}
@@ -228,7 +231,7 @@ export default function WhenToSendCard({
                       id="triggerDelay"
                       value={localSurvey.delay.toString()}
                       onChange={(e) => handleTriggerDelay(e)}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
                     seconds before showing the survey.
                   </p>

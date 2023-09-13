@@ -32,6 +32,9 @@ const addSyncEventListener = (debug?: boolean): void => {
       window.clearInterval(syncIntervalId);
     }
     syncIntervalId = window.setInterval(async () => {
+      if (!config.isSyncAllowed) {
+        return;
+      }
       logger.debug("Syncing.");
       await sync();
     }, updateInverval);
@@ -55,6 +58,7 @@ export const initialize = async (
   ErrorHandler.getInstance().printStatus();
 
   logger.debug("Start initialize");
+  config.allowSync();
 
   if (!c.environmentId) {
     logger.debug("No environmentId provided");

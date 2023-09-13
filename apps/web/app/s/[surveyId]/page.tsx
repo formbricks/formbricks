@@ -41,6 +41,10 @@ export default async function LinkSurveyPage({ params, searchParams }) {
 
   // get product and person
   const product = await getProductByEnvironmentId(survey.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   const userId = searchParams.userId;
   let person;
   if (userId) {

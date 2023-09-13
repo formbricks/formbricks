@@ -2,10 +2,11 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TActionClass, TActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 import { cache } from "react";
-
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 const select = {
   id: true,
   createdAt: true,
@@ -18,6 +19,7 @@ const select = {
 };
 
 export const getActionClasses = cache(async (environmentId: string): Promise<TActionClass[]> => {
+  validateInputs([environmentId, ZId]);
   try {
     let actionClasses = await prisma.eventClass.findMany({
       where: {
@@ -39,6 +41,7 @@ export const deleteActionClass = async (
   environmentId: string,
   actionClassId: string
 ): Promise<TActionClass> => {
+  validateInputs([environmentId, ZId], [actionClassId, ZId]);
   try {
     const result = await prisma.eventClass.delete({
       where: {
@@ -60,6 +63,7 @@ export const createActionClass = async (
   environmentId: string,
   actionClass: TActionClassInput
 ): Promise<TActionClass> => {
+  validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
   try {
     const result = await prisma.eventClass.create({
       data: {
@@ -84,6 +88,7 @@ export const updateActionClass = async (
   actionClassId: string,
   inputActionClass: Partial<TActionClassInput>
 ): Promise<TActionClass> => {
+  validateInputs([environmentId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput.partial()]);
   try {
     const result = await prisma.eventClass.update({
       where: {
