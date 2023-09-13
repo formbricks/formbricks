@@ -1,10 +1,12 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 import { getAttributeClassByName } from "./attributeClass";
 
 export const selectPerson = {
@@ -41,10 +43,13 @@ type TransformPersonInput = {
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
-  const attributes = person.attributes.reduce((acc, attr) => {
-    acc[attr.attributeClass.name] = attr.value;
-    return acc;
-  }, {} as Record<string, string | number>);
+  const attributes = person.attributes.reduce(
+    (acc, attr) => {
+      acc[attr.attributeClass.name] = attr.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
 
   return {
     id: person.id,
@@ -55,6 +60,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
 };
 
 export const getPerson = cache(async (personId: string): Promise<TPerson | null> => {
+  validateInputs([personId, ZId]);
   try {
     const personPrisma = await prisma.person.findUnique({
       where: {
@@ -80,6 +86,7 @@ export const getPerson = cache(async (personId: string): Promise<TPerson | null>
 });
 
 export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
+  validateInputs([environmentId, ZId]);
   try {
     const personsPrisma = await prisma.person.findMany({
       where: {
@@ -106,6 +113,7 @@ export const getPeople = cache(async (environmentId: string): Promise<TPerson[]>
 });
 
 export const createPerson = async (environmentId: string): Promise<TPerson> => {
+  validateInputs([environmentId, ZId]);
   try {
     const personPrisma = await prisma.person.create({
       data: {
@@ -131,6 +139,7 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
 };
 
 export const deletePerson = async (personId: string): Promise<void> => {
+  validateInputs([personId, ZId]);
   try {
     await prisma.person.delete({
       where: {

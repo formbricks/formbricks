@@ -174,7 +174,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                     </button>
                     <SelectSeparator />
                     {eventClasses.map((eventClass) => (
-                      <SelectItem value={eventClass.id} key={eventClass.id}>
+                      <SelectItem value={eventClass.id} key={eventClass.id} title={eventClass.description}>
                         {eventClass.name}
                       </SelectItem>
                     ))}
@@ -212,7 +212,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       id="triggerDelay"
                       value={localSurvey.delay.toString()}
                       onChange={(e) => handleTriggerDelay(e)}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
                     seconds before showing the survey.
                   </p>

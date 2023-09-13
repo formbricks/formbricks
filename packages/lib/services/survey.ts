@@ -1,11 +1,13 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { TSurvey, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import "server-only";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 
 export const selectSurvey = {
   id: true,
@@ -68,11 +70,13 @@ export const selectSurveyWithAnalytics = {
 };
 
 export const preloadSurveyWithAnalytics = (surveyId: string) => {
+  validateInputs([surveyId, ZId]);
   void getSurveyWithAnalytics(surveyId);
 };
 
 export const getSurveyWithAnalytics = cache(
   async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
+    validateInputs([surveyId, ZId]);
     let surveyPrisma;
     try {
       surveyPrisma = await prisma.survey.findUnique({
@@ -125,6 +129,7 @@ export const getSurveyWithAnalytics = cache(
 );
 
 export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null> => {
+  validateInputs([surveyId, ZId]);
   let surveyPrisma;
   try {
     surveyPrisma = await prisma.survey.findUnique({
@@ -162,6 +167,7 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null>
 });
 
 export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]> => {
+  validateInputs([environmentId, ZId]);
   let surveysPrisma;
   try {
     surveysPrisma = await prisma.survey.findMany({
@@ -200,6 +206,7 @@ export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]
 
 export const getSurveysWithAnalytics = cache(
   async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
+    validateInputs([environmentId, ZId]);
     let surveysPrisma;
     try {
       surveysPrisma = await prisma.survey.findMany({
@@ -246,6 +253,7 @@ export const getSurveysWithAnalytics = cache(
 );
 
 export async function deleteSurvey(surveyId: string) {
+  validateInputs([surveyId, ZId]);
   const deletedSurvey = await prisma.survey.delete({
     where: {
       id: surveyId,
@@ -256,6 +264,7 @@ export async function deleteSurvey(surveyId: string) {
 }
 
 export async function createSurvey(environmentId: string, surveyBody: any) {
+  validateInputs([environmentId, ZId]);
   const survey = await prisma.survey.create({
     data: {
       ...surveyBody,

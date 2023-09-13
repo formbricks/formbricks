@@ -1,6 +1,6 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { InvalidInputError } from "@formbricks/errors";
+import { InvalidInputError } from "@formbricks/types/v1/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createDisplay } from "@formbricks/lib/services/displays";
 import { getSurvey } from "@formbricks/lib/services/survey";
