@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
-import { deleteWebhook, updateWebhook } from "@formbricks/lib/services/webhook";
+import { deleteWebhookAction, updateWebhookAction } from "./actions";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/testEndpoint";
@@ -113,7 +113,7 @@ export default function WebhookSettingsTab({
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    await updateWebhook(environmentId, webhook.id, updatedData);
+    await updateWebhookAction(environmentId, webhook.id, updatedData);
     toast.success("Webhook updated successfully.");
     router.refresh();
     setIsUpdatingWebhook(false);
@@ -232,7 +232,7 @@ export default function WebhookSettingsTab({
         onDelete={async () => {
           setOpen(false);
           try {
-            await deleteWebhook(webhook.id);
+            await deleteWebhookAction(webhook.id);
             router.refresh();
             toast.success("Webhook deleted successfully");
           } catch (error) {
