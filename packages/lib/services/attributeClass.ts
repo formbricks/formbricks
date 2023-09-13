@@ -43,7 +43,6 @@ export const getAttributeClasses = cache(async (environmentId: string): Promise<
     throw new DatabaseError(`Database error when fetching attributeClasses for environment ${environmentId}`);
   }
 });
-
 export const updatetAttributeClass = async (
   attributeClassId: string,
   data: Partial<TAttributeClassUpdateInput>
