@@ -19,7 +19,7 @@ export const getWebhooks = cache(async (environmentId: string): Promise<TWebhook
     });
     return webhooks.map((webhook) => ({
       ...webhook,
-      source: webhook.source as "user" | "zapier" | null | undefined,
+      source: webhook.source,
     }));
   } catch (error) {
     throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
@@ -36,7 +36,7 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> => {
   if (webhook) {
     return {
       ...webhook,
-      source: webhook.source as "user" | "zapier" | null | undefined,
+      source: webhook.source,
     };
   }
   return null;
@@ -71,7 +71,7 @@ export const createWebhook = async (
     });
     return {
       ...createdWebhook,
-      source: createdWebhook.source as "user" | "zapier" | null | undefined,
+      source: createdWebhook.source,
     };
   } catch (error) {
     if (!(error instanceof InvalidInputError)) {
@@ -101,7 +101,7 @@ export const updateWebhook = async (
     });
     return {
       ...result,
-      source: result.source as "user" | "zapier" | null | undefined,
+      source: result.source,
     };
   } catch (error) {
     throw new DatabaseError(
@@ -120,7 +120,7 @@ export const deleteWebhook = async (id: string): Promise<TWebhook> => {
     });
     return {
       ...deletedWebhook,
-      source: deletedWebhook.source as "user" | "zapier" | null | undefined,
+      source: deletedWebhook.source,
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
