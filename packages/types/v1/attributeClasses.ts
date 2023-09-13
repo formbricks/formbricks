@@ -11,4 +11,10 @@ export const ZAttributeClass = z.object({
   archived: z.boolean(),
 });
 
+export const ZAttributeClassUpdateInput = z.object({
+  description: z.string(),
+  archived: z.boolean(),
+});
+export type TAttributeClassUpdateInput = z.infer<typeof ZAttributeClassUpdateInput>;
+
 export type TAttributeClass = z.infer<typeof ZAttributeClass>;

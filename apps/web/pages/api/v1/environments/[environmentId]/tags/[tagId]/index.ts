@@ -1,6 +1,6 @@
 import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";

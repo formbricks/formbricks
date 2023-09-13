@@ -3,10 +3,11 @@ import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { RatingResponse } from "../RatingResponse";
-import { QuestionType, RatingQuestion } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/questions";
+import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 
 interface RatingSummaryProps {
-  questionSummary: QuestionSummary<RatingQuestion>;
+  questionSummary: QuestionSummary<TSurveyRatingQuestion>;
 }
 
 interface ChoiceResult {

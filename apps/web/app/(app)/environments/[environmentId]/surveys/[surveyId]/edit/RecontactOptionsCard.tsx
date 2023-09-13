@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
-import { Badge, Input, Label, RadioGroup, RadioGroupItem, Switch } from "@formbricks/ui";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { AdvancedOptionToggle, Badge, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
@@ -33,8 +33,8 @@ const displayOptions: DisplayOption[] = [
 ];
 
 interface RecontactOptionsCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
 }
 
@@ -142,83 +142,79 @@ export default function RecontactOptionsCard({
           </RadioGroup>
         </div>
 
-        <div className="p-3">
-          <div className="ml-2 flex items-center space-x-1">
-            <Switch id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} />
-            {/* <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} /> */}
-            <Label htmlFor="recontactDays" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Ignore waiting time between surveys</h3>
-                <p className="text-xs font-normal text-slate-500">
-                  This setting overwrites your{" "}
-                  <Link
-                    className="decoration-brand-dark underline"
-                    href={`/environments/${environmentId}/settings/product`}
-                    target="_blank">
-                    waiting period
-                  </Link>
-                  . Use with caution.
-                </p>
-              </div>
-            </Label>
-          </div>
-          {ignoreWaiting && localSurvey.recontactDays !== null && (
-            <div className="p-3">
-              <RadioGroup
-                value={localSurvey.recontactDays.toString()}
-                className="flex flex-col space-y-3"
-                onValueChange={(v) => {
-                  const updatedSurvey = { ...localSurvey, recontactDays: v === "null" ? null : Number(v) };
-                  setLocalSurvey(updatedSurvey);
-                }}>
-                <Label
-                  htmlFor="ignore"
-                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                  <RadioGroupItem
-                    value="0"
-                    id="ignore"
-                    className="aria-checked:border-brand-dark mx-5 text-sm disabled:border-slate-400 aria-checked:border-2"
-                  />
-                  <div>
-                    <p className="font-semibold text-slate-700">Always show survey</p>
+        <AdvancedOptionToggle
+          htmlId="recontactDays"
+          isChecked={ignoreWaiting}
+          onToggle={handleCheckMark}
+          title="Ignore waiting time between surveys"
+          childBorder={false}
+          description={
+            <>
+              This setting overwrites your{" "}
+              <Link
+                className="decoration-brand-dark underline"
+                href={`/environments/${environmentId}/settings/product`}
+                target="_blank">
+                waiting period
+              </Link>
+              . Use with caution.
+            </>
+          }>
+          {localSurvey.recontactDays !== null && (
+            <RadioGroup
+              value={localSurvey.recontactDays.toString()}
+              className="flex w-full flex-col space-y-3 bg-white"
+              onValueChange={(v) => {
+                const updatedSurvey = { ...localSurvey, recontactDays: v === "null" ? null : Number(v) };
+                setLocalSurvey(updatedSurvey);
+              }}>
+              <Label
+                htmlFor="ignore"
+                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                <RadioGroupItem
+                  value="0"
+                  id="ignore"
+                  className="aria-checked:border-brand-dark mx-4 text-sm disabled:border-slate-400 aria-checked:border-2"
+                />
+                <div>
+                  <p className="font-semibold text-slate-700">Always show survey</p>
 
-                    <p className="mt-2 text-xs font-normal text-slate-600">
-                      When conditions match, waiting time will be ignored and survey shown.
-                    </p>
-                  </div>
-                </Label>
+                  <p className="mt-2 text-xs font-normal text-slate-600">
+                    When conditions match, waiting time will be ignored and survey shown.
+                  </p>
+                </div>
+              </Label>
 
-                <label
-                  htmlFor="newDays"
-                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                  <RadioGroupItem
-                    value={inputDays === 0 ? "1" : inputDays.toString()} //Fixes that both radio buttons are checked when inputDays is 0
-                    id="newDays"
-                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
-                  />
-                  <div className="">
-                    <p className="text-sm font-semibold text-slate-700">
-                      Wait
-                      <Input
-                        type="number"
-                        min="1"
-                        id="inputDays"
-                        value={inputDays === 0 ? 1 : inputDays}
-                        onChange={handleRecontactDaysChange}
-                        className="ml-2 mr-2 inline w-16 text-center text-sm"
-                      />
-                      days before showing this survey again.
-                    </p>
+              <label
+                htmlFor="newDays"
+                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                <RadioGroupItem
+                  value={inputDays === 0 ? "1" : inputDays.toString()} //Fixes that both radio buttons are checked when inputDays is 0
+                  id="newDays"
+                  className="aria-checked:border-brand-dark mx-4 disabled:border-slate-400 aria-checked:border-2"
+                />
+                <div className="">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Wait
+                    <Input
+                      type="number"
+                      min="1"
+                      id="inputDays"
+                      value={inputDays === 0 ? 1 : inputDays}
+                      onChange={handleRecontactDaysChange}
+                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                    />
+                    days before showing this survey again.
+                  </p>
 
-                    <p className="mt-2 text-xs font-normal text-slate-600">
-                      Overwrites waiting period between surveys to {inputDays === 0 ? 1 : inputDays} day(s).
-                    </p>
-                  </div>
-                </label>
-              </RadioGroup>
-            </div>
+                  <p className="mt-2 text-xs font-normal text-slate-600">
+                    Overwrites waiting period between surveys to {inputDays === 0 ? 1 : inputDays} day(s).
+                  </p>
+                </div>
+              </label>
+            </RadioGroup>
           )}
-        </div>
+        </AdvancedOptionToggle>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

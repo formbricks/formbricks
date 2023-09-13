@@ -52,33 +52,31 @@ export default function SurveyStatusDropdown({
           {survey.status === "archived" && <p className="text-sm italic text-slate-600">Archived</p>}
         </div>
       ) : (
-        <TooltipProvider delayDuration={50}>
-          <Tooltip open={isStatusChangeDisabled ? undefined : false}>
-            <TooltipTrigger>
-              <Select
-                disabled={isStatusChangeDisabled}
-                onValueChange={(value) => {
-                  triggerSurveyMutate({ status: value })
-                    .then(() => {
-                      toast.success(
-                        value === "inProgress"
-                          ? "Survey live"
-                          : value === "paused"
-                          ? "Survey paused"
-                          : value === "completed"
-                          ? "Survey completed"
-                          : ""
-                      );
-                    })
-                    .catch((error) => {
-                      toast.error(`Error: ${error.message}`);
-                    });
+        <Select
+          disabled={isStatusChangeDisabled}
+          onValueChange={(value) => {
+            triggerSurveyMutate({ status: value })
+              .then(() => {
+                toast.success(
+                  value === "inProgress"
+                    ? "Survey live"
+                    : value === "paused"
+                    ? "Survey paused"
+                    : value === "completed"
+                    ? "Survey completed"
+                    : ""
+                );
+              })
+              .catch((error) => {
+                toast.error(`Error: ${error.message}`);
+              });
 
-                  if (updateLocalSurveyStatus)
-                    updateLocalSurveyStatus(
-                      value as "draft" | "inProgress" | "paused" | "completed" | "archived"
-                    );
-                }}>
+            if (updateLocalSurveyStatus)
+              updateLocalSurveyStatus(value as "draft" | "inProgress" | "paused" | "completed" | "archived");
+          }}>
+          <TooltipProvider delayDuration={50}>
+            <Tooltip open={isStatusChangeDisabled ? undefined : false}>
+              <TooltipTrigger asChild>
                 <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
@@ -93,28 +91,29 @@ export default function SurveyStatusDropdown({
                     </div>
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
-                    <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                    In-progress
-                  </SelectItem>
-                  <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
-                    <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                    Paused
-                  </SelectItem>
-                  <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
-                    <CheckCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                    Completed
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </TooltipTrigger>
-            <TooltipContent>
-              To update the survey status, update the &ldquo;Close
-              <br /> survey on date&rdquo; setting in the Response Options.
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+              </TooltipTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
+                  <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                  In-progress
+                </SelectItem>
+                <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
+                  <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                  Paused
+                </SelectItem>
+                <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
+                  <CheckCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                  Completed
+                </SelectItem>
+              </SelectContent>
+
+              <TooltipContent>
+                To update the survey status, update the &ldquo;Close
+                <br /> survey on date&rdquo; setting in the Response Options.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </Select>
       )}
     </>
   );

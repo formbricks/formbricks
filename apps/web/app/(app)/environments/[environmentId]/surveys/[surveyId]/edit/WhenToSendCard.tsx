@@ -1,49 +1,67 @@
 "use client";
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/AddNoCodeActionModal";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import {
+  AdvancedOptionToggle,
   Badge,
   Button,
   Input,
-  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  Switch,
 } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 interface WhenToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
+  actionClasses: TActionClass[];
 }
 
-export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
+export default function WhenToSendCard({
+  environmentId,
+  localSurvey,
+  setLocalSurvey,
+  actionClasses,
+}: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
-  const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [actionClassArray, setActionClassArray] = useState<TActionClass[]>(actionClasses);
 
   const autoClose = localSurvey.autoClose !== null;
 
+  let newTrigger = {
+    id: "", // Set the appropriate value for the id
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "",
+    type: "code" as const, // Set the appropriate value for the type
+    environmentId: "",
+    description: null,
+    noCodeConfig: null,
+  };
+
   const addTriggerEvent = () => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = [...localSurvey.triggers, ""];
+    updatedSurvey.triggers = [...localSurvey.triggers, newTrigger];
     setLocalSurvey(updatedSurvey);
   };
 
-  const setTriggerEvent = (idx: number, eventClassId: string) => {
+  const setTriggerEvent = (idx: number, actionClassId: string) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = eventClassId;
+    updatedSurvey.triggers[idx] = actionClassArray!.find((actionClass) => {
+      return actionClass.id === actionClassId;
+    })!;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -55,10 +73,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const handleCheckMark = () => {
     if (autoClose) {
-      const updatedSurvey: Survey = { ...localSurvey, autoClose: null };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: Survey = { ...localSurvey, autoClose: 10 };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: 10 };
       setLocalSurvey(updatedSurvey);
     }
   };
@@ -68,15 +86,21 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
     if (value < 1) value = 1;
 
-    const updatedSurvey: Survey = { ...localSurvey, autoClose: value };
+    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: value };
     setLocalSurvey(updatedSurvey);
   };
 
   const handleTriggerDelay = (e: any) => {
     let value = parseInt(e.target.value);
-    const updatedSurvey: Survey = { ...localSurvey, delay: value };
+    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, delay: value };
     setLocalSurvey(updatedSurvey);
   };
+  useEffect(() => {
+    console.log(actionClassArray);
+    if (activeIndex !== null) {
+      setTriggerEvent(activeIndex, actionClassArray[actionClassArray.length - 1].id);
+    }
+  }, [actionClassArray]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -90,14 +114,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
       addTriggerEvent();
     }
   }, []);
-
-  if (isLoadingEventClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorEventClasses) {
-    return <div>Error</div>;
-  }
 
   return (
     <>
@@ -119,9 +135,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           )}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {!localSurvey.triggers ||
-              localSurvey.triggers.length === 0 ||
-              localSurvey.triggers[0] === "" ? (
+              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0]?.id ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"
@@ -153,13 +167,13 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
-          {localSurvey.triggers?.map((triggerEventClassId, idx) => (
+          {localSurvey.triggers?.map((triggerEventClass, idx) => (
             <div className="mt-2" key={idx}>
               <div className="inline-flex items-center">
                 <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
                 <Select
-                  value={triggerEventClassId}
-                  onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
+                  value={triggerEventClass.id}
+                  onValueChange={(actionClassId) => setTriggerEvent(idx, actionClassId)}>
                   <SelectTrigger className="w-[240px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -169,14 +183,18 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       value="none"
                       onClick={() => {
                         setAddEventModalOpen(true);
+                        setActiveIndex(idx);
                       }}>
                       <PlusIcon className="mr-1 h-5 w-5" />
                       Add Action
                     </button>
                     <SelectSeparator />
-                    {eventClasses.map((eventClass) => (
-                      <SelectItem value={eventClass.id} key={eventClass.id}>
-                        {eventClass.name}
+                    {actionClassArray.map((actionClass) => (
+                      <SelectItem
+                        value={actionClass.id}
+                        key={actionClass.id}
+                        title={actionClass.description ? actionClass.description : ""}>
+                        {actionClass.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -213,7 +231,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       id="triggerDelay"
                       value={localSurvey.delay.toString()}
                       onChange={(e) => handleTriggerDelay(e)}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
                     seconds before showing the survey.
                   </p>
@@ -222,42 +240,35 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             </div>
           )}
 
-          <div className="ml-2 flex items-center space-x-1 p-4">
-            <Switch id="autoClose" checked={autoClose} onCheckedChange={handleCheckMark} />
-            <Label htmlFor="autoClose" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Auto close on inactivity</h3>
-              </div>
-            </Label>
-          </div>
-          {autoClose && (
-            <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
-              <label
-                htmlFor="autoCloseSeconds"
-                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <div className="">
-                  <p className="text-sm font-semibold text-slate-700">
-                    Automatically close survey after
-                    <Input
-                      type="number"
-                      min="1"
-                      id="autoCloseSeconds"
-                      value={localSurvey.autoClose?.toString()}
-                      onChange={(e) => handleInputSeconds(e)}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
-                    />
-                    seconds with no initial interaction.
-                  </p>
-                </div>
-              </label>
-            </div>
-          )}
+          <AdvancedOptionToggle
+            htmlId="autoClose"
+            isChecked={autoClose}
+            onToggle={handleCheckMark}
+            title="Auto close on inactivity"
+            description="Automatically close the survey if the user does not respond after certain number of seconds"
+            childBorder={true}>
+            <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
+              <p className="text-sm font-semibold text-slate-700">
+                Automatically close survey after
+                <Input
+                  type="number"
+                  min="1"
+                  id="autoCloseSeconds"
+                  value={localSurvey.autoClose?.toString()}
+                  onChange={(e) => handleInputSeconds(e)}
+                  className="mx-2 inline w-16 bg-white text-center text-sm"
+                />
+                seconds with no initial interaction.
+              </p>
+            </label>
+          </AdvancedOptionToggle>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
       <AddNoCodeActionModal
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
+        setActionClassArray={setActionClassArray}
       />
     </>
   );

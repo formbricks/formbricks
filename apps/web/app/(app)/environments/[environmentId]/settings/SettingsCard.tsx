@@ -18,7 +18,7 @@ export default function SettingsCard({
 }) {
   return (
     <div className="my-4 w-full bg-white shadow sm:rounded-lg">
-      <div className="rounded-t-lg border-b border-slate-200 bg-slate-100 px-6 py-5">
+      <div className="border-b border-slate-200 bg-slate-100 px-6 py-5">
         <div className="flex">
           <h3 className="text-lg font-medium leading-6 text-slate-900">{title}</h3>
           <div className="ml-2">

@@ -11,9 +11,10 @@ import LinkSurveyModal from "./LinkSurveyModal";
 interface SummaryMetadataProps {
   environmentId: string;
   survey: TSurvey;
+  surveyBaseUrl: string;
 }
 
-export default function SuccessMessage({ environmentId, survey }: SummaryMetadataProps) {
+export default function SuccessMessage({ environmentId, survey, surveyBaseUrl }: SummaryMetadataProps) {
   const { environment } = useEnvironment(environmentId);
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -46,7 +47,14 @@ export default function SuccessMessage({ environmentId, survey }: SummaryMetadat
 
   return (
     <>
-      {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
+      {showLinkModal && (
+        <LinkSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          surveyBaseUrl={surveyBaseUrl}
+        />
+      )}
       {confetti && <Confetti />}
     </>
   );

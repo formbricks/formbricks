@@ -15,10 +15,12 @@ export default function EditAPIKeys({
   environmentTypeId,
   environmentType,
   apiKeys,
+  environmentId,
 }: {
   environmentTypeId: string;
   environmentType: string;
   apiKeys: TApiKey[];
+  environmentId: string;
 }) {
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
@@ -52,6 +54,7 @@ export default function EditAPIKeys({
       <div className="mb-6 text-right">
         <Button
           variant="darkCTA"
+          disabled={environmentId !== environmentTypeId}
           onClick={() => {
             setOpenAddAPIKeyModal(true);
           }}>
@@ -60,10 +63,10 @@ export default function EditAPIKeys({
       </div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-9 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-2">Label</div>
-          <div className="col-span-2">API Key</div>
-          <div className="col-span-2">Last used</div>
-          <div className="col-span-2">Created at</div>
+          <div className="col-span-4 sm:col-span-2">Label</div>
+          <div className="col-span-4 hidden sm:col-span-2 sm:block">API Key</div>
+          <div className="col-span-4 hidden sm:col-span-2 sm:block">Last used</div>
+          <div className="col-span-4 sm:col-span-2">Created at</div>
           <div className=""></div>
         </div>
         <div className="grid-cols-9">
@@ -77,12 +80,14 @@ export default function EditAPIKeys({
               <div
                 className="grid h-12 w-full grid-cols-9 content-center rounded-lg px-6 text-left text-sm text-slate-900"
                 key={apiKey.hashedKey}>
-                <div className="col-span-2 font-semibold">{apiKey.label}</div>
-                <div className="col-span-2">{apiKey.apiKey || <span className="italic">secret</span>}</div>
-                <div className="col-span-2">
+                <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
+                <div className="col-span-4 hidden sm:col-span-2 sm:block">
+                  {apiKey.apiKey || <span className="italic">secret</span>}
+                </div>
+                <div className="col-span-4 hidden sm:col-span-2 sm:block">
                   {apiKey.lastUsedAt && timeSince(apiKey.lastUsedAt.toString())}
                 </div>
-                <div className="col-span-2">{timeSince(apiKey.createdAt.toString())}</div>
+                <div className="col-span-4 sm:col-span-2">{timeSince(apiKey.createdAt.toString())}</div>
                 <div className="col-span-1 text-center">
                   <button onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>
                     <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />

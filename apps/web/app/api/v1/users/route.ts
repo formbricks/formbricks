@@ -1,5 +1,5 @@
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/lib/email";
-import { verifyInviteToken } from "@/lib/jwt";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";

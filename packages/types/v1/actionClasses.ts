@@ -1,7 +1,9 @@
 import z from "zod";
 
 export const ZActionClassNoCodeConfig = z.object({
-  type: z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")]),
+  // The "type field has been made optional to allow for multiple selectors in one noCode action from now on
+  // Use the existence check of the fields to determine the types of the noCode action
+  type: z.optional(z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")])),
   pageUrl: z.optional(
     z.object({
       value: z.string(),
