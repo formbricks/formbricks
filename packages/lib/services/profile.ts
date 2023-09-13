@@ -12,6 +12,7 @@ const responseSelection = {
   email: true,
   createdAt: true,
   updatedAt: true,
+  onboardingCompleted: true,
 };
 
 interface Membership {

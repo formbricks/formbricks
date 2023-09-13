@@ -1,11 +1,10 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { ProgressBar } from "@formbricks/ui";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import Greeting from "./Greeting";
 import Objective from "./Objective";
@@ -14,6 +13,7 @@ import Role from "./Role";
 import { ResponseId } from "@formbricks/js";
 import { TProfile } from "@formbricks/types/v1/profile";
 import { TProduct } from "@formbricks/types/v1/product";
+import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 
 const MAX_STEPS = 6;
 
@@ -25,11 +25,16 @@ interface OnboardingProps {
 }
 
 export default function Onboarding({ session, environmentId, profile, product }: OnboardingProps) {
-  const { triggerProfileMutate } = useProfileMutation();
   const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (profile.onboardingCompleted) {
+      router.push(`/environments/${environmentId}/surveys`);
+    }
+  }, []);
 
   const percent = useMemo(() => {
     return currentStep / MAX_STEPS;
@@ -56,7 +61,7 @@ export default function Onboarding({ session, environmentId, profile, product }:
 
     try {
       const updatedProfile = { ...profile, onboardingCompleted: true };
-      await triggerProfileMutate(updatedProfile);
+      await updateProfileAction(profile.id, updatedProfile);
 
       if (environmentId) {
         router.push(`/environments/${environmentId}/surveys`);
@@ -98,7 +103,12 @@ export default function Onboarding({ session, environmentId, profile, product }:
           />
         )}
         {currentStep === 3 && (
-          <Objective next={next} skip={skipStep} formbricksResponseId={formbricksResponseId} />
+          <Objective
+            next={next}
+            skip={skipStep}
+            formbricksResponseId={formbricksResponseId}
+            profile={profile}
+          />
         )}
         {currentStep === 4 && (
           <Product done={done} environmentId={environmentId} isLoading={isLoading} product={product} />

@@ -70,7 +70,6 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
         <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
           What is your role?
         </label>
-        ∏
         <label className="block text-sm font-normal leading-6 text-slate-500">
           Make your Formbricks experience more personalised.
         </label>
