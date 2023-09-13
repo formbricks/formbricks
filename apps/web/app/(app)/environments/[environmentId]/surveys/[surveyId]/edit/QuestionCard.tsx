@@ -6,6 +6,7 @@ import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
+  CalendarDaysIcon,
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -28,6 +29,7 @@ import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import BookingQuestionForm from "./BookingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurveyWithAnalytics;
@@ -124,6 +126,8 @@ export default function QuestionCard({
                       <StarIcon />
                     ) : question.type === "consent" ? (
                       <CheckIcon />
+                    ) : question.type === QuestionType.Booking ? (
+                      <CalendarDaysIcon />
                     ) : null}
                   </div>
                   <div>
@@ -206,6 +210,14 @@ export default function QuestionCard({
                 />
               ) : question.type === "consent" ? (
                 <ConsentQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === QuestionType.Booking ? (
+                <BookingQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}

@@ -21,6 +21,7 @@ import {
   ListBulletIcon,
   QueueListIcon,
   CheckIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 
@@ -65,6 +66,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
           return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
         case QuestionType.Consent:
           return <CheckIcon width={18} height={18} className="text-white" />;
+        case QuestionType.Booking:
+          return <CalendarDaysIcon width={18} height={18} className="text-white" />;
       }
     }
     if (type === OptionsType.ATTRIBUTES) {

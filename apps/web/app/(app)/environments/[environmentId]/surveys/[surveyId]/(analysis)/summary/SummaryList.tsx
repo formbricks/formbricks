@@ -13,12 +13,14 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyQuestion,
   TSurveyRatingQuestion,
+  TSurveyBookingQuestion,
 } from "@formbricks/types/v1/surveys";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
+import BookingSummary from "./BookingSummary";
 
 interface SummaryListProps {
   environmentId: string;
@@ -110,6 +112,15 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                   <ConsentSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as QuestionSummary<TSurveyConsentQuestion>}
+                  />
+                );
+              }
+              if (questionSummary.question.type === QuestionType.Booking) {
+                return (
+                  <BookingSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as QuestionSummary<TSurveyBookingQuestion>}
+                    environmentId={environmentId}
                   />
                 );
               }

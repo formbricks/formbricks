@@ -209,6 +209,17 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
+export const ZSurveyBookingQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(QuestionType.Booking),
+  calLink: z
+    .string()
+    .min(3)
+    .max(20)
+    .regex(/^[a-zA-Z0-9_-]+$/), // assuming standard username validation here.
+});
+
+export type TSurveyBookingQuestion = z.infer<typeof ZSurveyBookingQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -217,6 +228,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyNPSQuestion,
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
+  ZSurveyBookingQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;

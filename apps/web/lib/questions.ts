@@ -6,6 +6,7 @@ import {
   QueueListIcon,
   StarIcon,
   CheckIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -108,6 +109,15 @@ export const questionTypes: QuestionType[] = [
       headline: "Terms and Conditions",
       label: "I agree to the terms and conditions",
       dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: QuestionId.Booking,
+    label: "Booking with cal.com",
+    description: "Ask your users book a date your cal.com booking widget",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: "Book a time with {{productName}}",
     },
   },
 ];

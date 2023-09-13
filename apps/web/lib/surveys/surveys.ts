@@ -187,6 +187,7 @@ const conditionOptions = {
   tags: ["is"],
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
+  booking: ["is"],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -195,6 +196,7 @@ const filterOptions = {
   cta: ["Clicked", "Dismissed"],
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
+  booking: ["Accepted", "Dismissed"],
 };
 
 // creating an object for the attributes in key value format when key is string and value is an string array

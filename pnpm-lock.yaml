@@ -427,7 +427,7 @@ importers:
         version: 9.0.0(eslint@8.49.0)
       eslint-config-turbo:
         specifier: latest
-        version: 1.8.8(eslint@8.49.0)
+        version: 1.10.13(eslint@8.49.0)
       eslint-plugin-react:
         specifier: 7.33.2
         version: 7.33.2(eslint@8.49.0)
@@ -578,6 +578,10 @@ importers:
         version: 0.5.4(prettier@3.0.3)
 
   packages/surveys:
+    dependencies:
+      '@calcom/embed-snippet':
+        specifier: ^1.1.2
+        version: 1.1.2
     devDependencies:
       '@formbricks/types':
         specifier: workspace:*
@@ -10545,13 +10549,13 @@ packages:
     resolution: {integrity: sha512-NB/L/1Y30qyJcG5xZxCJKW/+bqyj+llbcCwo9DEz8bESIP0SLTOQ8T1DWCCFc+wJ61AMEstj4511PSScqMMfCw==}
     dev: true
 
-  /eslint-config-turbo@1.8.8(eslint@8.49.0):
-    resolution: {integrity: sha512-+yT22sHOT5iC1sbBXfLIdXfbZuiv9bAyOXsxTxFCWelTeFFnANqmuKB3x274CFvf7WRuZ/vYP/VMjzU9xnFnxA==}
+  /eslint-config-turbo@1.10.13(eslint@8.49.0):
+    resolution: {integrity: sha512-Ffa0SxkRCPMtfUX/HDanEqsWoLwZTQTAXO9W4IsOtycb2MzJDrVcLmoFW5sMwCrg7gjqbrC4ZJoD+1SPPzIVqg==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
       eslint: 8.49.0
-      eslint-plugin-turbo: 1.8.8(eslint@8.49.0)
+      eslint-plugin-turbo: 1.10.13(eslint@8.49.0)
     dev: true
 
   /eslint-import-resolver-node@0.3.6:
@@ -10749,11 +10753,12 @@ packages:
       semver: 6.3.1
       string.prototype.matchall: 4.0.8
 
-  /eslint-plugin-turbo@1.8.8(eslint@8.49.0):
-    resolution: {integrity: sha512-zqyTIvveOY4YU5jviDWw9GXHd4RiKmfEgwsjBrV/a965w0PpDwJgEUoSMB/C/dU310Sv9mF3DSdEjxjJLaw6rA==}
+  /eslint-plugin-turbo@1.10.13(eslint@8.49.0):
+    resolution: {integrity: sha512-el4AAmn0zXmvHEyp1h0IQMfse10Vy8g5Vbg4IU3+vD9CSj5sDbX07iFVt8sCKg7og9Q5FAa9mXzlCf7t4vYgzg==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
+      dotenv: 16.0.3
       eslint: 8.49.0
     dev: true
 
@@ -13733,9 +13738,13 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       chalk: 4.1.2
+      graceful-fs: 4.2.10
       jest-diff: 29.6.4
       jest-get-type: 29.6.3
+      micromatch: 4.0.5
       pretty-format: 29.6.3
+      slash: 3.0.0
+      stack-utils: 2.0.6
     dev: true
 
   /jest-message-util@29.6.2:
@@ -17437,6 +17446,23 @@ packages:
       lilconfig: 2.1.0
       postcss: 8.4.27
       yaml: 2.3.1
+
+  /postcss-load-config@4.0.1(postcss@8.4.29):
+    resolution: {integrity: sha512-vEJIc8RdiBRu3oRAI0ymerOn+7rPuMvRXslTvZUKZonDHFIczxztIyJ1urxM1x9JXEikvpWWTUUqal5j/8QgvA==}
+    engines: {node: '>= 14'}
+    peerDependencies:
+      postcss: '>=8.0.9'
+      ts-node: '>=9.0.0'
+    peerDependenciesMeta:
+      postcss:
+        optional: true
+      ts-node:
+        optional: true
+    dependencies:
+      lilconfig: 2.1.0
+      postcss: 8.4.29
+      yaml: 2.3.1
+    dev: true
 
   /postcss-loader@4.3.0(postcss@8.4.27)(webpack@4.46.0):
     resolution: {integrity: sha512-M/dSoIiNDOo8Rk0mUqoj4kpGq91gcxCfb9PoyZVdZ76/AuhxylHDYZblNE8o+EQ9AMSASeMFEKxZf5aU6wlx1Q==}
@@ -21741,7 +21767,7 @@ packages:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.1(postcss@8.4.27)
+      postcss-load-config: 4.0.1(postcss@8.4.29)
       resolve-from: 5.0.0
       rollup: 3.5.1
       source-map: 0.8.0-beta.0

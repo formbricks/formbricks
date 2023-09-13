@@ -8,6 +8,7 @@ import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import NPSQuestion from "./NPSQuestion";
 import OpenTextQuestion from "./OpenTextQuestion";
 import RatingQuestion from "./RatingQuestion";
+import BookingQuestion from "./BookingQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -101,6 +102,17 @@ export default function QuestionConditional({
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === QuestionType.Booking ? (
+    <BookingQuestion
       question={question}
       value={value}
       onChange={onChange}

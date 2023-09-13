@@ -15,7 +15,9 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@calcom/embed-snippet": "^1.1.2"
+  },
   "devDependencies": {
     "preact": "^10.17.1",
     "@formbricks/types": "workspace:*",

@@ -5,6 +5,7 @@ import Subheader from "./Subheader";
 interface ThankYouCardProps {
   headline?: string;
   subheader?: string;
+  questionId?: string;
   brandColor: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
@@ -16,6 +17,7 @@ export default function ThankYouCard({
   brandColor,
   redirectUrl,
   isRedirectDisabled,
+  questionId = "thankYouCard",
 }: ThankYouCardProps) {
   return (
     <div className="text-center">
@@ -38,8 +40,8 @@ export default function ThankYouCard({
       <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-slate-300"></span>
 
       <div>
-        <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />
-        <Subheader subheader={subheader} questionId="thankYouCard" />
+        <Headline headline={headline} questionId={questionId} style={{ "margin-right": 0 }} />
+        <Subheader subheader={subheader} questionId={questionId} />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
       </div>
     </div>
