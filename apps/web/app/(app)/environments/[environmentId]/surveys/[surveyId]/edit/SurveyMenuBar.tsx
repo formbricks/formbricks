@@ -84,7 +84,10 @@ export default function SurveyMenuBar({
   };
 
   const handleBack = () => {
-    if (localSurvey.createdAt === localSurvey.updatedAt && localSurvey.status === "draft") {
+    const createdAt = new Date(localSurvey.createdAt).getTime();
+    const updatedAt = new Date(localSurvey.updatedAt).getTime();
+
+    if (createdAt === updatedAt && localSurvey.status === "draft") {
       setDeleteDialogOpen(true);
     } else if (!isEqual(localSurvey, survey)) {
       setConfirmDialogOpen(true);
