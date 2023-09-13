@@ -76,6 +76,7 @@ export default function SurveyMenuBar({
   const deleteSurvey = async (surveyId) => {
     try {
       await deleteSurveyAction(surveyId);
+      router.refresh();
       setDeleteDialogOpen(false);
       router.back();
     } catch (error) {
@@ -127,7 +128,7 @@ export default function SurveyMenuBar({
     return true;
   };
 
-  const saveSurveyAction = (shouldNavigateBack = false) => {
+  const saveSurveyAction = async (shouldNavigateBack = false) => {
     setIsMutatingSurvey(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
@@ -142,24 +143,26 @@ export default function SurveyMenuBar({
       return;
     }
 
-    surveyMutateAction({ ...strippedSurvey })
-      .then(async () => {
-        setIsMutatingSurvey(false);
-        toast.success("Changes saved.");
-        if (shouldNavigateBack) {
-          router.back();
+    try {
+      await surveyMutateAction({ ...strippedSurvey });
+      router.refresh();
+      setIsMutatingSurvey(false);
+      toast.success("Changes saved.");
+      if (shouldNavigateBack) {
+        router.back();
+      } else {
+        if (localSurvey.status !== "draft") {
+          router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary`);
         } else {
-          if (localSurvey.status !== "draft") {
-            router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary`);
-          } else {
-            router.push(`/environments/${environment.id}/surveys`);
-          }
+          router.push(`/environments/${environment.id}/surveys`);
         }
-      })
-      .catch(() => {
-        setIsMutatingSurvey(false);
-        toast.error(`Error saving changes`);
-      });
+      }
+    } catch (e) {
+      console.error(e);
+      setIsMutatingSurvey(false);
+      toast.error(`Error saving changes`);
+      return;
+    }
   };
 
   return (
@@ -240,6 +243,7 @@ export default function SurveyMenuBar({
                   return;
                 }
                 await surveyMutateAction({ ...localSurvey, status: "inProgress" });
+                router.refresh();
                 setIsMutatingSurvey(false);
                 router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
               }}>
