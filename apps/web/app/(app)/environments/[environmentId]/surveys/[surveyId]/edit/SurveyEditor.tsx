@@ -41,6 +41,13 @@ export default function SurveyEditor({
     }
   }, [survey]);
 
+  // when the survey type changes, we need to reset the active question id to the first question
+  useEffect(() => {
+    if (survey?.questions?.length > 0) {
+      setActiveQuestionId(survey.questions[0].id);
+    }
+  }, [localSurvey?.type]);
+
   if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;
   }
