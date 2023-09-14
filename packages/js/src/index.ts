@@ -45,7 +45,7 @@ const reset = async (): Promise<void> => {
 };
 
 const track = async (name: string, properties: any = {}): Promise<void> => {
-  queue.add(true, trackAction, name, properties);
+  queue.add<any>(true, trackAction, name, properties);
   await queue.wait();
 };
 

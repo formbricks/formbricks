@@ -13,7 +13,10 @@ interface WidgetStatusIndicatorProps {
   environment: TEnvironment;
   type: "large" | "mini";
   actions: TAction[];
-  updateEnvironmentAction: (environmentId: string, data: Partial<TEnvironmentUpdateInput>) => Promise<TEnvironment>;
+  updateEnvironmentAction: (
+    environmentId: string,
+    data: Partial<TEnvironmentUpdateInput>
+  ) => Promise<TEnvironment>;
 }
 
 export default function WidgetStatusIndicator({

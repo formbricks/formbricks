@@ -2,12 +2,14 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
-import { ZEnvironment } from "@formbricks/types/v1/environment";
+import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import type { TEnvironment, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
 
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment> => {
+  validateInputs([environmentId, ZId]);
   let environmentPrisma;
   try {
     environmentPrisma = await prisma.environment.findUnique({
@@ -39,6 +41,7 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
 });
 
 export const getEnvironments = cache(async (productId: string): Promise<TEnvironment[]> => {
+  validateInputs([productId, ZId]);
   let productPrisma;
   try {
     productPrisma = await prisma.product.findFirst({
@@ -76,7 +79,11 @@ export const getEnvironments = cache(async (productId: string): Promise<TEnviron
   }
 });
 
-export const updateEnvironment = async (environmentId: string, data: Partial<TEnvironmentUpdateInput>): Promise<TEnvironment> => {
+export const updateEnvironment = async (
+  environmentId: string,
+  data: Partial<TEnvironmentUpdateInput>
+): Promise<TEnvironment> => {
+  validateInputs([environmentId, ZId], [data, ZEnvironmentUpdateInput.partial()]);
   const newData = { ...data, updatedAt: new Date() };
   let updatedEnvironment;
   try {

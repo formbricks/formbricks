@@ -11,12 +11,10 @@ import {
   err,
   okVoid,
 } from "./errors";
-import { trackAction } from "./actions";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
 import { resetPerson } from "./person";
 import { isExpired } from "./session";
-import { addStylesToDom } from "./styles";
 import { sync } from "./sync";
 import { addWidgetContainer } from "./widget";
 
@@ -34,6 +32,9 @@ const addSyncEventListener = (debug?: boolean): void => {
       window.clearInterval(syncIntervalId);
     }
     syncIntervalId = window.setInterval(async () => {
+      if (!config.isSyncAllowed) {
+        return;
+      }
       logger.debug("Syncing.");
       await sync();
     }, updateInverval);
@@ -57,6 +58,7 @@ export const initialize = async (
   ErrorHandler.getInstance().printStatus();
 
   logger.debug("Start initialize");
+  config.allowSync();
 
   if (!c.environmentId) {
     logger.debug("No environmentId provided");
@@ -79,7 +81,6 @@ export const initialize = async (
   addWidgetContainer();
 
   logger.debug("Adding styles to DOM");
-  addStylesToDom();
   if (
     config.get().state &&
     config.get().environmentId === c.environmentId &&
