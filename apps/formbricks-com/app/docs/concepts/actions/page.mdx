@@ -1,0 +1,72 @@
+export const meta = {
+  title: "What are actions and why are they useful?",
+  description:
+    "Actions in Formbricks enable targeted survey displays during specific user journey moments. Enhance user segmentation by tracking actions for granular surveying.",
+};
+
+#### Concepts
+
+# Actions
+
+You want to understand what your users think and feel during specific moments in the user journey. To be able to ask at exactly the right point in time, you need actions.
+
+## What are actions?
+
+Actions are a little notification sent from your application to Formbricks. You decide which actions are sent either in your [Code](/docs/actions/code) or by setting up a [No-Code](/docs/actions/no-code) action within Formbricks.
+
+### How do actions work?
+
+When a predefined action happens in your app, the Formbricks widget notices. This action can then trigger a survey to be shown to the user and is stored in the database.
+
+### Why are actions useful?
+
+Actions help you to display your surveys at the right time. Later on, you will be able to segment your users based on the actions they have triggered in the past. This way, you can create much more granular user segments, e.g. only target users that already have used a specific feature.
+
+## No-Code Actions
+
+No-Code actions can be set up within Formbricks with just a few clicks. There are three types of No-Code actions:
+
+### Page URL Action
+
+The page URL action is triggered, when a user visits a specific page in your application. There are several match conditions:
+
+- `exactMatch`: The URL should exactly match the provided string.
+- `contains`: The URL should contain the specified string as a substring.
+- `startsWith`: The URL should start with the specified string.
+- `endsWith`: The URL should end with the specified string.
+- `notMatch`: The URL should not match the specified condition.
+- `notContains`: The URL should not contain the specified string as a substring.
+
+### innerText Action
+
+The innerText action checks if the `innerText` of a clicked HTML element matches a specific text, e.g. the label of a button. Display a survey on any button click!
+
+### CSS Selector Action
+
+The CSS Selector action checks if the provided CSS selector matches the selector of a clicked HTML element. The CSS selector can be a class, id or any other CSS selector within your website. Display a survey on any element click!
+
+## Code Actions
+
+Actions can also be set in the code base. You can fire an action using `formbricks.track()`
+
+<CodeGroup title="Track an action">
+
+```javascript
+formbricks.track("Action Name");
+```
+
+</CodeGroup>
+
+Here is an example of how to fire an action when a user clicks a button:
+
+<CodeGroup title="Track Button Click">
+
+```javascript
+const handleClick = () => {
+  formbricks.track("Button Clicked");
+};
+
+return <button onClick={handleClick}>Click Me</button>;
+```
+
+</CodeGroup>

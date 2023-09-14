@@ -184,7 +184,7 @@ export const navigation: Array<NavGroup> = [
     title: "Introduction",
     links: [
       { title: "What is Formbricks?", href: "/docs/introduction/what-is-formbricks" },
-      { title: "Why is it better?", href: "/docs/introduction/why-is-it-better" },
+      { title: "Why Formbricks?", href: "/docs/introduction/why-is-it-better" },
       { title: "How does it work?", href: "/docs/introduction/how-it-works" },
     ],
   },
@@ -196,31 +196,11 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "Attributes",
+    // TODO: write redirects for all old concept pages
+    title: "Concepts",
     links: [
-      { title: "Why Attributes?", href: "/docs/attributes/why" },
-      { title: "Custom Attributes", href: "/docs/attributes/custom-attributes" },
-      { title: "Identify users", href: "/docs/attributes/identify-users" },
-    ],
-  },
-  {
-    title: "Actions",
-    links: [
-      { title: "Why Actions?", href: "/docs/actions/why" },
-      { title: "No-Code Actions", href: "/docs/actions/no-code" },
-      { title: "Code Actions", href: "/docs/actions/code" },
-    ],
-  },
-  {
-    title: "Best Practices",
-    links: [
-      { title: "Learn from Churn", href: "/docs/best-practices/cancel-subscription" },
-      { title: "Interview Prompt", href: "/docs/best-practices/interview-prompt" },
-      { title: "Product-Market Fit", href: "/docs/best-practices/pmf-survey" },
-      { title: "Trial Conversion", href: "/docs/best-practices/improve-trial-cr" },
-      { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
-      { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
-      { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
+      { title: "Actions", href: "/docs/concepts/actions" },
+      { title: "Attributes", href: "/docs/concepts/attributes" },
     ],
   },
   {
@@ -239,21 +219,23 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "Self-hosting",
+    // TODO: write redirects for all old deployment guides
+    title: "Developer Resources",
     links: [
-      { title: "Deployment", href: "/docs/self-hosting/deployment" },
-      { title: "Production", href: "/docs/self-hosting/production" },
-      { title: "Docker", href: "/docs/self-hosting/docker" },
-      { title: "From Source", href: "/docs/self-hosting/from-source" },
+      { title: "Self Host", href: "/docs/developer-resources/self-host" },
+      { title: "Contributing", href: "/docs/developer-resources/contributing" },
     ],
   },
   {
-    title: "Contributing",
+    title: "Best Practices",
     links: [
-      { title: "Introduction", href: "/docs/contributing/introduction" },
-      { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
-      { title: "Demo App", href: "/docs/contributing/demo" },
-      { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
+      { title: "Learn from Churn", href: "/docs/best-practices/cancel-subscription" },
+      { title: "Interview Prompt", href: "/docs/best-practices/interview-prompt" },
+      { title: "Product-Market Fit", href: "/docs/best-practices/pmf-survey" },
+      { title: "Trial Conversion", href: "/docs/best-practices/improve-trial-cr" },
+      { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
+      { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
+      { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
     ],
   },
   {

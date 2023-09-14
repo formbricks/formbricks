@@ -3,14 +3,14 @@ import { Heading } from "./Heading";
 
 const gettingStarted = [
   {
+    href: "/docs/introduction/why-is-it-better",
+    name: "Why Formbricks?",
+    description: "Understand why Formbricks is the best way to collect user experience.",
+  },
+  {
     href: "/docs/getting-started/quickstart-in-app-survey",
     name: "Quickstart",
     description: "Get up and running with our cloud and JavaScript widget",
-  },
-  {
-    href: "/docs/getting-started/framework-guides#next-js",
-    name: "Next.js App",
-    description: "Integrate the Formbricks SDK into a Next.js application with the new app directory",
   },
   {
     href: "/docs/self-hosting/deployment",

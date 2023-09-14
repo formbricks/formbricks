@@ -1,0 +1,498 @@
+export const meta = {
+  title: "Deploying Formbricks to production",
+  description:
+    "Utilize Docker-Compose for easy deployment on your machine. Clone the repo, configure settings, and build the image to access the app on localhost.",
+};
+
+#### Self-Hosting
+
+# Self Hosting Formbricks
+
+At Formbricks, we understand that different users have different needs, and we strive to cater to a wide variety of situations. This is why we currently provide three ways of running our application:
+
+1. **Production Instance Setup with Shell Script on Ubuntu**: If you want to quickly set up a production instance of Formbricks on a server running Ubuntu, we've got you covered! This method utilizes a convenient shell script that takes care of everything, including Docker, Postgres DB, and SSL certificate configuration. The shell script will automatically install all the required dependencies and configure your server, making the process a breeze. Checkout the [With Shell Script](/docs/self-hosting/production) Setup below.
+
+2. **Fast Setup with a Pre-built Docker Image:** This method is designed for those who want to quickly set up and start using Formbricks without getting into the technicalities of Docker or the build process. When you choose this method, you're using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container. Checkout the [With Docker](#with-docker) Setup below.
+
+3. **Manual Setup by Building the Docker Image from Source:** This approach provides the flexibility to configure every aspect of your Formbricks instance, including environment variables that need to be set at build time. While we don't recommend changing the source code of Formbricks, this method allows you to set your own configuration that might be necessary for specific deployment needs. Keep in mind that this method requires a more in-depth understanding of Docker and the build process. However, the trade-off is the additional control and flexibility you gain, making it worth considering if you're a more advanced user or have very specific configuration needs. Checkout the [From Source](#from-source) setup below.
+
+Please note that regardless of the method you choose, Formbricks is designed to be easy-to-use and flexible. So choose the method that best fits your comfort level and requirements, and start leveraging the **power of Formbricks** today!
+
+Looking for something not mentioned here? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
+
+
+## With Shell Script
+
+If you want to quickly set up a production instance of Formbricks on a server running Ubuntu, we've got you covered! This method utilizes a convenient shell script that takes care of everything, including Docker, Postgres DB, and SSL certificate configuration. The shell script will automatically install all the required dependencies and configure your server, making the process a breeze.
+
+This is the quickest way to get Formbricks up and running on an Ubuntu server. The shell script will automatically install all the required dependencies and configure your server, making the process a breeze.
+
+### Requirements
+
+Before you proceed, make sure you have the following:
+
+- A **Linux Ubuntu** Virtual Machine deployed with SSH access.
+
+  <Note>This only works with an Ubuntu machine so please verify the underlying OS beforehand!</Note>
+
+- An **A record** set up to connect a custom domain to your instance. Formbricks will **automatically create an SSL certificate** for your domain using Let's Encrypt.
+
+### Single Command Setup
+
+Copy and paste the following command into your terminal:
+
+<CodeGroup title="Single Command to deploy Formbricks">
+
+```bash
+/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/production.sh)"
+```
+
+</CodeGroup>
+
+The script will prompt you for the following information:
+
+1. **Overwriting Docker GPG Keys**: If Docker GPG keys already exist, the script will ask if you want to overwrite them.
+
+   <CodeGroup title="Docker GPG Keys Overwrite Prompt">
+
+   ```bash
+   🧱 Welcome to the Formbricks single instance installer
+
+   🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 22.04.2 LTS server.
+
+   🧹 Time to sweep away any old Docker installations.
+   🔄 Updating your package list.
+   📦 Installing the necessary dependencies.
+   🔑 Adding Docker's official GPG key and setting up the stable repository.
+   File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N)
+   ```
+
+   </CodeGroup>
+
+2. **Email Address**: Provide your email address for SSL certificate registration with Let's Encrypt.
+
+   <CodeGroup title="Email Prompt">
+
+   ```bash
+    🧱 Welcome to the Formbricks single instance installer
+
+    🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 22.04.2 LTS server.
+
+    🧹 Time to sweep away any old Docker installations.
+    🔄 Updating your package list.
+    📦 Installing the necessary dependencies.
+    🔑 Adding Docker's official GPG key and setting up the stable repository.
+    File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+    🔄 Updating your package list again.
+    🐳 Installing Docker.
+    🚀 Testing your Docker installation.
+    🎉 Docker is installed!
+    🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+    🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+    🚗 Installing Traefik...
+    📁 Created Formbricks Quickstart directory at ./formbricks.
+    💡 Please enter your email address for the SSL certificate:
+   ```
+
+    </CodeGroup>
+
+3. **Domain Name**: Enter the domain name that Traefik will use to create the SSL certificate and forward requests to Formbricks.
+
+    <CodeGroup title="Domain Name for SSL certificate Prompt">
+
+    ```bash
+    🧱 Welcome to the Formbricks single instance installer
+
+    🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 22.04.2 LTS server.
+
+    🧹 Time to sweep away any old Docker installations.
+    🔄 Updating your package list.
+    📦 Installing the necessary dependencies.
+    🔑 Adding Docker's official GPG key and setting up the stable repository.
+    File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+    🔄 Updating your package list again.
+    🐳 Installing Docker.
+    🚀 Testing your Docker installation.
+    🎉 Docker is installed!
+    🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+    🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+    🚗 Installing Traefik...
+    📁 Created Formbricks Quickstart directory at ./formbricks.
+    💡 Please enter your email address for the SSL certificate:
+    docs@formbricks.com
+    💡 Created traefik.yaml file with your provided email address.
+    💡 Created acme.json file with correct permissions.
+    🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+    ```
+    </CodeGroup>
+
+**That's it**! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
+
+    <CodeGroup title="Successfully setup Formbricks on your Ubuntu machine">
+
+    ```bash
+    🧱 Welcome to the Formbricks single instance installer
+
+    🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 22.04.2 LTS server.
+
+    🧹 Time to sweep away any old Docker installations.
+    🔄 Updating your package list.
+    📦 Installing the necessary dependencies.
+    🔑 Adding Docker's official GPG key and setting up the stable repository.
+    File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+    🔄 Updating your package list again.
+    🐳 Installing Docker.
+    🚀 Testing your Docker installation.
+    🎉 Docker is installed!
+    🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+    🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+    🚗 Installing Traefik...
+    📁 Created Formbricks Quickstart directory at ./formbricks.
+    💡 Please enter your email address for the SSL certificate:
+    docs@formbricks.com
+    💡 Created traefik.yaml file with your provided email address.
+    💡 Created acme.json file with correct permissions.
+    🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+    my.hosted.url.com
+    🚙 Updating NEXTAUTH_SECRET in the Formbricks container...
+    🚗 NEXTAUTH_SECRET updated successfully!
+    [+] Running 4/4
+    ✔ Network formbricks_default         Created                                                                                                                                                                                           0.1s
+    ✔ Container formbricks-postgres-1    Started                                                                                                                                                                                           0.5s
+    ✔ Container formbricks-formbricks-1  Started                                                                                                                                                                                           0.7s
+    ✔ Container traefik                  Started                                                                                                                                                                                           1.1s
+    🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance.
+
+    🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'
+    ```
+
+    </CodeGroup>
+
+### Debugging
+
+If you encounter any issues, you can check the logs of the container with:
+
+<CodeGroup title="Check logs of the container">
+
+```bash
+cd formbricks && docker compose logs -f
+```
+
+</CodeGroup>
+
+You can close the logs again with `CTRL + C`.
+
+<Note>
+### Customizing the Build Time variables
+
+To edit any of the variables that start with `NEXT_PUBLIC_`, you need to rebuild the Formbricks Docker from source! It is just one
+more added step and is not as much of a hassle as you think! Please check the [Building from Source](/docs/self-hosting/from-source) section!
+
+</Note>
+
+### Troubleshooting
+
+If you encounter any issues, consider the following steps:
+
+- **Inbound Rules**: Make sure you have added inbound rules for Port 80 and 443 in your VM's Security Group.
+
+- **A Record**: Verify that you have set up an A record for your domain, pointing to your VM's IP address.
+
+- **Check Docker Instances**: Run `docker ps` to check the status of the Docker instances.
+
+- **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
+
+**Still can’t figure it out?**: [Join our Discord!](https://formbricks.com/discord)
+
+
+
+## With Docker
+
+Quickly set up and start using Formbricks without getting into the technicalities of the build process. You'll be using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container.
+
+This is ideal for those who are testing Formbricks or want to run it with minimal to no modifications. For this we use the [public Docker image](https://hub.docker.com/r/formbricks/formbricks) and a simple docker-compose file.
+
+### Requirements
+
+Ensure `docker` & `docker compose` are installed on your server/system. Both are typically included with Docker utilities, like Docker Desktop and Rancher Desktop.
+
+<Note>
+  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the
+  Docker documentation.
+</Note>
+
+1. **Create a New Directory for Formbricks**
+
+   Open a terminal and create a new directory for Formbricks, then navigate into this new directory:
+
+   <CodeGroup title="Create and cd into the new directory">
+
+   ```bash
+   mkdir formbricks-quickstart && cd formbricks-quickstart
+   ```
+
+   </CodeGroup>
+
+2. **Download the Docker-Compose File**
+
+   Download the docker-compose file directly from the Formbricks repository:
+
+   <CodeGroup title="Download docker compose file">
+
+   ```bash
+   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+   ```
+
+   </CodeGroup>
+
+3. **Generate NextAuth Secret**
+
+   Next, you need to generate a NextAuth secret. This will be used for session signing and encryption. The `sed` command below generates a random string using `openssl`, then replaces the `NEXTAUTH_SECRET:` placeholder in the `docker-compose.yml` file with this generated secret:
+
+   <CodeGroup title="Generate NextAuth Secret">
+
+   ```bash
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)/" docker-compose.yml
+   ```
+
+   </CodeGroup>
+
+4. **Start the Docker Setup**
+
+   You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
+
+   <CodeGroup title="Launch Docker Instance">
+
+   ```bash
+   docker compose up -d
+   ```
+
+   </CodeGroup>
+
+   The `-d` flag will run the containers in detached mode, meaning they'll run in the background.
+
+5. **Visit Formbricks in Your Browser**
+
+   After starting the Docker setup, visit http://localhost:3000 in your browser to interact with the Formbricks application. The first time you access this page, you'll be greeted by a setup wizard. Follow the prompts to define your first user and get started.
+
+### Updating Formbricks
+
+1. Stop the Formbricks stack
+
+   <CodeGroup title="Stop the docker instance">
+
+   ```bash
+   docker compose down
+   ```
+
+   </CodeGroup>
+
+2. Pull the latest changes
+
+   <CodeGroup title="Pull the changes into docker">
+
+   ```bash
+   docker compose pull
+   ```
+
+   </CodeGroup>
+
+3. Update env vars as necessary in the docker-compose file.
+4. Re-start the Formbricks stack
+
+   <CodeGroup title="Relaunch the Docker Instance">
+
+   ```bash
+   docker compose up -d
+   ```
+
+   </CodeGroup>
+
+### Debugging
+
+If you encounter any issues, you can check the logs of the container with:
+
+<CodeGroup title="Look into docker logs">
+
+```bash
+docker compose logs -f
+```
+
+</CodeGroup>
+
+In an ideal case, you should see something like this:
+
+<CodeGroup title="Docker Build Underway">
+
+```bash
+[+] Running 9/16
+⠹ formbricks 15 layers [⣿⣤⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀] 29.78MB/47.76MB Pulling                                                           13.3s
+✔ 7264a8db6415 Already exists                                                                                                 0.0s
+⠋ 751194035c36 Downloading    [===============================>                   ]  29.78MB/47.76...                         8.1s
+✔ eff5dce73b38 Download complete                                                                                              1.7s
+✔ c8ce5be43019 Download complete                                                                                              1.2s
+✔ a2f33c630af5 Download complete                                                                                              5.1s
+✔ e3b64e437860 Download complete                                                                                              3.3s
+✔ a6551ac5f976 Download complete                                                                                              4.9s
+✔ 4f4fb700ef54 Download complete                                                                                              6.0s
+✔ 22163889e16b Download complete                                                                                              6.7s
+✔ dc647bb9eb13 Download complete                                                                                              7.8s
+⠋ 49c2ad494720 Waiting                                                                                                        8.1s
+⠋ 5c797a842dcb Waiting                                                                                                        8.1s
+⠋ 1f231213db04 Waiting                                                                                                        8.1s
+⠋ e407294bdcda Waiting                                                                                                        8.1s
+⠋ 6fd8358dca47 Pulling fs layer                                                                                               8.1s
+
+[+] Running 2/2
+✔ Container formbricks-quickstart-postgres-1    Created                                                                       0.0s
+✔ Container formbricks-quickstart-formbricks-1  Created                                                                       0.0s
+```
+
+</CodeGroup>
+
+And at the tail of the output, you should see something like this:
+
+<CodeGroup title="Docker Build Completed">
+
+```bash
+formbricks-quickstart-formbricks-1  | All migrations have been successfully applied.
+formbricks-quickstart-formbricks-1  |
+formbricks-quickstart-formbricks-1  | - info Loaded env from /home/nextjs/apps/web/.env
+formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random-string>:3000
+```
+
+</CodeGroup>
+
+You can close the logs again with `CTRL + C`.
+
+<Note>
+### Customizing the Build Time variables
+
+To edit any of the variables that start with `NEXT_PUBLIC_`, you need to rebuild the Formbricks Docker from source! It is just one
+more added step and is not as much of a hassle as you think! Please check the [Building from Source](/docs/self-hosting/from-source) section!
+
+</Note>
+
+Still facing issues? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
+
+## from Source
+
+This approach provides the flexibility to configure every aspect of your Formbricks instance, including environment variables that need to be set at build time. While we don't recommend changing the source code of Formbricks, this method allows you to set your own configuration that might be necessary for specific deployment needs. Keep in mind that this method requires a more in-depth understanding of Docker and the build process. However, the trade-off is the additional control and flexibility you gain, making it worth considering if you're a more advanced user or have very specific configuration needs.
+
+### Requirements
+
+Ensure `docker` & `docker compose` are installed on your server/system. Both are typically included with Docker utilities, like Docker Desktop and Rancher Desktop.
+
+<Note>
+  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the
+  Docker documentation.
+</Note>
+
+1.  **Clone the repository**:
+
+   <CodeGroup title="Clone and cd into the Formbricks directory">
+
+    ```bash
+    git clone https://github.com/formbricks/formbricks.git && cd formbricks
+    ```
+
+   </CodeGroup>
+
+2.  **Modify the `.env.docker` file as required by your setup.** <br/> This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
+
+        <Note>
+          ### Editing a NEXT_PUBLIC_* variable?
+          Note: All environment variables starting with `NEXT_PUBLIC_` are used at build time. When you change
+          environment variables later, you need to rebuild the image with `docker compose build` for the changes
+          to take effect.
+        </Note>
+
+3.  **Start the docker compose process.** <br/> Finally start the docker compose process to build and spin up the Formbricks container as well as the PostgreSQL database. <br/> _Use docker-compose if you are on an older docker version_
+
+   <CodeGroup title="Launch docker instances">
+
+    ```bash
+    docker compose up -d
+    ```
+
+    </CodeGroup>
+
+    You can now access the app on [http://localhost:3000](http://localhost:3000). You will be automatically redirected to the login. To use your local installation of Formbricks, create a new account.
+
+### Important Run-time Variables
+
+These variables must also be provided at runtime.
+
+| Variable                  | Description                                                                                  | Required                                                | Default                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| WEBAPP_URL                | Base URL of the site.                                                                        | required                                                | `http://localhost:3000`                                                 |
+| DATABASE_URL              | Database URL with credentials.                                                               | required                                                | `postgresql://postgres:postgres@postgres:5432/formbricks?schema=public` |
+| PRISMA_GENERATE_DATAPROXY | Enables a dedicated connection pool for Prisma using Prisma Data Proxy. Uncomment to enable. | optional                                                |                                                                         |
+| NEXTAUTH_SECRET           | Secret for NextAuth, used for session signing and encryption.                                | required                                                | (Generated by the user)                                                 |
+| NEXTAUTH_URL              | Location of the auth server. By default, this is the Formbricks docker instance itself.      | required                                                | `http://localhost:3000`                                                 |
+| MAIL_FROM                 | Email address to send emails from.                                                           | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_HOST                 | Host URL of your SMTP server.                                                                | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_PORT                 | Host Port of your SMTP server.                                                               | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_USER                 | Username for your SMTP Server.                                                               | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_PASSWORD             | Password for your SMTP Server.                                                               | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_SECURE_ENABLED       | SMTP secure connection. For using TLS, set to `1` else to `0`.                               | optional (required if email services are to be enabled) |                                                                         |
+| GITHUB_ID                 | Client ID for GitHub.                                                                        | optional (required if GitHub auth is enabled)           |                                                                         |
+| GITHUB_SECRET             | Secret for GitHub.                                                                           | optional (required if GitHub auth is enabled)           |                                                                         |
+| GOOGLE_CLIENT_ID          | Client ID for Google.                                                                        | optional (required if Google auth is enabled)           |                                                                         |
+| GOOGLE_CLIENT_SECRET      | Secret for Google.                                                                           | optional (required if Google auth is enabled)           |                                                                         |
+| CRON_SECRET               | API Secret for running cron jobs.                                                            | optional                                                |                                                                         |
+| STRIPE_SECRET_KEY         | Secret key for Stripe integration.                                                           | optional                                                |                                                                         |
+| STRIPE_WEBHOOK_SECRET     | Webhook secret for Stripe integration.                                                       | optional                                                |                                                                         |
+| TELEMETRY_DISABLED        | Disables telemetry if set to `1`.                                                            | optional                                                |                                                                         |
+| INSTANCE_ID               | Instance ID for Formbricks Cloud to be sent to Telemetry.                                    | optional                                                |                                                                         |
+| INTERNAL_SECRET           | Internal Secret (Currently we do not use this anywhere).                                     | optional                                                |                                                                         |
+| RENDER_EXTERNAL_URL       | External URL for rendering (used instead of WEBAPP_URL).                                     | optional                                                |                                                                         |
+| HEROKU_APP_NAME           | Heroku app name (used instead of WEBAPP_URL).                                                | optional                                                |                                                                         |
+| RAILWAY_STATIC_URL        | Railway static URL (used instead of WEBAPP_URL).                                             | optional                                                |                                                                         |
+
+### Build-time Variables
+
+These variables must be provided at the time of the docker build and can be provided by updating the `.env` file.
+
+| Variable                                           | Description                                                                | Required | Default                 |
+| -------------------------------------------------- | -------------------------------------------------------------------------- | -------- | ----------------------- |
+| NEXT_PUBLIC_WEBAPP_URL                             | Base URL injected into static files.                                       | required | `http://localhost:3000` |
+| NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED            | Disables email verification if set to `1`.                                 | optional |                         |
+| NEXT_PUBLIC_PASSWORD_RESET_DISABLED                | Disables password reset functionality if set to `1`.                       | optional |                         |
+| NEXT_PUBLIC_SIGNUP_DISABLED                        | Disables the ability for new users to create an account if set to `1`.     | optional |                         |
+| NEXT_PUBLIC_INVITE_DISABLED                        | Disables the ability for invited users to create an account if set to `1`. | optional |                         |
+| NEXT_PUBLIC_PRIVACY_URL                            | URL for privacy policy.                                                    | optional |                         |
+| NEXT_PUBLIC_TERMS_URL                              | URL for terms of service.                                                  | optional |                         |
+| NEXT_PUBLIC_IMPRINT_URL                            | URL for imprint.                                                           | optional |                         |
+| NEXT_PUBLIC_GITHUB_AUTH_ENABLED                    | Enables GitHub login if set to `1`.                                        | optional |                         |
+| NEXT_PUBLIC_GOOGLE_AUTH_ENABLED                    | Enables Google login if set to `1`.                                        | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_API_HOST                    | Host for the Formbricks API.                                               | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID              | If you already have a preset environment ID of the environment.            | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID        | If you already have an onboarding survey ID to show new users.             | optional |                         |
+| NEXT_PUBLIC_IS_FORMBRICKS_CLOUD                    | Uses Formbricks Cloud if set to `1`                                        | optional |                         |
+| NEXT_PUBLIC_POSTHOG_API_KEY                        | API key for PostHog analytics.                                             | optional |                         |
+| NEXT_PUBLIC_POSTHOG_API_HOST                       | Host for PostHog analytics.                                                | optional |                         |
+| NEXT_PUBLIC_SENTRY_DSN                             | DSN for Sentry error tracking.                                             | optional |                         |
+| NEXT_PUBLIC_DOCSEARCH_APP_ID                       | ID of the DocSearch application.                                           | optional |                         |
+| NEXT_PUBLIC_DOCSEARCH_API_KEY                      | API key of the DocSearch application.                                      | optional |                         |
+| NEXT_PUBLIC_DOCSEARCH_INDEX_NAME                   | Name of the DocSearch index.                                               | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID          | Environment ID for Formbricks (if you already have one)                    | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID | Survey ID for the feedback survey on the docs site.                        | optional |                         |
+| NEXT_PUBLIC_FORMBRICKS_COM_API_HOST                | Host for the Formbricks API.                                               | optional |                         |
+| NEXT_PUBLIC_VERCEL_URL                             | Vercel URL (used instead of WEBAPP_URL).                                   | optional |
+
+### Debugging
+
+If you encounter any issues, you can check the logs of the container with:
+
+<CodeGroup title="Docker container logs">
+
+```bash
+docker compose logs -f
+```
+
+</CodeGroup>
+
+You can close the logs again with `CTRL + C`.
+
+Still facing issues? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

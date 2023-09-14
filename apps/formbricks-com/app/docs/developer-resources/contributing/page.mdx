@@ -1,0 +1,302 @@
+import Image from "next/image";
+
+import DemoApp from "./demoapp.webp";
+
+import ClearAppData from "./clear-app-data.webp";
+import UncaughtPromise from "./uncaught-promise.webp";
+import Logout from "./logout.webp";
+
+export const meta = {
+  title: "Contribution Guide",
+  description: "How to contribute to Formbricks",
+};
+
+#### Contributing
+
+# Contributing to Formbricks
+
+We are so happy that you are interested in contributing to Formbricks 🤗
+
+## Ways to Contribute
+
+There are many ways to contribute to Formbricks with writing Issues, fixing bugs, building new features or updating the docs.
+
+### Issues
+
+Spotted a bug? Has deployment gone wrong? Do you have user feedback? [Raise an issue](https://github.com/formbricks/formbricks/issues/new/choose) for the fastest response.
+
+... or pick up and fix an issue if you want to do a Pull Request.
+
+### Feature requests
+
+Raise an issue for these and tag it as an Enhancement. We love every idea. Please give us as much context on the why as possible.
+
+### Creating a PR
+
+Please fork the repository, make your changes and create a new pull request if you want to make an update.
+
+If you want to speak to us before doing lots of work, please join our [Discord server](https://formbricks.com/discord) and tell us what you would like to work on - we're very responsive and friendly!
+
+For QA of your Pull-Request, you can also get in touch with Matti on Discord. But we will also get to your PR without you taking additional action ;-)
+
+### Features
+
+We are currently working on having a clear [Roadmap](https://github.com/formbricks/formbricks) for the next steps ahead.
+
+But you can also pick a feature that is not already on the roadmap if you think it creates a positive impact for Formbricks.
+
+If you are at all unsure, just raise it as an enhancement issue first and tell us that you like to work on it, and we'll very quickly respond.
+
+## Setup Dev Environment
+
+To get the project running locally on your machine you need to have the following development tools installed:
+
+- Node.JS (we recommend v18)
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) (to run PostgreSQL / MailHog)
+
+1. Clone the project:
+
+   <CodeGroup title="Git clone Formbricks monorepo">
+
+   ```bash
+   git clone https://github.com/formbricks/formbricks
+   ```
+
+   </CodeGroup>
+
+   and move into the directory
+
+   <CodeGroup title="Move into the Formbricks monorepo">
+
+   ```bash
+   cd formbricks
+   ```
+
+   </CodeGroup>
+
+1. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
+
+   <CodeGroup title="Install dependencies via pnpm">
+
+   ```bash
+   pnpm install
+   ```
+
+   </CodeGroup>
+
+1. Create a `.env` file based on `.env.example`. It's already preset to work with the docker-compose setup but you can also change values if needed.
+
+   <CodeGroup title="Define environment variables">
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   </CodeGroup>
+
+1. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the formbricks dev setup:
+
+   <CodeGroup title="Start Formbricks Dev Setup">
+
+   ```bash
+   pnpm go
+   ```
+
+   </CodeGroup>
+
+   This starts the Formbricks main app (plus all its dependencies) as well as the following services using Docker:
+
+   - a `postgres` container for hosting your database,
+   - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+
+   **You can now access the Formbricks app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
+
+   For viewing the confirmation email and other emails the system sends you, you can access mailhog at [http://localhost:8025](http://localhost:8025)
+
+### Build
+
+To build all apps and packages and check for build errors, run the following command:
+
+<CodeGroup title="Build Formbricks stack">
+
+```bash
+pnpm build
+```
+
+</CodeGroup>
+
+### Access Demo app
+
+To run the [Demo app](/docs/contributing/demo), run the following command in a separate terminal window:
+
+<CodeGroup title="Start Formbricks Demo App">
+
+```bash
+pnpm dev --filter=demo
+```
+
+</CodeGroup>
+
+You can now access the Demo app on [http://localhost:3002](http://localhost:3002).
+
+### Access Formbricks website
+
+If you want to make changes to the Formbricks website, e.g. to update the documentation, run the following command in a separate terminal window:
+
+<CodeGroup title="Start Formbricks Website">
+
+```bash
+pnpm dev --filter=formbricks-com
+```
+
+</CodeGroup>
+
+You can now access the Formbricks website on [http://localhost:3001](http://localhost:3001).
+
+## Demo App
+
+To play around with the in-app [User Actions](/docs/actions/why), you can use the Demo App. It's a simple React app that you can run locally and use to trigger actions and set [Attributes](/docs/attributes/why).
+
+<Image src={DemoApp} alt="Demo App Preview" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+
+### Code Action
+
+This button sends a <a href="/docs/actions/code">Code Action</a> to the Formbricks API called 'Code Action'. You will find it in the Actions Tab.
+
+<CodeGroup title="Track Code action">
+
+```javascript
+formbricks.track("Code Action");
+```
+
+</CodeGroup>
+
+### No Code Action
+
+This button sends a <a href="/docs/actions/no-code">No Code Action</a> as long as you created it beforehand in the Formbricks App. For it to work, you need to add the No Code Action within Formbricks.
+
+<CodeGroup title="Track No-Code action">
+
+```tsx
+<button>No-Code Action</button>
+```
+
+</CodeGroup>
+
+### Set Plan to "Free"
+
+This button sets the <a href="/docs/attributes/custom-attributes">attribute</a> 'Plan' to 'Free'. If the attribute does not exist, it creates it.
+
+<CodeGroup title="Set Plan to Free">
+
+```tsx
+formbricks.setAttribute("Plan", "Free");
+```
+
+</CodeGroup>
+
+### Set Plan to "Paid"
+
+This button sets the <a href="/docs/attributes/custom-attributes">attribute</a> 'Plan' to 'Paid'. If the attribute does not exist, it creates it.
+
+<CodeGroup title="Set Plan to Paid">
+
+```tsx
+formbricks.setAttribute("Plan", "Paid");
+```
+
+</CodeGroup>
+
+### Set Email
+
+This button sets the <a href="/docs/attributes/identify-users">user email</a> 'test@web.com'
+
+<CodeGroup title="Set Email">
+
+```tsx
+formbricks.setEmail("test@web.com");
+```
+
+</CodeGroup>
+
+### Set UserId
+
+This button sets an external <a href="/docs/attributes/identify-users">user ID</a> to 'THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING'
+
+<CodeGroup title="Set User ID">
+
+```tsx
+formbricks.setUserId("THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING");
+```
+
+</CodeGroup>
+
+## Troubleshooting
+
+Here you'll find help with Frequently Recurring Problems
+
+### "The app doesn't work after doing a prisma migration"
+
+This can happen but fear not, the fix is easy: Delete the application storage of your browser and reload the page. This will force the app to re-fetch the data from the server:
+
+<Image
+  src={ClearAppData}
+  alt="Demo App Preview"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
+
+### "I ran 'pnpm i' but there seems to be an error with the packages"
+
+If nothing helps, run `pnpm clean` and then `pnpm i` again. This solves a lot.
+
+### "I get a full-screen error with cryptic strings"
+
+This usually happens when the Formbricks Widget wasn't correctly or completely built.
+
+<CodeGroup title="Build js library first and then run again">
+
+```bash
+pnpm build --filter=js
+
+// Run the app again
+pnpm dev
+```
+
+</CodeGroup>
+
+### My machine struggles with the repository
+
+Since we're working with a monorepo structure, the repository can get quite big. If you're having trouble working with the repository, try the following:
+
+<CodeGroup title="Only run the required project">
+
+```bash {{ title: 'Formbricks Web-App' }}
+pnpm dev --filter=web...
+```
+
+```bash {{ title: 'Formbricks Landing Page' }}
+pnpm dev --filter=formbricks-com...
+```
+
+```bash {{ title: 'Formbricks Demo App' }}
+pnpm dev --filter=demo...
+```
+
+</CodeGroup>
+
+However, in our experience it's better to run `pnpm dev` than having two terminals open (one with the Formbricks app and one with the demo).
+
+### Uncaught (in promise) SyntaxError: Unexpected token !DOCTYPE ... is not valid JSON
+
+<Image
+  src={UncaughtPromise}
+  alt="Uncaught promise"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
+
+This happens when you're using the Demo App and delete the Person within the Formbricks app which the widget is currently connected with. We're fixing it, but you can also just logout your test person and reload the page to get rid of it.
+
+<Image src={Logout} alt="Logout Person" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
