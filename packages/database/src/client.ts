@@ -1,12 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
-declare global {
-  var prisma: any | undefined; // use any type for now. TODO: add support for Accelerate
+function makePrisma() {
+  return new PrismaClient({
+    datasources: { db: { url: process.env.DATABASE_URL } },
+  }).$extends(withAccelerate());
 }
 
-export const prisma =
-  global.prisma ||
-  new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } }).$extends(withAccelerate());
+const globalForPrisma = global as unknown as {
+  prisma: ReturnType<typeof makePrisma>;
+};
 
-if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+export const prisma = globalForPrisma.prisma ?? makePrisma();
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = makePrisma();
