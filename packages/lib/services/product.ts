@@ -74,7 +74,7 @@ export const updateProduct = async (
   productId: string,
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
-  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
+  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({
