@@ -17,6 +17,9 @@
     "lint": "eslint ./src --fix",
     "clean": "rimraf .turbo node_modules dist"
   },
+  "dependencies": {
+    "@formbricks/lib": "workspace:*"
+  },
   "devDependencies": {
     "node-fetch": "3.3.2",
     "tsup": "^7.2.0",
@@ -24,8 +27,5 @@
     "@formbricks/types": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "eslint-config-formbricks": "workspace:*"
-  },
-  "dependencies": {
-    "@formbricks/errors": "workspace:*"
   }
 }

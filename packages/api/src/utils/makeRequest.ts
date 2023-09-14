@@ -1,7 +1,8 @@
 import fetch from "node-fetch";
 
-import { Result, err, ok, wrapThrows } from "@formbricks/errors";
-import { NetworkError, ApiResponse } from "../types/index";
+import { Result, err, ok, wrapThrows } from "@formbricks/types/v1/errorHandlers";
+import { NetworkError } from "@formbricks/types/v1/errors";
+import { ApiResponse } from "../types";
 
 export async function makeRequest<T>(
   apiHost: string,
