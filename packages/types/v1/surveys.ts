@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
+import { ZUserSegment } from "./userSegment";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
@@ -255,6 +256,7 @@ export const ZSurvey = z.object({
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   userSegmentId: z.string().nullable().optional(),
+  userSegment: ZUserSegment.nullable().optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

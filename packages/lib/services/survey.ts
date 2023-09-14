@@ -54,6 +54,15 @@ export const selectSurvey = {
     },
   },
   userSegmentId: true,
+  userSegment: {
+    include: {
+      surveys: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  },
 };
 
 export const selectSurveyWithAnalytics = {
@@ -114,6 +123,10 @@ export const getSurveyWithAnalytics = cache(
         numDisplays,
         responseRate,
         numResponses,
+      },
+      userSegment: {
+        ...surveyPrismaFields.userSegment,
+        surveys: surveyPrismaFields.userSegment?.surveys.map((survey) => survey.id),
       },
     };
 

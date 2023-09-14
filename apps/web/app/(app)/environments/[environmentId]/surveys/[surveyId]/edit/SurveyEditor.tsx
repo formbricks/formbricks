@@ -60,8 +60,8 @@ export default function SurveyEditor({
           filters: [],
           isPrivate: true,
         });
+
         setIsCreatingUserSegment(false);
-        // mutateSurvey();
 
         router.refresh();
       } catch (err) {
@@ -78,12 +78,6 @@ export default function SurveyEditor({
     }
   }, [environment?.id, survey]);
 
-  // if (isLoadingSurvey || isLoadingProduct || !localSurvey || isCreatingUserSegment) {
-  //   return <LoadingSpinner />;
-  // }
-
-  // if (isErrorSurvey || isErrorProduct || isUserSegmentError) {
-  // }
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
     if (survey?.questions?.length > 0) {

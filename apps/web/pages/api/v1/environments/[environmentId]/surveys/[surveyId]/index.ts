@@ -15,6 +15,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (environmentId === undefined) {
     return res.status(400).json({ message: "Missing environmentId" });
   }
+
   if (surveyId === undefined) {
     return res.status(400).json({ message: "Missing surveyId" });
   }

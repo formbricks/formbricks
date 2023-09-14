@@ -17,6 +17,7 @@ export default async function SurveysEditPage({ params }) {
     getActionClasses(params.environmentId),
     getAttributeClasses(params.environmentId),
   ]);
+
   if (!survey || !environment || !actionClasses || !attributeClasses || !product) {
     return <ErrorComponent />;
   }

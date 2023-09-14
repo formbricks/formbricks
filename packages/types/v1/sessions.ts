@@ -6,6 +6,7 @@ export const ZSession = z.object({
   updatedAt: z.date(),
   expiresAt: z.date(),
   personId: z.string().cuid2(),
+  deviceType: z.enum(["mobile", "desktop"]).nullable(),
 });
 
 export type TSession = z.infer<typeof ZSession>;

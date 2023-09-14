@@ -5,7 +5,7 @@ import {
   updateUserSegmentAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Modal from "@/components/shared/Modal";
-import { Survey } from "@formbricks/types/surveys";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 type SaveAsNewSegmentModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  localSurvey: Survey;
+  localSurvey: TSurveyWithAnalytics;
   userSegment: TUserSegment;
   setUserSegment: (userSegment: TUserSegment) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;

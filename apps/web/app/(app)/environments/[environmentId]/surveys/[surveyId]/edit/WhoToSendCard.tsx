@@ -25,7 +25,6 @@ interface WhoToSendCardProps {
 
 export default function WhoToSendCard({ localSurvey, setLocalSurvey, environmentId }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
-
   const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment ?? null);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
@@ -49,6 +48,8 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, environment
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setLocalSurvey, userSegment]);
 
+  console.log("userSegment", localSurvey.userSegment);
+
   const isSegmentUsedInOtherSurveys = useMemo(
     () => (localSurvey?.userSegment ? localSurvey.userSegment?.surveys?.length > 1 : false),
     [localSurvey.userSegment]
@@ -66,16 +67,6 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, environment
     }
   };
 
-  // useEffect(() => {
-  //   if (!isLoadingAttributeClasses) {
-  //     if (localSurvey.attributeFilters?.length > 0) {
-  //       setOpen(true);
-  //     }
-  //   }
-
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [isLoadingAttributeClasses]);
-
   useEffect(() => {
     if (!!userSegment && userSegment?.filters?.length > 0) {
       setOpen(true);
@@ -87,30 +78,6 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, environment
       setOpen(false);
     }
   }, [localSurvey.type]);
-
-  // const addAttributeFilter = () => {
-  //   const updatedSurvey = { ...localSurvey };
-  //   updatedSurvey.attributeFilters = [
-  //     ...localSurvey.attributeFilters,
-  //     { attributeClassId: "", condition: filterConditions[0].id, value: "" },
-  //   ];
-  //   setLocalSurvey(updatedSurvey);
-  // };
-
-  // const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
-  //   const updatedSurvey = { ...localSurvey };
-  //   updatedSurvey.attributeFilters[idx] = { attributeClassId, condition, value };
-  //   setLocalSurvey(updatedSurvey);
-  // };
-
-  // const removeAttributeFilter = (idx: number) => {
-  //   const updatedSurvey = { ...localSurvey };
-  //   updatedSurvey.attributeFilters = [
-  //     ...localSurvey.attributeFilters.slice(0, idx),
-  //     ...localSurvey.attributeFilters.slice(idx + 1),
-  //   ];
-  //   setLocalSurvey(updatedSurvey);
-  // };
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
     const updatedUserSegment = produce(userSegment, (draft) => {

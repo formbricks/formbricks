@@ -108,7 +108,7 @@ export default function WhenToSendCard({
     setLocalSurvey(updatedSurvey);
   };
   useEffect(() => {
-    console.log(actionClassArray);
+    // console.log(actionClassArray);
     if (activeIndex !== null) {
       setTriggerEvent(activeIndex, actionClassArray[actionClassArray.length - 1].id);
     }

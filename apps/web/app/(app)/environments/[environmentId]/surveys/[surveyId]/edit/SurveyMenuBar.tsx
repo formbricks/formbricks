@@ -139,6 +139,8 @@ export default function SurveyMenuBar({
       }),
     };
 
+    console.log({ strippedSurvey });
+
     if (!validateSurvey(localSurvey)) {
       return;
     }

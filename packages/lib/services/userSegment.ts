@@ -1,5 +1,4 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import {
   TActionMetric,
   TAllOperators,
@@ -22,6 +21,7 @@ import {
   getLastWeekEventCount,
   getTotalOccurrences,
 } from "./actionsHelpers";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 
 export const createUserSegment = async (
   environmentId: string,

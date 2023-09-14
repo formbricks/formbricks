@@ -115,10 +115,10 @@ export default function Navigation({
         current: pathname?.includes("/surveys"),
       },
       {
-        name: "People",
+        name: "People & Segments",
         href: `/environments/${environment.id}/people`,
         icon: CustomersIcon,
-        current: pathname?.includes("/people"),
+        current: pathname?.includes("/people") || pathname?.includes("/segments"),
       },
       {
         name: "Actions & Attributes",
@@ -142,7 +142,7 @@ export default function Navigation({
     [environment.id, pathname]
   );
 
-  const dropdownnavigation = [
+  const dropdownNavigation = [
     {
       title: "Survey",
       links: [
@@ -433,7 +433,7 @@ export default function Navigation({
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
 
-                    {dropdownnavigation.map((item) => (
+                    {dropdownNavigation.map((item) => (
                       <DropdownMenuGroup key={item.title}>
                         <DropdownMenuSeparator />
                         {item.links.map(
