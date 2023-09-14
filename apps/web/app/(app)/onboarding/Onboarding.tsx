@@ -4,7 +4,7 @@ import { Logo } from "@/components/Logo";
 import { ProgressBar } from "@formbricks/ui";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import Greeting from "./Greeting";
 import Objective from "./Objective";
@@ -29,12 +29,6 @@ export default function Onboarding({ session, environmentId, profile, product }:
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    if (profile.onboardingCompleted) {
-      router.push(`/environments/${environmentId}/surveys`);
-    }
-  }, []);
 
   const percent = useMemo(() => {
     return currentStep / MAX_STEPS;

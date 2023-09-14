@@ -8,6 +8,7 @@ import { getEnvironmentByUser } from "@formbricks/lib/services/environment";
 import { getProfile } from "@formbricks/lib/services/profile";
 import { ErrorComponent } from "@formbricks/ui";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { redirect } from "next/navigation";
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);
@@ -17,6 +18,10 @@ export default async function OnboardingPage() {
 
   if (!environment || !profile || !product) {
     return <ErrorComponent />;
+  }
+
+  if (profile.onboardingCompleted) {
+    redirect("/");
   }
 
   return <Onboarding session={session} environmentId={environment?.id} profile={profile} product={product} />;
