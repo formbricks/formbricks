@@ -1,28 +1,33 @@
-/* import { getSurveys } from "@/app/api/v1/js/surveys"; */
+import { getSurveys } from "@/app/api/v1/js/surveys";
 import { responses } from "@/lib/api/response";
-/* import { transformErrorToDetails } from "@/lib/api/validator";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { transformErrorToDetails } from "@/lib/api/validator";
 import { getActionClasses } from "@formbricks/lib/services/actionClass";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { createPerson, getPerson } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { createSession, extendSession, getSession } from "@formbricks/lib/services/session"; */
-/* import { captureTelemetry } from "@formbricks/lib/telemetry"; */
-/* import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
+import { createSession, extendSession, getSession } from "@formbricks/lib/services/session";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
-import { TSession } from "@formbricks/types/v1/sessions"; */
+import { TSession } from "@formbricks/types/v1/sessions";
 import { NextResponse } from "next/server";
 
-/* const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
+const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
-}; */
+};
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(/* req: Request */): Promise<NextResponse> {
-  return responses.notFoundResponse("Sync", "Temporarily deactivated", true);
-  /* try {
+export async function POST(req: Request): Promise<NextResponse> {
+  if (IS_FORMBRICKS_CLOUD) {
+    // hotfix for cloud
+    // TODO: remove this when we have a proper fix
+    return responses.notFoundResponse("Sync", "Temporarily deactivated", true);
+  }
+  try {
     const jsonInput = await req.json();
 
     // validate using zod
@@ -172,5 +177,5 @@ export async function POST(/* req: Request */): Promise<NextResponse> {
       "Unable to complete response. See server logs for details.",
       true
     );
-  } */
+  }
 }
