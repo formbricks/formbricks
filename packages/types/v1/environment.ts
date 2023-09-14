@@ -23,4 +23,6 @@ export const ZEnvironmentUpdateInput = z.object({
   widgetSetupCompleted: z.boolean(),
 });
 
+export const ZId = z.string().cuid2();
+
 export type TEnvironmentUpdateInput = z.infer<typeof ZEnvironmentUpdateInput>;

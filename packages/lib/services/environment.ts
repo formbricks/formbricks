@@ -3,12 +3,14 @@ import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma, EnvironmentType } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import { ZEnvironment } from "@formbricks/types/v1/environment";
 import type { TEnvironment, TEnvironmentId, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 import { populateEnvironment } from "../utils/createDemoProductHelpers";
+import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
 
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment> => {
+  validateInputs([environmentId, ZId]);
   let environmentPrisma;
   try {
     environmentPrisma = await prisma.environment.findUnique({
@@ -40,6 +42,7 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
 });
 
 export const getEnvironments = cache(async (productId: string): Promise<TEnvironment[]> => {
+  validateInputs([productId, ZId]);
   let productPrisma;
   try {
     productPrisma = await prisma.product.findFirst({
@@ -81,6 +84,7 @@ export const updateEnvironment = async (
   environmentId: string,
   data: Partial<TEnvironmentUpdateInput>
 ): Promise<TEnvironment> => {
+  validateInputs([environmentId, ZId], [data, ZEnvironmentUpdateInput.partial()]);
   const newData = { ...data, updatedAt: new Date() };
   let updatedEnvironment;
   try {

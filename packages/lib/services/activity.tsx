@@ -1,7 +1,13 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
+import { cache } from "react";
 
-export const getActivityTimeline = async (personId: string): Promise<TActivityFeedItem[]> => {
+export const getActivityTimeline = cache(async (personId: string): Promise<TActivityFeedItem[]> => {
+  validateInputs([personId, ZId]);
   const person = await prisma.person.findUnique({
     where: {
       id: personId,
@@ -75,4 +81,4 @@ export const getActivityTimeline = async (personId: string): Promise<TActivityFe
   const unifiedList: TActivityFeedItem[] = [...unifiedAttributes, ...unifiedDisplays, ...unifiedEvents];
 
   return unifiedList;
-};
+});
