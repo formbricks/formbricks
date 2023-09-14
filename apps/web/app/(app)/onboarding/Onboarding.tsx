@@ -15,7 +15,6 @@ import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
-import { ResponseId } from "@formbricks/js";
 
 const MAX_STEPS = 6;
 
@@ -33,7 +32,7 @@ export default function Onboarding({ session }: OnboardingProps) {
   const { profile } = useProfile();
 
   const { triggerProfileMutate } = useProfileMutation();
-  const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
+  const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();

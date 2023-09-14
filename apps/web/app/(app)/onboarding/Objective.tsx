@@ -4,7 +4,6 @@ import { env } from "@/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/lib/formbricks";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
-import { ResponseId } from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { Objective } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui";
@@ -14,7 +13,7 @@ import { toast } from "react-hot-toast";
 type ObjectiveProps = {
   next: () => void;
   skip: () => void;
-  formbricksResponseId?: ResponseId;
+  formbricksResponseId?: string;
 };
 
 type ObjectiveChoice = {
