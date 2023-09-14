@@ -1,0 +1,76 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Responses API",
+  description:
+    "Explore the Formbricks Public Client API for client-side tasks and integration into your website.",
+};
+
+#### Management API
+
+# People API
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+---
+
+## Get or Create Person {{ tag: 'GET', label: '/api/v1/client/people/getOrCreate' }}
+
+<Row>
+  <Col>
+
+    Fetch a Person or create (if they don't exist) by their userId and the environmentId.
+
+    ### Mandatory Query Parameters
+    <Properties>
+      <Property name="userId" type="string">
+        User ID to fetch or create (if it does not exist)
+      </Property>
+    </Properties>
+
+    <Properties>
+      <Property name="enviornmentId" type="string">
+        Formbricks Environment ID
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/client/people/getOrCreate">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/client/people/getOrCreate?userId=<user-id>&environmentId=<env-id>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "person": {
+            "id": "clm4bcxms02hspj0ht05k6q5c",
+            "environmentId": "cll2m30r70004mx0huqkitgqv"
+            }
+        }
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "Fields are missing or incorrectly formatted",
+      "details": {
+        "userId": ""
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---

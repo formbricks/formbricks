@@ -1,5 +1,3 @@
-import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
-import { Survey } from "@formbricks/types/surveys";
 import {
   Button,
   Input,
@@ -14,10 +12,11 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
 import { useEffect, useRef, useState } from "react";
+import { TSurveyMultipleChoiceMultiQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface OpenQuestionFormProps {
-  localSurvey: Survey;
-  question: MultipleChoiceMultiQuestion;
+  localSurvey: TSurveyWithAnalytics;
+  question: TSurveyMultipleChoiceMultiQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;

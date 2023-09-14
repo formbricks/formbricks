@@ -1,23 +1,23 @@
 // extend this object in order to add more validation rules
 
 import {
-  ConsentQuestion,
-  MultipleChoiceMultiQuestion,
-  MultipleChoiceSingleQuestion,
-  Question,
-} from "@formbricks/types/questions";
+  TSurveyConsentQuestion,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyQuestion,
+} from "@formbricks/types/v1/surveys";
 
 const validationRules = {
-  multipleChoiceMulti: (question: MultipleChoiceMultiQuestion) => {
+  multipleChoiceMulti: (question: TSurveyMultipleChoiceMultiQuestion) => {
     return !question.choices.some((element) => element.label.trim() === "");
   },
-  multipleChoiceSingle: (question: MultipleChoiceSingleQuestion) => {
+  multipleChoiceSingle: (question: TSurveyMultipleChoiceSingleQuestion) => {
     return !question.choices.some((element) => element.label.trim() === "");
   },
-  consent: (question: ConsentQuestion) => {
+  consent: (question: TSurveyConsentQuestion) => {
     return question.label.trim() !== "";
   },
-  defaultValidation: (question: Question) => {
+  defaultValidation: (question: TSurveyQuestion) => {
     return question.headline.trim() !== "";
   },
 };

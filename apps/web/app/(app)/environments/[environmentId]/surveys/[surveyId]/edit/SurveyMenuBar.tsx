@@ -1,13 +1,10 @@
 "use client";
 
+import React from "react";
 import AlertDialog from "@/components/shared/AlertDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
-import { useProduct } from "@/lib/products/products";
-import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
-import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
@@ -15,35 +12,38 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
+import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { deleteSurveyAction, surveyMutateAction } from "./actions";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { QuestionType } from "@formbricks/types/questions";
 
 interface SurveyMenuBarProps {
-  localSurvey: Survey;
-  survey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
-  environmentId: string;
+  localSurvey: TSurveyWithAnalytics;
+  survey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environment: TEnvironment;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
+  product: TProduct;
 }
 
 export default function SurveyMenuBar({
   localSurvey,
   survey,
-  environmentId,
   environment,
   setLocalSurvey,
   activeId,
   setActiveId,
   setInvalidQuestions,
+  product,
 }: SurveyMenuBarProps) {
   const router = useRouter();
-  const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const { product } = useProduct(environmentId);
+  const [isMutatingSurvey, setIsMutatingSurvey] = useState(false);
   let faultyQuestions: String[] = [];
 
   useEffect(() => {
@@ -74,9 +74,10 @@ export default function SurveyMenuBar({
     setLocalSurvey(updatedSurvey);
   };
 
-  const deleteSurveyAction = async (survey) => {
+  const deleteSurvey = async (surveyId) => {
     try {
-      await deleteSurvey(environmentId, survey.id);
+      await deleteSurveyAction(surveyId);
+      router.refresh();
       setDeleteDialogOpen(false);
       router.back();
     } catch (error) {
@@ -85,7 +86,10 @@ export default function SurveyMenuBar({
   };
 
   const handleBack = () => {
-    if (localSurvey.createdAt === localSurvey.updatedAt && localSurvey.status === "draft") {
+    const createdAt = new Date(localSurvey.createdAt).getTime();
+    const updatedAt = new Date(localSurvey.updatedAt).getTime();
+
+    if (createdAt === updatedAt && localSurvey.status === "draft") {
       setDeleteDialogOpen(true);
     } else if (!isEqual(localSurvey, survey)) {
       setConfirmDialogOpen(true);
@@ -170,6 +174,15 @@ export default function SurveyMenuBar({
       }
     }
 
+    if (
+      survey.redirectUrl &&
+      !survey.redirectUrl.includes("https://") &&
+      !survey.redirectUrl.includes("http://")
+    ) {
+      toast.error("Please enter a valid URL for redirecting respondents.");
+      return false;
+    }
+
     /*
      Check whether the count for autocomplete responses is not less 
      than the current count of accepted response and also it is not set to 0
@@ -181,26 +194,17 @@ export default function SurveyMenuBar({
       return false;
     }
 
-    if (
-      survey.redirectUrl &&
-      !survey.redirectUrl.includes("https://") &&
-      !survey.redirectUrl.includes("http://")
-    ) {
-      toast.error("Please enter a valid URL for redirecting respondents.");
-      return false;
-    }
-
     return true;
   };
 
-  const saveSurveyAction = (shouldNavigateBack = false) => {
+  const saveSurveyAction = async (shouldNavigateBack = false) => {
     if (localSurvey.questions.length === 0) {
       toast.error("Please add at least one question.");
       return;
     }
-
-    // variable named strippedSurvey that is a copy of localSurvey with isDraft removed from every question
-    const strippedSurvey = {
+    setIsMutatingSurvey(true);
+    // Create a copy of localSurvey with isDraft removed from every question
+    const strippedSurvey: TSurvey = {
       ...localSurvey,
       questions: localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
@@ -212,28 +216,26 @@ export default function SurveyMenuBar({
       return;
     }
 
-    triggerSurveyMutate({ ...strippedSurvey })
-      .then(async (response) => {
-        if (!response?.ok) {
-          throw new Error(await response?.text());
-        }
-        const updatedSurvey = await response.json();
-        setLocalSurvey(updatedSurvey);
-        toast.success("Changes saved.");
-        if (shouldNavigateBack) {
-          router.back();
+    try {
+      await surveyMutateAction({ ...strippedSurvey });
+      router.refresh();
+      setIsMutatingSurvey(false);
+      toast.success("Changes saved.");
+      if (shouldNavigateBack) {
+        router.back();
+      } else {
+        if (localSurvey.status !== "draft") {
+          router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary`);
         } else {
-          if (localSurvey.status !== "draft") {
-            router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
-          } else {
-            router.push(`/environments/${environmentId}/surveys`);
-          }
+          router.push(`/environments/${environment.id}/surveys`);
         }
-      })
-      .catch((error) => {
-        console.log(error);
-        toast.error(`Error saving changes`);
-      });
+      }
+    } catch (e) {
+      console.error(e);
+      setIsMutatingSurvey(false);
+      toast.error(`Error saving changes`);
+      return;
+    }
   };
 
   return (
@@ -265,7 +267,7 @@ export default function SurveyMenuBar({
             className="w-72 border-white hover:border-slate-200 "
           />
         </div>
-        {!!localSurvey?.responseRate && (
+        {!!localSurvey.analytics.responseRate && (
           <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
             <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
             <p className="max-w-[90%] pl-1 text-xs lg:text-sm">
@@ -277,7 +279,7 @@ export default function SurveyMenuBar({
           <div className="mr-4 flex items-center">
             <SurveyStatusDropdown
               surveyId={localSurvey.id}
-              environmentId={environmentId}
+              environmentId={environment.id}
               updateLocalSurveyStatus={updateLocalSurveyStatus}
             />
           </div>
@@ -304,16 +306,19 @@ export default function SurveyMenuBar({
               disabled={
                 localSurvey.type === "web" &&
                 localSurvey.triggers &&
-                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+                (localSurvey.triggers[0]?.id === "" || localSurvey.triggers.length === 0)
               }
               variant="darkCTA"
               loading={isMutatingSurvey}
               onClick={async () => {
+                setIsMutatingSurvey(true);
                 if (!validateSurvey(localSurvey)) {
                   return;
                 }
-                await triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
-                router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
+                await surveyMutateAction({ ...localSurvey, status: "inProgress" });
+                router.refresh();
+                setIsMutatingSurvey(false);
+                router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
               }}>
               Publish
             </Button>
@@ -323,7 +328,7 @@ export default function SurveyMenuBar({
           deleteWhat="Draft"
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
-          onDelete={() => deleteSurveyAction(localSurvey)}
+          onDelete={() => deleteSurvey(localSurvey.id)}
           text="Do you want to delete this draft?"
           useSaveInsteadOfCancel={true}
           onSave={() => saveSurveyAction(true)}

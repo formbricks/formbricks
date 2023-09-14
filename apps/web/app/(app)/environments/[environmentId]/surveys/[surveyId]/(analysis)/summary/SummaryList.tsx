@@ -1,18 +1,19 @@
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/ConsentSummary";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import {
-  QuestionType,
-  type CTAQuestion,
-  type ConsentQuestion,
-  type MultipleChoiceMultiQuestion,
-  type MultipleChoiceSingleQuestion,
-  type NPSQuestion,
-  type OpenTextQuestion,
-  type RatingQuestion,
-} from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyCTAQuestion,
+  TSurveyConsentQuestion,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyNPSQuestion,
+  TSurveyOpenTextQuestion,
+  TSurveyQuestion,
+  TSurveyRatingQuestion,
+} from "@formbricks/types/v1/surveys";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
@@ -58,7 +59,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                 return (
                   <OpenTextSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<OpenTextQuestion>}
+                    questionSummary={questionSummary as QuestionSummary<TSurveyOpenTextQuestion>}
                     environmentId={environmentId}
                   />
                 );
@@ -72,7 +73,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                     key={questionSummary.question.id}
                     questionSummary={
                       questionSummary as QuestionSummary<
-                        MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion
+                        TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
                       >
                     }
                     environmentId={environmentId}
@@ -84,7 +85,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                 return (
                   <NPSSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<NPSQuestion>}
+                    questionSummary={questionSummary as QuestionSummary<TSurveyNPSQuestion>}
                   />
                 );
               }
@@ -92,7 +93,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                 return (
                   <CTASummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<CTAQuestion>}
+                    questionSummary={questionSummary as QuestionSummary<TSurveyCTAQuestion>}
                   />
                 );
               }
@@ -100,7 +101,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                 return (
                   <RatingSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<RatingQuestion>}
+                    questionSummary={questionSummary as QuestionSummary<TSurveyRatingQuestion>}
                   />
                 );
               }
@@ -108,7 +109,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                 return (
                   <ConsentSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<ConsentQuestion>}
+                    questionSummary={questionSummary as QuestionSummary<TSurveyConsentQuestion>}
                   />
                 );
               }
