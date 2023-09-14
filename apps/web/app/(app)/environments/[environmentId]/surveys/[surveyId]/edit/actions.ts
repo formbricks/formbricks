@@ -14,6 +14,9 @@ import {
   ZUserSegmentFilterGroup,
 } from "@formbricks/types/v1/userSegment";
 
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { deleteSurvey, updateSurvey } from "@formbricks/lib/services/survey";
+
 export const createUserSegmentAction = async ({
   description,
   environmentId,
@@ -73,3 +76,11 @@ export const deleteUserSegmentAction = async (segmentId: string) => {
 
   return await deleteUserSegment(segmentId);
 };
+
+export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
+  return await updateSurvey(survey);
+}
+
+export async function deleteSurveyAction(surveyId: string) {
+  await deleteSurvey(surveyId);
+}

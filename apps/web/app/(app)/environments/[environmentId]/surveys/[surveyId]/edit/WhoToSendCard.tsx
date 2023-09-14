@@ -7,33 +7,26 @@ import SegmentAlreadyUsedModal from "@/app/(app)/environments/[environmentId]/su
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import { cloneUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import AlertDialog from "@/components/shared/AlertDialog";
-import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
-import { Badge, Button } from "@formbricks/ui";
 import { CheckCircleIcon, ExclamationCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
-// const filterConditions = [
-//   { id: "equals", name: "equals" },
-//   { id: "notEquals", name: "not equals" },
-// ];
+import { cn } from "@formbricks/lib/cn";
+import { Badge, Button } from "@formbricks/ui";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface WhoToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
 }
 
-export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
+export default function WhoToSendCard({ localSurvey, setLocalSurvey, environmentId }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
-  // const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
-  //   useAttributeClasses(environmentId);
 
-  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
+  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment ?? null);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);

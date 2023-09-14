@@ -1,6 +1,6 @@
 "use client";
 
-import type { Survey } from "@formbricks/types/surveys";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { AdvancedOptionToggle, DatePicker, Input, Label } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
 }
 
 export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
@@ -17,7 +17,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
   const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
-
+  useState;
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
@@ -95,6 +95,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     subheading?: string;
   }) => {
     const message = {
+      enabled: surveyCloseOnDateToggle,
       heading: heading ?? surveyClosedMessage.heading,
       subheading: subheading ?? surveyClosedMessage.subheading,
     };
@@ -149,16 +150,16 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
   const handleCheckMark = () => {
     if (autoComplete) {
-      const updatedSurvey: Survey = { ...localSurvey, autoComplete: null };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: Survey = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: 25 };
       setLocalSurvey(updatedSurvey);
     }
   };
 
   const handleInputResponse = (e) => {
-    const updatedSurvey: Survey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
+    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -168,11 +169,11 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       return;
     }
 
-    const inputResponses = localSurvey?._count?.responses || 0;
+    const inputResponses = localSurvey.analytics.numResponses || 0;
 
     if (parseInt(e.target.value) <= inputResponses) {
       toast.error(
-        `Response limit needs to exceed number of received responses (${localSurvey?._count?.responses}).`
+        `Response limit needs to exceed number of received responses (${localSurvey.analytics.numResponses}).`
       );
       return;
     }
@@ -211,7 +212,11 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 <Input
                   autoFocus
                   type="number"
-                  min={localSurvey?._count?.responses ? (localSurvey?._count?.responses + 1).toString() : "1"}
+                  min={
+                    localSurvey?.analytics?.numResponses
+                      ? (localSurvey?.analytics?.numResponses + 1).toString()
+                      : "1"
+                  }
                   id="autoCompleteResponses"
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}
@@ -239,32 +244,32 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           </AdvancedOptionToggle>
 
           {/* Redirect on completion */}
+          <AdvancedOptionToggle
+            htmlId="redirectUrl"
+            isChecked={redirectToggle}
+            onToggle={handleRedirectCheckMark}
+            title="Redirect on completion"
+            description="Redirect user to specified link on survey completion"
+            childBorder={true}>
+            <div className="w-full p-4">
+              <div className="flex w-full cursor-pointer items-center">
+                <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
+                  Redirect respondents here:
+                </p>
+                <Input
+                  autoFocus
+                  className="w-full bg-white"
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                />
+              </div>
+            </div>
+          </AdvancedOptionToggle>
+
           {localSurvey.type === "link" && (
             <>
-              <AdvancedOptionToggle
-                htmlId="redirectUrl"
-                isChecked={redirectToggle}
-                onToggle={handleRedirectCheckMark}
-                title="Redirect on completion"
-                description="Redirect user to specified link on survey completion"
-                childBorder={true}>
-                <div className="w-full p-4">
-                  <div className="flex w-full cursor-pointer items-center">
-                    <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
-                      Redirect respondents here:
-                    </p>
-                    <Input
-                      autoFocus
-                      className="w-full bg-white"
-                      type="url"
-                      placeholder="https://www.example.com"
-                      value={redirectUrl ? redirectUrl : ""}
-                      onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </AdvancedOptionToggle>
-
               {/* Adjust Survey Closed Message */}
               <AdvancedOptionToggle
                 htmlId="adjustSurveyClosedMessage"

@@ -1,4 +1,4 @@
-import { Result, err, ok, wrapThrows } from "@formbricks/errors";
+import { Result, err, ok, wrapThrows } from "@formbricks/types/v1/errorHandlers";
 import { CreateResponseResponse, UpdateResponseResponseFormatted } from "./dtos/responses";
 import { NetworkError } from "./errors";
 
