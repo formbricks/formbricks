@@ -33,11 +33,6 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  if (IS_FORMBRICKS_CLOUD) {
-    // hotfix for cloud
-    // TODO: remove this when we have a proper fix
-    return responses.notFoundResponse("Sync", "Temporarily deactivated", true);
-  }
   try {
     const jsonInput = await req.json();
 
