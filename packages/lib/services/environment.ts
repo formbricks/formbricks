@@ -5,12 +5,13 @@ import { Prisma } from "@prisma/client";
 import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import type { TEnvironment, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
+import { cache } from "react";
 
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment> => {
   validateInputs([environmentId, ZId]);
   let environmentPrisma;
+
   try {
     environmentPrisma = await prisma.environment.findUnique({
       where: {
