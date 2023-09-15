@@ -22,7 +22,12 @@ export default async function LinkSurveyPage({ params, searchParams }) {
   const isPrefilledAnswerValid = prefillAnswer ? checkValidity(survey!.questions[0], prefillAnswer) : false;
 
   if (survey && survey.status !== "inProgress") {
-    return <SurveyInactive status={survey.status} surveyClosedMessage={survey.surveyClosedMessage} />;
+    return (
+      <SurveyInactive
+        status={survey.status}
+        surveyClosedMessage={survey.surveyClosedMessage ? survey.surveyClosedMessage : undefined}
+      />
+    );
   }
 
   // verify email: Check if the survey requires email verification

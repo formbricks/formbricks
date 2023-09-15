@@ -1,35 +1,44 @@
-import type { Survey } from "@formbricks/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 interface SettingsViewProps {
-  environmentId: string;
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  environment: TEnvironment;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  actionClasses: TActionClass[];
+  attributeClasses: TAttributeClass[];
 }
 
-export default function SettingsView({ environmentId, localSurvey, setLocalSurvey }: SettingsViewProps) {
+export default function SettingsView({
+  environment,
+  localSurvey,
+  setLocalSurvey,
+  actionClasses,
+  attributeClasses,
+}: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
-      />
+      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
       <WhoToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
+        environmentId={environment.id}
+        attributeClasses={attributeClasses}
       />
 
       <WhenToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
+        environmentId={environment.id}
+        actionClasses={actionClasses}
       />
 
       <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
@@ -37,7 +46,7 @@ export default function SettingsView({ environmentId, localSurvey, setLocalSurve
       <RecontactOptionsCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
+        environmentId={environment.id}
       />
     </div>
   );

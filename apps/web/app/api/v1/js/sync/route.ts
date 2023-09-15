@@ -1,5 +1,6 @@
 import { getSurveys } from "@/app/api/v1/js/surveys";
 import { responses } from "@/lib/api/response";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { getActionClasses } from "@formbricks/lib/services/actionClass";
 import { getEnvironment } from "@formbricks/lib/services/environment";
@@ -21,6 +22,11 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  if (IS_FORMBRICKS_CLOUD) {
+    // hotfix for cloud
+    // TODO: remove this when we have a proper fix
+    return responses.notFoundResponse("Sync", "Temporarily deactivated", true);
+  }
   try {
     const jsonInput = await req.json();
 

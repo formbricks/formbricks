@@ -1,12 +1,11 @@
-import type { OpenTextQuestion } from "@formbricks/types/questions";
-import { Survey } from "@formbricks/types/surveys";
+import { TSurveyOpenTextQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 interface OpenQuestionFormProps {
-  localSurvey: Survey;
-  question: OpenTextQuestion;
+  localSurvey: TSurveyWithAnalytics;
+  question: TSurveyOpenTextQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;

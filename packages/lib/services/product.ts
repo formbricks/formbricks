@@ -1,11 +1,13 @@
+import "server-only";
 import { prisma } from "@formbricks/database";
+import { z } from "zod";
+import { Prisma } from "@prisma/client";
+import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
 import { DatabaseError, ValidationError } from "@formbricks/types/v1/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
-import { ZProduct } from "@formbricks/types/v1/product";
-import { Prisma } from "@prisma/client";
 import { cache } from "react";
-import "server-only";
-import { z } from "zod";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 
 const selectProduct = {
   id: true,
@@ -23,6 +25,7 @@ const selectProduct = {
 };
 
 export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
+  validateInputs([teamId, ZId]);
   try {
     const products = await prisma.product.findMany({
       where: {
@@ -46,6 +49,7 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
     throw new ValidationError("EnvironmentId is required");
   }
   let productPrisma;
+
   try {
     productPrisma = await prisma.product.findFirst({
       where: {
@@ -71,6 +75,7 @@ export const updateProduct = async (
   productId: string,
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
+  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({
@@ -86,7 +91,6 @@ export const updateProduct = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw error;
   }
   try {
     const product = ZProduct.parse(updatedProduct);
@@ -116,4 +120,14 @@ export const getProduct = cache(async (productId: string): Promise<TProduct | nu
     }
     throw error;
   }
+});
+
+export const deleteProduct = cache(async (productId: string): Promise<TProduct> => {
+  const product = await prisma.product.delete({
+    where: {
+      id: productId,
+    },
+  });
+
+  return product;
 });

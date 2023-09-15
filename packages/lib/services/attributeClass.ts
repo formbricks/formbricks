@@ -1,8 +1,14 @@
 "use server";
 import "server-only";
 import { prisma } from "@formbricks/database";
+import {
+  TAttributeClass,
+  TAttributeClassUpdateInput,
+  ZAttributeClassUpdateInput,
+} from "@formbricks/types/v1/attributeClasses";
+import { ZId } from "@formbricks/types/v1/environment";
+import { validateInputs } from "../utils/validate";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { cache } from "react";
 
 export const transformPrismaAttributeClass = (attributeClass: any): TAttributeClass | null => {
@@ -18,6 +24,7 @@ export const transformPrismaAttributeClass = (attributeClass: any): TAttributeCl
 };
 
 export const getAttributeClasses = cache(async (environmentId: string): Promise<TAttributeClass[]> => {
+  validateInputs([environmentId, ZId]);
   try {
     let attributeClasses = await prisma.attributeClass.findMany({
       where: {
@@ -36,11 +43,11 @@ export const getAttributeClasses = cache(async (environmentId: string): Promise<
     throw new DatabaseError(`Database error when fetching attributeClasses for environment ${environmentId}`);
   }
 });
-
 export const updatetAttributeClass = async (
   attributeClassId: string,
-  data: { description?: string; archived?: boolean }
+  data: Partial<TAttributeClassUpdateInput>
 ): Promise<TAttributeClass | null> => {
+  validateInputs([attributeClassId, ZId], [data, ZAttributeClassUpdateInput.partial()]);
   try {
     let attributeClass = await prisma.attributeClass.update({
       where: {

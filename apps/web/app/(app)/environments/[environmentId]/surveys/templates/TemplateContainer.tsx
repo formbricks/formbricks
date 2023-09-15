@@ -73,7 +73,6 @@ export default function TemplateContainerWithPreview({
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
-                environmentId={environmentId}
               />
             </div>
           )}
