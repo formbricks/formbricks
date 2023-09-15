@@ -9,7 +9,7 @@ import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 
-export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment> => {
+export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
   validateInputs([environmentId, ZId]);
   let environmentPrisma;
   try {
@@ -19,9 +19,7 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
       },
     });
 
-    if (!environmentPrisma) {
-      throw new ResourceNotFoundError("Environment", environmentId);
-    }
+    return environmentPrisma;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

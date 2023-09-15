@@ -19,6 +19,9 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   }
 
   const environment = await getEnvironment(environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
   const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
   const environments: TEnvironment[] = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
