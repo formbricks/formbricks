@@ -3,7 +3,7 @@
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/services/product";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { getServerSession } from "next-auth";
-import { AuthenticationError, ResourceNotFoundError } from "@formbricks/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
@@ -13,7 +13,7 @@ import { getMembershipByUserId } from "@formbricks/lib/services/membership";
 export const updateProductAction = async (
   environmentId: string,
   productId: string,
-  data: TProductUpdateInput
+  data: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
   const session = await getServerSession();
 
