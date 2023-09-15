@@ -10,7 +10,7 @@ import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSession } from "@formbricks/types/v1/sessions";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
@@ -26,6 +26,7 @@ const getEnvironmentAndPersonCacheKey = (environmentId: string, personId: string
   "person",
   personId,
 ];
+const getProductCacheKey = (environmentId: string): string[] => ["product", environmentId];
 const getActionClassesCacheKey = (environmentId: string): string[] => [`env-${environmentId}-actionClasses`];
 
 const halfHourSeconds = 30 * 60;
@@ -106,9 +107,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (environmentId: string) => {
           return await getProductByEnvironmentId(environmentId);
         },
-        getEnvironmentCacheKey(environmentId),
+        getProductCacheKey(environmentId),
         {
-          tags: getEnvironmentCacheKey(environmentId),
+          tags: getProductCacheKey(environmentId),
           revalidate: halfHourSeconds,
         }
       );
@@ -188,9 +189,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (environmentId: string) => {
           return await getProductByEnvironmentId(environmentId);
         },
-        getEnvironmentCacheKey(environmentId),
+        getProductCacheKey(environmentId),
         {
-          tags: getEnvironmentCacheKey(environmentId),
+          tags: getProductCacheKey(environmentId),
           revalidate: halfHourSeconds,
         }
       );
@@ -293,8 +294,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
           if (isSessionAboutToExpire) {
             session = await extendSession(sessionId);
-
-            revalidateTag(sessionId);
           }
         }
       }
@@ -326,9 +325,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       async (environmentId: string) => {
         return await getProductByEnvironmentId(environmentId);
       },
-      getEnvironmentCacheKey(environmentId),
+      getProductCacheKey(environmentId),
       {
-        tags: getEnvironmentCacheKey(environmentId),
+        tags: getProductCacheKey(environmentId),
         revalidate: halfHourSeconds,
       }
     );
