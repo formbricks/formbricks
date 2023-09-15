@@ -11,12 +11,22 @@ import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSession } from "@formbricks/types/v1/sessions";
 import { NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
 };
+
+const getEnvironmentCacheKey = (environmentId: string): string[] => ["environment", environmentId];
+const getPersonCacheKey = (personId: string): string[] => ["person", personId];
+const getSessionCacheKey = (sessionId: string): string[] => ["session", sessionId];
+const getEnvironmentAndPersonCacheKey = (environmentId: string, personId: string): string[] => [
+  "environment",
+  environmentId,
+  "person",
+  personId,
+];
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -49,9 +59,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       async (environmentId: string) => {
         return await getEnvironment(environmentId);
       },
-      ["environment", environmentId],
+      getEnvironmentCacheKey(environmentId),
       {
-        tags: ["environment", environmentId],
+        tags: getEnvironmentCacheKey(environmentId),
       }
     );
 
@@ -81,9 +91,9 @@ export async function POST(req: Request): Promise<NextResponse> {
             getProductByEnvironmentId(environmentId),
           ]);
         },
-        [environmentId, person.id],
+        getEnvironmentAndPersonCacheKey(environmentId, person.id),
         {
-          tags: ["person", person.id, environmentId],
+          tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
         }
       );
 
@@ -114,9 +124,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (personId: string) => {
           return await getPerson(personId);
         },
-        [personId],
+        getPersonCacheKey(personId),
         {
-          tags: [personId],
+          tags: getPersonCacheKey(personId),
         }
       );
 
@@ -126,25 +136,64 @@ export async function POST(req: Request): Promise<NextResponse> {
         person = await createPerson(environmentId);
       }
 
-      const getPersonStateCached = unstable_cache(
-        async (person: TPerson, environmentId: string) => {
-          return await Promise.all([
-            createSession(person.id),
-            getSurveys(environmentId, person),
-            getActionClasses(environmentId),
-            getProductByEnvironmentId(environmentId),
-          ]);
+      // create a new session
+      const session = await createSession(person.id);
+
+      const getSurveysCached = unstable_cache(
+        async (environmentId: string, person: TPerson) => {
+          return await getSurveys(environmentId, person);
         },
-        [person.id, environmentId],
+        getEnvironmentAndPersonCacheKey(environmentId, person.id),
         {
-          tags: [person.id, environmentId],
+          tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
         }
       );
 
-      const [session, surveys, noCodeActionClasses, product] = await getPersonStateCached(
-        person,
-        environmentId
+      const getActionClassesCached = unstable_cache(
+        async (environmentId: string) => {
+          return await getActionClasses(environmentId);
+        },
+        getEnvironmentCacheKey(environmentId),
+        {
+          tags: getEnvironmentCacheKey(environmentId),
+        }
       );
+
+      const getProductByEnvironmentIdCached = unstable_cache(
+        async (environmentId: string) => {
+          return await getProductByEnvironmentId(environmentId);
+        },
+        getEnvironmentCacheKey(environmentId),
+        {
+          tags: getEnvironmentCacheKey(environmentId),
+        }
+      );
+
+      const [surveys, noCodeActionClasses, product] = await Promise.all([
+        getSurveysCached(environmentId, person),
+        getActionClassesCached(environmentId),
+        getProductByEnvironmentIdCached(environmentId),
+      ]);
+
+      // const getPersonStateCached = unstable_cache(
+      //   async (person: TPerson, environmentId: string) => {
+      //     return await Promise.all([
+      //       createSession(person.id),
+      //       getSurveys(environmentId, person),
+      //       getActionClasses(environmentId),
+      //       getProductByEnvironmentId(environmentId),
+      //     ]);
+      //   },
+      //   [person.id, environmentId],
+      //   {
+      //     tags: [person.id, environmentId],
+      //   }
+      // );
+
+      // const [session, surveys, noCodeActionClasses, product] = await getPersonStateCached(
+      //   person,
+      //   environmentId
+      // );
 
       if (!product) {
         return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
@@ -173,9 +222,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       async (sessionId: string) => {
         return await getSession(sessionId);
       },
-      [sessionId],
+      getSessionCacheKey(sessionId),
       {
-        tags: [sessionId],
+        tags: getSessionCacheKey(sessionId),
       }
     );
 
@@ -188,9 +237,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (personId: string) => {
           return await getPerson(personId);
         },
-        [personId],
+        getPersonCacheKey(personId),
         {
-          tags: [personId],
+          tags: getPersonCacheKey(personId),
         }
       );
 
@@ -210,9 +259,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (personId: string) => {
           return await getPerson(personId);
         },
-        [personId],
+        getPersonCacheKey(personId),
         {
-          tags: [personId],
+          tags: getPersonCacheKey(personId),
         }
       );
 
@@ -230,27 +279,54 @@ export async function POST(req: Request): Promise<NextResponse> {
         } else {
           // extend session
 
-          session = await extendSession(sessionId);
+          const isSessionAboutToExpire =
+            new Date(session.expiresAt).getTime() - new Date().getTime() < 1000 * 60 * 10;
+
+          if (isSessionAboutToExpire) {
+            session = await extendSession(sessionId);
+
+            revalidateTag(sessionId);
+          }
         }
       }
     }
 
-    const getPersonStateCached = unstable_cache(
-      async (person: TPerson, environmentId: string) => {
-        return await Promise.all([
-          getSurveys(environmentId, person),
-          getActionClasses(environmentId),
-          getProductByEnvironmentId(environmentId),
-        ]);
+    const getSurveysCached = unstable_cache(
+      async (environmentId: string, person: TPerson) => {
+        return await getSurveys(environmentId, person);
       },
-      [person.id, environmentId],
+      getEnvironmentAndPersonCacheKey(environmentId, person.id),
       {
-        tags: [person.id, environmentId],
+        tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
+      }
+    );
+
+    const getActionClassesCached = unstable_cache(
+      async (environmentId: string) => {
+        return await getActionClasses(environmentId);
+      },
+      getEnvironmentCacheKey(environmentId),
+      {
+        tags: getEnvironmentCacheKey(environmentId),
+      }
+    );
+
+    const getProductByEnvironmentIdCached = unstable_cache(
+      async (environmentId: string) => {
+        return await getProductByEnvironmentId(environmentId);
+      },
+      getEnvironmentCacheKey(environmentId),
+      {
+        tags: getEnvironmentCacheKey(environmentId),
       }
     );
 
     // get/create rest of the state
-    const [surveys, noCodeActionClasses, product] = await getPersonStateCached(person, environmentId);
+    const [surveys, noCodeActionClasses, product] = await Promise.all([
+      getSurveysCached(environmentId, person),
+      getActionClassesCached(environmentId),
+      getProductByEnvironmentIdCached(environmentId),
+    ]);
 
     if (!product) {
       return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
