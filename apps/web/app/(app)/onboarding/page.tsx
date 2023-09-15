@@ -3,7 +3,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
-import Onboarding from "./Onboarding";
+import Onboarding from "./components/Onboarding";
 import { getEnvironmentByUser } from "@formbricks/lib/services/environment";
 import { getProfile } from "@formbricks/lib/services/profile";
 import { ErrorComponent } from "@formbricks/ui";
