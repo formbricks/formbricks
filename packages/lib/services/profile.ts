@@ -1,10 +1,14 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProfile, ZProfileUpdateInput } from "@formbricks/types/v1/profile";
 import { deleteTeam } from "./team";
 import { MembershipRole } from "@prisma/client";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
+import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/membership";
+import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
 
 const responseSelection = {
   id: true,
@@ -12,15 +16,12 @@ const responseSelection = {
   email: true,
   createdAt: true,
   updatedAt: true,
+  onboardingCompleted: true,
 };
-
-interface Membership {
-  role: MembershipRole;
-  userId: string;
-}
 
 // function to retrive basic information about a user's profile
 export const getProfile = cache(async (userId: string): Promise<TProfile | null> => {
+  validateInputs([userId, ZId]);
   try {
     const profile = await prisma.user.findUnique({
       where: {
@@ -43,7 +44,8 @@ export const getProfile = cache(async (userId: string): Promise<TProfile | null>
   }
 });
 
-const updateUserMembership = async (teamId: string, userId: string, role: MembershipRole) => {
+const updateUserMembership = async (teamId: string, userId: string, role: TMembershipRole) => {
+  validateInputs([teamId, ZId], [userId, ZId], [role, ZMembershipRole]);
   await prisma.membership.update({
     where: {
       userId_teamId: {
@@ -57,11 +59,15 @@ const updateUserMembership = async (teamId: string, userId: string, role: Member
   });
 };
 
-const getAdminMemberships = (memberships: Membership[]) =>
+const getAdminMemberships = (memberships: TMembership[]) =>
   memberships.filter((membership) => membership.role === MembershipRole.admin);
 
 // function to update a user's profile
-export const updateProfile = async (personId: string, data: Prisma.UserUpdateInput): Promise<TProfile> => {
+export const updateProfile = async (
+  personId: string,
+  data: Partial<TProfileUpdateInput>
+): Promise<TProfile> => {
+  validateInputs([personId, ZId], [data, ZProfileUpdateInput.partial()]);
   try {
     const updatedProfile = await prisma.user.update({
       where: {
@@ -80,6 +86,7 @@ export const updateProfile = async (personId: string, data: Prisma.UserUpdateInp
   }
 };
 const deleteUser = async (userId: string) => {
+  validateInputs([userId, ZId]);
   await prisma.user.delete({
     where: {
       id: userId,
@@ -89,6 +96,7 @@ const deleteUser = async (userId: string) => {
 
 // function to delete a user's profile including teams
 export const deleteProfile = async (personId: string): Promise<void> => {
+  validateInputs([personId, ZId]);
   try {
     const currentUserMemberships = await prisma.membership.findMany({
       where: {

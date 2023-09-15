@@ -4,13 +4,14 @@ import footerLogo from "./footerlogo.svg";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@formbricks/ui";
+import { TSurveyClosedMessage } from "@formbricks/types/v1/surveys";
 
 const SurveyInactive = ({
   status,
   surveyClosedMessage,
 }: {
   status: string;
-  surveyClosedMessage?: { heading?: string | undefined; subheading?: string | undefined };
+  surveyClosedMessage?: TSurveyClosedMessage | null;
 }) => {
   const icons = {
     "not found": <QuestionMarkCircleIcon className="h-20 w-20" />,
@@ -25,7 +26,7 @@ const SurveyInactive = ({
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-tr from-slate-200 to-slate-50 py-8 text-center">
+    <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 py-8 text-center">
       <div></div>
       <div className="flex flex-col items-center space-y-3 text-slate-300">
         {icons[status]}

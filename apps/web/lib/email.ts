@@ -4,7 +4,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { withEmailTemplate } from "./email-template";
-import { createInviteToken, createToken } from "./jwt";
+import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 
 const nodemailer = require("nodemailer");
 
@@ -53,6 +53,26 @@ export const sendVerificationEmail = async (user) => {
     <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
     Your Formbricks Team`),
+  });
+};
+
+export const sendLinkSurveyToVerifiedEmail = async (data) => {
+  const surveyId = data.surveyId;
+  const email = data.email;
+  const surveyData = data.surveyData;
+  const token = createTokenForLinkSurvey(surveyId, email);
+  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: data.email,
+    subject: "Your Formbricks Survey",
+    html: withEmailTemplate(`<h1>Hey 👋</h1>
+    Thanks for validating your email. Here is your Survey.<br/><br/>
+    <strong>${surveyData.name}</strong>
+    <p>${surveyData.subheading}</p>
+    <a class="button" href="${surveyLink}">Take survey</a><br/>
+    <br/>
+    All the best,<br/>
+    Your Formbricks Team 🤍`),
   });
 };
 

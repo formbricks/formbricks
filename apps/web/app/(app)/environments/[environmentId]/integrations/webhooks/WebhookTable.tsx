@@ -28,6 +28,7 @@ export default function WebhookTable({
     id: "",
     name: "",
     url: "",
+    source: "user",
     triggers: [],
     surveyIds: [],
     createdAt: new Date(),

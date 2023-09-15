@@ -3,7 +3,7 @@ import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integ
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/HardcodedTriggers";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/testEndpoint";
 import Modal from "@/components/shared/Modal";
-import { createWebhook } from "@formbricks/lib/services/webhook";
+import { createWebhookAction } from "./actions";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TWebhookInput } from "@formbricks/types/v1/webhooks";
@@ -97,11 +97,12 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
         const updatedData: TWebhookInput = {
           name: data.name,
           url: testEndpointInput,
+          source: "user",
           triggers: selectedTriggers,
           surveyIds: selectedSurveys,
         };
 
-        await createWebhook(environmentId, updatedData);
+        await createWebhookAction(environmentId, updatedData);
         router.refresh();
         setOpenWithStates(false);
         toast.success("Webhook added successfully.");
@@ -194,6 +195,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                   triggers={triggers}
                   selectedTriggers={selectedTriggers}
                   onCheckboxChange={handleCheckboxChange}
+                  allowChanges={true}
                 />
               </div>
 
@@ -205,6 +207,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                   selectedAllSurveys={selectedAllSurveys}
                   onSelectAllSurveys={handleSelectAllSurveys}
                   onSelectedSurveyChange={handleSelectedSurveyChange}
+                  allowChanges={true}
                 />
               </div>
             </div>

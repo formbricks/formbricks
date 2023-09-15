@@ -1,8 +1,5 @@
 "use client";
-
-import { useEnvironment } from "@/lib/environments/environments";
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import {
   CheckCircleIcon,
@@ -15,17 +12,18 @@ import {
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface HowToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
-  environmentId: string;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  environment: TEnvironment;
 }
 
-export default function HowToSendCard({ localSurvey, setLocalSurvey, environmentId }: HowToSendCardProps) {
+export default function HowToSendCard({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? false : true);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
-  const { environment } = useEnvironment(environmentId);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -150,7 +148,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                           <p className="text-xs font-normal">
                             Follow the{" "}
                             <Link
-                              href={`/environments/${environmentId}/settings/setup`}
+                              href={`/environments/${environment.id}/settings/setup`}
                               className="underline hover:text-amber-900"
                               target="_blank">
                               set up guide

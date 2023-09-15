@@ -1,0 +1,164 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Responses API",
+  description:
+    "Explore the Formbricks Public Client API for client-side tasks and integration into your website.",
+};
+
+#### Management API
+
+# Displays API
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+---
+
+## Mark Survey as Displayed for Person {{ tag: 'POST', label: '/api/v1/client/diplays' }}
+
+<Row>
+  <Col>
+
+    Mark a Survey as seen for a Person provided valid SurveyId and PersonId.
+
+    ### Mandatory Request Body JSON Keys
+    <Properties>
+      <Property name="surveyId" type="string">
+        Survey ID to mark as viewed for a person
+      </Property>
+    </Properties>
+
+    <Properties>
+      <Property name="personId" type="string">
+        Person ID for whom mark a survey as viewed
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/displays">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST \
+    'https://app.formbricks.com/api/v1/client/displays' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "surveyId": "<survey-id>",
+        "personId": "<person-id>"
+    }'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "id": "clm4qiygr00uqs60h5f5ola5h",
+        "createdAt": "2023-09-04T10:24:36.603Z",
+        "updatedAt": "2023-09-04T10:24:36.603Z",
+        "surveyId": "<survey-id>",
+        "person": {
+            "id": "<person-id>",
+            "attributes": {
+                "userId": "CYO600",
+                "email": "wei@google.com",
+                "Name": "Wei Zhu",
+                "Role": "Manager",
+                "Company": "Google",
+                "Experience": "2 years",
+                "Usage Frequency": "Daily",
+                "Company Size": "2401 employees",
+                "Product Satisfaction Score": "4",
+                "Recommendation Likelihood": "3"
+                },
+            "createdAt": "2023-08-08T18:05:01.483Z",
+            "updatedAt": "2023-08-08T18:05:01.483Z"
+            },
+        "status": "seen"
+        }
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "Fields are missing or incorrectly formatted",
+      "details": {
+        "surveyId": "Required"
+      }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Mark Survey as Responded for Person {{ tag: 'POST', label: '/api/v1/client/diplays/[displayId]/responded' }}
+
+<Row>
+  <Col>
+
+    Mark a Displayed Survey as responded for a Person.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/client/diplays/[displayId]/responded">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST \
+    --location \
+    'https://app.formbricks.com/api/v1/client/displays/<displayId>/responded'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "id": "<displayId>",
+        "createdAt": "2023-09-04T10:24:36.603Z",
+        "updatedAt": "2023-09-04T10:33:56.978Z",
+        "surveyId": "<surveyId>",
+        "person": {
+            "id": "<personId>",
+            "attributes": {
+                "userId": "CYO600",
+                "email": "wei@google.com",
+                "Name": "Wei Zhu",
+                "Role": "Manager",
+                "Company": "Google",
+                "Experience": "2 years",
+                "Usage Frequency": "Daily",
+                "Company Size": "2401 employees",
+                "Product Satisfaction Score": "4",
+                "Recommendation Likelihood": "3"
+            },
+            "createdAt": "2023-08-08T18:05:01.483Z",
+            "updatedAt": "2023-08-08T18:05:01.483Z"
+        },
+        "status": "responded"
+      }
+    }
+    ```
+
+    ```json {{ title: '500 Internal Server Error' }}
+    {
+      "code": "internal_server_error",
+      "message": "Database operation failed",
+      "details": {}
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---

@@ -157,6 +157,7 @@ export const withEmailTemplate = (content: string) =>
           max-width: 525px;
           margin: 0 auto;
           border-radius: 12px;
+          white-space: pre-wrap;
         "
       >
         ${content}
