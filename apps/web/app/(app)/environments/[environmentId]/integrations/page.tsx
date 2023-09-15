@@ -47,7 +47,7 @@ export default function IntegrationsPage({ params }) {
           connectHref={`/environments/${params.environmentId}/integrations/google-sheets`}
           connectText="Connect"
           connectNewTab={false}
-          docsHref="https://formbricks.com/docs/webhook-api/overview"
+          docsHref="https://formbricks.com/docs/integrations/google-sheets"
           docsText="Docs"
           docsNewTab={true}
           label="Google Sheets"

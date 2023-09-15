@@ -13,6 +13,7 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 
 interface GoogleSheetWrapperProps {
+  enabled: boolean;
   environmentId: string;
   surveys: TSurvey[];
   spreadSheetArray: TGoogleSpreadsheet[];
@@ -20,6 +21,7 @@ interface GoogleSheetWrapperProps {
 }
 
 export default function GoogleSheetWrapper({
+  enabled,
   environmentId,
   surveys,
   spreadSheetArray,
@@ -62,7 +64,7 @@ export default function GoogleSheetWrapper({
           />
         </>
       ) : (
-        <Connect environmentId={environmentId} />
+        <Connect enabled={enabled} environmentId={environmentId} />
       )}
     </>
   );
