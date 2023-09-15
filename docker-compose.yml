@@ -1,4 +1,40 @@
 version: "3.3"
+x-environment: &environment
+  environment:
+    # IF YOU ARE USING DOCKER, PLEASE MAKE SURE YOU DO NOT HAVE A .env FILE IN THE ROOT DIRECTORY.
+    # IF you do, please rename it to anything else. This is because docker-compose will load the .env file
+    # and throw an error as it is according to the NextJs 13.4.19 versions and docker will not recognise it.
+
+    # This should be the same as below if you are running via docker compose up
+    WEBAPP_URL: http://formbricks:3000
+
+    # PostgreSQL DB for Formbricks to connect to
+    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+
+    # Uncomment to enable a dedicated connection pool for Prisma using Prisma Data Proxy
+    # Cold boots will be faster and you'll be able to scale your DB independently of your app.
+    # @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
+    # PRISMA_GENERATE_DATAPROXY=true
+    PRISMA_GENERATE_DATAPROXY:
+
+    # NextJS Auth
+    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+    # You can use: `openssl rand -base64 32` to generate one
+    NEXTAUTH_SECRET: MoPAA5lQLzx9J8xRa8JWpIwrB4U7STgVImLzI4Xtjag=
+
+    # Set this to your public-facing URL, e.g., https://example.com
+    # You do not need the NEXTAUTH_URL environment variable in Vercel.
+    NEXTAUTH_URL: http://localhost:3000
+
+    # Necessary if email verification and password reset are enabled.
+    # See optional configurations below if you want to disable these features.
+    MAIL_FROM:
+    SMTP_HOST:
+    SMTP_PORT:
+    # Enable SMTP_SECURE_ENABLED for TLS (port 465)
+    SMTP_SECURE_ENABLED:
+    SMTP_USER:
+    SMTP_PASSWORD:
 services:
   postgres:
     restart: always
@@ -13,12 +49,60 @@ services:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
+      args:
+        # If the below is changed, make sure to rebuild the docker image since they are baked at build time!
+
+        # Set the below 2 to your public-facing URL, e.g., https://example.com
+        - NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
+        - NEXT_PUBLIC_SURVEY_BASE_URL=http://localhost:3000/s
+
+        # Display privacy policy, imprint and terms of service links in the footer of signup & public pages.
+        # - NEXT_PUBLIC_PRIVACY_URL=
+        # - NEXT_PUBLIC_TERMS_URL=
+        # - NEXT_PUBLIC_IMPRINT_URL=
+
+        # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
+        - NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1
+
+        # Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
+        - NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1
+
+        # Signup. Disable the ability for new users to create an account.
+        - NEXT_PUBLIC_SIGNUP_DISABLED=0
+
+        # Team Invite. Disable the ability for invited users to create an account.
+        - NEXT_PUBLIC_INVITE_DISABLED=0
+
+        # Disable Sentry warning
+        # - SENTRY_IGNORE_API_RESOLUTION_ERROR=
+
+        # Enable Sentry Error Tracking
+        # - NEXT_PUBLIC_SENTRY_DSN=
+
+        # Configure Github Login
+        - NEXT_PUBLIC_GITHUB_AUTH_ENABLED=0
+        # - GITHUB_ID=
+        # - GITHUB_SECRET=
+
+        # Configure Google Login
+        - NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=0
+        # - GOOGLE_CLIENT_ID=
+        # - GOOGLE_CLIENT_SECRET=
+
+        # Cron Secret
+        # - CRON_SECRET=
+
+        # The below can be overwritten without rebuilding the image in the above x-environment variables since they are loaded at runtime!
+        - WEBAPP_URL=http://formbricks:3000
+        - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+        - NEXTAUTH_SECRET=RANDOM_STRING
+        - NEXTAUTH_URL=http://localhost:3000
+
     depends_on:
       - postgres
-    env_file:
-      - .env.docker
     ports:
       - 3000:3000
+    <<: *environment
 
 volumes:
   postgres:
