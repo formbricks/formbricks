@@ -1,8 +1,8 @@
 "use client";
 
+import { updateProductAction } from "@/app/(app)/onboarding/actions";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProductMutation } from "@/lib/products/mutateProducts";
-import { useProduct } from "@/lib/products/products";
+import { TProduct } from "@formbricks/types/v1/product";
 import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -11,12 +11,11 @@ type Product = {
   done: () => void;
   environmentId: string;
   isLoading: boolean;
+  product: TProduct;
 };
 
-const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
+const Product: React.FC<Product> = ({ done, isLoading, environmentId, product }) => {
   const [loading, setLoading] = useState(true);
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { triggerProductMutate } = useProductMutation(environmentId);
 
   const [name, setName] = useState("");
   const [color, setColor] = useState("##4748b");
@@ -30,7 +29,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
   };
 
   useEffect(() => {
-    if (isLoadingProduct) {
+    if (!product) {
       return;
     } else if (product && product.name !== "My Product") {
       done(); // when product already exists, skip product step entirely
@@ -40,7 +39,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
       }
       setLoading(false);
     }
-  }, [product, done, isLoadingProduct]);
+  }, [product, done]);
 
   const dummyChoices = ["❤️ Love it!"];
 
@@ -50,7 +49,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
     }
 
     try {
-      await triggerProductMutate({ name, brandColor: color });
+      await updateProductAction(product.id, { name, brandColor: color });
     } catch (e) {
       toast.error("An error occured saving your settings");
       console.error(e);
@@ -63,11 +62,11 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
     done();
   };
 
-  if (isLoadingProduct || loading) {
+  if (loading) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorProduct) {
+  if (!product) {
     return <ErrorComponent />;
   }
 

@@ -1,17 +1,17 @@
-import {
-  MultipleChoiceMultiQuestion,
-  MultipleChoiceSingleQuestion,
-  QuestionType,
-} from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
 import { truncate } from "@/lib/utils";
+import {
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+} from "@formbricks/types/v1/surveys";
 
 interface MultipleChoiceSummaryProps {
-  questionSummary: QuestionSummary<MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion>;
+  questionSummary: QuestionSummary<TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion>;
   environmentId: string;
   surveyType: string;
 }

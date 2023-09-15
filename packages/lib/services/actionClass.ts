@@ -7,7 +7,6 @@ import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { cache } from "react";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-
 const select = {
   id: true,
   createdAt: true,

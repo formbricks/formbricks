@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export default function OptionButton({
+export default function TabOption({
   active,
   icon,
   onClick,
