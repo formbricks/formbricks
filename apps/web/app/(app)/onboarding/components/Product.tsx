@@ -1,6 +1,6 @@
 "use client";
 
-import { updateProductAction } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/actions";
+import { updateProductAction } from "@/app/(app)/onboarding/actions";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { TProduct } from "@formbricks/types/v1/product";
 import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";
