@@ -13,7 +13,7 @@ import { notFound } from "next/navigation";
 export default async function LinkSurveyPage({ params, searchParams }) {
   const survey = await getSurvey(params.surveyId);
 
-  if (!survey || survey.type !== "link") {
+  if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
   }
 

@@ -152,7 +152,6 @@ enum SurveyStatus {
   inProgress
   paused
   completed
-  archived
 }
 
 enum DisplayStatus {

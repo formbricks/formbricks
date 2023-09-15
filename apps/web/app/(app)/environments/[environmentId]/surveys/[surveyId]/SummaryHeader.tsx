@@ -99,7 +99,6 @@ const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: Summa
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}
-                        {survey.status === "archived" && "Archived"}
                       </span>
                     </div>
                   </DropdownMenuSubTrigger>
