@@ -27,6 +27,9 @@ const getEnvironmentAndPersonCacheKey = (environmentId: string, personId: string
   "person",
   personId,
 ];
+const getActionClassesCacheKey = (environmentId: string): string[] => [`env-${environmentId}-actionClasses`];
+
+const halfHourSeconds = 30 * 60;
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -62,6 +65,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       getEnvironmentCacheKey(environmentId),
       {
         tags: getEnvironmentCacheKey(environmentId),
+        revalidate: halfHourSeconds,
       }
     );
 
@@ -82,22 +86,46 @@ export async function POST(req: Request): Promise<NextResponse> {
       // create a new session
       const session = await createSession(person.id);
 
-      // get/create rest of the state
-      const getPersonStateCached = unstable_cache(
-        async () => {
-          return await Promise.all([
-            getSurveys(environmentId, person),
-            getActionClasses(environmentId),
-            getProductByEnvironmentId(environmentId),
-          ]);
+      const getSurveysCached = unstable_cache(
+        async (environmentId: string, person: TPerson) => {
+          return await getSurveys(environmentId, person);
         },
         getEnvironmentAndPersonCacheKey(environmentId, person.id),
         {
           tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
+          revalidate: halfHourSeconds,
         }
       );
 
-      const [surveys, noCodeActionClasses, product] = await getPersonStateCached();
+      const getActionClassesCached = unstable_cache(
+        async (environmentId: string) => {
+          return await getActionClasses(environmentId);
+        },
+        getActionClassesCacheKey(environmentId),
+        {
+          tags: getActionClassesCacheKey(environmentId),
+          revalidate: halfHourSeconds,
+        }
+      );
+
+      const getProductByEnvironmentIdCached = unstable_cache(
+        async (environmentId: string) => {
+          return await getProductByEnvironmentId(environmentId);
+        },
+        getEnvironmentCacheKey(environmentId),
+        {
+          tags: getEnvironmentCacheKey(environmentId),
+          revalidate: halfHourSeconds,
+        }
+      );
+
+      // get/create rest of the state
+
+      const [surveys, noCodeActionClasses, product] = await Promise.all([
+        getSurveysCached(environmentId, person),
+        getActionClassesCached(environmentId),
+        getProductByEnvironmentIdCached(environmentId),
+      ]);
 
       captureNewSessionTelemetry(inputValidation.data.jsVersion);
 
@@ -127,6 +155,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         getPersonCacheKey(personId),
         {
           tags: getPersonCacheKey(personId),
+          revalidate: halfHourSeconds,
         }
       );
 
@@ -146,6 +175,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         getEnvironmentAndPersonCacheKey(environmentId, person.id),
         {
           tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
+          revalidate: halfHourSeconds,
         }
       );
 
@@ -153,9 +183,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (environmentId: string) => {
           return await getActionClasses(environmentId);
         },
-        getEnvironmentCacheKey(environmentId),
+        getActionClassesCacheKey(environmentId),
         {
-          tags: getEnvironmentCacheKey(environmentId),
+          tags: getActionClassesCacheKey(environmentId),
+          revalidate: halfHourSeconds,
         }
       );
 
@@ -166,6 +197,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         getEnvironmentCacheKey(environmentId),
         {
           tags: getEnvironmentCacheKey(environmentId),
+          revalidate: halfHourSeconds,
         }
       );
 
@@ -174,26 +206,6 @@ export async function POST(req: Request): Promise<NextResponse> {
         getActionClassesCached(environmentId),
         getProductByEnvironmentIdCached(environmentId),
       ]);
-
-      // const getPersonStateCached = unstable_cache(
-      //   async (person: TPerson, environmentId: string) => {
-      //     return await Promise.all([
-      //       createSession(person.id),
-      //       getSurveys(environmentId, person),
-      //       getActionClasses(environmentId),
-      //       getProductByEnvironmentId(environmentId),
-      //     ]);
-      //   },
-      //   [person.id, environmentId],
-      //   {
-      //     tags: [person.id, environmentId],
-      //   }
-      // );
-
-      // const [session, surveys, noCodeActionClasses, product] = await getPersonStateCached(
-      //   person,
-      //   environmentId
-      // );
 
       if (!product) {
         return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
@@ -225,6 +237,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       getSessionCacheKey(sessionId),
       {
         tags: getSessionCacheKey(sessionId),
+        revalidate: halfHourSeconds,
       }
     );
 
@@ -240,6 +253,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         getPersonCacheKey(personId),
         {
           tags: getPersonCacheKey(personId),
+          revalidate: halfHourSeconds,
         }
       );
 
@@ -262,6 +276,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         getPersonCacheKey(personId),
         {
           tags: getPersonCacheKey(personId),
+          revalidate: halfHourSeconds,
         }
       );
 
@@ -298,6 +313,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       getEnvironmentAndPersonCacheKey(environmentId, person.id),
       {
         tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
+        revalidate: halfHourSeconds,
       }
     );
 
@@ -305,9 +321,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       async (environmentId: string) => {
         return await getActionClasses(environmentId);
       },
-      getEnvironmentCacheKey(environmentId),
+      getActionClassesCacheKey(environmentId),
       {
-        tags: getEnvironmentCacheKey(environmentId),
+        tags: getActionClassesCacheKey(environmentId),
+        revalidate: halfHourSeconds,
       }
     );
 
@@ -318,6 +335,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       getEnvironmentCacheKey(environmentId),
       {
         tags: getEnvironmentCacheKey(environmentId),
+        revalidate: halfHourSeconds,
       }
     );
 
