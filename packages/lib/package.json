@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
+    "@types/jsonwebtoken": "^9.0.2",
     "eslint-config-formbricks": "workspace:*"
   }
 }

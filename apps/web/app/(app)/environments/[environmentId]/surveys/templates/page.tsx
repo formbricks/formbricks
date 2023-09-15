@@ -11,6 +11,10 @@ export default async function SurveyTemplatesPage({ params }) {
     throw new Error("Product not found");
   }
 
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+
   return (
     <TemplateContainerWithPreview environmentId={environmentId} environment={environment} product={product} />
   );
