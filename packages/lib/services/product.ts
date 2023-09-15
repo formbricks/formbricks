@@ -22,6 +22,7 @@ const selectProduct = {
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,
+  environments: true,
 };
 
 export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
@@ -127,6 +128,7 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
     where: {
       id: productId,
     },
+    select: selectProduct,
   });
 
   return product;
