@@ -8,7 +8,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { extendSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -113,9 +112,6 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     if (!product) {
       return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
     }
-
-    // revalidate person
-    revalidateTag(personId);
 
     // return state
     const state: TJsState = {

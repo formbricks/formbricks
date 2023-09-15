@@ -26,7 +26,7 @@ const getEnvironmentAndPersonCacheKey = (environmentId: string, personId: string
   "person",
   personId,
 ];
-const getProductCacheKey = (environmentId: string): string[] => ["product", environmentId];
+const getProductCacheKey = (environmentId: string): string[] => [`env-${environmentId}-product`];
 const getActionClassesCacheKey = (environmentId: string): string[] => [`env-${environmentId}-actionClasses`];
 
 const halfHourSeconds = 30 * 60;
