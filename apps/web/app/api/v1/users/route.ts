@@ -3,13 +3,18 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
-import { env } from "@/env.mjs";
 import { Prisma } from "@prisma/client";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  INTERNAL_SECRET,
+  INVITE_DISABLED,
+  SIGNUP_ENABLED,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
-  if (inviteToken ? env.INVITE_DISABLED === "1" : env.SIGNUP_DISABLED === "1") {
+  if (inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
   user = { ...user, ...{ email: user.email.toLowerCase() } };
@@ -117,7 +122,7 @@ export async function POST(request: Request) {
       await prisma.invite.delete({ where: { id: inviteId } });
     }
 
-    if (env.EMAIL_VERIFICATION_DISABLED !== "1") {
+    if (!EMAIL_VERIFICATION_DISABLED) {
       await sendVerificationEmail(userData);
     }
     return NextResponse.json(userData);

@@ -1,8 +1,13 @@
-import { env } from "@/env.mjs";
 import { SigninForm } from "@/components/auth/SigninForm";
 import Testimonial from "@/components/auth/Testimonial";
 import FormWrapper from "@/components/auth/FormWrapper";
 import { Metadata } from "next";
+import {
+  GITHUB_OAUTH_ENABLED,
+  GOOGLE_OAUTH_ENABLED,
+  PASSWORD_RESET_DISABLED,
+  SIGNUP_ENABLED,
+} from "@formbricks/lib/constants";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -10,11 +15,6 @@ export const metadata: Metadata = {
 };
 
 export default function SignInPage() {
-  const publicSignUpEnabled = env.SIGNUP_DISABLED !== "1";
-  const passwordResetEnabled = env.PASSWORD_RESET_DISABLED !== "1";
-  const googleOAuthEnabled = env.GOOGLE_AUTH_ENABLED === "1";
-  const githubOAuthEnabled = env.GITHUB_AUTH_ENABLED === "1";
-
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -23,10 +23,10 @@ export default function SignInPage() {
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
           <SigninForm
-            publicSignUpEnabled={publicSignUpEnabled}
-            passwordResetEnabled={passwordResetEnabled}
-            googleOAuthEnabled={googleOAuthEnabled}
-            githubOAuthEnabled={githubOAuthEnabled}
+            publicSignUpEnabled={SIGNUP_ENABLED}
+            passwordResetEnabled={!PASSWORD_RESET_DISABLED}
+            googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
+            githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
           />
         </FormWrapper>
       </div>

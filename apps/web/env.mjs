@@ -47,6 +47,7 @@ export const env = createEnv({
     GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
+    VERCEL_URL: z.string().url().optional(),
   },
 
   /*
@@ -107,5 +108,6 @@ export const env = createEnv({
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    VERCEL_URL: process.env.VERCEL_URL,
   },
 });

@@ -2,7 +2,17 @@ import Link from "next/link";
 import { SignupForm } from "@/components/auth/SignupForm";
 import FormWrapper from "@/components/auth/FormWrapper";
 import Testimonial from "@/components/auth/Testimonial";
-import { env } from "@/env.mjs";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  GITHUB_OAUTH_ENABLED,
+  GOOGLE_OAUTH_ENABLED,
+  INVITE_DISABLED,
+  PASSWORD_RESET_DISABLED,
+  PRIVACY_URL,
+  SIGNUP_ENABLED,
+  TERMS_URL,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 
 export default function SignUpPage({
   searchParams,
@@ -10,13 +20,6 @@ export default function SignUpPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const privacyUrl = env.PRIVACY_URL;
-  const termsUrl = env.TERMS_URL;
-  const passwordResetEnabled = env.PASSWORD_RESET_DISABLED !== "1";
-  const emailVerificationDisabled = env.EMAIL_VERIFICATION_DISABLED === "1";
-  const googleOAuthEnabled = env.GOOGLE_AUTH_ENABLED === "1";
-  const githubOAuthEnabled = env.GITHUB_AUTH_ENABLED === "1";
-  const webappUrl = env.WEBAPP_URL;
 
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
@@ -25,7 +28,7 @@ export default function SignUpPage({
       </div>
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
-          {(inviteToken ? env.INVITE_DISABLED === "1" : env.SIGNUP_DISABLED === "1") ? (
+          {(inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) ? (
             <>
               <h1 className="leading-2 mb-4 text-center font-bold">Sign up disabled</h1>
               <p className="text-center">
@@ -41,13 +44,13 @@ export default function SignUpPage({
             </>
           ) : (
             <SignupForm
-              webAppUrl={webappUrl}
-              termsUrl={termsUrl}
-              privacyUrl={privacyUrl}
-              passwordResetEnabled={passwordResetEnabled}
-              emailVerificationDisabled={emailVerificationDisabled}
-              googleOAuthEnabled={googleOAuthEnabled}
-              githubOAuthEnabled={githubOAuthEnabled}
+              webAppUrl={WEBAPP_URL}
+              termsUrl={TERMS_URL}
+              privacyUrl={PRIVACY_URL}
+              passwordResetEnabled={!PASSWORD_RESET_DISABLED}
+              emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
+              googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
+              githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
             />
           )}
         </FormWrapper>
