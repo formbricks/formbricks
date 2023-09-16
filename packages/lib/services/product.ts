@@ -49,6 +49,7 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
     throw new ValidationError("EnvironmentId is required");
   }
   let productPrisma;
+
   try {
     productPrisma = await prisma.product.findFirst({
       where: {
@@ -90,7 +91,6 @@ export const updateProduct = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw error;
   }
   try {
     const product = ZProduct.parse(updatedProduct);
@@ -120,4 +120,14 @@ export const getProduct = cache(async (productId: string): Promise<TProduct | nu
     }
     throw error;
   }
+});
+
+export const deleteProduct = cache(async (productId: string): Promise<TProduct> => {
+  const product = await prisma.product.delete({
+    where: {
+      id: productId,
+    },
+  });
+
+  return product;
 });
