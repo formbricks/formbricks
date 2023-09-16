@@ -25,9 +25,9 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CRON_SECRET: z.string().optional(),
-    GOOGLE_APP_CLIENT_ID: z.string().optional(),
-    GOOGLE_APP_CLIENT_SECRET: z.string().optional(),
-    GOOGLE_APP_REDIRECT_URL : z.string().optional(),
+    GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
+    GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
   },
   /*
    * Environment variables available on the client (and server).

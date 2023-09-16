@@ -1,4 +1,5 @@
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { env } from "@/env.mjs";
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
@@ -23,9 +24,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ Error: "You dont have access to environment" }, { status: 401 });
   }
 
-  const client_id = process.env.GOOGLE_APP_CLIENT_ID;
-  const client_secret = process.env.GOOGLE_APP_CLIENT_SECRET;
-  const redirect_uri = process.env.GOOGLE_APP_REDIRECT_URL;
+  const client_id = env.GOOGLE_SHEETS_CLIENT_ID;
+  const client_secret = env.GOOGLE_SHEETS_CLIENT_SECRET;
+  const redirect_uri = env.GOOGLE_SHEETS_REDIRECT_URL;
   if (!client_id) return NextResponse.json({ Error: "Google client id is missing" }, { status: 400 });
   if (!client_secret) return NextResponse.json({ Error: "Google client secret is missing" }, { status: 400 });
   if (!redirect_uri) return NextResponse.json({ Error: "Google redirect url is missing" }, { status: 400 });

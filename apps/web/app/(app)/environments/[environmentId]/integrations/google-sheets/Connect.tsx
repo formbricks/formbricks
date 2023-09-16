@@ -1,12 +1,20 @@
+"use client";
+
 import GoogleSheetLogo from "@/images/google-sheets-small.png";
 import FormbricksLogo from "@/images/logo.svg";
 import { authorize } from "@formbricks/lib/client/google";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { Button } from "@formbricks/ui";
+import { Alert, Button } from "@formbricks/ui";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
-export default function Connect({ environmentId }: { environmentId: string }) {
+interface ConnectProps {
+  enabled: boolean;
+  environmentId: string;
+}
+
+export default function Connect({ enabled, environmentId }: ConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const handleGoogleLogin = async () => {
     setIsConnecting(true);
@@ -29,7 +37,18 @@ export default function Connect({ environmentId }: { environmentId: string }) {
           </div>
         </div>
         <p className="my-8">Sync responses directly with Google Sheets.</p>
-        <Button variant="darkCTA" loading={isConnecting} onClick={handleGoogleLogin}>
+        {!enabled && (
+          <p className="mb-8 rounded border-gray-200 bg-gray-100 p-3 text-sm">
+            Google Sheets Integration is not configured in your instance of Formbricks.
+            <br />
+            Please follow the{" "}
+            <Link href="https://formbricks.com/docs/integrations/google-sheets" className="underline">
+              docs
+            </Link>{" "}
+            to configure it.
+          </p>
+        )}
+        <Button variant="darkCTA" loading={isConnecting} onClick={handleGoogleLogin} disabled={!enabled}>
           Connect with Google
         </Button>
       </div>
