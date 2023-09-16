@@ -1,16 +1,8 @@
-import { getSurveysCached } from "@/app/api/v1/js/surveys";
 import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { getActionClassesCached } from "@formbricks/lib/services/actionClass";
-import { getEnvironmentCached } from "@formbricks/lib/services/environment";
-import { createPerson, getPersonCached } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
-import { createSession, extendSession, getSessionCached } from "@formbricks/lib/services/session";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TSession } from "@formbricks/types/v1/sessions";
+import { ZJsSyncInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
