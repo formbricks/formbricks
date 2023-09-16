@@ -8,6 +8,7 @@ import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { getAttributeClassByName } from "./attributeClass";
+import { revalidateTag } from "next/cache";
 
 export const selectPerson = {
   id: true,
@@ -128,6 +129,11 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
 
     const person = transformPrismaPerson(personPrisma);
 
+    if (person) {
+      // revalidate person
+      revalidateTag(person.id);
+    }
+
     return person;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -146,6 +152,9 @@ export const deletePerson = async (personId: string): Promise<void> => {
         id: personId,
       },
     });
+
+    // revalidate person
+    revalidateTag(personId);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -205,6 +214,12 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
       },
       select: selectPerson,
     });
+
+    if (personPrisma) {
+      // revalidate person
+      revalidateTag(personPrisma.id);
+    }
+
     return transformPrismaPerson(personPrisma);
   }
 };

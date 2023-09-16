@@ -6,20 +6,19 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import type { TEnvironment, TEnvironmentId, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 import { populateEnvironment } from "../utils/createDemoProductHelpers";
 import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
+import { cache } from "react";
 
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
   validateInputs([environmentId, ZId]);
   let environmentPrisma;
+
   try {
     environmentPrisma = await prisma.environment.findUnique({
       where: {
         id: environmentId,
       },
     });
-
-    return environmentPrisma;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

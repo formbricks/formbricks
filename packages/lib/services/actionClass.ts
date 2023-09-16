@@ -7,6 +7,8 @@ import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { cache } from "react";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { revalidateTag } from "next/cache";
+
 const select = {
   id: true,
   createdAt: true,
@@ -51,6 +53,9 @@ export const deleteActionClass = async (
     });
     if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
 
+    // revalidate cache
+    revalidateTag(`env-${environmentId}-actionClasses`);
+
     return result;
   } catch (error) {
     throw new DatabaseError(
@@ -77,6 +82,10 @@ export const createActionClass = async (
       },
       select,
     });
+
+    // revalidate cache
+    revalidateTag(`env-${environmentId}-actionClasses`);
+
     return result;
   } catch (error) {
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
@@ -104,6 +113,10 @@ export const updateActionClass = async (
       },
       select,
     });
+
+    // revalidate cache
+    revalidateTag(`env-${environmentId}-actionClasses`);
+
     return result;
   } catch (error) {
     throw new DatabaseError(`Database error when updating an action for environment ${environmentId}`);

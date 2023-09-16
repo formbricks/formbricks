@@ -7,6 +7,7 @@ import { getPerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { extendSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -100,6 +101,11 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     });
 
     const person = transformPrismaPerson(attribute.person);
+
+    if (person) {
+      // revalidate person
+      revalidateTag(person.id);
+    }
 
     // get/create rest of the state
     const [session, surveys, noCodeActionClasses, product] = await Promise.all([

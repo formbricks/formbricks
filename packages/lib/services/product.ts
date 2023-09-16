@@ -8,6 +8,7 @@ import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { revalidateTag } from "next/cache";
 
 const selectProduct = {
   id: true,
@@ -22,6 +23,7 @@ const selectProduct = {
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,
+  environments: true,
 };
 
 export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
@@ -92,8 +94,15 @@ export const updateProduct = async (
       throw new DatabaseError("Database operation failed");
     }
   }
+
   try {
     const product = ZProduct.parse(updatedProduct);
+
+    product.environments.forEach((environment) => {
+      // revalidate environment cache
+      revalidateTag(`env-${environment.id}-product`);
+    });
+
     return product;
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -127,7 +136,15 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
     where: {
       id: productId,
     },
+    select: selectProduct,
   });
+
+  if (product) {
+    product.environments.forEach((environment) => {
+      // revalidate product cache
+      revalidateTag(`env-${environment.id}-product`);
+    });
+  }
 
   return product;
 });

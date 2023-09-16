@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { revalidateTag } from "next/cache";
 
 const select = {
   id: true,
@@ -108,6 +109,11 @@ export const createSession = async (personId: string): Promise<TSession> => {
       select,
     });
 
+    if (session) {
+      // revalidate session cache
+      revalidateTag(session.id);
+    }
+
     return session;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -130,6 +136,9 @@ export const extendSession = async (sessionId: string): Promise<TSession> => {
       },
       select,
     });
+
+    // revalidate session cache
+    revalidateTag(sessionId);
 
     return session;
   } catch (error) {
