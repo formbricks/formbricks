@@ -3,7 +3,7 @@ import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/services/attributeClass";
-import { getPersonCached, selectPerson, transformPrismaPerson } from "@formbricks/lib/services/person";
+import { getPersonCached } from "@formbricks/lib/services/person";
 import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
