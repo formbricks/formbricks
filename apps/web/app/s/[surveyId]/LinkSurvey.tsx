@@ -3,7 +3,6 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { SurveyInline } from "@/components/shared/Survey";
 import { createDisplay } from "@formbricks/lib/client/display";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/v1/product";
@@ -21,6 +20,7 @@ interface LinkSurveyProps {
   personId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
+  webAppUrl: string;
 }
 
 export default function LinkSurvey({
@@ -29,6 +29,7 @@ export default function LinkSurvey({
   personId,
   emailVerificationStatus,
   prefillAnswer,
+  webAppUrl,
 }: LinkSurveyProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
@@ -42,7 +43,7 @@ export default function LinkSurvey({
     () =>
       new ResponseQueue(
         {
-          apiHost: WEBAPP_URL,
+          apiHost: webAppUrl,
           retryAttempts: 2,
           onResponseSendingFailed: (response) => {
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
