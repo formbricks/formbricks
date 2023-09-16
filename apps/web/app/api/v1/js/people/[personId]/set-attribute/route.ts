@@ -1,11 +1,9 @@
-import { getSurveys } from "@/app/api/v1/js/surveys";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
-import { getActionClasses } from "@formbricks/lib/services/actionClass";
-import { getPerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { extendSession } from "@formbricks/lib/services/session";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/services/attributeClass";
+import { getPersonCached, selectPerson, transformPrismaPerson } from "@formbricks/lib/services/person";
 import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
@@ -32,41 +30,21 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const { environmentId, sessionId, key, value } = inputValidation.data;
 
-    const existingPerson = await getPerson(personId);
+    const existingPerson = await getPersonCached(personId);
 
     if (!existingPerson) {
       return responses.notFoundResponse("Person", personId, true);
     }
 
-    // find attribute class
-    let attributeClass = await prisma.attributeClass.findUnique({
-      where: {
-        name_environmentId: {
-          name: key,
-          environmentId,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
+    let attributeClass = await getAttributeClassByNameCached(environmentId, key);
 
     // create new attribute class if not found
     if (attributeClass === null) {
-      attributeClass = await prisma.attributeClass.create({
-        data: {
-          name: key,
-          type: "code",
-          environment: {
-            connect: {
-              id: environmentId,
-            },
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
+      attributeClass = await createAttributeClass(environmentId, key, "code");
+    }
+
+    if (!attributeClass) {
+      return responses.internalServerErrorResponse("Unable to create attribute class", true);
     }
 
     // upsert attribute (update or create)
@@ -107,26 +85,22 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       revalidateTag(person.id);
     }
 
-    // get/create rest of the state
-    const [session, surveys, noCodeActionClasses, product] = await Promise.all([
-      extendSession(sessionId),
-      getSurveys(environmentId, person),
-      getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
-    ]);
+    const syncRes = await fetch(`${WEBAPP_URL}/api/v1/js/sync`, {
+      method: "POST",
+      body: JSON.stringify({
+        environmentId,
+        personId,
+        sessionId,
+      }),
+    });
 
-    if (!product) {
-      return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
+    if (!syncRes.ok) {
+      throw new Error("Unable to get latest state from sync");
     }
 
-    // return state
-    const state: TJsState = {
-      person,
-      session,
-      surveys,
-      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-      product,
-    };
+    const syncJson = await syncRes.json();
+    const state: TJsState = syncJson.data;
+
     return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);

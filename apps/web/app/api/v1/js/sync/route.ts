@@ -1,10 +1,10 @@
-import { getSurveys } from "@/app/api/v1/js/surveys";
+import { getSurveysCached } from "@/app/api/v1/js/surveys";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { getActionClasses } from "@formbricks/lib/services/actionClass";
+import { getActionClassesCached } from "@formbricks/lib/services/actionClass";
 import { getEnvironment } from "@formbricks/lib/services/environment";
-import { createPerson, getPerson } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { createPerson, getPerson, getPersonCached } from "@formbricks/lib/services/person";
+import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
 import { createSession, extendSession, getSession } from "@formbricks/lib/services/session";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
@@ -20,15 +20,6 @@ const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => 
 const getEnvironmentCacheKey = (environmentId: string): string[] => ["environment", environmentId];
 const getPersonCacheKey = (personId: string): string[] => ["person", personId];
 const getSessionCacheKey = (sessionId: string): string[] => ["session", sessionId];
-const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
-  "surveys",
-  `env-${environmentId}-surveys`,
-  `env-${environmentId}-product`,
-  "person",
-  personId,
-];
-const getProductCacheKey = (environmentId: string): string[] => [`env-${environmentId}-product`];
-const getActionClassesCacheKey = (environmentId: string): string[] => [`env-${environmentId}-actionClasses`];
 
 const halfHourSeconds = 30 * 60;
 
@@ -82,39 +73,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       // create a new session
       const session = await createSession(person.id);
 
-      const getSurveysCached = unstable_cache(
-        async (environmentId: string, person: TPerson) => {
-          return await getSurveys(environmentId, person);
-        },
-        getSurveysCacheKey(environmentId, person.id),
-        {
-          tags: getSurveysCacheKey(environmentId, person.id),
-          revalidate: halfHourSeconds,
-        }
-      );
-
-      const getActionClassesCached = unstable_cache(
-        async (environmentId: string) => {
-          return await getActionClasses(environmentId);
-        },
-        getActionClassesCacheKey(environmentId),
-        {
-          tags: getActionClassesCacheKey(environmentId),
-          revalidate: halfHourSeconds,
-        }
-      );
-
-      const getProductByEnvironmentIdCached = unstable_cache(
-        async (environmentId: string) => {
-          return await getProductByEnvironmentId(environmentId);
-        },
-        getProductCacheKey(environmentId),
-        {
-          tags: getProductCacheKey(environmentId),
-          revalidate: halfHourSeconds,
-        }
-      );
-
       // get/create rest of the state
 
       const [surveys, noCodeActionClasses, product] = await Promise.all([
@@ -144,17 +102,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       let person: TPerson | null;
       // check if person exists
 
-      const getPersonCached = unstable_cache(
-        async (personId: string) => {
-          return await getPerson(personId);
-        },
-        getPersonCacheKey(personId),
-        {
-          tags: getPersonCacheKey(personId),
-          revalidate: halfHourSeconds,
-        }
-      );
-
       person = await getPersonCached(personId);
       if (!person) {
         // create a new person
@@ -163,39 +110,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
       // create a new session
       const session = await createSession(person.id);
-
-      const getSurveysCached = unstable_cache(
-        async (environmentId: string, person: TPerson) => {
-          return await getSurveys(environmentId, person);
-        },
-        getSurveysCacheKey(environmentId, person.id),
-        {
-          tags: getSurveysCacheKey(environmentId, person.id),
-          revalidate: halfHourSeconds,
-        }
-      );
-
-      const getActionClassesCached = unstable_cache(
-        async (environmentId: string) => {
-          return await getActionClasses(environmentId);
-        },
-        getActionClassesCacheKey(environmentId),
-        {
-          tags: getActionClassesCacheKey(environmentId),
-          revalidate: halfHourSeconds,
-        }
-      );
-
-      const getProductByEnvironmentIdCached = unstable_cache(
-        async (environmentId: string) => {
-          return await getProductByEnvironmentId(environmentId);
-        },
-        getProductCacheKey(environmentId),
-        {
-          tags: getProductCacheKey(environmentId),
-          revalidate: halfHourSeconds,
-        }
-      );
 
       const [surveys, noCodeActionClasses, product] = await Promise.all([
         getSurveysCached(environmentId, person),
@@ -299,39 +213,6 @@ export async function POST(req: Request): Promise<NextResponse> {
         }
       }
     }
-
-    const getSurveysCached = unstable_cache(
-      async (environmentId: string, person: TPerson) => {
-        return await getSurveys(environmentId, person);
-      },
-      getSurveysCacheKey(environmentId, person.id),
-      {
-        tags: getSurveysCacheKey(environmentId, person.id),
-        revalidate: halfHourSeconds,
-      }
-    );
-
-    const getActionClassesCached = unstable_cache(
-      async (environmentId: string) => {
-        return await getActionClasses(environmentId);
-      },
-      getActionClassesCacheKey(environmentId),
-      {
-        tags: getActionClassesCacheKey(environmentId),
-        revalidate: halfHourSeconds,
-      }
-    );
-
-    const getProductByEnvironmentIdCached = unstable_cache(
-      async (environmentId: string) => {
-        return await getProductByEnvironmentId(environmentId);
-      },
-      getProductCacheKey(environmentId),
-      {
-        tags: getProductCacheKey(environmentId),
-        revalidate: halfHourSeconds,
-      }
-    );
 
     // get/create rest of the state
     const [surveys, noCodeActionClasses, product] = await Promise.all([
