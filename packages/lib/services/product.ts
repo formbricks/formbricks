@@ -158,6 +158,7 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
     product.environments.forEach((environment) => {
       // revalidate product cache
       revalidateTag(getProductCacheTag(environment.id));
+      revalidateTag(environment.id);
     });
   }
 

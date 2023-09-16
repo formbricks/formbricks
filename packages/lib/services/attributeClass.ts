@@ -16,7 +16,6 @@ import { revalidateTag, unstable_cache } from "next/cache";
 const attributeClassesCacheTag = (environmentId: string): string => `env-${environmentId}-attributeClasses`;
 
 const getAttributeClassesCacheKey = (environmentId: string): string[] => [
-  "attribute-class",
   attributeClassesCacheTag(environmentId),
 ];
 

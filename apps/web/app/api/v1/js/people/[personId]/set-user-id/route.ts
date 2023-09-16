@@ -63,6 +63,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
       // delete old person
       await deletePerson(personId);
+
       returnedPerson = existingPerson;
     } else {
       // update person with userId

@@ -4,12 +4,14 @@ import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { unstable_cache } from "next/cache";
 
-const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
-  "surveys",
+const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
   `env-${environmentId}-surveys`,
   `env-${environmentId}-product`,
-  "person",
   personId,
+];
+
+const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
+  `env-${environmentId}-person-${personId}-syncSurveys`,
 ];
 
 export const getSurveysCached = (environmentId: string, person: TPerson) =>
@@ -19,7 +21,7 @@ export const getSurveysCached = (environmentId: string, person: TPerson) =>
     },
     getSurveysCacheKey(environmentId, person.id),
     {
-      tags: getSurveysCacheKey(environmentId, person.id),
+      tags: getSurveysCacheTags(environmentId, person.id),
       revalidate: 30 * 60,
     }
   )();

@@ -86,7 +86,7 @@ export const getPerson = cache(async (personId: string): Promise<TPerson | null>
   }
 });
 
-const getPersonCacheKey = (personId: string): string[] => ["person", personId];
+const getPersonCacheKey = (personId: string): string[] => [personId];
 
 export const getPersonCached = async (personId: string) =>
   await unstable_cache(
