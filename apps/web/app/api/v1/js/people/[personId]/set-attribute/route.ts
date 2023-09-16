@@ -48,7 +48,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     }
 
     // upsert attribute (update or create)
-    const attribute = await prisma.attribute.upsert({
+    await prisma.attribute.upsert({
       where: {
         attributeClassId_personId: {
           attributeClassId: attributeClass.id,
@@ -71,19 +71,10 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
         },
         value,
       },
-      select: {
-        person: {
-          select: selectPerson,
-        },
-      },
     });
 
-    const person = transformPrismaPerson(attribute.person);
-
-    if (person) {
-      // revalidate person
-      revalidateTag(person.id);
-    }
+    // revalidate person
+    revalidateTag(personId);
 
     const syncRes = await fetch(`${WEBAPP_URL}/api/v1/js/sync`, {
       method: "POST",
