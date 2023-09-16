@@ -9,6 +9,14 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 
+const halfHourInSeconds = 60 * 30;
+
+export const getActionClassCacheTag = (name: string, environmentId: string): string =>
+  `env-${environmentId}-actionClass-${name}`;
+const getActionClassCacheKey = (name: string, environmentId: string): string[] => [
+  getActionClassCacheTag(name, environmentId),
+];
+
 const getActionClassesCacheTag = (environmentId: string): string => `env-${environmentId}-actionClasses`;
 const getActionClassesCacheKey = (environmentId: string): string[] => [
   getActionClassesCacheTag(environmentId),
@@ -52,7 +60,7 @@ export const getActionClassesCached = (environmentId: string) =>
     getActionClassesCacheKey(environmentId),
     {
       tags: getActionClassesCacheKey(environmentId),
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: halfHourInSeconds,
     }
   )();
 
@@ -132,6 +140,7 @@ export const updateActionClass = async (
     });
 
     // revalidate cache
+    revalidateTag(getActionClassCacheTag(result.name, environmentId));
     revalidateTag(getActionClassesCacheTag(environmentId));
 
     return result;
@@ -139,3 +148,20 @@ export const updateActionClass = async (
     throw new DatabaseError(`Database error when updating an action for environment ${environmentId}`);
   }
 };
+
+export const getActionClassCached = async (name: string, environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await prisma.eventClass.findFirst({
+        where: {
+          name,
+          environmentId,
+        },
+      });
+    },
+    getActionClassCacheKey(name, environmentId),
+    {
+      tags: getActionClassCacheKey(name, environmentId),
+      revalidate: halfHourInSeconds,
+    }
+  )();

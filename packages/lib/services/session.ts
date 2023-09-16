@@ -10,6 +10,10 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 
+const halfHourInSeconds = 60 * 30;
+
+const getSessionCacheKey = (sessionId: string): string[] => [sessionId];
+
 const select = {
   id: true,
   createdAt: true,
@@ -45,10 +49,10 @@ export const getSessionCached = (sessionId: string) =>
     async () => {
       return await getSession(sessionId);
     },
-    [sessionId],
+    getSessionCacheKey(sessionId),
     {
-      tags: [sessionId],
-      revalidate: 30 * 60, // 30 minutes
+      tags: getSessionCacheKey(sessionId),
+      revalidate: halfHourInSeconds, // 30 minutes
     }
   )();
 

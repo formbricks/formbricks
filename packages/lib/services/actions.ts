@@ -8,6 +8,11 @@ import { ZId } from "@formbricks/types/v1/environment";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
+import { TJsActionInput } from "@formbricks/types/v1/js";
+import { revalidateTag } from "next/cache";
+import { EventType } from "@prisma/client";
+import { getActionClassCacheTag, getActionClassCached } from "../services/actionClass";
+import { getSessionCached } from "../services/session";
 
 export const getActionsByEnvironmentId = cache(
   async (environmentId: string, limit?: number): Promise<TAction[]> => {
@@ -48,3 +53,80 @@ export const getActionsByEnvironmentId = cache(
     }
   }
 );
+
+export const createAction = async (data: TJsActionInput) => {
+  const { environmentId, name, properties, sessionId } = data;
+
+  let eventType: EventType = EventType.code;
+  if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
+    eventType = EventType.automatic;
+  }
+
+  const session = await getSessionCached(sessionId);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  const actionClass = await getActionClassCached(name, environmentId);
+
+  if (actionClass) {
+    await prisma.event.create({
+      data: {
+        properties,
+        sessionId: session.id,
+        eventClassId: actionClass.id,
+      },
+    });
+
+    return;
+  }
+
+  // if action class does not exist, create it and then create the action
+  await prisma.$transaction([
+    prisma.eventClass.create({
+      data: {
+        name,
+        type: eventType,
+        environmentId,
+      },
+    }),
+
+    prisma.event.create({
+      data: {
+        properties,
+        session: {
+          connect: {
+            id: sessionId,
+          },
+        },
+        eventClass: {
+          connectOrCreate: {
+            where: {
+              name_environmentId: {
+                name,
+                environmentId,
+              },
+            },
+            create: {
+              name,
+              type: eventType,
+              environment: {
+                connect: {
+                  id: environmentId,
+                },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    }),
+  ]);
+
+  // revalidate cache
+  revalidateTag(sessionId);
+  revalidateTag(getActionClassCacheTag(name, environmentId));
+};
