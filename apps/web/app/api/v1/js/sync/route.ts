@@ -20,12 +20,6 @@ const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => 
 const getEnvironmentCacheKey = (environmentId: string): string[] => ["environment", environmentId];
 const getPersonCacheKey = (personId: string): string[] => ["person", personId];
 const getSessionCacheKey = (sessionId: string): string[] => ["session", sessionId];
-const getEnvironmentAndPersonCacheKey = (environmentId: string, personId: string): string[] => [
-  "environment",
-  environmentId,
-  "person",
-  personId,
-];
 const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
   "surveys",
   `env-${environmentId}-surveys`,
