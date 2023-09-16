@@ -2,13 +2,13 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TSession, TSessionWithActions } from "@formbricks/types/v1/sessions";
 import { Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
-import { revalidateTag, unstable_cache } from "next/cache";
 
 const halfHourInSeconds = 60 * 30;
 
@@ -43,6 +43,18 @@ export const getSession = async (sessionId: string): Promise<TSession | null> =>
     throw error;
   }
 };
+
+export const getSessionCached = (sessionId: string) =>
+  unstable_cache(
+    async () => {
+      return await getSession(sessionId);
+    },
+    getSessionCacheKey(sessionId),
+    {
+      tags: getSessionCacheKey(sessionId),
+      revalidate: halfHourInSeconds, // 30 minutes
+    }
+  )();
 
 export const getSessionWithActionsOfPerson = async (
   personId: string
@@ -152,23 +164,4 @@ export const extendSession = async (sessionId: string): Promise<TSession> => {
 
     throw error;
   }
-};
-
-export const getSessionCached = async (sessionId: string) => {
-  const cachedSessionGetter = unstable_cache(
-    async () => {
-      return await prisma.session.findFirst({
-        where: {
-          id: sessionId,
-        },
-      });
-    },
-    getSessionCacheKey(sessionId),
-    {
-      tags: getSessionCacheKey(sessionId),
-      revalidate: halfHourInSeconds,
-    }
-  );
-
-  return await cachedSessionGetter();
 };

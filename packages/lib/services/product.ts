@@ -1,14 +1,17 @@
-import "server-only";
 import { prisma } from "@formbricks/database";
-import { z } from "zod";
-import { Prisma } from "@prisma/client";
-import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
+import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/v1/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
+import { Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
+import "server-only";
+import { z } from "zod";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
-import { revalidateTag } from "next/cache";
+
+const getProductCacheTag = (environmentId: string): string => `env-${environmentId}-product`;
+const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
 
 const selectProduct = {
   id: true,
@@ -73,6 +76,18 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
   }
 });
 
+export const getProductByEnvironmentIdCached = (environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await getProductByEnvironmentId(environmentId);
+    },
+    getProductCacheKey(environmentId),
+    {
+      tags: getProductCacheKey(environmentId),
+      revalidate: 30 * 60, // 30 minutes
+    }
+  )();
+
 export const updateProduct = async (
   productId: string,
   inputProduct: Partial<TProductUpdateInput>
@@ -100,7 +115,7 @@ export const updateProduct = async (
 
     product.environments.forEach((environment) => {
       // revalidate environment cache
-      revalidateTag(`env-${environment.id}-product`);
+      revalidateTag(getProductCacheTag(environment.id));
     });
 
     return product;
@@ -142,7 +157,8 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   if (product) {
     product.environments.forEach((environment) => {
       // revalidate product cache
-      revalidateTag(`env-${environment.id}-product`);
+      revalidateTag(getProductCacheTag(environment.id));
+      revalidateTag(environment.id);
     });
   }
 

@@ -3,17 +3,22 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
-import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { revalidateTag, unstable_cache } from "next/cache";
+import { cache } from "react";
+import { validateInputs } from "../utils/validate";
 
 const getActionClassCacheKey = (name: string, environmentId: string): string[] => [
   `actionClass-${name}-env-${environmentId}`,
 ];
 
 const halfHourInSeconds = 60 * 30;
+
+const getActionClassesCacheTag = (environmentId: string): string => `env-${environmentId}-actionClasses`;
+const getActionClassesCacheKey = (environmentId: string): string[] => [
+  getActionClassesCacheTag(environmentId),
+];
 
 const select = {
   id: true,
@@ -45,6 +50,18 @@ export const getActionClasses = cache(async (environmentId: string): Promise<TAc
   }
 });
 
+export const getActionClassesCached = (environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await getActionClasses(environmentId);
+    },
+    getActionClassesCacheKey(environmentId),
+    {
+      tags: getActionClassesCacheKey(environmentId),
+      revalidate: 30 * 60, // 30 minutes
+    }
+  )();
+
 export const deleteActionClass = async (
   environmentId: string,
   actionClassId: string
@@ -60,7 +77,7 @@ export const deleteActionClass = async (
     if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     // revalidate cache
-    revalidateTag(`env-${environmentId}-actionClasses`);
+    revalidateTag(getActionClassesCacheTag(environmentId));
 
     return result;
   } catch (error) {
@@ -90,7 +107,7 @@ export const createActionClass = async (
     });
 
     // revalidate cache
-    revalidateTag(`env-${environmentId}-actionClasses`);
+    revalidateTag(getActionClassesCacheTag(environmentId));
 
     return result;
   } catch (error) {
@@ -121,7 +138,7 @@ export const updateActionClass = async (
     });
 
     // revalidate cache
-    revalidateTag(`env-${environmentId}-actionClasses`);
+    revalidateTag(getActionClassesCacheTag(environmentId));
 
     return result;
   } catch (error) {

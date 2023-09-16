@@ -5,12 +5,13 @@ import {
   TDisplaysWithSurveyName,
   ZDisplayInput,
 } from "@formbricks/types/v1/displays";
-import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { transformPrismaPerson } from "./person";
-import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { Prisma } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+import { transformPrismaPerson } from "./person";
 
 const selectDisplay = {
   id: true,
@@ -64,6 +65,10 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
       ...displayPrisma,
       person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
     };
+
+    if (displayInput.personId) {
+      revalidateTag(displayInput.personId);
+    }
 
     return display;
   } catch (error) {
