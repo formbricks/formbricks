@@ -27,6 +27,7 @@ const getEnvironmentAndPersonCacheKey = (environmentId: string, personId: string
   personId,
 ];
 const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
+  "surveys",
   `env-${environmentId}-surveys`,
   `env-${environmentId}-product`,
   "person",
@@ -93,7 +94,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
         getSurveysCacheKey(environmentId, person.id),
         {
-          tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
+          tags: getSurveysCacheKey(environmentId, person.id),
           revalidate: halfHourSeconds,
         }
       );
@@ -175,7 +176,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
         getSurveysCacheKey(environmentId, person.id),
         {
-          tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
+          tags: getSurveysCacheKey(environmentId, person.id),
           revalidate: halfHourSeconds,
         }
       );
@@ -309,9 +310,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       async (environmentId: string, person: TPerson) => {
         return await getSurveys(environmentId, person);
       },
-      getEnvironmentAndPersonCacheKey(environmentId, person.id),
+      getSurveysCacheKey(environmentId, person.id),
       {
-        tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
+        tags: getSurveysCacheKey(environmentId, person.id),
         revalidate: halfHourSeconds,
       }
     );
