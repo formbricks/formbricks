@@ -1,5 +1,8 @@
+import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { getServerSession } from "next-auth";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -9,6 +12,16 @@ const scopes = [
 
 export async function GET(req: NextRequest) {
   const environmentId = req.headers.get("environmentId");
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json({ Error: "Invalid session" }, { status: 400 });
+  }
+
+  const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user, environmentId);
+  if (!canUserAccessEnvironment) {
+    return NextResponse.json({ Error: "You dont have access to environment" }, { status: 401 });
+  }
 
   const client_id = process.env.GOOGLE_APP_CLIENT_ID;
   const client_secret = process.env.GOOGLE_APP_CLIENT_SECRET;
