@@ -14,3 +14,11 @@ export const ZActivityFeedItem = z.object({
 });
 
 export type TActivityFeedItem = z.infer<typeof ZActivityFeedItem>;
+
+export const ZActivityPopOverItem = z.object({
+  count: z.number().default(0),
+  activityFeedItem: ZActivityFeedItem.nullable(),
+  displaySurveyNames: z.array(z.string()),
+});
+
+export type TActivityPopOverItem = z.infer<typeof ZActivityPopOverItem>;
