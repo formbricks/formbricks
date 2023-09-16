@@ -20,6 +20,10 @@ export default async function ApiKeyList({
   };
 
   const product = await getProductByEnvironmentId(environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   const environments = await getEnvironments(product.id);
   const environmentTypeId = findEnvironmentByType(environments, environmentType);
   const apiKeys = await getApiKeys(environmentTypeId);

@@ -1,10 +1,14 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
+import { getAttributeClassByName } from "./attributeClass";
+import { revalidateTag } from "next/cache";
 
 export const selectPerson = {
   id: true,
@@ -40,10 +44,13 @@ type TransformPersonInput = {
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
-  const attributes = person.attributes.reduce((acc, attr) => {
-    acc[attr.attributeClass.name] = attr.value;
-    return acc;
-  }, {} as Record<string, string | number>);
+  const attributes = person.attributes.reduce(
+    (acc, attr) => {
+      acc[attr.attributeClass.name] = attr.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
 
   return {
     id: person.id,
@@ -54,6 +61,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
 };
 
 export const getPerson = cache(async (personId: string): Promise<TPerson | null> => {
+  validateInputs([personId, ZId]);
   try {
     const personPrisma = await prisma.person.findUnique({
       where: {
@@ -79,6 +87,7 @@ export const getPerson = cache(async (personId: string): Promise<TPerson | null>
 });
 
 export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
+  validateInputs([environmentId, ZId]);
   try {
     const personsPrisma = await prisma.person.findMany({
       where: {
@@ -105,6 +114,7 @@ export const getPeople = cache(async (environmentId: string): Promise<TPerson[]>
 });
 
 export const createPerson = async (environmentId: string): Promise<TPerson> => {
+  validateInputs([environmentId, ZId]);
   try {
     const personPrisma = await prisma.person.create({
       data: {
@@ -119,6 +129,11 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
 
     const person = transformPrismaPerson(personPrisma);
 
+    if (person) {
+      // revalidate person
+      revalidateTag(person.id);
+    }
+
     return person;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -130,17 +145,81 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
 };
 
 export const deletePerson = async (personId: string): Promise<void> => {
+  validateInputs([personId, ZId]);
   try {
     await prisma.person.delete({
       where: {
         id: personId,
       },
     });
+
+    // revalidate person
+    revalidateTag(personId);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
 
     throw error;
+  }
+};
+
+export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> => {
+  // Check if a person with the userId attribute exists
+  const personPrisma = await prisma.person.findFirst({
+    where: {
+      environmentId,
+      attributes: {
+        some: {
+          attributeClass: {
+            name: "userId",
+          },
+          value: userId,
+        },
+      },
+    },
+    select: selectPerson,
+  });
+
+  if (personPrisma) {
+    const person = transformPrismaPerson(personPrisma);
+    return person;
+  } else {
+    // Create a new person with the userId attribute
+    const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
+
+    if (!userIdAttributeClass) {
+      throw new Error("Attribute class not found for the given environmentId");
+    }
+
+    const personPrisma = await prisma.person.create({
+      data: {
+        environment: {
+          connect: {
+            id: environmentId,
+          },
+        },
+        attributes: {
+          create: [
+            {
+              attributeClass: {
+                connect: {
+                  id: userIdAttributeClass.id,
+                },
+              },
+              value: userId,
+            },
+          ],
+        },
+      },
+      select: selectPerson,
+    });
+
+    if (personPrisma) {
+      // revalidate person
+      revalidateTag(personPrisma.id);
+    }
+
+    return transformPrismaPerson(personPrisma);
   }
 };

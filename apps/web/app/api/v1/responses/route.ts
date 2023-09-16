@@ -2,7 +2,7 @@ import { responses } from "@/lib/api/response";
 import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
 import { getEnvironmentResponses, getSurveyResponses } from "@formbricks/lib/services/response";
 import { headers } from "next/headers";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { getSurvey } from "@formbricks/lib/services/survey";
 
 export async function GET(request: Request) {

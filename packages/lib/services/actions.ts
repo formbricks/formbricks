@@ -1,12 +1,17 @@
+import "server-only";
+
+import z from "zod";
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TAction } from "@formbricks/types/v1/actions";
+import { ZId } from "@formbricks/types/v1/environment";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
-import "server-only";
+import { validateInputs } from "../utils/validate";
 
 export const getActionsByEnvironmentId = cache(
   async (environmentId: string, limit?: number): Promise<TAction[]> => {
+    validateInputs([environmentId, ZId], [limit, z.number().optional()]);
     try {
       const actionsPrisma = await prisma.event.findMany({
         where: {

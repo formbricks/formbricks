@@ -179,12 +179,14 @@ export const setPersonAttribute = async (
 export const logoutPerson = async (): Promise<void> => {
   logger.debug("Resetting state");
   config.update({ state: undefined });
+  config.disallowSync();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
   await logoutPerson();
   try {
+    config.allowSync();
     await sync();
     return okVoid();
   } catch (e) {

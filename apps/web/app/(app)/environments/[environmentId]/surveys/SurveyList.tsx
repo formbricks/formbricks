@@ -14,10 +14,17 @@ import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   const environment = await getEnvironment(environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
   const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
   const environments: TEnvironment[] = await getEnvironments(product.id);
-  const otherEnvironment = environments.find((e) => e.type !== environment.type);
+  const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
   const totalSubmissions = surveys.reduce((acc, survey) => acc + (survey.analytics?.numResponses || 0), 0);
 
   if (surveys.length === 0) {

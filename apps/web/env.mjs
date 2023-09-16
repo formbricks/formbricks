@@ -7,7 +7,7 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
-    WEBAPP_URL: z.string().url(),
+    WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
     PRISMA_GENERATE_DATAPROXY: z.enum(["true", ""]).optional(),
     NEXTAUTH_SECRET: z.string().min(1),
