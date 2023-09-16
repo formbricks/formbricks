@@ -7,7 +7,13 @@ import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { cache } from "react";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
+
+const getActionClassCacheKey = (name: string, environmentId: string): string[] => [
+  `actionClass-${name}-env-${environmentId}`,
+];
+
+const halfHourInSeconds = 60 * 30;
 
 const select = {
   id: true,
@@ -121,4 +127,24 @@ export const updateActionClass = async (
   } catch (error) {
     throw new DatabaseError(`Database error when updating an action for environment ${environmentId}`);
   }
+};
+
+export const getActionClassCached = async (name: string, environmentId: string) => {
+  const cachedActionClassGetter = unstable_cache(
+    async () => {
+      return await prisma.eventClass.findFirst({
+        where: {
+          name,
+          environmentId,
+        },
+      });
+    },
+    getActionClassCacheKey(name, environmentId),
+    {
+      tags: getActionClassCacheKey(name, environmentId),
+      revalidate: halfHourInSeconds,
+    }
+  );
+
+  return await cachedActionClassGetter();
 };

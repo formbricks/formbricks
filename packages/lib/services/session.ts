@@ -8,7 +8,11 @@ import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
+
+const halfHourInSeconds = 60 * 30;
+
+const getSessionCacheKey = (sessionId: string): string[] => [sessionId];
 
 const select = {
   id: true,
@@ -148,4 +152,23 @@ export const extendSession = async (sessionId: string): Promise<TSession> => {
 
     throw error;
   }
+};
+
+export const getSessionCached = async (sessionId: string) => {
+  const cachedSessionGetter = unstable_cache(
+    async () => {
+      return await prisma.session.findFirst({
+        where: {
+          id: sessionId,
+        },
+      });
+    },
+    getSessionCacheKey(sessionId),
+    {
+      tags: getSessionCacheKey(sessionId),
+      revalidate: halfHourInSeconds,
+    }
+  );
+
+  return await cachedSessionGetter();
 };
