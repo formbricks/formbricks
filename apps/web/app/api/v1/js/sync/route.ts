@@ -26,6 +26,12 @@ const getEnvironmentAndPersonCacheKey = (environmentId: string, personId: string
   "person",
   personId,
 ];
+const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
+  `env-${environmentId}-surveys`,
+  `env-${environmentId}-product`,
+  "person",
+  personId,
+];
 const getProductCacheKey = (environmentId: string): string[] => [`env-${environmentId}-product`];
 const getActionClassesCacheKey = (environmentId: string): string[] => [`env-${environmentId}-actionClasses`];
 
@@ -85,7 +91,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (environmentId: string, person: TPerson) => {
           return await getSurveys(environmentId, person);
         },
-        getEnvironmentAndPersonCacheKey(environmentId, person.id),
+        getSurveysCacheKey(environmentId, person.id),
         {
           tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
           revalidate: halfHourSeconds,
@@ -167,7 +173,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         async (environmentId: string, person: TPerson) => {
           return await getSurveys(environmentId, person);
         },
-        getEnvironmentAndPersonCacheKey(environmentId, person.id),
+        getSurveysCacheKey(environmentId, person.id),
         {
           tags: getEnvironmentAndPersonCacheKey(environmentId, person.id),
           revalidate: halfHourSeconds,
