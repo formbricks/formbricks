@@ -5,7 +5,7 @@ import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surv
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import { getServerSession } from "next-auth";
 import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -21,6 +21,7 @@ export default async function Page({ params }) {
         responses={responses}
         survey={survey}
         surveyId={params.surveyId}
+        surveyBaseUrl={SURVEY_BASE_URL}
       />
     </>
   );

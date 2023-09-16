@@ -5,8 +5,8 @@ export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and rev
 // URLs
 export const WEBAPP_URL = process.env.WEBAPP_URL || process.env.VERCEL_URL || "http://localhost:3000";
 
-export const SURVEY_BASE_URL = process.env.NEXT_PUBLIC_SURVEY_BASE_URL
-  ? process.env.NEXT_PUBLIC_SURVEY_BASE_URL + "/"
+export const SURVEY_BASE_URL = process.env.SURVEY_BASE_URL
+  ? process.env.SURVEY_BASE_URL + "/"
   : `${WEBAPP_URL}/s/`;
 
 // Other

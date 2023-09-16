@@ -1,7 +1,6 @@
 "use client";
 
 import CodeBlock from "@/components/shared/CodeBlock";
-import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button, Dialog, DialogContent } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";
@@ -13,13 +12,14 @@ interface LinkSurveyModalProps {
   survey: TSurvey;
   open: boolean;
   setOpen: (open: boolean) => void;
+  surveyBaseUrl: string;
 }
 
-export default function LinkSurveyModal({ survey, open, setOpen }: LinkSurveyModalProps) {
+export default function LinkSurveyModal({ survey, open, setOpen, surveyBaseUrl }: LinkSurveyModalProps) {
   const linkTextRef = useRef(null);
   const [showEmbed, setShowEmbed] = useState(false);
 
-  const surveyUrl = useMemo(() => SURVEY_BASE_URL + survey.id, [survey]);
+  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
 
   const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; 
 overflow:auto;"> 

@@ -48,6 +48,7 @@ export const env = createEnv({
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().url().optional(),
+    SURVEY_BASE_URL: z.string().optional(),
   },
 
   /*
@@ -66,7 +67,6 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-    NEXT_PUBLIC_SURVEY_BASE_URL: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -109,5 +109,6 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
     VERCEL_URL: process.env.VERCEL_URL,
+    SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
   },
 });

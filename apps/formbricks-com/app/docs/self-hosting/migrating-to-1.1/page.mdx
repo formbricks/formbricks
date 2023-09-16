@@ -29,6 +29,7 @@ This is now possible with v1.1. However, due to Next.JS best practices, we had t
 | **NEXT_PUBLIC_**GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
 | **NEXT_PUBLIC_**WEBAPP_URL                  | WEBAPP_URL                  |
 | **NEXT_PUBLIC_**IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
+| **NEXT_PUBLIC_**SURVEY_BASE_URL | SURVEY_BASE_URL |
 
 <Note>
 Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated. The other environment variables remain the same as well.
@@ -53,7 +54,7 @@ The below script will:
 
 <CodeGroup title="Run the below in your terminal in the directory of your .env">
 ```shell {{ title: '.env file' }}
-for var in NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED NEXT_PUBLIC_PASSWORD_RESET_DISABLED NEXT_PUBLIC_SIGNUP_DISABLED NEXT_PUBLIC_INVITE_DISABLED NEXT_PUBLIC_PRIVACY_URL NEXT_PUBLIC_TERMS_URL NEXT_PUBLIC_IMPRINT_URL NEXT_PUBLIC_GITHUB_AUTH_ENABLED NEXT_PUBLIC_GOOGLE_AUTH_ENABLED NEXT_PUBLIC_WEBAPP_URL NEXT_PUBLIC_IS_FORMBRICKS_CLOUD; do sed -i.old "s/^$var=/$(echo $var | sed 's/NEXT_PUBLIC_//')=/" .env; done; echo "Formbricks environment variables have been migrated as per v1.1! You are good to go."
+for var in NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED NEXT_PUBLIC_PASSWORD_RESET_DISABLED NEXT_PUBLIC_SIGNUP_DISABLED NEXT_PUBLIC_INVITE_DISABLED NEXT_PUBLIC_PRIVACY_URL NEXT_PUBLIC_TERMS_URL NEXT_PUBLIC_IMPRINT_URL NEXT_PUBLIC_GITHUB_AUTH_ENABLED NEXT_PUBLIC_GOOGLE_AUTH_ENABLED NEXT_PUBLIC_WEBAPP_URL NEXT_PUBLIC_IS_FORMBRICKS_CLOUD NEXT_PUBLIC_SURVEY_BASE_URL; do sed -i.old "s/^$var=/$(echo $var | sed 's/NEXT_PUBLIC_//')=/" .env; done; echo "Formbricks environment variables have been migrated as per v1.1! You are good to go."
 ```
 </CodeGroup>
 

@@ -30,7 +30,6 @@ import { useTeam } from "@/lib/teams/teams";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   CustomersIcon,
   DashboardIcon,
@@ -74,9 +73,14 @@ import AddProductModal from "./AddProductModal";
 interface EnvironmentsNavbarProps {
   environmentId: string;
   session: Session;
+  isFormbricksCloud: boolean;
 }
 
-export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
+export default function EnvironmentsNavbar({
+  environmentId,
+  session,
+  isFormbricksCloud,
+}: EnvironmentsNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -173,7 +177,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
-          hidden: !IS_FORMBRICKS_CLOUD,
+          hidden: !isFormbricksCloud,
         },
       ],
     },
@@ -461,7 +465,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  {IS_FORMBRICKS_CLOUD && (
+                  {isFormbricksCloud && (
                     <DropdownMenuItem>
                       <button
                         onClick={() => {
