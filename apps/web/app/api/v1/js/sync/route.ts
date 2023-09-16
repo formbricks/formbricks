@@ -1,13 +1,8 @@
 import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { ZJsSyncInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
-
-const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
-  await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
-};
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
