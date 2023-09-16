@@ -1,10 +1,10 @@
+import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/services/attributeClass";
 import { getPersonCached } from "@formbricks/lib/services/person";
-import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
+import { ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
@@ -76,21 +76,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     // revalidate person
     revalidateTag(personId);
 
-    const syncRes = await fetch(`${WEBAPP_URL}/api/v1/js/sync`, {
-      method: "POST",
-      body: JSON.stringify({
-        environmentId,
-        personId,
-        sessionId,
-      }),
-    });
-
-    if (!syncRes.ok) {
-      throw new Error("Unable to get latest state from sync");
-    }
-
-    const syncJson = await syncRes.json();
-    const state: TJsState = syncJson.data;
+    const state = await getUpdatedState(environmentId, personId, sessionId);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
