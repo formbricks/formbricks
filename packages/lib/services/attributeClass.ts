@@ -116,5 +116,6 @@ export const createAttributeClass = async (
       },
     },
   });
+  revalidateTag(attributeClassesCacheTag(environmentId));
   return transformPrismaAttributeClass(attributeClass);
 };
