@@ -97,7 +97,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       revalidateTag(person.id);
     }
 
-    const state = getUpdatedState(environmentId, person.id, sessionId);
+    const state = await getUpdatedState(environmentId, person.id, sessionId);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
