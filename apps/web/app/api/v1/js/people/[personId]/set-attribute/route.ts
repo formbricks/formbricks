@@ -76,21 +76,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     // revalidate person
     revalidateTag(personId);
 
-    const syncRes = await fetch(`${WEBAPP_URL}/api/v1/js/sync`, {
-      method: "POST",
-      body: JSON.stringify({
-        environmentId,
-        personId,
-        sessionId,
-      }),
-    });
-
-    if (!syncRes.ok) {
-      throw new Error("Unable to get latest state from sync");
-    }
-
-    const syncJson = await syncRes.json();
-    const state: TJsState = syncJson.data;
+    const state = await getUpdatedState(environmentId, personId, sessionId);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
