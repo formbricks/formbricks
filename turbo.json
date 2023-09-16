@@ -10,6 +10,13 @@
       "persistent": true,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"]
     },
+    "@formbricks/demo#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": [
+        "@formbricks/js#build"
+      ]
+    },
     "@formbricks/api#build": {
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
@@ -91,6 +98,10 @@
       "env": ["PRISMA_GENERATE_DATAPROXY"]
     },
     "db:setup": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:down": {
       "cache": false,
       "outputs": []
     },

@@ -53,7 +53,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
   };
 };
 
-export const getPerson = async (personId: string): Promise<TPerson | null> => {
+export const getPerson = cache(async (personId: string): Promise<TPerson | null> => {
   try {
     const personPrisma = await prisma.person.findUnique({
       where: {
@@ -76,7 +76,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
 
     throw error;
   }
-};
+});
 
 export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
   try {

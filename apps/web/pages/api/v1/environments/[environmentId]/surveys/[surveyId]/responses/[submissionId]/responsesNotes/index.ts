@@ -1,8 +1,7 @@
-import { captureTelemetry } from "@/../../packages/lib/telemetry";
-import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
+import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { responses } from "@/lib/api/response";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { responses } from "@/lib/api/response";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -75,7 +74,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     };
 
     const newResponseNote = await prisma.responseNote.create(responseNote);
-    captureTelemetry("responseNote created");
     return res.json(newResponseNote);
   }
 

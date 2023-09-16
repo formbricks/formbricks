@@ -6,7 +6,6 @@ import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
@@ -80,8 +79,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       response: response,
     });
   }
-
-  captureTelemetry("response created");
 
   if (teamDetails?.teamOwnerId) {
     await capturePosthogEvent(teamDetails.teamOwnerId, "response created", teamDetails.teamId, {

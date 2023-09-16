@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import "server-only";
 import { getPerson, transformPrismaPerson } from "./person";
+import { captureTelemetry } from "../telemetry";
 
 const responseSelection = {
   id: true,
@@ -97,6 +98,7 @@ export const getResponsesByPersonId = async (personId: string): Promise<Array<TR
 };
 
 export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
+  captureTelemetry("response created");
   try {
     let person: TPerson | null = null;
 

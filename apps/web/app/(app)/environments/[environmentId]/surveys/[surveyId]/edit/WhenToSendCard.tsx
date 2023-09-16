@@ -6,17 +6,16 @@ import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import {
+  AdvancedOptionToggle,
   Badge,
   Button,
   Input,
-  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  Switch,
 } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -222,36 +221,28 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             </div>
           )}
 
-          <div className="ml-2 flex items-center space-x-1 p-4">
-            <Switch id="autoClose" checked={autoClose} onCheckedChange={handleCheckMark} />
-            <Label htmlFor="autoClose" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Auto close on inactivity</h3>
-              </div>
-            </Label>
-          </div>
-          {autoClose && (
-            <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
-              <label
-                htmlFor="autoCloseSeconds"
-                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <div className="">
-                  <p className="text-sm font-semibold text-slate-700">
-                    Automatically close survey after
-                    <Input
-                      type="number"
-                      min="1"
-                      id="autoCloseSeconds"
-                      value={localSurvey.autoClose?.toString()}
-                      onChange={(e) => handleInputSeconds(e)}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
-                    />
-                    seconds with no initial interaction.
-                  </p>
-                </div>
-              </label>
-            </div>
-          )}
+          <AdvancedOptionToggle
+            htmlId="autoClose"
+            isChecked={autoClose}
+            onToggle={handleCheckMark}
+            title="Auto close on inactivity"
+            description="Automatically close the survey if the user does not respond after certain number of seconds"
+            childBorder={true}>
+            <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
+              <p className="text-sm font-semibold text-slate-700">
+                Automatically close survey after
+                <Input
+                  type="number"
+                  min="1"
+                  id="autoCloseSeconds"
+                  value={localSurvey.autoClose?.toString()}
+                  onChange={(e) => handleInputSeconds(e)}
+                  className="mx-2 inline w-16 bg-white text-center text-sm"
+                />
+                seconds with no initial interaction.
+              </p>
+            </label>
+          </AdvancedOptionToggle>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
       <AddNoCodeActionModal

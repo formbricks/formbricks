@@ -1,16 +1,15 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
 import { useEvents } from "@/lib/events/events";
 import { timeSince } from "@formbricks/lib/time";
+import { Confetti, ErrorComponent } from "@formbricks/ui";
 import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ErrorComponent } from "@formbricks/ui";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;
@@ -81,7 +80,7 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
     return (
       <div
         className={clsx(
-          "flex flex-col items-center justify-center space-y-2 rounded-lg py-6",
+          "flex flex-col items-center justify-center space-y-2 rounded-lg py-6 text-center",
           status === "notImplemented" && "bg-slate-100",
           status === "running" && "bg-green-100",
           status === "issue" && "bg-amber-100"
@@ -95,7 +94,7 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
           )}>
           <currentStatus.icon />
         </div>
-        <p className="text-xl font-bold text-slate-800">{currentStatus.title}</p>
+        <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
         <p className="text-sm text-slate-700">
           {currentStatus.subtitle}{" "}
           {status !== "notImplemented" && <span>{timeSince(events[0].createdAt)}</span>}

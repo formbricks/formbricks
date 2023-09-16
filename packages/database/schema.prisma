@@ -328,7 +328,7 @@ model Product {
   teamId               String
   environments         Environment[]
   brandColor           String          @default("#64748b")
-  highlightBorderColor String?         
+  highlightBorderColor String?
   recontactDays        Int             @default(7)
   formbricksSignature  Boolean         @default(true)
   placement            WidgetPlacement @default(bottomRight)

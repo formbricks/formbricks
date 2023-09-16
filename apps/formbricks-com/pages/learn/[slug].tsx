@@ -1,6 +1,8 @@
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import { FAQPageJsonLd } from "next-seo";
+import Head from "next/head";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import fetch from "node-fetch";
 import ReactMarkdown from "react-markdown";
 
@@ -65,7 +67,7 @@ export async function getStaticPaths() {
   const articles = (await response.json()) as ArticleResponse;
 
   const paths = articles.data.map((article) => ({
-    params: { slug: article.attributes.slug },
+    params: { slug: article.attributes?.slug },
   }));
 
   return { paths, fallback: true };
@@ -89,12 +91,16 @@ export async function getStaticProps({ params }) {
 }
 
 export default function ArticlePage({ article = {} }: ArticlePageProps) {
+  const router = useRouter();
   if (!article || !article.attributes) return <div>Loading...</div>;
+
+  // Generate canonical URL
+  const canonicalURL = `https://formbricks.com${router.asPath}`;
 
   // Use next/image to render images in markdown
   const renderers = {
     img: (image) => {
-      return <Image src={image.src} alt={image.alt} width={1000} height={500} />;
+      return <Image src={image.src} alt={image.alt} width={1000} height={500} className="rounded-lg" />;
     },
   };
 
@@ -103,23 +109,23 @@ export default function ArticlePage({ article = {} }: ArticlePageProps) {
       author,
       publishedAt,
       text,
-      faq,
+      faq = [],
       meta: {
-        title,
-        description,
-        section,
+        title = "",
+        description = "",
+        section = "",
         tags = [], // default empty array if tags are not provided
       } = {}, // default empty object if meta is not provided
     } = {}, // default empty object if attributes are not provided
   } = article;
 
-  const metaTags = tags.map((tag) => tag.tag);
+  const metaTags = tags.map((tag) => tag.tag || "").filter((t) => t !== "");
 
   const meta = {
     title,
     description,
-    publishedTime: publishedAt,
-    authors: [author],
+    publishedTime: publishedAt || Date.now().toString(),
+    authors: [author || "Formbricks"],
     section,
     tags: metaTags,
   };
@@ -133,7 +139,10 @@ export default function ArticlePage({ article = {} }: ArticlePageProps) {
   return (
     <LayoutMdx meta={meta}>
       <>
-        <ReactMarkdown components={renderers}>{text}</ReactMarkdown>
+        <ReactMarkdown components={renderers}>{text as any}</ReactMarkdown>
+        <Head>
+          <link rel="canonical" href={canonicalURL} />
+        </Head>
         <FAQPageJsonLd mainEntity={faqEntities} />
       </>
     </LayoutMdx>

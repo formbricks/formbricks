@@ -29,6 +29,7 @@ export const select = {
   updatedAt: true,
   name: true,
   plan: true,
+  stripeCustomerId: true,
 };
 
 export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {

@@ -6,10 +6,15 @@ import { getEnvironment } from "@formbricks/lib/services/environment";
 import { createPerson, getPerson } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { createSession, extendSession, getSession } from "@formbricks/lib/services/session";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSession } from "@formbricks/types/v1/sessions";
 import { NextResponse } from "next/server";
+
+const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
+  await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
+};
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -53,6 +58,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         getProductByEnvironmentId(environmentId),
       ]);
 
+      captureNewSessionTelemetry(inputValidation.data.jsVersion);
+
       // return state
       const state: TJsState = {
         person,
@@ -79,6 +86,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         getActionClasses(environmentId),
         getProductByEnvironmentId(environmentId),
       ]);
+
+      captureNewSessionTelemetry(inputValidation.data.jsVersion);
+
       // return state
       const state: TJsState = {
         person,
@@ -87,6 +97,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
         product,
       };
+
       return responses.successResponse({ ...state }, true);
     }
     // person & session exists
@@ -104,6 +115,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
       // create a new session
       session = await createSession(person.id);
+      captureNewSessionTelemetry(inputValidation.data.jsVersion);
     } else {
       // session exists
       // check if person exists (should always exist, but just in case)
@@ -117,6 +129,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         if (session.expiresAt < new Date()) {
           // create a new session
           session = await createSession(person.id);
+          captureNewSessionTelemetry(inputValidation.data.jsVersion);
         } else {
           // extend session
           session = await extendSession(sessionId);
