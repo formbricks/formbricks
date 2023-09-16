@@ -8,6 +8,7 @@ import { populateEnvironment } from "../utils/createDemoProductHelpers";
 import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
   validateInputs([environmentId, ZId]);
@@ -37,6 +38,18 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
     throw new ValidationError("Data validation of environment failed");
   }
 });
+
+export const getEnvironmentCached = (environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await getEnvironment(environmentId);
+    },
+    [environmentId],
+    {
+      tags: [environmentId],
+      revalidate: 30 * 60, // 30 minutes
+    }
+  )();
 
 export const getEnvironments = cache(async (productId: string): Promise<TEnvironment[]> => {
   validateInputs([productId, ZId]);
