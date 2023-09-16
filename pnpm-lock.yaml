@@ -366,6 +366,9 @@ importers:
       '@prisma/client':
         specifier: ^5.2.0
         version: 5.2.0(prisma@5.2.0)
+      '@prisma/extension-accelerate':
+        specifier: ^0.6.2
+        version: 0.6.2(@prisma/client@5.2.0)
       dotenv-cli:
         specifier: ^7.3.0
         version: 7.3.0
@@ -543,6 +546,9 @@ importers:
       '@formbricks/tsconfig':
         specifier: '*'
         version: link:../tsconfig
+      '@types/jsonwebtoken':
+        specifier: ^9.0.2
+        version: 9.0.2
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../eslint-config-formbricks
@@ -4270,6 +4276,15 @@ packages:
     resolution: {integrity: sha512-dT7FOLUCdZmq+AunLqB1Iz+ZH/IIS1Fz2THmKZQ6aFONrQD/BQ5ecJ7g2wGS2OgyUFf4OaLam6/bxmgdOBDqig==}
     requiresBuild: true
 
+  /@prisma/extension-accelerate@0.6.2(@prisma/client@5.2.0):
+    resolution: {integrity: sha512-KIBVPeWt8qaSg7wQ+TXmCVeUDoW75whtXcdS9dbHxRoO2OWFH5I9+qbkHBhx5Wj/h1wQpS8usuxGnsZqiBjUpQ==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@prisma/client': '>=4.16.1'
+    dependencies:
+      '@prisma/client': 5.2.0(prisma@5.2.0)
+    dev: false
+
   /@prisma/fetch-engine@4.6.1:
     resolution: {integrity: sha512-0Nggqzd6J630wO65i5LjyYxarHSZL3mlN04j98Eff5tzhymwv6A8QEMMwuIJY3B5mQ+3ns3q6zZsJ3Ef063RUA==}
     dependencies:
@@ -5917,6 +5932,12 @@ packages:
 
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
+
+  /@types/jsonwebtoken@9.0.2:
+    resolution: {integrity: sha512-drE6uz7QBKq1fYqqoFKTDRdFCPHd5TCub75BM+D+cMx7NU9hUz7SESLfC2fSCXVFMO5Yj8sOWHuGqPgjc+fz0Q==}
+    dependencies:
+      '@types/node': 20.6.0
+    dev: true
 
   /@types/keyv@3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}

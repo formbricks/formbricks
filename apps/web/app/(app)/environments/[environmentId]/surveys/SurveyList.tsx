@@ -21,7 +21,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   const environment = await getEnvironment(environmentId);
   const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
   const environments: TEnvironment[] = await getEnvironments(product.id);
-  const otherEnvironment = environments.find((e) => e.type !== environment.type);
+  const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
   const totalSubmissions = surveys.reduce((acc, survey) => acc + (survey.analytics?.numResponses || 0), 0);
 
   if (surveys.length === 0) {

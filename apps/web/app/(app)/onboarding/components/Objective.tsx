@@ -1,12 +1,12 @@
 "use client";
 
+import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/lib/formbricks";
-import { useProfile } from "@/lib/profile";
-import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { ResponseId } from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { Objective } from "@formbricks/types/templates";
+import { TProfile } from "@formbricks/types/v1/profile";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -15,6 +15,7 @@ type ObjectiveProps = {
   next: () => void;
   skip: () => void;
   formbricksResponseId?: ResponseId;
+  profile: TProfile;
 };
 
 type ObjectiveChoice = {
@@ -22,7 +23,7 @@ type ObjectiveChoice = {
   id: Objective;
 };
 
-const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId }) => {
+const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId, profile }) => {
   const objectives: Array<ObjectiveChoice> = [
     { label: "Increase conversion", id: "increase_conversion" },
     { label: "Improve user retention", id: "improve_user_retention" },
@@ -32,19 +33,20 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId 
     { label: "Other", id: "other" },
   ];
 
-  const { profile } = useProfile();
-  const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
-
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [isProfileUpdating, setIsProfileUpdating] = useState(false);
 
   const handleNextClick = async () => {
     if (selectedChoice) {
       const selectedObjective = objectives.find((objective) => objective.label === selectedChoice);
       if (selectedObjective) {
         try {
+          setIsProfileUpdating(true);
           const updatedProfile = { ...profile, objective: selectedObjective.id };
-          await triggerProfileMutate(updatedProfile);
+          await updateProfileAction(profile.id, updatedProfile);
+          setIsProfileUpdating(false);
         } catch (e) {
+          setIsProfileUpdating(false);
           console.error(e);
           toast.error("An error occured saving your settings");
         }
@@ -116,7 +118,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId 
         <Button
           size="lg"
           variant="darkCTA"
-          loading={isMutatingProfile}
+          loading={isProfileUpdating}
           disabled={!selectedChoice}
           onClick={handleNextClick}
           id="objective-next">
