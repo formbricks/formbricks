@@ -28,6 +28,7 @@
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "CRON_SECRET",
+        "DEBUG",
         "PRISMA_GENERATE_DATAPROXY",
         "GITHUB_ID",
         "GITHUB_SECRET",
