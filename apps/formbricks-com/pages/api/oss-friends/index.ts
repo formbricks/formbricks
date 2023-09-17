@@ -94,6 +94,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://openbb.co",
         },
         {
+          name: "OpenStatus",
+          description: "Open-source monitoring platform with beautiful status pages",
+          href: "https://www.openstatus.dev",
+        },
+        {
           name: "Rivet",
           description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",
