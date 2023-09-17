@@ -10,6 +10,7 @@ import { getEmailVerificationStatus } from "./helpers";
 import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/services/response";
+import { TResponse } from "@formbricks/types/v1/responses";
 
 interface LinkSurveyPageProps {
   params: {
@@ -48,7 +49,10 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     return <SurveyInactive status="link invalid" />;
   }
 
-  const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUseId);
+  let singleUseResponse: TResponse | undefined = undefined;
+  if (isSingleUseSurvey) {
+    singleUseResponse = (await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined;
+  }
 
   // verify email: Check if the survey requires email verification
   let emailVerificationStatus: string | undefined = undefined;
