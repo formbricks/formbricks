@@ -1,7 +1,8 @@
 import { getSurveysCached } from "@/app/api/v1/js/surveys";
+import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClassesCached } from "@formbricks/lib/services/actionClass";
 import { getEnvironmentCached } from "@formbricks/lib/services/environment";
-import { createPerson, getPersonCached } from "@formbricks/lib/services/person";
+import { createPerson, getMonthlyActivePeopleCount, getPersonCached } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
 import { createSession, extendSession, getSessionCached } from "@formbricks/lib/services/session";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
@@ -29,6 +30,28 @@ export const getUpdatedState = async (
 
   if (!environment) {
     throw new Error("Environment does not exist");
+  }
+
+  // check if Monthly Active Users limit is reached
+  const currentMau = await getMonthlyActivePeopleCount(environmentId);
+  const isMauLimitReached = currentMau >= MAU_LIMIT;
+  if (isMauLimitReached) {
+    const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
+    if (!personId || !sessionId) {
+      // don't allow new people or sessions
+      throw new Error(errorMessage);
+    }
+    const session = await getSessionCached(sessionId);
+    if (!session) {
+      // don't allow new sessions
+      throw new Error(errorMessage);
+    }
+    // check if session was created this month (user already active this month)
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (new Date(session.createdAt) < firstDayOfMonth) {
+      throw new Error(errorMessage);
+    }
   }
 
   if (!personId) {

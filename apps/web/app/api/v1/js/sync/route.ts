@@ -29,7 +29,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
-    console.error(error);
+    console.error(error.message);
     return responses.internalServerErrorResponse(
       "Unable to complete response. See server logs for details.",
       true

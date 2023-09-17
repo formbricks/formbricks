@@ -237,3 +237,34 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
     return transformPrismaPerson(personPrisma);
   }
 };
+
+export const getMonthlyActivePeopleCount = async (environmentId: string): Promise<number> =>
+  await unstable_cache(
+    async () => {
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const aggregations = await prisma.person.aggregate({
+        _count: {
+          id: true,
+        },
+        where: {
+          environmentId,
+          sessions: {
+            some: {
+              createdAt: {
+                gte: firstDayOfMonth,
+              },
+            },
+          },
+        },
+      });
+
+      return aggregations._count.id;
+    },
+    [`env-${environmentId}-mau`],
+    {
+      tags: [`env-${environmentId}-mau`],
+      revalidate: 60 * 60 * 6, // 6 hours
+    }
+  )();
