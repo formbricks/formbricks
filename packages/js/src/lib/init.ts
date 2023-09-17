@@ -22,6 +22,7 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
+let isInitialized = false;
 
 const addSyncEventListener = (debug?: boolean): void => {
   const updateInverval = debug ? 1000 * 30 : 1000 * 60 * 2; // 2 minutes in production, 30 seconds in debug mode
@@ -29,7 +30,8 @@ const addSyncEventListener = (debug?: boolean): void => {
   if (typeof window !== "undefined") {
     // clear any existing interval
     if (syncIntervalId !== null) {
-      window.clearInterval(syncIntervalId);
+      logger.debug("Sync event listener already exists, not adding a new one.");
+      return;
     }
     syncIntervalId = window.setInterval(async () => {
       if (!config.isSyncAllowed) {
@@ -50,6 +52,11 @@ const addSyncEventListener = (debug?: boolean): void => {
 export const initialize = async (
   c: InitConfig
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  if (isInitialized) {
+    logger.debug("Already initialized, skipping initialization.");
+    return okVoid();
+  }
+
   if (c.debug) {
     logger.debug(`Setting log level to debug`);
     logger.configure({ logLevel: "debug" });
@@ -126,6 +133,7 @@ export const initialize = async (
   logger.debug("Add scroll depth 50% listener");
   addScrollDepthListener();
 
+  isInitialized = true;
   logger.debug("Initialized");
 
   // check page url if initialized after page load
