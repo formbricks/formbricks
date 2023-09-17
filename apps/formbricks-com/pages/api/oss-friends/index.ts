@@ -99,6 +99,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.openstatus.dev",
         },
         {
+          name: "Requestly",
+          description:
+            "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
+          href: "https://requestly.io",
+        },
+        {
           name: "Rivet",
           description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",
