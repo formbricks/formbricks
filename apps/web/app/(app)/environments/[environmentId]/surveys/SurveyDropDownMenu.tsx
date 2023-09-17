@@ -28,7 +28,7 @@ import {
 import cuid2 from "@paralleldrive/cuid2";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 interface SurveyDropDownMenuProps {
@@ -36,6 +36,7 @@ interface SurveyDropDownMenuProps {
   survey: TSurveyWithAnalytics;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
+  surveyBaseUrl: string;
 }
 
 export default function SurveyDropDownMenu({
@@ -43,10 +44,13 @@ export default function SurveyDropDownMenu({
   survey,
   environment,
   otherEnvironment,
+  surveyBaseUrl,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
 
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);
@@ -167,12 +171,8 @@ export default function SurveyDropDownMenu({
                     className="flex w-full items-center"
                     onClick={() => {
                       const singleUseId = cuid2.createId();
-                      const defaultSurveyUrl = `${window.location.protocol}//${window.location.host}/s/${survey.id}`;
-
                       navigator.clipboard.writeText(
-                        survey.singleUse?.enabled
-                          ? `${defaultSurveyUrl}?suId=${singleUseId}`
-                          : defaultSurveyUrl
+                        survey.singleUse?.enabled ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
                       );
                       toast.success("Copied link to clipboard");
                     }}>

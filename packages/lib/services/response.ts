@@ -1,6 +1,12 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
+import {
+  TResponse,
+  TResponseInput,
+  TResponseUpdateInput,
+  ZResponseInput,
+  ZResponseUpdateInput,
+} from "@formbricks/types/v1/responses";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
@@ -8,6 +14,8 @@ import { cache } from "react";
 import "server-only";
 import { getPerson, transformPrismaPerson } from "./person";
 import { captureTelemetry } from "../telemetry";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 
 const responseSelection = {
   id: true,
@@ -66,6 +74,7 @@ const responseSelection = {
 };
 
 export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
+  validateInputs([personId, ZId]);
   try {
     const responsePrisma = await prisma.response.findMany({
       where: {
@@ -133,6 +142,7 @@ export const getResponseBySingleUseId = cache(
 );
 
 export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseInput.partial()]);
   captureTelemetry("response created");
   try {
     let person: TPerson | null = null;
@@ -181,6 +191,7 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
 };
 
 export const getResponse = async (responseId: string): Promise<TResponse | null> => {
+  validateInputs([responseId, ZId]);
   try {
     const responsePrisma = await prisma.response.findUnique({
       where: {
@@ -210,10 +221,12 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 };
 
 export const preloadSurveyResponses = (surveyId: string) => {
+  validateInputs([surveyId, ZId]);
   void getSurveyResponses(surveyId);
 };
 
 export const getSurveyResponses = cache(async (surveyId: string): Promise<TResponse[]> => {
+  validateInputs([surveyId, ZId]);
   try {
     const responsesPrisma = await prisma.response.findMany({
       where: {
@@ -248,6 +261,7 @@ export const preloadEnvironmentResponses = (environmentId: string) => {
 };
 
 export const getEnvironmentResponses = cache(async (environmentId: string): Promise<TResponse[]> => {
+  validateInputs([environmentId, ZId]);
   try {
     const responsesPrisma = await prisma.response.findMany({
       where: {
@@ -283,6 +297,7 @@ export const updateResponse = async (
   responseId: string,
   responseInput: TResponseUpdateInput
 ): Promise<TResponse> => {
+  validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
     const currentResponse = await getResponse(responseId);
 

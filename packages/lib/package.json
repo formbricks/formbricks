@@ -13,17 +13,17 @@
   },
   "dependencies": {
     "@formbricks/database": "*",
-    "@formbricks/errors": "*",
     "@formbricks/types": "*",
-    "@paralleldrive/cuid2": "^2.2.1",
+    "@paralleldrive/cuid2": "^2.2.2",
     "date-fns": "^2.30.0",
     "markdown-it": "^13.0.1",
-    "posthog-node": "^3.1.1",
+    "posthog-node": "^3.1.2",
     "server-only": "^0.0.1",
     "tailwind-merge": "^1.14.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
+    "@types/jsonwebtoken": "^9.0.2",
     "eslint-config-formbricks": "workspace:*"
   }
 }

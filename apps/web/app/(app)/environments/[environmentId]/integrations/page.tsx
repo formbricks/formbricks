@@ -2,6 +2,7 @@ import JsLogo from "@/images/jslogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import n8nLogo from "@/images/n8n.png";
+import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui";
 import Image from "next/image";
 
@@ -51,6 +52,17 @@ export default function IntegrationsPage({ params }) {
           label="n8n"
           description="Integrate Formbricks with 350+ apps via n8n"
           icon={<Image src={n8nLogo} alt="n8n Logo" />}
+        />
+        <Card
+          docsHref="https://formbricks.com/docs/integrations/make"
+          docsText="Docs"
+          docsNewTab={true}
+          connectHref="https://www.make.com/en/integrations/formbricks"
+          connectText="Connect"
+          connectNewTab={true}
+          label="Make.com"
+          description="Integrate Formbricks with 1000+ apps via Make"
+          icon={<Image src={MakeLogo} alt="Make Logo" />}
         />
       </div>
     </div>

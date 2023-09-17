@@ -7,13 +7,16 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import LinkSurveyModal from "./LinkSurveyModal";
+import LinkSingleUseSurveyModal from "./LinkSingleUseSurveyModal";
 
 interface SummaryMetadataProps {
   environmentId: string;
   survey: TSurvey;
+  surveyBaseUrl: string;
 }
 
-export default function SuccessMessage({ environmentId, survey }: SummaryMetadataProps) {
+export default function SuccessMessage({ environmentId, survey, surveyBaseUrl }: SummaryMetadataProps) {
+  const isSingleUse = survey.singleUse?.enabled ?? false;
   const { environment } = useEnvironment(environmentId);
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -46,7 +49,16 @@ export default function SuccessMessage({ environmentId, survey }: SummaryMetadat
 
   return (
     <>
-      {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
+      {showLinkModal && isSingleUse ? (
+        <LinkSingleUseSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />
+      ) : (
+        <LinkSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          surveyBaseUrl={surveyBaseUrl}
+        />
+      )}
       {confetti && <Confetti />}
     </>
   );

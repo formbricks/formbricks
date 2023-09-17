@@ -1,7 +1,16 @@
 import { prisma } from "@formbricks/database";
-import { TDisplay, TDisplayInput, TDisplaysWithSurveyName } from "@formbricks/types/v1/displays";
+import {
+  TDisplay,
+  TDisplayInput,
+  TDisplaysWithSurveyName,
+  ZDisplayInput,
+} from "@formbricks/types/v1/displays";
+import { ZId } from "@formbricks/types/v1/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { revalidateTag } from "next/cache";
+import { cache } from "react";
+import { validateInputs } from "../utils/validate";
 import { transformPrismaPerson } from "./person";
 
 const selectDisplay = {
@@ -30,6 +39,7 @@ const selectDisplay = {
 };
 
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayInput]);
   try {
     const displayPrisma = await prisma.display.create({
       data: {
@@ -56,6 +66,10 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
       person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
     };
 
+    if (displayInput.personId) {
+      revalidateTag(displayInput.personId);
+    }
+
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -67,6 +81,7 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
 };
 
 export const markDisplayResponded = async (displayId: string): Promise<TDisplay> => {
+  validateInputs([displayId, ZId]);
   try {
     if (!displayId) throw new Error("Display ID is required");
 
@@ -99,51 +114,54 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
   }
 };
 
-export const getDisplaysOfPerson = async (personId: string): Promise<TDisplaysWithSurveyName[] | null> => {
-  try {
-    const displaysPrisma = await prisma.display.findMany({
-      where: {
-        personId: personId,
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        survey: {
-          select: {
-            name: true,
-          },
+export const getDisplaysOfPerson = cache(
+  async (personId: string): Promise<TDisplaysWithSurveyName[] | null> => {
+    validateInputs([personId, ZId]);
+    try {
+      const displaysPrisma = await prisma.display.findMany({
+        where: {
+          personId: personId,
         },
-        status: true,
-      },
-    });
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          surveyId: true,
+          survey: {
+            select: {
+              name: true,
+            },
+          },
+          status: true,
+        },
+      });
 
-    if (!displaysPrisma) {
-      throw new ResourceNotFoundError("Display from PersonId", personId);
+      if (!displaysPrisma) {
+        throw new ResourceNotFoundError("Display from PersonId", personId);
+      }
+
+      let displays: TDisplaysWithSurveyName[] = [];
+
+      displaysPrisma.forEach((displayPrisma) => {
+        const display: TDisplaysWithSurveyName = {
+          id: displayPrisma.id,
+          createdAt: displayPrisma.createdAt,
+          updatedAt: displayPrisma.updatedAt,
+          person: null,
+          status: displayPrisma.status,
+          surveyId: displayPrisma.surveyId,
+          surveyName: displayPrisma.survey.name,
+        };
+        displays.push(display);
+      });
+
+      return displays;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Database operation failed");
+      }
+
+      throw error;
     }
-
-    let displays: TDisplaysWithSurveyName[] = [];
-
-    displaysPrisma.forEach((displayPrisma) => {
-      const display: TDisplaysWithSurveyName = {
-        id: displayPrisma.id,
-        createdAt: displayPrisma.createdAt,
-        updatedAt: displayPrisma.updatedAt,
-        person: null,
-        status: displayPrisma.status,
-        surveyId: displayPrisma.surveyId,
-        surveyName: displayPrisma.survey.name,
-      };
-      displays.push(display);
-    });
-
-    return displays;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
   }
-};
+);

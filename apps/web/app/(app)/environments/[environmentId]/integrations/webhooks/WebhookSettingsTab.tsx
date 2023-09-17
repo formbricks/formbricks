@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
-import { deleteWebhook, updateWebhook } from "@formbricks/lib/services/webhook";
+import { deleteWebhookAction, updateWebhookAction } from "./actions";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/testEndpoint";
@@ -108,11 +108,12 @@ export default function WebhookSettingsTab({
     const updatedData: TWebhookInput = {
       name: data.name,
       url: data.url as string,
+      source: data.source,
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    await updateWebhook(environmentId, webhook.id, updatedData);
+    await updateWebhookAction(environmentId, webhook.id, updatedData);
     toast.success("Webhook updated successfully.");
     router.refresh();
     setIsUpdatingWebhook(false);
@@ -147,7 +148,9 @@ export default function WebhookSettingsTab({
               onChange={(e) => {
                 setTestEndpointInput(e.target.value);
               }}
+              readOnly={webhook.source !== "user"}
               className={clsx(
+                webhook.source === "user" ? null : "cursor-not-allowed bg-gray-100 text-gray-500",
                 endpointAccessible === true
                   ? "border-green-500 bg-green-50"
                   : endpointAccessible === false
@@ -177,6 +180,7 @@ export default function WebhookSettingsTab({
             triggers={triggers}
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
+            allowChanges={webhook.source === "user"}
           />
         </div>
 
@@ -188,19 +192,22 @@ export default function WebhookSettingsTab({
             selectedAllSurveys={selectedAllSurveys}
             onSelectAllSurveys={handleSelectAllSurveys}
             onSelectedSurveyChange={handleSelectedSurveyChange}
+            allowChanges={webhook.source === "user"}
           />
         </div>
 
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
-            <Button
-              type="button"
-              variant="warn"
-              onClick={() => setOpenDeleteDialog(true)}
-              StartIcon={TrashIcon}
-              className="mr-3">
-              Delete
-            </Button>
+            {webhook.source === "user" && (
+              <Button
+                type="button"
+                variant="warn"
+                onClick={() => setOpenDeleteDialog(true)}
+                StartIcon={TrashIcon}
+                className="mr-3">
+                Delete
+              </Button>
+            )}
 
             <Button
               variant="secondary"
@@ -225,7 +232,7 @@ export default function WebhookSettingsTab({
         onDelete={async () => {
           setOpen(false);
           try {
-            await deleteWebhook(webhook.id);
+            await deleteWebhookAction(webhook.id);
             router.refresh();
             toast.success("Webhook deleted successfully");
           } catch (error) {
