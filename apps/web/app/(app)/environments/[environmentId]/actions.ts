@@ -135,6 +135,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
 
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
+    // @ts-expect-error
     data: {
       ...existingSurvey,
       id: undefined, // id is auto-generated
@@ -176,6 +177,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
       }),
     },
   });
+
   return newSurvey;
 }
 

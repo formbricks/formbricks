@@ -7,15 +7,15 @@ import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 import { ErrorComponent } from "@formbricks/ui";
-import { useRouter } from "next/navigation";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
+import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { useRouter } from "next/navigation";
 
 interface SurveyEditorProps {
   survey: TSurveyWithAnalytics;
@@ -37,8 +37,6 @@ export default function SurveyEditor({
   const router = useRouter();
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [isCreatingUserSegment, setIsCreatingUserSegment] = useState(true);
-  const [isUserSegmentError, setIsUserSegmentError] = useState(false);
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics | null>();
 
@@ -52,41 +50,35 @@ export default function SurveyEditor({
     }
   }, [survey]);
 
-  useEffect(() => {
-    const createUserSegment = async () => {
-      try {
-        await createUserSegmentAction({
-          title: "",
-          description: "",
-          environmentId: environment.id,
-          surveyId: survey.id,
-          filters: [],
-          isPrivate: true,
-        });
-
-        setIsCreatingUserSegment(false);
-
-        router.refresh();
-      } catch (err) {
-        setIsUserSegmentError(true);
-        setIsCreatingUserSegment(false);
-      }
-    };
-
-    if (survey && !survey.userSegmentId) {
-      setIsCreatingUserSegment(true);
-      createUserSegment();
-    } else {
-      setIsCreatingUserSegment(false);
-    }
-  }, [environment?.id, survey]);
-
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
     if (survey?.questions?.length > 0) {
       setActiveQuestionId(survey.questions[0].id);
     }
   }, [localSurvey?.type, survey?.questions]);
+
+  useEffect(() => {
+    const createSegment = async () => {
+      await createUserSegmentAction({
+        title: "",
+        description: "",
+        environmentId: environment.id,
+        surveyId: survey.id,
+        filters: [],
+        isPrivate: true,
+      });
+    };
+
+    if (survey && !survey.userSegmentId) {
+      try {
+        createSegment();
+
+        router.refresh();
+      } catch (err) {
+        throw new Error("Error creating segment");
+      }
+    }
+  }, [environment.id, router, survey]);
 
   if (!localSurvey) {
     return <ErrorComponent />;

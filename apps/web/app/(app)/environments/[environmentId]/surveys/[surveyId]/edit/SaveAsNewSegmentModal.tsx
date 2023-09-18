@@ -68,11 +68,8 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
 
         toast.success("Segment updated successfully");
 
-        setUserSegment({
-          ...updatedUserSegment,
-          description: updatedUserSegment.description || "",
-          surveys: updatedUserSegment.surveys.map((survey) => survey.id),
-        });
+        setUserSegment(updatedUserSegment);
+
         setIsSegmentEditorOpen(false);
         handleReset();
         return;
@@ -87,11 +84,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
         filters: userSegment?.filters,
       });
 
-      setUserSegment({
-        ...createdUserSegment,
-        description: createdUserSegment.description || "",
-        surveys: createdUserSegment.surveys.map((survey) => survey.id),
-      });
+      setUserSegment(createdUserSegment);
 
       setIsSegmentEditorOpen(false);
       setIsLoading(false);

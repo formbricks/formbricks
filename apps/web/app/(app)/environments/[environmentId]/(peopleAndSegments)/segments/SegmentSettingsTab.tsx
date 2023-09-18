@@ -168,7 +168,7 @@ const SegmentSettingsTab = ({
                 <label className="text-sm font-medium text-slate-900">Description</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
-                    value={userSegment.description}
+                    value={userSegment.description ?? ""}
                     placeholder="Ex. Power Users"
                     onChange={(e) => {
                       setUserSegment((prev) => ({
@@ -199,6 +199,9 @@ const SegmentSettingsTab = ({
                 userSegment={userSegment}
                 setUserSegment={setUserSegment}
                 group={userSegment.filters}
+                actionClasses={actionClasses}
+                attributeClasses={attributeClasses}
+                userSegments={userSegments}
               />
 
               <div>

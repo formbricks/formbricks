@@ -2,7 +2,7 @@ import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[su
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { TUserSegmentFilterValue } from "@formbricks/js/dist/types/v1/userSegment";
+import { TUserSegmentFilterValue } from "@formbricks/types/v1/userSegment";
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";

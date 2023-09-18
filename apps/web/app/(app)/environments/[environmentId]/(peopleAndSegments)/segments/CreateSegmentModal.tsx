@@ -173,6 +173,9 @@ const CreateSegmentModal = ({
                 userSegment={userSegment}
                 setUserSegment={setUserSegment}
                 group={userSegment.filters}
+                actionClasses={actionClasses}
+                attributeClasses={attributeClasses}
+                userSegments={userSegments}
               />
 
               <div>
