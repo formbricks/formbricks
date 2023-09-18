@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 import { Result, err, ok, wrapThrows } from "@formbricks/types/v1/errorHandlers";
 import { NetworkError } from "@formbricks/types/v1/errors";
 import { ApiResponse } from "../types";
