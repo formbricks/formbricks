@@ -2,49 +2,61 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
+import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Prisma } from "@prisma/client";
 
-export const updateResponseNote = async (responseId: string, noteId: string, text: string): Promise<any> => {
+const select = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  text: true,
+  isEdited: true,
+  isResolved: true,
+  user: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+};
+
+export const updateResponseNote = async (responseNoteId: string, text: string): Promise<TResponseNote> => {
   try {
-    const currentResponse = await prisma.response.findUnique({
+    const updatedResponseNote = await prisma.responseNote.update({
       where: {
-        id: responseId,
-      },
-      select: {
-        notes: true,
-      },
-    });
-
-    if (!currentResponse) {
-      throw new ResourceNotFoundError("Response", "No Response Found");
-    }
-
-    const currentNote = currentResponse.notes.find((eachnote) => eachnote.id === noteId);
-
-    if (!currentNote) {
-      throw new ResourceNotFoundError("Note", "No Note Found");
-    }
-
-    const updatedResponse = await prisma.response.update({
-      where: {
-        id: responseId,
+        id: responseNoteId,
       },
       data: {
-        notes: {
-          updateMany: {
-            where: {
-              id: noteId,
-            },
-            data: {
-              text: text,
-              updatedAt: new Date(),
-            },
-          },
-        },
+        text: text,
+        updatedAt: new Date(),
+        isEdited: true,
       },
+      select,
     });
-    return updatedResponse;
+    return updatedResponseNote;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const resolveResponseNote = async (responseNoteId: string): Promise<TResponseNote> => {
+  try {
+    const responseNote = await prisma.responseNote.update({
+      where: {
+        id: responseNoteId,
+      },
+      data: {
+        updatedAt: new Date(),
+        isResolved: true,
+      },
+      select,
+    });
+    return responseNote;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
