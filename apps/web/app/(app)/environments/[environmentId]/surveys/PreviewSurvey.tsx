@@ -1,5 +1,4 @@
 "use client";
-
 import Modal from "@/components/preview/Modal";
 import TabOption from "@/components/preview/TabOption";
 import { SurveyInline } from "@/components/shared/Survey";
@@ -16,7 +15,6 @@ interface PreviewSurveyProps {
   survey: TSurvey | Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
-  environmentId: string;
   previewType?: "modal" | "fullwidth" | "email";
   product: TProduct;
   environment: TEnvironment;

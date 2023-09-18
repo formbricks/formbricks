@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.2.0",
+    "@prisma/extension-accelerate": "^0.6.2",
     "dotenv-cli": "^7.3.0"
   },
   "devDependencies": {

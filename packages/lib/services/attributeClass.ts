@@ -1,9 +1,23 @@
 "use server";
 import "server-only";
 import { prisma } from "@formbricks/database";
+import {
+  TAttributeClass,
+  TAttributeClassType,
+  TAttributeClassUpdateInput,
+  ZAttributeClassUpdateInput,
+} from "@formbricks/types/v1/attributeClasses";
+import { ZId } from "@formbricks/types/v1/environment";
+import { validateInputs } from "../utils/validate";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { cache } from "react";
+import { revalidateTag, unstable_cache } from "next/cache";
+
+const attributeClassesCacheTag = (environmentId: string): string => `env-${environmentId}-attributeClasses`;
+
+const getAttributeClassesCacheKey = (environmentId: string): string[] => [
+  attributeClassesCacheTag(environmentId),
+];
 
 export const transformPrismaAttributeClass = (attributeClass: any): TAttributeClass | null => {
   if (attributeClass === null) {
@@ -18,6 +32,7 @@ export const transformPrismaAttributeClass = (attributeClass: any): TAttributeCl
 };
 
 export const getAttributeClasses = cache(async (environmentId: string): Promise<TAttributeClass[]> => {
+  validateInputs([environmentId, ZId]);
   try {
     let attributeClasses = await prisma.attributeClass.findMany({
       where: {
@@ -39,8 +54,9 @@ export const getAttributeClasses = cache(async (environmentId: string): Promise<
 
 export const updatetAttributeClass = async (
   attributeClassId: string,
-  data: { description?: string; archived?: boolean }
+  data: Partial<TAttributeClassUpdateInput>
 ): Promise<TAttributeClass | null> => {
+  validateInputs([attributeClassId, ZId], [data, ZAttributeClassUpdateInput.partial()]);
   try {
     let attributeClass = await prisma.attributeClass.update({
       where: {
@@ -53,11 +69,24 @@ export const updatetAttributeClass = async (
     });
     const transformedAttributeClass: TAttributeClass | null = transformPrismaAttributeClass(attributeClass);
 
+    revalidateTag(attributeClassesCacheTag(attributeClass.environmentId));
     return transformedAttributeClass;
   } catch (error) {
     throw new DatabaseError(`Database error when updating attribute class with id ${attributeClassId}`);
   }
 };
+
+export const getAttributeClassByNameCached = async (environmentId: string, name: string) =>
+  await unstable_cache(
+    async () => {
+      return await getAttributeClassByName(environmentId, name);
+    },
+    getAttributeClassesCacheKey(environmentId),
+    {
+      tags: getAttributeClassesCacheKey(environmentId),
+      revalidate: 30 * 60, // 30 minutes
+    }
+  )();
 
 export const getAttributeClassByName = cache(
   async (environmentId: string, name: string): Promise<TAttributeClass | null> => {
@@ -70,3 +99,23 @@ export const getAttributeClassByName = cache(
     return transformPrismaAttributeClass(attributeClass);
   }
 );
+
+export const createAttributeClass = async (
+  environmentId: string,
+  name: string,
+  type: TAttributeClassType
+): Promise<TAttributeClass | null> => {
+  const attributeClass = await prisma.attributeClass.create({
+    data: {
+      name,
+      type,
+      environment: {
+        connect: {
+          id: environmentId,
+        },
+      },
+    },
+  });
+  revalidateTag(attributeClassesCacheTag(environmentId));
+  return transformPrismaAttributeClass(attributeClass);
+};

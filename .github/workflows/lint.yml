@@ -26,5 +26,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
 
+      - name: create .env
+        run: cp .env.example .env
+
       - name: Lint
         run: pnpm lint

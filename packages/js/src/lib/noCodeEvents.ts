@@ -46,14 +46,31 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
   return okVoid();
 };
 
-export const addPageUrlEventListeners = (): void => {
-  if (typeof window === "undefined") return;
+let arePageUrlEventListenersAdded = false;
+const checkPageUrlWrapper = () => checkPageUrl();
 
-  window.addEventListener("hashchange", checkPageUrl);
-  window.addEventListener("popstate", checkPageUrl);
-  window.addEventListener("pushstate", checkPageUrl);
-  window.addEventListener("replacestate", checkPageUrl);
-  window.addEventListener("load", checkPageUrl);
+export const addPageUrlEventListeners = (): void => {
+  if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
+
+  window.addEventListener("hashchange", checkPageUrlWrapper);
+  window.addEventListener("popstate", checkPageUrlWrapper);
+  window.addEventListener("pushstate", checkPageUrlWrapper);
+  window.addEventListener("replacestate", checkPageUrlWrapper);
+  window.addEventListener("load", checkPageUrlWrapper);
+
+  arePageUrlEventListenersAdded = true;
+};
+
+export const removePageUrlEventListeners = (): void => {
+  if (typeof window === "undefined" || !arePageUrlEventListenersAdded) return;
+
+  window.removeEventListener("hashchange", checkPageUrlWrapper);
+  window.removeEventListener("popstate", checkPageUrlWrapper);
+  window.removeEventListener("pushstate", checkPageUrlWrapper);
+  window.removeEventListener("replacestate", checkPageUrlWrapper);
+  window.removeEventListener("load", checkPageUrlWrapper);
+
+  arePageUrlEventListenersAdded = false;
 };
 
 export function checkUrlMatch(
@@ -144,8 +161,21 @@ export const checkClickMatch = (event: MouseEvent) => {
   });
 };
 
-export const addClickEventListener = (): void => {
-  if (typeof window === "undefined") return;
+let isClickEventListenerAdded = false;
+const checkClickMatchWrapper = (e: MouseEvent) => checkClickMatch(e);
 
-  document.addEventListener("click", checkClickMatch);
+export const addClickEventListener = (): void => {
+  if (typeof window === "undefined" || isClickEventListenerAdded) return;
+
+  document.addEventListener("click", checkClickMatchWrapper);
+
+  isClickEventListenerAdded = true;
+};
+
+export const removeClickEventListener = (): void => {
+  if (!isClickEventListenerAdded) return;
+
+  document.removeEventListener("click", checkClickMatchWrapper);
+
+  isClickEventListenerAdded = false;
 };

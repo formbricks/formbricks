@@ -103,13 +103,13 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
       return `
         <div style="display: block; margin-top:3em;">
           <a href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-        survey.id
-      }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
+            survey.id
+          }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
             <h2 style="text-decoration: underline; display:inline;">${survey.name}</h2>
           </a>
           <span style="display: inline; margin-left: 10px; background-color: ${
             isLive ? "#34D399" : "#cbd5e1"
-          }; color: ${isLive ? "#F3F4F6" : "#15803d"}; border-radius:99px; padding: 2px 8px; font-size:0.9em">
+          }; color: ${isLive ? "#F3F4F6" : "#1e293b"}; border-radius:99px; padding: 2px 8px; font-size:0.9em">
             ${displayStatus}
           </span>
           ${
