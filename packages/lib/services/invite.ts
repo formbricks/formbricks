@@ -32,7 +32,7 @@ export const getInviteesByTeamId = cache(async (teamId: string): Promise<TInvite
   return invites;
 });
 
-export const updateInvite = cache(async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite> => {
+export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite> => {
   try {
     const invite = await prisma.invite.update({
       where: { id: inviteId },
@@ -48,7 +48,7 @@ export const updateInvite = cache(async (inviteId: string, data: TInviteUpdateIn
       throw error; // Re-throw any other errors
     }
   }
-});
+};
 
 export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   const deletedInvite = await prisma.invite.delete({
