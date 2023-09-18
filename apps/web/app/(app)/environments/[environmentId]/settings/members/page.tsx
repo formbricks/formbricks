@@ -1,6 +1,6 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getMembershipsByUserId, getMembershipByUserId } from "@formbricks/lib/services/membership";
+import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/services/membership";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { Skeleton } from "@formbricks/ui";
 import { getServerSession } from "next-auth";
@@ -36,24 +36,24 @@ const MembersLoading = () => (
 
 export default async function MembersSettingsPage({ params }: { params: { environmentId: string } }) {
   const session = await getServerSession(authOptions);
-  const team = session ? await getTeamByEnvironmentId(params.environmentId) : null;
 
-  const currentUserMembership =
-    session && team ? await getMembershipByUserId(session?.user.id, team.id) : null;
+  if (!session) {
+    throw new Error("Unauthenticated");
+  }
+  const team = await getTeamByEnvironmentId(params.environmentId);
 
-  const allMemberships = session ? await getMembershipsByUserId(session.user.id) : [];
-
-  const isDeleteDisabled = allMemberships.length <= 1;
-  const currentUserRole = currentUserMembership?.role;
-
-  const isLeaveTeamDisabled = allMemberships.length <= 1;
-  const isUserAdminOrOwner = currentUserRole === "admin" || currentUserRole === "owner";
-
-  if (!session || !team) {
-    return null;
+  if (!team) {
+    throw new Error("Team not found");
   }
 
-  const currentUserId = session.user?.id;
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const userMemberships = await getMembershipsByUserId(session.user.id);
+
+  const isDeleteDisabled = userMemberships.length <= 1;
+  const currentUserRole = currentUserMembership?.role;
+
+  const isLeaveTeamDisabled = userMemberships.length <= 1;
+  const isUserAdminOrOwner = currentUserRole === "admin" || currentUserRole === "owner";
 
   return (
     <div>
@@ -72,8 +72,8 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
           <Suspense fallback={<MembersLoading />}>
             <EditMemberships
               team={team}
-              currentUserId={currentUserId}
-              allMemberships={allMemberships}
+              currentUserId={session.user?.id}
+              allMemberships={userMemberships}
               currentUserMembership={currentUserMembership}
             />
           </Suspense>

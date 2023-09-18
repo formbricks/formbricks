@@ -34,7 +34,7 @@ export default function TeamActions({ isAdminOrOwner, role, team, isLeaveTeamDis
     try {
       await leaveTeamAction(team.id);
       toast.success("You left the team successfully");
-
+      router.refresh();
       setLoading(false);
       router.push("/");
     } catch (err) {
@@ -50,7 +50,6 @@ export default function TeamActions({ isAdminOrOwner, role, team, isLeaveTeamDis
     } catch (err) {
       toast.error(`Error: ${err.message}`);
     }
-
     router.refresh();
   };
 

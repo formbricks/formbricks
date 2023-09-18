@@ -13,7 +13,7 @@ import {
 import {
   deleteMembership,
   getMembershipsByUserId,
-  getMembershipByUserId,
+  getMembershipByUserIdTeamId,
   transferOwnership,
   updateMembership,
 } from "@formbricks/lib/services/membership";
@@ -108,7 +108,7 @@ export const leaveTeamAction = async (teamId: string) => {
     throw new AuthenticationError("Not authenticated");
   }
 
-  const membership = await getMembershipByUserId(session.user.id, teamId);
+  const membership = await getMembershipByUserIdTeamId(session.user.id, teamId);
 
   if (!membership) {
     throw new AuthenticationError("Not a member of this team");
@@ -195,7 +195,7 @@ export const transferOwnershipAction = async (teamId: string, newOwnerId: string
     throw new ValidationError("You are already the owner of this team");
   }
 
-  const membership = await getMembershipByUserId(newOwnerId, teamId);
+  const membership = await getMembershipByUserIdTeamId(newOwnerId, teamId);
   if (!membership) {
     throw new ValidationError("User is not a member of this team");
   }

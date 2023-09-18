@@ -33,7 +33,7 @@ export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[
   return members;
 });
 
-export const getMembershipByUserId = cache(
+export const getMembershipByUserIdTeamId = cache(
   async (userId: string, teamId: string): Promise<TMembership | null> => {
     const membership = await prisma.membership.findUnique({
       where: {
@@ -50,30 +50,10 @@ export const getMembershipByUserId = cache(
   }
 );
 
-export const getMembershipsByUserId = cache(async (userId: string) => {
+export const getMembershipsByUserId = cache(async (userId: string): Promise<TMembership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
-    },
-    include: {
-      team: {
-        select: {
-          id: true,
-          name: true,
-          products: {
-            select: {
-              id: true,
-              name: true,
-              environments: {
-                select: {
-                  id: true,
-                  type: true,
-                },
-              },
-            },
-          },
-        },
-      },
     },
   });
 
