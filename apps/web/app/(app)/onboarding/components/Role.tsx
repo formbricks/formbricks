@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@/../../packages/lib/cn";
+import { cn } from "@formbricks/lib/cn";
+import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/lib/formbricks";
-import { useProfile } from "@/lib/profile";
-import { useProfileMutation } from "@/lib/profile/mutateProfile";
+import { TProfile } from "@formbricks/types/v1/profile";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -13,6 +13,7 @@ type RoleProps = {
   next: () => void;
   skip: () => void;
   setFormbricksResponseId: (id: string) => void;
+  profile: TProfile;
 };
 
 type RoleChoice = {
@@ -20,11 +21,9 @@ type RoleChoice = {
   id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
 };
 
-const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
+const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profile }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
-
-  const { profile } = useProfile();
-  const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const roles: Array<RoleChoice> = [
     { label: "Project Manager", id: "project_manager" },
@@ -39,9 +38,12 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
       const selectedRole = roles.find((role) => role.label === selectedChoice);
       if (selectedRole) {
         try {
+          setIsUpdating(true);
           const updatedProfile = { ...profile, role: selectedRole.id };
-          await triggerProfileMutate(updatedProfile);
+          await updateProfileAction(profile.id, updatedProfile);
+          setIsUpdating(false);
         } catch (e) {
+          setIsUpdating(false);
           toast.error("An error occured saving your settings");
           console.error(e);
         }
@@ -67,7 +69,6 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
         <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
           What is your role?
         </label>
-        ∏
         <label className="block text-sm font-normal leading-6 text-slate-500">
           Make your Formbricks experience more personalised.
         </label>
@@ -113,7 +114,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
         <Button
           size="lg"
           variant="darkCTA"
-          loading={isMutatingProfile}
+          loading={isUpdating}
           disabled={!selectedChoice}
           onClick={handleNextClick}
           id="role-next">

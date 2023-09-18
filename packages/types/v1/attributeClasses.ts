@@ -1,12 +1,16 @@
 import z from "zod";
 
+export const ZAttributeClassType = z.enum(["code", "noCode", "automatic"]);
+
+export type TAttributeClassType = z.infer<typeof ZAttributeClassType>;
+
 export const ZAttributeClass = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
   description: z.string(),
-  type: z.enum(["code", "noCode", "automatic"]),
+  type: ZAttributeClassType,
   environmentId: z.string(),
   archived: z.boolean(),
 });

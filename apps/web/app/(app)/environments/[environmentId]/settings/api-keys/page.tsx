@@ -9,6 +9,9 @@ import { getEnvironment } from "@formbricks/lib/services/environment";
 
 export default async function ProfileSettingsPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
   return (
     <div>
       <SettingsTitle title="API Keys" />

@@ -1,14 +1,12 @@
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { Prisma } from "@prisma/client";
-import { TProfile, ZProfileUpdateInput } from "@formbricks/types/v1/profile";
-import { deleteTeam } from "./team";
-import { MembershipRole } from "@prisma/client";
+import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/memberships";
+import { TProfile, TProfileUpdateInput, ZProfileUpdateInput } from "@formbricks/types/v1/profile";
+import { MembershipRole, Prisma } from "@prisma/client";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
-import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/membership";
-import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
+import { deleteTeam } from "./team";
 
 const responseSelection = {
   id: true,
@@ -16,6 +14,7 @@ const responseSelection = {
   email: true,
   createdAt: true,
   updatedAt: true,
+  onboardingCompleted: true,
 };
 
 // function to retrive basic information about a user's profile
@@ -58,12 +57,15 @@ const updateUserMembership = async (teamId: string, userId: string, role: TMembe
   });
 };
 
-const getAdminMemberships = (memberships: TMembership[]) =>
+const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === MembershipRole.admin);
 
 // function to update a user's profile
-export const updateProfile = async (personId: string, data: TProfileUpdateInput): Promise<TProfile> => {
-  validateInputs([personId, ZId], [data, ZProfileUpdateInput]);
+export const updateProfile = async (
+  personId: string,
+  data: Partial<TProfileUpdateInput>
+): Promise<TProfile> => {
+  validateInputs([personId, ZId], [data, ZProfileUpdateInput.partial()]);
   try {
     const updatedProfile = await prisma.user.update({
       where: {
@@ -103,12 +105,7 @@ export const deleteProfile = async (personId: string): Promise<void> => {
           select: {
             id: true,
             name: true,
-            memberships: {
-              select: {
-                userId: true,
-                role: true,
-              },
-            },
+            memberships: true,
           },
         },
       },
