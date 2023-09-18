@@ -151,7 +151,15 @@ export const getSurveys = async (
           createdAt: true,
         },
       },
-      userSegment: true,
+      userSegment: {
+        include: {
+          surveys: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -242,6 +250,10 @@ export const getSurveys = async (
     })
     .map((survey) => ({
       ...survey,
+      userSegment: {
+        ...survey.userSegment,
+        surveys: survey.userSegment?.surveys?.map((s) => s.id) ?? [],
+      },
       triggers: survey.triggers.map((trigger) => trigger.eventClass),
       attributeFilters: survey.attributeFilters.map((af) => ({
         ...af,
