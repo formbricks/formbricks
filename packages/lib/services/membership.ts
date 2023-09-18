@@ -80,31 +80,33 @@ export const getMembershipsByUserId = cache(async (userId: string) => {
   return memberships;
 });
 
-export const updateMembership = cache(
-  async (userId: string, teamId: string, data: TMembershipUpdateInput): Promise<TMembership> => {
-    try {
-      const membership = await prisma.membership.update({
-        where: {
-          userId_teamId: {
-            userId,
-            teamId,
-          },
+export const updateMembership = async (
+  userId: string,
+  teamId: string,
+  data: TMembershipUpdateInput
+): Promise<TMembership> => {
+  try {
+    const membership = await prisma.membership.update({
+      where: {
+        userId_teamId: {
+          userId,
+          teamId,
         },
-        data,
-      });
+      },
+      data,
+    });
 
-      return membership;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
-        throw new ResourceNotFoundError("Membership", `userId: ${userId}, teamId: ${teamId}`);
-      } else {
-        throw error; // Re-throw any other errors
-      }
+    return membership;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+      throw new ResourceNotFoundError("Membership", `userId: ${userId}, teamId: ${teamId}`);
+    } else {
+      throw error; // Re-throw any other errors
     }
   }
-);
+};
 
-export const deleteMembership = cache(async (userId: string, teamId: string): Promise<TMembership> => {
+export const deleteMembership = async (userId: string, teamId: string): Promise<TMembership> => {
   const deletedMembership = await prisma.membership.delete({
     where: {
       userId_teamId: {
@@ -115,9 +117,9 @@ export const deleteMembership = cache(async (userId: string, teamId: string): Pr
   });
 
   return deletedMembership;
-});
+};
 
-export const transferOwnership = cache(async (currentOwnerId: string, newOwnerId: string, teamId: string) => {
+export const transferOwnership = async (currentOwnerId: string, newOwnerId: string, teamId: string) => {
   try {
     await prisma.$transaction([
       prisma.membership.update({
@@ -146,4 +148,4 @@ export const transferOwnership = cache(async (currentOwnerId: string, newOwnerId
   } catch (error) {
     throw new Error("Something went wrong");
   }
-});
+};

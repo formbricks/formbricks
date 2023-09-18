@@ -85,7 +85,7 @@ export const getTeamByEnvironmentId = cache(async (environmentId: string): Promi
   }
 });
 
-export const updateTeam = cache(async (teamId: string, data: TTeamUpdateInput) => {
+export const updateTeam = async (teamId: string, data: TTeamUpdateInput) => {
   try {
     const updatedTeam = await prisma.team.update({
       where: {
@@ -102,7 +102,7 @@ export const updateTeam = cache(async (teamId: string, data: TTeamUpdateInput) =
       throw error; // Re-throw any other errors
     }
   }
-});
+};
 
 export const deleteTeam = async (teamId: string) => {
   validateInputs([teamId, ZId]);

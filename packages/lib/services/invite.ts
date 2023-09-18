@@ -50,7 +50,7 @@ export const updateInvite = cache(async (inviteId: string, data: TInviteUpdateIn
   }
 });
 
-export const deleteInvite = cache(async (inviteId: string): Promise<TInvite> => {
+export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   const deletedInvite = await prisma.invite.delete({
     where: {
       id: inviteId,
@@ -58,7 +58,7 @@ export const deleteInvite = cache(async (inviteId: string): Promise<TInvite> => 
   });
 
   return deletedInvite;
-});
+};
 
 export const getInviteToken = cache(async (inviteId: string) => {
   const invite = await prisma.invite.findUnique({
@@ -80,7 +80,7 @@ export const getInviteToken = cache(async (inviteId: string) => {
   };
 });
 
-export const resendInvite = cache(async (inviteId: string) => {
+export const resendInvite = async (inviteId: string) => {
   const invite = await prisma.invite.findUnique({
     where: {
       id: inviteId,
@@ -108,56 +108,54 @@ export const resendInvite = cache(async (inviteId: string) => {
   });
 
   return updatedInvite;
-});
+};
 
-export const inviteUser = cache(
-  async ({
-    currentUser,
-    invitee,
-    teamId,
-  }: {
-    teamId: string;
-    invitee: { name: string; email: string; role: TMembershipRole };
-    currentUser: { id: string; name: string };
-  }) => {
-    const { name, email, role } = invitee;
-    const { id: currentUserId, name: currentUserName } = currentUser;
-    const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
+export const inviteUser = async ({
+  currentUser,
+  invitee,
+  teamId,
+}: {
+  teamId: string;
+  invitee: { name: string; email: string; role: TMembershipRole };
+  currentUser: { id: string; name: string };
+}) => {
+  const { name, email, role } = invitee;
+  const { id: currentUserId, name: currentUserName } = currentUser;
+  const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
 
-    if (existingInvite) {
-      throw new ValidationError("Invite already exists");
-    }
+  if (existingInvite) {
+    throw new ValidationError("Invite already exists");
+  }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email } });
 
-    if (user) {
-      const member = await prisma.membership.findUnique({
-        where: {
-          userId_teamId: { teamId, userId: user.id },
-        },
-      });
-      if (member) {
-        throw new ValidationError("User is already a member of this team");
-      }
-    }
-
-    const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
-    const expiresAt = new Date(Date.now() + expiresIn);
-
-    const invite = await prisma.invite.create({
-      data: {
-        email,
-        name,
-        team: { connect: { id: teamId } },
-        creator: { connect: { id: currentUserId } },
-        acceptor: user ? { connect: { id: user.id } } : undefined,
-        role,
-        expiresAt,
+  if (user) {
+    const member = await prisma.membership.findUnique({
+      where: {
+        userId_teamId: { teamId, userId: user.id },
       },
     });
-
-    await sendInviteMemberEmail(invite.id, currentUserName, name, email);
-
-    return invite;
+    if (member) {
+      throw new ValidationError("User is already a member of this team");
+    }
   }
-);
+
+  const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const expiresAt = new Date(Date.now() + expiresIn);
+
+  const invite = await prisma.invite.create({
+    data: {
+      email,
+      name,
+      team: { connect: { id: teamId } },
+      creator: { connect: { id: currentUserId } },
+      acceptor: user ? { connect: { id: user.id } } : undefined,
+      role,
+      expiresAt,
+    },
+  });
+
+  await sendInviteMemberEmail(invite.id, currentUserName, name, email);
+
+  return invite;
+};
