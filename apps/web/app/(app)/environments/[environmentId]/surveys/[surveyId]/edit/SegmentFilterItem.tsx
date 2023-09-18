@@ -2,9 +2,10 @@ import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[su
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { useUserSegments } from "@/lib/userSegments/userSegments";
 import { TUserSegmentFilterValue } from "@formbricks/js/dist/types/v1/userSegment";
 import { cn } from "@formbricks/lib/cn";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import {
   ACTION_METRICS,
   ARITHMETIC_OPERATORS,
@@ -61,6 +62,9 @@ type SegmentFilterItemProps = {
   resource: TUserSegmentFilter;
   environmentId: string;
   userSegment: TUserSegment;
+  userSegments: TUserSegment[];
+  actionClasses: TActionClass[];
+  attributeClasses: TAttributeClass[];
   setUserSegment: (userSegment: TUserSegment) => void;
   handleAddFilterBelow: (resourceId: string, filter: TBaseFilterGroupItem) => void;
   onCreateGroup: (filterId: string) => void;
@@ -212,9 +216,8 @@ const AttributeSegmentFilter = ({
     };
   });
 
-  const attributeClass = attributeClasses?.find(
-    (attributeClass) => attributeClass?.id === attributeClassId
-  )?.name;
+  const attributeClass = attributeClasses?.find((attributeClass) => attributeClass?.id === attributeClassId)
+    ?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
     const updatedUserSegment = produce(userSegment, (draft) => {
@@ -609,22 +612,17 @@ type TUserSegmentFilterProps = SegmentFilterItemProps & {
 };
 const UserSegmentFilter = ({
   connector,
-  environmentId,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
   onMoveFilter,
   resource,
   userSegment,
+  userSegments,
   setUserSegment,
 }: TUserSegmentFilterProps) => {
   const { userSegmentId } = resource.root;
-  const { userSegments, isLoadingUserSegments } = useUserSegments(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
-
-  if (isLoadingUserSegments) {
-    return <div>Loading...</div>;
-  }
 
   const currentUserSegment = userSegments?.find((segment) => segment.id === userSegmentId);
 
@@ -727,9 +725,7 @@ const UserSegmentFilter = ({
         <SelectContent>
           {userSegments
             ?.filter((segment) => !segment.isPrivate)
-            .map((segment) => (
-              <SelectItem value={segment.id}>{segment.title}</SelectItem>
-            ))}
+            .map((segment) => <SelectItem value={segment.id}>{segment.title}</SelectItem>)}
         </SelectContent>
       </Select>
 
@@ -884,6 +880,9 @@ const SegmentFilterItem = ({
   connector,
   environmentId,
   userSegment,
+  userSegments,
+  actionClasses,
+  attributeClasses,
   setUserSegment,
   handleAddFilterBelow,
   onCreateGroup,
@@ -923,10 +922,12 @@ const SegmentFilterItem = ({
 
   const RenderFilterModal = () => (
     <AddFilterModal
-      environmentId={environmentId}
       open={addFilterModalOpen}
       setOpen={setAddFilterModalOpen}
       onAddFilter={(filter) => handleAddFilterBelow(resource.id, filter)}
+      actionClasses={actionClasses}
+      attributeClasses={attributeClasses}
+      userSegments={userSegments}
     />
   );
 
@@ -939,6 +940,9 @@ const SegmentFilterItem = ({
             resource={resource as TUserSegmentActionFilter}
             environmentId={environmentId}
             userSegment={userSegment}
+            userSegments={userSegments}
+            actionClasses={actionClasses}
+            attributeClasses={attributeClasses}
             setUserSegment={setUserSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
@@ -960,6 +964,9 @@ const SegmentFilterItem = ({
             resource={resource as TUserSegmentAttributeFilter}
             environmentId={environmentId}
             userSegment={userSegment}
+            userSegments={userSegments}
+            actionClasses={actionClasses}
+            attributeClasses={attributeClasses}
             setUserSegment={setUserSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
@@ -981,6 +988,9 @@ const SegmentFilterItem = ({
             resource={resource as TUserSegmentSegmentFilter}
             environmentId={environmentId}
             userSegment={userSegment}
+            userSegments={userSegments}
+            actionClasses={actionClasses}
+            attributeClasses={attributeClasses}
             setUserSegment={setUserSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
@@ -1001,6 +1011,9 @@ const SegmentFilterItem = ({
             resource={resource as TUserSegmentDeviceFilter}
             environmentId={environmentId}
             userSegment={userSegment}
+            userSegments={userSegments}
+            actionClasses={actionClasses}
+            attributeClasses={attributeClasses}
             setUserSegment={setUserSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}

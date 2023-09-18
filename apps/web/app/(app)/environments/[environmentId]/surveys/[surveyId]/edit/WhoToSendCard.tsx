@@ -165,10 +165,10 @@ export default function WhoToSendCard({
                   open={loadSegmentModalOpen}
                   setOpen={setLoadSegmentModalOpen}
                   surveyId={localSurvey.id}
-                  environmentId={localSurvey.environmentId}
                   step={loadSegmentModalStep}
                   setStep={setLoadSegmentModalStep}
                   userSegment={userSegment}
+                  userSegments={userSegments}
                   setUserSegment={setUserSegment}
                   setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                 />
@@ -181,6 +181,9 @@ export default function WhoToSendCard({
                     group={userSegment.filters}
                     environmentId={environmentId}
                     userSegment={userSegment}
+                    actionClasses={actionClasses}
+                    attributeClasses={attributeClasses}
+                    userSegments={userSegments}
                     setUserSegment={setUserSegment}
                   />
                 </div>
@@ -200,6 +203,9 @@ export default function WhoToSendCard({
                         environmentId={environmentId}
                         userSegment={userSegment}
                         setUserSegment={setUserSegment}
+                        actionClasses={actionClasses}
+                        attributeClasses={attributeClasses}
+                        userSegments={userSegments}
                       />
                     </div>
                   )}

@@ -1,9 +1,7 @@
 "use client";
 
 import { loadNewUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Modal from "@/components/shared/Modal";
-import { useUserSegments } from "@/lib/userSegments/userSegments";
 import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 import { Button } from "@formbricks/ui";
 import toast from "react-hot-toast";
@@ -12,35 +10,29 @@ type LoadSegmentModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   surveyId: string;
-  environmentId: string;
   step: "initial" | "load";
   setStep: (step: "initial" | "load") => void;
   userSegment: TUserSegment;
+  userSegments: TUserSegment[];
   setUserSegment: (userSegment: TUserSegment) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
 };
 
 const SegmentDetails = ({
-  environmentId,
   surveyId,
   setOpen,
   setUserSegment,
   userSegment,
+  userSegments,
   setIsSegmentEditorOpen,
 }: {
-  environmentId: string;
   surveyId: string;
   userSegment: TUserSegment;
+  userSegments: TUserSegment[];
   setUserSegment: (userSegment: TUserSegment) => void;
   setOpen: (open: boolean) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
 }) => {
-  const { userSegments, isLoadingUserSegments } = useUserSegments(environmentId);
-
-  if (isLoadingUserSegments) {
-    return <LoadingSpinner />;
-  }
-
   const handleLoadNewSegment = async (segmentId: string) => {
     try {
       const updatedSurvey = await loadNewUserSegmentAction(surveyId, segmentId);
@@ -100,13 +92,13 @@ const SegmentDetails = ({
 };
 
 const LoadSegmentModal = ({
-  environmentId,
   surveyId,
   open,
   setOpen,
   setStep,
   step,
   userSegment,
+  userSegments,
   setUserSegment,
   setIsSegmentEditorOpen,
 }: LoadSegmentModalProps) => {
@@ -146,11 +138,11 @@ const LoadSegmentModal = ({
 
       {step === "load" && (
         <SegmentDetails
-          environmentId={environmentId}
           surveyId={surveyId}
           setOpen={setOpen}
           setUserSegment={setUserSegment}
           userSegment={userSegment}
+          userSegments={userSegments}
           setIsSegmentEditorOpen={setIsSegmentEditorOpen}
         />
       )}

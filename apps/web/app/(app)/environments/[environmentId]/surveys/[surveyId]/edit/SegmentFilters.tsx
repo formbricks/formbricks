@@ -19,18 +19,28 @@ import { useState } from "react";
 import { produce } from "immer";
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import SegmentFilterItem from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilterItem";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+
+type TSegmentFilterProps = {
+  group: TBaseFilterGroup;
+  environmentId: string;
+  userSegment: TUserSegment;
+  userSegments: TUserSegment[];
+  actionClasses: TActionClass[];
+  attributeClasses: TAttributeClass[];
+  setUserSegment: (userSegment: TUserSegment) => void;
+};
 
 const SegmentFilters = ({
   group,
   environmentId,
   setUserSegment,
   userSegment,
-}: {
-  group: TBaseFilterGroup;
-  environmentId: string;
-  userSegment: TUserSegment;
-  setUserSegment: (userSegment: TUserSegment) => void;
-}) => {
+  actionClasses,
+  attributeClasses,
+  userSegments,
+}: TSegmentFilterProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 
@@ -338,6 +348,9 @@ const SegmentFilters = ({
               resource={resource}
               environmentId={environmentId}
               userSegment={userSegment}
+              userSegments={userSegments}
+              actionClasses={actionClasses}
+              attributeClasses={attributeClasses}
               setUserSegment={setUserSegment}
               handleAddFilterBelow={handleAddFilterBelow}
               onCreateGroup={(filterId: string) => handleCreateGroup(filterId)}
@@ -365,6 +378,9 @@ const SegmentFilters = ({
                     environmentId={environmentId}
                     userSegment={userSegment}
                     setUserSegment={setUserSegment}
+                    actionClasses={actionClasses}
+                    attributeClasses={attributeClasses}
+                    userSegments={userSegments}
                   />
 
                   <div className="mt-4">
@@ -374,7 +390,6 @@ const SegmentFilters = ({
                   </div>
 
                   <AddFilterModal
-                    environmentId={environmentId}
                     open={addFilterModalOpen}
                     setOpen={setAddFilterModalOpen}
                     onAddFilter={(filter) => {
@@ -385,6 +400,9 @@ const SegmentFilters = ({
                         handleAddFilterInGroup(groupId, filter);
                       }
                     }}
+                    actionClasses={actionClasses}
+                    attributeClasses={attributeClasses}
+                    userSegments={userSegments}
                   />
                 </div>
 
