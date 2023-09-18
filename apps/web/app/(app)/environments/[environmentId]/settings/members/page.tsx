@@ -1,6 +1,6 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getAllMembershipsByUserId, getMembershipByUserId } from "@formbricks/lib/services/membership";
+import { getMembershipsByUserId, getMembershipByUserId } from "@formbricks/lib/services/membership";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { Skeleton } from "@formbricks/ui";
 import { getServerSession } from "next-auth";
@@ -41,7 +41,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
   const currentUserMembership =
     session && team ? await getMembershipByUserId(session?.user.id, team.id) : null;
 
-  const allMemberships = session ? await getAllMembershipsByUserId(session.user.id) : [];
+  const allMemberships = session ? await getMembershipsByUserId(session.user.id) : [];
 
   const isDeleteDisabled = allMemberships.length <= 1;
   const currentUserRole = currentUserMembership?.role;

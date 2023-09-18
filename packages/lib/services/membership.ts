@@ -50,7 +50,7 @@ export const getMembershipByUserId = cache(
   }
 );
 
-export const getAllMembershipsByUserId = cache(async (userId: string) => {
+export const getMembershipsByUserId = cache(async (userId: string) => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,

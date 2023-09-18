@@ -12,7 +12,7 @@ import {
 } from "@formbricks/lib/services/invite";
 import {
   deleteMembership,
-  getAllMembershipsByUserId,
+  getMembershipsByUserId,
   getMembershipByUserId,
   transferOwnership,
   updateMembership,
@@ -118,7 +118,7 @@ export const leaveTeamAction = async (teamId: string) => {
     throw new ValidationError("You cannot leave a team you own");
   }
 
-  const memberships = await getAllMembershipsByUserId(session.user.id);
+  const memberships = await getMembershipsByUserId(session.user.id);
   if (!memberships || memberships?.length <= 1) {
     throw new ValidationError("You cannot leave the only team you are a member of");
   }
