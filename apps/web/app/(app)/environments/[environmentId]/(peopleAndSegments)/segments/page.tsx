@@ -5,19 +5,30 @@ import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getUserSegments } from "@formbricks/lib/services/userSegment";
 import CreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/CreateSegmentModal";
 import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTable";
+import { getAttributeClasses } from "@formbricks/lib/services/attributeClass";
+import { getActionClasses } from "@formbricks/lib/services/actionClass";
 
 export default async function SegmentsPage({ params }) {
-  const fetchedSegments = await getUserSegments(params.environmentId);
+  const [userSegments, attributeClasses, actionClasses] = await Promise.all([
+    getUserSegments(params.environmentId),
+    getAttributeClasses(params.environmentId),
+    getActionClasses(params.environmentId),
+  ]);
 
-  if (!fetchedSegments) {
+  if (!userSegments) {
     throw new Error("Failed to fetch segments");
   }
 
-  const segments = fetchedSegments.filter((segment) => !segment.isPrivate);
+  const segments = userSegments.filter((segment) => !segment.isPrivate);
 
   return (
     <>
-      <CreateSegmentModal environmentId={params.environmentId} />
+      <CreateSegmentModal
+        environmentId={params.environmentId}
+        actionClasses={actionClasses}
+        attributeClasses={attributeClasses}
+        userSegments={userSegments}
+      />
       {segments.length === 0 ? (
         <EmptySpaceFiller
           type="table"
@@ -25,7 +36,11 @@ export default async function SegmentsPage({ params }) {
           emptyMessage="Your segments will appear here as soon as you add them ⏲️"
         />
       ) : (
-        <SegmentTable segments={segments} />
+        <SegmentTable
+          userSegments={segments}
+          actionClasses={actionClasses}
+          attributeClasses={attributeClasses}
+        />
       )}
     </>
   );

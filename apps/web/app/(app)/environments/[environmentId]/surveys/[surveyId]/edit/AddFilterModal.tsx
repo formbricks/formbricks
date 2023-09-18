@@ -1,9 +1,8 @@
 "use client";
 
-import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
-import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { useUserSegments } from "@/lib/userSegments/userSegments";
-import { TBaseFilterGroupItem } from "@formbricks/types/v1/userSegment";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
 import { Dialog, DialogContent, Input, TabBar } from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 import { MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
@@ -13,17 +12,22 @@ type TAddFilterModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   onAddFilter: (filter: TBaseFilterGroupItem) => void;
-  environmentId: string;
+  actionClasses: TActionClass[];
+  attributeClasses: TAttributeClass[];
+  userSegments: TUserSegment[];
 };
 
 type TFilterType = "action" | "attribute" | "segment" | "device";
 
-const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilterModalProps) => {
+const AddFilterModal = ({
+  onAddFilter,
+  open,
+  setOpen,
+  actionClasses,
+  attributeClasses,
+  userSegments,
+}: TAddFilterModalProps) => {
   const [activeTabId, setActiveTabId] = useState("actions");
-
-  const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
-  const { eventClasses, isLoadingEventClasses } = useEventClasses(environmentId);
-  const { userSegments, isLoadingUserSegments } = useUserSegments(environmentId);
 
   const [searchValue, setSearchValue] = useState("");
 
@@ -46,14 +50,14 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
   ];
 
   const actionClassesFiltered = useMemo(() => {
-    if (!eventClasses) return [];
+    if (!actionClasses) return [];
 
-    if (!searchValue) return eventClasses;
+    if (!searchValue) return actionClasses;
 
-    return eventClasses.filter((eventClass) =>
+    return actionClasses.filter((eventClass) =>
       eventClass.name.toLowerCase().includes(searchValue.toLowerCase())
     );
-  }, [eventClasses, searchValue]);
+  }, [actionClasses, searchValue]);
 
   const attributeClassesFiltered = useMemo(() => {
     if (!attributeClasses) return [];
@@ -285,7 +289,6 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
           {activeTabId === "actions" && (
             <>
-              {isLoadingEventClasses && <div>Loading...</div>}
               {actionClassesFiltered.map((eventClass) => {
                 return (
                   <div
@@ -306,7 +309,6 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
           {activeTabId === "attributes" && (
             <>
-              {isLoadingAttributeClasses && <div>Loading...</div>}
               {attributeClassesFiltered.map((attributeClass) => {
                 return (
                   <div
@@ -327,7 +329,6 @@ const AddFilterModal = ({ environmentId, onAddFilter, open, setOpen }: TAddFilte
 
           {activeTabId === "segments" && (
             <>
-              {isLoadingUserSegments && <div>Loading...</div>}
               {userSegmentsFiltered
                 ?.filter((segment) => !segment.isPrivate)
                 ?.map((userSegment) => {

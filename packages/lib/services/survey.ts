@@ -9,6 +9,7 @@ import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
 
 export const selectSurvey = {
   id: true,
@@ -124,17 +125,18 @@ export const getSurveyWithAnalytics = cache(
         responseRate,
         numResponses,
       },
-      userSegment: {
-        ...surveyPrismaFields.userSegment,
-        surveys: surveyPrismaFields.userSegment?.surveys.map((survey) => survey.id),
-      },
+      ...(surveyPrismaFields.userSegmentId && {
+        userSegment: {
+          ...surveyPrismaFields.userSegment,
+          surveys: surveyPrismaFields.userSegment?.surveys.map((survey) => survey.id),
+        },
+      }),
     };
 
     try {
       const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
       return survey;
     } catch (error) {
-      console.log(error);
       if (error instanceof z.ZodError) {
         console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
       }
@@ -168,6 +170,12 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null>
   const transformedSurvey = {
     ...surveyPrisma,
     triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+    ...(surveyPrisma.userSegmentId && {
+      userSegment: {
+        ...surveyPrisma.userSegment,
+        surveys: surveyPrisma.userSegment?.surveys.map((survey) => survey.id),
+      },
+    }),
   };
 
   try {
@@ -206,7 +214,14 @@ export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]
       const transformedSurvey = {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+        ...(surveyPrisma.userSegmentId && {
+          userSegment: {
+            ...surveyPrisma.userSegment,
+            surveys: surveyPrisma.userSegment?.surveys.map((survey) => survey.id),
+          },
+        }),
       };
+
       const survey = ZSurvey.parse(transformedSurvey);
       surveys.push(survey);
     }
@@ -247,6 +262,12 @@ export const getSurveysWithAnalytics = cache(
 
         const transformedSurvey = {
           ...surveyPrisma,
+          ...(surveyPrisma.userSegmentId && {
+            userSegment: {
+              ...surveyPrisma.userSegment,
+              surveys: surveyPrisma.userSegment?.surveys.map((survey) => survey.id),
+            },
+          }),
           triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
           analytics: {
             numDisplays,
@@ -254,6 +275,7 @@ export const getSurveysWithAnalytics = cache(
             numResponses: _count.responses,
           },
         };
+
         const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
         surveys.push(survey);
       }
@@ -426,20 +448,56 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     ...survey,
   };
 
+  let prismaRes;
+
+  const userSegmentId = data.userSegmentId;
+  const userSegment = data.userSegment;
+
+  let updatedUserSegment;
+
+  if (userSegmentId && userSegment) {
+    delete data.userSegmentId;
+    delete data.userSegment;
+
+    const parseSegmentFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+
+    if (!parseSegmentFilters.success) {
+      throw new Error("Error parsing user segment");
+    }
+
+    if (userSegment.surveys) {
+      delete userSegment.surveys;
+    }
+
+    try {
+      updatedUserSegment = await prisma.userSegment.update({
+        where: {
+          id: userSegment.id,
+        },
+        data: userSegment,
+      });
+    } catch (err) {
+      console.log({ err });
+      throw new Error("Error updating survey");
+    }
+  }
+
   try {
-    const prismaSurvey = await prisma.survey.update({
+    prismaRes = await prisma.survey.update({
       where: { id: surveyId },
       data,
     });
 
     const modifiedSurvey: TSurvey = {
-      ...prismaSurvey, // Properties from prismaSurvey
+      ...prismaRes, // Properties from prismaSurvey
+      userSegment: updatedSurvey.userSegment, // Include userSegment from updatedSurvey
       triggers: updatedSurvey.triggers, // Include triggers from updatedSurvey
       attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
     };
 
     return modifiedSurvey;
   } catch (error) {
+    console.log({ error });
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

@@ -8,14 +8,16 @@ import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getActionClasses } from "@formbricks/lib/services/actionClass";
 import { getAttributeClasses } from "@formbricks/lib/services/attributeClass";
 import { ErrorComponent } from "@formbricks/ui";
+import { getUserSegments } from "@formbricks/lib/services/userSegment";
 
 export default async function SurveysEditPage({ params }) {
-  const [survey, product, environment, actionClasses, attributeClasses] = await Promise.all([
+  const [survey, product, environment, actionClasses, attributeClasses, userSegments] = await Promise.all([
     getSurveyWithAnalytics(params.surveyId),
     getProductByEnvironmentId(params.environmentId),
     getEnvironment(params.environmentId),
     getActionClasses(params.environmentId),
     getAttributeClasses(params.environmentId),
+    getUserSegments(params.environmentId),
   ]);
 
   if (!survey || !environment || !actionClasses || !attributeClasses || !product) {
@@ -30,6 +32,7 @@ export default async function SurveysEditPage({ params }) {
         environment={environment}
         actionClasses={actionClasses}
         attributeClasses={attributeClasses}
+        userSegments={userSegments}
       />
     </>
   );

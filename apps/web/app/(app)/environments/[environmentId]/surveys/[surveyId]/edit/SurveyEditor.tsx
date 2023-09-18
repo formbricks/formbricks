@@ -15,6 +15,7 @@ import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 import { ErrorComponent } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
+import { TUserSegment } from "@formbricks/types/v1/userSegment";
 
 interface SurveyEditorProps {
   survey: TSurveyWithAnalytics;
@@ -22,6 +23,7 @@ interface SurveyEditorProps {
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  userSegments: TUserSegment[];
 }
 
 export default function SurveyEditor({
@@ -30,7 +32,8 @@ export default function SurveyEditor({
   environment,
   actionClasses,
   attributeClasses,
-}: SurveyEditorProps): JSX.Element {
+  userSegments,
+}: SurveyEditorProps) {
   const router = useRouter();
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -122,6 +125,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
+                userSegments={userSegments}
               />
             )}
           </main>

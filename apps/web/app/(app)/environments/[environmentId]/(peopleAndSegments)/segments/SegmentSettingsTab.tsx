@@ -7,6 +7,8 @@ import {
   updateUserSegmentAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { cn } from "@formbricks/lib/cn";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import {
   TBaseFilterGroupItem,
   TUserSegment,
@@ -22,9 +24,19 @@ type TSegmentSettingsTabProps = {
   environmentId: string;
   setOpen: (open: boolean) => void;
   initialSegment: TUserSegment;
+  userSegments: TUserSegment[];
+  attributeClasses: TAttributeClass[];
+  actionClasses: TActionClass[];
 };
 
-const SegmentSettingsTab = ({ environmentId, initialSegment, setOpen }: TSegmentSettingsTabProps) => {
+const SegmentSettingsTab = ({
+  environmentId,
+  initialSegment,
+  setOpen,
+  actionClasses,
+  attributeClasses,
+  userSegments,
+}: TSegmentSettingsTabProps) => {
   const router = useRouter();
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
@@ -196,12 +208,14 @@ const SegmentSettingsTab = ({ environmentId, initialSegment, setOpen }: TSegment
               </div>
 
               <AddFilterModal
-                environmentId={environmentId}
                 onAddFilter={(filter) => {
                   handleAddFilterInGroup(filter);
                 }}
                 open={addFilterModalOpen}
                 setOpen={setAddFilterModalOpen}
+                actionClasses={actionClasses}
+                attributeClasses={attributeClasses}
+                userSegments={userSegments}
               />
             </div>
 

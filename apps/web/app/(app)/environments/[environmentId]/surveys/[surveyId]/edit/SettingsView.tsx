@@ -7,6 +7,7 @@ import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TUserSegment } from "@formbricks/types/v1/userSegment";
 
 interface SettingsViewProps {
   environment: TEnvironment;
@@ -14,6 +15,7 @@ interface SettingsViewProps {
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  userSegments: TUserSegment[];
 }
 
 export default function SettingsView({
@@ -22,6 +24,7 @@ export default function SettingsView({
   setLocalSurvey,
   actionClasses,
   attributeClasses,
+  userSegments,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -32,6 +35,8 @@ export default function SettingsView({
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
         attributeClasses={attributeClasses}
+        actionClasses={actionClasses}
+        userSegments={userSegments}
       />
 
       <WhenToSendCard

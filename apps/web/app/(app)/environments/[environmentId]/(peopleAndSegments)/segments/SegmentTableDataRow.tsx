@@ -1,6 +1,8 @@
 "use client";
 
 import EditSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/EditSegmentModal";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { format, formatDistanceToNow } from "date-fns";
@@ -11,9 +13,17 @@ type TSegmentTableDataRowProps = {
     activeSurveys: string[];
     inactiveSurveys: string[];
   };
+  userSegments: TUserSegment[];
+  attributeClasses: TAttributeClass[];
+  actionClasses: TActionClass[];
 };
 
-const SegmentTableDataRow = ({ currentSegment }: TSegmentTableDataRowProps) => {
+const SegmentTableDataRow = ({
+  currentSegment,
+  actionClasses,
+  attributeClasses,
+  userSegments,
+}: TSegmentTableDataRowProps) => {
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
 
@@ -24,6 +34,9 @@ const SegmentTableDataRow = ({ currentSegment }: TSegmentTableDataRowProps) => {
         open={isEditSegmentModalOpen}
         setOpen={setIsEditSegmentModalOpen}
         currentSegment={currentSegment}
+        actionClasses={actionClasses}
+        attributeClasses={attributeClasses}
+        userSegments={userSegments}
       />
       <div
         key={id}

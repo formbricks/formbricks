@@ -1,11 +1,15 @@
 import SegmentTableDataRowContainer from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTableDataRowContainer";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import React from "react";
 
 type TSegmentTableProps = {
-  segments: TUserSegment[];
+  userSegments: TUserSegment[];
+  attributeClasses: TAttributeClass[];
+  actionClasses: TActionClass[];
 };
-const SegmentTable = ({ segments }: TSegmentTableProps) => {
+const SegmentTable = ({ userSegments, actionClasses, attributeClasses }: TSegmentTableProps) => {
   return (
     <div className="rounded-lg border border-slate-200">
       <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
@@ -14,8 +18,13 @@ const SegmentTable = ({ segments }: TSegmentTableProps) => {
         <div className="col-span-1 hidden text-center sm:block">Updated</div>
         <div className="col-span-1 hidden text-center sm:block">Created</div>
       </div>
-      {segments.map((segment) => (
-        <SegmentTableDataRowContainer currentSegment={segment} />
+      {userSegments.map((segment) => (
+        <SegmentTableDataRowContainer
+          currentSegment={segment}
+          userSegments={userSegments}
+          actionClasses={actionClasses}
+          attributeClasses={attributeClasses}
+        />
       ))}
     </div>
   );

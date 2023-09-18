@@ -4,6 +4,8 @@ import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[su
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Modal from "@/components/shared/Modal";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
 import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/20/solid";
@@ -14,8 +16,16 @@ import toast from "react-hot-toast";
 
 type TCreateSegmentModalProps = {
   environmentId: string;
+  userSegments: TUserSegment[];
+  attributeClasses: TAttributeClass[];
+  actionClasses: TActionClass[];
 };
-const CreateSegmentModal = ({ environmentId }: TCreateSegmentModalProps) => {
+const CreateSegmentModal = ({
+  environmentId,
+  actionClasses,
+  attributeClasses,
+  userSegments,
+}: TCreateSegmentModalProps) => {
   const router = useRouter();
   const initialSegmentState = {
     title: "",
@@ -172,12 +182,14 @@ const CreateSegmentModal = ({ environmentId }: TCreateSegmentModalProps) => {
               </div>
 
               <AddFilterModal
-                environmentId={environmentId}
                 onAddFilter={(filter) => {
                   handleAddFilterInGroup(filter);
                 }}
                 open={addFilterModalOpen}
                 setOpen={setAddFilterModalOpen}
+                actionClasses={actionClasses}
+                attributeClasses={attributeClasses}
+                userSegments={userSegments}
               />
             </div>
 

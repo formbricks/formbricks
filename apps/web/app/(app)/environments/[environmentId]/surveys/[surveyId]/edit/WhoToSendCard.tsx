@@ -16,14 +16,26 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { Badge, Button } from "@formbricks/ui";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 interface WhoToSendCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
+  actionClasses: TActionClass[];
+  attributeClasses: TAttributeClass[];
+  userSegments: TUserSegment[];
 }
 
-export default function WhoToSendCard({ localSurvey, setLocalSurvey, environmentId }: WhoToSendCardProps) {
+export default function WhoToSendCard({
+  localSurvey,
+  setLocalSurvey,
+  environmentId,
+  actionClasses,
+  attributeClasses,
+  userSegments,
+}: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
   const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment ?? null);
 
@@ -47,8 +59,6 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, environment
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setLocalSurvey, userSegment]);
-
-  console.log("userSegment", localSurvey.userSegment);
 
   const isSegmentUsedInOtherSurveys = useMemo(
     () => (localSurvey?.userSegment ? localSurvey.userSegment?.surveys?.length > 1 : false),
@@ -212,12 +222,14 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, environment
 
                   <>
                     <AddFilterModal
-                      environmentId={environmentId}
                       onAddFilter={(filter) => {
                         handleAddFilterInGroup(filter);
                       }}
                       open={addFilterModalOpen}
                       setOpen={setAddFilterModalOpen}
+                      actionClasses={actionClasses}
+                      attributeClasses={attributeClasses}
+                      userSegments={userSegments}
                     />
                     {!!userSegment && (
                       <SaveAsNewSegmentModal
