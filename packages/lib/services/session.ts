@@ -20,6 +20,7 @@ const select = {
   updatedAt: true,
   expiresAt: true,
   personId: true,
+  deviceType: true,
 };
 
 const oneHour = 1000 * 60 * 60;

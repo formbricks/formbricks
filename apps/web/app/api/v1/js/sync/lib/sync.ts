@@ -102,7 +102,7 @@ export const getUpdatedState = async (
 
   // get/create rest of the state
   const [surveys, noCodeActionClasses, product] = await Promise.all([
-    getSurveysCached(environmentId, person, sessionId!),
+    getSurveysCached(environmentId, person, session.id),
     getActionClassesCached(environmentId),
     getProductByEnvironmentIdCached(environmentId),
   ]);
