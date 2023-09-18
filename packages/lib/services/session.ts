@@ -2,10 +2,17 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { ZId } from "@formbricks/types/v1/environment";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TSession, TSessionWithActions } from "@formbricks/types/v1/sessions";
 import { Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+
+const halfHourInSeconds = 60 * 30;
+
+const getSessionCacheKey = (sessionId: string): string[] => [sessionId];
 
 const select = {
   id: true,
@@ -18,6 +25,7 @@ const select = {
 const oneHour = 1000 * 60 * 60;
 
 export const getSession = async (sessionId: string): Promise<TSession | null> => {
+  validateInputs([sessionId, ZId]);
   try {
     const session = await prisma.session.findUnique({
       where: {
@@ -36,9 +44,22 @@ export const getSession = async (sessionId: string): Promise<TSession | null> =>
   }
 };
 
+export const getSessionCached = (sessionId: string) =>
+  unstable_cache(
+    async () => {
+      return await getSession(sessionId);
+    },
+    getSessionCacheKey(sessionId),
+    {
+      tags: getSessionCacheKey(sessionId),
+      revalidate: halfHourInSeconds, // 30 minutes
+    }
+  )();
+
 export const getSessionWithActionsOfPerson = async (
   personId: string
 ): Promise<TSessionWithActions[] | null> => {
+  validateInputs([personId, ZId]);
   try {
     const sessionsWithActionsForPerson = await prisma.session.findMany({
       where: {
@@ -73,6 +94,7 @@ export const getSessionWithActionsOfPerson = async (
 };
 
 export const getSessionCount = cache(async (personId: string): Promise<number> => {
+  validateInputs([personId, ZId]);
   try {
     const sessionCount = await prisma.session.count({
       where: {
@@ -89,6 +111,7 @@ export const getSessionCount = cache(async (personId: string): Promise<number> =
 });
 
 export const createSession = async (personId: string): Promise<TSession> => {
+  validateInputs([personId, ZId]);
   try {
     const session = await prisma.session.create({
       data: {
@@ -102,6 +125,11 @@ export const createSession = async (personId: string): Promise<TSession> => {
       select,
     });
 
+    if (session) {
+      // revalidate session cache
+      revalidateTag(session.id);
+    }
+
     return session;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -113,6 +141,7 @@ export const createSession = async (personId: string): Promise<TSession> => {
 };
 
 export const extendSession = async (sessionId: string): Promise<TSession> => {
+  validateInputs([sessionId, ZId]);
   try {
     const session = await prisma.session.update({
       where: {
@@ -123,6 +152,9 @@ export const extendSession = async (sessionId: string): Promise<TSession> => {
       },
       select,
     });
+
+    // revalidate session cache
+    revalidateTag(sessionId);
 
     return session;
   } catch (error) {

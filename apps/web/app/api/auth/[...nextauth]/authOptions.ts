@@ -1,6 +1,6 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
-import { verifyToken } from "@/lib/jwt";
+import { verifyToken } from "@formbricks/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import type { IdentityProvider } from "@prisma/client";
@@ -83,6 +83,9 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials, _req) {
         let user;
         try {
+          if (!credentials?.token) {
+            throw new Error("Token not found");
+          }
           const { id } = await verifyToken(credentials?.token);
           user = await prisma.user.findUnique({
             where: {

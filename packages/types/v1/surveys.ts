@@ -14,6 +14,7 @@ export const ZSurveyClosedMessage = z
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
   })
+  .nullable()
   .optional();
 
 export const ZSurveyVerifyEmail = z
@@ -27,7 +28,7 @@ export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
-export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
+export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
@@ -136,6 +137,7 @@ const ZSurveyQuestionBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
+  isDraft: z.boolean().optional(),
 });
 
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
@@ -238,7 +240,7 @@ export const ZSurvey = z.object({
   name: z.string(),
   type: z.enum(["web", "email", "link", "mobile"]),
   environmentId: z.string(),
-  status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
+  status: z.enum(["draft", "inProgress", "paused", "completed"]),
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),

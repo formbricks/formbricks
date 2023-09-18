@@ -1,5 +1,4 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
 import {
   TSurvey,
   TSurveyInput,
@@ -8,66 +7,18 @@ import {
   ZSurveyWithAnalytics,
   TSurveyAttributeFilter,
 } from "@formbricks/types/v1/surveys";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { Prisma as prismaClient } from "@prisma/client/";
 import "server-only";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 
-export const selectSurveyWithAnalytics = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  name: true,
-  type: true,
-  environmentId: true,
-  status: true,
-  questions: true,
-  thankYouCard: true,
-  displayOption: true,
-  recontactDays: true,
-  autoClose: true,
-  closeOnDate: true,
-  delay: true,
-  autoComplete: true,
-  redirectUrl: true,
-  triggers: {
-    select: {
-      eventClass: {
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          environmentId: true,
-          name: true,
-          description: true,
-          type: true,
-          noCodeConfig: true,
-        },
-      },
-    },
-  },
-  attributeFilters: {
-    select: {
-      id: true,
-      attributeClassId: true,
-      condition: true,
-      value: true,
-    },
-  },
-  displays: {
-    select: {
-      status: true,
-      id: true,
-    },
-  },
-  _count: {
-    select: {
-      responses: true,
-    },
-  },
-};
+const getSurveysCacheTag = (environmentId: string): string => `env-${environmentId}-surveys`;
 
 export const selectSurvey = {
   id: true,
@@ -87,6 +38,7 @@ export const selectSurvey = {
   autoComplete: true,
   verifyEmail: true,
   redirectUrl: true,
+  surveyClosedMessage: true,
   triggers: {
     select: {
       eventClass: {
@@ -113,12 +65,29 @@ export const selectSurvey = {
   },
 };
 
+export const selectSurveyWithAnalytics = {
+  ...selectSurvey,
+  displays: {
+    select: {
+      status: true,
+      id: true,
+    },
+  },
+  _count: {
+    select: {
+      responses: true,
+    },
+  },
+};
+
 export const preloadSurveyWithAnalytics = (surveyId: string) => {
+  validateInputs([surveyId, ZId]);
   void getSurveyWithAnalytics(surveyId);
 };
 
 export const getSurveyWithAnalytics = cache(
   async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
+    validateInputs([surveyId, ZId]);
     let surveyPrisma;
     try {
       surveyPrisma = await prisma.survey.findUnique({
@@ -170,6 +139,7 @@ export const getSurveyWithAnalytics = cache(
 );
 
 export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null> => {
+  validateInputs([surveyId, ZId]);
   let surveyPrisma;
   try {
     surveyPrisma = await prisma.survey.findUnique({
@@ -207,6 +177,7 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null>
 });
 
 export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]> => {
+  validateInputs([environmentId, ZId]);
   let surveysPrisma;
   try {
     surveysPrisma = await prisma.survey.findMany({
@@ -245,6 +216,7 @@ export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]
 
 export const getSurveysWithAnalytics = cache(
   async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
+    validateInputs([environmentId, ZId]);
     let surveysPrisma;
     try {
       surveysPrisma = await prisma.survey.findMany({
@@ -290,7 +262,8 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyInput): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+  const surveyId = updatedSurvey.id;
   let data: any = {};
   let survey: Partial<any> = { ...updatedSurvey };
 
@@ -326,10 +299,7 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyInput
     delete survey.recontactDays;
     // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
     if (!survey.surveyClosedMessage) {
-      survey.surveyClosedMessage = prismaClient.JsonNull;
-    }
-    if (!survey.verifyEmail) {
-      survey.verifyEmail = prismaClient.JsonNull;
+      survey.surveyClosedMessage = null;
     }
   }
 
@@ -459,9 +429,11 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyInput
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: updatedSurvey.triggers ?? [], // Include triggers from updatedSurvey
-      attributeFilters: updatedSurvey.attributeFilters ?? [], // Include attributeFilters from updatedSurvey
+      triggers: updatedSurvey.triggers, // Include triggers from updatedSurvey
+      attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
     };
+
+    revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
 
     return modifiedSurvey;
   } catch (error) {
@@ -474,16 +446,19 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyInput
 }
 
 export async function deleteSurvey(surveyId: string) {
+  validateInputs([surveyId, ZId]);
   const deletedSurvey = await prisma.survey.delete({
     where: {
       id: surveyId,
     },
     select: selectSurvey,
   });
+  revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
   return deletedSurvey;
 }
 
 export async function createSurvey(environmentId: string, surveyBody: any) {
+  validateInputs([environmentId, ZId]);
   const survey = await prisma.survey.create({
     data: {
       ...surveyBody,
@@ -495,6 +470,7 @@ export async function createSurvey(environmentId: string, surveyBody: any) {
     },
   });
   captureTelemetry("survey created");
+  revalidateTag(getSurveysCacheTag(environmentId));
 
   return survey;
 }

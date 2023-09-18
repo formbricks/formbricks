@@ -24,6 +24,8 @@ const ZResponseNote = z.object({
   id: z.string(),
   text: z.string(),
   user: ZResponseNoteUser,
+  isResolved: z.boolean(),
+  isEdited: z.boolean(),
 });
 
 export type TResponseNote = z.infer<typeof ZResponseNote>;
@@ -95,3 +97,10 @@ export const ZResponseWithSurvey = ZResponse.extend({
 });
 
 export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
+
+export const ZResponseUpdate = z.object({
+  finished: z.boolean(),
+  data: ZResponseData,
+});
+
+export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;

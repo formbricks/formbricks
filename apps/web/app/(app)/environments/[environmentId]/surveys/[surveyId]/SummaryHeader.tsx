@@ -31,8 +31,9 @@ interface SummaryHeaderProps {
   surveyId: string;
   environmentId: string;
   survey: TSurvey;
+  surveyBaseUrl: string;
 }
-const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) => {
+const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: SummaryHeaderProps) => {
   const router = useRouter();
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
@@ -56,7 +57,7 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && <LinkSurveyShareButton survey={survey} />}
+        {survey.type === "link" && <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} />}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environmentId={environmentId} surveyId={surveyId} />
         ) : null}
@@ -78,7 +79,11 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
               <>
-                <LinkSurveyShareButton className="flex w-full justify-center p-1" survey={survey} />
+                <LinkSurveyShareButton
+                  className="flex w-full justify-center p-1"
+                  survey={survey}
+                  surveyBaseUrl={surveyBaseUrl}
+                />
                 <DropdownMenuSeparator />
               </>
             )}
@@ -94,7 +99,6 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}
-                        {survey.status === "archived" && "Archived"}
                       </span>
                     </div>
                   </DropdownMenuSubTrigger>
@@ -155,7 +159,7 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage environmentId={environmentId} survey={survey} />
+      <SuccessMessage environmentId={environmentId} survey={survey} surveyBaseUrl={surveyBaseUrl} />
     </div>
   );
 };

@@ -1,10 +1,10 @@
 import { responses } from "@/lib/api/response";
 import { createResponse, getEnvironmentResponses } from "@formbricks/lib/services/response";
-import { DatabaseError } from "@formbricks/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { NextResponse } from "next/server";
 import { TResponse, ZResponseInput } from "@formbricks/types/v1/responses";
 import { transformErrorToDetails } from "@/lib/api/validator";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 
 export async function GET(request: Request) {
   try {

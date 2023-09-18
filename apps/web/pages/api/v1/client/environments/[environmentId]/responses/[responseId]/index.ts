@@ -93,6 +93,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 name: true,
               },
             },
+            isResolved: true,
+            isEdited: true,
           },
         },
         tags: {
@@ -112,10 +114,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
 
     const transformPrismaPerson = (person): TPerson => {
-      const attributes = person.attributes.reduce((acc, attr) => {
-        acc[attr.attributeClass.name] = attr.value;
-        return acc;
-      }, {} as Record<string, string | number>);
+      const attributes = person.attributes.reduce(
+        (acc, attr) => {
+          acc[attr.attributeClass.name] = attr.value;
+          return acc;
+        },
+        {} as Record<string, string | number>
+      );
 
       return {
         id: person.id,

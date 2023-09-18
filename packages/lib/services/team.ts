@@ -1,6 +1,7 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
-import { TTeam } from "@formbricks/types/v1/teams";
+import { ZId } from "@formbricks/types/v1/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { TTeam, TTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
@@ -22,6 +23,7 @@ import {
   populateEnvironment,
   updateEnvironmentArgs,
 } from "../utils/createDemoProductHelpers";
+import { validateInputs } from "../utils/validate";
 
 export const select = {
   id: true,
@@ -32,7 +34,31 @@ export const select = {
   stripeCustomerId: true,
 };
 
+export const getTeamsByUserId = cache(async (userId: string): Promise<TTeam[]> => {
+  try {
+    const teams = await prisma.team.findMany({
+      where: {
+        memberships: {
+          some: {
+            userId,
+          },
+        },
+      },
+      select,
+    });
+
+    return teams;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
+
 export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
+  validateInputs([environmentId, ZId]);
   try {
     const team = await prisma.team.findFirst({
       where: {
@@ -59,7 +85,27 @@ export const getTeamByEnvironmentId = cache(async (environmentId: string): Promi
   }
 });
 
+export const updateTeam = async (teamId: string, data: TTeamUpdateInput) => {
+  try {
+    const updatedTeam = await prisma.team.update({
+      where: {
+        id: teamId,
+      },
+      data,
+    });
+
+    return updatedTeam;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+      throw new ResourceNotFoundError("Team", teamId);
+    } else {
+      throw error; // Re-throw any other errors
+    }
+  }
+};
+
 export const deleteTeam = async (teamId: string) => {
+  validateInputs([teamId, ZId]);
   try {
     await prisma.team.delete({
       where: {
@@ -76,6 +122,7 @@ export const deleteTeam = async (teamId: string) => {
 };
 
 export const createDemoProduct = cache(async (teamId: string) => {
+  validateInputs([teamId, ZId]);
   const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({
     include: {
       environments: true,

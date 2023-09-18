@@ -70,6 +70,7 @@ export { Switch } from "./components/Switch";
 export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/Tooltip";
 export { AddVariablesDropdown, Editor } from "./components/editor";
+export { Skeleton } from "./components/Skeleton";
 
 /* Icons */
 export { AngryBirdRage2Icon } from "./components/icons/AngryBirdRage2Icon";
