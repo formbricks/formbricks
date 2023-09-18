@@ -124,6 +124,8 @@ model ResponseNote {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   text       String
+  isResolved Boolean  @default(false)
+  isEdited   Boolean  @default(false)
 }
 
 model Tag {
