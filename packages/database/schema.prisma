@@ -28,12 +28,18 @@ enum PipelineTriggers {
   responseFinished
 }
 
+enum WehbhookSource {
+  user
+  zapier
+}
+
 model Webhook {
   id            String             @id @default(cuid())
   name          String?
   createdAt     DateTime           @default(now()) @map(name: "created_at")
   updatedAt     DateTime           @updatedAt @map(name: "updated_at")
   url           String
+  source        WehbhookSource     @default(user)
   environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   triggers      PipelineTriggers[]
@@ -118,6 +124,8 @@ model ResponseNote {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   text       String
+  isResolved Boolean  @default(false)
+  isEdited   Boolean  @default(false)
 }
 
 model Tag {
@@ -146,7 +154,6 @@ enum SurveyStatus {
   inProgress
   paused
   completed
-  archived
 }
 
 enum DisplayStatus {

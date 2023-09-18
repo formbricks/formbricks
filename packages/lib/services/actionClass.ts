@@ -3,10 +3,25 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
-import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+
+const halfHourInSeconds = 60 * 30;
+
+export const getActionClassCacheTag = (name: string, environmentId: string): string =>
+  `env-${environmentId}-actionClass-${name}`;
+const getActionClassCacheKey = (name: string, environmentId: string): string[] => [
+  getActionClassCacheTag(name, environmentId),
+];
+
+const getActionClassesCacheTag = (environmentId: string): string => `env-${environmentId}-actionClasses`;
+const getActionClassesCacheKey = (environmentId: string): string[] => [
+  getActionClassesCacheTag(environmentId),
+];
+
 const select = {
   id: true,
   createdAt: true,
@@ -37,6 +52,18 @@ export const getActionClasses = cache(async (environmentId: string): Promise<TAc
   }
 });
 
+export const getActionClassesCached = (environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await getActionClasses(environmentId);
+    },
+    getActionClassesCacheKey(environmentId),
+    {
+      tags: getActionClassesCacheKey(environmentId),
+      revalidate: halfHourInSeconds,
+    }
+  )();
+
 export const deleteActionClass = async (
   environmentId: string,
   actionClassId: string
@@ -50,6 +77,9 @@ export const deleteActionClass = async (
       select,
     });
     if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
+
+    // revalidate cache
+    revalidateTag(getActionClassesCacheTag(environmentId));
 
     return result;
   } catch (error) {
@@ -77,6 +107,10 @@ export const createActionClass = async (
       },
       select,
     });
+
+    // revalidate cache
+    revalidateTag(getActionClassesCacheTag(environmentId));
+
     return result;
   } catch (error) {
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
@@ -104,8 +138,30 @@ export const updateActionClass = async (
       },
       select,
     });
+
+    // revalidate cache
+    revalidateTag(getActionClassCacheTag(result.name, environmentId));
+    revalidateTag(getActionClassesCacheTag(environmentId));
+
     return result;
   } catch (error) {
     throw new DatabaseError(`Database error when updating an action for environment ${environmentId}`);
   }
 };
+
+export const getActionClassCached = async (name: string, environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await prisma.eventClass.findFirst({
+        where: {
+          name,
+          environmentId,
+        },
+      });
+    },
+    getActionClassCacheKey(name, environmentId),
+    {
+      tags: getActionClassCacheKey(name, environmentId),
+      revalidate: halfHourInSeconds,
+    }
+  )();

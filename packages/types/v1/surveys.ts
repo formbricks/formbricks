@@ -241,7 +241,7 @@ export const ZSurvey = z.object({
   name: z.string(),
   type: z.enum(["web", "email", "link", "mobile"]),
   environmentId: z.string(),
-  status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
+  status: z.enum(["draft", "inProgress", "paused", "completed"]),
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),

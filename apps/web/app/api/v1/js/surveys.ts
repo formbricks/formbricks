@@ -4,6 +4,29 @@ import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { evaluateSegment } from "@formbricks/lib/services/userSegment";
 import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
+import { unstable_cache } from "next/cache";
+
+const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
+  `env-${environmentId}-surveys`,
+  `env-${environmentId}-product`,
+  personId,
+];
+
+const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
+  `env-${environmentId}-person-${personId}-syncSurveys`,
+];
+
+export const getSurveysCached = (environmentId: string, person: TPerson, sessionId: string) =>
+  unstable_cache(
+    async () => {
+      return await getSurveys(environmentId, person, sessionId);
+    },
+    getSurveysCacheKey(environmentId, person.id),
+    {
+      tags: getSurveysCacheTags(environmentId, person.id),
+      revalidate: 30 * 60,
+    }
+  )();
 
 export const getSurveys = async (
   environmentId: string,

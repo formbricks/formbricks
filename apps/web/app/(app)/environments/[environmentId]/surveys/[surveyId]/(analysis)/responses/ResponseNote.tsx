@@ -1,16 +1,20 @@
 "use client";
 
-import { updateResponseNoteAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
+import {
+  resolveResponseNoteAction,
+  updateResponseNoteAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 import { useProfile } from "@/lib/profile";
 import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
+import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/v1/responses";
-import { Button } from "@formbricks/ui";
-import { MinusIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
-import { Maximize2Icon } from "lucide-react";
+import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ResponseNotesProps {
@@ -35,6 +39,7 @@ export default function ResponseNotes({
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
+  const [isTextAreaOpen, setIsTextAreaOpen] = useState(true);
   const [noteId, setNoteId] = useState("");
   const divRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +57,22 @@ export default function ResponseNotes({
     }
   };
 
+  const handleResolveNote = (note: TResponseNote) => {
+    try {
+      resolveResponseNoteAction(note.id);
+      // when this was the last note, close the notes panel
+      if (unresolvedNotes.length === 1) {
+        setIsOpen(false);
+      }
+      router.refresh();
+    } catch (e) {
+      toast.error("An error occurred resolving a note");
+      setIsUpdatingNote(false);
+    }
+  };
+
   const handleEditPencil = (note: TResponseNote) => {
+    setIsTextAreaOpen(true);
     setNoteText(note.text);
     setIsUpdatingNote(true);
     setNoteId(note.id);
@@ -62,7 +82,7 @@ export default function ResponseNotes({
     e.preventDefault();
     setIsUpdatingNote(true);
     try {
-      await updateResponseNoteAction(responseId, noteId, noteText);
+      await updateResponseNoteAction(noteId, noteText);
       router.refresh();
       setIsUpdatingNote(false);
       setNoteText("");
@@ -78,15 +98,17 @@ export default function ResponseNotes({
     }
   }, [notes]);
 
+  const unresolvedNotes = useMemo(() => notes.filter((note) => !note.isResolved), [notes]);
+
   return (
     <div
       className={clsx(
         "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
-        !isOpen && notes.length && "group/hint cursor-pointer bg-white hover:-right-3",
-        !isOpen && !notes.length && "cursor-pointer bg-slate-50",
+        !isOpen && unresolvedNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
+        !isOpen && !unresolvedNotes.length && "cursor-pointer bg-slate-50",
         isOpen
           ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
-          : notes.length
+          : unresolvedNotes.length
           ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
           : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
       )}
@@ -98,9 +120,9 @@ export default function ResponseNotes({
           <div
             className={clsx(
               "space-y-2 rounded-t-lg px-2 pb-2 pt-2",
-              notes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
+              unresolvedNotes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
             )}>
-            {!notes.length ? (
+            {!unresolvedNotes.length ? (
               <div className="flex items-center justify-end">
                 <div className="group flex items-center">
                   <h3 className="float-left ml-4 pb-1 text-sm text-slate-600">Note</h3>
@@ -112,7 +134,7 @@ export default function ResponseNotes({
               </div>
             )}
           </div>
-          {!notes.length ? (
+          {!unresolvedNotes.length ? (
             <div className="flex  flex-1 items-center justify-end pr-3">
               <span>
                 <PlusIcon className=" h-5 w-5 text-slate-400" />
@@ -125,20 +147,20 @@ export default function ResponseNotes({
           <div className="rounded-t-lg bg-amber-50 px-4 pb-3 pt-4">
             <div className="flex items-center justify-between">
               <div className="group flex items-center">
-                <h3 className="pb-1 text-sm text-slate-500">Note</h3>
+                <h3 className="pb-1 text-sm text-amber-500">Note</h3>
               </div>
               <button
                 className="h-6 w-6 cursor-pointer"
                 onClick={() => {
                   setIsOpen(!isOpen);
                 }}>
-                <MinusIcon className="h-5 w-5 text-amber-500 hover:text-amber-600" />
+                <Minimize2Icon className="h-5 w-5 text-amber-500 hover:text-amber-600" />
               </button>
             </div>
           </div>
           <div className="flex-1 overflow-auto px-4 pt-2" ref={divRef}>
-            {notes.map((note) => (
-              <div className="mb-3" key={note.id}>
+            {unresolvedNotes.map((note) => (
+              <div className="group/notetext mb-3" key={note.id}>
                 <span className="block font-semibold text-slate-700">
                   {note.user.name}
                   <time
@@ -146,25 +168,62 @@ export default function ResponseNotes({
                     dateTime={timeSince(note.updatedAt.toISOString())}>
                     {timeSince(note.updatedAt.toISOString())}
                   </time>
+                  {note.isEdited && (
+                    <span className="ml-1 text-[12px] font-normal text-slate-500">{"(edited)"}</span>
+                  )}
                 </span>
-                <div className="group/notetext flex items-center">
-                  <span className="block pr-1 text-slate-700">{note.text}</span>
+                <div className="flex items-center">
+                  <span className="block text-slate-700">{note.text}</span>
                   {profile.id === note.user.id && (
-                    <button onClick={() => handleEditPencil(note)}>
-                      <PencilIcon className=" h-3 w-3 text-gray-500 opacity-0 group-hover/notetext:opacity-100" />
+                    <button
+                      className="ml-auto hidden group-hover/notetext:block"
+                      onClick={() => {
+                        handleEditPencil(note);
+                      }}>
+                      <PencilIcon className="h-3 w-3 text-gray-500" />
                     </button>
                   )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="ml-2 hidden group-hover/notetext:block"
+                          onClick={() => {
+                            handleResolveNote(note);
+                          }}>
+                          <CheckIcon className="h-4 w-4 text-gray-500" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
+                        <span className="text-slate-700">Resolve</span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             ))}
           </div>
-          <div className="h-[120px]">
-            <div className={clsx("absolute bottom-0 w-full px-3 pb-3", !notes.length && "absolute bottom-0")}>
+          <div
+            className={cn(
+              "h-[120px] transition-all duration-300",
+              !isTextAreaOpen && "pointer-events-none h-14"
+            )}>
+            <div
+              className={clsx(
+                "absolute bottom-0 w-full px-3 pb-3",
+                !unresolvedNotes.length && "absolute bottom-0"
+              )}>
               <form onSubmit={isUpdatingNote ? handleNoteUpdate : handleNoteSubmission}>
                 <div className="mt-4">
                   <textarea
                     rows={2}
-                    className="block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"
+                    className={cn(
+                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm  focus:border-slate-500 focus:ring-0 sm:text-sm",
+                      !isTextAreaOpen && "scale-y-0 transition-all duration-1000",
+                      !isTextAreaOpen && "translate-y-8 transition-all duration-300",
+                      isTextAreaOpen && "scale-y-1 transition-all duration-1000",
+                      isTextAreaOpen && "translate-y-0 transition-all duration-300"
+                    )}
                     onChange={(e) => setNoteText(e.target.value)}
                     value={noteText}
                     autoFocus
@@ -178,10 +237,22 @@ export default function ResponseNotes({
                     }}
                     required></textarea>
                 </div>
-                <div className="mt-2 flex w-full justify-end">
-                  <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
-                    {isUpdatingNote ? "Save" : "Send"}
+                <div className="pointer-events-auto z-10 mt-2 flex w-full items-center justify-end">
+                  <Button
+                    variant="minimal"
+                    type="button"
+                    size="sm"
+                    className={cn("mr-auto duration-300 ")}
+                    onClick={() => {
+                      setIsTextAreaOpen(!isTextAreaOpen);
+                    }}>
+                    {isTextAreaOpen ? "Hide" : "Show"}
                   </Button>
+                  {isTextAreaOpen && (
+                    <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
+                      {isUpdatingNote ? "Save" : "Send"}
+                    </Button>
+                  )}
                 </div>
               </form>
             </div>

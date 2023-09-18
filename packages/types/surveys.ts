@@ -25,7 +25,7 @@ export interface Survey {
   redirectUrl: string | null;
   type: "web" | "email" | "link" | "mobile";
   environmentId: string;
-  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  status: "draft" | "inProgress" | "paused" | "completed";
   recontactDays: number | null;
   questions: Question[];
   thankYouCard: ThankYouCard;
@@ -59,6 +59,6 @@ export interface SurveyNotificationData {
   responseCompletedLength: number;
   latestResponse: any;
   questions: Question[];
-  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  status: "draft" | "inProgress" | "paused" | "completed";
   name: String;
 }

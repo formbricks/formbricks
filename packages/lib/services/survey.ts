@@ -5,11 +5,14 @@ import { Prisma } from "@prisma/client";
 import { TSurveyAttributeFilter } from "@formbricks/types/v1/surveys";
 import { cache } from "react";
 import "server-only";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
+
+const getSurveysCacheTag = (environmentId: string): string => `env-${environmentId}-surveys`;
 
 export const selectSurvey = {
   id: true,
@@ -495,6 +498,8 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
     };
 
+    revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
+
     return modifiedSurvey;
   } catch (error) {
     console.log({ error });
@@ -514,6 +519,7 @@ export async function deleteSurvey(surveyId: string) {
     },
     select: selectSurvey,
   });
+  revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
   return deletedSurvey;
 }
 
@@ -530,6 +536,7 @@ export async function createSurvey(environmentId: string, surveyBody: any) {
     },
   });
   captureTelemetry("survey created");
+  revalidateTag(getSurveysCacheTag(environmentId));
 
   return survey;
 }

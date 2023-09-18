@@ -41,7 +41,7 @@ export default function ModalWithTabs({
     <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={closeOnOutsideClick}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
-          <div className="flex items-center justify-between p-6">
+          <div className="mr-20 flex items-center justify-between truncate p-6">
             <div className="flex items-center space-x-2">
               {icon && <div className="mr-1.5 h-6 w-6 text-slate-500">{icon}</div>}
               <div>
