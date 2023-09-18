@@ -7,7 +7,7 @@ import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 export default function FeedbackBoxPage() {
   return (
     <Layout
-      title="Feedback Box"
+      title="Feedback Box with Formbricks"
       description="Open a direct channel to your users by allowing them to share feedback with your team.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
