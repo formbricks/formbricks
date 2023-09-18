@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
     "dev": "next dev -p 3002 --turbo",
-    "go": "next dev -p 3002 --turbo",
+    "go": "next dev -p 3002",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -13,7 +13,7 @@
   "dependencies": {
     "@formbricks/js": "workspace:*",
     "@heroicons/react": "^2.0.18",
-    "next": "13.4.12",
+    "next": "13.4.19",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },

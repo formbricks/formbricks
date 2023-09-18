@@ -2,7 +2,7 @@
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { createInviteToken } from "@formbricks/lib/jwt";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/errors";
+import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/v1/errors";
 import {
   deleteInvite,
   getInviteToken,

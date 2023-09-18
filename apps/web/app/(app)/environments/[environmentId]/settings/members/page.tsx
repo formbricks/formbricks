@@ -1,15 +1,15 @@
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import { EditMemberships } from "./EditMemberships";
-import EditTeamName from "./EditTeamName";
-import DeleteTeam from "./DeleteTeam";
-import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
-import { getServerSession } from "next-auth";
+import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getAllMembershipsByUserId, getMembershipByUserId } from "@formbricks/lib/services/membership";
-import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
-import { Suspense } from "react";
+import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { Skeleton } from "@formbricks/ui";
+import { getServerSession } from "next-auth";
+import { Suspense } from "react";
+import SettingsCard from "../SettingsCard";
+import SettingsTitle from "../SettingsTitle";
+import DeleteTeam from "./DeleteTeam";
+import { EditMemberships } from "./EditMemberships";
+import EditTeamName from "./EditTeamName";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">

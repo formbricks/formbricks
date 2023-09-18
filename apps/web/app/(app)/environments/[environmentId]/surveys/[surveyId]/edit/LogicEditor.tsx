@@ -1,5 +1,5 @@
-import { Logic, LogicCondition, Question, QuestionType } from "@formbricks/types/questions";
-import { Survey } from "@formbricks/types/surveys";
+import { LogicCondition, QuestionType } from "@formbricks/types/questions";
+import { TSurveyLogic, TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {
   Button,
   DropdownMenu,
@@ -23,9 +23,9 @@ import { useMemo } from "react";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 interface LogicEditorProps {
-  localSurvey: Survey;
+  localSurvey: TSurveyWithAnalytics;
   questionIdx: number;
-  question: Question;
+  question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
 }
 
@@ -48,7 +48,7 @@ export default function LogicEditor({
     if ("choices" in question) {
       return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
-      return Array.from({ length: question.range }, (_, i) => (i + 1).toString());
+      return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
     } else if (question.type === QuestionType.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
@@ -141,7 +141,7 @@ export default function LogicEditor({
   };
 
   const addLogic = () => {
-    const newLogic: Logic[] = !question.logic ? [] : question.logic;
+    const newLogic: TSurveyLogic[] = !question.logic ? [] : question.logic;
     newLogic.push({
       condition: undefined,
       value: undefined,
@@ -207,9 +207,6 @@ export default function LogicEditor({
     updateQuestion(questionIdx, { logic: updatedLogic });
   };
 
-  const truncate = (str: string, n: number) =>
-    str && str.length > n ? str.substring(0, n - 1) + "..." : str;
-
   if (!(question.type in conditions)) {
     return <></>;
   }
@@ -221,19 +218,23 @@ export default function LogicEditor({
       {question?.logic && question?.logic?.length !== 0 && (
         <div className="mt-2 space-y-3">
           {question?.logic?.map((logic, logicIdx) => (
-            <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-sm">
+            <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-xs xl:text-sm">
               <BsArrowReturnRight className="h-4 w-4" />
-              <p className="text-slate-700">If this answer</p>
+              <p className="text-slate-800">If this answer</p>
 
               <Select value={logic.condition} onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
-                <SelectTrigger className="min-w-fit flex-1">
-                  <SelectValue placeholder="Select condition" />
+                <SelectTrigger className=" min-w-fit flex-1">
+                  <SelectValue placeholder="Select condition" className="text-xs lg:text-sm" />
                 </SelectTrigger>
                 <SelectContent>
                   {conditions[question.type].map(
                     (condition) =>
                       !(question.required && condition === "skipped") && (
-                        <SelectItem key={condition} value={condition}>
+                        <SelectItem
+                          key={condition}
+                          value={condition}
+                          title={logicConditions[condition].label}
+                          className="text-xs lg:text-sm">
                           {logicConditions[condition].label}
                         </SelectItem>
                       )
@@ -251,7 +252,7 @@ export default function LogicEditor({
                       <SelectContent>
                         {logicConditions[logic.condition].values?.map((value) => (
                           <SelectItem key={value} value={value} title={value}>
-                            {truncate(value, 20)}
+                            {value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -259,11 +260,15 @@ export default function LogicEditor({
                   ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-                        <div className="flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
+                        <div className="flex h-10 w-40 items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
                           {logic.value?.length === 0 ? (
-                            <p className="text-slate-400">Select match type</p>
+                            <p className="truncate text-slate-400" title="Select match type">
+                              Select match type
+                            </p>
                           ) : (
-                            <p>{logic.value.join(", ")}</p>
+                            <p className="truncate" title={logic.value.join(", ")}>
+                              {logic.value.join(", ")}
+                            </p>
                           )}
                           <ChevronDown className="h-4 w-4 opacity-50" />
                         </div>
@@ -275,6 +280,7 @@ export default function LogicEditor({
                         {logicConditions[logic.condition].values?.map((value) => (
                           <DropdownMenuCheckboxItem
                             key={value}
+                            title={value}
                             checked={logic.value?.includes(value)}
                             onSelect={(e) => e.preventDefault()}
                             onCheckedChange={(e) => updateMultiSelectLogic(logicIdx, e, value)}>
@@ -287,7 +293,7 @@ export default function LogicEditor({
                 </div>
               )}
 
-              <p className="text-slate-700">skip to</p>
+              <p className="text-slate-800">jump to</p>
 
               <Select
                 value={logic.destination}
@@ -300,7 +306,11 @@ export default function LogicEditor({
                     (question, idx) =>
                       idx !== questionIdx && (
                         <SelectItem key={question.id} value={question.id} title={question.headline}>
-                          {idx + 1} - {truncate(question.headline, 14)}
+                          <div className="w-40">
+                            <p className="truncate">
+                              {idx + 1} - {question.headline}
+                            </p>
+                          </div>
                         </SelectItem>
                       )
                   )}

@@ -2,7 +2,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { TInvite, TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { cache } from "react";
-import { ResourceNotFoundError, ValidationError } from "@formbricks/errors";
+import { ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { sendInviteMemberEmail } from "../emails/emails";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 

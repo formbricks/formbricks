@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { AuthenticationError } from "@formbricks/errors";
+import { AuthenticationError } from "@formbricks/types/v1/errors";
 
 export const hasTeamAccess = async (userId: string, teamId: string) => {
   const membership = await prisma.membership.findUnique({

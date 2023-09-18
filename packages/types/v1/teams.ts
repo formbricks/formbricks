@@ -7,6 +7,7 @@ export const ZTeam = z.object({
   updatedAt: z.date(),
   name: z.string(),
   plan: z.enum(["free", "pro"]),
+  stripeCustomerId: z.string().nullable(),
 });
 
 export type TTeamUpdateInput = Prisma.TeamUpdateInput;

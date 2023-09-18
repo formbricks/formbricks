@@ -1,9 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import {
   Badge,
   Button,
@@ -17,6 +14,8 @@ import {
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -24,23 +23,15 @@ const filterConditions = [
 ];
 
 interface WhoToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
+  attributeClasses: TAttributeClass[];
 }
 
-export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
+export default function WhoToSendCard({ localSurvey, setLocalSurvey, attributeClasses }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
-  const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
-    useAttributeClasses(environmentId);
-
-  useEffect(() => {
-    if (!isLoadingAttributeClasses) {
-      if (localSurvey.attributeFilters?.length > 0) {
-        setOpen(true);
-      }
-    }
-  }, [isLoadingAttributeClasses]);
+  const condition = filterConditions[0].id === "equals" ? "equals" : "notEquals";
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -52,14 +43,18 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.attributeFilters = [
       ...localSurvey.attributeFilters,
-      { attributeClassId: "", condition: filterConditions[0].id, value: "" },
+      { attributeClassId: "", condition: condition, value: "" },
     ];
     setLocalSurvey(updatedSurvey);
   };
 
   const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.attributeFilters[idx] = { attributeClassId, condition, value };
+    updatedSurvey.attributeFilters[idx] = {
+      attributeClassId,
+      condition: condition === "equals" ? "equals" : "notEquals",
+      value,
+    };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -71,14 +66,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     ];
     setLocalSurvey(updatedSurvey);
   };
-
-  if (isLoadingAttributeClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorAttributeClasses) {
-    return <div>Error</div>;
-  }
 
   return (
     <>
@@ -106,9 +93,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             </div>
             <div>
               <p className="font-semibold text-slate-800">Target Audience</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Pre-segment your users with attributes filters.
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
             </div>
             {localSurvey.type === "link" && (
               <div className="flex w-full items-center justify-end pr-2">
@@ -189,14 +174,15 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 </Select>
                 <Input
                   value={attributeFilter.value}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    e.preventDefault();
                     setAttributeFilter(
                       idx,
                       attributeFilter.attributeClassId,
                       attributeFilter.condition,
                       e.target.value
-                    )
-                  }
+                    );
+                  }}
                 />
                 <button onClick={() => removeAttributeFilter(idx)}>
                   <TrashIcon className="h-4 w-4 text-slate-400" />

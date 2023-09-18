@@ -4,7 +4,6 @@ import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
-import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
@@ -28,9 +27,10 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface QuestionCardProps {
-  localSurvey: Survey;
+  localSurvey: TSurveyWithAnalytics;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -40,6 +40,23 @@ interface QuestionCardProps {
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
   isInValid: boolean;
+}
+
+export function BackButtonInput({ value, onChange }) {
+  return (
+    <div className="w-full">
+      <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
+      <div className="mt-2">
+        <Input
+          id="backButtonLabel"
+          name="backButtonLabel"
+          value={value}
+          placeholder="Back"
+          onChange={onChange}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function QuestionCard({
@@ -57,6 +74,7 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -210,19 +228,36 @@ export default function QuestionCard({
                     {question.type !== QuestionType.NPS &&
                     question.type !== QuestionType.Rating &&
                     question.type !== QuestionType.CTA ? (
-                      <div className="mt-4">
-                        <Label htmlFor="buttonLabel">Button Label</Label>
-                        <div className="mt-2">
-                          <Input
-                            id="buttonLabel"
-                            name="buttonLabel"
-                            value={question.buttonLabel}
-                            placeholder={lastQuestion ? "Finish" : "Next"}
-                            onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-                          />
+                      <div className="mt-4 flex space-x-2">
+                        <div className="w-full">
+                          <Label htmlFor="buttonLabel">Button Label</Label>
+                          <div className="mt-2">
+                            <Input
+                              id="buttonLabel"
+                              name="buttonLabel"
+                              value={question.buttonLabel}
+                              placeholder={lastQuestion ? "Finish" : "Next"}
+                              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+                            />
+                          </div>
                         </div>
+                        {questionIdx !== 0 && (
+                          <BackButtonInput
+                            value={question.backButtonLabel}
+                            onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+                          />
+                        )}
                       </div>
                     ) : null}
+                    {(question.type === QuestionType.Rating || question.type === QuestionType.NPS) &&
+                      questionIdx !== 0 && (
+                        <div className="mt-4">
+                          <BackButtonInput
+                            value={question.backButtonLabel}
+                            onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+                          />
+                        </div>
+                      )}
 
                     <AdvancedSettings
                       question={question}

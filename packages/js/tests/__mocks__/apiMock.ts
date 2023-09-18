@@ -214,7 +214,7 @@ export const mockRegisterRouteChangeResponse = () => {
   console.log("Checking page url: http://localhost/");
 };
 
-export const mockLogoutResponse = () => {
+export const mockResetResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
       data: {

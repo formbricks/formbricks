@@ -1,6 +1,11 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
 import { TResponsePersonAttributes, TResponseData, TResponseMeta } from "@formbricks/types/v1/responses";
-import { TSurveyClosedMessage, TSurveyQuestions, TSurveyThankYouCard } from "@formbricks/types/v1/surveys";
+import {
+  TSurveyClosedMessage,
+  TSurveyQuestions,
+  TSurveyThankYouCard,
+  TSurveyVerifyEmail,
+} from "@formbricks/types/v1/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/v1/users";
 
 declare global {
@@ -13,6 +18,7 @@ declare global {
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyThankYouCard = TSurveyThankYouCard;
     export type SurveyClosedMessage = TSurveyClosedMessage;
+    export type SurveyVerifyEmail = TSurveyVerifyEmail;
     export type UserNotificationSettings = TUserNotificationSettings;
   }
 }

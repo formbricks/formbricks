@@ -3,10 +3,11 @@ import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { RatingResponse } from "../RatingResponse";
-import { QuestionType, RatingQuestion } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/questions";
+import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 
 interface RatingSummaryProps {
-  questionSummary: QuestionSummary<RatingQuestion>;
+  questionSummary: QuestionSummary<TSurveyRatingQuestion>;
 }
 
 interface ChoiceResult {
@@ -77,7 +78,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <div>
-          <h3 className="text-lg pb-1 font-semibold text-slate-900 md:text-xl">
+          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
             {questionSummary.question.headline}
           </h3>
         </div>

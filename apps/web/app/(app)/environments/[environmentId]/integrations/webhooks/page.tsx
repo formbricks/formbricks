@@ -1,9 +1,12 @@
+export const revalidate = REVALIDATION_INTERVAL;
+
 import WebhookRowData from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookRowData";
 import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTable";
 import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTableHeading";
 import GoBackButton from "@/components/shared/GoBackButton";
 import { getSurveys } from "@formbricks/lib/services/survey";
 import { getWebhooks } from "@formbricks/lib/services/webhook";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 
 export default async function CustomWebhookPage({ params }) {
   const webhooks = (await getWebhooks(params.environmentId)).sort((a, b) => {

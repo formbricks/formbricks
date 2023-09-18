@@ -1,13 +1,13 @@
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { OpenTextQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
 import { PersonAvatar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 interface OpenTextSummaryProps {
-  questionSummary: QuestionSummary<OpenTextQuestion>;
+  questionSummary: QuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
 }
 
@@ -20,7 +20,7 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <div>
-          <h3 className="text-lg pb-1 font-semibold text-slate-900 md:text-xl">
+          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
             {questionSummary.question.headline}
           </h3>
         </div>

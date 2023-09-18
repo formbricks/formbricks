@@ -5,7 +5,7 @@ import { TagIcon } from "@heroicons/react/24/solid";
 export default function AttributeClassDataRow({ attributeClass }) {
   return (
     <div className="m-2 grid h-16  grid-cols-5 content-center rounded-lg hover:bg-slate-100">
-      <div className="sm:col-span-3 col-span-5 flex items-center pl-6 text-sm">
+      <div className="col-span-5 flex items-center pl-6 text-sm sm:col-span-3">
         <div className="flex items-center">
           <div className="h-10 w-10 flex-shrink-0">
             <TagIcon className="h-8 w-8 flex-shrink-0 text-slate-500" />
@@ -22,10 +22,10 @@ export default function AttributeClassDataRow({ attributeClass }) {
         </div>
       </div>
 
-      <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500 hidden md:block">
+      <div className="my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 md:block">
         <div className="text-slate-900">{timeSinceConditionally(attributeClass.createdAt.toString())}</div>
       </div>
-      <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500 hidden md:block">
+      <div className="my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 md:block">
         <div className="text-slate-900">{timeSinceConditionally(attributeClass.updatedAt.toString())}</div>
       </div>
     </div>

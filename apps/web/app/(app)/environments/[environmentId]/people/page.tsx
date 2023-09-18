@@ -26,8 +26,8 @@ export default async function PeoplePage({ params }) {
         <div className="rounded-lg border border-slate-200">
           <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
             <div className="col-span-3 pl-6 ">User</div>
-            <div className="col-span-2 text-center hidden sm:block">User ID</div>
-            <div className="col-span-2 text-center hidden sm:block">Email</div>
+            <div className="col-span-2 hidden text-center sm:block">User ID</div>
+            <div className="col-span-2 hidden text-center sm:block">Email</div>
           </div>
           {people.map((person) => (
             <Link
@@ -51,12 +51,12 @@ export default async function PeoplePage({ params }) {
                     </div>
                   </div>
                 </div>
-                <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500 hidden sm:block">
+                <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
                   <div className="ph-no-capture text-slate-900">
                     {truncateMiddle(getAttributeValue(person, "userId"), 24)}
                   </div>
                 </div>
-                <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500 hidden sm:block">
+                <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
                   <div className="ph-no-capture text-slate-900">{getAttributeValue(person, "email")}</div>
                 </div>
               </div>

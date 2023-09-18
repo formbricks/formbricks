@@ -1,11 +1,11 @@
-import { CTAQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
 import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 
 interface CTASummaryProps {
-  questionSummary: QuestionSummary<CTAQuestion>;
+  questionSummary: QuestionSummary<TSurveyCTAQuestion>;
 }
 
 interface ChoiceResult {
@@ -28,7 +28,7 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <div>
-          <h3 className="text-lg pb-1 font-semibold text-slate-900 md:text-xl">
+          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
             {questionSummary.question.headline}
           </h3>
         </div>

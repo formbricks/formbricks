@@ -1,12 +1,12 @@
 "use client";
 
-import toast from "react-hot-toast";
-import DeleteDialog from "@/components/shared/DeleteDialog";
-import { useState, Dispatch, SetStateAction } from "react";
-import { useRouter } from "next/navigation";
-import { Button, Input } from "@formbricks/ui";
 import { deleteTeamAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import { TTeam } from "@formbricks/types/v1/teams";
+import { Button, Input } from "@formbricks/ui";
+import { useRouter } from "next/navigation";
+import { Dispatch, SetStateAction, useState } from "react";
+import toast from "react-hot-toast";
 
 type DeleteTeamProps = {
   team: TTeam;
