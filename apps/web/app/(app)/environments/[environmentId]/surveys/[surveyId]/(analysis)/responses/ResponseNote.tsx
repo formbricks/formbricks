@@ -59,7 +59,7 @@ export default function ResponseNotes({
 
   const handleResolveNote = (note: TResponseNote) => {
     try {
-      resolveResponseNoteAction(responseId, note.id);
+      resolveResponseNoteAction(note.id);
       router.refresh();
     } catch (e) {
       toast.error("An error occurred resolving a note");
@@ -78,7 +78,7 @@ export default function ResponseNotes({
     e.preventDefault();
     setIsUpdatingNote(true);
     try {
-      await updateResponseNoteAction(responseId, noteId, noteText);
+      await updateResponseNoteAction(noteId, noteText);
       router.refresh();
       setIsUpdatingNote(false);
       setNoteText("");
