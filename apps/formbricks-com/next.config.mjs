@@ -130,6 +130,76 @@ const nextConfig = {
         destination: "/blog/experience-management-open-source",
         permanent: true,
       },
+      // Below done for Docs update, 09-2023
+      {
+        source: "/docs/actions/why",
+        destination: "/docs/concepts/actions",
+        permanent: true,
+      },
+      {
+        source: "/docs/actions/code",
+        destination: "/docs/concepts/actions#code-actions",
+        permanent: true,
+      },
+      {
+        source: "/docs/actions/no-code",
+        destination: "/docs/concepts/actions#no-code-actions",
+        permanent: true,
+      },
+      {
+        source: "/docs/attributes/why",
+        destination: "/docs/concepts/attributes#what-are-actions",
+        permanent: true,
+      },
+      {
+        source: "/docs/attributes/custom-attributes",
+        destination: "/docs/concepts/attributes#setting-attributes-with-code",
+        permanent: true,
+      },
+      {
+        source: "/docs/attributes/identify-users",
+        destination: "/docs/concepts/attributes#identifying-users",
+        permanent: true,
+      },
+      {
+        source: "/docs/contributing/introduction",
+        destination:"/docs/developer-resources/contributing",
+        permanent: true,
+      },
+      {
+        source: "/docs/contributing/setup",
+        destination:"/docs/developer-resources/contributing#setup-dev-environment",
+        permanent: true,
+      },
+      {
+        source: "/docs/contributing/demo",
+        destination:"/docs/developer-resources/contributing#demo-app",
+        permanent: true,
+      },
+      {
+        source: "/docs/contributing/troubleshooting",
+        destination:"/docs/developer-resources/contributing#troubleshooting",
+        permanent: true,
+      },
+      {
+        source:"/docs/self-hosting/deployment",
+        destination:"/docs/developer-resources/self-host",
+        permanent: true,
+      },
+      {
+        source:"/docs/self-hosting/production",
+        destination:"/docs/developer-resources/self-host#with-shell-script",
+        permanent: true,
+      },      {
+        source:"/docs/self-hosting/docker",
+        destination:"/docs/developer-resources/self-host#with-docker",
+        permanent: true,
+      },      {
+        source:"/docs/self-hosting/from-source",
+        destination:"/docs/developer-resources/self-host#from-source",
+        permanent: true,
+      },
+
     ];
   },
   async rewrites() {
