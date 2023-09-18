@@ -29,7 +29,9 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
 
    </CodeGroup>
 
-2.  **Modify the environment variables in your `docker-compose.yml` file as required by your setup.** <br/> This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
+2.  **Rename your .env file (if it exists)** <br/> The .env file currently works as per NextJs 13.4.19 and not exactly how docker compose likes hence please rename it to something else
+
+3.  **Modify the environment variables in your `docker-compose.yml` file as required by your setup.** <br/> This file comes with a basic setup and Formbricks works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
 
         <Note>
            ## Editing a NEXT_PUBLIC_* variable?
@@ -38,7 +40,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
           to take effect.
         </Note>
 
-3. **Generate NextAuth Secret**
+4. **Generate NextAuth Secret**
 
    Next, you need to generate a NextAuth secret. This will be used for session signing and encryption. The `sed` command below generates a random string using `openssl`, then replaces the `NEXTAUTH_SECRET:` placeholder in the `docker-compose.yml` file with this generated secret:
 
@@ -50,7 +52,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
 
    </CodeGroup>
 
-4.  **Start the docker compose process.** <br/> Finally start the docker compose process to build and spin up the Formbricks container as well as the PostgreSQL database. <br/> _Use docker-compose if you are on an older docker version_
+5.  **Start the docker compose process.** <br/> Finally start the docker compose process to build and spin up the Formbricks container as well as the PostgreSQL database. <br/> _Use docker-compose if you are on an older docker version_
 
    <CodeGroup title="Launch docker instances">
 
