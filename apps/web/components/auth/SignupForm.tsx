@@ -8,7 +8,7 @@ import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
 export const SignupForm = () => {
@@ -19,7 +19,15 @@ export const SignupForm = () => {
   const nameRef = useRef<HTMLInputElement>(null);
 
   const inviteToken = searchParams?.get("inviteToken");
-  const callbackUrl = env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + inviteToken;
+  // const callbackUrl = env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + inviteToken;
+
+  const callbackUrl = useMemo(() => {
+    if (inviteToken) {
+      return env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + inviteToken;
+    } else {
+      return env.NEXT_PUBLIC_WEBAPP_URL;
+    }
+  }, [inviteToken]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();

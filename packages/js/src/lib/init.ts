@@ -1,5 +1,4 @@
 import type { InitConfig } from "../../../types/js";
-import { addExitIntentListener, addScrollDepthListener } from "./automaticActions";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -11,8 +10,9 @@ import {
   err,
   okVoid,
 } from "./errors";
+import { addCleanupEventListeners, addEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
-import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
+import { checkPageUrl } from "./noCodeEvents";
 import { resetPerson } from "./person";
 import { isExpired } from "./session";
 import { sync } from "./sync";
@@ -21,40 +21,29 @@ import { addWidgetContainer } from "./widget";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-let syncIntervalId: number | null = null;
+let isInitialized = false;
 
-const addSyncEventListener = (debug?: boolean): void => {
-  const updateInverval = debug ? 1000 * 30 : 1000 * 60 * 2; // 2 minutes in production, 30 seconds in debug mode
-  // add event listener to check sync with backend on regular interval
-  if (typeof window !== "undefined") {
-    // clear any existing interval
-    if (syncIntervalId !== null) {
-      window.clearInterval(syncIntervalId);
-    }
-    syncIntervalId = window.setInterval(async () => {
-      logger.debug("Syncing.");
-      await sync();
-    }, updateInverval);
-    // clear interval on page unload
-    window.addEventListener("beforeunload", () => {
-      if (syncIntervalId !== null) {
-        window.clearInterval(syncIntervalId);
-      }
-    });
+const setDebugLevel = (c: InitConfig): void => {
+  if (c.debug) {
+    logger.debug(`Setting log level to debug`);
+    logger.configure({ logLevel: "debug" });
   }
 };
 
 export const initialize = async (
   c: InitConfig
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  if (c.debug) {
-    logger.debug(`Setting log level to debug`);
-    logger.configure({ logLevel: "debug" });
+  if (isInitialized) {
+    logger.debug("Already initialized, skipping initialization.");
+    return okVoid();
   }
+
+  setDebugLevel(c);
 
   ErrorHandler.getInstance().printStatus();
 
   logger.debug("Start initialize");
+  config.allowSync();
 
   if (!c.environmentId) {
     logger.debug("No environmentId provided");
@@ -107,21 +96,11 @@ export const initialize = async (
     await sync();
   }
 
-  logger.debug("Add session event listeners");
-  addSyncEventListener(c.debug);
+  logger.debug("Adding event listeners");
+  addEventListeners();
+  addCleanupEventListeners();
 
-  logger.debug("Add page url event listeners");
-  addPageUrlEventListeners();
-
-  logger.debug("Add click event listeners");
-  addClickEventListener();
-
-  logger.debug("Add exit intent (Desktop) listener");
-  addExitIntentListener();
-
-  logger.debug("Add scroll depth 50% listener");
-  addScrollDepthListener();
-
+  isInitialized = true;
   logger.debug("Initialized");
 
   // check page url if initialized after page load

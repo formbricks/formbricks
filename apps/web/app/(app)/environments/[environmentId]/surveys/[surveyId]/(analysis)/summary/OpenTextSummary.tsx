@@ -1,13 +1,13 @@
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { OpenTextQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
 import { PersonAvatar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 interface OpenTextSummaryProps {
-  questionSummary: QuestionSummary<OpenTextQuestion>;
+  questionSummary: QuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
 }
 

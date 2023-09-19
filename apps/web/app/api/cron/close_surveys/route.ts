@@ -1,12 +1,13 @@
+import { env } from "@/env.mjs";
 import { responses } from "@/lib/api/response";
-import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
+import { headers } from "next/headers";
 
 export async function POST() {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
 
-  if (!apiKey || apiKey !== process.env.CRON_SECRET) {
+  if (!apiKey || apiKey !== env.CRON_SECRET) {
     return responses.notAuthenticatedResponse();
   }
 
