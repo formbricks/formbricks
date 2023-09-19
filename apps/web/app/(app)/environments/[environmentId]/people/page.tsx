@@ -21,8 +21,9 @@ export default async function PeoplePage({
 }) {
   const pageNumber = searchParams.page ? parseInt(searchParams.page as string) : 1;
   const totalPeople = await getPeopleCount(params.environmentId);
+  const maxPageNumber = Math.ceil(totalPeople / PEOPLE_PER_PAGE);
 
-  if (pageNumber > totalPeople / PEOPLE_PER_PAGE || pageNumber < 1) {
+  if (pageNumber < 1 || pageNumber > maxPageNumber) {
     throw new Error("Invalid Page Number");
   }
 
