@@ -7,6 +7,7 @@ import Steps from "@/components/home/Steps";
 import Pricing from "@/components/shared/Pricing";
 import GitHubSponsorship from "@/components/home/GitHubSponsorship";
 import BestPractices from "@/components/shared/BestPractices";
+import Faq from "@/components/home/Faq";
 
 const IndexPage = () => (
   <Layout
@@ -43,6 +44,7 @@ const IndexPage = () => (
       inverted
     />
     <Pricing />
+    <Faq />
   </Layout>
 );
 

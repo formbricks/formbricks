@@ -254,6 +254,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
+      { title: "FaQ", href: "/docs/faq" },
     ],
   },
   {

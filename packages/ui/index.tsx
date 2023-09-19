@@ -1,5 +1,6 @@
 export { AdvancedOptionToggle } from "./components/AdvancedOptionToggle";
 export { Alert, AlertDescription, AlertTitle } from "./components/Alert";
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./components/Accordian";
 export { PersonAvatar, ProfileAvatar } from "./components/Avatars";
 export { Badge } from "./components/Badge";
 export { Button } from "./components/Button";
