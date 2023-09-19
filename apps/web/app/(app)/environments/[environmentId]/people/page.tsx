@@ -21,12 +21,16 @@ export default async function PeoplePage({
   const pageNumber = searchParams.page ? parseInt(searchParams.page as string) : 1;
   const totalPeople = await getPeopleCount(params.environmentId);
   const maxPageNumber = Math.ceil(totalPeople / PEOPLE_PER_PAGE);
+  let hidePagination = false;
+
+  let people: TPerson[] = [];
 
   if (pageNumber < 1 || pageNumber > maxPageNumber) {
-    throw new Error("Invalid Page Number");
+    people = [];
+    hidePagination = true;
+  } else {
+    people = await getPeople(params.environmentId, pageNumber);
   }
-
-  const people = await getPeople(params.environmentId, pageNumber);
 
   return (
     <>
@@ -78,12 +82,14 @@ export default async function PeoplePage({
           ))}
         </div>
       )}
-      <Pagination
-        baseUrl={`/environments/${params.environmentId}/people`}
-        currentPage={pageNumber}
-        totalItems={totalPeople}
-        itemsPerPage={PEOPLE_PER_PAGE}
-      />
+      {hidePagination ? null : (
+        <Pagination
+          baseUrl={`/environments/${params.environmentId}/people`}
+          currentPage={pageNumber}
+          totalItems={totalPeople}
+          itemsPerPage={PEOPLE_PER_PAGE}
+        />
+      )}
     </>
   );
 }
