@@ -1,12 +1,11 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import Pagination from "@/app/(app)/environments/[environmentId]/people/pagination";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
 import { PEOPLE_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getPeople, getPeopleCount } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
-import { PersonAvatar } from "@formbricks/ui";
+import { Pagination, PersonAvatar } from "@formbricks/ui";
 import Link from "next/link";
 
 const getAttributeValue = (person: TPerson, attributeName: string) =>
@@ -80,7 +79,7 @@ export default async function PeoplePage({
         </div>
       )}
       <Pagination
-        environmentId={params.environmentId}
+        baseUrl={`/environments/${params.environmentId}/people`}
         currentPage={pageNumber}
         totalItems={totalPeople}
         itemsPerPage={PEOPLE_PER_PAGE}

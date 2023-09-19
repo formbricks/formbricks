@@ -50,6 +50,7 @@ export {
 export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
+export { Pagination } from "./components/Pagination";
 export { PasswordInput } from "./components/PasswordInput";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";
 export { HalfCircle, ProgressBar } from "./components/ProgressBar";
