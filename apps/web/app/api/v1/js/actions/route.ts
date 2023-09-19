@@ -23,13 +23,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, sessionId, name, properties } = inputValidation.data;
+    const { environmentId, sessionId, name, properties, personId } = inputValidation.data;
 
     createAction({
       environmentId,
       sessionId,
       name,
       properties,
+      personId,
     });
 
     return responses.successResponse({}, true);

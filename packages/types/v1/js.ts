@@ -54,6 +54,9 @@ export const ZJsActionInput = z.object({
   sessionId: z.string().cuid2(),
   name: z.string(),
   properties: z.record(z.string()),
+
+  // adding personId to revalidate person cache after action
+  personId: z.string(),
 });
 
 export type TJsActionInput = z.infer<typeof ZJsActionInput>;

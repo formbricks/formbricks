@@ -55,7 +55,7 @@ export const getActionsByEnvironmentId = cache(
 );
 
 export const createAction = async (data: TJsActionInput) => {
-  const { environmentId, name, properties, sessionId } = data;
+  const { environmentId, name, properties, sessionId, personId } = data;
 
   let eventType: EventType = EventType.code;
   if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
@@ -78,6 +78,11 @@ export const createAction = async (data: TJsActionInput) => {
         eventClassId: actionClass.id,
       },
     });
+
+    // revalidate cache
+    revalidateTag(personId);
+    revalidateTag(sessionId);
+    revalidateTag(getActionClassCacheTag(name, environmentId));
 
     return;
   }
@@ -127,6 +132,7 @@ export const createAction = async (data: TJsActionInput) => {
   ]);
 
   // revalidate cache
+  revalidateTag(personId);
   revalidateTag(sessionId);
   revalidateTag(getActionClassCacheTag(name, environmentId));
 };

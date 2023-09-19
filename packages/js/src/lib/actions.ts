@@ -16,6 +16,7 @@ export const trackAction = async (
     sessionId: config.get().state?.session?.id,
     name,
     properties: properties || {},
+    personId: config.get().state?.person?.id,
   };
 
   const res = await fetch(`${config.get().apiHost}/api/v1/js/actions`, {

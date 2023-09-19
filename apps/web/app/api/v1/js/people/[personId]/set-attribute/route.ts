@@ -81,13 +81,6 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     // revalidate person
     revalidateTag(personId);
 
-    // get/create rest of the state
-    // const [session, surveys, noCodeActionClasses, product] = await Promise.all([
-    //   extendSession(sessionId),
-    //   getSurveys(environmentId, person, sessionId),
-    //   getActionClasses(environmentId),
-    //   getProductByEnvironmentId(environmentId),
-    // ]);
     const state = await getUpdatedState(environmentId, device, personId, sessionId);
 
     return responses.successResponse({ ...state }, true);
