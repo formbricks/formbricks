@@ -9,6 +9,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClassByName } from "./attributeClass";
+import { PERSONS_PER_PAGE } from "../constants";
 
 export const selectPerson = {
   id: true,
@@ -100,16 +101,20 @@ export const getPersonCached = async (personId: string) =>
     }
   )();
 
-export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
+export const getPeople = cache(async (environmentId: string, page: number = 1): Promise<TPerson[]> => {
   validateInputs([environmentId, ZId]);
   try {
+    const itemsPerPage = PERSONS_PER_PAGE;
     const personsPrisma = await prisma.person.findMany({
       where: {
         environmentId: environmentId,
       },
       select: selectPerson,
+      take: itemsPerPage,
+      skip: itemsPerPage * (page - 1),
     });
-    if (!personsPrisma) {
+
+    if (!personsPrisma || personsPrisma.length === 0) {
       throw new ResourceNotFoundError("Persons", "All Persons");
     }
 
@@ -121,6 +126,24 @@ export const getPeople = cache(async (environmentId: string): Promise<TPerson[]>
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
+
+export const getPeopleCount = cache(async (environmentId: string): Promise<number> => {
+  validateInputs([environmentId, ZId]);
+  try {
+    const totalCount = await prisma.person.count({
+      where: {
+        environmentId: environmentId,
+      },
+    });
+    return totalCount;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
 
     throw error;

@@ -1,9 +1,10 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
+import Pagination from "@/app/(app)/environments/[environmentId]/people/pagination";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getPeople } from "@formbricks/lib/services/person";
+import { PERSONS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { getPeople, getPeopleCount } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
 import { PersonAvatar } from "@formbricks/ui";
 import Link from "next/link";
@@ -11,8 +12,21 @@ import Link from "next/link";
 const getAttributeValue = (person: TPerson, attributeName: string) =>
   person.attributes[attributeName]?.toString();
 
-export default async function PeoplePage({ params }) {
-  const people = await getPeople(params.environmentId);
+export default async function PeoplePage({
+  params,
+  searchParams,
+}: {
+  params: { environmentId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const pageNumber = searchParams.page ? parseInt(searchParams.page as string) : 1;
+  const totalPeople = await getPeopleCount(params.environmentId);
+
+  if (pageNumber > totalPeople / PERSONS_PER_PAGE || pageNumber < 1) {
+    throw new Error("Invalid Page Number");
+  }
+
+  const people = await getPeople(params.environmentId, pageNumber);
 
   return (
     <>
@@ -64,6 +78,12 @@ export default async function PeoplePage({ params }) {
           ))}
         </div>
       )}
+      <Pagination
+        environmentId={params.environmentId}
+        currentPage={pageNumber}
+        totalItems={totalPeople}
+        itemsPerPage={PERSONS_PER_PAGE}
+      />
     </>
   );
 }
