@@ -17,6 +17,11 @@ export function getPrefillResponseData(
 
       const answer = transformAnswer(question, firstQuestionPrefill || "");
       const answerObj = { [firstQuestionId]: answer };
+
+      if (question.type === QuestionType.CTA && question.buttonExternal && question.buttonUrl) {
+        window?.open(question.buttonUrl, "blank");
+      }
+
       return answerObj;
     }
   } catch (error) {
