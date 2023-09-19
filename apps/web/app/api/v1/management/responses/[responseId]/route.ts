@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/services/response";

@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { getPeople } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";

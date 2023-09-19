@@ -1,7 +1,6 @@
 import { prisma } from "@formbricks/database";
 import {
   TSurvey,
-  TSurveyInput,
   TSurveyWithAnalytics,
   ZSurvey,
   ZSurveyWithAnalytics,
@@ -10,7 +9,6 @@ import {
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
-import { Prisma as prismaClient } from "@prisma/client/";
 import "server-only";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
@@ -262,7 +260,7 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSurvey> {
   const surveyId = updatedSurvey.id;
   let data: any = {};
   let survey: Partial<any> = { ...updatedSurvey };
@@ -437,6 +435,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     return modifiedSurvey;
   } catch (error) {
+    console.log(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

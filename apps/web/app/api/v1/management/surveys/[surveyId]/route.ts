@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { NextResponse } from "next/server";
 import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/services/survey";
 import { TSurvey, ZSurveyInput } from "@formbricks/types/v1/surveys";
@@ -81,7 +81,7 @@ export async function PUT(
         transformErrorToDetails(inputValidation.error)
       );
     }
-    return responses.successResponse(await updateSurvey(params.surveyId, inputValidation.data));
+    return responses.successResponse(await updateSurvey(inputValidation.data));
   } catch (error) {
     return handleErrorResponse(error);
   }
