@@ -25,6 +25,9 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CRON_SECRET: z.string().optional(),
+    GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
+    GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
   },
   /*
    * Environment variables available on the client (and server).
@@ -92,6 +95,9 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
+    GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
+    GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
+    GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
     NEXT_PUBLIC_WEBAPP_URL: process.env.NEXT_PUBLIC_WEBAPP_URL,
     NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED: process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED,
     NEXT_PUBLIC_PASSWORD_RESET_DISABLED: process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED,

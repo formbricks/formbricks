@@ -229,6 +229,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Zapier", href: "/docs/integrations/zapier" },
       { title: "n8n", href: "/docs/integrations/n8n" },
       { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "Google Sheets", href: "/docs/integrations/google-sheets" },
     ],
   },
   {
