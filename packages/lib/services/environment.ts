@@ -6,20 +6,20 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import type { TEnvironment, TEnvironmentId, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 import { populateEnvironment } from "../utils/createDemoProductHelpers";
 import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
   validateInputs([environmentId, ZId]);
   let environmentPrisma;
+
   try {
     environmentPrisma = await prisma.environment.findUnique({
       where: {
         id: environmentId,
       },
     });
-
-    return environmentPrisma;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -38,6 +38,18 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
     throw new ValidationError("Data validation of environment failed");
   }
 });
+
+export const getEnvironmentCached = (environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await getEnvironment(environmentId);
+    },
+    [environmentId],
+    {
+      tags: [environmentId],
+      revalidate: 30 * 60, // 30 minutes
+    }
+  )();
 
 export const getEnvironments = cache(async (productId: string): Promise<TEnvironment[]> => {
   validateInputs([productId, ZId]);

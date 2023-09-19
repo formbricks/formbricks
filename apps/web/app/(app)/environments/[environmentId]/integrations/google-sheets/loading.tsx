@@ -1,28 +1,24 @@
 import GoBackButton from "@/components/shared/GoBackButton";
 import { Button } from "@formbricks/ui";
-import { Webhook } from "lucide-react";
 
 export default function Loading() {
   return (
-    <>
+    <div className="mt-6 p-6">
       <GoBackButton />
       <div className="mb-6 text-right">
         <Button
           variant="darkCTA"
           className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-gray-200">
-          <Webhook className="mr-2 h-5 w-5 text-white" />
-          Loading
+          Link new sheet
         </Button>
       </div>
 
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-12 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-          <span className="sr-only">Edit</span>
-          <div className="col-span-3 pl-6 ">Webhook</div>
-          <div className="col-span-1 text-center">Source</div>
-          <div className="col-span-4 text-center">Surveys</div>
-          <div className="col-span-2 text-center ">Triggers</div>
-          <div className="col-span-2 text-center">Updated</div>
+          <div className="col-span-4 text-center ">Survey</div>
+          <div className="col-span-4 text-center">Google Sheet Name</div>
+          <div className="col-span-2 text-center ">Questions</div>
+          <div className="col-span-2 text-center">Updated At</div>
         </div>
         <div className="grid-cols-7">
           {[...Array(3)].map((_, index) => (
@@ -59,6 +55,6 @@ export default function Loading() {
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }
