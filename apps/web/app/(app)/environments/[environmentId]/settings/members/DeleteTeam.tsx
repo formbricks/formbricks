@@ -1,52 +1,38 @@
 "use client";
 
+import { deleteTeamAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useMembers } from "@/lib/members";
-import { useMemberships } from "@/lib/memberships";
-import { useProfile } from "@/lib/profile";
-import { deleteTeam, useTeam } from "@/lib/teams/teams";
-import { Button, ErrorComponent, Input } from "@formbricks/ui";
+import { TTeam } from "@formbricks/types/v1/teams";
+import { Button, Input } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 
-export default function DeleteTeam({ environmentId }) {
+type DeleteTeamProps = {
+  team: TTeam;
+  isDeleteDisabled?: boolean;
+  isUserOwner?: boolean;
+};
+
+export default function DeleteTeam({ team, isDeleteDisabled = false, isUserOwner = false }: DeleteTeamProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
-  const { profile } = useProfile();
-  const { memberships } = useMemberships();
-  const { team } = useMembers(environmentId);
-  const { team: teamData, isLoadingTeam, isErrorTeam } = useTeam(environmentId);
-
-  const availableTeams = memberships?.length;
-  const role = team?.members?.filter((member) => member?.userId === profile?.id)[0]?.role;
-  const isUserOwner = role === "owner";
-  const isDeleteDisabled = availableTeams <= 1 || !isUserOwner;
-
-  if (isLoadingTeam) {
-    return <LoadingSpinner />;
-  }
-  if (isErrorTeam) {
-    return <ErrorComponent />;
-  }
 
   const handleDeleteTeam = async () => {
     setIsDeleting(true);
-    const deleteTeamRes = await deleteTeam(environmentId);
-    setIsDeleteDialogOpen(false);
-    setIsDeleting(false);
 
-    if (deleteTeamRes?.deletedTeam?.id?.length > 0) {
+    try {
+      await deleteTeamAction(team.id);
       toast.success("Team deleted successfully.");
       router.push("/");
-    } else if (deleteTeamRes?.message?.length > 0) {
-      toast.error(deleteTeamRes.message);
-    } else {
+    } catch (err) {
       toast.error("Error deleting team. Please try again.");
     }
+
+    setIsDeleteDialogOpen(false);
+    setIsDeleting(false);
   };
 
   return (
@@ -75,7 +61,7 @@ export default function DeleteTeam({ environmentId }) {
       <DeleteTeamModal
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        teamData={teamData}
+        teamData={team}
         deleteTeam={handleDeleteTeam}
         isDeleting={isDeleting}
       />
@@ -86,7 +72,8 @@ export default function DeleteTeam({ environmentId }) {
 interface DeleteTeamModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-  teamData: { name: string; id: string; plan: string };
+  // teamData: { name: string; id: string; plan: string };
+  teamData: TTeam;
   deleteTeam: () => void;
   isDeleting?: boolean;
 }
