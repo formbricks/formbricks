@@ -1,6 +1,7 @@
 import JsLogo from "@/images/jslogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import GoogleSheetsLogo from "@/images/google-sheets-small.png";
 import n8nLogo from "@/images/n8n.png";
 import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui";
@@ -41,6 +42,17 @@ export default function IntegrationsPage({ params }) {
           label="Webhooks"
           description="Trigger Webhooks based on actions in your surveys"
           icon={<Image src={WebhookLogo} alt="Webhook Logo" />}
+        />
+        <Card
+          connectHref={`/environments/${params.environmentId}/integrations/google-sheets`}
+          connectText="Connect"
+          connectNewTab={false}
+          docsHref="https://formbricks.com/docs/integrations/google-sheets"
+          docsText="Docs"
+          docsNewTab={true}
+          label="Google Sheets"
+          description="Instantly populate your spreadsheets with survey data"
+          icon={<Image src={GoogleSheetsLogo} alt="Google sheets Logo" />}
         />
         <Card
           docsHref="https://formbricks.com/docs/integrations/n8n"
