@@ -9,7 +9,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClassByName } from "./attributeClass";
-import { PERSONS_PER_PAGE } from "../constants";
+import { PEOPLE_PER_PAGE } from "../constants";
 
 export const selectPerson = {
   id: true,
@@ -104,8 +104,8 @@ export const getPersonCached = async (personId: string) =>
 export const getPeople = cache(async (environmentId: string, page: number = 1): Promise<TPerson[]> => {
   validateInputs([environmentId, ZId]);
   try {
-    const itemsPerPage = PERSONS_PER_PAGE;
-    const personsPrisma = await prisma.person.findMany({
+    const itemsPerPage = PEOPLE_PER_PAGE;
+    const people = await prisma.person.findMany({
       where: {
         environmentId: environmentId,
       },
@@ -114,11 +114,11 @@ export const getPeople = cache(async (environmentId: string, page: number = 1): 
       skip: itemsPerPage * (page - 1),
     });
 
-    if (!personsPrisma || personsPrisma.length === 0) {
-      throw new ResourceNotFoundError("Persons", "All Persons");
+    if (!people || people.length === 0) {
+      return [];
     }
 
-    const transformedPeople: TPerson[] = personsPrisma
+    const transformedPeople: TPerson[] = people
       .map(transformPrismaPerson)
       .filter((person: TPerson | null): person is TPerson => person !== null);
 

@@ -26,4 +26,4 @@ export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = process.env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
 
-export const PERSONS_PER_PAGE = 50;
+export const PEOPLE_PER_PAGE = 50;

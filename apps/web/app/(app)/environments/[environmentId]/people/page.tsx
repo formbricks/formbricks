@@ -3,7 +3,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import Pagination from "@/app/(app)/environments/[environmentId]/people/pagination";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
-import { PERSONS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { PEOPLE_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getPeople, getPeopleCount } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
 import { PersonAvatar } from "@formbricks/ui";
@@ -22,7 +22,7 @@ export default async function PeoplePage({
   const pageNumber = searchParams.page ? parseInt(searchParams.page as string) : 1;
   const totalPeople = await getPeopleCount(params.environmentId);
 
-  if (pageNumber > totalPeople / PERSONS_PER_PAGE || pageNumber < 1) {
+  if (pageNumber > totalPeople / PEOPLE_PER_PAGE || pageNumber < 1) {
     throw new Error("Invalid Page Number");
   }
 
@@ -82,7 +82,7 @@ export default async function PeoplePage({
         environmentId={params.environmentId}
         currentPage={pageNumber}
         totalItems={totalPeople}
-        itemsPerPage={PERSONS_PER_PAGE}
+        itemsPerPage={PEOPLE_PER_PAGE}
       />
     </>
   );
