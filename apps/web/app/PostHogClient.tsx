@@ -10,8 +10,8 @@ const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHO
 
 if (typeof window !== "undefined") {
   if (posthogEnabled) {
-    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_API_KEY!, {
-      api_host: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    posthog.init(env.NEXT_PUBLIC_POSTHOG_API_KEY!, {
+      api_host: env.NEXT_PUBLIC_POSTHOG_API_HOST,
     });
   }
 }
