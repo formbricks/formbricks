@@ -141,6 +141,10 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
     }
   )();
 
+  if (!survey) {
+    return null;
+  }
+
   return {
     ...survey,
     createdAt: new Date(survey.createdAt),
@@ -148,8 +152,8 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
   };
 };
 
-export const getSurvey = async (surveyId: string): Promise<TSurvey | null> =>
-  await unstable_cache(
+export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
+  const survey = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
       let surveyPrisma;
@@ -194,8 +198,19 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> =>
     }
   )();
 
-export const getSurveys = async (environmentId: string): Promise<TSurvey[]> =>
-  await unstable_cache(
+  if (!survey) {
+    return null;
+  }
+
+  return {
+    ...survey,
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
+  };
+};
+
+export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
+  const surveys = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
       let surveysPrisma;
@@ -240,8 +255,15 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> =>
     }
   )();
 
-export const getSurveysWithAnalytics = async (environmentId: string): Promise<TSurveyWithAnalytics[]> =>
-  await unstable_cache(
+  return surveys.map((survey) => ({
+    ...survey,
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
+  }));
+};
+
+export const getSurveysWithAnalytics = async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
+  const surveysWithAnalytics = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
       let surveysPrisma;
@@ -292,6 +314,13 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
       tags: [getSurveysWithAnalyticsCacheTag(environmentId)],
     }
   )();
+
+  return surveysWithAnalytics.map((survey) => ({
+    ...survey,
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
+  }));
+};
 
 export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   const surveyId = updatedSurvey.id;
