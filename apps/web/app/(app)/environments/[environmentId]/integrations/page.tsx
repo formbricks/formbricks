@@ -111,6 +111,9 @@ export default async function IntegrationsPage({ params }) {
             docsHref={card.docsHref}
             docsText={card.docsText}
             docsNewTab={card.docsNewTab}
+            connectHref={card.connectHref}
+            connectText={card.connectText}
+            connectNewTab={card.connectNewTab}
             label={card.label}
             description={card.description}
             icon={card.icon}
