@@ -9,7 +9,7 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
     PRISMA_GENERATE_DATAPROXY: z.enum(["true", ""]).optional(),
-    FORMBRICKS_ENCRYPTION_KEY: z.string().min(1),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(32),
     NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
