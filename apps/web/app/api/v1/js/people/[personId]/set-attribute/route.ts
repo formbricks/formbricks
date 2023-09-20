@@ -3,7 +3,7 @@ import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/services/attributeClass";
-import { getPersonCached } from "@formbricks/lib/services/person";
+import { getPerson } from "@formbricks/lib/services/person";
 import { ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
@@ -30,7 +30,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const { environmentId, sessionId, key, value } = inputValidation.data;
 
-    const existingPerson = await getPersonCached(personId);
+    const existingPerson = await getPerson(personId);
 
     if (!existingPerson) {
       return responses.notFoundResponse("Person", personId, true);
