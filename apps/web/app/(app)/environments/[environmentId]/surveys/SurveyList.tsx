@@ -22,7 +22,13 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
+  const fetchedSurveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
+  const surveys = fetchedSurveys.map((survey) => ({
+    ...survey,
+    updatedAt: new Date(survey.updatedAt),
+    createdAt: new Date(survey.createdAt),
+  }));
+
   const environments: TEnvironment[] = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
   const totalSubmissions = surveys.reduce((acc, survey) => acc + (survey.analytics?.numResponses || 0), 0);
@@ -45,7 +51,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
           </li>
         </Link>
         {surveys
-          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+          .sort((a, b) => b.updatedAt?.getTime() - a.updatedAt?.getTime())
           .map((survey) => (
             <li key={survey.id} className="relative col-span-1 h-56">
               <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">

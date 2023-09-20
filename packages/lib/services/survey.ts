@@ -3,15 +3,19 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { TSurvey, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { TSurveyAttributeFilter } from "@formbricks/types/v1/surveys";
-import { cache } from "react";
 import "server-only";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 
 const getSurveysCacheTag = (environmentId: string): string => `env-${environmentId}-surveys`;
+const getSurveysWithAnalyticsCacheTag = (environmentId: string): string =>
+  `env-${environmentId}-surveysWithAnalytics`;
+
+const getSurveyCacheTag = (surveyId: string): string => `survey-${surveyId}`;
+const getSurveyWithAnalyticsCacheTag = (surveyId: string): string => `survey-${surveyId}-withAnalytics`;
 
 export const selectSurvey = {
   id: true,
@@ -78,183 +82,216 @@ export const preloadSurveyWithAnalytics = (surveyId: string) => {
   void getSurveyWithAnalytics(surveyId);
 };
 
-export const getSurveyWithAnalytics = cache(
-  async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
-    validateInputs([surveyId, ZId]);
-    let surveyPrisma;
-    try {
-      surveyPrisma = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
+export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
+  const survey = await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+      let surveyPrisma;
+      try {
+        surveyPrisma = await prisma.survey.findUnique({
+          where: {
+            id: surveyId,
+          },
+          select: selectSurveyWithAnalytics,
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+
+      if (!surveyPrisma) {
+        throw new ResourceNotFoundError("Survey", surveyId);
+      }
+
+      let { _count, displays, ...surveyPrismaFields } = surveyPrisma;
+
+      const numDisplays = displays.length;
+      const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
+      const numResponses = _count.responses;
+      // responseRate, rounded to 2 decimal places
+      const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
+
+      const transformedSurvey = {
+        ...surveyPrismaFields,
+        triggers: surveyPrismaFields.triggers.map((trigger) => trigger.eventClass),
+        analytics: {
+          numDisplays,
+          responseRate,
+          numResponses,
         },
-        select: selectSurveyWithAnalytics,
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
+      };
+
+      try {
+        const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
+        return survey;
+      } catch (error) {
+        console.log(error);
+        if (error instanceof z.ZodError) {
+          console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+        }
+        throw new ValidationError("Data validation of survey failed");
       }
-
-      throw error;
+    },
+    [getSurveyWithAnalyticsCacheTag(surveyId)],
+    {
+      tags: [getSurveyWithAnalyticsCacheTag(surveyId)],
     }
+  )();
 
-    if (!surveyPrisma) {
-      throw new ResourceNotFoundError("Survey", surveyId);
-    }
-
-    let { _count, displays, ...surveyPrismaFields } = surveyPrisma;
-
-    const numDisplays = displays.length;
-    const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
-    const numResponses = _count.responses;
-    // responseRate, rounded to 2 decimal places
-    const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
-
-    const transformedSurvey = {
-      ...surveyPrismaFields,
-      triggers: surveyPrismaFields.triggers.map((trigger) => trigger.eventClass),
-      analytics: {
-        numDisplays,
-        responseRate,
-        numResponses,
-      },
-    };
-
-    try {
-      const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
-      return survey;
-    } catch (error) {
-      console.log(error);
-      if (error instanceof z.ZodError) {
-        console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
-      }
-      throw new ValidationError("Data validation of survey failed");
-    }
-  }
-);
-
-export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null> => {
-  validateInputs([surveyId, ZId]);
-  let surveyPrisma;
-  try {
-    surveyPrisma = await prisma.survey.findUnique({
-      where: {
-        id: surveyId,
-      },
-      select: selectSurvey,
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
-  }
-
-  if (!surveyPrisma) {
-    return null;
-  }
-
-  const transformedSurvey = {
-    ...surveyPrisma,
-    triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+  return {
+    ...survey,
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
   };
+};
 
-  try {
-    const survey = ZSurvey.parse(transformedSurvey);
-    return survey;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
-    }
-    throw new ValidationError("Data validation of survey failed");
-  }
-});
+export const getSurvey = async (surveyId: string): Promise<TSurvey | null> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+      let surveyPrisma;
+      try {
+        surveyPrisma = await prisma.survey.findUnique({
+          where: {
+            id: surveyId,
+          },
+          select: selectSurvey,
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
 
-export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]> => {
-  validateInputs([environmentId, ZId]);
-  let surveysPrisma;
-  try {
-    surveysPrisma = await prisma.survey.findMany({
-      where: {
-        environmentId,
-      },
-      select: selectSurvey,
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
+        throw error;
+      }
 
-    throw error;
-  }
+      if (!surveyPrisma) {
+        return null;
+      }
 
-  const surveys: TSurvey[] = [];
-
-  try {
-    for (const surveyPrisma of surveysPrisma) {
       const transformedSurvey = {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
       };
-      const survey = ZSurvey.parse(transformedSurvey);
-      surveys.push(survey);
-    }
-    return surveys;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
-    }
-    throw new ValidationError("Data validation of survey failed");
-  }
-});
 
-export const getSurveysWithAnalytics = cache(
-  async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
-    validateInputs([environmentId, ZId]);
-    let surveysPrisma;
-    try {
-      surveysPrisma = await prisma.survey.findMany({
-        where: {
-          environmentId,
-        },
-        select: selectSurveyWithAnalytics,
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
+      try {
+        const survey = ZSurvey.parse(transformedSurvey);
+        return survey;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+        }
+        throw new ValidationError("Data validation of survey failed");
       }
-
-      throw error;
+    },
+    [getSurveyCacheTag(surveyId)],
+    {
+      tags: [getSurveyCacheTag(surveyId)],
+      revalidate: 60 * 30,
     }
+  )();
 
-    try {
-      const surveys: TSurveyWithAnalytics[] = [];
-      for (const { _count, displays, ...surveyPrisma } of surveysPrisma) {
-        const numDisplays = displays.length;
-        const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
-        const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
-
-        const transformedSurvey = {
-          ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
-          analytics: {
-            numDisplays,
-            responseRate,
-            numResponses: _count.responses,
+export const getSurveys = async (environmentId: string): Promise<TSurvey[]> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+      let surveysPrisma;
+      try {
+        surveysPrisma = await prisma.survey.findMany({
+          where: {
+            environmentId,
           },
-        };
-        const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
-        surveys.push(survey);
+          select: selectSurvey,
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
       }
-      return surveys;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+
+      const surveys: TSurvey[] = [];
+
+      try {
+        for (const surveyPrisma of surveysPrisma) {
+          const transformedSurvey = {
+            ...surveyPrisma,
+            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+          };
+          const survey = ZSurvey.parse(transformedSurvey);
+          surveys.push(survey);
+        }
+        return surveys;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+        }
+        throw new ValidationError("Data validation of survey failed");
       }
-      throw new ValidationError("Data validation of survey failed");
+    },
+    [getSurveysCacheTag(environmentId)],
+    {
+      tags: [getSurveysCacheTag(environmentId)],
+      revalidate: 60 * 30,
     }
-  }
-);
+  )();
+
+export const getSurveysWithAnalytics = async (environmentId: string): Promise<TSurveyWithAnalytics[]> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+      let surveysPrisma;
+      try {
+        surveysPrisma = await prisma.survey.findMany({
+          where: {
+            environmentId,
+          },
+          select: selectSurveyWithAnalytics,
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+
+      try {
+        const surveys: TSurveyWithAnalytics[] = [];
+        for (const { _count, displays, ...surveyPrisma } of surveysPrisma) {
+          const numDisplays = displays.length;
+          const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
+          const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
+
+          const transformedSurvey = {
+            ...surveyPrisma,
+            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+            analytics: {
+              numDisplays,
+              responseRate,
+              numResponses: _count.responses,
+            },
+          };
+          const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
+          surveys.push(survey);
+        }
+        return surveys;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+        }
+        throw new ValidationError("Data validation of survey failed");
+      }
+    },
+    [getSurveysWithAnalyticsCacheTag(environmentId)],
+    {
+      tags: [getSurveysWithAnalyticsCacheTag(environmentId)],
+    }
+  )();
 
 export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   const surveyId = updatedSurvey.id;
@@ -428,6 +465,9 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     };
 
     revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
+    revalidateTag(getSurveysWithAnalyticsCacheTag(modifiedSurvey.environmentId));
+    revalidateTag(getSurveyCacheTag(modifiedSurvey.id));
+    revalidateTag(getSurveyWithAnalyticsCacheTag(modifiedSurvey.id));
 
     return modifiedSurvey;
   } catch (error) {
@@ -448,6 +488,8 @@ export async function deleteSurvey(surveyId: string) {
     select: selectSurvey,
   });
   revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
+  revalidateTag(getSurveysWithAnalyticsCacheTag(deletedSurvey.environmentId));
+
   return deletedSurvey;
 }
 
@@ -465,6 +507,7 @@ export async function createSurvey(environmentId: string, surveyBody: any) {
   });
   captureTelemetry("survey created");
   revalidateTag(getSurveysCacheTag(environmentId));
+  revalidateTag(getSurveysWithAnalyticsCacheTag(environmentId));
 
   return survey;
 }
