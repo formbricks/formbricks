@@ -162,6 +162,8 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
     return null;
   }
 
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
     createdAt: new Date(survey.createdAt),
@@ -219,6 +221,8 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     return null;
   }
 
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
     createdAt: new Date(survey.createdAt),
@@ -272,6 +276,8 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
     }
   )();
 
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
   return surveys.map((survey) => ({
     ...survey,
     createdAt: new Date(survey.createdAt),
@@ -332,6 +338,8 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
     }
   )();
 
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
   return surveysWithAnalytics.map((survey) => ({
     ...survey,
     createdAt: new Date(survey.createdAt),
