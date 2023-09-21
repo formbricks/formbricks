@@ -1,5 +1,11 @@
 import { Fence } from "@/components/shared/Fence";
 import { Callout } from "@/components/shared/Callout";
+import IntegrationTab from "./integrations-tab.png";
+import ConnectWithGoogle from "./connect-with-google.png";
+import GoogleConnected from "./google-connected.png";
+import LinkSurveyWithSheet from "./link-survey-with-sheet.png";
+import LinkWithQuestions from "./link-with-questions.png";
+import ListLinkedSurveys from "./list-linked-surveys.png";
 import Image from "next/image";
 
 export const meta = {
@@ -18,6 +24,73 @@ The Google Sheets integration allows you to automatically send responses to a Go
   self-hosted version of Formbricks.
 </Note>
 
+## Setup in Formbricks Cloud
+
+1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) and click on the "Connect" button under Google Sheets integration.
+
+<Image
+  src={IntegrationTab}
+  alt="Formbricks Integrations Tab"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+2. Now click on the "Connect with Google" button to authenticate yourself with Google.
+
+<Image
+  src={ConnectWithGoogle}
+  alt="Connect Formbricks with your Google"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. You will now be taken to the Google OAuth page where you can select the Google account you want to use for the integration. Note that you need to have access to Google Sheets you want to use for the integration with the selected account.
+
+4. Once you have selected the account and completed the authentication process, you will be taken back to Formbricks Cloud and see the connected status as below:
+
+<Image
+  src={GoogleConnected}
+  alt="Formbricks is now connected with Google"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+<Note>
+
+Before the next step, make sure that you have a Formbricks Survey with at least one question and a Google Sheet in the Google account you integrated.
+
+</Note>
+
+6. Now click on the "Link New Sheet" button to link a new Google Sheet with Formbricks and a modal will open up.
+
+<Image
+  src={LinkSurveyWithSheet}
+  alt="Link Formbricks with a Google Sheet"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+7. Select the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to be feeded in the Google Sheet. Select the questions and click on the "Link Sheet" button.
+
+<Image
+  src={LinkWithQuestions}
+  alt="Select question to link with Google Sheet"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+
+/>
+
+8. On submitting, the modal will close and you will see the linked Google Sheet in the list of linked Google Sheets.
+
+<Image
+  src={ListLinkedSurveys}
+  alt="List of linked Google Sheets"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Congratulations! You have successfully linked a Google Sheet with Formbricks. Now whenever a response is submitted for the linked Survey, it will be automatically added to the linked Google Sheet.
+
 ## Setup in self-hosted Formbricks
 
 Enabling the Google Sheets Integration in a self-hosted environment isn't easy and requires a setup using Google Cloud and changing the environment variables of your Formbricks instance.
@@ -27,3 +100,14 @@ The environment variables you need to set are:
 - `GOOGLE_SHEETS_CLIENT_ID`
 - `GOOGLE_SHEETS_CLIENT_SECRET`
 - `GOOGLE_SHEETS_REDIRECT_URL`
+
+## Remove Integration with Google Account
+
+To remove the integration with Google Account,
+
+1. Visit the Integrations tab in your Formbricks Cloud dashboard.
+2. Select "Manage" button in the Google Sheets card.
+3. Click on the "Connected with `<your-email-here`>" just before the "Link new Sheet" button.
+4. It will now ask for a confirmation to remove the integration. Click on the "Delete" button to remove the integration. You can always come back and connect again with the same Google Account.
+
+Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
