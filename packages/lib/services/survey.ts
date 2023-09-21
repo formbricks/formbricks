@@ -9,12 +9,19 @@ import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { getDisplaysCacheTag } from "./displays";
 
 const getSurveysCacheTag = (environmentId: string): string => `env-${environmentId}-surveys`;
 const getSurveysWithAnalyticsCacheTag = (environmentId: string): string =>
   `env-${environmentId}-surveysWithAnalytics`;
 
-const getSurveyCacheTag = (surveyId: string): string => `survey-${surveyId}`;
+export const getSurveyCacheKey = (surveyId: string): string[] => [`survey-${surveyId}`];
+
+export const getSurveyCacheTag = (surveyId: string): string[] => [
+  `survey-${surveyId}`,
+  getDisplaysCacheTag(surveyId),
+];
+
 const getSurveyWithAnalyticsCacheTag = (surveyId: string): string => `survey-${surveyId}-withAnalytics`;
 
 export const selectSurvey = {
@@ -191,9 +198,9 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveyCacheTag(surveyId)],
+    getSurveyCacheKey(surveyId),
     {
-      tags: [getSurveyCacheTag(surveyId)],
+      tags: getSurveyCacheTag(surveyId),
       revalidate: 60 * 30,
     }
   )();
@@ -495,7 +502,8 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
     revalidateTag(getSurveysWithAnalyticsCacheTag(modifiedSurvey.environmentId));
-    revalidateTag(getSurveyCacheTag(modifiedSurvey.id));
+    // revalidateTag(getSurveyCacheTag(modifiedSurvey.id));
+    revalidateTag(`survey-${modifiedSurvey.id}`);
     revalidateTag(getSurveyWithAnalyticsCacheTag(modifiedSurvey.id));
 
     return modifiedSurvey;
