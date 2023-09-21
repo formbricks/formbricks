@@ -131,7 +131,11 @@ export default function RatingQuestion({
                     )}
                   </label>
                 ) : (
-                  <label className="flex h-full w-full justify-center text-slate-800">
+                  <label
+                    className={cn(
+                      "flex justify-center text-slate-800",
+                      question.range === 10 ? "h-6 w-6" : "h-full w-full"
+                    )}>
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={value === number || hoveredNumber === number}
