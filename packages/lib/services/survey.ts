@@ -10,6 +10,7 @@ import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { getDisplaysCacheTag } from "./displays";
+import { getResponseCacheTag } from "./response";
 
 const getSurveysCacheTag = (environmentId: string): string[] => [`env-${environmentId}-surveys`, "surveys"];
 const getSurveysWithAnalyticsCacheTag = (environmentId: string): string[] => [
@@ -23,6 +24,7 @@ export const getSurveyCacheTag = (surveyId: string): string[] => [
   surveyId,
   `survey-${surveyId}`,
   getDisplaysCacheTag(surveyId),
+  getResponseCacheTag(surveyId),
 ];
 
 // survey with analytics cache key and tags
@@ -31,6 +33,7 @@ const getSurveyWithAnalyticsCacheTag = (surveyId: string): string[] => [
   surveyId,
   `surveyWithAnalytics-${surveyId}`,
   getDisplaysCacheTag(surveyId),
+  getResponseCacheTag(surveyId),
 ];
 
 export const selectSurvey = {
