@@ -11,18 +11,27 @@ import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { getDisplaysCacheTag } from "./displays";
 
-const getSurveysCacheTag = (environmentId: string): string => `env-${environmentId}-surveys`;
-const getSurveysWithAnalyticsCacheTag = (environmentId: string): string =>
-  `env-${environmentId}-surveysWithAnalytics`;
+const getSurveysCacheTag = (environmentId: string): string[] => [`env-${environmentId}-surveys`, "surveys"];
+const getSurveysWithAnalyticsCacheTag = (environmentId: string): string[] => [
+  `env-${environmentId}-surveysWithAnalytics`,
+  "surveys",
+];
 
+// survey cache key and tags
 export const getSurveyCacheKey = (surveyId: string): string[] => [`survey-${surveyId}`];
-
 export const getSurveyCacheTag = (surveyId: string): string[] => [
+  surveyId,
   `survey-${surveyId}`,
   getDisplaysCacheTag(surveyId),
 ];
 
-const getSurveyWithAnalyticsCacheTag = (surveyId: string): string => `survey-${surveyId}-withAnalytics`;
+// survey with analytics cache key and tags
+const getSurveyWithAnalyticsCacheKey = (surveyId: string): string[] => [`surveyWithAnalytics-${surveyId}`];
+const getSurveyWithAnalyticsCacheTag = (surveyId: string): string[] => [
+  surveyId,
+  `surveyWithAnalytics-${surveyId}`,
+  getDisplaysCacheTag(surveyId),
+];
 
 export const selectSurvey = {
   id: true,
@@ -142,9 +151,10 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveyWithAnalyticsCacheTag(surveyId)],
+    getSurveyWithAnalyticsCacheKey(surveyId),
     {
-      tags: [getSurveyWithAnalyticsCacheTag(surveyId)],
+      tags: getSurveyWithAnalyticsCacheTag(surveyId),
+      revalidate: 60 * 30,
     }
   )();
 
@@ -255,9 +265,9 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveysCacheTag(environmentId)],
+    getSurveysCacheTag(environmentId),
     {
-      tags: [getSurveysCacheTag(environmentId)],
+      tags: getSurveysCacheTag(environmentId),
       revalidate: 60 * 30,
     }
   )();
@@ -316,9 +326,9 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveysWithAnalyticsCacheTag(environmentId)],
+    getSurveysWithAnalyticsCacheTag(environmentId),
     {
-      tags: [getSurveysWithAnalyticsCacheTag(environmentId)],
+      tags: getSurveysWithAnalyticsCacheTag(environmentId),
     }
   )();
 
@@ -500,11 +510,8 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
     };
 
-    revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
-    revalidateTag(getSurveysWithAnalyticsCacheTag(modifiedSurvey.environmentId));
-    // revalidateTag(getSurveyCacheTag(modifiedSurvey.id));
-    revalidateTag(`survey-${modifiedSurvey.id}`);
-    revalidateTag(getSurveyWithAnalyticsCacheTag(modifiedSurvey.id));
+    revalidateTag("surveys");
+    revalidateTag(surveyId);
 
     return modifiedSurvey;
   } catch (error) {
@@ -524,8 +531,8 @@ export async function deleteSurvey(surveyId: string) {
     },
     select: selectSurvey,
   });
-  revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
-  revalidateTag(getSurveysWithAnalyticsCacheTag(deletedSurvey.environmentId));
+
+  revalidateTag("surveys");
 
   return deletedSurvey;
 }
@@ -543,8 +550,8 @@ export async function createSurvey(environmentId: string, surveyBody: any) {
     },
   });
   captureTelemetry("survey created");
-  revalidateTag(getSurveysCacheTag(environmentId));
-  revalidateTag(getSurveysWithAnalyticsCacheTag(environmentId));
+
+  revalidateTag("surveys");
 
   return survey;
 }
