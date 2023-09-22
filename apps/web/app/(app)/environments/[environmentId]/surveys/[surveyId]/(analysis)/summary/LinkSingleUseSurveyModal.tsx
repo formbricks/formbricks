@@ -6,9 +6,9 @@ import { ArrowPathIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
-import cuid2 from "@paralleldrive/cuid2";
 import { truncateMiddle } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
+import { generateSurveySingleUseId } from "@/lib/surveys/surveys";
 
 interface LinkSingleUseSurveyModalProps {
   survey: TSurvey;
@@ -19,7 +19,7 @@ interface LinkSingleUseSurveyModalProps {
 const generateSingleUseIds = () =>
   Array(5)
     .fill(null)
-    .map(() => cuid2.createId());
+    .map(() => generateSurveySingleUseId());
 
 export default function LinkSingleUseSurveyModal({ survey, open, setOpen }: LinkSingleUseSurveyModalProps) {
   const defaultSurveyUrl = `${window.location.protocol}//${window.location.host}/s/${survey.id}`;

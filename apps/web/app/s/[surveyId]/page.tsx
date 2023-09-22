@@ -11,6 +11,7 @@ import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/services/response";
 import { TResponse } from "@formbricks/types/v1/responses";
+import { validateSurveySingleUseId } from "@/lib/surveys/surveys";
 
 interface LinkSurveyPageProps {
   params: {
@@ -25,7 +26,7 @@ interface LinkSurveyPageProps {
 
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
-  const singleUseId = searchParams.suId;
+  const suId = searchParams.suId;
   const isSingleUseSurvey = survey?.singleUse?.enabled;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
@@ -45,8 +46,13 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     );
   }
 
-  if (isSingleUseSurvey && !singleUseId) {
-    return <SurveyInactive status="link invalid" />;
+  let singleUseId: string | undefined = undefined;
+  if (isSingleUseSurvey) {
+    const validatedSingleUseId = validateSurveySingleUseId(suId);
+    if (!validatedSingleUseId) {
+      return <SurveyInactive status="link invalid" />;
+    }
+    singleUseId = validatedSingleUseId;
   }
 
   let singleUseResponse: TResponse | undefined = undefined;
