@@ -1,8 +1,7 @@
 "use client";
 
-import { Dialog, DialogContent } from "@formbricks/ui";
+import { Button, Dialog, DialogContent } from "@formbricks/ui";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui";
 import { ArrowPathIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useRef, useState } from "react";
@@ -54,6 +53,7 @@ export default function LinkSingleUseSurveyModal({ survey, open, setOpen }: Link
                 const isSelected = selectedSingleUseIds.includes(index);
                 return (
                   <div
+                    key={singleUseId}
                     className={cn(
                       "row relative mt-3 flex max-w-full cursor-pointer items-center justify-between overflow-auto rounded-lg border border-slate-300 bg-slate-50 px-8 py-4 text-left text-slate-800 transition-all duration-200 ease-in-out hover:border-slate-500",
                       isSelected && "border-slate-200 text-slate-400 hover:border-slate-200"
