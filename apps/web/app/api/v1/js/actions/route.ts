@@ -1,8 +1,7 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { prisma } from "@formbricks/database";
+import { createAction } from "@formbricks/lib/services/actions";
 import { ZJsActionInput } from "@formbricks/types/v1/js";
-import { EventType } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -26,42 +25,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const { environmentId, sessionId, name, properties } = inputValidation.data;
 
-    let eventType: EventType = EventType.code;
-    if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
-      eventType = EventType.automatic;
-    }
-
-    await prisma.event.create({
-      data: {
-        properties,
-        session: {
-          connect: {
-            id: sessionId,
-          },
-        },
-        eventClass: {
-          connectOrCreate: {
-            where: {
-              name_environmentId: {
-                name,
-                environmentId,
-              },
-            },
-            create: {
-              name,
-              type: eventType,
-              environment: {
-                connect: {
-                  id: environmentId,
-                },
-              },
-            },
-          },
-        },
-      },
-      select: {
-        id: true,
-      },
+    createAction({
+      environmentId,
+      sessionId,
+      name,
+      properties,
     });
 
     return responses.successResponse({}, true);

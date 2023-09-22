@@ -1,0 +1,29 @@
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+export const meta = {
+  title: "n8n Setup",
+  description: "Wire up Formbricks with n8n and 350+ other apps",
+};
+
+#### Integrations
+
+# Google Sheets
+
+The Google Sheets integration allows you to automatically send responses to a Google Sheet of your choice.
+
+<Note>
+  This feature is enabled by default in Formbricks Cloud but needs to be self-configured when running a
+  self-hosted version of Formbricks.
+</Note>
+
+## Setup in self-hosted Formbricks
+
+Enabling the Google Sheets Integration in a self-hosted environment isn't easy and requires a setup using Google Cloud and changing the environment variables of your Formbricks instance.
+
+The environment variables you need to set are:
+
+- `GOOGLE_SHEETS_CLIENT_ID`
+- `GOOGLE_SHEETS_CLIENT_SECRET`
+- `GOOGLE_SHEETS_REDIRECT_URL`
