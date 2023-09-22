@@ -16,9 +16,11 @@ const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
       <div></div>
       <div className="flex flex-col items-center space-y-3 text-slate-300">
         <CheckCircleIcon className="h-20 w-20" />
-        <h1 className="text-4xl font-bold text-slate-800">{singleUseMessage?.heading ?? defaultHeading}</h1>
+        <h1 className="text-4xl font-bold text-slate-800">
+          {!!singleUseMessage?.heading ? singleUseMessage?.heading : defaultHeading}
+        </h1>
         <p className="text-lg leading-10 text-gray-500">
-          {singleUseMessage?.subheading ?? defaultSubheading}
+          {!!singleUseMessage?.subheading ? singleUseMessage?.subheading : defaultSubheading}
         </p>
       </div>
       <div>
