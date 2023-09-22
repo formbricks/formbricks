@@ -40,7 +40,7 @@ export default function ResponseTimeline({
         // iterate over survey questions and build the updated response
         for (const question of survey.questions) {
           const answer = response.data[question.id];
-          if (answer) {
+          if (answer !== null && answer !== undefined) {
             updatedResponse.push({
               id: createId(),
               question: question.headline,
