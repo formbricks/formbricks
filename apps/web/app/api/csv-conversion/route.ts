@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(
     {
-      csvResponse: csv,
+      fileResponse: csv,
     },
     {
       headers,

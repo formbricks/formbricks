@@ -17,7 +17,7 @@ import {
 } from "@/lib/surveys/surveys";
 import toast from "react-hot-toast";
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
-import { convertToCSV } from "@/lib/csvConversion";
+import { fetchFile } from "@/lib/fetchFile";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
@@ -142,12 +142,12 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
   }, [survey]);
 
   const downloadResponses = useCallback(
-    async (filter: FilterDownload) => {
+    async (filter: FilterDownload, filetype: string) => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
       const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, downloadResponse);
       const matchQandA = getMatchQandA(downloadResponse, survey);
-      const csvData = matchQandA.map((response) => {
-        const csvResponse = {
+      const jsonData = matchQandA.map((response) => {
+        const fileResponse = {
           "Response ID": response.id,
           Timestamp: response.createdAt,
           Finished: response.finished,
@@ -167,26 +167,12 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
               transformedAnswer = answer;
             }
           }
-          csvResponse[questionName] = matchingQuestion ? transformedAnswer : "";
+          fileResponse[questionName] = matchingQuestion ? transformedAnswer : "";
         });
 
-        return csvResponse;
+        return fileResponse;
       });
 
-      // Add attribute columns to the CSV
-
-      Object.keys(attributeMap).forEach((attributeName) => {
-        const attributeValues = attributeMap[attributeName];
-        Object.keys(attributeValues).forEach((personId) => {
-          const value = attributeValues[personId];
-          const matchingResponse = csvData.find((response) => response["Formbricks User ID"] === personId);
-          if (matchingResponse) {
-            matchingResponse[attributeName] = value;
-          }
-        });
-      });
-
-      // Fields which will be used as column headers in the CSV
       const fields = [
         "Response ID",
         "Timestamp",
@@ -200,23 +186,38 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
       let response;
 
       try {
-        response = await convertToCSV({
-          json: csvData,
-          fields,
-          fileName: csvFileName,
-        });
+        response = await fetchFile(
+          {
+            json: jsonData,
+            fields,
+            fileName: csvFileName,
+          },
+          filetype
+        );
       } catch (err) {
-        toast.error("Error downloading CSV");
+        toast.error(`Error downloading ${filetype === "csv" ? "CSV" : "Excel"}`);
         return;
       }
 
-      const blob = new Blob([response.csvResponse], { type: "text/csv;charset=utf-8;" });
+      let blob: Blob;
+      if (filetype === "csv") {
+        blob = new Blob([response.fileResponse], { type: "text/csv;charset=utf-8;" });
+      } else {
+        const binaryString = atob(response["fileResponse"]);
+        const byteArray = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          byteArray[i] = binaryString.charCodeAt(i);
+        }
+        blob = new Blob([byteArray], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+      }
+
       const downloadUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = downloadUrl;
-
-      link.download = `${csvFileName}.csv`;
+      link.download = `${csvFileName}.${filetype}`;
 
       document.body.appendChild(link);
       link.click();
@@ -376,16 +377,30 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.ALL);
+                  downloadResponses(FilterDownload.ALL, "csv");
                 }}>
                 <p className="text-slate-700">All responses (CSV)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.FILTER);
+                  downloadResponses(FilterDownload.ALL, "xlsx");
+                }}>
+                <p className="text-slate-700">All responses (Excel)</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:ring-0"
+                onClick={() => {
+                  downloadResponses(FilterDownload.FILTER, "csv");
                 }}>
                 <p className="text-slate-700">Current selection (CSV)</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:ring-0"
+                onClick={() => {
+                  downloadResponses(FilterDownload.FILTER, "xlsx");
+                }}>
+                <p className="text-slate-700">Current selection (Excel)</p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
