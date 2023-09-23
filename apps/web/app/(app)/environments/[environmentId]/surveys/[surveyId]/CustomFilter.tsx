@@ -173,6 +173,19 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
         return fileResponse;
       });
 
+      // Add attribute columns to the file
+      Object.keys(attributeMap).forEach((attributeName) => {
+        const attributeValues = attributeMap[attributeName];
+        Object.keys(attributeValues).forEach((personId) => {
+          const value = attributeValues[personId];
+          const matchingResponse = jsonData.find((response) => response["Formbricks User ID"] === personId);
+          if (matchingResponse) {
+            matchingResponse[attributeName] = value;
+          }
+        });
+      });
+
+      // Fields which will be used as column headers in the file
       const fields = [
         "Response ID",
         "Timestamp",
