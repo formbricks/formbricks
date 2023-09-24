@@ -5,7 +5,7 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
-import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/EmptyInAppSurveys";
+import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 
 interface ResponseTimelineProps {
   environmentId: string;

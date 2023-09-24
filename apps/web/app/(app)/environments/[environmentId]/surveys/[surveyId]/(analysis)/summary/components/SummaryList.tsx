@@ -1,4 +1,4 @@
-import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/ConsentSummary";
+import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
@@ -19,7 +19,7 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/EmptyInAppSurveys";
+import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 
 interface SummaryListProps {
   environmentId: string;
