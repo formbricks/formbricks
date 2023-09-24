@@ -1,5 +1,5 @@
-import Footer from "./Footer";
-import MetaInformation from "./MetaInformation";
+import Footer from "../../components/shared/Footer";
+import MetaInformation from "../../components/shared/MetaInformation";
 import HeaderLight from "./HeaderLight";
 
 interface LayoutProps {
