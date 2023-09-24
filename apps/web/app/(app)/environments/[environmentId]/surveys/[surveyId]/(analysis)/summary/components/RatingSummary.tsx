@@ -2,9 +2,9 @@ import type { QuestionSummary } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { RatingResponse } from "../RatingResponse";
 import { QuestionType } from "@formbricks/types/questions";
 import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
+import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 
 interface RatingSummaryProps {
   questionSummary: QuestionSummary<TSurveyRatingQuestion>;
