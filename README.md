@@ -85,6 +85,13 @@ Here are a few options:
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
 
+## 🧑‍💻 Community managed One Click Hosting
+### Railway
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
+
+You can deploy Formbricks on [Railway](https://railway.app) using the button above.
+
+
 ## 📆 Contact us
 
 Let's have a chat about your survey needs and get you started.
