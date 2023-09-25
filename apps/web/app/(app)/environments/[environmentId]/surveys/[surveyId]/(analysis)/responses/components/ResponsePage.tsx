@@ -1,28 +1,27 @@
 "use client";
-
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/CustomFilter";
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
-import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/SurveyResultsTabs";
-import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryList";
-import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryMetadata";
+import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
+import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import { getFilterResponses } from "@/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
-interface SummaryPageProps {
+interface ResponsePageProps {
   environmentId: string;
-  survey: TSurveyWithAnalytics;
+  survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
 }
 
-const SummaryPage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl }: SummaryPageProps) => {
+const ResponsePage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -30,11 +29,11 @@ const SummaryPage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl
       resetState();
     }
   }, [searchParams]);
+
   // get the filtered array when the selected filter value changes
   const filterResponses: TResponse[] = useMemo(() => {
     return getFilterResponses(responses, selectedFilter, survey, dateRange);
   }, [selectedFilter, responses, survey, dateRange]);
-
   return (
     <ContentWrapper>
       <SummaryHeader
@@ -49,11 +48,15 @@ const SummaryPage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl
         survey={survey}
         totalResponses={responses}
       />
-      <SurveyResultsTabs activeId="summary" environmentId={environmentId} surveyId={surveyId} />
-      <SummaryMetadata responses={filterResponses} survey={survey} />
-      <SummaryList responses={filterResponses} survey={survey} environmentId={environmentId} />
+      <SurveyResultsTabs activeId="responses" environmentId={environmentId} surveyId={surveyId} />
+      <ResponseTimeline
+        environmentId={environmentId}
+        surveyId={surveyId}
+        responses={filterResponses}
+        survey={survey}
+      />
     </ContentWrapper>
   );
 };
 
-export default SummaryPage;
+export default ResponsePage;
