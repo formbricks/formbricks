@@ -162,6 +162,12 @@ const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string })
 
   const confirmEmail = render(Email, { pretty: true });
 
+  // remove <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> from the top of the email template string because it's not needed for embedding in an email client
+  const confirmEmailWithoutDoctype = confirmEmail.replace(
+    '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
+    ""
+  );
+
   return (
     <div className="flex grow flex-col gap-5">
       <div className="flex items-center gap-4">
@@ -179,6 +185,7 @@ const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string })
             aria-label="Embed survey in your website"
             onClick={() => {
               toast.success("Embed code copied to clipboard!");
+              navigator.clipboard.writeText(confirmEmailWithoutDoctype);
             }}
             className="shrink-0"
             EndIcon={DocumentDuplicateIcon}>
@@ -212,7 +219,7 @@ const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string })
               customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
               language="html"
               showCopyToClipboard={false}>
-              {confirmEmail}
+              {confirmEmailWithoutDoctype}
             </CodeBlock>
           </>
         ) : (
@@ -280,74 +287,64 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
   switch (firstQuestion.type) {
     case QuestionType.OpenText:
       return (
-        <Link
-          href={surveyUrl}
-          target="_blank"
-          className="mx-0 my-2 block rounded-lg border border-black px-4 py-2 text-inherit">
+        <EmailTemplateWrapper surveyUrl={surveyUrl}>
           <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
             {firstQuestion.headline}
           </Text>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
             {firstQuestion.subheader}
           </Text>
-          <Section className="mt-4 block h-20 w-full rounded-lg border border-gray-200 bg-slate-50" />
-          <Container className="m-auto mt-4 text-center">
-            <Text className="m-0 inline-block p-0 text-xs text-slate-400">powered by</Text>
-            <Text className="m-0 ml-1 inline-block p-0 text-slate-700">Formbricks</Text>
-          </Container>
-        </Link>
+          <Section className="mt-4 block h-20 w-full rounded-lg border border-solid border-gray-200 bg-slate-50" />
+          <EmailFooter />
+        </EmailTemplateWrapper>
       );
     case QuestionType.Consent:
       return (
-        <Link href={surveyUrl} target="_blank">
-          <Section className="block rounded-lg border border-black px-4 py-2 text-inherit">
-            <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
-              {firstQuestion.headline}
-            </Text>
-            <Container className="m-0 text-sm font-normal leading-6 text-slate-600">
-              <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
-            </Container>
+        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+          <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+            {firstQuestion.headline}
+          </Text>
+          <Container className="m-0 text-sm font-normal leading-6 text-slate-600">
+            <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
+          </Container>
 
-            <Container className="mt-4 block w-full rounded-lg border border-gray-200 bg-slate-50 p-4 font-medium text-slate-800">
-              <Text className="m-0 inline-block">{firstQuestion.label}</Text>
-            </Container>
-            <Container className="mt-4 flex justify-end">
-              {!firstQuestion.required && (
-                <EmailButton
-                  href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
-                  className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
-                  Reject
-                </EmailButton>
-              )}
+          <Container className="m-0 mt-4 block w-full max-w-none rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 font-medium text-slate-800">
+            <Text className="m-0 inline-block">{firstQuestion.label}</Text>
+          </Container>
+          <Container className="mx-0 mt-4 flex max-w-none justify-end">
+            {!firstQuestion.required && (
               <EmailButton
-                href={`${surveyUrl}?${firstQuestion.id}=accepted`}
-                className="bg-brand-dark ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
-                Accept
+                href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
+                Reject
               </EmailButton>
-            </Container>
-            <Container className="m-auto mt-4 text-center">
-              <Text className="m-0 inline-block p-0 text-xs text-slate-400">powered by</Text>
-              <Text className="m-0 ml-1 inline-block p-0 text-slate-700">Formbricks</Text>
-            </Container>
-          </Section>
-        </Link>
+            )}
+            <EmailButton
+              href={`${surveyUrl}?${firstQuestion.id}=accepted`}
+              className="bg-brand-dark ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
+              Accept
+            </EmailButton>
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
       );
     case QuestionType.NPS:
       return (
-        <Link href={surveyUrl} target="_blank">
-          <Section className="block rounded-lg border border-black px-4 py-2 text-inherit">
+        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+          <Section>
             <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
               {firstQuestion.headline}
             </Text>
             <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
               {firstQuestion.subheader}
             </Text>
-            <Container className="mx-0 mt-4 flex w-max flex-col ">
-              <Section className="block overflow-hidden rounded-md border">
+            <Container className="mx-0 mt-4 flex w-max flex-col">
+              <Section className="block overflow-hidden rounded-md border border-solid border-gray-200">
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
+                    key={i}
                     href={`${surveyUrl}?${firstQuestion.id}=${i}`}
-                    className="m-0 inline-flex h-10 w-10 items-center justify-center border p-0 text-slate-800">
+                    className="m-0 inline-flex h-10 w-10 items-center justify-center border border-solid border-gray-200 p-0 text-slate-800">
                     {i}
                   </EmailButton>
                 ))}
@@ -363,51 +360,166 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
                 </Row>
               </Section>
             </Container>
+            {/* {!firstQuestion.required && (
+              <EmailButton
+                href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                className="mt-4 cursor-pointer appearance-none rounded-md bg-slate-500 px-6 py-3 text-sm font-medium text-white">
+                {firstQuestion.buttonLabel || "Skip"}
+              </EmailButton>
+            )} */}
 
-            <Container className="m-auto mt-4 text-center">
-              <Text className="m-0 inline-block p-0 text-xs text-slate-400">powered by</Text>
-              <Text className="m-0 ml-1 inline-block p-0 text-slate-700">Formbricks</Text>
-            </Container>
+            <EmailFooter />
           </Section>
-        </Link>
+        </EmailTemplateWrapper>
       );
     case QuestionType.CTA:
       return (
-        <Link href={surveyUrl} target="_blank">
-          <Section className="block rounded-lg border border-black px-4 py-2 text-inherit">
+        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+          <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+            {firstQuestion.headline}
+          </Text>
+          <Container className="m-0 text-sm font-normal leading-6 text-slate-600">
+            <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
+          </Container>
+
+          <Container className="mx-0 mt-4 max-w-none">
+            {!firstQuestion.required && (
+              <EmailButton
+                href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
+                {firstQuestion.dismissButtonLabel}
+              </EmailButton>
+            )}
+            <EmailButton
+              href={`${surveyUrl}?${firstQuestion.id}=clicked`}
+              className="ml-2 inline-flex cursor-pointer appearance-none rounded-md bg-slate-500 px-6 py-3 text-sm font-medium text-white">
+              {firstQuestion.buttonLabel}
+            </EmailButton>
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case QuestionType.Rating:
+      return (
+        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+          <Section>
             <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
               {firstQuestion.headline}
             </Text>
-            <Container className="m-0 text-sm font-normal leading-6 text-slate-600">
-              <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
+            <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+              {firstQuestion.subheader}
+            </Text>
+            <Container className="mx-0 mt-4 flex">
+              <Section
+                className={cn("inline-block w-max overflow-hidden rounded-md", {
+                  ["border border-solid border-gray-200"]: firstQuestion.scale === "number",
+                })}>
+                {Array.from({ length: firstQuestion.range }, (_, i) => (
+                  <EmailButton
+                    key={i}
+                    href={`${surveyUrl}?${firstQuestion.id}=${i + 1}`}
+                    className={cn(
+                      "m-0 inline-flex h-10 w-10 items-center justify-center p-0 text-slate-800",
+                      {
+                        ["border border-solid border-gray-200"]: firstQuestion.scale === "number",
+                      }
+                    )}>
+                    {firstQuestion.scale === "smiley" && "😃"}
+                    {firstQuestion.scale === "number" && i + 1}
+                    {firstQuestion.scale === "star" && "⭐"}
+                  </EmailButton>
+                ))}
+              </Section>
+              <Section className="m-0 px-1.5 text-xs leading-6 text-slate-500">
+                <Row>
+                  <Column>
+                    <Text className="m-0 inline-block p-0">{firstQuestion.lowerLabel}</Text>
+                  </Column>
+                  <Column className="text-right">
+                    <Text className="m-0 inline-block  p-0 text-right">{firstQuestion.upperLabel}</Text>
+                  </Column>
+                </Row>
+              </Section>
             </Container>
-
-            <Container className="mt-4 ">
-              {!firstQuestion.required && (
-                <EmailButton
-                  href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
-                  className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
-                  {firstQuestion.dismissButtonLabel}
-                </EmailButton>
-              )}
+            {/* {!firstQuestion.required && (
               <EmailButton
-                onClick={() => {
-                  if (firstQuestion.buttonExternal && firstQuestion.buttonUrl) {
-                    window?.open(firstQuestion.buttonUrl, "_blank")?.focus();
-                  }
-                }}
-                href={`${surveyUrl}?${firstQuestion.id}=clicked`}
-                className="ml-2 inline-flex cursor-pointer appearance-none rounded-md bg-slate-500 px-6 py-3 text-sm font-medium text-white">
-                {firstQuestion.buttonLabel}
+                href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                className="mt-4 cursor-pointer appearance-none rounded-md bg-slate-500 px-6 py-3 text-sm font-medium text-white">
+                {firstQuestion.buttonLabel || "Skip"}
               </EmailButton>
-            </Container>
-            <Container className="m-auto mt-4 text-center">
-              <Text className="m-0 inline-block p-0 text-xs text-slate-400">powered by</Text>
-              <Text className="m-0 ml-1 inline-block p-0 text-slate-700">Formbricks</Text>
-            </Container>
+            )} */}
+            <EmailFooter />
           </Section>
-        </Link>
+        </EmailTemplateWrapper>
+      );
+    case QuestionType.MultipleChoiceMulti:
+      return (
+        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+          <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+            {firstQuestion.subheader}
+          </Text>
+          <Container className="mx-0 max-w-none">
+            {firstQuestion.choices.map((choice) => (
+              <Section
+                className="mt-4 block w-full rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
+                key={choice.id}>
+                {choice.label}
+              </Section>
+            ))}
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case QuestionType.MultipleChoiceSingle:
+      return (
+        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+          <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+            {firstQuestion.subheader}
+          </Text>
+          <Container className="mx-0 max-w-none">
+            {firstQuestion.choices
+              .filter((c) => c.id !== "other")
+              .map((choice) => (
+                <Link
+                  className="mt-4 block rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
+                  href={`${surveyUrl}?${firstQuestion.id}=${choice.label}`}>
+                  {choice.label}
+                </Link>
+              ))}
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
       );
   }
-  return <></>;
+};
+
+const EmailTemplateWrapper = ({ children, surveyUrl }) => {
+  return (
+    <Link
+      href={surveyUrl}
+      target="_blank"
+      className="mx-0 my-2 block rounded-lg border border-solid border-black bg-white px-4 py-2 font-sans text-inherit">
+      {children}
+    </Link>
+  );
+};
+
+const EmailFooter = () => {
+  return (
+    <Container className="m-auto mt-4 text-center">
+      <Text className="m-0 inline-block p-0 text-xs text-slate-400">Powered by</Text>
+      <Link
+        href="https://formbricks.com/"
+        target="_blank"
+        className="m-0 ml-1 inline-block p-0 text-sm text-slate-700">
+        Formbricks
+      </Link>
+    </Container>
+  );
 };
