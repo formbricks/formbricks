@@ -2,7 +2,6 @@ import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
-import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 
 interface SummaryMetadataProps {
   responses: TResponse[];
@@ -10,9 +9,7 @@ interface SummaryMetadataProps {
 }
 
 export default function SummaryMetadata({ responses, survey }: SummaryMetadataProps) {
-  const completionRate = !responses
-    ? 0
-    : (responses.filter((r) => r.finished).length / responses.length) * 100;
+  const completedResponsesLength = responses.filter((r) => r.finished).length;
 
   return (
     <>
@@ -20,15 +17,9 @@ export default function SummaryMetadata({ responses, survey }: SummaryMetadataPr
         <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-2 lg:gap-x-2">
           <div className="grid grid-cols-2 gap-4 md:grid md:grid-cols-4 md:gap-x-2">
             <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-600">Survey displays</p>
+              <p className="text-sm text-slate-600">displays</p>
               <p className="text-2xl font-bold text-slate-800">
                 {survey.analytics.numDisplays === 0 ? <span>-</span> : survey.analytics.numDisplays}
-              </p>
-            </div>
-            <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-600">Total Responses</p>
-              <p className="text-2xl font-bold text-slate-800">
-                {responses.length === 0 ? <span>-</span> : responses.length}
               </p>
             </div>
             <TooltipProvider delayDuration={50}>
@@ -36,20 +27,38 @@ export default function SummaryMetadata({ responses, survey }: SummaryMetadataPr
                 <TooltipTrigger>
                   <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
                     <p className="text-sm text-slate-600">
-                      Response %
-                      <QuestionMarkCircleIcon className="mb-1 ml-2 inline h-4 w-4 text-slate-500" />
+                      Starts
+                      <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">
+                        {Math.round((responses.length / survey.analytics.numDisplays) * 100)}%
+                      </span>
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {survey.analytics.responseRate === null || survey.analytics.responseRate === 0 ? (
-                        <span>-</span>
-                      ) : (
-                        <span>{Math.round(survey.analytics.responseRate * 100)} %</span>
-                      )}
+                      {responses.length === 0 ? <span>-</span> : responses.length}
                     </p>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>% of people who responded when survey was shown.</p>
+                  <p>People who started the survey.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider delayDuration={50}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+                    <p className="text-sm text-slate-600">
+                      Responses
+                      <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">
+                        {Math.round((completedResponsesLength / survey.analytics.numDisplays) * 100)}%
+                      </span>
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      <span>{completedResponsesLength}</span>
+                    </p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>People who completed the survey.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -58,22 +67,27 @@ export default function SummaryMetadata({ responses, survey }: SummaryMetadataPr
                 <TooltipTrigger>
                   <div className="flex cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
                     <p className="text-sm text-slate-600">
-                      Completion %
-                      <QuestionMarkCircleIcon className="mb-1 ml-2 inline h-4 w-4 text-slate-500" />
+                      Drop Offs
+                      <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">
+                        {Math.round(
+                          ((survey.analytics.numDisplays - survey.analytics.numResponses) /
+                            survey.analytics.numDisplays) *
+                            100
+                        )}
+                        %
+                      </span>
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
                       {responses.length === 0 ? (
                         <span>-</span>
                       ) : (
-                        <span>{parseFloat(completionRate.toFixed(2))} %</span>
+                        <span>{survey.analytics.numDisplays - survey.analytics.numResponses}</span>
                       )}
                     </p>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    % of people who started <strong>and</strong> completed the survey.
-                  </p>
+                  <p>People who didn&apos;t respond to survey.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
