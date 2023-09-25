@@ -1,6 +1,6 @@
 "use client";
 
-import LinkSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkSurveyModal";
+import LinkSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSurveyModal";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";

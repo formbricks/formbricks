@@ -24,6 +24,8 @@ const ZResponseNote = z.object({
   id: z.string(),
   text: z.string(),
   user: ZResponseNoteUser,
+  isResolved: z.boolean(),
+  isEdited: z.boolean(),
 });
 
 export type TResponseNote = z.infer<typeof ZResponseNote>;

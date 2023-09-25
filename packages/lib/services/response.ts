@@ -56,6 +56,8 @@ const responseSelection = {
           name: true,
         },
       },
+      isResolved: true,
+      isEdited: true,
     },
   },
   tags: {

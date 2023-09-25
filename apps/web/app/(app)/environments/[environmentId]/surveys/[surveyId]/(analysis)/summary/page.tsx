@@ -1,11 +1,11 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
-import { getServerSession } from "next-auth";
-import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
-import SummaryPage from "./SummaryPage";
+import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { getServerSession } from "next-auth";
 import { generateSurveySingleUseId } from "@/lib/surveys/surveys";
 
 const generateSingleUseIds = (isEncrypted: boolean) => {

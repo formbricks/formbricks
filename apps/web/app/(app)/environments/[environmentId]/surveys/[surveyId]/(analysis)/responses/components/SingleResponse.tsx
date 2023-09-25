@@ -14,9 +14,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
-import { RatingResponse } from "../RatingResponse";
 import ResponseNote from "./ResponseNote";
 import ResponseTagsWrapper from "./ResponseTagsWrapper";
+import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 
 export interface OpenTextSummaryProps {
   environmentId: string;

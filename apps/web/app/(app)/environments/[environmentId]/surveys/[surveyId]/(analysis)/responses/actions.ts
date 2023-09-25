@@ -1,7 +1,11 @@
 "use server";
 
-import { updateResponseNote } from "@formbricks/lib/services/responseNote";
+import { updateResponseNote, resolveResponseNote } from "@formbricks/lib/services/responseNote";
 
-export const updateResponseNoteAction = async (responseId: string, noteId: string, text: string) => {
-  await updateResponseNote(responseId, noteId, text);
+export const updateResponseNoteAction = async (responseNoteId: string, text: string) => {
+  await updateResponseNote(responseNoteId, text);
+};
+
+export const resolveResponseNoteAction = async (responseNoteId: string) => {
+  await resolveResponseNote(responseNoteId);
 };

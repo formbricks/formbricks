@@ -94,6 +94,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 name: true,
               },
             },
+            isResolved: true,
+            isEdited: true,
           },
         },
         tags: {

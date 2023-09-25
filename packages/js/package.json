@@ -57,7 +57,8 @@
     "preact": "10.17.1",
     "preact-cli": "^3.5.0",
     "preact-render-to-string": "^6.2.1",
-    "regenerator-runtime": "^0.14.0"
+    "regenerator-runtime": "^0.14.0",
+    "terser": "^5.19.4"
   },
   "jest": {
     "transformIgnorePatterns": [
