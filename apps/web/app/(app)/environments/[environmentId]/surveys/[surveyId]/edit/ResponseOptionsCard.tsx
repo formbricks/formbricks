@@ -1,7 +1,7 @@
 "use client";
 
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { AdvancedOptionToggle, DatePicker, Input, Label } from "@formbricks/ui";
+import { AdvancedOptionToggle, DatePicker, Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
@@ -32,6 +32,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     subheading: "You can only use this link once.",
   });
 
+  const [singleUseEncryption, setSingleUseEncryption] = useState(true);
   const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
     name: "",
     subheading: "",
@@ -111,9 +112,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
   const handleSingleUseSurveyToggle = () => {
     if (!localSurvey.singleUse?.enabled) {
-      setLocalSurvey({ ...localSurvey, singleUse: { enabled: true, ...singleUseMessage } });
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: singleUseEncryption },
+      });
     } else {
-      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false } });
+      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false, isEncrypted: false } });
     }
   };
 
@@ -131,7 +135,26 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
     const localSurveySingleUseEnabled = localSurvey.singleUse?.enabled ?? false;
     setSingleUseMessage(message);
-    setLocalSurvey({ ...localSurvey, singleUse: { enabled: localSurveySingleUseEnabled, ...message } });
+    setLocalSurvey({
+      ...localSurvey,
+      singleUse: { enabled: localSurveySingleUseEnabled, ...message, isEncrypted: singleUseEncryption },
+    });
+  };
+
+  const hangleSingleUseEncryptionToggle = () => {
+    if (!singleUseEncryption) {
+      setSingleUseEncryption(true);
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: true },
+      });
+    } else {
+      setSingleUseEncryption(false);
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: false },
+      });
+    }
   };
 
   const handleVerifyEmailSurveyDetailsChange = ({
@@ -169,6 +192,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
         heading: localSurvey.singleUse.heading ?? singleUseMessage.heading,
         subheading: localSurvey.singleUse.subheading ?? singleUseMessage.subheading,
       });
+      setSingleUseEncryption(localSurvey.singleUse.isEncrypted);
     }
 
     if (localSurvey.verifyEmail) {
@@ -372,12 +396,27 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
                     <Label htmlFor="headline">Subheading</Label>
                     <Input
-                      className="mt-2 bg-white"
+                      className="mb-4 mt-2 bg-white"
                       id="subheading"
                       name="subheading"
                       defaultValue={singleUseMessage.subheading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
+                    <Label htmlFor="headline">URL Encryption</Label>
+                    <div className="mt-2 flex items-center space-x-1 ">
+                      <Switch
+                        id="encryption-switch"
+                        checked={singleUseEncryption}
+                        onCheckedChange={hangleSingleUseEncryptionToggle}
+                      />
+                      <Label htmlFor="encryption-label" className="cursor-pointer">
+                        <div className="ml-2">
+                          <p className="text-sm font-normal text-slate-600">
+                            Enable encryption of Single Use Id (suId) in survey URL.
+                          </p>
+                        </div>
+                      </Label>
+                    </div>
                   </div>
                 </div>
               </AdvancedOptionToggle>

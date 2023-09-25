@@ -596,19 +596,19 @@ function matchAndUpdateArray(choices: any, responseValue: string[]) {
 }
 
 // generate encrypted single use id for the survey
-export const generateSurveySingleUseId = () => {
+export const generateSurveySingleUseId = (isEncrypted: boolean) => {
   const cuid = cuid2.createId();
-  const encryptedCuid = encryptAES128(env.NEXT_PUBLIC_SURVEY_ENCRYPTION_KEY!, cuid);
+  if (!isEncrypted) {
+    return cuid;
+  }
+  const encryptedCuid = encryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, cuid);
   return encryptedCuid;
 };
 
 // validate the survey single use id
-export const validateSurveySingleUseId = (surveySingleUseId?: string) => {
-  if (!surveySingleUseId) {
-    return undefined;
-  }
+export const validateSurveySingleUseId = (surveySingleUseId: string) => {
   try {
-    const decryptedCuid = decryptAES128(env.NEXT_PUBLIC_SURVEY_ENCRYPTION_KEY!, surveySingleUseId);
+    const decryptedCuid = decryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
     if (cuid2.isCuid(decryptedCuid)) {
       return decryptedCuid;
     } else {

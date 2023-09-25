@@ -32,8 +32,15 @@ interface SummaryHeaderProps {
   environmentId: string;
   survey: TSurvey;
   surveyBaseUrl: string;
+  singleUseIds?: string[];
 }
-const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: SummaryHeaderProps) => {
+const SummaryHeader = ({
+  surveyId,
+  environmentId,
+  survey,
+  surveyBaseUrl,
+  singleUseIds,
+}: SummaryHeaderProps) => {
   const router = useRouter();
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
@@ -57,7 +64,9 @@ const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: Summa
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} />}
+        {survey.type === "link" && (
+          <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} singleUseIds={singleUseIds} />
+        )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environmentId={environmentId} surveyId={surveyId} />
         ) : null}
@@ -83,6 +92,7 @@ const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: Summa
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
+                  singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -159,7 +169,12 @@ const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: Summa
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage environmentId={environmentId} survey={survey} surveyBaseUrl={surveyBaseUrl} />
+      <SuccessMessage
+        environmentId={environmentId}
+        survey={survey}
+        surveyBaseUrl={surveyBaseUrl}
+        singleUseIds={singleUseIds}
+      />
     </div>
   );
 };

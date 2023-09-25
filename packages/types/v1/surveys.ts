@@ -22,6 +22,7 @@ export const ZSurveySingleUse = z
     enabled: z.boolean(),
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
+    isEncrypted: z.boolean(),
   })
   .nullable();
 

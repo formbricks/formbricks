@@ -249,7 +249,7 @@ model Survey {
   surveyClosedMessage Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse           Json?                   @default("{\"enabled\": false}")
+  singleUse           Json?                   @default("{\"enabled\": false, \"isEncrypted\": true}")
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail         Json?

@@ -19,9 +19,17 @@ interface SummaryPageProps {
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
+  singleUseIds?: string[];
 }
 
-const SummaryPage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl }: SummaryPageProps) => {
+const SummaryPage = ({
+  environmentId,
+  survey,
+  surveyId,
+  responses,
+  surveyBaseUrl,
+  singleUseIds,
+}: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const searchParams = useSearchParams();
 
@@ -42,6 +50,7 @@ const SummaryPage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl
         survey={survey}
         surveyId={surveyId}
         surveyBaseUrl={surveyBaseUrl}
+        singleUseIds={singleUseIds}
       />
       <CustomFilter
         environmentId={environmentId}

@@ -8,7 +8,7 @@
 ALTER TABLE "Response" ADD COLUMN     "suId" TEXT;
 
 -- AlterTable
-ALTER TABLE "Survey" ADD COLUMN     "singleUse" JSONB DEFAULT '{"enabled": false}';
+ALTER TABLE "Survey" ADD COLUMN     "singleUse" JSONB DEFAULT '{"enabled": false, "isEncrypted": true}';
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Response_surveyId_suId_key" ON "Response"("surveyId", "suId");

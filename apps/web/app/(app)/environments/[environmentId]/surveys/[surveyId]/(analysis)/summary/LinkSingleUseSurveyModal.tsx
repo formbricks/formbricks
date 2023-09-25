@@ -8,26 +8,26 @@ import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { truncateMiddle } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
-import { generateSurveySingleUseId } from "@/lib/surveys/surveys";
+import { useRouter } from "next/navigation";
 
 interface LinkSingleUseSurveyModalProps {
   survey: TSurvey;
   open: boolean;
   setOpen: (open: boolean) => void;
+  singleUseIds: string[];
 }
 
-const generateSingleUseIds = () =>
-  Array(5)
-    .fill(null)
-    .map(() => generateSurveySingleUseId());
-
-export default function LinkSingleUseSurveyModal({ survey, open, setOpen }: LinkSingleUseSurveyModalProps) {
+export default function LinkSingleUseSurveyModal({
+  survey,
+  open,
+  setOpen,
+  singleUseIds,
+}: LinkSingleUseSurveyModalProps) {
   const defaultSurveyUrl = `${window.location.protocol}//${window.location.host}/s/${survey.id}`;
-  const initialSingleUseIds = generateSingleUseIds();
   const [selectedSingleUseIds, setSelectedSingleIds] = useState<number[]>([]);
 
   const linkTextRef = useRef<HTMLDivElement>(null);
-  const [singleUseIds, setSingleUseIds] = useState(initialSingleUseIds);
+  const router = useRouter();
 
   const handleLinkOnClick = (index: number) => {
     setSelectedSingleIds([...selectedSingleUseIds, index]);
@@ -81,8 +81,7 @@ export default function LinkSingleUseSurveyModal({ survey, open, setOpen }: Link
               aria-label="Generate new single-use survey link"
               className="flex justify-center"
               onClick={() => {
-                const newSingleUseIds = generateSingleUseIds();
-                setSingleUseIds(newSingleUseIds);
+                router.refresh();
                 setSelectedSingleIds([]);
                 toast.success("New survey links generated!");
               }}
@@ -92,6 +91,7 @@ export default function LinkSingleUseSurveyModal({ survey, open, setOpen }: Link
             <Button
               variant="secondary"
               onClick={() => {
+                setSelectedSingleIds(Array.from(singleUseIds.keys()));
                 const allSurveyUrls = singleUseIds
                   .map((singleUseId) => `${defaultSurveyUrl}?suId=${singleUseId}`)
                   .join("\n");

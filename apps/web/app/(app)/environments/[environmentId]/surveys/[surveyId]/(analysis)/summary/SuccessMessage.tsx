@@ -13,9 +13,15 @@ interface SummaryMetadataProps {
   environmentId: string;
   survey: TSurvey;
   surveyBaseUrl: string;
+  singleUseIds?: string[];
 }
 
-export default function SuccessMessage({ environmentId, survey, surveyBaseUrl }: SummaryMetadataProps) {
+export default function SuccessMessage({
+  environmentId,
+  survey,
+  surveyBaseUrl,
+  singleUseIds,
+}: SummaryMetadataProps) {
   const isSingleUse = survey.singleUse?.enabled ?? false;
   const { environment } = useEnvironment(environmentId);
   const searchParams = useSearchParams();
@@ -49,8 +55,13 @@ export default function SuccessMessage({ environmentId, survey, surveyBaseUrl }:
 
   return (
     <>
-      {showLinkModal && isSingleUse ? (
-        <LinkSingleUseSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />
+      {showLinkModal && isSingleUse && singleUseIds ? (
+        <LinkSingleUseSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          singleUseIds={singleUseIds}
+        />
       ) : (
         <LinkSurveyModal
           survey={survey}

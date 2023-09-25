@@ -28,6 +28,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const survey = await getSurvey(params.surveyId);
   const suId = searchParams.suId;
   const isSingleUseSurvey = survey?.singleUse?.enabled;
+  const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -48,11 +49,21 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   let singleUseId: string | undefined = undefined;
   if (isSingleUseSurvey) {
-    const validatedSingleUseId = validateSurveySingleUseId(suId);
-    if (!validatedSingleUseId) {
+    // check if the single use id is present for single use surveys
+    if (!suId) {
       return <SurveyInactive status="link invalid" />;
     }
-    singleUseId = validatedSingleUseId;
+
+    // if encryption is enabled, validate the single use id
+    let validatedSingleUseId: string | undefined = undefined;
+    if (isSingleUseSurveyEncrypted) {
+      validatedSingleUseId = validateSurveySingleUseId(suId);
+      if (!validatedSingleUseId) {
+        return <SurveyInactive status="link invalid" />;
+      }
+    }
+    // if encryption is disabled, use the suId as is
+    singleUseId = validatedSingleUseId ?? suId;
   }
 
   let singleUseResponse: TResponse | undefined = undefined;

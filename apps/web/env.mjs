@@ -66,7 +66,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
     NEXT_PUBLIC_SURVEY_BASE_URL: z.string().optional(),
-    NEXT_PUBLIC_SURVEY_ENCRYPTION_KEY: z.string().optional(),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -109,6 +109,6 @@ export const env = createEnv({
     NEXT_PUBLIC_IS_FORMBRICKS_CLOUD: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD,
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
-    NEXT_PUBLIC_SURVEY_ENCRYPTION_KEY: process.env.NEXT_PUBLIC_SURVEY_ENCRYPTION_KEY,
+    FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
   },
 });
