@@ -5,6 +5,7 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
+import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 
 interface ResponseTimelineProps {
   environmentId: string;
@@ -40,7 +41,7 @@ export default function ResponseTimeline({
         // iterate over survey questions and build the updated response
         for (const question of survey.questions) {
           const answer = response.data[question.id];
-          if (answer) {
+          if (answer !== null && answer !== undefined) {
             updatedResponse.push({
               id: createId(),
               question: question.headline,
@@ -66,7 +67,8 @@ export default function ResponseTimeline({
 
   return (
     <div className="space-y-4">
-      {responses.length === 0 ? (
+      {survey.type === "web" && responses.length === 0 && <EmptyInAppSurveys environmentId={environmentId} />}
+      {survey.type !== "web" && responses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environmentId={environmentId}

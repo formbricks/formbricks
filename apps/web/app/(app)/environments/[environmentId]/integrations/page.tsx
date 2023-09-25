@@ -6,8 +6,14 @@ import n8nLogo from "@/images/n8n.png";
 import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui";
 import Image from "next/image";
+import { getIntegrations } from "@formbricks/lib/services/integrations";
 
-export default function IntegrationsPage({ params }) {
+export default async function IntegrationsPage({ params }) {
+  const integrations = await getIntegrations(params.environmentId);
+  const containsGoogleSheetIntegration = integrations.some(
+    (integration) => integration.type === "googleSheets"
+  );
+
   return (
     <div>
       <h1 className="my-2 text-3xl font-bold text-slate-800">Integrations</h1>
@@ -45,7 +51,7 @@ export default function IntegrationsPage({ params }) {
         />
         <Card
           connectHref={`/environments/${params.environmentId}/integrations/google-sheets`}
-          connectText="Connect"
+          connectText={`${containsGoogleSheetIntegration ? "Manage Sheets" : "Connect"}`}
           connectNewTab={false}
           docsHref="https://formbricks.com/docs/integrations/google-sheets"
           docsText="Docs"
