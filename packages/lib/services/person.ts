@@ -34,6 +34,7 @@ export const selectPerson = {
 
 type TransformPersonInput = {
   id: string;
+  environmentId: string;
   attributes: {
     value: string;
     attributeClass: {
@@ -56,6 +57,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
   return {
     id: person.id,
     attributes: attributes,
+    environmentId: person.environmentId,
     createdAt: person.createdAt,
     updatedAt: person.updatedAt,
   };
@@ -179,7 +181,7 @@ export const deletePerson = async (personId: string): Promise<void> => {
   }
 };
 
-export const updatePeople = async (personId: string, personInput: TPersonUpdateInput): Promise<TPerson> => {
+export const updatePerson = async (personId: string, personInput: TPersonUpdateInput): Promise<TPerson> => {
   try {
     const personPrisma = await prisma.person.update({
       where: {

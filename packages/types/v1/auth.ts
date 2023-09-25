@@ -28,15 +28,5 @@ const ZAuthenticationApiKey = z.object({
   environmentId: z.string(),
 });
 
-const ZAuthenticationSession = z.object({
-  type: z.literal("session"),
-  session: ZAuthSession,
-  environmentId: z.string().optional(),
-});
-
-const ZAuthentication = z.union([ZAuthenticationApiKey, ZAuthenticationSession]);
-
 export type TAuthSession = z.infer<typeof ZAuthSession>;
 export type TAuthenticationApiKey = z.infer<typeof ZAuthenticationApiKey>;
-export type TAuthenticationSession = z.infer<typeof ZAuthenticationSession>;
-export type TAuthentication = z.infer<typeof ZAuthentication>;

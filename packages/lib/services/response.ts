@@ -224,6 +224,7 @@ export const getSurveyResponses = cache(async (surveyId: string): Promise<TRespo
 });
 
 export const preloadEnvironmentResponses = (environmentId: string) => {
+  validateInputs([environmentId, ZId]);
   void getEnvironmentResponses(environmentId);
 };
 
@@ -306,6 +307,7 @@ export const updateResponse = async (
 };
 
 export async function deleteResponse(responseId: string) {
+  validateInputs([responseId, ZId]);
   try {
     const deletedResponse = await prisma.response.delete({
       where: {

@@ -53,6 +53,7 @@ export const getAttributeClasses = cache(async (environmentId: string): Promise<
 });
 
 export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
+  validateInputs([attributeClassId, ZId]);
   try {
     let attributeClass = await prisma.attributeClass.findUnique({
       where: {
@@ -132,4 +133,19 @@ export const createAttributeClass = async (
   });
   revalidateTag(attributeClassesCacheTag(environmentId));
   return transformPrismaAttributeClass(attributeClass);
+};
+
+export const deleteAttributeClass = async (attributeClassId: string): Promise<TAttributeClass> => {
+  validateInputs([attributeClassId, ZId]);
+  try {
+    const deletedAttributeClass = await prisma.attributeClass.delete({
+      where: {
+        id: attributeClassId,
+      },
+    });
+
+    return deletedAttributeClass;
+  } catch (error) {
+    throw new DatabaseError(`Database error when deleting webhook with ID ${attributeClassId}`);
+  }
 };

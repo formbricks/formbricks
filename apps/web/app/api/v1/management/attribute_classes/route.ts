@@ -13,8 +13,8 @@ export async function GET(request: Request) {
     if (!authentication) {
       return responses.notAuthenticatedResponse();
     }
-    const atributes: TAttributeClass[] = await getAttributeClasses(authentication.environmentId!);
-    return responses.successResponse(atributes);
+    const atributeClasses: TAttributeClass[] = await getAttributeClasses(authentication.environmentId!);
+    return responses.successResponse(atributeClasses);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);
@@ -42,10 +42,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const attributeClass: TAttributeClass = await createAttributeClass(
-      authentication.environmentId!,
-      inputValidation.data
+    const attributeClass: TAttributeClass | null = await createAttributeClass(
+      authentication.environmentId,
+      inputValidation.data.name,
+      inputValidation.data.type
     );
+    if (!attributeClass) {
+      return responses.internalServerErrorResponse("Failed creating attribute class");
+    }
     return responses.successResponse(attributeClass);
   } catch (error) {
     if (error instanceof DatabaseError) {

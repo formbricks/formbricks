@@ -65,6 +65,7 @@ export const getActionClassesCached = (environmentId: string) =>
   )();
 
 export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> => {
+  validateInputs([actionClassId, ZId]);
   try {
     let actionClass = await prisma.eventClass.findUnique({
       where: {

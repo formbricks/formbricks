@@ -9,7 +9,6 @@ import { DatabaseError } from "@formbricks/types/v1/errors";
 export async function GET(request: Request) {
   try {
     const authentication = await authenticateRequest(request);
-    console.log(authentication);
     if (!authentication) {
       responses.notAuthenticatedResponse();
     }

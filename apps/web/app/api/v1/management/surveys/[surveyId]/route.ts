@@ -1,34 +1,21 @@
 import { responses } from "@/lib/api/response";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { NextResponse } from "next/server";
 import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/services/survey";
 import { TSurvey, ZSurveyInput } from "@formbricks/types/v1/surveys";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { handleErrorResponse } from "@/app/api/v1/auth";
 
-async function fetchAndValidateSurvey(authentication: any, surveyId: string): Promise<TSurvey | null> {
+async function fetchAndAuthorizeSurvey(authentication: any, surveyId: string): Promise<TSurvey | null> {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     return null;
   }
-  if (!(await canUserAccessSurvey(authentication, survey))) {
+  if (survey.environmentId !== authentication.environmentId) {
     throw new Error("Unauthorized");
   }
   return survey;
 }
-
-const canUserAccessSurvey = async (authentication: any, survey: TSurvey): Promise<boolean> => {
-  if (!authentication) return false;
-
-  if (authentication.type === "session") {
-    return await hasUserEnvironmentAccess(authentication.session.user, survey.environmentId);
-  } else if (authentication.type === "apiKey") {
-    return survey.environmentId === authentication.environmentId;
-  } else {
-    throw Error("Unknown authentication type");
-  }
-};
 
 export async function GET(
   request: Request,
@@ -36,7 +23,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const survey = await fetchAndValidateSurvey(authentication, params.surveyId);
+    const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
     if (survey) {
       return responses.successResponse(survey);
     }
@@ -52,7 +39,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const survey = await fetchAndValidateSurvey(authentication, params.surveyId);
+    const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);
     }
@@ -69,7 +56,7 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const survey = await fetchAndValidateSurvey(authentication, params.surveyId);
+    const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);
     }
@@ -84,23 +71,5 @@ export async function PUT(
     return responses.successResponse(await updateSurvey(inputValidation.data));
   } catch (error) {
     return handleErrorResponse(error);
-  }
-}
-
-function handleErrorResponse(error: any): NextResponse {
-  switch (error.message) {
-    case "NotAuthenticated":
-      return responses.notAuthenticatedResponse();
-    case "Unauthorized":
-      return responses.unauthorizedResponse();
-    default:
-      if (
-        error instanceof DatabaseError ||
-        error instanceof InvalidInputError ||
-        error instanceof ResourceNotFoundError
-      ) {
-        return responses.badRequestResponse(error.message);
-      }
-      return responses.internalServerErrorResponse("Some error occurred");
   }
 }

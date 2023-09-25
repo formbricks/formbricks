@@ -435,7 +435,7 @@ export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSu
 
     return modifiedSurvey;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

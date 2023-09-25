@@ -240,7 +240,7 @@ export const ZSurvey = z.object({
   name: z.string(),
   type: z.enum(["web", "email", "link", "mobile"]),
   environmentId: z.string(),
-  status: z.enum(["draft", "inProgress", "paused", "completed", "archived"]),
+  status: z.enum(["draft", "inProgress", "paused", "completed"]),
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),
@@ -256,24 +256,14 @@ export const ZSurvey = z.object({
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
-export const ZSurveyInput = z.object({
-  id: z.string().cuid2(),
-  name: z.string(),
-  type: z.enum(["web", "email", "link", "mobile"]),
-  status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
+export const ZSurveyInput = ZSurvey.omit({
+  createdAt: true,
+  updatedAt: true,
+  environmentId: true,
+}).extend({
+  id: z.optional(z.string().cuid2()),
   attributeFilters: z.optional(z.array(ZSurveyAttributeFilter)),
-  displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
-  autoClose: z.union([z.number(), z.null()]),
   triggers: z.optional(z.array(ZActionClass)),
-  redirectUrl: z.string().url().nullable(),
-  recontactDays: z.union([z.number(), z.null()]),
-  questions: ZSurveyQuestions,
-  thankYouCard: ZSurveyThankYouCard,
-  delay: z.number(),
-  autoComplete: z.union([z.number(), z.null()]),
-  closeOnDate: z.date().nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
-  verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
