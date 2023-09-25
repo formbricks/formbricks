@@ -18,7 +18,12 @@ const validationRules = {
     return question.label.trim() !== "";
   },
   defaultValidation: (question: TSurveyQuestion) => {
-    return question.headline.trim() !== "";
+    console.log(question);
+    return (
+      question.headline.trim() !== "" &&
+      question.buttonLabel?.trim() !== "" &&
+      question.backButtonLabel?.trim() !== ""
+    );
   },
 };
 

@@ -213,6 +213,7 @@ export default function SurveyMenuBar({
     };
 
     if (!validateSurvey(localSurvey)) {
+      setIsMutatingSurvey(false);
       return;
     }
 
