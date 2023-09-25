@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import LinkSurveyModal from "./LinkSurveyModal";
-import LinkSingleUseSurveyModal from "./LinkSingleUseSurveyModal";
+import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 
 interface SummaryMetadataProps {
   environmentId: string;
