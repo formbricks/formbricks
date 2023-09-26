@@ -132,7 +132,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
     return [];
   };
 
-  const csvFileName = useMemo(() => {
+  const downloadFileName = useMemo(() => {
     if (survey) {
       const formattedDateString = getTodaysDateFormatted("_");
       return `${survey.name.split(" ").join("_")}_responses_${formattedDateString}`.toLocaleLowerCase();
@@ -142,7 +142,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
   }, [survey]);
 
   const downloadResponses = useCallback(
-    async (filter: FilterDownload, filetype: string) => {
+    async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
       const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, downloadResponse);
       const matchQandA = getMatchQandA(downloadResponse, survey);
@@ -203,7 +203,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
           {
             json: jsonData,
             fields,
-            fileName: csvFileName,
+            fileName: downloadFileName,
           },
           filetype
         );
@@ -215,7 +215,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
       let blob: Blob;
       if (filetype === "csv") {
         blob = new Blob([response.fileResponse], { type: "text/csv;charset=utf-8;" });
-      } else {
+      } else if (filetype === "xlsx") {
         const binaryString = atob(response["fileResponse"]);
         const byteArray = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
@@ -224,13 +224,15 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
         blob = new Blob([byteArray], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
+      } else {
+        throw new Error(`Unsupported filetype: ${filetype}`);
       }
 
       const downloadUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `${csvFileName}.${filetype}`;
+      link.download = `${downloadFileName}.${filetype}`;
 
       document.body.appendChild(link);
       link.click();
@@ -239,7 +241,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
 
       URL.revokeObjectURL(downloadUrl);
     },
-    [csvFileName, responses, totalResponses, survey]
+    [downloadFileName, responses, totalResponses, survey]
   );
 
   const handleDateHoveredChange = (date: Date) => {
