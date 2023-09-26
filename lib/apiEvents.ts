@@ -38,9 +38,18 @@ export const validateEvents = (
 
 export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
   let userOpenFormSession = null;
+  let eventDataDefault = {
+    "6. Choisis ta vacation": "",
+    "5. Test de français": ""
+  };
   // save submission
   if (event.type === "pageSubmission") {
     const pageSubmited = event.data;
+
+    event.data["submissions"] = {
+      ...eventDataDefault,
+      ...event.data["submissions"]
+    };
 
     const sessionEvent = await prisma.sessionEvent.findFirst({
       where: {
