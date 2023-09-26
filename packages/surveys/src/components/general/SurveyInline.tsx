@@ -1,4 +1,4 @@
-import { SurveyBaseProps } from "../types/props";
+import { SurveyBaseProps } from "../../types/props";
 import { Survey } from "./Survey";
 
 export function SurveyInline({

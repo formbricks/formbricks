@@ -1,9 +1,10 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { useState } from "preact/hooks";
-import { cn } from "../lib/utils";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
+import { cn } from "../../lib/utils";
+import { BackButton } from "../buttons/BackButton";
+import SubmitButton from "../buttons/SubmitButton";
+import Headline from "../general/Headline";
 import {
   ConfusedFace,
   FrowningFace,
@@ -15,9 +16,8 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "./Smileys";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
+} from "../general/Smileys";
+import Subheader from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;

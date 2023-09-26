@@ -1,6 +1,6 @@
-import { cn } from "../../../lib/cn";
-import { isLight } from "../lib/utils";
-import { TSurveyQuestion } from "../../../types/v1/surveys";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { cn } from "../../../../lib/cn";
+import { isLight } from "../../lib/utils";
 
 interface SubmitButtonProps {
   question: TSurveyQuestion;

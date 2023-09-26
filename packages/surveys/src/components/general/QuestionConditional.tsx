@@ -1,13 +1,13 @@
+import { QuestionType } from "@formbricks/types/questions";
 import { TResponseData } from "@formbricks/types/v1/responses";
-import { QuestionType } from "../../../types/questions";
-import { TSurveyQuestion } from "../../../types/v1/surveys";
-import CTAQuestion from "./CTAQuestion";
-import ConsentQuestion from "./ConsentQuestion";
-import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
-import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
-import NPSQuestion from "./NPSQuestion";
-import OpenTextQuestion from "./OpenTextQuestion";
-import RatingQuestion from "./RatingQuestion";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import CTAQuestion from "../questions/CTAQuestion";
+import ConsentQuestion from "../questions/ConsentQuestion";
+import MultipleChoiceMultiQuestion from "../questions/MultipleChoiceMultiQuestion";
+import MultipleChoiceSingleQuestion from "../questions/MultipleChoiceSingleQuestion";
+import NPSQuestion from "../questions/NPSQuestion";
+import OpenTextQuestion from "../questions/OpenTextQuestion";
+import RatingQuestion from "../questions/RatingQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;

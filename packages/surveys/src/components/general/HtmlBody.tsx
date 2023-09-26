@@ -1,4 +1,4 @@
-import { cleanHtml } from "../lib/cleanHtml";
+import { cleanHtml } from "../../lib/cleanHtml";
 
 export default function HtmlBody({ htmlString, questionId }: { htmlString?: string; questionId: string }) {
   if (!htmlString) return null;

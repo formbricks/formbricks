@@ -1,10 +1,10 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
-import { cn } from "../lib/utils";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
+import { cn } from "../../lib/utils";
+import { BackButton } from "../buttons/BackButton";
+import SubmitButton from "../buttons/SubmitButton";
+import Headline from "../general/Headline";
+import Subheader from "../general/Subheader";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;

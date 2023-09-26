@@ -1,11 +1,11 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
-import { useMemo, useRef, useState, useEffect } from "preact/hooks";
-import { cn, shuffleQuestions } from "../lib/utils";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { cn, shuffleQuestions } from "../../lib/utils";
+import { BackButton } from "../buttons/BackButton";
+import SubmitButton from "../buttons/SubmitButton";
+import Headline from "../general/Headline";
+import Subheader from "../general/Subheader";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;

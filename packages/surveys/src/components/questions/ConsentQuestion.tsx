@@ -1,9 +1,9 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import HtmlBody from "./HtmlBody";
-import SubmitButton from "./SubmitButton";
+import { BackButton } from "../buttons/BackButton";
+import SubmitButton from "../buttons/SubmitButton";
+import Headline from "../general/Headline";
+import HtmlBody from "../general/HtmlBody";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;

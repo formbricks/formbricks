@@ -1,9 +1,9 @@
 import type { TResponseData } from "@formbricks/types/v1/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { evaluateCondition } from "../lib/logicEvaluator";
-import { cn } from "../lib/utils";
-import { SurveyBaseProps } from "../types/props";
-import { AutoCloseWrapper } from "./AutoCloseWrapper";
+import { evaluateCondition } from "../../lib/logicEvaluator";
+import { cn } from "../../lib/utils";
+import { SurveyBaseProps } from "../../types/props";
+import { AutoCloseWrapper } from "../wrappers/AutoCloseWrapper";
 import FormbricksSignature from "./FormbricksSignature";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";

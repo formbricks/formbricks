@@ -1,9 +1,9 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
+import { BackButton } from "../buttons/BackButton";
+import SubmitButton from "../buttons/SubmitButton";
+import Headline from "../general/Headline";
+import Subheader from "../general/Subheader";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;

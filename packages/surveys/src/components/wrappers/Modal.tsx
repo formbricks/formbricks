@@ -1,7 +1,7 @@
 import type { PlacementType } from "@formbricks/types/js";
 import { VNode } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { cn } from "../lib/utils";
+import { cn } from "../../lib/utils";
 
 // CSS classes object
 const mobileClasses = {

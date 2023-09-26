@@ -1,8 +1,8 @@
 import { h, render } from "preact";
-import { SurveyModal } from "./components/SurveyModal";
+import { SurveyInline } from "./components/general/SurveyInline";
+import { SurveyModal } from "./components/general/SurveyModal";
 import { addStylesToDom } from "./lib/styles";
 import { SurveyInlineProps, SurveyModalProps } from "./types/props";
-import { SurveyInline } from "./components/SurveyInline";
 
 export const renderSurveyInline = (props: SurveyInlineProps) => {
   addStylesToDom();
