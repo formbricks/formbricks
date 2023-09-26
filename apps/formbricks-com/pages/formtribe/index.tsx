@@ -11,6 +11,7 @@ import Mac from "@/images/formtribe/package.jpeg";
 import Pandey from "@/images/formtribe/pandeyman.jpeg";
 import Shubham from "@/images/formtribe/shubham.jpeg";
 import Timeline from "@/images/formtribe/timeline.png";
+import { useEffect } from "react";
 
 const HowTo = [
   {
@@ -212,6 +213,10 @@ const FAQ = [
 ];
 
 export default function FormTribeHackathon() {
+  // dark mode fix
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+  }, []);
   return (
     <LayoutLight
       title="FormbTribe Hackathon"
