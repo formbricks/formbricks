@@ -23,6 +23,7 @@ const selectDisplay = {
       id: true,
       createdAt: true,
       updatedAt: true,
+      environmentId: true,
       attributes: {
         select: {
           value: true,

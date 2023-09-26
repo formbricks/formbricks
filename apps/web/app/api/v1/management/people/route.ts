@@ -28,8 +28,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       return responses.notAuthenticatedResponse();
     }
 
-    const people: TPerson = await createPerson(authentication.environmentId!);
-    return responses.successResponse(people);
+    const person: TPerson = await createPerson(authentication.environmentId);
+    return responses.successResponse(person);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);
