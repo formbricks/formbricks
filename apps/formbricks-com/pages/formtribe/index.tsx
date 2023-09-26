@@ -244,10 +244,8 @@ export default function FormTribeHackathon() {
           <iframe
             width="100%"
             height="315"
-            src="https://www.youtube.com/embed/watch?v=g3iC3SgsZO0"
-            title="YouTube video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen></iframe>
+            src="https://www.youtube-nocookie.com/embed/zed8IIQWZLk?si=pfma3e9isiviKq2j&amp;controls=0"
+            title="Formbricks goes Hacktoberfest"></iframe>
         </div>
 
         {/* Right Column: Headline + Ordered List */}
