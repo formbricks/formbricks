@@ -50,6 +50,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Deletes a single survey
   else if (req.method === "DELETE") {
     const submissionId = req.query.submissionId?.toString();
+    const deletedDisplay = await prisma.display.delete({
+      where: {
+        responseId: submissionId,
+      },
+    });
+    console.log(deletedDisplay);
     const prismaRes = await prisma.response.delete({
       where: { id: submissionId },
     });

@@ -34,6 +34,7 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
+  const [displayId, setDisplayId] = useState();
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
@@ -89,9 +90,14 @@ export default function LinkSurvey({
           survey={survey}
           brandColor={product.brandColor}
           formbricksSignature={product.formbricksSignature}
-          onDisplay={() => createDisplay({ surveyId: survey.id }, window?.location?.origin)}
+          onDisplay={async () => {
+            const display = await createDisplay({ surveyId: survey.id }, window?.location?.origin);
+            setDisplayId(display.id);
+          }}
           onResponse={(responseUpdate) => {
-            responseQueue.add(responseUpdate);
+            let responseTemp = { ...responseUpdate };
+            responseTemp.displayId = displayId;
+            responseQueue.add(responseTemp);
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

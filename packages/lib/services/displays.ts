@@ -38,6 +38,31 @@ const selectDisplay = {
   status: true,
 };
 
+export const updateDisplay = async (
+  displayId: string,
+  displayInput: Partial<TDisplayInput>
+): Promise<TDisplay> => {
+  // validateInputs([displayInput, ZDisplayInput]);
+  try {
+    console.log(displayId);
+    const updateDisplay = await prisma.display.update({
+      where: {
+        id: displayId,
+      },
+      data: displayInput,
+    });
+    console.log(updateDisplay);
+    return updateDisplay;
+  } catch (error) {
+    console.log(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayInput]);
   try {
@@ -165,3 +190,23 @@ export const getDisplaysOfPerson = cache(
     }
   }
 );
+
+export const deleteDisplayByResponseId = async (responseId: string): Promise<void> => {
+  validateInputs([responseId, ZId]);
+  try {
+    await prisma.display.delete({
+      where: {
+        responseId,
+      },
+    });
+
+    // revalidate person
+    revalidateTag(responseId);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
