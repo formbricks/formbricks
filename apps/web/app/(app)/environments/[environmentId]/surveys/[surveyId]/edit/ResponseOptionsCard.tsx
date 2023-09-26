@@ -409,7 +409,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                         checked={singleUseEncryption}
                         onCheckedChange={hangleSingleUseEncryptionToggle}
                       />
-                      <Label htmlFor="encryption-label" className="cursor-pointer">
+                      <Label htmlFor="encryption-label">
                         <div className="ml-2">
                           <p className="text-sm font-normal text-slate-600">
                             Enable encryption of Single Use Id (suId) in survey URL.

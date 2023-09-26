@@ -25,7 +25,6 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
-import cuid2 from "@paralleldrive/cuid2";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -37,6 +36,7 @@ interface SurveyDropDownMenuProps {
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
   surveyBaseUrl: string;
+  singleUseId?: string;
 }
 
 export default function SurveyDropDownMenu({
@@ -45,6 +45,7 @@ export default function SurveyDropDownMenu({
   environment,
   otherEnvironment,
   surveyBaseUrl,
+  singleUseId,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -157,8 +158,8 @@ export default function SurveyDropDownMenu({
                   <Link
                     className="flex w-full items-center"
                     href={
-                      survey.singleUse?.enabled
-                        ? `/s/${survey.id}?suId=${cuid2.createId()}%preview=true`
+                      singleUseId
+                        ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
                         : `/s/${survey.id}?preview=true`
                     }
                     target="_blank">
@@ -170,11 +171,11 @@ export default function SurveyDropDownMenu({
                   <button
                     className="flex w-full items-center"
                     onClick={() => {
-                      const singleUseId = cuid2.createId();
                       navigator.clipboard.writeText(
-                        survey.singleUse?.enabled ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
+                        singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
                       );
                       toast.success("Copied link to clipboard");
+                      router.refresh();
                     }}>
                     <LinkIcon className="mr-2 h-4 w-4" />
                     Copy Link
