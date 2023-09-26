@@ -291,3 +291,37 @@ export const getMonthlyActivePeopleCount = async (environmentId: string): Promis
       revalidate: 60 * 60 * 6, // 6 hours
     }
   )();
+
+export const updatePersonAttribute = async (
+  personId: string,
+  attributeClassId: string,
+  value: string
+): Promise<void> => {
+  await prisma.attribute.upsert({
+    where: {
+      attributeClassId_personId: {
+        attributeClassId,
+        personId,
+      },
+    },
+    update: {
+      value,
+    },
+    create: {
+      attributeClass: {
+        connect: {
+          id: attributeClassId,
+        },
+      },
+      person: {
+        connect: {
+          id: personId,
+        },
+      },
+      value,
+    },
+  });
+
+  // revalidate person
+  revalidateTag(personId);
+};
