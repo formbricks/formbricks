@@ -1,6 +1,6 @@
 "use client";
 
-import TagsCombobox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/TagsCombobox";
+import TagsCombobox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TagsCombobox";
 import { removeTagFromResponse, useAddTagToResponse, useCreateTag } from "@/lib/tags/mutateTags";
 import { useTagsForEnvironment } from "@/lib/tags/tags";
 import React, { useEffect, useState } from "react";

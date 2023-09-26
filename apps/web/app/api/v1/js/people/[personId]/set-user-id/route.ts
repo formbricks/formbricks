@@ -1,12 +1,9 @@
-import { getSurveys } from "@/app/api/v1/js/surveys";
+import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
-import { getActionClasses } from "@formbricks/lib/services/actionClass";
 import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { extendSession } from "@formbricks/lib/services/session";
-import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
+import { ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
@@ -66,6 +63,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
       // delete old person
       await deletePerson(personId);
+
       returnedPerson = existingPerson;
     } else {
       // update person with userId
@@ -99,26 +97,8 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       revalidateTag(person.id);
     }
 
-    // get/create rest of the state
-    const [session, surveys, noCodeActionClasses, product] = await Promise.all([
-      extendSession(sessionId),
-      getSurveys(environmentId, person),
-      getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
-    ]);
+    const state = await getUpdatedState(environmentId, person.id, sessionId);
 
-    if (!product) {
-      return responses.notFoundResponse("ProductByEnvironmentId", environmentId, true);
-    }
-
-    // return state
-    const state: TJsState = {
-      person,
-      session,
-      surveys,
-      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-      product,
-    };
     return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);

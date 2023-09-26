@@ -4,7 +4,7 @@ const config: Options = {
   entryPoints: ["src/index.ts"],
   dts: true,
   format: ["cjs", "esm"],
-  minify: true,
+  minify: "terser",
   sourcemap: true,
 };
 

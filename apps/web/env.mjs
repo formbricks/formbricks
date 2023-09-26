@@ -49,6 +49,9 @@ export const env = createEnv({
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().url().optional(),
     SURVEY_BASE_URL: z.string().optional(),
+    GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
+    GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
   },
 
   /*
@@ -102,6 +105,9 @@ export const env = createEnv({
     IMPRINT_URL: process.env.IMPRINT_URL,
     GITHUB_AUTH_ENABLED: process.env.GITHUB_AUTH_ENABLED,
     GOOGLE_AUTH_ENABLED: process.env.GOOGLE_AUTH_ENABLED,
+    GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
+    GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
+    GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
@@ -110,5 +116,6 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
     VERCEL_URL: process.env.VERCEL_URL,
     SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
 });

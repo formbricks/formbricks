@@ -8,7 +8,7 @@ import { getEnvironment } from "@formbricks/lib/services/environment";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
-import { getMembershipByUserId } from "@formbricks/lib/services/membership";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/services/membership";
 
 export const updateProductAction = async (
   environmentId: string,
@@ -67,7 +67,7 @@ export const deleteProductAction = async (environmentId: string, userId: string,
   }
 
   const team = await getTeamByEnvironmentId(environmentId);
-  const membership = team ? await getMembershipByUserId(userId, team.id) : null;
+  const membership = team ? await getMembershipByUserIdTeamId(userId, team.id) : null;
 
   if (membership?.role !== "admin" && membership?.role !== "owner") {
     throw new AuthenticationError("You are not allowed to delete products.");

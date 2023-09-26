@@ -29,7 +29,7 @@ This is now possible with v1.1. However, due to Next.JS best practices, we had t
 | **NEXT_PUBLIC_**GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
 | **NEXT_PUBLIC_**WEBAPP_URL                  | WEBAPP_URL                  |
 | **NEXT_PUBLIC_**IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
-| **NEXT_PUBLIC_**SURVEY_BASE_URL | SURVEY_BASE_URL |
+| **NEXT_PUBLIC_**SURVEY_BASE_URL             | SURVEY_BASE_URL             |
 
 <Note>
 Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated. The other environment variables remain the same as well.
@@ -38,11 +38,11 @@ Please note that their values and the logic remains exactly the same. Only the p
 ### Deprecated Environment Variables
 
 - **NEXT_PUBLIC_VERCEL_URL**: Was used as Vercel URL (used instead of WEBAPP_URL), but from v1.1, you can just set the WEBAPP_URL environment variable to your Vercel URL.
-- **VERCEL_URL**: Was used in the Meta information for SEO to fetch the image but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **RAILWAY_STATIC_URL**: Was used as Railway Static URL (used instead of WEBAPP_URL), but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **RENDER_EXTERNAL_URL**: Was used as an external URL to Render (used instead of WEBAPP_URL), but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **HEROKU_APP_NAME**: Was used to build the App name on a Heroku hosted webapp, but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **NEXT_PUBLIC_WEBAPP_URL**: Was used for the same purpose as WEBAPP_URL, but from v1.1, you can just set the WEBAPP_URL environment variable.
+- **PRISMA_GENERATE_DATAPROXY**: Was used to tell Prisma that it should generate the runtime for Dataproxy usage. But its officially deprecated now.
 
 ## Helper Shell Script
 For a seamless migration, below is a shell script for your self-hosted instance that will automatically update your environment variables to be compliant with the new naming conventions.
