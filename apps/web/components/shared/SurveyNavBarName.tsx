@@ -1,24 +1,16 @@
 "use client";
 
-import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface SurveyNavBarNameProps {
   surveyId: string;
   environmentId: string;
+  product: TProduct;
 }
 
-export default function SurveyNavBarName({ surveyId, environmentId }: SurveyNavBarNameProps) {
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
-  if (isLoadingSurvey || isLoadingProduct) {
-    return null;
-  }
-
-  if (isErrorProduct || isErrorSurvey) {
-    return null;
-  }
+export default function SurveyNavBarName({ surveyId, environmentId, product }: SurveyNavBarNameProps) {
+  const { survey } = useSurvey(environmentId, surveyId);
 
   return (
     <div className="hidden items-center space-x-2 whitespace-nowrap md:flex">

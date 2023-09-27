@@ -1,8 +1,8 @@
 "use client";
 
-import { useProduct } from "@/lib/products/products";
-import { useTeam } from "@/lib/teams/teams";
 import { truncate } from "@/lib/utils";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TTeam } from "@formbricks/types/v1/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import {
@@ -27,13 +27,15 @@ import { useMemo, useState } from "react";
 export default function SettingsNavbar({
   environmentId,
   isFormbricksCloud,
+  team,
+  product,
 }: {
   environmentId: string;
   isFormbricksCloud: boolean;
+  team: TTeam;
+  product: TProduct;
 }) {
   const pathname = usePathname();
-  const { team } = useTeam(environmentId);
-  const { product } = useProduct(environmentId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
 
   interface NavigationLink {

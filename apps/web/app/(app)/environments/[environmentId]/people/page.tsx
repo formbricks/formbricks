@@ -3,6 +3,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getPeople } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
 import { PersonAvatar } from "@formbricks/ui";
@@ -12,14 +13,20 @@ const getAttributeValue = (person: TPerson, attributeName: string) =>
   person.attributes[attributeName]?.toString();
 
 export default async function PeoplePage({ params }) {
-  const people = await getPeople(params.environmentId);
+  const [people, environment] = await Promise.all([
+    getPeople(params.environmentId),
+    getEnvironment(params.environmentId),
+  ]);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
 
   return (
     <>
       {people.length === 0 ? (
         <EmptySpaceFiller
           type="table"
-          environmentId={params.environmentId}
+          environment={environment}
           emptyMessage="Your users will appear here as soon as they use your app ⏲️"
         />
       ) : (

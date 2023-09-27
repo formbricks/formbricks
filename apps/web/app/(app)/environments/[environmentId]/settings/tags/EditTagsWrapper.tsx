@@ -6,34 +6,28 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags";
 import { useTagsCountForEnvironment, useTagsForEnvironment } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { Button, Input } from "@formbricks/ui";
 import React from "react";
 import { toast } from "react-hot-toast";
 
 interface IEditTagsWrapperProps {
-  environmentId: string;
+  environment: TEnvironment;
 }
 
 const SingleTag: React.FC<{
   tagId: string;
   tagName: string;
-  environmentId: string;
+  environment: TEnvironment;
   tagCount?: number;
   tagCountLoading?: boolean;
   updateTagsCount?: () => void;
-}> = ({
-  environmentId,
-  tagId,
-  tagName,
-  tagCount = 0,
-  tagCountLoading = false,
-  updateTagsCount = () => {},
-}) => {
-  const { mutate: refetchEnvironmentTags, data: environmentTags } = useTagsForEnvironment(environmentId);
-  const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, tagId);
+}> = ({ environment, tagId, tagName, tagCount = 0, tagCountLoading = false, updateTagsCount = () => {} }) => {
+  const { mutate: refetchEnvironmentTags, data: environmentTags } = useTagsForEnvironment(environment.id);
+  const { deleteTag, isDeletingTag } = useDeleteTag(environment.id, tagId);
 
-  const { updateTag, updateTagError } = useUpdateTag(environmentId, tagId);
-  const { mergeTags, isMergingTags } = useMergeTags(environmentId);
+  const { updateTag, updateTagError } = useUpdateTag(environment.id, tagId);
+  const { mergeTags, isMergingTags } = useMergeTags(environment.id);
 
   return (
     <div className="w-full" key={tagId}>
@@ -129,10 +123,12 @@ const SingleTag: React.FC<{
 };
 
 const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
-  const { environmentId } = props;
-  const { data: environmentTags, isLoading: isLoadingEnvironmentTags } = useTagsForEnvironment(environmentId);
+  const { environment } = props;
+  const { data: environmentTags, isLoading: isLoadingEnvironmentTags } = useTagsForEnvironment(
+    environment.id
+  );
 
-  const { tagsCount, isLoadingTagsCount, mutateTagsCount } = useTagsCountForEnvironment(environmentId);
+  const { tagsCount, isLoadingTagsCount, mutateTagsCount } = useTagsCountForEnvironment(environment.id);
 
   if (isLoadingEnvironmentTags) {
     return (
@@ -152,13 +148,13 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
         </div>
 
         {!environmentTags?.length ? (
-          <EmptySpaceFiller environmentId={environmentId} type="tag" noWidgetRequired />
+          <EmptySpaceFiller environment={environment} type="tag" noWidgetRequired />
         ) : null}
 
         {environmentTags?.map((tag) => (
           <SingleTag
             key={tag.id}
-            environmentId={environmentId}
+            environment={environment}
             tagId={tag.id}
             tagName={tag.name}
             tagCount={tagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0}

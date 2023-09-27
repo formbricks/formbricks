@@ -9,6 +9,8 @@ import { cache } from "react";
 import "server-only";
 import { z } from "zod";
 import { validateInputs } from "../utils/validate";
+import { EnvironmentType } from "@prisma/client";
+import { EventType } from "@prisma/client";
 
 const getProductCacheTag = (environmentId: string): string => `env-${environmentId}-product`;
 const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
@@ -27,6 +29,34 @@ const selectProduct = {
   clickOutsideClose: true,
   darkOverlay: true,
   environments: true,
+};
+
+const populateEnvironment = {
+  eventClasses: {
+    create: [
+      {
+        name: "New Session",
+        description: "Gets fired when a new session is created",
+        type: EventType.automatic,
+      },
+      {
+        name: "Exit Intent (Desktop)",
+        description: "A user on Desktop leaves the website with the cursor.",
+        type: EventType.automatic,
+      },
+      {
+        name: "50% Scroll",
+        description: "A user scrolled 50% of the current page",
+        type: EventType.automatic,
+      },
+    ],
+  },
+  attributeClasses: {
+    create: [
+      { name: "userId", description: "The internal ID of the person", type: EventType.automatic },
+      { name: "email", description: "The email of the person", type: EventType.automatic },
+    ],
+  },
 };
 
 export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
@@ -164,3 +194,44 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
 
   return product;
 });
+
+export const createProduct = async (environmentId: string, productName: string): Promise<TProduct> => {
+  const environment = await prisma.environment.findUnique({
+    where: { id: environmentId },
+    select: {
+      product: {
+        select: {
+          teamId: true,
+        },
+      },
+    },
+  });
+
+  if (!environment) {
+    throw new Error("Invalid environment");
+  }
+
+  const newProduct = await prisma.product.create({
+    data: {
+      name: productName,
+      team: {
+        connect: { id: environment.product.teamId },
+      },
+      environments: {
+        create: [
+          {
+            type: EnvironmentType.production,
+            ...populateEnvironment,
+          },
+          {
+            type: EnvironmentType.development,
+            ...populateEnvironment,
+          },
+        ],
+      },
+    },
+    select: selectProduct,
+  });
+
+  return newProduct;
+};

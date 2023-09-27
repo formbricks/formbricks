@@ -1,11 +1,16 @@
 import EditTagsWrapper from "./EditTagsWrapper";
 import SettingsTitle from "../SettingsTitle";
+import { getEnvironment } from "@formbricks/lib/services/environment";
 
-export default function MembersSettingsPage({ params }) {
+export default async function MembersSettingsPage({ params }) {
+  const environment = await getEnvironment(params.environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
   return (
     <div>
       <SettingsTitle title="Tags" />
-      <EditTagsWrapper environmentId={params.environmentId} />
+      <EditTagsWrapper environment={environment} />
     </div>
   );
 }

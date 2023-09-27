@@ -22,5 +22,5 @@ export default function ActionsAttributesTabs({ activeId, environmentId }: Actio
     },
   ];
 
-  return <SecondNavbar tabs={tabs} activeId={activeId} />;
+  return <SecondNavbar tabs={tabs} activeId={activeId} environmentId={environmentId} />;
 }

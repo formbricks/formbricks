@@ -1,21 +1,20 @@
 "use client";
 
-import { useEnvironment } from "@/lib/environments/environments";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Confetti } from "@formbricks/ui";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import LinkSurveyModal from "./LinkSurveyModal";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SummaryMetadataProps {
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurvey;
   surveyBaseUrl: string;
 }
 
-export default function SuccessMessage({ environmentId, survey, surveyBaseUrl }: SummaryMetadataProps) {
-  const { environment } = useEnvironment(environmentId);
+export default function SuccessMessage({ environment, survey, surveyBaseUrl }: SummaryMetadataProps) {
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);

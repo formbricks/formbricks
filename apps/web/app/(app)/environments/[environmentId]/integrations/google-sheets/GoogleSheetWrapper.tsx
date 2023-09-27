@@ -11,10 +11,11 @@ import {
 } from "@formbricks/types/v1/integrations";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface GoogleSheetWrapperProps {
   enabled: boolean;
-  environmentId: string;
+  environment: TEnvironment;
   surveys: TSurvey[];
   spreadSheetArray: TGoogleSpreadsheet[];
   googleSheetIntegration: TGoogleSheetIntegration | undefined;
@@ -23,7 +24,7 @@ interface GoogleSheetWrapperProps {
 
 export default function GoogleSheetWrapper({
   enabled,
-  environmentId,
+  environment,
   surveys,
   spreadSheetArray,
   googleSheetIntegration,
@@ -39,7 +40,7 @@ export default function GoogleSheetWrapper({
   >(null);
 
   const refreshSheet = async () => {
-    const latestSpreadsheets = await refreshSheetAction(environmentId);
+    const latestSpreadsheets = await refreshSheetAction(environment.id);
     setSpreadsheets(latestSpreadsheets);
   };
 
@@ -48,7 +49,7 @@ export default function GoogleSheetWrapper({
       {isConnected && googleSheetIntegration ? (
         <>
           <AddIntegrationModal
-            environmentId={environmentId}
+            environmentId={environment.id}
             surveys={surveys}
             open={isModalOpen}
             setOpen={setModalOpen}
@@ -57,7 +58,7 @@ export default function GoogleSheetWrapper({
             selectedIntegration={selectedIntegration}
           />
           <Home
-            environmentId={environmentId}
+            environment={environment}
             googleSheetIntegration={googleSheetIntegration}
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
@@ -66,7 +67,7 @@ export default function GoogleSheetWrapper({
           />
         </>
       ) : (
-        <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} />
+        <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
       )}
     </>
   );

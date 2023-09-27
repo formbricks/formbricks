@@ -4,6 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { useSurvey } from "@/lib/surveys/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import {
   ErrorComponent,
   Select,
@@ -21,15 +22,15 @@ import toast from "react-hot-toast";
 
 export default function SurveyStatusDropdown({
   surveyId,
-  environmentId,
+  environment,
   updateLocalSurveyStatus,
 }: {
   surveyId: string;
-  environmentId: string;
+  environment: TEnvironment;
   updateLocalSurveyStatus?: (status: "draft" | "inProgress" | "paused" | "completed" | "archived") => void;
 }) {
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
-  const { triggerSurveyMutate } = useSurveyMutation(environmentId, surveyId);
+  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environment.id, surveyId);
+  const { triggerSurveyMutate } = useSurveyMutation(environment.id, surveyId);
 
   if (isLoadingSurvey) {
     return <LoadingSpinner />;
@@ -47,7 +48,7 @@ export default function SurveyStatusDropdown({
     <>
       {survey.status === "draft" || survey.status === "archived" ? (
         <div className="flex items-center">
-          <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+          <SurveyStatusIndicator status={survey.status} environment={environment} />
           {survey.status === "draft" && <p className="text-sm italic text-slate-600">Draft</p>}
           {survey.status === "archived" && <p className="text-sm italic text-slate-600">Archived</p>}
         </div>
@@ -80,7 +81,7 @@ export default function SurveyStatusDropdown({
                 <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+                      <SurveyStatusIndicator status={survey.status} environment={environment} />
                       <span className="ml-2 text-sm text-slate-700">
                         {survey.status === "draft" && "Draft"}
                         {survey.status === "inProgress" && "In-progress"}

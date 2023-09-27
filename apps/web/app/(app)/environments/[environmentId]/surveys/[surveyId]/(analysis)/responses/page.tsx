@@ -6,22 +6,35 @@ import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/survey
 import { getServerSession } from "next-auth";
 import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
+import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const { responses, survey } = await getAnalysisData(params.surveyId, params.environmentId);
+  const [{ responses, survey }, environment] = await Promise.all([
+    getAnalysisData(params.surveyId, params.environmentId),
+    getEnvironment(params.environmentId),
+  ]);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+  const product = await getProductByEnvironmentId(environment.id);
+  if (!product) {
+    throw new Error("Product not found");
+  }
   return (
     <>
       <ResponsesLimitReachedBanner environmentId={params.environmentId} surveyId={params.surveyId} />
       <ResponsePage
-        environmentId={params.environmentId}
+        environment={params.environmentId}
         responses={responses}
         survey={survey}
         surveyId={params.surveyId}
         surveyBaseUrl={SURVEY_BASE_URL}
+        product={product}
       />
     </>
   );

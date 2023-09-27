@@ -77,7 +77,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 activeQuestionId={activeQuestionId}
                 setActiveQuestionId={setActiveQuestionId}
-                environmentId={environment.id}
+                product={product}
                 invalidQuestions={invalidQuestions}
                 setInvalidQuestions={setInvalidQuestions}
               />

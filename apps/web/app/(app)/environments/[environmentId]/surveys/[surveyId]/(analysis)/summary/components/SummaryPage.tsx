@@ -12,16 +12,26 @@ import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface SummaryPageProps {
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurveyWithAnalytics;
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
+  product: TProduct;
 }
 
-const SummaryPage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl }: SummaryPageProps) => {
+const SummaryPage = ({
+  environment,
+  survey,
+  surveyId,
+  responses,
+  surveyBaseUrl,
+  product,
+}: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const searchParams = useSearchParams();
 
@@ -38,20 +48,21 @@ const SummaryPage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl
   return (
     <ContentWrapper>
       <SummaryHeader
-        environmentId={environmentId}
+        environment={environment}
         survey={survey}
         surveyId={surveyId}
         surveyBaseUrl={surveyBaseUrl}
+        product={product}
       />
       <CustomFilter
-        environmentId={environmentId}
+        environmentId={environment.id}
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
       />
-      <SurveyResultsTabs activeId="summary" environmentId={environmentId} surveyId={surveyId} />
+      <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
       <SummaryMetadata responses={filterResponses} survey={survey} />
-      <SummaryList responses={filterResponses} survey={survey} environmentId={environmentId} />
+      <SummaryList responses={filterResponses} survey={survey} environment={environment} />
     </ContentWrapper>
   );
 };

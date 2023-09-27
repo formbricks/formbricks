@@ -12,13 +12,14 @@ import { StrictModeDroppable } from "./StrictModeDroppable";
 import { Question } from "@formbricks/types/questions";
 import { validateQuestion } from "./Validation";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface QuestionsViewProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
-  environmentId: string;
+  product: TProduct;
   invalidQuestions: String[] | null;
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
 }
@@ -28,7 +29,7 @@ export default function QuestionsView({
   setActiveQuestionId,
   localSurvey,
   setLocalSurvey,
-  environmentId,
+  product,
   invalidQuestions,
   setInvalidQuestions,
 }: QuestionsViewProps) {
@@ -212,7 +213,7 @@ export default function QuestionsView({
           </StrictModeDroppable>
         </div>
       </DragDropContext>
-      <AddQuestionButton addQuestion={addQuestion} environmentId={environmentId} />
+      <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5">
         <EditThankYouCard
           localSurvey={localSurvey}
