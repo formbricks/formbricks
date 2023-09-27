@@ -74,7 +74,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     if (env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1") {
       const plan = await getPlan(req, res);
-      if (plan === "free" && responses.length > RESPONSES_LIMIT_FREE) {
+      if (plan === "community" && responses.length > RESPONSES_LIMIT_FREE) {
         return res.json({
           count: responses.length,
           responses: responses.slice(responses.length - RESPONSES_LIMIT_FREE, responses.length), // get last 30 from array

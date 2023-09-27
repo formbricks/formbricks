@@ -133,6 +133,11 @@ export const getEnvironmentByUser = async (user: any): Promise<TEnvironment | TE
         team: {
           create: {
             name: `${user.name}'s Team`,
+            subscription: {
+              plan: "community",
+              addOns: [],
+              stripeCustomerId: null,
+            },
             products: {
               create: {
                 name: "My Product",

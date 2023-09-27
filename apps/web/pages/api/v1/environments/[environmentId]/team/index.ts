@@ -41,8 +41,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       select: {
         id: true,
         name: true,
-        stripeCustomerId: true,
-        plan: true,
+        subscription: true,
       },
     });
 
@@ -78,8 +77,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         select: {
           id: true,
           name: true,
-          stripeCustomerId: true,
-          plan: true,
+          subscription: true,
         },
       });
       if (team === null) {

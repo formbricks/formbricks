@@ -8,7 +8,7 @@ import {
   TSurveyVerifyEmail,
 } from "@formbricks/types/v1/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/v1/users";
-
+import { TTeamSubscription } from "@formbricks/types/v1/teams";
 declare global {
   namespace PrismaJson {
     export type EventProperties = { [key: string]: string };
@@ -21,6 +21,7 @@ declare global {
     export type SurveyThankYouCard = TSurveyThankYouCard;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
+    export type TeamSubscription = TTeamSubscription;
     export type UserNotificationSettings = TUserNotificationSettings;
   }
 }

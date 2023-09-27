@@ -18,6 +18,11 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
           accepted: true,
         },
       },
+      subscription: {
+        plan: "community",
+        addOns: [],
+        stripeCustomerId: null,
+      },
       products: {
         create: [
           {

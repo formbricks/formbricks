@@ -72,7 +72,7 @@ export const getPlan = async (req, res) => {
               select: {
                 team: {
                   select: {
-                    plan: true,
+                    subscription: true,
                   },
                 },
               },
@@ -81,10 +81,10 @@ export const getPlan = async (req, res) => {
         },
       },
     });
-    return apiKeyData?.environment.product.team.plan || "free";
+    return apiKeyData?.environment.product.team.subscription.plan || "community";
   } else {
     const user = await getSessionUser(req, res);
-    return user && user.teams?.length > 0 ? user.teams[0].plan : "free";
+    return user && user.teams?.length > 0 ? user.teams[0].plan : "community";
   }
 };
 

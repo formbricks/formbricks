@@ -33,6 +33,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           team: {
             create: {
               name: `${user.name}'s Team`,
+              subscription: {
+                plan: "community",
+                addOns: [],
+                stripeCustomerId: null,
+              },
               products: {
                 create: {
                   name: "My Product",

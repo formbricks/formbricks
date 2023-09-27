@@ -145,7 +145,7 @@ export const authOptions: NextAuthOptions = {
               role: true,
               team: {
                 select: {
-                  plan: true,
+                  subscription: true,
                 },
               },
             },
@@ -158,11 +158,13 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      const teams = existingUser.memberships.map((membership) => ({
-        id: membership.teamId,
-        role: membership.role,
-        plan: membership.team.plan,
-      }));
+      const teams = existingUser.memberships.map((membership) => {
+        return {
+          id: membership.teamId,
+          role: membership.role,
+          plan: membership.team?.subscription?.plan,
+        };
+      });
 
       const additionalAttributs = {
         id: existingUser.id,
@@ -274,6 +276,11 @@ export const authOptions: NextAuthOptions = {
                   team: {
                     create: {
                       name: `${user.name}'s Team`,
+                      subscription: {
+                        plan: "community",
+                        addOns: [],
+                        stripeCustomerId: null,
+                      },
                       products: {
                         create: [
                           {

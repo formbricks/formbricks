@@ -14,7 +14,7 @@ export const getAnalysisData = async (surveyId: string, environmentId: string) =
   if (survey.environmentId !== environmentId) throw new Error(`Survey not found: ${surveyId}`);
   const limitReached =
     IS_FORMBRICKS_CLOUD &&
-    team.plan === "free" &&
+    team.subscription?.plan === "community" &&
     survey.type === "web" &&
     allResponses.length >= RESPONSES_LIMIT_FREE;
   const responses = limitReached ? allResponses.slice(0, RESPONSES_LIMIT_FREE) : allResponses;

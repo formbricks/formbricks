@@ -63,6 +63,11 @@ export async function POST(request: Request) {
                 team: {
                   create: {
                     name: `${user.name}'s Team`,
+                    subscription: {
+                      plan: "community",
+                      addOns: [],
+                      stripeCustomerId: null,
+                    },
                     products: {
                       create: [
                         {

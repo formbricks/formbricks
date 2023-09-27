@@ -30,8 +30,7 @@ export const select = {
   createdAt: true,
   updatedAt: true,
   name: true,
-  plan: true,
-  stripeCustomerId: true,
+  subscription: true,
 };
 
 export const getTeamsByUserId = cache(async (userId: string): Promise<TTeam[]> => {

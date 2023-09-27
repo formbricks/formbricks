@@ -13,6 +13,12 @@ const stripeURl =
     ? "https://buy.stripe.com/5kA9ABal07ZjgEw3cc"
     : "https://buy.stripe.com/test_8wMaHA3UWcACfuM3cc";
 
+const stripeRemoveBrandingUrl =
+  process.env.NODE_ENV === "production" ? "" : "https://billing.formbricks.com/b/test_5kA02WezAgQSdmEbIJ";
+
+const customUrlStripeUrl =
+  process.env.NODE_ENV === "production" ? "" : "https://billing.formbricks.com/b/test_cN22b4gHIdEGciA9AC";
+
 interface PricingTableProps {
   team: TTeam;
 }
@@ -29,7 +35,7 @@ export default function PricingTable({ team }: PricingTableProps) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        stripeCustomerId: team.stripeCustomerId,
+        stripeCustomerId: team.subscription?.stripeCustomerId,
         returnUrl: `${window.location}`,
       }),
     });
@@ -70,7 +76,9 @@ export default function PricingTable({ team }: PricingTableProps) {
           <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
             <div className="p-8">
               <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Free</h2>
-              {team.plan === "free" && <Badge text="Current Plan" size="normal" type="success" />}
+              {team.subscription?.plan === "community" && (
+                <Badge text="Current Plan" size="normal" type="success" />
+              )}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 Always free. Giving back to the community.
               </p>
@@ -87,7 +95,7 @@ export default function PricingTable({ team }: PricingTableProps) {
               <p className="mt-6 text-3xl">
                 <span className="text-slate-800font-light">Always free</span>
               </p>
-              {team.plan === "free" ? (
+              {team.subscription?.plan === "community" ? (
                 <Button variant="minimal" disabled className="mt-6 w-full justify-center py-4 shadow-sm">
                   Your current plan
                 </Button>
@@ -106,7 +114,9 @@ export default function PricingTable({ team }: PricingTableProps) {
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="p-8">
               <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Pro</h2>
-              {team.plan === "pro" && <Badge text="Current Plan" size="normal" type="success" />}
+              {team.subscription?.plan === "scale" && (
+                <Badge text="Current Plan" size="normal" type="success" />
+              )}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 All features included. Unlimited usage.
               </p>
@@ -125,7 +135,7 @@ export default function PricingTable({ team }: PricingTableProps) {
 
                 <span className="text-base font-medium text-slate-400">/ month</span>
               </p>
-              {team.plan === "pro" ? (
+              {team.subscription?.plan === "scale" ? (
                 <Button
                   variant="secondary"
                   className="mt-6 w-full justify-center py-4 shadow-sm"
@@ -144,6 +154,56 @@ export default function PricingTable({ team }: PricingTableProps) {
           </div>
         </div>
 
+        <div className="col-span-1">
+          <div className="rounded-lg border border-slate-100  shadow-sm">
+            <div className="p-8">
+              <h2 className="inline-flex text-2xl font-bold text-slate-700">Remove Formbricks Branding</h2>
+              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
+                Remove Formbricks branding from web-app surveys across all your products.
+              </p>
+              {team.subscription?.addOns.includes("removeBranding") ? (
+                <Button
+                  variant="secondary"
+                  className="mt-6 w-full justify-center py-4 shadow-sm"
+                  onClick={() => openCustomerPortal()}>
+                  Manage Subscription
+                </Button>
+              ) : (
+                <Button
+                  variant="darkCTA"
+                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
+                  onClick={() => router.push(`${stripeRemoveBrandingUrl}?client_reference_id=${team.id}`)}>
+                  Buy for 10$ /month
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-span-1">
+          <div className="rounded-lg border border-slate-100 shadow-sm">
+            <div className="p-8">
+              <h2 className="inline-flex text-2xl font-bold text-slate-700">Custom URL for Link Surveys</h2>
+              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
+                Use your own custom URL for link surveys.
+              </p>
+              {team.subscription?.addOns.includes("customUrl") ? (
+                <Button
+                  variant="secondary"
+                  className="mt-6 w-full justify-center py-4 shadow-sm"
+                  onClick={() => openCustomerPortal()}>
+                  Manage Subscription
+                </Button>
+              ) : (
+                <Button
+                  variant="darkCTA"
+                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
+                  onClick={() => router.push(`${customUrlStripeUrl}?client_reference_id=${team.id}`)}>
+                  Buy for 10$ /month
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
         <div className="col-span-2">
           <div className="rounded-lg border border-slate-100  shadow-sm">
             <div className="p-8">

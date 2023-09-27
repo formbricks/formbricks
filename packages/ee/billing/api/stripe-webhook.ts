@@ -11,6 +11,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
 
+interface Subscription {
+  stripeCustomerId: string | null;
+  plan: "community" | "scale";
+  addOns: ("removeBranding" | "customUrl")[];
+}
+
 // Stripe requires the raw body to construct the event.
 export const config = {
   api: {
@@ -47,20 +53,70 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
     // Cast event data to Stripe object.
     if (event.type === "checkout.session.completed") {
       const checkoutSession = event.data.object as Stripe.Checkout.Session;
+      const { line_items } = await stripe.checkout.sessions.retrieve(checkoutSession.id, {
+        expand: ["line_items"],
+      });
+
       const teamId = checkoutSession.client_reference_id;
       if (!teamId) {
         console.error("No teamId found in checkout session");
         return res.json({ message: "skipping, no teamId found" });
       }
       const stripeCustomerId = checkoutSession.customer as string;
-      const plan = "pro";
-      await prisma.team.update({
+
+      const purchasedRemoveBranding = line_items?.data[0].description === "Test Remove Branding";
+      const purchasedFormbricksScale = line_items?.data[0].description === "Test FB Cloud";
+      const purchasedCustomUrl = line_items?.data[0].description === "Test Custom URL";
+
+      const existingSubscription: Subscription = (await prisma.team.findUnique({
         where: { id: teamId },
-        data: {
-          stripeCustomerId,
-          plan,
+        select: {
+          subscription: true,
         },
-      });
+      })) as unknown as Subscription;
+
+      if (purchasedFormbricksScale) {
+        await prisma.team.update({
+          where: { id: teamId },
+          data: {
+            subscription: {
+              addOns: existingSubscription.addOns,
+              plan: "scale",
+              stripeCustomerId,
+            },
+          },
+        });
+      }
+
+      if (purchasedRemoveBranding) {
+        const addOns = existingSubscription.addOns || [];
+        addOns.includes("removeBranding") ? addOns.push("removeBranding") : addOns;
+        await prisma.team.update({
+          where: { id: teamId },
+          data: {
+            subscription: {
+              plan: existingSubscription.plan,
+              stripeCustomerId,
+              addOns,
+            },
+          },
+        });
+      }
+
+      if (purchasedCustomUrl) {
+        const addOns = existingSubscription.addOns || [];
+        addOns.includes("customUrl") ? addOns.push("customUrl") : addOns;
+        await prisma.team.update({
+          where: { id: teamId },
+          data: {
+            subscription: {
+              plan: existingSubscription.plan,
+              stripeCustomerId,
+              addOns,
+            },
+          },
+        });
+      }
       // add teamId to subscription metadata in Stripe
       const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string);
       await stripe.subscriptions.update(subscription.id, {
@@ -70,17 +126,63 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     } else if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
+
+      const unsubscribedRemoveBranding = subscription.description === "Test Remove Branding";
+      const unsubscribedFormbricksPro = subscription.description === "Test FB Cloud";
+      const unsubscribedCustomUrl = subscription.description === "Test Custom URL";
+
       const teamId = subscription.metadata.teamId;
       if (!teamId) {
         console.error("No teamId found in subscription");
         return res.json({ message: "skipping, no teamId found" });
       }
-      await prisma.team.update({
+
+      const existingSubscription: Subscription = (await prisma.team.findUnique({
         where: { id: teamId },
-        data: {
-          plan: "free",
+        select: {
+          subscription: true,
         },
-      });
+      })) as unknown as Subscription;
+
+      if (unsubscribedFormbricksPro) {
+        await prisma.team.update({
+          where: { id: teamId },
+          data: {
+            subscription: {
+              ...existingSubscription,
+              plan: "community",
+            },
+          },
+        });
+      }
+
+      if (unsubscribedRemoveBranding) {
+        const currentAddOns = existingSubscription.addOns || [];
+        const updatedAddOns = currentAddOns.filter((addOn) => addOn !== "removeBranding");
+        await prisma.team.update({
+          where: { id: teamId },
+          data: {
+            subscription: {
+              ...existingSubscription,
+              addOns: updatedAddOns,
+            },
+          },
+        });
+      }
+
+      if (unsubscribedCustomUrl) {
+        const currentAddOns = existingSubscription.addOns || [];
+        const updatedAddOns = currentAddOns.filter((addOn) => addOn !== "customUrl");
+        await prisma.team.update({
+          where: { id: teamId },
+          data: {
+            subscription: {
+              ...existingSubscription,
+              addOns: updatedAddOns,
+            },
+          },
+        });
+      }
     } else {
       console.warn(`🤷‍♀️ Unhandled event type: ${event.type}`);
     }
