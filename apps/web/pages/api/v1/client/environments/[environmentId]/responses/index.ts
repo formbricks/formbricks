@@ -172,6 +172,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         attributes: attributes,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
+        environmentId: environmentId,
       };
     };
 

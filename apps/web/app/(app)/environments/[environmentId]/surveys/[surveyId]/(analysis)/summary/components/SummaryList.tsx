@@ -11,7 +11,7 @@ import {
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
-  TSurveyQuestion,
+  // TSurveyQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/v1/surveys";
 import CTASummary from "./CTASummary";
@@ -28,7 +28,7 @@ interface SummaryListProps {
 }
 
 export default function SummaryList({ environmentId, survey, responses }: SummaryListProps) {
-  const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
+  const getSummaryData = () =>
     survey.questions.map((question) => {
       const questionResponses = responses
         .filter((response) => question.id in response.data)

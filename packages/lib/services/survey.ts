@@ -427,8 +427,8 @@ export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSu
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: updatedSurvey.triggers, // Include triggers from updatedSurvey
-      attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
+      triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
+      attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
     };
 
     revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));

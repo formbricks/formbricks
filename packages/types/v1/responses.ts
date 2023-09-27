@@ -50,6 +50,7 @@ export const ZResponse = z.object({
     .object({
       id: z.string().cuid2(),
       attributes: z.record(z.union([z.string(), z.number()])),
+      environmentId: z.string().cuid2(),
       createdAt: z.date(),
       updatedAt: z.date(),
     })
