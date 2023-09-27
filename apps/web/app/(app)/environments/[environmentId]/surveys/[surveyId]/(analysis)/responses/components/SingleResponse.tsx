@@ -189,7 +189,6 @@ export default function SingleResponse({
 
         <ResponseTagsWrapper
           environmentId={environmentId}
-          surveyId={surveyId}
           responseId={data.id}
           tags={data.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
           key={data.tags.map((tag) => tag.id).join("-")}
