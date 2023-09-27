@@ -19,7 +19,6 @@ export const updateResponse = async (
   responseId: string,
   apiHost: string
 ): Promise<TResponse> => {
-  console.log(responseInput);
   const res = await fetch(`${apiHost}/api/v1/client/responses/${responseId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
