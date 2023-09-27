@@ -73,6 +73,19 @@ Formbricks is available Open-Source under AGPLv3 license. You can host Formbrick
 
 (In the future we may develop additional features that aren't in the free Open-Source version)
 
+### Development
+
+#### Local Setup
+
+To get started locally, we've got a [guide to help you](https://formbricks.com/docs/contributing/setup).
+
+#### Gitpod Setup
+1. Click the button below to open this project in Gitpod.
+
+2. This will open a fully configured workspace in your browser with all the necessary dependencies already installed.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
+
 ## ✍️ Contribution
 
 We are very happy if you are interested in contributing to Formbricks 🤗
@@ -84,6 +97,13 @@ Here are a few options:
 - Upvote issues with 👍 reaction so we know what's the demand for particular issue to prioritize it within roadmap
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
+
+## 🧑‍💻 Community managed One Click Hosting
+### Railway
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
+
+You can deploy Formbricks on [Railway](https://railway.app) using the button above.
+
 
 ## 📆 Contact us
 
