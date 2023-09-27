@@ -63,6 +63,14 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ## 🚀 Getting started
 
+### Prerequisites
+
+Here is what you need to be able to run Formbricks
+
+- Node.js (Version: >=18.x)
+- [Pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
+
 ### ☁️ Cloud Version
 
 Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com)
@@ -80,6 +88,7 @@ Formbricks is available Open-Source under AGPLv3 license. You can host Formbrick
 To get started locally, we've got a [guide to help you](https://formbricks.com/docs/contributing/setup).
 
 #### Gitpod Setup
+
 1. Click the button below to open this project in Gitpod.
 
 2. This will open a fully configured workspace in your browser with all the necessary dependencies already installed.
@@ -99,11 +108,12 @@ Here are a few options:
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
 
 ## 🧑‍💻 Community managed One Click Hosting
+
 ### Railway
+
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
 
 You can deploy Formbricks on [Railway](https://railway.app) using the button above.
-
 
 ## 📆 Contact us
 
