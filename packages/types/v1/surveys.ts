@@ -252,7 +252,7 @@ export const ZSurvey = z.object({
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+  surveyClosedMessage: ZSurveyClosedMessage.nullish(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
