@@ -71,9 +71,22 @@ Formbricks has a hosted cloud offering with a generous free plan to get you up a
 
 ### 🐳 Self-hosted version
 
+If you opt for self-hosting Formbricks, here are a few options to consider:
+
+#### Docker
+
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription. To get started with self-hosting, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
 
 (In the future we may develop additional features that aren't in the free Open-Source version)
+
+#### Community managed One Click Hosting
+
+##### Railway
+
+You can deploy Formbricks on [Railway](https://railway.app) using the button below.
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
+
 
 ### 👨‍💻 Development
 
@@ -108,14 +121,6 @@ Here are a few options:
 - Upvote issues with 👍 reaction so we know what's the demand for particular issue to prioritize it within roadmap
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
-
-## 🧑‍💻 Community managed One Click Hosting
-
-### Railway
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
-
-You can deploy Formbricks on [Railway](https://railway.app) using the button above.
 
 ## 📆 Contact us
 
