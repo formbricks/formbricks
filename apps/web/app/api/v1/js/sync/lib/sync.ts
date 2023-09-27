@@ -2,7 +2,7 @@ import { getSurveysCached } from "@/app/api/v1/js/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClassesCached } from "@formbricks/lib/services/actionClass";
 import { getEnvironmentCached } from "@formbricks/lib/services/environment";
-import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/services/person";
+import { createPerson, getMonthlyActivePeopleCount, getPersonCached } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
 import { createSession, extendSession, getSessionCached } from "@formbricks/lib/services/session";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
@@ -61,7 +61,7 @@ export const getUpdatedState = async (
     session = await createSession(person.id);
   } else {
     // check if person exists
-    const existingPerson = await getPerson(personId);
+    const existingPerson = await getPersonCached(personId);
     if (!existingPerson) {
       // create a new person
       person = await createPerson(environmentId);
