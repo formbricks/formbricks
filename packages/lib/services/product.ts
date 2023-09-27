@@ -10,7 +10,7 @@ import "server-only";
 import { z } from "zod";
 import { validateInputs } from "../utils/validate";
 
-const getProductCacheTag = (environmentId: string): string => `env-${environmentId}-product`;
+const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
 const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
 
 const selectProduct = {

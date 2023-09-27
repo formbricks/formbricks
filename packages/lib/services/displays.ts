@@ -38,7 +38,7 @@ const selectDisplay = {
   status: true,
 };
 
-export const getDisplaysCacheTag = (surveyId: string) => `survey-${surveyId}-displays`;
+export const getDisplaysCacheTag = (surveyId: string) => `surveys-${surveyId}-displays`;
 
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayInput]);

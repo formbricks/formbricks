@@ -75,7 +75,7 @@ const responseSelection = {
   },
 };
 
-export const getResponseCacheTag = (surveyId: string) => `survey-${surveyId}-response`;
+export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-responses`;
 
 export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
   validateInputs([personId, ZId]);
@@ -150,7 +150,7 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
     };
 
     if (response.surveyId) {
-      revalidateTag(getResponseCacheTag(response.surveyId));
+      revalidateTag(getResponsesCacheTag(response.surveyId));
     }
 
     return response;
@@ -302,7 +302,7 @@ export const updateResponse = async (
     };
 
     if (response.surveyId) {
-      revalidateTag(getResponseCacheTag(response.surveyId));
+      revalidateTag(getResponsesCacheTag(response.surveyId));
     }
 
     return response;

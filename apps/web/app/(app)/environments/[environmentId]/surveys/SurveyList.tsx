@@ -94,7 +94,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                     </div>
                     <SurveyDropDownMenu
                       survey={survey}
-                      key={`survey-${survey.id}`}
+                      key={`surveys-${survey.id}`}
                       environmentId={environmentId}
                       environment={environment}
                       otherEnvironment={otherEnvironment!}
