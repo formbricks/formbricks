@@ -303,3 +303,22 @@ export const updateResponse = async (
     throw error;
   }
 };
+
+export const deleteResponse = async (responseId: string): Promise<boolean> => {
+  validateInputs([responseId, ZId]);
+  try {
+    await prisma.response.delete({
+      where: {
+        id: responseId,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};

@@ -2,13 +2,13 @@
 
 import TagsCombobox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TagsCombobox";
 import { removeTagFromResponse, useAddTagToResponse, useCreateTag } from "@/lib/tags/mutateTags";
-import { useTagsForEnvironment } from "@/lib/tags/tags";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Tag } from "./Tag";
 import { ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { Button } from "@formbricks/ui";
+import { TTag } from "@formbricks/types/v1/tags";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -18,6 +18,7 @@ interface ResponseTagsWrapperProps {
   environmentId: string;
   surveyId: string;
   responseId: string;
+  environmentTags: TTag[];
 }
 
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -25,6 +26,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   environmentId,
   responseId,
   surveyId,
+  environmentTags,
 }) => {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
@@ -33,7 +35,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const [tagIdToHighlight, setTagIdToHighlight] = useState("");
 
   const { createTag } = useCreateTag(environmentId);
-  const { data: environmentTags, mutate: refetchEnvironmentTags } = useTagsForEnvironment(environmentId);
+  // const { data: environmentTags, mutate: refetchEnvironmentTags } = useTagsForEnvironment(environmentId);
   const { addTagToRespone } = useAddTagToResponse(environmentId, surveyId, responseId);
 
   const onDelete = async (tagId: string) => {
@@ -101,8 +103,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                       onSuccess: () => {
                         setSearchValue("");
                         setOpen(false);
-
-                        refetchEnvironmentTags();
                         router.refresh();
                       },
                     }
@@ -125,9 +125,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
                   setSearchValue("");
                   setOpen(false);
-
-                  refetchEnvironmentTags();
-
                   router.refresh();
                 },
                 throwOnError: false,
@@ -151,8 +148,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                 onSuccess: () => {
                   setSearchValue("");
                   setOpen(false);
-                  refetchEnvironmentTags();
-
                   router.refresh();
                 },
               }

@@ -1,13 +1,7 @@
 import { fetcher } from "@formbricks/lib/fetcher";
 import useSWR from "swr";
-import { TTag, TTagsCount } from "@formbricks/types/v1/tags";
+import { TTagsCount } from "@formbricks/types/v1/tags";
 import { useMemo } from "react";
-
-export const useTagsForEnvironment = (environmentId: string) => {
-  const tagsForProducts = useSWR<TTag[]>(`/api/v1/environments/${environmentId}/tags`, fetcher);
-
-  return tagsForProducts;
-};
 
 export const useTagsCountForEnvironment = (environmentId: string) => {
   const {

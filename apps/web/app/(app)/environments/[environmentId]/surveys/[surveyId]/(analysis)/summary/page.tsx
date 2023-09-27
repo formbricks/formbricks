@@ -7,6 +7,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getTagsByEnvironmentId } from "@formbricks/lib/services/tag";
 import { getServerSession } from "next-auth";
 
 export default async function Page({ params }) {
@@ -26,6 +27,7 @@ export default async function Page({ params }) {
   if (!product) {
     throw new Error("Product not found");
   }
+  const tags = await getTagsByEnvironmentId(params.environmentId);
 
   return (
     <>
@@ -37,6 +39,7 @@ export default async function Page({ params }) {
         surveyId={params.surveyId}
         surveyBaseUrl={SURVEY_BASE_URL}
         product={product}
+        environmentTags={tags}
       />
     </>
   );

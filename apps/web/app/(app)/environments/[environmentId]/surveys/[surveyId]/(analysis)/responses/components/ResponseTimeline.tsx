@@ -7,12 +7,14 @@ import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TTag } from "@formbricks/types/v1/tags";
 
 interface ResponseTimelineProps {
   environment: TEnvironment;
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
+  environmentTags: TTag[];
 }
 
 export default function ResponseTimeline({
@@ -20,6 +22,7 @@ export default function ResponseTimeline({
   surveyId,
   responses,
   survey,
+  environmentTags,
 }: ResponseTimelineProps) {
   const matchQandA = useMemo(() => {
     if (survey && responses) {
@@ -86,6 +89,7 @@ export default function ResponseTimeline({
                 data={updatedResponse}
                 surveyId={surveyId}
                 environmentId={environment.id}
+                environmentTags={environmentTags}
               />
             );
           })}

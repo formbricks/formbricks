@@ -12,6 +12,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
+import { TTag } from "@formbricks/types/v1/tags";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -20,6 +21,7 @@ interface ResponsePageProps {
   responses: TResponse[];
   surveyBaseUrl: string;
   product: TProduct;
+  environmentTags: TTag[];
 }
 
 const ResponsePage = ({
@@ -29,6 +31,7 @@ const ResponsePage = ({
   responses,
   surveyBaseUrl,
   product,
+  environmentTags,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -54,7 +57,7 @@ const ResponsePage = ({
         product={product}
       />
       <CustomFilter
-        environmentId={environment.id}
+        environmentTags={environmentTags}
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
@@ -65,6 +68,7 @@ const ResponsePage = ({
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
+        environmentTags={environmentTags}
       />
     </ContentWrapper>
   );
