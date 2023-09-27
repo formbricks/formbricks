@@ -63,13 +63,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ## 🚀 Getting started
 
-### Prerequisites
-
-Here is what you need to be able to run Formbricks
-
-- Node.js (Version: >=18.x)
-- [Pnpm](https://pnpm.io/)
-- [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
+We've got several options depending on your need to help you quickly get started with Formbricks
 
 ### ☁️ Cloud Version
 
@@ -81,7 +75,15 @@ Formbricks is available Open-Source under AGPLv3 license. You can host Formbrick
 
 (In the future we may develop additional features that aren't in the free Open-Source version)
 
-### Development
+### 👨‍💻 Development
+
+#### Prerequisites
+
+Here is what you need to be able to run Formbricks
+
+- Node.js (Version: >=18.x)
+- [Pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
 
 #### Local Setup
 
