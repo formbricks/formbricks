@@ -6,7 +6,6 @@ export const createResponse = async (responseInput: TResponseInput, apiHost: str
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(responseInput),
   });
-  console.log(res);
   if (!res.ok) {
     console.error(res.text);
     throw new Error("Could not create response");
@@ -26,27 +25,8 @@ export const updateResponse = async (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(responseInput),
   });
-  console.log(res);
   if (!res.ok) {
     throw new Error("Could not update response");
-  }
-  const resJson = await res.json();
-  return resJson.data;
-};
-
-export const updateDisplay = async (
-  displayId: string,
-  displayInput: any,
-  apiHost: string
-): Promise<TResponse> => {
-  const res = await fetch(`${apiHost}/api/v1/client/displays/${displayId}/responded`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(displayInput),
-  });
-  console.log(res);
-  if (!res.ok) {
-    throw new Error("Could not update display");
   }
   const resJson = await res.json();
   return resJson.data;

@@ -1,5 +1,6 @@
 import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import { createResponse, updateResponse, updateDisplay } from "./client/response";
+import { createResponse, updateResponse } from "./client/response";
+import { updateDisplay } from "./client/display";
 import SurveyState from "./surveyState";
 
 interface QueueConfig {

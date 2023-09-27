@@ -13,7 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/prefilling";
-import { TResponseData } from "@formbricks/types/v1/responses";
+import { TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -34,7 +34,7 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
-  const [displayId, setDisplayId] = useState();
+  const [displayId, setDisplayId] = useState<string>();
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
@@ -94,10 +94,9 @@ export default function LinkSurvey({
             const display = await createDisplay({ surveyId: survey.id }, window?.location?.origin);
             setDisplayId(display.id);
           }}
-          onResponse={(responseUpdate) => {
-            let responseTemp = { ...responseUpdate };
-            responseTemp.displayId = displayId;
-            responseQueue.add(responseTemp);
+          onResponse={(responseUpdate: TResponseUpdate) => {
+            responseUpdate.displayId = displayId!;
+            responseQueue.add(responseUpdate);
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

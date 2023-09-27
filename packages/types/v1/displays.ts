@@ -7,7 +7,7 @@ export const ZDisplay = z.object({
   updatedAt: z.date(),
   surveyId: z.string().cuid2(),
   person: ZPerson.nullable(),
-  responseId: z.string().cuid2(),
+  responseId: z.string().cuid2().nullable(),
   status: z.enum(["seen", "responded"]),
 });
 

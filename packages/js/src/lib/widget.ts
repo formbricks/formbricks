@@ -13,6 +13,7 @@ const containerId = "formbricks-web-container";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
+let displayId: string | null = null;
 let surveyRunning = false;
 
 export const renderWidget = (survey: TSurvey) => {
@@ -51,16 +52,18 @@ export const renderWidget = (survey: TSurvey) => {
       darkOverlay: product.darkOverlay,
       highlightBorderColor: product.highlightBorderColor,
       placement: product.placement,
-      onDisplay: () => {
-        createDisplay(
+      onDisplay: async () => {
+        const display = await createDisplay(
           {
             surveyId: survey.id,
             personId: config.get().state.person.id,
           },
           config.get().apiHost
         );
+        displayId = display.id;
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
+        responseUpdate.displayId = displayId!;
         responseQueue.add(responseUpdate);
       },
       onClose: closeSurvey,

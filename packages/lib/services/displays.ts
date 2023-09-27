@@ -18,6 +18,7 @@ const selectDisplay = {
   createdAt: true,
   updatedAt: true,
   surveyId: true,
+  responseId: true,
   person: {
     select: {
       id: true,
@@ -42,19 +43,23 @@ export const updateDisplay = async (
   displayId: string,
   displayInput: Partial<TDisplayInput>
 ): Promise<TDisplay> => {
-  // validateInputs([displayInput, ZDisplayInput]);
+  validateInputs([displayInput, ZDisplayInput.partial()]);
   try {
-    console.log(displayId);
-    const updateDisplay = await prisma.display.update({
+    const displayPrisma = await prisma.display.update({
       where: {
         id: displayId,
       },
       data: displayInput,
+      select: selectDisplay,
     });
-    console.log(updateDisplay);
-    return updateDisplay;
+    const display: TDisplay = {
+      ...displayPrisma,
+      person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
+    };
+
+    return display;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
@@ -152,6 +157,7 @@ export const getDisplaysOfPerson = cache(
           createdAt: true,
           updatedAt: true,
           surveyId: true,
+          responseId: true,
           survey: {
             select: {
               name: true,
@@ -176,6 +182,7 @@ export const getDisplaysOfPerson = cache(
           status: displayPrisma.status,
           surveyId: displayPrisma.surveyId,
           surveyName: displayPrisma.survey.name,
+          responseId: displayPrisma.responseId,
         };
         displays.push(display);
       });
@@ -190,23 +197,3 @@ export const getDisplaysOfPerson = cache(
     }
   }
 );
-
-export const deleteDisplayByResponseId = async (responseId: string): Promise<void> => {
-  validateInputs([responseId, ZId]);
-  try {
-    await prisma.display.delete({
-      where: {
-        responseId,
-      },
-    });
-
-    // revalidate person
-    revalidateTag(responseId);
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
-  }
-};

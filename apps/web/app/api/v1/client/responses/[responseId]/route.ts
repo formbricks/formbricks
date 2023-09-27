@@ -81,6 +81,5 @@ export async function PUT(
       response: response,
     });
   }
-  console.log("returning sucees reposne");
   return responses.successResponse(response, true);
 }

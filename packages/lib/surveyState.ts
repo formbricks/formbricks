@@ -3,7 +3,7 @@ import { TResponseUpdate } from "@formbricks/types/v1/responses";
 export class SurveyState {
   responseId: string | null = null;
   surveyId: string;
-  responseAcc: TResponseUpdate = { finished: false, data: {} };
+  responseAcc: TResponseUpdate = { finished: false, data: {}, displayId: "" };
 
   constructor(surveyId: string) {
     this.surveyId = surveyId;
@@ -43,6 +43,7 @@ export class SurveyState {
     this.responseAcc = {
       finished: responseUpdate.finished,
       data: { ...this.responseAcc.data, ...responseUpdate.data },
+      displayId: responseUpdate.displayId,
     };
   }
 
@@ -58,7 +59,7 @@ export class SurveyState {
    */
   clear() {
     this.responseId = null;
-    this.responseAcc = { finished: false, data: {} };
+    this.responseAcc = { finished: false, data: {}, displayId: "" };
   }
 }
 
