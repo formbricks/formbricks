@@ -12,12 +12,7 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
-  transpilePackages: [
-    "@formbricks/database",
-    "@formbricks/ee",
-    "@formbricks/ui",
-    "@formbricks/lib",
-  ],
+  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {
@@ -29,6 +24,20 @@ const nextConfig = {
         hostname: "lh3.googleusercontent.com",
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/api/v1/responses",
+        destination: "/api/v1/management/responses",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/surveys",
+        destination: "/api/v1/management/surveys",
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     return [

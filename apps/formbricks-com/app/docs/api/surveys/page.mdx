@@ -14,7 +14,7 @@ The Survey API currently has one endpoint that allows you to get all the surveys
 
 ---
 
-## List all surveys {{ tag: 'GET', label: '/api/v1/surveys' }}
+## List all surveys {{ tag: 'GET', label: '/api/v1/management/surveys' }}
 
 <Row>
   <Col>
@@ -32,11 +32,11 @@ The Survey API currently has one endpoint that allows you to get all the surveys
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/api/v1/surveys">
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/surveys">
 
     ```bash {{ title: 'cURL' }}
     curl --location \
-    'https://app.formbricks.com/api/v1/surveys' \
+    'https://app.formbricks.com/api/v1/management/surveys' \
     --header \
     'x-api-key: <your-api-key>'
     ```
