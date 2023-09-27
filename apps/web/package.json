@@ -11,6 +11,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.418.0",
+    "@aws-sdk/s3-request-presigner": "^3.418.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
