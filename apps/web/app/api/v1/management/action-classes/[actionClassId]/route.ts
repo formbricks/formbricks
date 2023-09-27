@@ -23,15 +23,15 @@ async function fetchAndAuthorizeActionClass(
 
 export async function GET(
   request: Request,
-  { params }: { params: { action_class_Id: string } }
+  { params }: { params: { actionClassId: string } }
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.action_class_Id);
+    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
     if (actionClass) {
       return responses.successResponse(actionClass);
     }
-    return responses.notFoundResponse("Action Class", params.action_class_Id);
+    return responses.notFoundResponse("Action Class", params.actionClassId);
   } catch (error) {
     return handleErrorResponse(error);
   }
@@ -39,13 +39,13 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { action_class_Id: string } }
+  { params }: { params: { actionClassId: string } }
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.action_class_Id);
+    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
     if (!actionClass) {
-      return responses.notFoundResponse("Action Class", params.action_class_Id);
+      return responses.notFoundResponse("Action Class", params.actionClassId);
     }
     const actionCLassUpdate = await request.json();
     const inputValidation = ZActionClassInput.safeParse(actionCLassUpdate);
@@ -57,7 +57,7 @@ export async function PUT(
     }
     const updatedActionClass = await updateActionClass(
       inputValidation.data.environmentId,
-      params.action_class_Id,
+      params.actionClassId,
       inputValidation.data
     );
     if (updatedActionClass) {
@@ -71,15 +71,15 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { action_class_Id: string } }
+  { params }: { params: { actionClassId: string } }
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.action_class_Id);
+    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
     if (!actionClass) {
-      return responses.notFoundResponse("Action Class", params.action_class_Id);
+      return responses.notFoundResponse("Action Class", params.actionClassId);
     }
-    const deletedActionClass = await deleteActionClass(authentication.environmentId, params.action_class_Id);
+    const deletedActionClass = await deleteActionClass(authentication.environmentId, params.actionClassId);
     return responses.successResponse(deletedActionClass);
   } catch (error) {
     return handleErrorResponse(error);

@@ -1,20 +1,20 @@
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/v1/environment";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import {
   TSurvey,
+  TSurveyAttributeFilter,
   TSurveyWithAnalytics,
   ZSurvey,
   ZSurveyWithAnalytics,
-  TSurveyAttributeFilter,
 } from "@formbricks/types/v1/surveys";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import { cache } from "react";
 import "server-only";
-import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
 
 const getSurveysCacheTag = (environmentId: string): string => `env-${environmentId}-surveys`;
 
@@ -263,7 +263,7 @@ export const getSurveysWithAnalytics = cache(
 export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSurvey> {
   const surveyId = updatedSurvey.id;
   let data: any = {};
-  let survey: Partial<any> = { ...updatedSurvey };
+  let survey: any = { ...updatedSurvey };
 
   if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
     const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {

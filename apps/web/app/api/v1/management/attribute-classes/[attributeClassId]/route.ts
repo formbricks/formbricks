@@ -27,15 +27,15 @@ async function fetchAndAuthorizeAttributeClass(
 
 export async function GET(
   request: Request,
-  { params }: { params: { attribute_class_Id: string } }
+  { params }: { params: { attributeClassId: string } }
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attribute_class_Id);
+    const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attributeClassId);
     if (attributeClass) {
       return responses.successResponse(attributeClass);
     }
-    return responses.notFoundResponse("Attribute Class", params.attribute_class_Id);
+    return responses.notFoundResponse("Attribute Class", params.attributeClassId);
   } catch (error) {
     return handleErrorResponse(error);
   }
@@ -43,15 +43,15 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { attribute_class_Id: string } }
+  { params }: { params: { attributeClassId: string } }
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attribute_class_Id);
+    const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attributeClassId);
     if (!attributeClass) {
-      return responses.notFoundResponse("Attribute Class", params.attribute_class_Id);
+      return responses.notFoundResponse("Attribute Class", params.attributeClassId);
     }
-    const deletedAttributeClass = await deleteAttributeClass(params.attribute_class_Id);
+    const deletedAttributeClass = await deleteAttributeClass(params.attributeClassId);
     return responses.successResponse(deletedAttributeClass);
   } catch (error) {
     return handleErrorResponse(error);
@@ -60,13 +60,13 @@ export async function DELETE(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { attribute_class_Id: string } }
+  { params }: { params: { attributeClassId: string } }
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attribute_class_Id);
+    const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attributeClassId);
     if (!attributeClass) {
-      return responses.notFoundResponse("Attribute Class", params.attribute_class_Id);
+      return responses.notFoundResponse("Attribute Class", params.attributeClassId);
     }
     const attributeCLassUpdate = await request.json();
     const inputValidation = ZAttributeClassUpdateInput.safeParse(attributeCLassUpdate);
@@ -76,10 +76,7 @@ export async function PUT(
         transformErrorToDetails(inputValidation.error)
       );
     }
-    const updatedAttributeClass = await updatetAttributeClass(
-      params.attribute_class_Id,
-      inputValidation.data
-    );
+    const updatedAttributeClass = await updatetAttributeClass(params.attributeClassId, inputValidation.data);
     if (updatedAttributeClass) {
       return responses.successResponse(updatedAttributeClass);
     }
