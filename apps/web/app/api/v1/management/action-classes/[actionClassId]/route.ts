@@ -27,6 +27,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
     if (actionClass) {
       return responses.successResponse(actionClass);
@@ -43,6 +44,7 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);
@@ -75,6 +77,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);

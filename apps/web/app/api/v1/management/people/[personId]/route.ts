@@ -27,6 +27,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const person = await fetchAndAuthorizePerson(authentication, params.personId);
     if (person) {
       return responses.successResponse(person);
@@ -43,6 +44,7 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     await fetchAndAuthorizePerson(authentication, params.personId);
 
     const personUpdate = await request.json();
@@ -62,6 +64,7 @@ export async function PUT(
 export async function DELETE(request: Request, { params }: { params: { personId: string } }) {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const person = await fetchAndAuthorizePerson(authentication, params.personId);
     if (!person) {
       return responses.notFoundResponse("Person", params.personId);

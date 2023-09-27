@@ -23,6 +23,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
     if (survey) {
       return responses.successResponse(survey);
@@ -39,6 +40,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);
@@ -56,6 +58,7 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);

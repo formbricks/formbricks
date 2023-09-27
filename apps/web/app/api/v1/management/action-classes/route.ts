@@ -9,9 +9,7 @@ import { transformErrorToDetails } from "@/lib/api/validator";
 export async function GET(request: Request) {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      return responses.notAuthenticatedResponse();
-    }
+    if (!authentication) return responses.notAuthenticatedResponse();
     const actionClasses: TActionClass[] = await getActionClasses(authentication.environmentId!);
     return responses.successResponse(actionClasses);
   } catch (error) {
@@ -25,10 +23,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      return responses.notAuthenticatedResponse();
-    }
-
+    if (!authentication) return responses.notAuthenticatedResponse();
     const actionClassInput = await request.json();
     const inputValidation = ZActionClassInput.safeParse(actionClassInput);
 

@@ -31,6 +31,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attributeClassId);
     if (attributeClass) {
       return responses.successResponse(attributeClass);
@@ -47,6 +48,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attributeClassId);
     if (!attributeClass) {
       return responses.notFoundResponse("Attribute Class", params.attributeClassId);
@@ -64,6 +66,7 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const attributeClass = await fetchAndAuthorizeAttributeClass(authentication, params.attributeClassId);
     if (!attributeClass) {
       return responses.notFoundResponse("Attribute Class", params.attributeClassId);

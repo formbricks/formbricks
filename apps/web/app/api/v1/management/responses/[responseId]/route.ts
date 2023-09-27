@@ -17,8 +17,6 @@ async function fetchAndValidateResponse(authentication: any, responseId: string)
 }
 
 const canUserAccessResponse = async (authentication: any, response: TResponse): Promise<boolean> => {
-  if (!authentication) return false;
-
   const survey = await getSurvey(response.surveyId);
   if (!survey) return false;
 
@@ -37,6 +35,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     await fetchAndValidateResponse(authentication, params.responseId);
     const response = await fetchAndValidateResponse(authentication, params.responseId);
     if (response) {
@@ -54,6 +53,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     const response = await fetchAndValidateResponse(authentication, params.responseId);
     if (!response) {
       return responses.notFoundResponse("Response", params.responseId);
@@ -71,8 +71,8 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
+    if (!authentication) return responses.notAuthenticatedResponse();
     await fetchAndValidateResponse(authentication, params.responseId);
-
     const responseUpdate = await request.json();
     const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
     if (!inputValidation.success) {

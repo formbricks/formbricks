@@ -9,10 +9,7 @@ import { createAttributeClass, getAttributeClasses } from "@formbricks/lib/servi
 export async function GET(request: Request) {
   try {
     const authentication = await authenticateRequest(request);
-
-    if (!authentication) {
-      return responses.notAuthenticatedResponse();
-    }
+    if (!authentication) return responses.notAuthenticatedResponse();
     const atributeClasses: TAttributeClass[] = await getAttributeClasses(authentication.environmentId!);
     return responses.successResponse(atributeClasses);
   } catch (error) {
@@ -26,11 +23,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-
-    if (!authentication) {
-      return responses.notAuthenticatedResponse();
-    }
-
+    if (!authentication) return responses.notAuthenticatedResponse();
     const attributeClassInput = await request.json();
     const inputValidation = ZAttributeClassInput.safeParse(attributeClassInput);
 

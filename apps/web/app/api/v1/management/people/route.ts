@@ -8,9 +8,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      return responses.notAuthenticatedResponse();
-    }
+    if (!authentication) return responses.notAuthenticatedResponse();
     const people: TPerson[] = await getPeople(authentication.environmentId!);
     return responses.successResponse(people);
   } catch (error) {
@@ -24,10 +22,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      return responses.notAuthenticatedResponse();
-    }
-
+    if (!authentication) return responses.notAuthenticatedResponse();
     const person: TPerson = await createPerson(authentication.environmentId);
     return responses.successResponse(person);
   } catch (error) {

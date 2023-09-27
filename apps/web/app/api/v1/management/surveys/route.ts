@@ -9,9 +9,7 @@ import { DatabaseError } from "@formbricks/types/v1/errors";
 export async function GET(request: Request) {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      responses.notAuthenticatedResponse();
-    }
+    if (!authentication) return responses.notAuthenticatedResponse();
     const surveys = await getSurveys(authentication.environmentId!);
     return responses.successResponse(surveys);
   } catch (error) {
@@ -25,10 +23,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      return responses.notAuthenticatedResponse();
-    }
-
+    if (!authentication) return responses.notAuthenticatedResponse();
     const surveyInput = await request.json();
     const inputValidation = ZSurveyInput.safeParse(surveyInput);
 

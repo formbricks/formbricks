@@ -4,7 +4,7 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { responses } from "@/lib/api/response";
 import { NextResponse } from "next/server";
 
-export async function getAuthentication(request: Request): Promise<TAuthenticationApiKey | null> {
+export async function authenticateRequest(request: Request): Promise<TAuthenticationApiKey | null> {
   const apiKey = request.headers.get("x-api-key");
   if (apiKey) {
     const apiKeyData = await getApiKeyFromKey(apiKey);
@@ -15,15 +15,9 @@ export async function getAuthentication(request: Request): Promise<TAuthenticati
       };
       return authentication;
     }
+    return null;
   }
   return null;
-}
-export async function authenticateRequest(request: Request): Promise<TAuthenticationApiKey> {
-  const authentication = await getAuthentication(request);
-  if (!authentication) {
-    throw new Error("NotAuthenticated");
-  }
-  return authentication;
 }
 
 export function handleErrorResponse(error: any): NextResponse {
