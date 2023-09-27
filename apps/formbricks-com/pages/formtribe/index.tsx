@@ -219,7 +219,7 @@ export default function FormTribeHackathon() {
   }, []);
   return (
     <LayoutLight
-      title="FormbTribe Hackathon"
+      title="FormTribe Hackathon"
       description="Can we ship an Open Source Typeform alternative in 30 days?">
       <Head>
         <link
