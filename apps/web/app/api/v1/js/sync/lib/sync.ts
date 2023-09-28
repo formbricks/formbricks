@@ -1,6 +1,6 @@
 import { getSurveysCached } from "@/app/api/v1/js/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
-import { getActionClassesCached } from "@formbricks/lib/services/actionClass";
+import { getActionClassesCached } from "@formbricks/lib/actionClass/service";
 import { getEnvironmentCached } from "@formbricks/lib/services/environment";
 import { createPerson, getMonthlyActivePeopleCount, getPersonCached } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
