@@ -1,8 +1,7 @@
-import { cache } from "react";
 import { prisma } from "@formbricks/database";
 import { unstable_cache } from "next/cache";
 
-export const hasUserEnvironmentAccess = cache(async (userId: string, environmentId: string) => {
+export const hasUserEnvironmentAccess = async (userId: string, environmentId: string) => {
   if (!userId) return false;
   const environment = await prisma.environment.findUnique({
     where: {
@@ -29,7 +28,7 @@ export const hasUserEnvironmentAccess = cache(async (userId: string, environment
     return true;
   }
   return false;
-});
+};
 
 export const hasUserEnvironmentAccessCached = async (userId: string, environmentId: string) =>
   await unstable_cache(
