@@ -244,6 +244,40 @@ export const getSurveysByAttributeClassId = cache(async (attributeClassId: strin
   }
 });
 
+export const getSurveysByActionClassId = cache(async (actionClassId: string): Promise<TSurvey[]> => {
+  const surveysPrisma = await prisma.survey.findMany({
+    where: {
+      triggers: {
+        some: {
+          eventClass: {
+            id: actionClassId,
+          },
+        },
+      },
+    },
+    select: selectSurvey,
+  });
+
+  const surveys: TSurvey[] = [];
+
+  try {
+    for (const surveyPrisma of surveysPrisma) {
+      const transformedSurvey = {
+        ...surveyPrisma,
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+      };
+      const survey = ZSurvey.parse(transformedSurvey);
+      surveys.push(survey);
+    }
+    return surveys;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+    }
+    throw new ValidationError("Data validation of survey failed");
+  }
+});
+
 export const getSurveysWithAnalytics = cache(
   async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
     validateInputs([environmentId, ZId]);

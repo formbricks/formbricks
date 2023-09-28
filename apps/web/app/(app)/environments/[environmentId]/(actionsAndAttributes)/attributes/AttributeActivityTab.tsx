@@ -30,9 +30,10 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
         const activeInactive = await GetActiveInactiveSurveysAction(attributeClass.id);
         setActiveSurveys(activeInactive.activeSurveys);
         setInactiveSurveys(activeInactive.inactiveSurveys);
-        setLoading(false);
       } catch (err) {
         setError(err);
+      } finally {
+        setLoading(false);
       }
     }
   }, [attributeClass.id]);

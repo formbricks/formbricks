@@ -1,3 +1,5 @@
+"use client";
+
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { ErrorComponent } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
@@ -10,8 +12,7 @@ import {
   getActionCountInLastHourAction,
   getActionCountInLast24HoursAction,
   getActionCountInLast7DaysAction,
-  getActiveSurveysForActionClassAction,
-  getInactiveSurveysForActionClassAction,
+  GetActiveInactiveSurveysAction,
 } from "./actions";
 interface ActivityTabProps {
   actionClass: TActionClass;
@@ -30,35 +31,33 @@ export default function EventActivityTab({ actionClass }: ActivityTabProps) {
 
   useEffect(() => {
     setLoading(true);
+    updateState();
 
-    Promise.all([
-      getActionCountInLastHourAction(actionClass.id),
-      getActionCountInLast24HoursAction(actionClass.id),
-      getActionCountInLast7DaysAction(actionClass.id),
-      getActiveSurveysForActionClassAction(actionClass.id),
-      getInactiveSurveysForActionClassAction(actionClass.id),
-    ])
-      .then(
-        ([
+    async function updateState() {
+      try {
+        setLoading(true);
+        const [
           numEventsLastHourData,
           numEventsLast24HoursData,
           numEventsLast7DaysData,
-          activeData,
-          inactiveData,
-        ]) => {
-          setNumEventsLastHour(numEventsLastHourData);
-          setNumEventsLast24Hours(numEventsLast24HoursData);
-          setNumEventsLast7Days(numEventsLast7DaysData);
-          setActiveSurveys(activeData);
-          setInactiveSurveys(inactiveData);
-        }
-      )
-      .catch((err) => {
+          activeInactiveSurveys,
+        ] = await Promise.all([
+          getActionCountInLastHourAction(actionClass.id),
+          getActionCountInLast24HoursAction(actionClass.id),
+          getActionCountInLast7DaysAction(actionClass.id),
+          GetActiveInactiveSurveysAction(actionClass.id),
+        ]);
+        setNumEventsLastHour(numEventsLastHourData);
+        setNumEventsLast24Hours(numEventsLast24HoursData);
+        setNumEventsLast7Days(numEventsLast7DaysData);
+        setActiveSurveys(activeInactiveSurveys.activeSurveys);
+        setInactiveSurveys(activeInactiveSurveys.inactiveSurveys);
+      } catch (err) {
         setError(err);
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    }
   }, [actionClass.id]);
 
   if (loading) return <LoadingSpinner />;
