@@ -130,3 +130,102 @@ export const createAction = async (data: TJsActionInput) => {
   revalidateTag(sessionId);
   revalidateTag(getActionClassCacheTag(name, environmentId));
 };
+
+export const getActionCountInLastHour = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLastHour = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLastHour;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getActionCountInLast24Hours = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLast24Hours = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLast24Hours;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getActionCountInLast7Days = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLast7Days = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLast7Days;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getActiveSurveysForActionClass = cache(async (actionClassId: string): Promise<string[]> => {
+  try {
+    const activeSurveysData = await prisma.surveyTrigger.findMany({
+      where: {
+        eventClassId: actionClassId,
+        survey: {
+          status: "inProgress",
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    const activeSurveys = activeSurveysData.map((t) => t.survey.name);
+
+    return activeSurveys;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getInactiveSurveysForActionClass = cache(async (actionClassId: string): Promise<string[]> => {
+  try {
+    const inactiveSurveysData = await prisma.surveyTrigger.findMany({
+      where: {
+        eventClassId: actionClassId,
+        survey: {
+          status: {
+            in: ["paused", "completed"],
+          },
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    const inactiveSurveys = inactiveSurveysData.map((t) => t.survey.name);
+    return inactiveSurveys;
+  } catch (error) {
+    throw error;
+  }
+});
