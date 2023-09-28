@@ -1,16 +1,14 @@
 "use server";
 
-import {
-  getActiveSurveysForAttributeClass,
-  getInactiveSurveysForAttributeClass,
-} from "@formbricks/lib/services/attributeClass";
+import { getSurveysByAttributeClassId } from "@formbricks/lib/services/survey";
 
-export const getActiveSurveysForAttributeClassAction = async (attributeClassId: string) => {
-  const activeSurveys = await getActiveSurveysForAttributeClass(attributeClassId);
-  return activeSurveys;
-};
-
-export const getInactiveSurveysForAttributeClassAction = async (attributeClassId: string) => {
-  const inactiveSurveys = await getInactiveSurveysForAttributeClass(attributeClassId);
-  return inactiveSurveys;
+export const GetActiveInactiveSurveysAction = async (
+  attributeClassId: string
+): Promise<{ activeSurveys: string[]; inactiveSurveys: string[] }> => {
+  const surveys = await getSurveysByAttributeClassId(attributeClassId);
+  const response = {
+    activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
+    inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
+  };
+  return response;
 };

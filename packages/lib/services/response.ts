@@ -31,6 +31,7 @@ const responseSelection = {
       id: true,
       createdAt: true,
       updatedAt: true,
+      environmentId: true,
       attributes: {
         select: {
           value: true,
@@ -223,6 +224,7 @@ export const getSurveyResponses = cache(async (surveyId: string): Promise<TRespo
 });
 
 export const preloadEnvironmentResponses = (environmentId: string) => {
+  validateInputs([environmentId, ZId]);
   void getEnvironmentResponses(environmentId);
 };
 
@@ -304,16 +306,22 @@ export const updateResponse = async (
   }
 };
 
-export const deleteResponse = async (responseId: string): Promise<boolean> => {
+export const deleteResponse = async (responseId: string): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
-    await prisma.response.delete({
+    const responsePrisma = await prisma.response.delete({
       where: {
         id: responseId,
       },
+      select: responseSelection,
     });
 
-    return true;
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+    return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

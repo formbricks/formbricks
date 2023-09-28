@@ -40,6 +40,7 @@ export default function SurveyStatusDropdown({
         </div>
       ) : (
         <Select
+          value={survey.status}
           disabled={isStatusChangeDisabled}
           onValueChange={(value) => {
             const castedValue = value as "draft" | "inProgress" | "paused" | "completed";

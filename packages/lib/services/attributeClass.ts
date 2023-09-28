@@ -3,9 +3,9 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import {
   TAttributeClass,
-  TAttributeClassType,
   TAttributeClassUpdateInput,
   ZAttributeClassUpdateInput,
+  TAttributeClassType,
 } from "@formbricks/types/v1/attributeClasses";
 import { ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
@@ -134,49 +134,17 @@ export const createAttributeClass = async (
   return transformPrismaAttributeClass(attributeClass);
 };
 
-export const getActiveSurveysForAttributeClass = cache(
-  async (attributeClassId: string): Promise<string[]> => {
-    const activeSurveysData = await prisma.surveyAttributeFilter.findMany({
+export const deleteAttributeClass = async (attributeClassId: string): Promise<TAttributeClass> => {
+  validateInputs([attributeClassId, ZId]);
+  try {
+    const deletedAttributeClass = await prisma.attributeClass.delete({
       where: {
-        attributeClassId,
-        survey: {
-          status: "inProgress",
-        },
-      },
-      select: {
-        survey: {
-          select: {
-            name: true,
-          },
-        },
+        id: attributeClassId,
       },
     });
 
-    const activeSurveys = activeSurveysData.map((t) => t.survey.name);
-    return activeSurveys;
+    return deletedAttributeClass;
+  } catch (error) {
+    throw new DatabaseError(`Database error when deleting webhook with ID ${attributeClassId}`);
   }
-);
-
-export const getInactiveSurveysForAttributeClass = cache(
-  async (attributeClassId: string): Promise<string[]> => {
-    const inactiveSurveysData = await prisma.surveyAttributeFilter.findMany({
-      where: {
-        attributeClassId,
-        survey: {
-          status: {
-            in: ["paused", "completed"],
-          },
-        },
-      },
-      select: {
-        survey: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-    const inactiveSurveys = inactiveSurveysData.map((t) => t.survey.name);
-    return inactiveSurveys;
-  }
-);
+};

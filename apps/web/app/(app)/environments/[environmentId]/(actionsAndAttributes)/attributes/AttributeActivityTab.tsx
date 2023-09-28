@@ -1,14 +1,13 @@
-import {
-  getActiveSurveysForAttributeClassAction,
-  getInactiveSurveysForAttributeClassAction,
-} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
+"use client";
+
+import { GetActiveInactiveSurveysAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { ErrorComponent, Label } from "@formbricks/ui";
 import { TagIcon } from "@heroicons/react/24/solid";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface EventActivityTabProps {
   attributeClass: TAttributeClass;
@@ -23,20 +22,19 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
   useEffect(() => {
     setLoading(true);
 
-    Promise.all([
-      getActiveSurveysForAttributeClassAction(attributeClass.id),
-      getInactiveSurveysForAttributeClassAction(attributeClass.id),
-    ])
-      .then(([activeData, inactiveData]) => {
-        setActiveSurveys(activeData);
-        setInactiveSurveys(inactiveData);
-      })
-      .catch((err) => {
-        setError(err);
-      })
-      .finally(() => {
+    getSurveys();
+
+    async function getSurveys() {
+      try {
+        setLoading(true);
+        const activeInactive = await GetActiveInactiveSurveysAction(attributeClass.id);
+        setActiveSurveys(activeInactive.activeSurveys);
+        setInactiveSurveys(activeInactive.inactiveSurveys);
         setLoading(false);
-      });
+      } catch (err) {
+        setError(err);
+      }
+    }
   }, [attributeClass.id]);
 
   if (loading) return <LoadingSpinner />;

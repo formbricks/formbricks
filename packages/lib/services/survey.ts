@@ -1,15 +1,20 @@
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import { TSurvey, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyAttributeFilter,
+  TSurveyWithAnalytics,
+  ZSurvey,
+  ZSurveyWithAnalytics,
+} from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
-import { TSurveyAttributeFilter } from "@formbricks/types/v1/surveys";
+import { revalidateTag } from "next/cache";
 import { cache } from "react";
 import "server-only";
-import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
 
 const getSurveysCacheTag = (environmentId: string): string => `env-${environmentId}-surveys`;
 
@@ -123,7 +128,6 @@ export const getSurveyWithAnalytics = cache(
       const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
       return survey;
     } catch (error) {
-      console.log(error);
       if (error instanceof z.ZodError) {
         console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
       }
@@ -208,6 +212,38 @@ export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]
   }
 });
 
+export const getSurveysByAttributeClassId = cache(async (attributeClassId: string): Promise<TSurvey[]> => {
+  const surveysPrisma = await prisma.survey.findMany({
+    where: {
+      attributeFilters: {
+        some: {
+          attributeClassId,
+        },
+      },
+    },
+    select: selectSurvey,
+  });
+
+  const surveys: TSurvey[] = [];
+
+  try {
+    for (const surveyPrisma of surveysPrisma) {
+      const transformedSurvey = {
+        ...surveyPrisma,
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+      };
+      const survey = ZSurvey.parse(transformedSurvey);
+      surveys.push(survey);
+    }
+    return surveys;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+    }
+    throw new ValidationError("Data validation of survey failed");
+  }
+});
+
 export const getSurveysWithAnalytics = cache(
   async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
     validateInputs([environmentId, ZId]);
@@ -256,10 +292,10 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSurvey> {
   const surveyId = updatedSurvey.id;
   let data: any = {};
-  let survey: Partial<any> = { ...updatedSurvey };
+  let survey: any = { ...updatedSurvey };
 
   if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
     const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {
@@ -423,14 +459,15 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: updatedSurvey.triggers, // Include triggers from updatedSurvey
-      attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
+      triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
+      attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
     };
 
     revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
 
     return modifiedSurvey;
   } catch (error) {
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
