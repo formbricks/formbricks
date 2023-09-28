@@ -25,3 +25,5 @@ export const SURVEY_BASE_URL = process.env.NEXT_PUBLIC_SURVEY_BASE_URL
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = process.env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
+
+export const PEOPLE_PER_PAGE = 50;
