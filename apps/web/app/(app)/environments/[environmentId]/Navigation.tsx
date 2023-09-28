@@ -30,8 +30,6 @@ import {
   DashboardIcon,
   FilterIcon,
   FormIcon,
-  Input,
-  Button,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -63,7 +61,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
 
 interface NavigationProps {
@@ -219,32 +217,6 @@ export default function Navigation({
 
   if (pathname?.includes("/edit")) return null;
 
-  const handleFileUpload = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const file = e.currentTarget.file.files?.[0];
-
-    const bytes = await file?.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const accessType = "private";
-
-    await fetch("/api/storage", {
-      method: "POST",
-      body: JSON.stringify({
-        fileName: file?.name,
-        fileType: file?.type,
-        fileBuffer: buffer,
-        environmentId: environment.id,
-        accessType,
-        allowedFileExtensions: ["pdf"],
-      }),
-    });
-
-    const fileKey = `${environment.id}/${accessType}/${file?.name}`;
-    await fetch(`/api/storage?fileName=${fileKey}`);
-  };
-
   return (
     <>
       {product && (
@@ -254,16 +226,6 @@ export default function Navigation({
               You&apos;re in development mode. Use it to test surveys, actions and attributes.
             </div>
           )}
-
-          <div className="my-16">
-            <form onSubmit={handleFileUpload}>
-              <Input type="file" name="file"></Input>
-
-              <Button variant="darkCTA" type="submit">
-                Upload
-              </Button>
-            </form>
-          </div>
 
           <div className="w-full px-4 sm:px-6">
             <div className="flex h-14 justify-between">
