@@ -25,7 +25,7 @@ The Google Sheets integration allows you to automatically send responses to a Go
   self-hosted version of Formbricks.
 </Note>
 
-## Start using straightaway Formbricks Cloud
+## Formbricks Cloud
 
 1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) and click on the "Connect" button under Google Sheets integration.
 
@@ -45,7 +45,7 @@ The Google Sheets integration allows you to automatically send responses to a Go
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-3. You will now be taken to the Google OAuth page where you can select the Google account you want to use for the integration. Note that you need to have access to Google Sheets you want to use for the integration with the selected account.
+3. You will now be taken to the Google OAuth page where you can select the Google account you want to use for the integration.
 
 4. Once you have selected the account and completed the authentication process, you will be taken back to Formbricks Cloud and see the connected status as below:
 
@@ -71,7 +71,7 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-7. Select the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to be feeded in the Google Sheet. Select the questions and click on the "Link Sheet" button.
+7. Select the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in the Google Sheet. Select the questions and click on the "Link Sheet" button.
 
 <Image
   src={LinkWithQuestions}
@@ -130,7 +130,7 @@ We will first create a Google Cloud Project and then enable the Google Sheets AP
 - `GOOGLE_SHEETS_CLIENT_SECRET`
 - `GOOGLE_SHEETS_REDIRECT_URL`
 
-Voila! You have successfully enabled the Google Sheets integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Start using straightaway Formbricks Cloud](#start-using-straightaway-formbricks-cloud) section to link a Google Sheet with Formbricks.
+Voila! You have successfully enabled the Google Sheets integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Formbricks Cloud](#formbricks-cloud) section to link a Google Sheet with Formbricks.
 
 ## Remove Integration with Google Account
 
@@ -158,7 +158,7 @@ For the above, we ask for:
 
 1. **User Email**: To identify you (that's it, nothing else, we're opensource, see this in our codebase [here](https://github.com/formbricks/formbricks/blob/main/apps/web/app/api/google-sheet/callback/route.ts#L47C17-L47C25))
 1. **Google Drive API**: To list all your google sheets (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/services/googleSheet.ts#L13))
-2. **Google Spreadsheet API**: To write to the spreadsheet you select (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/services/googleSheet.ts#L70))
+1. **Google Spreadsheet API**: To write to the spreadsheet you select (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/services/googleSheet.ts#L70))
 
 <Note>
   We do not store any other information of yours! We value Privacy more than you and rest assured you're safe
