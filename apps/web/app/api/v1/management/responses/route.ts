@@ -16,3 +16,5 @@ export async function GET(request: Request) {
     throw error;
   }
 }
+
+// Please use the client API to create a new response

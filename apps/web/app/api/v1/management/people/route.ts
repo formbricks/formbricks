@@ -1,9 +1,8 @@
-import { responses } from "@/lib/api/response";
-import { DatabaseError } from "@formbricks/types/v1/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { getPeople, createPerson } from "@formbricks/lib/services/person";
+import { responses } from "@/lib/api/response";
+import { getPeople } from "@formbricks/lib/services/person";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TPerson } from "@formbricks/types/v1/people";
-import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
@@ -19,7 +18,9 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+// Please use the client API to create a new person
+
+/* export async function POST(request: Request): Promise<NextResponse> {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -31,4 +32,4 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     throw error;
   }
-}
+} */

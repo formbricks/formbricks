@@ -82,6 +82,9 @@ export async function DELETE(
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);
     }
+    if (actionClass.type === "automatic") {
+      return responses.badRequestResponse("Automatic action classes cannot be deleted");
+    }
     const deletedActionClass = await deleteActionClass(authentication.environmentId, params.actionClassId);
     return responses.successResponse(deletedActionClass);
   } catch (error) {

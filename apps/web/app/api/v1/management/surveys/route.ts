@@ -35,7 +35,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const survey = await createSurvey(authentication.environmentId!, inputValidation.data);
+    const environmentId = authentication.environmentId;
+    const surveyData = { ...inputValidation.data, environmentId: undefined };
+
+    const survey = await createSurvey(environmentId, surveyData);
     return responses.successResponse(survey);
   } catch (error) {
     if (error instanceof DatabaseError) {

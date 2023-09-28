@@ -37,6 +37,11 @@ const nextConfig = {
         destination: "/api/v1/management/surveys",
         permanent: true,
       },
+      {
+        source: "/api/v1/me",
+        destination: "/api/v1/management/me",
+        permanent: true,
+      },
     ];
   },
   async headers() {

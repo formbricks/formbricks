@@ -1,11 +1,9 @@
+import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/lib/api/response";
-import { getPerson, deletePerson, updatePerson } from "@formbricks/lib/services/person";
-import { NextResponse } from "next/server";
-import { handleErrorResponse } from "@/app/api/v1/auth";
-import { TPerson, ZPersonUpdateInput } from "@formbricks/types/v1/people";
-import { authenticateRequest } from "@/app/api/v1/auth";
+import { deletePerson, getPerson } from "@formbricks/lib/services/person";
 import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { TPerson } from "@formbricks/types/v1/people";
+import { NextResponse } from "next/server";
 
 async function fetchAndAuthorizePerson(
   authentication: TAuthenticationApiKey,
@@ -38,7 +36,9 @@ export async function GET(
   }
 }
 
-export async function PUT(
+// Please use the methods provided by the client API to update a person
+
+/* export async function PUT(
   request: Request,
   { params }: { params: { personId: string } }
 ): Promise<NextResponse> {
@@ -59,7 +59,7 @@ export async function PUT(
   } catch (error) {
     return handleErrorResponse(error);
   }
-}
+} */
 
 export async function DELETE(request: Request, { params }: { params: { personId: string } }) {
   try {

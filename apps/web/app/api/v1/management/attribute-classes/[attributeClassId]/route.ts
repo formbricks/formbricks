@@ -53,6 +53,9 @@ export async function DELETE(
     if (!attributeClass) {
       return responses.notFoundResponse("Attribute Class", params.attributeClassId);
     }
+    if (attributeClass.type === "automatic") {
+      return responses.badRequestResponse("Automatic Attribute Classes cannot be deleted");
+    }
     const deletedAttributeClass = await deleteAttributeClass(params.attributeClassId);
     return responses.successResponse(deletedAttributeClass);
   } catch (error) {
@@ -71,8 +74,8 @@ export async function PUT(
     if (!attributeClass) {
       return responses.notFoundResponse("Attribute Class", params.attributeClassId);
     }
-    const attributeCLassUpdate = await request.json();
-    const inputValidation = ZAttributeClassUpdateInput.safeParse(attributeCLassUpdate);
+    const attributeClassUpdate = await request.json();
+    const inputValidation = ZAttributeClassUpdateInput.safeParse(attributeClassUpdate);
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",

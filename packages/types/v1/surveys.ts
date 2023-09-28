@@ -233,37 +233,54 @@ export const ZSurveyAttributeFilter = z.object({
 
 export type TSurveyAttributeFilter = z.infer<typeof ZSurveyAttributeFilter>;
 
+const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
+
+const ZSurveyType = z.enum(["web", "email", "link", "mobile"]);
+
+const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
+
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  type: z.enum(["web", "email", "link", "mobile"]),
+  type: ZSurveyType,
   environmentId: z.string(),
-  status: z.enum(["draft", "inProgress", "paused", "completed"]),
+  status: ZSurveyStatus,
   attributeFilters: z.array(ZSurveyAttributeFilter),
-  displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
-  autoClose: z.union([z.number(), z.null()]),
+  displayOption: ZSurveyDisplayOption,
+  autoClose: z.number().nullable(),
   triggers: z.array(ZActionClass),
   redirectUrl: z.string().url().nullable(),
-  recontactDays: z.union([z.number(), z.null()]),
+  recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
-  autoComplete: z.union([z.number(), z.null()]),
+  autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
-export const ZSurveyInput = ZSurvey.omit({
-  createdAt: true,
-  updatedAt: true,
-  environmentId: true,
-}).extend({
-  id: z.optional(z.string().cuid2()),
-  attributeFilters: z.optional(z.array(ZSurveyAttributeFilter)),
-  triggers: z.optional(z.array(ZActionClass)),
+export const ZSurveyInput = z.object({
+  name: z.string(),
+  type: ZSurveyType.optional(),
+  environmentId: z.string(),
+  status: ZSurveyStatus.optional(),
+  displayOption: ZSurveyDisplayOption.optional(),
+  autoClose: z.number().optional(),
+  redirectUrl: z.string().url().optional(),
+  recontactDays: z.number().optional(),
+  questions: ZSurveyQuestions.optional(),
+  thankYouCard: ZSurveyThankYouCard.optional(),
+  delay: z.number().optional(),
+  autoComplete: z.number().optional(),
+  closeOnDate: z.date().optional(),
+  surveyClosedMessage: ZSurveyClosedMessage.optional(),
+  verifyEmail: ZSurveyVerifyEmail.optional(),
+  // TODO: Update survey create endpoint to accept attributeFilters and triggers like the survey update endpoint
+  // attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
+  //triggers: z.array(ZActionClass).optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
