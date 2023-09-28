@@ -162,9 +162,16 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { fileName, fileType, accessType = "private", environmentId, fileBuffer } = await req.json();
+  const {
+    fileName,
+    fileType,
+    accessType = "private",
+    environmentId,
+    fileBuffer,
+    allowedFileExtensions,
+  } = await req.json();
 
-  if (!fileName || !fileType || !environmentId) {
+  if (!fileName || !fileType || !fileBuffer || !environmentId) {
     return NextResponse.json(
       {
         success: false,
@@ -174,6 +181,21 @@ export async function POST(req: NextRequest) {
         status: 400,
       }
     );
+  }
+
+  if (allowedFileExtensions?.length) {
+    const fileExtension = fileName.split(".").pop();
+    if (!fileExtension || !allowedFileExtensions.includes(fileExtension)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid file extension",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
   }
 
   // check file size and if it is greater than 10MB, return error

@@ -237,6 +237,7 @@ export default function Navigation({
         fileBuffer: buffer,
         environmentId: environment.id,
         accessType,
+        allowedFileExtensions: ["pdf"],
       }),
     });
 
