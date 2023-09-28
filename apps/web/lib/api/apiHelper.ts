@@ -1,6 +1,6 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { prisma } from "@formbricks/database";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
 import { createHash } from "crypto";
 import { NextApiRequest, NextApiResponse } from "next";
 import type { Session } from "next-auth";
@@ -23,7 +23,7 @@ export const hasEnvironmentAccess = async (
     if (!user) {
       return false;
     }
-    const ownership = await hasUserEnvironmentAccess(user, environmentId);
+    const ownership = await hasUserEnvironmentAccessCached(user.id, environmentId);
     if (!ownership) {
       return false;
     }

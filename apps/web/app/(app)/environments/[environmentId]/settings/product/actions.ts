@@ -6,9 +6,9 @@ import { getServerSession } from "next-auth";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/services/membership";
+import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
 
 export const updateProductAction = async (
   environmentId: string,
@@ -34,7 +34,7 @@ export const updateProductAction = async (
     throw err;
   }
 
-  if (!hasUserEnvironmentAccess(session.user, environment.id)) {
+  if (!hasUserEnvironmentAccessCached(session.user.id, environment.id)) {
     throw new AuthenticationError("You don't have access to this environment");
   }
 
@@ -62,7 +62,7 @@ export const deleteProductAction = async (environmentId: string, userId: string,
     throw err;
   }
 
-  if (!hasUserEnvironmentAccess(session.user, environment.id)) {
+  if (!hasUserEnvironmentAccessCached(session.user.id, environment.id)) {
     throw new AuthenticationError("You don't have access to this environment");
   }
 

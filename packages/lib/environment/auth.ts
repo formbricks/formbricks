@@ -1,8 +1,9 @@
+import { cache } from "react";
 import { prisma } from "@formbricks/database";
-import { Session } from "next-auth";
+import { unstable_cache } from "next/cache";
 
-export const hasUserEnvironmentAccess = async (user: Session["user"], environmentId: string) => {
-  if (!user) return false;
+export const hasUserEnvironmentAccess = cache(async (userId: string, environmentId: string) => {
+  if (!userId) return false;
   const environment = await prisma.environment.findUnique({
     where: {
       id: environmentId,
@@ -24,8 +25,19 @@ export const hasUserEnvironmentAccess = async (user: Session["user"], environmen
     },
   });
   const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
-  if (environmentUsers.includes(user.id)) {
+  if (environmentUsers.includes(userId)) {
     return true;
   }
   return false;
-};
+});
+
+export const hasUserEnvironmentAccessCached = async (userId: string, environmentId: string) =>
+  await unstable_cache(
+    async () => {
+      return await hasUserEnvironmentAccess(userId, environmentId);
+    },
+    [`${userId}-${environmentId}`],
+    {
+      revalidate: 5 * 60, // 5 minutes
+    }
+  )();

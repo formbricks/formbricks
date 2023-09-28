@@ -5,14 +5,14 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import FormbricksClient from "../../FormbricksClient";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return redirect(`/auth/login`);
   }
-  const hasAccess = await hasUserEnvironmentAccess(session.user, params.environmentId);
+  const hasAccess = await hasUserEnvironmentAccessCached(session.user.id, params.environmentId);
   if (!hasAccess) {
     throw new Error("User does not have access to this environment");
   }

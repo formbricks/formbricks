@@ -1,4 +1,4 @@
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
 import { env } from "@/env.mjs";
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,11 +15,15 @@ export async function GET(req: NextRequest) {
   const environmentId = req.headers.get("environmentId");
   const session = await getServerSession(authOptions);
 
+  if (!environmentId) {
+    return NextResponse.json({ Error: "environmentId is missing" }, { status: 400 });
+  }
+
   if (!session) {
     return NextResponse.json({ Error: "Invalid session" }, { status: 400 });
   }
 
-  const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user, environmentId);
+  const canUserAccessEnvironment = await hasUserEnvironmentAccessCached(session?.user.id, environmentId);
   if (!canUserAccessEnvironment) {
     return NextResponse.json({ Error: "You dont have access to environment" }, { status: 401 });
   }
