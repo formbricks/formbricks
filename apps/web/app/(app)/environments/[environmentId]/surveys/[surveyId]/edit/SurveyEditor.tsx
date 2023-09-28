@@ -46,8 +46,8 @@ export default function SurveyEditor({
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
-    if (survey?.questions?.length > 0) {
-      setActiveQuestionId(survey.questions[0].id);
+    if (localSurvey && localSurvey.questions?.length > 0) {
+      setActiveQuestionId(localSurvey.questions[0].id);
     }
   }, [localSurvey?.type]);
 

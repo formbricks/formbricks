@@ -160,7 +160,7 @@ export const sendResponseFinishedEmail = async (
           question.answer &&
           `<div style="margin-top:1em;">
           <p style="margin:0px;">${question.question}</p>
-          <p style="font-weight: 500; margin:0px;">${question.answer}</p>  
+          <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
         </div>`
       )
       .join("")} 

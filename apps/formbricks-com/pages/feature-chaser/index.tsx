@@ -7,8 +7,8 @@ import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 export default function FeatureChaserPage() {
   return (
     <Layout
-      title="Feature Chaser"
-      description="Show a survey about a new feature shown only to people who used it.">
+      title="Feature Chaser with Formbricks"
+      description="Show a survey about a new feature shown only to people who used it and gain insightful data.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
           <UseCaseHeader title="Feature Chaser" difficulty="Easy" setupMinutes="10" />
