@@ -31,6 +31,20 @@ export const transformPrismaAttributeClass = (attributeClass: any): TAttributeCl
   return transformedAttributeClass;
 };
 
+export const getAttributeClass = cache(async (attributeClassId: string): Promise<TAttributeClass | null> => {
+  validateInputs([attributeClassId, ZId]);
+  try {
+    const attributeClass = await prisma.attributeClass.findFirst({
+      where: {
+        id: attributeClassId,
+      },
+    });
+    return transformPrismaAttributeClass(attributeClass);
+  } catch (error) {
+    throw new DatabaseError(`Database error when fetching attributeClass with id ${attributeClassId}`);
+  }
+});
+
 export const getAttributeClasses = cache(async (environmentId: string): Promise<TAttributeClass[]> => {
   validateInputs([environmentId, ZId]);
   try {
@@ -119,3 +133,50 @@ export const createAttributeClass = async (
   revalidateTag(attributeClassesCacheTag(environmentId));
   return transformPrismaAttributeClass(attributeClass);
 };
+
+export const getActiveSurveysForAttributeClass = cache(
+  async (attributeClassId: string): Promise<string[]> => {
+    const activeSurveysData = await prisma.surveyAttributeFilter.findMany({
+      where: {
+        attributeClassId,
+        survey: {
+          status: "inProgress",
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    const activeSurveys = activeSurveysData.map((t) => t.survey.name);
+    return activeSurveys;
+  }
+);
+
+export const getInactiveSurveysForAttributeClass = cache(
+  async (attributeClassId: string): Promise<string[]> => {
+    const inactiveSurveysData = await prisma.surveyAttributeFilter.findMany({
+      where: {
+        attributeClassId,
+        survey: {
+          status: {
+            in: ["paused", "completed"],
+          },
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    const inactiveSurveys = inactiveSurveysData.map((t) => t.survey.name);
+    return inactiveSurveys;
+  }
+);
