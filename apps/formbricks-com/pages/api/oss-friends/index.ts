@@ -100,7 +100,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Papermark",
-          description: "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
+          description:
+            "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
           href: "https://www.papermark.io/",
         },
         {
