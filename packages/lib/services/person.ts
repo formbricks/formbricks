@@ -2,11 +2,12 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
+import { PEOPLE_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClassByName } from "./attributeClass";
 
@@ -100,20 +101,24 @@ export const getPersonCached = async (personId: string) =>
     }
   )();
 
-export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
+export const getPeople = cache(async (environmentId: string, page: number = 1): Promise<TPerson[]> => {
   validateInputs([environmentId, ZId]);
   try {
-    const personsPrisma = await prisma.person.findMany({
+    const itemsPerPage = PEOPLE_PER_PAGE;
+    const people = await prisma.person.findMany({
       where: {
         environmentId: environmentId,
       },
       select: selectPerson,
+      take: itemsPerPage,
+      skip: itemsPerPage * (page - 1),
     });
-    if (!personsPrisma) {
-      throw new ResourceNotFoundError("Persons", "All Persons");
+
+    if (!people || people.length === 0) {
+      return [];
     }
 
-    const transformedPeople: TPerson[] = personsPrisma
+    const transformedPeople: TPerson[] = people
       .map(transformPrismaPerson)
       .filter((person: TPerson | null): person is TPerson => person !== null);
 
@@ -121,6 +126,24 @@ export const getPeople = cache(async (environmentId: string): Promise<TPerson[]>
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
+
+export const getPeopleCount = cache(async (environmentId: string): Promise<number> => {
+  validateInputs([environmentId, ZId]);
+  try {
+    const totalCount = await prisma.person.count({
+      where: {
+        environmentId: environmentId,
+      },
+    });
+    return totalCount;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -268,3 +291,37 @@ export const getMonthlyActivePeopleCount = async (environmentId: string): Promis
       revalidate: 60 * 60 * 6, // 6 hours
     }
   )();
+
+export const updatePersonAttribute = async (
+  personId: string,
+  attributeClassId: string,
+  value: string
+): Promise<void> => {
+  await prisma.attribute.upsert({
+    where: {
+      attributeClassId_personId: {
+        attributeClassId,
+        personId,
+      },
+    },
+    update: {
+      value,
+    },
+    create: {
+      attributeClass: {
+        connect: {
+          id: attributeClassId,
+        },
+      },
+      person: {
+        connect: {
+          id: personId,
+        },
+      },
+      value,
+    },
+  });
+
+  // revalidate person
+  revalidateTag(personId);
+};

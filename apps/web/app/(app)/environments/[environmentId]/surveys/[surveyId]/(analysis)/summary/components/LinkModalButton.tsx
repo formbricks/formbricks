@@ -5,8 +5,8 @@ import { Button } from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";
-import EmbedSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/EmbedSurveyModal";
 import { TProduct } from "@formbricks/types/v1/product";
+import EmbedSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EmbedSurveyModal";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;

@@ -57,7 +57,7 @@ ports:
     onOpen: ignore
   - port: 8025
     visibility: public
-    onOpen: ignore
+    onOpen: open-browser
     
 github:
   prebuilds:

@@ -1,5 +1,5 @@
-import LayoutWaitlist from "@/components/shared/LayoutLight";
 import DemoView from "@/components/dummyUI/DemoView";
+import LayoutWaitlist from "@/pages/formtribe/LayoutLight";
 
 export default function DemoPage() {
   return (
