@@ -104,6 +104,53 @@ echo "💡 Created acme.json file with correct permissions."
 echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
 read domain_name
 
+# Prompt for email service setup
+read -p "Do you want to set up the email service? (yes/no) You will need SMTP credentials for the same! " email_service
+if [[ $email_service == "yes" ]]; then
+  echo "Please provide the following email service details: "
+
+  echo -n "Enter your SMTP configured Email ID: "
+  read mail_from
+
+  echo -n "Enter your SMTP Host URL: "
+  read smtp_host
+
+  echo -n "Enter your SMTP Host Port: "
+  read smtp_port
+
+  echo -n "Enter your SMTP username: "
+  read smtp_user
+
+  echo -n "Enter your SMTP password: "
+  read smtp_password
+
+  echo -n "Enable Secure SMTP (use SSL)? Enter 1 for yes and 0 for no: "
+  read smtp_secure_enabled
+
+else
+  mail_from=""
+  smtp_host=""
+  smtp_port=""
+  smtp_user=""
+  smtp_password=""
+  smtp_secure_enabled=0
+fi
+
+if [[ -n $mail_from ]]; then
+  email_config=$(
+    cat <<EOT
+MAIL_FROM: "$mail_from"
+    SMTP_HOST: "$smtp_host"
+    SMTP_PORT: "$smtp_port"
+    SMTP_SECURE_ENABLED: $smtp_secure_enabled
+    SMTP_USER: "$smtp_user"
+    SMTP_PASSWORD: "$smtp_password"
+EOT
+  )
+else
+  email_config=""
+fi
+
 cat <<EOT >docker-compose.yml
 version: "3.3"
 x-environment: &environment
@@ -131,6 +178,9 @@ x-environment: &environment
 
     # PostgreSQL password
     POSTGRES_PASSWORD: postgres
+
+    # Email configuration
+    $email_config
 
 services:
   postgres:
@@ -176,10 +226,12 @@ echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
 nextauth_secret=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
 echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
-newgrp docker << END
+newgrp docker <<END
 
 docker compose up -d
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
 echo "🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
+
+END

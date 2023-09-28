@@ -1,11 +1,11 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
+import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getServerSession } from "next-auth";
-import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
-import SummaryPage from "./SummaryPage";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -22,6 +22,7 @@ export default async function Page({ params }) {
         responses={responses}
         survey={survey}
         surveyId={params.surveyId}
+        surveyBaseUrl={SURVEY_BASE_URL}
       />
     </>
   );

@@ -1,7 +1,7 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { DatabaseError, InvalidInputError } from "@formbricks/errors";
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/v1/errors";
 import { createWebhook, getWebhooks } from "@formbricks/lib/services/webhook";
 import { ZWebhookInput } from "@formbricks/types/v1/webhooks";
 import { headers } from "next/headers";

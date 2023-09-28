@@ -1,6 +1,14 @@
 {
   "extends": "@formbricks/tsconfig/nextjs.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../../packages/types/*.d.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "../../packages/types/*.d.ts",
+    "../../packages/lib/jwt.ts"
+  ],
+  "exclude": ["../../.env"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

@@ -1,6 +1,7 @@
 export const RESPONSES_LIMIT_FREE = 100;
 export const IS_FORMBRICKS_CLOUD = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
+export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 5000 : 1000000;
 
 // URLs
 const VERCEL_URL = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "";
@@ -16,7 +17,13 @@ export const WEBAPP_URL =
   RENDER_URL ||
   "http://localhost:3000";
 
+export const SURVEY_BASE_URL = process.env.NEXT_PUBLIC_SURVEY_BASE_URL
+  ? process.env.NEXT_PUBLIC_SURVEY_BASE_URL + "/"
+  : `${WEBAPP_URL}/s/`;
+
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = process.env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
+
+export const PEOPLE_PER_PAGE = 50;

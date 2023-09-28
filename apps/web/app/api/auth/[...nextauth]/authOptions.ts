@@ -1,6 +1,6 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
-import { verifyToken } from "@/lib/jwt";
+import { verifyToken } from "@formbricks/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import type { IdentityProvider } from "@prisma/client";
@@ -44,20 +44,17 @@ export const authOptions: NextAuthOptions = {
           throw Error("Internal server error. Please try again later");
         }
 
-        if (!user) {
-          throw new Error("User not found");
-        }
-        if (!credentials) {
-          throw new Error("No credentials");
+        if (!user || !credentials) {
+          throw new Error("No user matches the provided credentials");
         }
         if (!user.password) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         return {
@@ -86,6 +83,9 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials, _req) {
         let user;
         try {
+          if (!credentials?.token) {
+            throw new Error("Token not found");
+          }
           const { id } = await verifyToken(credentials?.token);
           user = await prisma.user.findUnique({
             where: {
@@ -94,11 +94,11 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (e) {
           console.error(e);
-          throw new Error("Token is not valid or expired");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (!user) {
-          throw new Error("User not found");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (user.emailVerified) {

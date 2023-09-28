@@ -13,9 +13,7 @@
     "@formbricks/demo#go": {
       "cache": false,
       "persistent": true,
-      "dependsOn": [
-        "@formbricks/js#build"
-      ]
+      "dependsOn": ["@formbricks/js#build"]
     },
     "@formbricks/api#build": {
       "outputs": ["dist/**"],
@@ -30,11 +28,15 @@
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "CRON_SECRET",
+        "DEBUG",
         "PRISMA_GENERATE_DATAPROXY",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_SHEETS_CLIENT_ID",
+        "GOOGLE_SHEETS_CLIENT_SECRET",
+        "GOOGLE_SHEETS_REDIRECT_URL",
         "HEROKU_APP_NAME",
         "INSTANCE_ID",
         "INTERNAL_SECRET",
@@ -49,7 +51,6 @@
         "NEXT_PUBLIC_INVITE_DISABLED",
         "NEXT_PUBLIC_SIGNUP_DISABLED",
         "NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID",
-        "NEXT_PUBLIC_STRIPE_PUBLIC_KEY",
         "NEXT_PUBLIC_TERMS_URL",
         "NEXTAUTH_SECRET",
         "NEXTAUTH_URL",
@@ -71,6 +72,7 @@
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_IMPRINT_URL",
         "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_SURVEY_BASE_URL",
         "NEXT_PUBLIC_VERCEL_URL",
         "NODE_ENV",
         "NEXT_PUBLIC_POSTHOG_API_HOST",
