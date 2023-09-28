@@ -1,5 +1,6 @@
 "use client";
 
+import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { deleteSubmission } from "@/lib/responses/responses";
 import { truncate } from "@/lib/utils";
@@ -16,7 +17,6 @@ import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import ResponseNote from "./ResponseNote";
 import ResponseTagsWrapper from "./ResponseTagsWrapper";
-import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 
 export interface OpenTextSummaryProps {
   environmentId: string;
@@ -47,7 +47,7 @@ function TooltipRenderer(props: TooltipRendererProps) {
   const { children, shouldRender, tooltipContent } = props;
   if (shouldRender) {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={50}>
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
           <TooltipContent>{tooltipContent}</TooltipContent>
