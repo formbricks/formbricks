@@ -16,7 +16,6 @@ import {
 } from "@formbricks/ui";
 import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
@@ -24,6 +23,7 @@ import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surv
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
+import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -34,7 +34,6 @@ interface SummaryHeaderProps {
 }
 const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }: SummaryHeaderProps) => {
   const router = useRouter();
-  const { triggerSurveyMutate } = useSurveyMutation(environment.id, surveyId);
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
@@ -49,7 +48,7 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} />}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
-          <SurveyStatusDropdown environment={environment} surveyId={surveyId} />
+          <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
         <Button
           variant="darkCTA"
@@ -97,7 +96,8 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
                       <DropdownMenuRadioGroup
                         value={survey.status}
                         onValueChange={(value) => {
-                          triggerSurveyMutate({ status: value })
+                          const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
+                          surveyMutateAction({ ...survey, status: castedValue })
                             .then(() => {
                               toast.success(
                                 value === "inProgress"

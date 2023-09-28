@@ -2,6 +2,7 @@ import { cn } from "@formbricks/lib/cn";
 import SurveyNavBarName from "@/components/shared/SurveyNavBarName";
 import Link from "next/link";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getSurvey } from "@formbricks/lib/services/survey";
 
 interface SecondNavbarProps {
   tabs: { id: string; label: string; href: string; icon?: React.ReactNode }[];
@@ -22,12 +23,17 @@ export default async function SecondNavbar({
     throw new Error("Product not found");
   }
 
+  let survey;
+  if (surveyId) {
+    survey = await getSurvey(surveyId);
+  }
+
   return (
     <div {...props}>
       <div className="grid h-14 w-full grid-cols-3 items-center justify-items-stretch border-b bg-white px-4">
         <div className="justify-self-start">
-          {surveyId && environmentId && (
-            <SurveyNavBarName surveyId={surveyId} environmentId={environmentId} product={product} />
+          {survey && environmentId && (
+            <SurveyNavBarName surveyName={survey.name} productName={product.name} />
           )}
         </div>{" "}
         <nav className="flex h-full items-center space-x-4 justify-self-center" aria-label="Tabs">
