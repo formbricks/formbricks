@@ -1,4 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui";
+import FaqJsonLdComponent from "./faQJsonLD";
 
 const FAQ_DATA = [
   {
@@ -46,15 +47,23 @@ const FAQ_DATA = [
   },
 ];
 
+export const faqJsonLdData = FAQ_DATA.map((faq) => ({
+  questionName: faq.question,
+  acceptedAnswerText: faq.answer(),
+}));
+
 export default function FaQ() {
   return (
-    <Accordion type="single" collapsible>
-      {FAQ_DATA.map((faq, index) => (
-        <AccordionItem key={`item-${index}`} value={`item-${index + 1}`} className="not-prose mb-0 mt-0">
-          <AccordionTrigger>{faq.question}</AccordionTrigger>
-          <AccordionContent>{faq.answer()}</AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <>
+      <FaqJsonLdComponent data={faqJsonLdData} />
+      <Accordion type="single" collapsible>
+        {FAQ_DATA.map((faq, index) => (
+          <AccordionItem key={`item-${index}`} value={`item-${index + 1}`} className="not-prose mb-0 mt-0">
+            <AccordionTrigger>{faq.question}</AccordionTrigger>
+            <AccordionContent>{faq.answer()}</AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </>
   );
 }

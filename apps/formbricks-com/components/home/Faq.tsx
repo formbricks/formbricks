@@ -1,3 +1,5 @@
+import { FAQPageJsonLd } from "next-seo";
+
 import HeadingCentered from "@/components/shared/HeadingCentered";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui";
 
@@ -62,9 +64,15 @@ const FAQ_DATA = [
   },
 ];
 
+const faqJsonLdData = FAQ_DATA.map((faq) => ({
+  questionName: faq.question,
+  acceptedAnswerText: faq.answer(),
+}));
+
 export default function FaQ() {
   return (
     <div className="max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8" id="faq">
+      <FAQPageJsonLd mainEntity={faqJsonLdData} />
       <HeadingCentered heading="Frequently Asked Questions" teaser="FaQ" closer />
       <Accordion type="single" collapsible className="px-4 sm:px-0">
         {FAQ_DATA.map((faq, index) => (
