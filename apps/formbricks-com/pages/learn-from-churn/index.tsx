@@ -7,7 +7,7 @@ import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 export default function LearnFromChurnPage() {
   return (
     <Layout
-      title="Learn from Churn"
+      title="Learn from Churn with Formbricks"
       description="Churn is hard, but insightful. Learn from users who changed their mind.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
