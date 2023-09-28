@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TPerson, TPersonUpdateInput } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
@@ -15,6 +15,7 @@ export const selectPerson = {
   id: true,
   createdAt: true,
   updatedAt: true,
+  environmentId: true,
   attributes: {
     where: {
       attributeClass: {
@@ -34,6 +35,7 @@ export const selectPerson = {
 
 type TransformPersonInput = {
   id: string;
+  environmentId: string;
   attributes: {
     value: string;
     attributeClass: {
@@ -56,6 +58,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
   return {
     id: person.id,
     attributes: attributes,
+    environmentId: person.environmentId,
     createdAt: person.createdAt,
     updatedAt: person.updatedAt,
   };
@@ -201,6 +204,26 @@ export const deletePerson = async (personId: string): Promise<void> => {
   }
 };
 
+export const updatePerson = async (personId: string, personInput: TPersonUpdateInput): Promise<TPerson> => {
+  try {
+    const personPrisma = await prisma.person.update({
+      where: {
+        id: personId,
+      },
+      data: personInput,
+      select: selectPerson,
+    });
+
+    const person = transformPrismaPerson(personPrisma);
+    return person;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
 export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> => {
   // Check if a person with the userId attribute exists
   const personPrisma = await prisma.person.findFirst({
