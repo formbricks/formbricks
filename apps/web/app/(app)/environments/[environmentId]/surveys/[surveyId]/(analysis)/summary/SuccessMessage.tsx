@@ -6,15 +6,22 @@ import { Confetti } from "@formbricks/ui";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import LinkSurveyModal from "./LinkSurveyModal";
+import EmbedSurveyModal from "./EmbedSurveyModal";
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface SummaryMetadataProps {
   environmentId: string;
   survey: TSurvey;
   surveyBaseUrl: string;
+  product: TProduct;
 }
 
-export default function SuccessMessage({ environmentId, survey, surveyBaseUrl }: SummaryMetadataProps) {
+export default function SuccessMessage({
+  environmentId,
+  survey,
+  surveyBaseUrl,
+  product,
+}: SummaryMetadataProps) {
   const { environment } = useEnvironment(environmentId);
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -48,11 +55,12 @@ export default function SuccessMessage({ environmentId, survey, surveyBaseUrl }:
   return (
     <>
       {showLinkModal && (
-        <LinkSurveyModal
+        <EmbedSurveyModal
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
           surveyBaseUrl={surveyBaseUrl}
+          product={product}
         />
       )}
       {confetti && <Confetti />}

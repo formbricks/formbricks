@@ -1,23 +1,25 @@
 "use client";
 
-import LinkSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkSurveyModal";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";
 import EmbedSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/EmbedSurveyModal";
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   surveyBaseUrl: string;
+  product: TProduct;
 }
 
 export default function LinkSurveyShareButton({
   survey,
   className,
   surveyBaseUrl,
+  product,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
 
@@ -37,17 +39,10 @@ export default function LinkSurveyShareButton({
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
+          product={product}
           surveyBaseUrl={surveyBaseUrl}
         />
       )}
-      {/* {showLinkModal && (
-        <LinkSurveyModal
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          surveyBaseUrl={surveyBaseUrl}
-        />
-      )} */}
     </>
   );
 }

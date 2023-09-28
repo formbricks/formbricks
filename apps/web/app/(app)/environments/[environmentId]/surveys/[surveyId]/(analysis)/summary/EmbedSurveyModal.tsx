@@ -25,12 +25,17 @@ import {
 } from "@heroicons/react/24/outline";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
+import { SurveyInline } from "@/components/shared/Survey";
+import { TProduct } from "@formbricks/types/v1/product";
+import { useProfile } from "@/lib/profile";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface EmbedSurveyModalProps {
   survey: TSurvey;
   open: boolean;
   setOpen: (open: boolean) => void;
   surveyBaseUrl: string;
+  product: TProduct;
 }
 
 const tabs = [
@@ -39,14 +44,22 @@ const tabs = [
   { id: "webpage", label: "Embed in a Web Page", icon: CodeBracketIcon },
 ];
 
-export default function EmbedSurveyModal({ survey, open, setOpen, surveyBaseUrl }: EmbedSurveyModalProps) {
+export default function EmbedSurveyModal({
+  survey,
+  open,
+  setOpen,
+  surveyBaseUrl,
+  product,
+}: EmbedSurveyModalProps) {
   const [activeId, setActiveId] = useState(tabs[0].id);
 
   const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
 
+  const { profile } = useProfile();
+
   const componentMap = {
-    link: <LinkTab surveyUrl={surveyUrl} />,
-    email: <EmailTab survey={survey} surveyUrl={surveyUrl} />,
+    link: <LinkTab surveyUrl={surveyUrl} survey={survey} product={product} />,
+    email: <EmailTab survey={survey} surveyUrl={surveyUrl} profile={profile} />,
     webpage: <WebpageTab surveyUrl={surveyUrl} />,
   };
 
@@ -84,7 +97,16 @@ export default function EmbedSurveyModal({ survey, open, setOpen, surveyBaseUrl 
   );
 }
 
-const LinkTab = ({ surveyUrl }) => {
+// 1st tab
+const LinkTab = ({
+  surveyUrl,
+  survey,
+  product,
+}: {
+  surveyUrl: string;
+  survey: TSurvey;
+  product: TProduct;
+}) => {
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
@@ -121,11 +143,20 @@ const LinkTab = ({ surveyUrl }) => {
           Copy URL
         </Button>
       </div>
-      <div className="relative grow rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
+      <div className="relative grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
+        <SurveyInline
+          brandColor={product.brandColor}
+          survey={survey}
+          formbricksSignature={false}
+          autoFocus={false}
+          isRedirectDisabled={false}
+          key={survey.id}
+        />
+
         <Button
           variant="minimal"
           className={cn(
-            "absolute bottom-6 left-1/2 -translate-x-1/2 transform rounded-lg border border-slate-200"
+            "absolute bottom-6 left-1/2 -translate-x-1/2 transform rounded-lg border border-slate-200 bg-white"
           )}
           EndIcon={ArrowUpRightIcon}
           title="Open survey in new tab"
@@ -140,8 +171,17 @@ const LinkTab = ({ surveyUrl }) => {
   );
 };
 
-const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string }) => {
-  const [email, setEmail] = useState("");
+// 2nd tab
+const EmailTab = ({
+  survey,
+  surveyUrl,
+  profile,
+}: {
+  survey: TSurvey;
+  surveyUrl: string;
+  profile: TProfile;
+}) => {
+  const [email, setEmail] = useState(profile.email);
   const [showEmbed, setShowEmbed] = useState(false);
 
   console.log(survey);
@@ -162,12 +202,20 @@ const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string })
 
   const confirmEmail = render(Email, { pretty: true });
 
-  // remove <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> from the top of the email template string because it's not needed for embedding in an email client
   const confirmEmailWithoutDoctype = confirmEmail.replace(
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
     ""
   );
 
+  const sendPreviewEmail = async () => {
+    // const res = await sendEmail({
+    //   to: email,
+    //   subject: "Formbricks Email Survey Preview",
+    //   html: confirmEmail,
+    // });
+    // const res = await sendPreviewMail(email, confirmEmail);
+    // console.log(res);
+  };
   return (
     <div className="flex grow flex-col gap-5">
       <div className="flex items-center gap-4">
@@ -176,7 +224,7 @@ const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string })
           placeholder="user@mail.com"
           className="h-11 grow bg-white"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          // onChange={(e) => setEmail(e.target.value)}
         />
         {showEmbed ? (
           <Button
@@ -194,9 +242,9 @@ const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string })
         ) : (
           <Button
             variant="secondary"
-            title="view embed code for email"
-            aria-label="view embed code for email"
-            onClick={() => {}}
+            title="send preview email"
+            aria-label="send preview email"
+            onClick={sendPreviewEmail}
             EndIcon={EnvelopeIcon}
             className="shrink-0">
             Send Preview
@@ -245,6 +293,7 @@ const EmailTab = ({ survey, surveyUrl }: { survey: TSurvey; surveyUrl: string })
   );
 };
 
+// 3rd tab
 const WebpageTab = ({ surveyUrl }) => {
   const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; overflow:auto;"> 
   <iframe 
@@ -283,7 +332,6 @@ const WebpageTab = ({ surveyUrl }) => {
 
 const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
   const firstQuestion = survey.questions[0];
-  console.log(firstQuestion);
   switch (firstQuestion.type) {
     case QuestionType.OpenText:
       return (

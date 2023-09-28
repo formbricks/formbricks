@@ -57,7 +57,9 @@ const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: Summa
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} />}
+        {survey.type === "link" && (
+          <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} product={product} />
+        )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environmentId={environmentId} surveyId={surveyId} />
         ) : null}
@@ -83,6 +85,7 @@ const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: Summa
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
+                  product={product}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -159,7 +162,12 @@ const SummaryHeader = ({ surveyId, environmentId, survey, surveyBaseUrl }: Summa
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage environmentId={environmentId} survey={survey} surveyBaseUrl={surveyBaseUrl} />
+      <SuccessMessage
+        environmentId={environmentId}
+        survey={survey}
+        surveyBaseUrl={surveyBaseUrl}
+        product={product}
+      />
     </div>
   );
 };
