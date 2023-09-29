@@ -67,16 +67,6 @@ export {
   SelectTrigger,
   SelectValue,
 } from "./components/Select";
-export {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-  SheetFooter,
-} from "./components/Sheet";
 export { Switch } from "./components/Switch";
 export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/Tooltip";

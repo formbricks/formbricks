@@ -112,14 +112,12 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
       </div>
       <div className="grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
         {showEmbed ? (
-          <>
-            <CodeBlock
-              customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
-              language="html"
-              showCopyToClipboard={false}>
-              {confirmEmailWithoutDoctype}
-            </CodeBlock>
-          </>
+          <CodeBlock
+            customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
+            language="html"
+            showCopyToClipboard={false}>
+            {confirmEmailWithoutDoctype}
+          </CodeBlock>
         ) : (
           <div className="">
             <div className="mb-6 flex gap-2">
