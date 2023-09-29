@@ -6,8 +6,7 @@ import { ShareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";
 import { TProduct } from "@formbricks/types/v1/product";
-import EmbedSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EmbedSurveyModal";
-import ShareEmbedSurvey from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
+import ShareEmbedSurvey from "./ShareEmbedSurvey";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
@@ -35,15 +34,7 @@ export default function LinkSurveyShareButton({
         onClick={() => setShowLinkModal(true)}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {/* {showLinkModal && (
-        <EmbedSurveyModal
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          product={product}
-          surveyBaseUrl={surveyBaseUrl}
-        />
-      )} */}
+
       {showLinkModal && (
         <ShareEmbedSurvey
           survey={survey}
