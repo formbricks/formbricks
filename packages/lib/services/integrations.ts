@@ -30,7 +30,7 @@ export async function createOrUpdateIntegration(
     return integration;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.log(error);
+      console.error(error);
       throw new DatabaseError("Database operation failed");
     }
     throw error;
