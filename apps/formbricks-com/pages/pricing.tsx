@@ -8,7 +8,11 @@ import { OpenSourceInfo } from "@/components/shared/OpenSourceInfo";
 const inProductSurveys = {
   leadRow: {
     title: "In-Product Surveys",
-    free: "5000 tracked users",
+    free: (
+      <div>
+        <span>5000 tracked users</span> <span className="text-slate-400">/mo</span>{" "}
+      </div>
+    ),
     paid: "Unlimited",
   },
   features: [
@@ -40,8 +44,8 @@ const inProductSurveys = {
     free: "Free",
     paid: (
       <div>
-        <span>Free</span> <span className="text-slate-400">upto 5000 tracked users, then </span>
-        <span>$0.00031</span>
+        <span>Free</span> <span className="text-slate-400">up to 5000 tracked users/mo, then </span>
+        <span>$0.005</span>
         <span className="text-slate-400"> / tracked user</span>
       </div>
     ),
@@ -51,7 +55,7 @@ const inProductSurveys = {
 const linkSurveys = {
   leadRow: {
     title: "Link Surveys",
-    free: "Unlimited",
+    free: <span>Unlimited</span>,
     paid: "Unlimited",
   },
 
@@ -79,7 +83,7 @@ const linkSurveys = {
 const integrations = {
   leadRow: {
     title: "Integrations",
-    free: "Unlimited",
+    free: <span>Unlimited</span>,
     paid: "Unlimited",
   },
   features: [
@@ -107,7 +111,7 @@ const PricingPage = () => {
         subheading="Choose what's best for you! All our plans start free."
       />
 
-      <GetStartedWithPricing />
+      <GetStartedWithPricing showDetailed={true} />
 
       <PricingTable
         leadRow={inProductSurveys.leadRow}
@@ -129,7 +133,10 @@ const PricingPage = () => {
         endRow={integrations.endRow}
       />
 
-      <div className="my-8 md:my-20"></div>
+      <div className="my-4"></div>
+
+      <GetStartedWithPricing showDetailed={false} />
+
       <PricingCalculator />
 
       <OpenSourceInfo />

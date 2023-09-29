@@ -4,7 +4,7 @@ export const OpenSourceInfo = () => {
   return (
     <div className="my-8 md:my-20">
       <div className="px-4 md:px-16">
-        <div className=" rounded-xl bg-slate-100 px-4 py-4 md:px-12">
+        <div className=" rounded-xl bg-slate-100 px-4 py-4 dark:bg-slate-800 md:px-12">
           <h2 className="text-lg font-semibold leading-7 tracking-tight text-slate-800 dark:text-slate-200 md:text-2xl">
             Open Source
           </h2>
@@ -16,13 +16,13 @@ export const OpenSourceInfo = () => {
           </p>
           <div className="flex items-center justify-center">
             <Button
-              className="mr-4 mt-4 w-[40%] justify-center px-4 text-xs shadow-sm md:text-lg"
+              className="mr-4 mt-4 justify-center px-8 text-xs shadow-sm md:text-lg"
               variant="highlight"
               onClick={() => window.open("https://github.com/formbricks/formbricks", "_blank")}>
               Star us on GitHub
             </Button>
             <Button
-              className="ml-4 mt-4 w-[40%] justify-center px-4 text-xs shadow-sm md:text-lg"
+              className="ml-4 mt-4 justify-center px-8 text-xs shadow-sm md:text-lg"
               onClick={() => window.open("/docs/self-hosting/deployment", "_blank")}
               variant="secondary">
               Read our Docs on Self Hosting
