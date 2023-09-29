@@ -27,7 +27,6 @@ import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
 import { SurveyInline } from "@/components/shared/Survey";
 import { TProduct } from "@formbricks/types/v1/product";
-import { useProfile } from "@/lib/profile";
 import { TProfile } from "@formbricks/types/v1/profile";
 
 interface EmbedSurveyModalProps {
@@ -36,6 +35,7 @@ interface EmbedSurveyModalProps {
   setOpen: (open: boolean) => void;
   surveyBaseUrl: string;
   product: TProduct;
+  profile: TProfile;
 }
 
 const tabs = [
@@ -50,12 +50,11 @@ export default function EmbedSurveyModal({
   setOpen,
   surveyBaseUrl,
   product,
+  profile,
 }: EmbedSurveyModalProps) {
   const [activeId, setActiveId] = useState(tabs[0].id);
 
   const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
-
-  const { profile } = useProfile();
 
   const componentMap = {
     link: <LinkTab surveyUrl={surveyUrl} survey={survey} product={product} />,
@@ -98,7 +97,7 @@ export default function EmbedSurveyModal({
 }
 
 // 1st tab
-const LinkTab = ({
+export const LinkTab = ({
   surveyUrl,
   survey,
   product,
@@ -123,11 +122,11 @@ const LinkTab = ({
   };
 
   return (
-    <div className="flex grow flex-col gap-5">
+    <div className="flex h-full grow flex-col gap-5">
       <div className="flex justify-between gap-2">
         <div
           ref={linkTextRef}
-          className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-slate-800"
+          className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
           onClick={() => handleTextSelection()}>
           <span style={{ wordBreak: "break-all" }}>{surveyUrl}</span>
         </div>
@@ -172,15 +171,7 @@ const LinkTab = ({
 };
 
 // 2nd tab
-const EmailTab = ({
-  survey,
-  surveyUrl,
-  profile,
-}: {
-  survey: TSurvey;
-  surveyUrl: string;
-  profile: TProfile;
-}) => {
+export const EmailTab = ({ survey, surveyUrl, profile }: { survey: TSurvey; surveyUrl: string; profile }) => {
   const [email, setEmail] = useState(profile.email);
   const [showEmbed, setShowEmbed] = useState(false);
 
@@ -217,14 +208,16 @@ const EmailTab = ({
     // console.log(res);
   };
   return (
-    <div className="flex grow flex-col gap-5">
+    <div className="flex h-full grow flex-col gap-5">
       <div className="flex items-center gap-4">
         <Input
           type="email"
           placeholder="user@mail.com"
           className="h-11 grow bg-white"
           value={email}
-          // onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            // setEmail(e.target.value)
+          }}
         />
         {showEmbed ? (
           <Button
@@ -303,7 +296,7 @@ const WebpageTab = ({ surveyUrl }) => {
   </div>`;
 
   return (
-    <div className="flex grow flex-col gap-5">
+    <div className="flex h-full grow flex-col gap-5">
       <div className="flex justify-between">
         <div className=""></div>
         <Button

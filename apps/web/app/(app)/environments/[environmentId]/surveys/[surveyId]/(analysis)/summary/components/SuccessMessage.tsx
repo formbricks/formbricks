@@ -6,7 +6,7 @@ import { Confetti } from "@formbricks/ui";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import EmbedSurveyModal from "./EmbedSurveyModal";
+import ShareEmbedSurvey from "./ShareEmbedSurvey";
 import { TProduct } from "@formbricks/types/v1/product";
 
 interface SummaryMetadataProps {
@@ -55,7 +55,7 @@ export default function SuccessMessage({
   return (
     <>
       {showLinkModal && (
-        <EmbedSurveyModal
+        <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
