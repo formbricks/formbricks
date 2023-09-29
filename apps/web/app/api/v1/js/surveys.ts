@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { selectSurvey } from "@formbricks/lib/services/survey";
+import { selectSurvey } from "@formbricks/lib/survey/service";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { unstable_cache } from "next/cache";

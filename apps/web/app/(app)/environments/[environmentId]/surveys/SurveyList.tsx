@@ -4,7 +4,7 @@ import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/Surv
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurveysWithAnalytics } from "@formbricks/lib/services/survey";
+import { getSurveysWithAnalytics } from "@formbricks/lib/survey/service";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui";

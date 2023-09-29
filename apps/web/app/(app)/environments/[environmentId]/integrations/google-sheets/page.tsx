@@ -4,7 +4,7 @@ import { env } from "@/env.mjs";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getSpreadSheets } from "@formbricks/lib/services/googleSheet";
 import { getIntegrations } from "@formbricks/lib/services/integrations";
-import { getSurveys } from "@formbricks/lib/services/survey";
+import { getSurveys } from "@formbricks/lib/survey/service";
 import { TGoogleSheetIntegration, TGoogleSpreadsheet } from "@formbricks/types/v1/integrations";
 
 export default async function GoogleSheet({ params }) {

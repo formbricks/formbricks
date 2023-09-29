@@ -3,9 +3,12 @@
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
+import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { getServerSession } from "next-auth";
+import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
 
 export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
   const newTeam = await prisma.team.create({
@@ -301,5 +304,17 @@ export async function copyToOtherEnvironmentAction(
 }
 
 export const deleteSurveyAction = async (surveyId: string) => {
-  await deleteSurvey(surveyId);
+  const session = await getServerSession(authOptions);
+  if (!session) throw new Error("You are not authorized to perform this action.");
+
+  const survey = await getSurvey(surveyId);
+  if (!survey) throw new Error("Survey not found");
+
+  const isAuthorized = await hasUserEnvironmentAccessCached(session.user.id, survey.environmentId);
+
+  if (isAuthorized) {
+    await deleteSurvey(surveyId);
+  } else {
+    throw new Error("You are not authorized to perform this action.");
+  }
 };

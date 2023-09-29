@@ -5,7 +5,7 @@ import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurvey } from "@formbricks/lib/services/survey";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { getEmailVerificationStatus } from "./helpers";
 import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 import { notFound } from "next/navigation";
