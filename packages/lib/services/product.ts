@@ -11,8 +11,10 @@ import { z } from "zod";
 import { validateInputs } from "../utils/validate";
 import { EnvironmentType } from "@prisma/client";
 import { EventType } from "@prisma/client";
+import { getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
 
-const getProductCacheTag = (environmentId: string): string => `env-${environmentId}-product`;
+export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
+const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
 const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
 
 const selectProduct = {
@@ -59,25 +61,33 @@ const populateEnvironment = {
   },
 };
 
-export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
-  validateInputs([teamId, ZId]);
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        teamId,
-      },
-      select: selectProduct,
-    });
+export const getProducts = async (teamId: string): Promise<TProduct[]> =>
+  unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+      try {
+        const products = await prisma.product.findMany({
+          where: {
+            teamId,
+          },
+          select: selectProduct,
+        });
 
-    return products;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+        return products;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`teams-${teamId}-products`],
+    {
+      tags: [getProductsCacheTag(teamId)],
+      revalidate: 30 * 60, // 30 minutes
     }
-
-    throw error;
-  }
-});
+  )();
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct | null> => {
   if (!environmentId) {
@@ -143,6 +153,7 @@ export const updateProduct = async (
   try {
     const product = ZProduct.parse(updatedProduct);
 
+    revalidateTag(getProductsCacheTag(product.teamId));
     product.environments.forEach((environment) => {
       // revalidate environment cache
       revalidateTag(getProductCacheTag(environment.id));
@@ -185,10 +196,12 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   });
 
   if (product) {
+    revalidateTag(getProductsCacheTag(product.teamId));
+    revalidateTag(getEnvironmentsCacheTag(product.id));
     product.environments.forEach((environment) => {
       // revalidate product cache
       revalidateTag(getProductCacheTag(environment.id));
-      revalidateTag(environment.id);
+      revalidateTag(getEnvironmentCacheTag(environment.id));
     });
   }
 

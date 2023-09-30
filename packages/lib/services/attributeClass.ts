@@ -13,7 +13,8 @@ import { DatabaseError } from "@formbricks/types/v1/errors";
 import { cache } from "react";
 import { revalidateTag, unstable_cache } from "next/cache";
 
-const attributeClassesCacheTag = (environmentId: string): string => `env-${environmentId}-attributeClasses`;
+const attributeClassesCacheTag = (environmentId: string): string =>
+  `environments-${environmentId}-attributeClasses`;
 
 const getAttributeClassesCacheKey = (environmentId: string): string[] => [
   attributeClassesCacheTag(environmentId),

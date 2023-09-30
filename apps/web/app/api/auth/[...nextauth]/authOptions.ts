@@ -1,8 +1,9 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
-import { verifyToken } from "@formbricks/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { verifyToken } from "@formbricks/lib/jwt";
+import { getProfileByEmail } from "@formbricks/lib/services/profile";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -133,42 +134,16 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token }) {
-      const existingUser = await prisma.user.findFirst({
-        where: { email: token.email! },
-        select: {
-          id: true,
-          createdAt: true,
-          onboardingCompleted: true,
-          memberships: {
-            select: {
-              teamId: true,
-              role: true,
-              team: {
-                select: {
-                  plan: true,
-                },
-              },
-            },
-          },
-          name: true,
-        },
-      });
+      const existingUser = await getProfileByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
       }
 
-      const teams = existingUser.memberships.map((membership) => ({
-        id: membership.teamId,
-        role: membership.role,
-        plan: membership.team.plan,
-      }));
-
       const additionalAttributs = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
-        teams,
         name: existingUser.name,
       };
 
@@ -185,7 +160,6 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
-      session.user.teams = token?.teams;
       session.user.name = token.name || "";
 
       return session;

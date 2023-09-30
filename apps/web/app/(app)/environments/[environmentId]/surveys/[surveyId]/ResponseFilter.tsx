@@ -2,7 +2,7 @@
 
 import { QuestionType } from "@formbricks/types/questions";
 import QuestionsComboBox, { QuestionOption, OptionsType } from "./QuestionsComboBox";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Popover, PopoverTrigger, PopoverContent, Button, Checkbox } from "@formbricks/ui";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { TrashIcon } from "@heroicons/react/24/solid";
@@ -47,12 +47,20 @@ const ResponseFilter = () => {
     }
   };
 
+  // when filter is opened and added a filter without selecting any option clear out that value
+  const clearItem = useCallback(() => {
+    setSelectedFilter({
+      filter: [...selectedFilter.filter.filter((s) => s.questionType.hasOwnProperty("label"))],
+      onlyComplete: selectedFilter.onlyComplete,
+    });
+  }, [selectedFilter.filter, selectedFilter.onlyComplete, setSelectedFilter]);
+
   // remove the added filter if nothing is selected when filter is closed
   useEffect(() => {
     if (!isOpen) {
       clearItem();
     }
-  }, [isOpen]);
+  }, [clearItem, isOpen]);
 
   const handleAddNewFilter = () => {
     setSelectedFilter({
@@ -74,14 +82,6 @@ const ResponseFilter = () => {
   const handleDeleteFilter = (index: number) => {
     selectedFilter.filter.splice(index, 1);
     setSelectedFilter({ ...selectedFilter });
-  };
-
-  // when filter is opened and added a filter without selecting any option clear out that value
-  const clearItem = () => {
-    setSelectedFilter({
-      filter: [...selectedFilter.filter.filter((s) => s.questionType.hasOwnProperty("label"))],
-      onlyComplete: selectedFilter.onlyComplete,
-    });
   };
 
   const handleOnChangeFilterComboBoxValue = (o: string | string[], index: number) => {

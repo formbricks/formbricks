@@ -40,7 +40,7 @@ export const SignupForm = ({
     } else {
       return webAppUrl;
     }
-  }, [inviteToken]);
+  }, [inviteToken, webAppUrl]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();

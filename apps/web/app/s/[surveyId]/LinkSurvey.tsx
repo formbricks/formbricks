@@ -53,7 +53,7 @@ export default function LinkSurvey({
         },
         surveyState
       ),
-    []
+    [personId, webAppUrl]
   );
   const [autoFocus, setAutofocus] = useState(false);
 

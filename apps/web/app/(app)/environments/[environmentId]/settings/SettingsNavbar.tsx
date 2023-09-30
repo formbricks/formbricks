@@ -185,7 +185,7 @@ export default function SettingsNavbar({
         ],
       },
     ],
-    [environmentId, pathname]
+    [environmentId, isFormbricksCloud, pathname]
   );
 
   if (!navigation) return null;

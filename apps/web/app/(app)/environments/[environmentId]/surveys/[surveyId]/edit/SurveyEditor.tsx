@@ -49,7 +49,7 @@ export default function SurveyEditor({
     if (localSurvey && localSurvey.questions?.length > 0) {
       setActiveQuestionId(localSurvey.questions[0].id);
     }
-  }, [localSurvey?.type]);
+  }, [localSurvey]);
 
   if (!localSurvey) {
     return <ErrorComponent />;
