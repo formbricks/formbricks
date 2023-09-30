@@ -13,7 +13,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // GET
   if (req.method === "GET") {
-    // find first production enviroment of the user
+    // find first production environment of the user
     const firstMembership = await prisma.membership.findFirst({
       where: {
         userId: user.id,
