@@ -37,3 +37,114 @@
 .formbricks-footer {
   @apply mt-8;
 }
+
+/* theming */
+:root {
+  --fb-primary: rgb(229, 4, 241);
+  --fb-on-primary: black;
+  --slate-50: rgb(248 250 252);
+  --slate-100: rgb(241 245 249);
+  --slate-200: rgb(226 232 240);
+  --slate-300: rgb(203 213 225);
+  --slate-400: rgb(148 163 184);
+  --slate-500: rgb(100 116 139);
+  --slate-600: rgb(71 85 105);
+  --slate-700: rgb(51 65 85);
+  --slate-800: rgb(30 41 59);
+  --slate-900: rgb(15 23 42);
+  --gray-100: rgb(243 244 246);
+  --gray-200: rgb(229 231 235);
+  --yellow-300: rgb(253 224 71);
+  --yellow-500: rgb(234 179 8);
+
+  /* Back Button */
+  --fb-back-btn-focus-ring: var(--slate-500);
+  --fb-back-btn-border: transparent;
+
+  /* Submit button */
+  --fb-submit-btn-border: transparent;
+  --fb-submit-btn-focus-ring: var(--slate-500);
+  --fb-submit-btn-bg: var(--fb-primary);
+  --fb-submit-btn-color: var(--fb-on-primary);
+
+  /* Signature */
+  --fb-signature-color: var(--slate-400);
+  --fb-signature-color-highlight: var(--slate-500);
+  --fb-signature-color-highlight-hover: var(--slate-700);
+
+  /* Headline */
+  --fb-headline-color: var(--slate-900);
+
+  /* HtmlBody */
+  --fb-html-body-color: var(--slate-600);
+
+  /* Progress */
+  --fb-progress-wrapper-bg: var(--slate-200);
+  --fb-progress-bg: var(--fb-primary);
+
+  /* RedirectCountdown */
+  --fb-rdr-countdown-bg: var(--slate-100);
+  --fb-rdr-countdown-color: var(--slate-600);
+
+  /* Subheader */
+  --fb-subheader-color: var(--slate-600);
+
+  /* ThankYouCard */
+  --fb-tyc-icon-shadow: var(--slate-300);
+  --fb-tyc-icon-color: var(--fb-primary);
+
+  /* Questions */
+  /* ConsentQuestion */
+  --fb-q-consent-label-bg: var(--slate-50);
+  --fb-q-consent-label-border: var(--gray-200);
+  --fb-q-consent-label-color: var(--slate-800);
+  --fb-q-consent-input-border: var(--fb-primary);
+  --fb-q-consent-input-color: var(--fb-primary);
+
+  /* CTAQuestion */
+  --fb-q-cta-focus-ring: var(--slate-500);
+  --fb-q-cta-color: var(--slate-800);
+
+  /* MultipleChoiceMultiQuestion */
+  --fb-q-mcmq-bg: white;
+  --fb-q-mcmq-color: var(--slate-800);
+  --fb-q-mcmq-bg-hover: var(--slate-50);
+  --fb-q-mcmq-input-border: var(--fb-primary);
+  --fb-q-mcmq-input-color: var(--fb-primary);
+  --fb-q-mcmq-other-bg: white;
+  --fb-q-mcmq-other-color: var(--slate-800);
+  --fb-q-mcmq-other-border: var(--slate-300);
+  --fb-q-mcmq-other-placeholder: var(--slate-400);
+  --fb-q-mcmq-other-ring-focus: var(--slate-400);
+
+  /* MultipleChoiceSingleQuestion */
+  --fb-q-mcsq-bg: white;
+  --fb-q-mcsq-color: var(--slate-800);
+  --fb-q-mcsq-bg-hover: var(--slate-50);
+  --fb-q-mcsq-input-border: var(--fb-primary);
+  --fb-q-mcsq-input-color: var(--fb-primary);
+  --fb-q-mcsq-other-bg: white;
+  --fb-q-mcsq-other-color: var(--slate-800);
+  --fb-q-mcsq-other-border: var(--slate-300);
+  --fb-q-mcsq-other-placeholder: var(--slate-400);
+  --fb-q-mcsq-other-ring-focus: var(--slate-400);
+
+  /* NPSQuestion */
+  --fb-q-nps-bg: white;
+  --fb-q-nps-bg-hover: var(--gray-100);
+  --fb-q-nps-color: var(--slate-800);
+  --fb-q-nps-label: var(--slate-500);
+
+  /* OpenTextQuestion */
+  --fb-q-otp-bg: var(--slate-50);
+  --fb-q-otp-border: var(--slate-100);
+  --fb-q-otp-border-focus: var(--slate-500);
+
+  /* RatingQuestion */
+  --fb-q-rating-bg: white;
+  --fb-q-rating-text: var(--slate-800);
+  --fb-q-rating-label: var(--slate-500);
+  --fb-q-rating-bg-hover: var(--gray-100);
+  --fb-q-rating-star-fill: var(--yellow-300);
+  --fb-q-rating-star-hover: var(--yellow-500);
+}

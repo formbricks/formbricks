@@ -44,7 +44,7 @@ export default function NPSQuestion({
                 key={number}
                 className={cn(
                   value === number ? "z-10 border-slate-400 bg-slate-50" : "",
-                  "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm leading-10 text-slate-800 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:outline-none"
+                  "relative h-10 flex-1 cursor-pointer border bg-[--fb-q-nps-bg] text-center text-sm leading-10 text-[--fb-q-nps-color] first:rounded-l-md last:rounded-r-md hover:bg-[--fb-q-nps-color] focus:outline-none"
                 )}>
                 <input
                   type="radio"
@@ -66,7 +66,7 @@ export default function NPSQuestion({
               </label>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
+          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-q-nps-label]">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>

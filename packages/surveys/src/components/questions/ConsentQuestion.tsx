@@ -36,7 +36,7 @@ export default function ConsentQuestion({
           e.preventDefault();
           onSubmit({ [question.id]: value });
         }}>
-        <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm text-slate-800 focus:outline-none">
+        <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-[--fb-q-consent-label-border] bg-[--fb-q-consent-label-bg] p-4 text-sm text-[--fb-q-consent-label-color] focus:outline-none">
           <input
             type="checkbox"
             id={question.id}
@@ -50,9 +50,8 @@ export default function ConsentQuestion({
               }
             }}
             checked={value === "accepted"}
-            className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+            className="h-4 w-4 border border-[--fb-q-consent-input-border] text-[--fb-q-consent-input-color] focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
-            style={{ borderColor: brandColor, color: brandColor }}
             required={question.required}
           />
           <span id={`${question.id}-label`} className="ml-3 font-medium">

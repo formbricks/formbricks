@@ -1,24 +1,22 @@
 import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { cn } from "../../../../lib/cn";
-import { isLight } from "../../lib/utils";
 
 interface SubmitButtonProps {
   question: TSurveyQuestion;
   isLastQuestion: boolean;
-  brandColor: string;
   onClick: () => void;
   type?: "submit" | "button";
+  // DEPRECATED
+  brandColor?: string;
 }
 
-function SubmitButton({ question, isLastQuestion, brandColor, onClick, type = "submit" }: SubmitButtonProps) {
+function SubmitButton({ question, isLastQuestion, onClick, type = "submit" }: SubmitButtonProps) {
   return (
     <button
       type={type}
       className={cn(
-        "flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2",
-        isLight(brandColor) ? "text-black" : "text-white"
+        "flex items-center rounded-md border border-[var(--fb-submit-btn-border)] bg-[var(--fb-submit-btn-bg)] px-3 py-3 text-base font-medium leading-4 text-[var(--fb-submit-btn-color)] shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--fb-submit-btn-focus-ring)] focus:ring-offset-2"
       )}
-      style={{ backgroundColor: brandColor }}
       onClick={onClick}>
       {question.buttonLabel || (isLastQuestion ? "Finish" : "Next")}
     </button>

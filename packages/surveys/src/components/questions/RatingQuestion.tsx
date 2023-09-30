@@ -81,14 +81,14 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
+                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-[--fb-q-rating-bg] text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     className={cn(
                       value === number ? "z-10 border-slate-400 bg-slate-50" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "block h-full w-full border text-slate-800 hover:bg-gray-100 focus:outline-none"
+                      "block h-full w-full border text-[--fb-q-rating-text] hover:bg-[--fb-q-rating-bg-hover] focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -96,12 +96,12 @@ export default function RatingQuestion({
                 ) : question.scale === "star" ? (
                   <label
                     className={cn(
-                      number <= hoveredNumber ? "text-yellow-500" : "",
+                      number <= hoveredNumber ? "text-[--fb-q-rating-star-hover]" : "",
                       "flex h-full w-full justify-center"
                     )}>
                     <HiddenRadioInput number={number} />
                     {typeof value === "number" && value >= number ? (
-                      <span className="text-yellow-300">
+                      <span className="text-[--fb-q-rating-star-fill]">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
@@ -131,7 +131,7 @@ export default function RatingQuestion({
                     )}
                   </label>
                 ) : (
-                  <label className="flex h-full w-full justify-center text-slate-800">
+                  <label className="flex h-full w-full justify-center text-[--fb-q-rating-text]">
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={value === number || hoveredNumber === number}
@@ -143,7 +143,7 @@ export default function RatingQuestion({
               </span>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
+          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-q-rating-label]">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>

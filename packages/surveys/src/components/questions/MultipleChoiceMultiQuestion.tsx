@@ -88,13 +88,13 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2">
+          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-[--fb-q-mcmq-bg] py-0.5 pr-2">
             {questionChoices.map((choice) => (
               <label
                 key={choice.id}
                 className={cn(
                   value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-q-mcmq-color] hover:bg-[--fb-q-mcmq-bg-hover] focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -102,7 +102,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
-                    className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-q-mcmq-input-border] text-[--fb-q-mcmq-input-color] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={(e) => {
                       if ((e.target as HTMLInputElement)?.checked) {
@@ -112,7 +112,6 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     checked={Array.isArray(value) && value.includes(choice.label)}
-                    style={{ borderColor: brandColor, color: brandColor }}
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
@@ -124,7 +123,7 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 className={cn(
                   value === otherOption.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-q-mcmq-color] hover:bg-[--fb-q-mcmq-bg-hover] focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -132,7 +131,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={otherOption.id}
                     name={question.id}
                     value={otherOption.label}
-                    className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-q-mcmq-input-border] text-[--fb-q-mcmq-input-color] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={(e) => {
                       setOtherSelected(!otherSelected);
@@ -144,7 +143,6 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     checked={otherSelected}
-                    style={{ borderColor: brandColor, color: brandColor }}
                   />
                   <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
                     {otherOption.label}
@@ -162,7 +160,7 @@ export default function MultipleChoiceSingleQuestion({
                       addItem(e.currentTarget.value);
                     }}
                     placeholder="Please specify"
-                    className="mt-3 flex h-10 w-full rounded-md border border-slate-300 bg-transparent bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none  focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
+                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-q-mcmq-other-border] bg-[--fb-q-mcmq-other-bg] px-3 py-2 text-sm text-[--fb-q-mcmq-other-color] placeholder:text-[--fb-q-mcmq-other-placeholder] focus:outline-none  focus:ring-2 focus:ring-[--fb-q-mcmq-other-ring-focus] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

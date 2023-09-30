@@ -49,7 +49,7 @@ export default function OpenTextQuestion({
               onChange({ [question.id]: e.currentTarget.value });
             }}
             autoFocus={autoFocus}
-            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
+            className="block w-full rounded-md border border-[--fb-q-otp-border] bg-[--fb-q-otp-bg] p-2 shadow-sm focus:border-[--fb-q-otp-border-focus] focus:outline-none focus:ring-0 sm:text-sm"
           />
         ) : (
           <textarea
@@ -63,7 +63,7 @@ export default function OpenTextQuestion({
               onChange({ [question.id]: e.currentTarget.value });
             }}
             autoFocus={autoFocus}
-            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
+            className="block w-full rounded-md border border-[--fb-q-otp-border] bg-[--fb-q-otp-bg] p-2 shadow-sm focus:border-[--fb-q-otp-border-focus] focus:ring-0 sm:text-sm"></textarea>
         )}
       </div>
       <div className="mt-4 flex w-full justify-between">

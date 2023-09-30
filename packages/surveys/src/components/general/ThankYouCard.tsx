@@ -5,21 +5,22 @@ import Subheader from "../general/Subheader";
 interface ThankYouCardProps {
   headline?: string;
   subheader?: string;
-  brandColor: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
+
+  // DEPRECATED
+  brandColor?: string;
 }
 
 export default function ThankYouCard({
   headline,
   subheader,
-  brandColor,
   redirectUrl,
   isRedirectDisabled,
 }: ThankYouCardProps) {
   return (
     <div className="text-center">
-      <div className="flex items-center justify-center" style={{ color: brandColor }}>
+      <div className="flex items-center justify-center text-[--fb-tyc-icon-color]">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -35,7 +36,7 @@ export default function ThankYouCard({
         </svg>
       </div>
 
-      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-slate-300"></span>
+      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-[--fb-tyc-icon-shadow]"></span>
 
       <div>
         <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />
