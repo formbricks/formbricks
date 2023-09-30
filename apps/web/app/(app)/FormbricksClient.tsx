@@ -7,7 +7,6 @@ import { useEffect } from "react";
 
 type UsageAttributesUpdaterProps = {
   numSurveys: number;
-  totalSubmissions: number;
 };
 
 export default function FormbricksClient({ session }) {
@@ -28,22 +27,18 @@ export default function FormbricksClient({ session }) {
   return null;
 }
 
-const updateUsageAttributes = (numSurveys, totalSubmissions) => {
+const updateUsageAttributes = (numSurveys) => {
   if (!formbricksEnabled) return;
 
   if (numSurveys >= 3) {
     formbricks.setAttribute("HasThreeSurveys", "true");
   }
-
-  if (totalSubmissions >= 20) {
-    formbricks.setAttribute("HasTwentySubmissions", "true");
-  }
 };
 
-export function UsageAttributesUpdater({ numSurveys, totalSubmissions }: UsageAttributesUpdaterProps) {
+export function UsageAttributesUpdater({ numSurveys }: UsageAttributesUpdaterProps) {
   useEffect(() => {
-    updateUsageAttributes(numSurveys, totalSubmissions);
-  }, [numSurveys, totalSubmissions]);
+    updateUsageAttributes(numSurveys);
+  }, [numSurveys]);
 
   return null;
 }

@@ -4,7 +4,7 @@ import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/Surv
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurveysWithAnalytics } from "@formbricks/lib/services/survey";
+import { getSurveys } from "@formbricks/lib/services/survey";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui";
@@ -22,11 +22,10 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
+  const surveys = await getSurveys(environmentId);
 
   const environments: TEnvironment[] = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
-  const totalSubmissions = surveys.reduce((acc, survey) => acc + (survey.analytics?.numResponses || 0), 0);
 
   if (surveys.length === 0) {
     return <SurveyStarter environmentId={environmentId} environment={environment} product={product} />;
@@ -83,9 +82,6 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                             tooltip
                             environmentId={environmentId}
                           />
-                          <p className="ml-2 text-xs text-slate-400 ">
-                            {survey.analytics.numResponses} responses
-                          </p>
                         </>
                       )}
                       {survey.status === "draft" && (
@@ -106,7 +102,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
             </li>
           ))}
       </ul>
-      <UsageAttributesUpdater numSurveys={surveys.length} totalSubmissions={totalSubmissions} />
+      <UsageAttributesUpdater numSurveys={surveys.length} />
     </>
   );
 }
