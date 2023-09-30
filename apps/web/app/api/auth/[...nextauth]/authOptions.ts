@@ -1,7 +1,7 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
 import { prisma } from "@formbricks/database";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyToken } from "@formbricks/lib/jwt";
 import { getProfileByEmail } from "@formbricks/lib/services/profile";
 import type { IdentityProvider } from "@prisma/client";
@@ -166,7 +166,7 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
-        if (!user.emailVerified && env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+        if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
         }
         return true;

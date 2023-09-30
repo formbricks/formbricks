@@ -317,15 +317,22 @@ export const updateResponse = async (
   }
 };
 
-export async function deleteResponse(responseId: string) {
+export const deleteResponse = async (responseId: string): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
-    const deletedResponse = await prisma.response.delete({
+    const responsePrisma = await prisma.response.delete({
       where: {
         id: responseId,
       },
+      select: responseSelection,
     });
-    return deletedResponse;
+
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+    return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -333,4 +340,4 @@ export async function deleteResponse(responseId: string) {
 
     throw error;
   }
-}
+};

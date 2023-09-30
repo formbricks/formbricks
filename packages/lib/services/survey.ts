@@ -136,7 +136,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
         const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
         return survey;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
         }
@@ -220,6 +220,72 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     createdAt: new Date(survey.createdAt),
     updatedAt: new Date(survey.updatedAt),
   };
+};
+
+export const getSurveysByAttributeClassId = async (attributeClassId: string): Promise<TSurvey[]> => {
+  const surveysPrisma = await prisma.survey.findMany({
+    where: {
+      attributeFilters: {
+        some: {
+          attributeClassId,
+        },
+      },
+    },
+    select: selectSurvey,
+  });
+
+  const surveys: TSurvey[] = [];
+
+  try {
+    for (const surveyPrisma of surveysPrisma) {
+      const transformedSurvey = {
+        ...surveyPrisma,
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+      };
+      const survey = ZSurvey.parse(transformedSurvey);
+      surveys.push(survey);
+    }
+    return surveys;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+    }
+    throw new ValidationError("Data validation of survey failed");
+  }
+};
+
+export const getSurveysByActionClassId = async (actionClassId: string): Promise<TSurvey[]> => {
+  const surveysPrisma = await prisma.survey.findMany({
+    where: {
+      triggers: {
+        some: {
+          eventClass: {
+            id: actionClassId,
+          },
+        },
+      },
+    },
+    select: selectSurvey,
+  });
+
+  const surveys: TSurvey[] = [];
+
+  try {
+    for (const surveyPrisma of surveysPrisma) {
+      const transformedSurvey = {
+        ...surveyPrisma,
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+      };
+      const survey = ZSurvey.parse(transformedSurvey);
+      surveys.push(survey);
+    }
+    return surveys;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+    }
+    throw new ValidationError("Data validation of survey failed");
+  }
 };
 
 export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {

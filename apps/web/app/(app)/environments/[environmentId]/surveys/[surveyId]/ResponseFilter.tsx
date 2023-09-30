@@ -1,8 +1,8 @@
 "use client";
 
-import { QuestionType } from "@formbricks/types/questions";
+import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
 import QuestionsComboBox, { QuestionOption, OptionsType } from "./QuestionsComboBox";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Popover, PopoverTrigger, PopoverContent, Button, Checkbox } from "@formbricks/ui";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { TrashIcon } from "@heroicons/react/24/solid";
@@ -11,7 +11,7 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/Resp
 import clsx from "clsx";
 
 export type QuestionFilterOptions = {
-  type: QuestionType | "Attributes" | "Tags";
+  type: TSurveyQuestionType | "Attributes" | "Tags";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
@@ -47,6 +47,14 @@ const ResponseFilter = () => {
     }
   };
 
+  // when filter is opened and added a filter without selecting any option clear out that value
+  const clearItem = () => {
+    setSelectedFilter({
+      filter: [...selectedFilter.filter.filter((s) => s.questionType.hasOwnProperty("label"))],
+      onlyComplete: selectedFilter.onlyComplete,
+    });
+  };
+
   // remove the added filter if nothing is selected when filter is closed
   useEffect(() => {
     if (!isOpen) {
@@ -74,14 +82,6 @@ const ResponseFilter = () => {
   const handleDeleteFilter = (index: number) => {
     selectedFilter.filter.splice(index, 1);
     setSelectedFilter({ ...selectedFilter });
-  };
-
-  // when filter is opened and added a filter without selecting any option clear out that value
-  const clearItem = () => {
-    setSelectedFilter({
-      filter: [...selectedFilter.filter.filter((s) => s.questionType.hasOwnProperty("label"))],
-      onlyComplete: selectedFilter.onlyComplete,
-    });
   };
 
   const handleOnChangeFilterComboBoxValue = (o: string | string[], index: number) => {

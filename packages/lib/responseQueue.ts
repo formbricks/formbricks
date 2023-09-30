@@ -1,6 +1,7 @@
 import { TResponseUpdate } from "@formbricks/types/v1/responses";
 import { createResponse, updateResponse } from "./client/response";
 import SurveyState from "./surveyState";
+import { markDisplayResponded } from "./client/display";
 
 interface QueueConfig {
   apiHost: string;
@@ -47,7 +48,7 @@ export class ResponseQueue {
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
-      console.log("Formbricks: Failed to send response. Retrying...", attempts);
+      console.error("Formbricks: Failed to send response. Retrying...", attempts);
       attempts++;
     }
 
@@ -74,6 +75,9 @@ export class ResponseQueue {
           { ...responseUpdate, surveyId: this.surveyState.surveyId, personId: this.config.personId || null },
           this.config.apiHost
         );
+        if (this.surveyState.displayId) {
+          markDisplayResponded(this.surveyState.displayId, this.config.apiHost);
+        }
         this.surveyState.updateResponseId(response.id);
         if (this.config.setSurveyState) {
           this.config.setSurveyState(this.surveyState);
@@ -84,5 +88,10 @@ export class ResponseQueue {
       console.error(error);
       return false;
     }
+  }
+
+  // update surveyState
+  updateSurveyState(surveyState: SurveyState) {
+    this.surveyState = surveyState;
   }
 }

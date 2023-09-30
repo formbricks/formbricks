@@ -49,7 +49,7 @@ export default function SurveyDropDownMenu({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
+  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey.id, surveyBaseUrl]);
 
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);

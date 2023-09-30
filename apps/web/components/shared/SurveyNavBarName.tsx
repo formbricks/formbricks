@@ -1,25 +1,9 @@
-"use client";
-
-import { useProduct } from "@/lib/products/products";
-import { useSurvey } from "@/lib/surveys/surveys";
-
 interface SurveyNavBarNameProps {
-  surveyId: string;
-  environmentId: string;
+  surveyName: string;
+  productName: string;
 }
 
-export default function SurveyNavBarName({ surveyId, environmentId }: SurveyNavBarNameProps) {
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
-  if (isLoadingSurvey || isLoadingProduct) {
-    return null;
-  }
-
-  if (isErrorProduct || isErrorSurvey) {
-    return null;
-  }
-
+export default function SurveyNavBarName({ surveyName, productName }: SurveyNavBarNameProps) {
   return (
     <div className="hidden items-center space-x-2 whitespace-nowrap md:flex">
       {/*       <Button
@@ -30,8 +14,8 @@ export default function SurveyNavBarName({ surveyId, environmentId }: SurveyNavB
         }}>
         Back
       </Button> */}
-      <p className="pl-4 font-semibold">{product.name} / </p>
-      <span>{survey.name}</span>
+      <p className="pl-4 font-semibold">{productName} / </p>
+      <span>{surveyName}</span>
     </div>
   );
 }
