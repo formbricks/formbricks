@@ -7,7 +7,8 @@ export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and rev
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 5000 : 1000000;
 
 // URLs
-export const WEBAPP_URL = env.WEBAPP_URL || env.VERCEL_URL || "http://localhost:3000";
+export const WEBAPP_URL =
+  env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
 export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" : `${WEBAPP_URL}/s/`;
 

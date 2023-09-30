@@ -1,14 +1,14 @@
 "use client";
 
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import QuestionsComboBox, { QuestionOption, OptionsType } from "./QuestionsComboBox";
-import { useState, useEffect, useCallback } from "react";
-import { Popover, PopoverTrigger, PopoverContent, Button, Checkbox } from "@formbricks/ui";
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
-import { TrashIcon } from "@heroicons/react/24/solid";
-import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionFilterComboBox";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
+import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionFilterComboBox";
+import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import { Button, Checkbox, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import QuestionsComboBox, { OptionsType, QuestionOption } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
   type: TSurveyQuestionType | "Attributes" | "Tags";
