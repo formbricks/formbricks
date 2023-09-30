@@ -1,9 +1,9 @@
 {
   "functions": {
-    "api/v1/js/sync/*.ts": {
+    "app/api/v1/js/sync/*.ts": {
       "maxDuration": 3
     },
-    "api/**/*.ts": {
+    "app/api/**/*.ts": {
       "maxDuration": 10
     }
   }
