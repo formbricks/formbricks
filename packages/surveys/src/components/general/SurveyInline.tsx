@@ -14,7 +14,7 @@ export function SurveyInline({
   isRedirectDisabled = false,
 }: SurveyBaseProps) {
   return (
-    <div id="fbjs" className="h-full w-full">
+    <div id="fbjs" className="formbricks-form h-full w-full">
       <Survey
         survey={survey}
         brandColor={brandColor}

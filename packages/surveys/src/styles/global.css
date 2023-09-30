@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* @import "./survey.css"; */
+
 /* Firefox */
 * {
   scrollbar-width: thin;
@@ -23,4 +25,15 @@
   background-color: #cbd5e1;
   border: 3px solid #cbd5e1;
   border-radius: 99px;
+}
+
+.formbricks-inner {
+  @apply flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-5;
+}
+
+/* .formbricks-question {
+} */
+
+.formbricks-footer {
+  @apply mt-8;
 }
