@@ -83,6 +83,10 @@ You should store constants in `packages/lib/constants`
 
 You should store type in `packages/types/v1`
 
+## Read environment variables from `.env.mjs`
+
+Environment variables (`process.env`) shouldn’t be accessed directly but be added in the `.env.mjs` and should be accessed from here. This practice helps us ensure that the variables are typesafe.
+
 ## How we handle Pull Requests
 
 We have a number of requirements for PRs to ensure they are as easy to review as possible and to ensure that they are up to standard with the code.
@@ -122,7 +126,3 @@ At the moment Matti is responsible for approving and merging pull requests, so p
 - Be sure to **[check the "Allow edits from maintainers" option](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)** while creating you PR.
 - If your PR refers to or fixes an issue, be sure to add **`refs #XXX`** or **`fixes #XXX`** to the PR description. Replacing **`XXX`** with the respective issue number. See more about **[Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)** .
 - Be sure to fill the PR Template accordingly.
-
-### Read environment variables from `.env.mjs`
-
-Environment variables (`process.env`) shouldn’t be accessed directly but be added in the `.env.mjs` and should be accessed from here. This practice helps us ensure that the variables are typesafe.
