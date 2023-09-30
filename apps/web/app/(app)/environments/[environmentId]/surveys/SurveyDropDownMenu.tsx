@@ -15,7 +15,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import type { TSurvey } from "@formbricks/types/v1/surveys";
 import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,
@@ -32,7 +32,7 @@ import toast from "react-hot-toast";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
-  survey: TSurveyWithAnalytics;
+  survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
   surveyBaseUrl: string;

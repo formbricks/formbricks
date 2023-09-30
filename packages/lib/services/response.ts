@@ -16,6 +16,7 @@ import { getPerson, transformPrismaPerson } from "./person";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { revalidateTag } from "next/cache";
 
 const responseSelection = {
   id: true,
@@ -74,6 +75,8 @@ const responseSelection = {
     },
   },
 };
+
+export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-responses`;
 
 export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
   validateInputs([personId, ZId]);
@@ -146,6 +149,10 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
+
+    if (response.surveyId) {
+      revalidateTag(getResponsesCacheTag(response.surveyId));
+    }
 
     return response;
   } catch (error) {
@@ -295,6 +302,10 @@ export const updateResponse = async (
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
+
+    if (response.surveyId) {
+      revalidateTag(getResponsesCacheTag(response.surveyId));
+    }
 
     return response;
   } catch (error) {
