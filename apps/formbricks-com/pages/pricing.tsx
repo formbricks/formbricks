@@ -62,7 +62,7 @@ const linkSurveys = {
   features: [
     { name: "Unlimited Surveys", free: true, paid: true },
     { name: "Unlimited Responses", free: true, paid: true },
-    { name: "Partial Submissions", free: true, paid: true },
+    { name: "Partial Responses", free: true, paid: true },
     { name: "⚙️ URL Shortener", free: true, paid: true },
     { name: "⚙️ Recall Information", free: true, paid: true },
     { name: "⚙️ Hidden Field Questions", free: true, paid: true },
