@@ -9,8 +9,8 @@ import {
   ZSurveyWithAnalytics,
 } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
-import "server-only";
 import { revalidateTag, unstable_cache } from "next/cache";
+import "server-only";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";

@@ -18,10 +18,6 @@ export default function FormbricksClient({ session }) {
       });
       formbricks.setUserId(session.user.id);
       formbricks.setEmail(session.user.email);
-      if (session.user.teams?.length > 0) {
-        formbricks.setAttribute("Plan", session.user.teams[0].plan);
-        formbricks.setAttribute("Name", session?.user?.name);
-      }
     }
   }, [session]);
   return null;
