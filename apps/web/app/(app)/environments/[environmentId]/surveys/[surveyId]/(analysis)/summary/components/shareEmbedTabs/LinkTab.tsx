@@ -32,7 +32,7 @@ export default function LinkTab({ surveyUrl, survey, product }: EmailTabProps) {
 
   return (
     <div className="flex h-full grow flex-col gap-5">
-      <div className="flex justify-between gap-2">
+      <div className="flex flex-wrap justify-between gap-2">
         <div
           ref={linkTextRef}
           className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
@@ -64,7 +64,7 @@ export default function LinkTab({ surveyUrl, survey, product }: EmailTabProps) {
         <Button
           variant="minimal"
           className={cn(
-            "absolute bottom-6 left-1/2 -translate-x-1/2 transform rounded-lg border border-slate-200 bg-white"
+            "absolute bottom-8 left-1/2 -translate-x-1/2 transform rounded-lg border border-slate-200 bg-white"
           )}
           EndIcon={ArrowUpRightIcon}
           title="Open survey in new tab"

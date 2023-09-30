@@ -14,11 +14,12 @@ import {
   Row,
   Column,
 } from "@react-email/components";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
 import { TProfile } from "@formbricks/types/v1/profile";
 import { TProduct } from "@formbricks/types/v1/product";
+import { sendEmailAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -31,8 +32,12 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
   const [email, setEmail] = useState(profile.email);
   const [showEmbed, setShowEmbed] = useState(false);
   const brandColor = product.brandColor;
+  const subject = "Formbricks Email Survey Preview";
 
-  console.log(survey);
+  const emailTemplate = useMemo(() => {
+    return getEmailTemplate(survey, surveyUrl);
+  }, [survey, surveyUrl]);
+
   const Email = (
     <Tailwind
       config={{
@@ -44,25 +49,19 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
           },
         },
       }}>
-      {getEmailTemplate(survey, surveyUrl)}
+      {emailTemplate}
     </Tailwind>
   );
 
-  const confirmEmail = render(Email, { pretty: true });
-
-  const confirmEmailWithoutDoctype = confirmEmail.replace(
+  const emailHTML = render(Email, { pretty: true });
+  const emailHTMLWithoutDoctype = emailHTML.replace(
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
     ""
   );
 
   const sendPreviewEmail = async () => {
-    // const res = await sendEmail({
-    //   to: email,
-    //   subject: "Formbricks Email Survey Preview",
-    //   html: confirmEmail,
-    // });
-    // const res = await sendPreviewMail(email, confirmEmail);
-    // console.log(res);
+    await sendEmailAction({ html: emailHTMLWithoutDoctype, subject, to: email });
+    toast.success("Email sent!");
   };
   return (
     <div className="flex h-full grow flex-col gap-5">
@@ -83,7 +82,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
             aria-label="Embed survey in your website"
             onClick={() => {
               toast.success("Embed code copied to clipboard!");
-              navigator.clipboard.writeText(confirmEmailWithoutDoctype);
+              navigator.clipboard.writeText(emailHTMLWithoutDoctype);
             }}
             className="shrink-0"
             EndIcon={DocumentDuplicateIcon}>
@@ -116,7 +115,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
             customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
             language="html"
             showCopyToClipboard={false}>
-            {confirmEmailWithoutDoctype}
+            {emailHTMLWithoutDoctype}
           </CodeBlock>
         ) : (
           <div className="">
@@ -129,9 +128,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
               <div className="mb-2 border-b border-slate-200 pb-2 text-sm">
                 To : {email || "user@mail.com"}
               </div>
-              <div className="border-b border-slate-200 pb-2 text-sm">
-                Subject : Formbricks Email Survey Preview
-              </div>
+              <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
               <div className="p-4">{Email}</div>
             </div>
           </div>
@@ -346,6 +343,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
               .filter((c) => c.id !== "other")
               .map((choice) => (
                 <Link
+                  key={choice.id}
                   className="mt-4 block rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
                   href={`${surveyUrl}?${firstQuestion.id}=${choice.label}`}>
                   {choice.label}

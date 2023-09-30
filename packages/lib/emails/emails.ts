@@ -170,3 +170,15 @@ export const sendResponseFinishedEmail = async (
     `),
   });
 };
+
+export const sendEmbedSurveyPreviewEmail = async (to: string, subject: string, html: string) => {
+  await sendEmail({
+    to: to,
+    subject: subject,
+    html: withEmailTemplate(`
+    <h1>Preview Email</h1>
+    <p>This is a preview email for your survey. Please do not reply to this email.</p>
+    <hr/>
+    ${html}`),
+  });
+};
