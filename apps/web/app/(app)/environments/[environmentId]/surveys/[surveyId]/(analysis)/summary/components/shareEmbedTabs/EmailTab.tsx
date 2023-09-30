@@ -29,7 +29,7 @@ interface EmailTabProps {
 }
 
 export default function EmailTab({ survey, surveyUrl, profile, product }: EmailTabProps) {
-  const [email, setEmail] = useState(profile.email);
+  const [email] = useState(profile.email);
   const [showEmbed, setShowEmbed] = useState(false);
   const brandColor = product.brandColor;
   const subject = "Formbricks Email Survey Preview";
@@ -71,7 +71,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
           placeholder="user@mail.com"
           className="h-11 grow bg-white"
           value={email}
-          onChange={(e) => {
+          onChange={() => {
             // setEmail(e.target.value)
           }}
         />
