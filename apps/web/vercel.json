@@ -1,6 +1,9 @@
 {
   "functions": {
-    "api/test.js": {
+    "api/v1/js/sync/*.ts": {
+      "maxDuration": 3
+    },
+    "api/**/*.ts": {
       "maxDuration": 10
     }
   }
