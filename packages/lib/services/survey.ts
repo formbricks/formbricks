@@ -136,7 +136,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
         const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
         return survey;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
         }

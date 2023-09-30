@@ -9,7 +9,7 @@ import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
-import { Question } from "@formbricks/types/questions";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { validateQuestion } from "./Validation";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TProduct } from "@formbricks/types/v1/product";
@@ -38,7 +38,7 @@ export default function QuestionsView({
       acc[question.id] = createId();
       return acc;
     }, {});
-  }, [localSurvey.questions]);
+  }, []);
 
   const [backButtonLabel, setbackButtonLabel] = useState(null);
 
@@ -59,7 +59,7 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateSurvey = (question: Question) => {
+  const validateSurvey = (question: TSurveyQuestion) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;

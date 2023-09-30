@@ -64,6 +64,10 @@ export default function LinkSurvey({
     }
   }, []);
 
+  useEffect(() => {
+    responseQueue.updateSurveyState(surveyState);
+  }, [responseQueue, surveyState]);
+
   if (emailVerificationStatus && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
       return <VerifyEmail survey={survey} isErrorComponent={true} />;
@@ -90,9 +94,16 @@ export default function LinkSurvey({
           survey={survey}
           brandColor={product.brandColor}
           formbricksSignature={product.formbricksSignature}
-          onDisplay={() => createDisplay({ surveyId: survey.id }, window?.location?.origin)}
+          onDisplay={async () => {
+            if (!isPreview) {
+              const { id } = await createDisplay({ surveyId: survey.id }, window?.location?.origin);
+              const newSurveyState = surveyState.copy();
+              newSurveyState.updateDisplayId(id);
+              setSurveyState(newSurveyState);
+            }
+          }}
           onResponse={(responseUpdate) => {
-            responseQueue.add(responseUpdate);
+            !isPreview && responseQueue.add(responseUpdate);
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}
