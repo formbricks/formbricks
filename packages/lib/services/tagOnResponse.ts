@@ -16,7 +16,7 @@ export const addTagToRespone = async (responseId: string, tagId: string) => {
   }
 };
 
-export const removeTagFromResponse = async (responseId: string, tagId: string) => {
+export const deleteTagFromResponse = async (responseId: string, tagId: string) => {
   try {
     const deletedTag = await prisma.tagsOnResponses.delete({
       where: {
@@ -32,7 +32,7 @@ export const removeTagFromResponse = async (responseId: string, tagId: string) =
   }
 };
 
-export const getTagsCount = cache(async (): Promise<TTagsCount> => {
+export const getTagsOnResponsesCount = cache(async (): Promise<TTagsCount> => {
   try {
     const tagsCount = await prisma.tagsOnResponses.groupBy({
       by: ["tagId"],

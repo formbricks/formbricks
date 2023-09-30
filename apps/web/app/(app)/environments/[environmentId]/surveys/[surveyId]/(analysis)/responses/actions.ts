@@ -3,7 +3,7 @@
 import { deleteResponse } from "@formbricks/lib/services/response";
 import { updateResponseNote, resolveResponseNote } from "@formbricks/lib/services/responseNote";
 import { createTag } from "@formbricks/lib/services/tag";
-import { addTagToRespone, removeTagFromResponse } from "@formbricks/lib/services/tagOnResponse";
+import { addTagToRespone, deleteTagFromResponse } from "@formbricks/lib/services/tagOnResponse";
 
 export const updateResponseNoteAction = async (responseNoteId: string, text: string) => {
   await updateResponseNote(responseNoteId, text);
@@ -26,5 +26,5 @@ export const addTagToResponeAction = async (responseId: string, tagId: string) =
 };
 
 export const removeTagFromResponseAction = async (responseId: string, tagId: string) => {
-  return await removeTagFromResponse(responseId, tagId);
+  return await deleteTagFromResponse(responseId, tagId);
 };
