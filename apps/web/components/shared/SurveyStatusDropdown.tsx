@@ -53,6 +53,7 @@ export default function SurveyStatusDropdown({
         </div>
       ) : (
         <Select
+          value={survey.status}
           disabled={isStatusChangeDisabled}
           onValueChange={(value) => {
             triggerSurveyMutate({ status: value })

@@ -3,9 +3,9 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import {
   TAttributeClass,
-  TAttributeClassType,
   TAttributeClassUpdateInput,
   ZAttributeClassUpdateInput,
+  TAttributeClassType,
 } from "@formbricks/types/v1/attributeClasses";
 import { ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
@@ -52,6 +52,21 @@ export const getAttributeClasses = cache(async (environmentId: string): Promise<
     throw new DatabaseError(`Database error when fetching attributeClasses for environment ${environmentId}`);
   }
 });
+
+export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
+  validateInputs([attributeClassId, ZId]);
+  try {
+    let attributeClass = await prisma.attributeClass.findUnique({
+      where: {
+        id: attributeClassId,
+      },
+    });
+
+    return attributeClass;
+  } catch (error) {
+    throw new DatabaseError(`Database error when fetching attributeClass with id ${attributeClassId}`);
+  }
+};
 
 export const updatetAttributeClass = async (
   attributeClassId: string,
@@ -119,4 +134,19 @@ export const createAttributeClass = async (
   });
   revalidateTag(attributeClassesCacheTag(environmentId));
   return transformPrismaAttributeClass(attributeClass);
+};
+
+export const deleteAttributeClass = async (attributeClassId: string): Promise<TAttributeClass> => {
+  validateInputs([attributeClassId, ZId]);
+  try {
+    const deletedAttributeClass = await prisma.attributeClass.delete({
+      where: {
+        id: attributeClassId,
+      },
+    });
+
+    return deletedAttributeClass;
+  } catch (error) {
+    throw new DatabaseError(`Database error when deleting webhook with ID ${attributeClassId}`);
+  }
 };

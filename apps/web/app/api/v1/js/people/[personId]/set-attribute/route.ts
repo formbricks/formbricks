@@ -1,11 +1,9 @@
 import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { prisma } from "@formbricks/database";
 import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/services/attributeClass";
-import { getPersonCached } from "@formbricks/lib/services/person";
+import { getPersonCached, updatePersonAttribute } from "@formbricks/lib/services/person";
 import { ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
-import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -48,33 +46,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     }
 
     // upsert attribute (update or create)
-    await prisma.attribute.upsert({
-      where: {
-        attributeClassId_personId: {
-          attributeClassId: attributeClass.id,
-          personId,
-        },
-      },
-      update: {
-        value,
-      },
-      create: {
-        attributeClass: {
-          connect: {
-            id: attributeClass.id,
-          },
-        },
-        person: {
-          connect: {
-            id: personId,
-          },
-        },
-        value,
-      },
-    });
-
-    // revalidate person
-    revalidateTag(personId);
+    updatePersonAttribute(personId, attributeClass.id, value);
 
     const state = await getUpdatedState(environmentId, personId, sessionId);
 

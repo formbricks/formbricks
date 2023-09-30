@@ -1,14 +1,19 @@
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import { TSurvey, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyAttributeFilter,
+  TSurveyWithAnalytics,
+  ZSurvey,
+  ZSurveyWithAnalytics,
+} from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
-import { TSurveyAttributeFilter } from "@formbricks/types/v1/surveys";
 import "server-only";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
 import { getDisplaysCacheTag } from "./displays";
 import { getResponsesCacheTag } from "./response";
 
@@ -272,6 +277,7 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
   }));
 };
 
+// TODO: Cache doesn't work for updated displays & responses
 export const getSurveysWithAnalytics = async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
   const surveysWithAnalytics = await unstable_cache(
     async () => {
@@ -334,10 +340,10 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
   }));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSurvey> {
   const surveyId = updatedSurvey.id;
   let data: any = {};
-  let survey: Partial<any> = { ...updatedSurvey };
+  let survey: any = { ...updatedSurvey };
 
   if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
     const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {
@@ -501,8 +507,8 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
-      triggers: updatedSurvey.triggers, // Include triggers from updatedSurvey
-      attributeFilters: updatedSurvey.attributeFilters, // Include attributeFilters from updatedSurvey
+      triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
+      attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
     };
 
     revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
@@ -510,6 +516,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     return modifiedSurvey;
   } catch (error) {
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

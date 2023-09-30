@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import PosthogIdentify from "./PosthogIdentify";
+import { NoMobileOverlay } from "@formbricks/ui";
 
 export default async function AppLayout({ children }) {
   const session = await getServerSession(authOptions);
@@ -14,6 +15,7 @@ export default async function AppLayout({ children }) {
 
   return (
     <>
+      <NoMobileOverlay />
       <Suspense>
         <PostHogPageview />
       </Suspense>

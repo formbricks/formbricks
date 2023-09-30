@@ -32,6 +32,7 @@ const responseSelection = {
       id: true,
       createdAt: true,
       updatedAt: true,
+      environmentId: true,
       attributes: {
         select: {
           value: true,
@@ -230,6 +231,7 @@ export const getSurveyResponses = cache(async (surveyId: string): Promise<TRespo
 });
 
 export const preloadEnvironmentResponses = (environmentId: string) => {
+  validateInputs([environmentId, ZId]);
   void getEnvironmentResponses(environmentId);
 };
 
@@ -314,3 +316,21 @@ export const updateResponse = async (
     throw error;
   }
 };
+
+export async function deleteResponse(responseId: string) {
+  validateInputs([responseId, ZId]);
+  try {
+    const deletedResponse = await prisma.response.delete({
+      where: {
+        id: responseId,
+      },
+    });
+    return deletedResponse;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+}
