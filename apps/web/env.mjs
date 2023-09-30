@@ -47,7 +47,7 @@ export const env = createEnv({
     GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
-    VERCEL_URL: z.string().url().optional(),
+    VERCEL_URL: z.string().optional(),
     SURVEY_BASE_URL: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
