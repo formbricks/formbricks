@@ -20,7 +20,7 @@ Thank you for choosing to contribute to Formbricks. Before you start, please fam
 - Fetch data only in server components
 - Use Server-Action for mutations
 - Use service abstraction instead of direct database calls
-- Handle authentication and CORS in management API’s
+- Handle authentication and CORS in management APIs
 - Always Document API changes
 - Constants should be in the packages folder
 - Types should be in the packages folder
@@ -51,18 +51,18 @@ Server actions are used to perform server actions in client components. For exam
 
 We utilize [prisma](https://www.prisma.io/) as our Object-Relational Mapping (ORM) tool to interact with the database. This implies that when you need to fetch or modify data in the database, you will be utilizing prisma. All prisma calls should be written in the services folder `packages/lib/services`, and before creating a new service, please ensure that one does not already exist.
 
-## Handle authentication and CORS in management API’s
+## Handle authentication and CORS in management APIs
 
-We have two API’s: Management API and Client API.
+We have two APIs: Management API and Client API.
 
-The public endpoints of the Client API are used by the link survey and `formbricks-js` to send responses and displays to formbricks. Client API’s can be found in `apps/web/app/api/v1/client`
+The public endpoints of the Client API are used by the link survey and `formbricks-js` to send responses and displays to formbricks. Client APIs can be found in `apps/web/app/api/v1/client`
 
-The Management API offers the same functionality as the management frontend and can be used to create surveys, view responses or change account settings. The endpoints require an api key that the user can obtain in the management frontend. Management API’s can be found in `apps/web/app/api/v1/management`.
+The Management API offers the same functionality as the management frontend and can be used to create surveys, view responses or change account settings. The endpoints require an api key that the user can obtain in the management frontend. Management APIs can be found in `apps/web/app/api/v1/management`.
 
 Please keep the following in mind:
 
-- When dealing with Management API’s always make sure to require authentication via API keys and a sufficient authorization check.
-- Make sure to handle CORS request in any new Client API endpoint you create as these are called from the browser in link surveys or `formbricks-js`. Example below:
+- When dealing with Management APIs always make sure to require authentication via API keys and a sufficient authorization check.
+- Make sure to handle CORS requests in any new Client API endpoint you create as these are called from the browser in link surveys or `formbricks-js`. Example below:
 
 <Image
   src={CorsHandling}
@@ -75,7 +75,7 @@ Please keep the following in mind:
 
 It is imperative that any and all modifications or updates made to the client API are thoroughly and comprehensively documented. This documentation should provide clear and detailed information about the nature of the changes, their impact on existing functionality, and any new features or improvements introduced. This practice not only ensures transparency and accountability but also aids developers, both internal and external, in understanding and effectively utilizing the API, ultimately fostering a more robust and user-friendly development ecosystem.
 
-## Contants should be in the packages folder
+## Constants should be in the packages folder
 
 You should store constants in `packages/lib/constants`
 
@@ -123,6 +123,6 @@ At the moment Matti is responsible for approving and merging pull requests, so p
 
 ### Making a Pull Request
 
-- Be sure to **[check the "Allow edits from maintainers" option](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)** while creating you PR.
+- Be sure to **[check the "Allow edits from maintainers" option](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)** while creating your PR.
 - If your PR refers to or fixes an issue, be sure to add **`refs #XXX`** or **`fixes #XXX`** to the PR description. Replacing **`XXX`** with the respective issue number. See more about **[Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)** .
 - Be sure to fill the PR Template accordingly.
