@@ -1,7 +1,7 @@
 import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { PersonAvatar, ProgressBar } from "@formbricks/ui";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
+import { InboxStackIcon, QueueListIcon, ListBulletIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
 import { truncate } from "@/lib/utils";
@@ -9,7 +9,6 @@ import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
 } from "@formbricks/types/v1/surveys";
-import { ListBulletIcon } from "@heroicons/react/24/solid";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: QuestionSummary<TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion>;
@@ -133,7 +132,11 @@ export default function MultipleChoiceSummary({
         </div>
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <ListBulletIcon className="mr-2 h-4 w-4 " />
+            {isSingleChoice ? (
+              <QueueListIcon className="mr-2 h-4 w-4" />
+            ) : (
+              <ListBulletIcon className="mr-2 h-4 w-4" />
+            )}
             {isSingleChoice
               ? "Multiple-Choice Single Select Question"
               : "Multiple-Choice Multi Select Question"}
