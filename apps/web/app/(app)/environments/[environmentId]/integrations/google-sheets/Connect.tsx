@@ -3,7 +3,6 @@
 import GoogleSheetLogo from "@/images/google-sheets-small.png";
 import FormbricksLogo from "@/images/logo.svg";
 import { authorize } from "@formbricks/lib/client/google";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,13 +11,14 @@ import { useState } from "react";
 interface ConnectProps {
   enabled: boolean;
   environmentId: string;
+  webAppUrl: string;
 }
 
-export default function Connect({ enabled, environmentId }: ConnectProps) {
+export default function Connect({ enabled, environmentId, webAppUrl }: ConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const handleGoogleLogin = async () => {
     setIsConnecting(true);
-    authorize(environmentId, WEBAPP_URL).then((url: string) => {
+    authorize(environmentId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }

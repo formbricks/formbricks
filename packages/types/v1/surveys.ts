@@ -295,3 +295,15 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
 });
 
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;
+
+export const ZSurveyQuestionType = z.union([
+  z.literal("openText"),
+  z.literal("multipleChoiceSingle"),
+  z.literal("multipleChoiceMulti"),
+  z.literal("nps"),
+  z.literal("cta"),
+  z.literal("rating"),
+  z.literal("consent"),
+]);
+
+export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;

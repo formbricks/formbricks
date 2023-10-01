@@ -144,6 +144,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
 
 const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
   const firstQuestion = survey.questions[0];
+  console.log("firstQuestion", firstQuestion);
   switch (firstQuestion.type) {
     case QuestionType.OpenText:
       return (
@@ -247,7 +248,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
               <EmailButton
                 href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
                 className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
-                {firstQuestion.dismissButtonLabel}
+                {firstQuestion.dismissButtonLabel || "Skip"}
               </EmailButton>
             )}
             <EmailButton

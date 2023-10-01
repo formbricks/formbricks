@@ -1,26 +1,8 @@
 import { z } from "zod";
-
-const StaticImageData = z.object({
-  // Placeholder schema for StaticImageData
-  // ... (fill in with actual keys and types for the StaticImageData)
-});
+import { ZProfile } from "./profile";
 
 const ZAuthSession = z.object({
-  user: z.object({
-    id: z.string(),
-    createdAt: z.string(),
-    teams: z.array(
-      z.object({
-        id: z.string(),
-        plan: z.string(),
-        role: z.string(),
-      })
-    ),
-    email: z.string(),
-    name: z.string(),
-    onboardingCompleted: z.boolean(),
-    image: StaticImageData.optional(),
-  }),
+  user: ZProfile,
 });
 
 const ZAuthenticationApiKey = z.object({
