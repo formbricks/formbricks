@@ -589,18 +589,16 @@ export default function FormTribeHackathon() {
           </div>
         ))}
       </div>
-
-      <div className="mt-12 flex h-64 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
-        <div className="text-center">
-          <p>No issues released yet.</p>
-          <a
-            href="https://formbricks.com/discord"
-            target="_blank"
-            className="text-slate-700 underline decoration-[#013C27] underline-offset-4">
-            Join Discord to get notified first.
-          </a>
-        </div>
+      <div className="text-center">
+        <Button
+          variant="darkCTA"
+          href="https://github.com/formbricks/formbricks/issues"
+          target="_blank"
+          className="mx-auto mt-12 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] px-20 text-white ">
+          View Issues on GitHub
+        </Button>
       </div>
+
       {/* Side Quests */}
       <div className="mt-16" id="side-quests">
         <h3 className="font-kablammo my-4 text-4xl font-bold text-slate-800">
@@ -618,13 +616,13 @@ export default function FormTribeHackathon() {
                   <TooltipTrigger>
                     <div className="mb-2 flex items-center gap-x-6">
                       <div className="text-2xl">✅</div>
-                      <p className="text-left text-lg font-bold text-slate-700">
+                      <p className="text-left font-bold text-slate-700">
                         {quest.points}: <span className="font-normal">{quest.quest}</span>
                       </p>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side={"top"}>
-                    <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                    <p className="py-2 text-center text-slate-500 dark:text-slate-400">
                       <p className="mt-1 text-sm text-slate-600">Proof: {quest.proof}</p>
                     </p>
                   </TooltipContent>
