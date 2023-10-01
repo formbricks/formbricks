@@ -45,3 +45,4 @@ body:
         - Everything is type-safe
         - We use **chatGPT** to help refactor code. Use our [Formbricks ✨ megaprompt ✨](https://github.com/formbricks/formbricks/blob/main/megaprompt.md) to create the right 
           context before you write your prompt.
+        - Anything unclear? [Ask in Discord](https://formbricks.com/discord)
