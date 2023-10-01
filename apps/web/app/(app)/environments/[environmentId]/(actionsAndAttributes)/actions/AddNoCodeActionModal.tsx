@@ -79,6 +79,7 @@ export default function AddNoCodeActionModal({
       const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
       const updatedData: TActionClassInput = {
         ...data,
+        environmentId,
         noCodeConfig: filteredNoCodeConfig,
         type: "noCode",
       } as TActionClassInput;

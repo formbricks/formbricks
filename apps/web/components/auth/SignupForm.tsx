@@ -2,7 +2,6 @@
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import IsPasswordValid from "@/components/auth/IsPasswordValid";
-import { env } from "@/env.mjs";
 import { createUser } from "@/lib/users/users";
 import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
@@ -11,7 +10,23 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
-export const SignupForm = () => {
+export const SignupForm = ({
+  webAppUrl,
+  privacyUrl,
+  termsUrl,
+  passwordResetEnabled,
+  emailVerificationDisabled,
+  googleOAuthEnabled,
+  githubOAuthEnabled,
+}: {
+  webAppUrl: string;
+  privacyUrl: string | undefined;
+  termsUrl: string | undefined;
+  passwordResetEnabled: boolean;
+  emailVerificationDisabled: boolean;
+  googleOAuthEnabled: boolean;
+  githubOAuthEnabled: boolean;
+}) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
@@ -19,15 +34,13 @@ export const SignupForm = () => {
   const nameRef = useRef<HTMLInputElement>(null);
 
   const inviteToken = searchParams?.get("inviteToken");
-  // const callbackUrl = env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + inviteToken;
-
   const callbackUrl = useMemo(() => {
     if (inviteToken) {
-      return env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + inviteToken;
+      return webAppUrl + "/invite?token=" + inviteToken;
     } else {
-      return env.NEXT_PUBLIC_WEBAPP_URL;
+      return webAppUrl;
     }
-  }, [inviteToken]);
+  }, [inviteToken, webAppUrl]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -45,10 +58,9 @@ export const SignupForm = () => {
         e.target.elements.password.value,
         inviteToken
       );
-      const url =
-        env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
-          ? `/auth/signup-without-verification-success`
-          : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
+      const url = emailVerificationDisabled
+        ? `/auth/signup-without-verification-success`
+        : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
 
       router.push(url);
     } catch (e: any) {
@@ -144,7 +156,7 @@ export const SignupForm = () => {
                     className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
-                {env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
+                {passwordResetEnabled && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -176,38 +188,30 @@ export const SignupForm = () => {
             </Button>
           </form>
 
-          {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
+          {googleOAuthEnabled && (
             <>
               <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
-          {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          {githubOAuthEnabled && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>
 
-        {(env.NEXT_PUBLIC_TERMS_URL || env.NEXT_PUBLIC_PRIVACY_URL) && (
+        {(termsUrl || privacyUrl) && (
           <div className="mt-3 text-center text-xs text-slate-500">
             By signing up, you agree to our
             <br />
-            {env.NEXT_PUBLIC_TERMS_URL && (
-              <Link
-                className="font-semibold"
-                href={env.NEXT_PUBLIC_TERMS_URL}
-                rel="noreferrer"
-                target="_blank">
+            {termsUrl && (
+              <Link className="font-semibold" href={termsUrl} rel="noreferrer" target="_blank">
                 Terms of Service
               </Link>
             )}
-            {env.NEXT_PUBLIC_TERMS_URL && env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
-            {env.NEXT_PUBLIC_PRIVACY_URL && (
-              <Link
-                className="font-semibold"
-                href={env.NEXT_PUBLIC_PRIVACY_URL}
-                rel="noreferrer"
-                target="_blank">
+            {termsUrl && privacyUrl && <span> and </span>}
+            {privacyUrl && (
+              <Link className="font-semibold" href={privacyUrl} rel="noreferrer" target="_blank">
                 Privacy Policy.
               </Link>
             )}

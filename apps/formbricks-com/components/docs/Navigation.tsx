@@ -229,6 +229,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Zapier", href: "/docs/integrations/zapier" },
       { title: "n8n", href: "/docs/integrations/n8n" },
       { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "Google Sheets", href: "/docs/integrations/google-sheets" },
     ],
   },
   {
@@ -245,12 +246,14 @@ export const navigation: Array<NavGroup> = [
       { title: "Production", href: "/docs/self-hosting/production" },
       { title: "Docker", href: "/docs/self-hosting/docker" },
       { title: "From Source", href: "/docs/self-hosting/from-source" },
+      { title: "Migration to v1.1", href: "/docs/self-hosting/migrating-to-1.1" },
     ],
   },
   {
     title: "Contributing",
     links: [
       { title: "Introduction", href: "/docs/contributing/introduction" },
+      { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },

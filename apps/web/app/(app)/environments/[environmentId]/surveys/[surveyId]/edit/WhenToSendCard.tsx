@@ -16,7 +16,7 @@ import {
 } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
@@ -40,30 +40,36 @@ export default function WhenToSendCard({
 
   const autoClose = localSurvey.autoClose !== null;
 
-  let newTrigger = {
-    id: "", // Set the appropriate value for the id
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    name: "",
-    type: "code" as const, // Set the appropriate value for the type
-    environmentId: "",
-    description: null,
-    noCodeConfig: null,
-  };
+  let newTrigger = useMemo(
+    () => ({
+      id: "", // Set the appropriate value for the id
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "",
+      type: "code" as const, // Set the appropriate value for the type
+      environmentId: "",
+      description: null,
+      noCodeConfig: null,
+    }),
+    []
+  );
 
-  const addTriggerEvent = () => {
+  const addTriggerEvent = useCallback(() => {
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = [...localSurvey.triggers, newTrigger];
     setLocalSurvey(updatedSurvey);
-  };
+  }, [newTrigger, localSurvey, setLocalSurvey]);
 
-  const setTriggerEvent = (idx: number, actionClassId: string) => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = actionClassArray!.find((actionClass) => {
-      return actionClass.id === actionClassId;
-    })!;
-    setLocalSurvey(updatedSurvey);
-  };
+  const setTriggerEvent = useCallback(
+    (idx: number, actionClassId: string) => {
+      const updatedSurvey = { ...localSurvey };
+      updatedSurvey.triggers[idx] = actionClassArray!.find((actionClass) => {
+        return actionClass.id === actionClassId;
+      })!;
+      setLocalSurvey(updatedSurvey);
+    },
+    [actionClassArray, localSurvey, setLocalSurvey]
+  );
 
   const removeTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
@@ -95,12 +101,12 @@ export default function WhenToSendCard({
     const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, delay: value };
     setLocalSurvey(updatedSurvey);
   };
+
   useEffect(() => {
-    console.log(actionClassArray);
     if (activeIndex !== null) {
       setTriggerEvent(activeIndex, actionClassArray[actionClassArray.length - 1].id);
     }
-  }, [actionClassArray]);
+  }, [actionClassArray, activeIndex, setTriggerEvent]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -113,7 +119,7 @@ export default function WhenToSendCard({
     if (localSurvey.triggers.length === 0) {
       addTriggerEvent();
     }
-  }, []);
+  }, [addTriggerEvent, localSurvey.triggers.length]);
 
   return (
     <>

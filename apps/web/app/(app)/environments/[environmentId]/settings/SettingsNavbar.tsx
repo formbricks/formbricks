@@ -1,9 +1,8 @@
 "use client";
 
-import { useProduct } from "@/lib/products/products";
-import { useTeam } from "@/lib/teams/teams";
 import { truncate } from "@/lib/utils";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TTeam } from "@formbricks/types/v1/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import {
@@ -25,10 +24,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 
-export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
+export default function SettingsNavbar({
+  environmentId,
+  isFormbricksCloud,
+  team,
+  product,
+}: {
+  environmentId: string;
+  isFormbricksCloud: boolean;
+  team: TTeam;
+  product: TProduct;
+}) {
   const pathname = usePathname();
-  const { team } = useTeam(environmentId);
-  const { product } = useProduct(environmentId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
 
   interface NavigationLink {
@@ -113,7 +120,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             name: "Billing & Plan",
             href: `/environments/${environmentId}/settings/billing`,
             icon: CreditCardIcon,
-            hidden: !IS_FORMBRICKS_CLOUD,
+            hidden: !isFormbricksCloud,
             current: pathname?.includes("/billing"),
           },
         ],
@@ -152,21 +159,21 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             href: "https://formbricks.com/gdpr",
             icon: LinkIcon,
             target: "_blank",
-            hidden: !IS_FORMBRICKS_CLOUD,
+            hidden: !isFormbricksCloud,
           },
           {
             name: "Privacy",
             href: "https://formbricks.com/privacy",
             icon: LinkIcon,
             target: "_blank",
-            hidden: !IS_FORMBRICKS_CLOUD,
+            hidden: !isFormbricksCloud,
           },
           {
             name: "Terms",
             href: "https://formbricks.com/terms",
             icon: LinkIcon,
             target: "_blank",
-            hidden: !IS_FORMBRICKS_CLOUD,
+            hidden: !isFormbricksCloud,
           },
           {
             name: "License",
@@ -178,7 +185,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
         ],
       },
     ],
-    [environmentId, pathname]
+    [environmentId, isFormbricksCloud, pathname]
   );
 
   if (!navigation) return null;

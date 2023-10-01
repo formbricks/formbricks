@@ -24,7 +24,7 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import ResponseFilter from "./ResponseFilter";
 import { DateRange, useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
-import { useTagsForEnvironment } from "@/lib/tags/tags";
+import { TTag } from "@formbricks/types/v1/tags";
 
 enum DateSelected {
   FROM = "from",
@@ -44,7 +44,7 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
-  environmentId: string;
+  environmentTags: TTag[];
   survey: TSurvey;
   responses: TResponse[];
   totalResponses: TResponse[];
@@ -61,7 +61,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentId, responses, survey, totalResponses }: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -73,7 +73,6 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
-  const { data: environmentTags } = useTagsForEnvironment(environmentId);
 
   // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
   useEffect(() => {
@@ -318,7 +317,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
                 )}
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {

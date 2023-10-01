@@ -1,3 +1,5 @@
+import { TInvite } from "@formbricks/types/v1/invites";
+
 export function capitalizeFirstLetter(string: string | null = "") {
   if (string === null) {
     return "";
@@ -71,4 +73,18 @@ export const shuffleArray = (array: any[], shuffleOption: string | undefined) =>
   }
 
   return arrayCopy;
+};
+
+export enum MEMBERSHIP_ROLES {
+  OWNER = "owner",
+  ADMIN = "admin",
+  EDITOR = "editor",
+  DEVELOPER = "developer",
+  VIEWER = "viewer",
+}
+
+export const isInviteExpired = (invite: TInvite) => {
+  const now = new Date();
+  const expiresAt = new Date(invite.expiresAt);
+  return now > expiresAt;
 };

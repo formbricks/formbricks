@@ -55,7 +55,7 @@ export default function NPSQuestion({
                   onClick={() => {
                     if (question.required) {
                       onSubmit({
-                        [question.id]: value,
+                        [question.id]: number,
                       });
                     }
                     onChange({ [question.id]: number });
