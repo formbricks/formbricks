@@ -51,14 +51,16 @@ export const renderWidget = (survey: TSurvey) => {
       darkOverlay: product.darkOverlay,
       highlightBorderColor: product.highlightBorderColor,
       placement: product.placement,
-      onDisplay: () => {
-        createDisplay(
+      onDisplay: async () => {
+        const { id } = await createDisplay(
           {
             surveyId: survey.id,
             personId: config.get().state.person.id,
           },
           config.get().apiHost
         );
+        surveyState.updateDisplayId(id);
+        responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
         responseQueue.add(responseUpdate);
@@ -70,7 +72,7 @@ export const renderWidget = (survey: TSurvey) => {
 
 export const closeSurvey = async (): Promise<void> => {
   // remove container element from DOM
-  document.getElementById(containerId).remove();
+  document.getElementById(containerId)?.remove();
   addWidgetContainer();
 
   try {

@@ -10,6 +10,7 @@ import SettingsTitle from "../SettingsTitle";
 import DeleteTeam from "./DeleteTeam";
 import { EditMemberships } from "./EditMemberships";
 import EditTeamName from "./EditTeamName";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">
@@ -65,6 +66,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
             isAdminOrOwner={isUserAdminOrOwner}
             role={currentUserRole}
             isLeaveTeamDisabled={isLeaveTeamDisabled}
+            isInviteDisabled={INVITE_DISABLED}
           />
         )}
 

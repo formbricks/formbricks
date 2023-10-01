@@ -16,6 +16,7 @@ import { getPerson, transformPrismaPerson } from "./person";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { revalidateTag } from "next/cache";
 
 const responseSelection = {
   id: true,
@@ -74,6 +75,8 @@ const responseSelection = {
     },
   },
 };
+
+export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-responses`;
 
 export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
   validateInputs([personId, ZId]);
@@ -146,6 +149,10 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
+
+    if (response.surveyId) {
+      revalidateTag(getResponsesCacheTag(response.surveyId));
+    }
 
     return response;
   } catch (error) {
@@ -296,6 +303,10 @@ export const updateResponse = async (
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
+    if (response.surveyId) {
+      revalidateTag(getResponsesCacheTag(response.surveyId));
+    }
+
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -306,15 +317,22 @@ export const updateResponse = async (
   }
 };
 
-export async function deleteResponse(responseId: string) {
+export const deleteResponse = async (responseId: string): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
-    const deletedResponse = await prisma.response.delete({
+    const responsePrisma = await prisma.response.delete({
       where: {
         id: responseId,
       },
+      select: responseSelection,
     });
-    return deletedResponse;
+
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+    return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -322,4 +340,4 @@ export async function deleteResponse(responseId: string) {
 
     throw error;
   }
-}
+};

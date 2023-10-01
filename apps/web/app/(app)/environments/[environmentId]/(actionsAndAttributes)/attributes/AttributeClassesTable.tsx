@@ -8,11 +8,9 @@ import { useMemo } from "react";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 export default function AttributeClassesTable({
-  environmentId,
   attributeClasses,
   children: [TableHeading, howToAddAttributeButton, attributeRows],
 }: {
-  environmentId: string;
   attributeClasses: TAttributeClass[];
   children: [JSX.Element, JSX.Element, JSX.Element[]];
 }) {
@@ -69,7 +67,6 @@ export default function AttributeClassesTable({
           ))}
         </div>
         <AttributeDetailModal
-          environmentId={environmentId}
           open={isAttributeDetailModalOpen}
           setOpen={setAttributeDetailModalOpen}
           attributeClass={activeAttributeClass}

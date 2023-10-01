@@ -4,10 +4,10 @@ import { createId } from "@paralleldrive/cuid2";
 
 /** @type {import('next').NextConfig} */
 
-const isCloud = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1";
+const isCloud = process.env.IS_FORMBRICKS_CLOUD === "1";
 
 const nextConfig = {
-  assetPrefix: isCloud ? process.env.NEXT_PUBLIC_WEBAPP_URL : undefined,
+  assetPrefix: isCloud ? process.env.WEBAPP_URL : undefined,
   output: "standalone",
   experimental: {
     serverActions: true,

@@ -19,6 +19,7 @@ interface PreviewSurveyProps {
   product: TProduct;
   environment: TEnvironment;
 }
+let surveyNameTemp;
 
 export default function PreviewSurvey({
   survey,
@@ -46,7 +47,20 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, survey.type, survey, setActiveQuestionId]);
 
+  useEffect(() => {
+    if (survey.name !== surveyNameTemp) {
+      resetQuestionProgress();
+      surveyNameTemp = survey.name;
+    }
+  }, [survey]);
+
   function resetQuestionProgress() {
+    let storePreviewMode = previewMode;
+    setPreviewMode("null");
+    setTimeout(() => {
+      setPreviewMode(storePreviewMode);
+    }, 10);
+
     setActiveQuestionId(survey.questions[0].id);
   }
 
