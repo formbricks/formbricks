@@ -20,14 +20,15 @@ import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SummaryListProps {
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
 }
 
-export default function SummaryList({ environmentId, survey, responses }: SummaryListProps) {
+export default function SummaryList({ environment, survey, responses }: SummaryListProps) {
   const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses
@@ -48,13 +49,13 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
     <>
       <div className="mt-10 space-y-8">
         {survey.type === "web" && responses.length === 0 && (
-          <EmptyInAppSurveys environmentId={environmentId} />
+          <EmptyInAppSurveys environmentId={environment.id} />
         )}
 
         {survey.type !== "web" && responses.length === 0 ? (
           <EmptySpaceFiller
             type="response"
-            environmentId={environmentId}
+            environment={environment}
             noWidgetRequired={survey.type === "link"}
           />
         ) : (
@@ -65,7 +66,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                   <OpenTextSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as QuestionSummary<TSurveyOpenTextQuestion>}
-                    environmentId={environmentId}
+                    environmentId={environment.id}
                   />
                 );
               }
@@ -81,7 +82,7 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
                         TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
                       >
                     }
-                    environmentId={environmentId}
+                    environmentId={environment.id}
                     surveyType={survey.type}
                   />
                 );

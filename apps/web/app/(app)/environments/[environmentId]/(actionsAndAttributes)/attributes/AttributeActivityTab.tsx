@@ -1,31 +1,53 @@
+"use client";
+
+import { GetActiveInactiveSurveysAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useAttributeClass } from "@/lib/attributeClasses/attributeClasses";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { ErrorComponent, Label } from "@formbricks/ui";
 import { TagIcon } from "@heroicons/react/24/solid";
+import { useEffect, useState } from "react";
 
 interface EventActivityTabProps {
-  attributeClassId: string;
-  environmentId: string;
+  attributeClass: TAttributeClass;
 }
 
-export default function AttributeActivityTab({ environmentId, attributeClassId }: EventActivityTabProps) {
-  const { attributeClass, isLoadingAttributeClass, isErrorAttributeClass } = useAttributeClass(
-    environmentId,
-    attributeClassId
-  );
+export default function AttributeActivityTab({ attributeClass }: EventActivityTabProps) {
+  const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
+  const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  if (isLoadingAttributeClass) return <LoadingSpinner />;
-  if (isErrorAttributeClass) return <ErrorComponent />;
+  useEffect(() => {
+    setLoading(true);
+
+    getSurveys();
+
+    async function getSurveys() {
+      try {
+        setLoading(true);
+        const activeInactive = await GetActiveInactiveSurveysAction(attributeClass.id);
+        setActiveSurveys(activeInactive.activeSurveys);
+        setInactiveSurveys(activeInactive.inactiveSurveys);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [attributeClass.id]);
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorComponent />;
 
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
         <div>
           <Label className="text-slate-500">Active surveys</Label>
-          {attributeClass.activeSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
-          {attributeClass.activeSurveys.map((surveyName) => (
+          {activeSurveys?.length === 0 && <p className="text-sm text-slate-900">-</p>}
+          {activeSurveys?.map((surveyName) => (
             <p key={surveyName} className="text-sm text-slate-900">
               {surveyName}
             </p>
@@ -33,8 +55,8 @@ export default function AttributeActivityTab({ environmentId, attributeClassId }
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
-          {attributeClass.inactiveSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
-          {attributeClass.inactiveSurveys.map((surveyName) => (
+          {inactiveSurveys?.length === 0 && <p className="text-sm text-slate-900">-</p>}
+          {inactiveSurveys?.map((surveyName) => (
             <p key={surveyName} className="text-sm text-slate-900">
               {surveyName}
             </p>
