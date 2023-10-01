@@ -12,6 +12,10 @@ export const WEBAPP_URL =
 
 export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" : `${WEBAPP_URL}/s/`;
 
+export const SHORT_SURVEY_BASE_URL = env.SHORT_SURVEY_BASE_URL
+  ? env.SURVEY_BASE_URL + "/"
+  : `${WEBAPP_URL}/i/`;
+
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = env.CRON_SECRET;

@@ -500,3 +500,12 @@ model User {
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
 }
+
+model UrlShortener {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  fullUrl   String
+  shortUrl  String
+  hits      Int      @default(0)
+}
