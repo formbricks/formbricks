@@ -53,14 +53,18 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
     </Tailwind>
   );
 
-  const emailHTML = render(Email, { pretty: true });
-  const emailHTMLWithoutDoctype = emailHTML.replace(
+  const emailHtml = render(Email, { pretty: true });
+  const emailHtmlWithoutDoctype = emailHtml.replace(
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
     ""
   );
 
   const sendPreviewEmail = async () => {
-    await sendEmailAction({ html: emailHTMLWithoutDoctype, subject, to: email });
+    const emailPreviewHtml = emailHtmlWithoutDoctype
+      .replace(`${surveyUrl}?`, `${surveyUrl}?preview=true&`)
+      .replace(`"${surveyUrl}"`, `"${surveyUrl}?preview=true"`);
+
+    await sendEmailAction({ html: emailPreviewHtml, subject, to: email });
     toast.success("Email sent!");
   };
   return (
@@ -82,7 +86,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
             aria-label="Embed survey in your website"
             onClick={() => {
               toast.success("Embed code copied to clipboard!");
-              navigator.clipboard.writeText(emailHTMLWithoutDoctype);
+              navigator.clipboard.writeText(emailHtmlWithoutDoctype);
             }}
             className="shrink-0"
             EndIcon={DocumentDuplicateIcon}>
@@ -115,7 +119,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
             customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
             language="html"
             showCopyToClipboard={false}>
-            {emailHTMLWithoutDoctype}
+            {emailHtmlWithoutDoctype}
           </CodeBlock>
         ) : (
           <div className="">
