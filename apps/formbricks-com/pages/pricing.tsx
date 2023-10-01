@@ -1,9 +1,9 @@
 import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
-import { PricingTable } from "../components/shared/PricingTable";
-import { PricingCalculator } from "../components/shared/PricingCalculator";
-import { GetStartedWithPricing } from "@/components/shared/PricingGetStarted";
 import { OpenSourceInfo } from "@/components/shared/OpenSourceInfo";
+import { GetStartedWithPricing } from "@/components/shared/PricingGetStarted";
+import { PricingCalculator } from "../components/shared/PricingCalculator";
+import { PricingTable } from "../components/shared/PricingTable";
 
 const inProductSurveys = {
   leadRow: {
@@ -110,36 +110,33 @@ const PricingPage = () => {
         headingTeal="Pricing"
         subheading="Choose what's best for you! All our plans start free."
       />
+      <div className="space-y-24">
+        <div>
+          <GetStartedWithPricing showDetailed={true} />
 
-      <GetStartedWithPricing showDetailed={true} />
+          <PricingTable
+            leadRow={inProductSurveys.leadRow}
+            pricing={inProductSurveys.features}
+            endRow={inProductSurveys.endRow}
+          />
+        </div>
 
-      <PricingTable
-        leadRow={inProductSurveys.leadRow}
-        pricing={inProductSurveys.features}
-        endRow={inProductSurveys.endRow}
-      />
-      <div className="my-12 md:my-20"></div>
-      <PricingTable
-        leadRow={linkSurveys.leadRow}
-        pricing={linkSurveys.features}
-        endRow={linkSurveys.endRow}
-      />
+        <PricingTable
+          leadRow={linkSurveys.leadRow}
+          pricing={linkSurveys.features}
+          endRow={linkSurveys.endRow}
+        />
 
-      <div className="my-12 md:my-20"></div>
-
-      <PricingTable
-        leadRow={integrations.leadRow}
-        pricing={integrations.features}
-        endRow={integrations.endRow}
-      />
-
-      <div className="my-4"></div>
-
-      <GetStartedWithPricing showDetailed={false} />
-
-      <PricingCalculator />
-
-      <OpenSourceInfo />
+        <PricingTable
+          leadRow={integrations.leadRow}
+          pricing={integrations.features}
+          endRow={integrations.endRow}
+        />
+        <div>
+          <PricingCalculator />
+          <OpenSourceInfo />
+        </div>
+      </div>
     </Layout>
   );
 };
