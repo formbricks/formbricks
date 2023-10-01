@@ -1,6 +1,5 @@
 import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/v1/js";
-import type { Person } from "../../../types/js";
-import type { Session, Settings } from "../../../types/js";
+import { TPerson } from "@formbricks/types/v1/people";
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
@@ -14,7 +13,6 @@ import {
 } from "./errors";
 import { Logger } from "./logger";
 import { sync } from "./sync";
-import { TPerson } from "@formbricks/types/v1/people";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();

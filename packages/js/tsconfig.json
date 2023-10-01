@@ -1,5 +1,9 @@
 {
   "extends": "@formbricks/tsconfig/js-library.json",
-  "include": ["**/*.ts", "tsup.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts", "tsup.config.ts", "package.json"],
+  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": true
+  }
 }

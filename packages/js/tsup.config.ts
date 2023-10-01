@@ -2,10 +2,9 @@ import type { Options } from "tsup";
 
 const config: Options = {
   entryPoints: ["src/index.ts"],
-  dts: true,
+  target: "es2015",
   format: ["cjs", "esm"],
-  minify: "terser",
-  sourcemap: true,
+  minify: true,
 };
 
 export default config;

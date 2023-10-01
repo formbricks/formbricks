@@ -48,10 +48,7 @@ export class Config {
         return JSON.parse(savedConfig);
       }
     }
-    return {
-      apiHost: null,
-      environmentId: null,
-    };
+    return {};
   }
 
   private saveToLocalStorage(): Result<void, Error> {

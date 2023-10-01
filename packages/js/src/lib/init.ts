@@ -1,4 +1,4 @@
-import type { InitConfig } from "../../../types/js";
+import type { TJsConfigInput } from "@formbricks/types/v1/js";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -23,7 +23,7 @@ const logger = Logger.getInstance();
 
 let isInitialized = false;
 
-const setDebugLevel = (c: InitConfig): void => {
+const setDebugLevel = (c: TJsConfigInput): void => {
   if (c.debug) {
     logger.debug(`Setting log level to debug`);
     logger.configure({ logLevel: "debug" });
@@ -31,7 +31,7 @@ const setDebugLevel = (c: InitConfig): void => {
 };
 
 export const initialize = async (
-  c: InitConfig
+  c: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");

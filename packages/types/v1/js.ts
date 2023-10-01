@@ -25,12 +25,21 @@ export const ZJsSyncInput = z.object({
 export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
 
 export const ZJsConfig = z.object({
-  environmentId: z.string().cuid2(),
-  apiHost: z.string(),
-  state: ZJsState,
+  environmentId: z.string().cuid2().optional(),
+  apiHost: z.string().optional(),
+  state: ZJsState.optional(),
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;
+
+export const ZJsConfigInput = z.object({
+  environmentId: z.string().cuid2(),
+  apiHost: z.string(),
+  debug: z.boolean().optional(),
+  errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
+});
+
+export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),

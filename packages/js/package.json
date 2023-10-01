@@ -21,7 +21,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "rollup -c",
     "dev": "tsup --watch",
     "go": "tsup --watch",
     "lint": "eslint ./src --fix",
@@ -41,6 +41,10 @@
     "@formbricks/surveys": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@rollup/plugin-commonjs": "^25.0.4",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.1",
+    "@rollup/plugin-typescript": "^11.1.4",
     "@types/jest": "^29.5.5",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
@@ -58,6 +62,7 @@
     "preact-cli": "^3.5.0",
     "preact-render-to-string": "^6.2.1",
     "regenerator-runtime": "^0.14.0",
+    "rollup": "^3.29.4",
     "terser": "^5.20.0"
   },
   "jest": {

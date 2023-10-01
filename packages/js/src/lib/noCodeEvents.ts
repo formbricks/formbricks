@@ -1,5 +1,5 @@
 import type { TActionClass } from "../../../types/v1/actionClasses";
-import type { MatchType } from "../../../types/js";
+import type { TActionClassPageUrlRule } from "@formbricks/types/v1/actionClasses";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { trackAction } from "./actions";
@@ -32,7 +32,7 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
     if (!pageUrl) {
       continue;
     }
-    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as MatchType);
+    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as TActionClassPageUrlRule);
 
     if (match.ok !== true) return err(match.error);
 
@@ -76,7 +76,7 @@ export const removePageUrlEventListeners = (): void => {
 export function checkUrlMatch(
   url: string,
   pageUrlValue: string,
-  pageUrlRule: MatchType
+  pageUrlRule: TActionClassPageUrlRule
 ): Result<boolean, InvalidMatchTypeError> {
   let result: boolean;
   let error: Result<never, InvalidMatchTypeError>;
@@ -143,7 +143,7 @@ export const checkClickMatch = (event: MouseEvent) => {
       }
     }
     if (pageUrl) {
-      const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule);
+      const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule!);
       if (!urlMatch.ok || !urlMatch.value) {
         return;
       }

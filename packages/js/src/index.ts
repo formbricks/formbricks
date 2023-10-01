@@ -1,4 +1,4 @@
-import type { InitConfig } from "../../types/js";
+import type { TJsConfigInput } from "@formbricks/types/v1/js";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
@@ -13,7 +13,7 @@ const logger = Logger.getInstance();
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-const init = async (initConfig: InitConfig) => {
+const init = async (initConfig: TJsConfigInput) => {
   ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, initialize, initConfig);
   await queue.wait();
