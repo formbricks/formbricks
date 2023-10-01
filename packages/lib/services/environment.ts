@@ -7,88 +7,94 @@ import type { TEnvironment, TEnvironmentId, TEnvironmentUpdateInput } from "@for
 import { populateEnvironment } from "../utils/createDemoProductHelpers";
 import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
-import { cache } from "react";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag } from "next/cache";
 
-export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
-  validateInputs([environmentId, ZId]);
-  let environmentPrisma;
+export const getEnvironmentCacheTag = (environmentId: string) => `environments-${environmentId}`;
+export const getEnvironmentsCacheTag = (productId: string) => `products-${productId}-environments`;
 
-  try {
-    environmentPrisma = await prisma.environment.findUnique({
-      where: {
-        id: environmentId,
-      },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
-  }
-
-  try {
-    const environment = ZEnvironment.parse(environmentPrisma);
-    return environment;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
-    }
-    throw new ValidationError("Data validation of environment failed");
-  }
-});
-
-export const getEnvironmentCached = (environmentId: string) =>
+export const getEnvironment = (environmentId: string) =>
   unstable_cache(
     async () => {
-      return await getEnvironment(environmentId);
+      validateInputs([environmentId, ZId]);
+      let environmentPrisma;
+
+      try {
+        environmentPrisma = await prisma.environment.findUnique({
+          where: {
+            id: environmentId,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+
+      try {
+        const environment = ZEnvironment.parse(environmentPrisma);
+        return environment;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          console.error(JSON.stringify(error.errors, null, 2));
+        }
+        throw new ValidationError("Data validation of environment failed");
+      }
     },
-    [environmentId],
+    [`environments-${environmentId}`],
     {
-      tags: [environmentId],
+      tags: [getEnvironmentCacheTag(environmentId)],
       revalidate: 30 * 60, // 30 minutes
     }
   )();
 
-export const getEnvironments = cache(async (productId: string): Promise<TEnvironment[]> => {
-  validateInputs([productId, ZId]);
-  let productPrisma;
-  try {
-    productPrisma = await prisma.product.findFirst({
-      where: {
-        id: productId,
-      },
-      include: {
-        environments: true,
-      },
-    });
+export const getEnvironments = async (productId: string): Promise<TEnvironment[]> =>
+  unstable_cache(
+    async () => {
+      validateInputs([productId, ZId]);
+      let productPrisma;
+      try {
+        productPrisma = await prisma.product.findFirst({
+          where: {
+            id: productId,
+          },
+          include: {
+            environments: true,
+          },
+        });
 
-    if (!productPrisma) {
-      throw new ResourceNotFoundError("Product", productId);
-    }
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-    throw error;
-  }
+        if (!productPrisma) {
+          throw new ResourceNotFoundError("Product", productId);
+        }
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+        throw error;
+      }
 
-  const environments: TEnvironment[] = [];
-  for (let environment of productPrisma.environments) {
-    let targetEnvironment: TEnvironment = ZEnvironment.parse(environment);
-    environments.push(targetEnvironment);
-  }
+      const environments: TEnvironment[] = [];
+      for (let environment of productPrisma.environments) {
+        let targetEnvironment: TEnvironment = ZEnvironment.parse(environment);
+        environments.push(targetEnvironment);
+      }
 
-  try {
-    return environments;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
+      try {
+        return environments;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          console.error(JSON.stringify(error.errors, null, 2));
+        }
+        throw new ValidationError("Data validation of environments array failed");
+      }
+    },
+    [`products-${productId}-environments`],
+    {
+      tags: [getEnvironmentsCacheTag(productId)],
+      revalidate: 30 * 60, // 30 minutes
     }
-    throw new ValidationError("Data validation of environments array failed");
-  }
-});
+  )();
 
 export const updateEnvironment = async (
   environmentId: string,
@@ -104,6 +110,10 @@ export const updateEnvironment = async (
       },
       data: newData,
     });
+
+    revalidateTag(getEnvironmentsCacheTag(updatedEnvironment.productId));
+    revalidateTag(getEnvironmentCacheTag(environmentId));
+
     return updatedEnvironment;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

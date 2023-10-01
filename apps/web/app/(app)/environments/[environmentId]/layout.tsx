@@ -6,6 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import FormbricksClient from "../../FormbricksClient";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
@@ -22,7 +23,11 @@ export default async function EnvironmentLayout({ children, params }) {
       <ResponseFilterProvider>
         <FormbricksClient session={session} />
         <ToasterClient />
-        <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
+        <EnvironmentsNavbar
+          environmentId={params.environmentId}
+          session={session}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        />
         <main className="h-full flex-1 overflow-y-auto bg-slate-50">
           {children}
           <main />
