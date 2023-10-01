@@ -263,6 +263,82 @@ const FAQ = [
   },
 ];
 
+const Leaderboard = [
+  {
+    name: "Piyush",
+    points: "200",
+    link: "https://github.com/gupta-piyush19",
+  },
+  {
+    name: "Subhdeep",
+    points: "100",
+  },
+  {
+    name: "Pratik",
+    points: "100",
+  },
+  {
+    name: "/home/babubaap",
+    points: "100",
+  },
+  {
+    name: "Karuppiah",
+    points: "100",
+  },
+  {
+    name: "Arth",
+    points: "100",
+  },
+  {
+    name: "Neztep",
+    points: "100",
+  },
+  {
+    name: "Kelvin Parmar",
+    points: "100",
+  },
+  {
+    name: "Arjun",
+    points: "100",
+  },
+  {
+    name: "Yashhhh",
+    points: "100",
+  },
+  {
+    name: "vishleshak",
+    points: "100",
+  },
+  {
+    name: "Ashu999",
+    points: "100",
+  },
+  {
+    name: "Sachin H",
+    points: "100",
+  },
+  {
+    name: "Suraj Jadhav",
+    points: "100",
+  },
+  {
+    name: "Vishrut",
+    points: "100",
+  },
+  {
+    name: "cataxcab",
+    points: "100",
+  },
+  {
+    name: "Eldemarkki",
+    points: "100",
+  },
+  {
+    name: "Suyash",
+    points: "100",
+  },
+];
+
 export default function FormTribeHackathon() {
   // dark mode fix
   useEffect(() => {
@@ -574,13 +650,21 @@ export default function FormTribeHackathon() {
         title="The Leaderboard"
         description="We keep track of all contributions and side quests in Discord. Join to take part!"
       />
-      <div className="mt-12 flex h-64 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
-        <div className="text-center">
-          <p>Not live yet.</p>
-          <a href="#join" className="pl-2 text-slate-700 underline decoration-[#013C27] underline-offset-4">
-            Sign up to get notified on kick-off.
-          </a>
+      <div className="rounded-lg border border-slate-200">
+        <div className=" grid grid-cols-2 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+          <div className="m-2 pl-6">User</div>
+          <div className="m-2 pr-6 text-right">Points</div>
         </div>
+        {Leaderboard.sort((a, b) => parseInt(b.points) - parseInt(a.points)).map((player) => (
+          <a href={player.link} key={player.name} className="w-full" target="_blank">
+            <div className="m-4 grid grid-cols-2 content-center rounded-lg hover:bg-slate-100">
+              <div className="flex items-center  text-sm">
+                <div className="m-2 font-medium text-slate-900">{player.name}</div>
+              </div>
+              <div className="m-2 my-auto text-right text-sm text-slate-900">{player.points} Points</div>
+            </div>
+          </a>
+        ))}
       </div>
 
       {/* The Timeline */}
