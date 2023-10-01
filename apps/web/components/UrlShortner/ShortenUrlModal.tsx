@@ -1,16 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Modal from "@/components/shared/Modal";
 import { Button, Input, Label } from "@formbricks/ui";
 import { useForm } from "react-hook-form";
 import { LinkIcon } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
+// import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 
 interface ShortenUrlModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
 }
 
+const SURVEY_BASE_URL = "https://formbricks.com/i/";
+
 const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
-  const { register, handleSubmit } = useForm();
+  const [loading, setLoading] = useState(false);
+
+  const { register, handleSubmit } = useForm({
+    mode: "onBlur",
+  });
+
+  const submitUrl = async (data) => {
+    setLoading(true);
+
+    console.log(data);
+
+    setLoading(false);
+  };
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
@@ -28,7 +44,7 @@ const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
             </div>
           </div>
         </div>
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={handleSubmit(submitUrl)}>
           <div className="flex w-full justify-between space-y-4 rounded-lg p-6 text-sm">
             <div className="grid w-full grid-cols-5 gap-x-2 gap-y-4">
               <div className="col-span-4">
@@ -37,10 +53,14 @@ const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
                   className="h-11"
                   autoFocus
                   placeholder="https://formbricks.com/c..."
-                  {...register("name", { required: true })}
+                  {...register("url", {
+                    required: true,
+                    validate: (value) =>
+                      value.startsWith(SURVEY_BASE_URL) || toast.error("Only formbricks links allowed."),
+                  })}
                 />
               </div>
-              <Button className="h-11 self-end" variant="darkCTA">
+              <Button type="submit" loading={loading} className="h-11 self-end" variant="darkCTA">
                 Shorten
               </Button>
               <div className="col-span-4">
