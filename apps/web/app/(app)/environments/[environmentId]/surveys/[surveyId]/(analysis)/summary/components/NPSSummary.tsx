@@ -3,6 +3,7 @@ import { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
 import { HalfCircle, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
+import { PresentationChartBarIcon } from "@heroicons/react/24/solid";
 
 interface NPSSummaryProps {
   questionSummary: QuestionSummary<TSurveyNPSQuestion>;
@@ -81,7 +82,9 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
           </h3>
         </div>
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="rounded-lg bg-slate-100 p-2">Net Promoter Score (NPS)</div>
+          <div className="flex items-center rounded-lg bg-slate-100 p-2">
+            <PresentationChartBarIcon className="mr-2 h-4 w-4 " /> Net Promoter Score (NPS)
+          </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {result.total} responses

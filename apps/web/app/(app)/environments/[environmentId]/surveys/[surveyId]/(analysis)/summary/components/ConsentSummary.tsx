@@ -3,6 +3,7 @@ import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
+import { CheckIcon } from "@heroicons/react/24/solid";
 
 interface ConsentSummaryProps {
   questionSummary: QuestionSummary<TSurveyConsentQuestion>;
@@ -41,7 +42,10 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
           </h3>
         </div>
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="rounded-lg bg-slate-100 p-2">Consent</div>
+          <div className=" flex items-center rounded-lg bg-slate-100 p-2">
+            <CheckIcon className="mr-2 h-4 w-4 " />
+            Consent
+          </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {ctr.count} responses
