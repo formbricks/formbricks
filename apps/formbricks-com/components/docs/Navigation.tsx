@@ -253,6 +253,7 @@ export const navigation: Array<NavGroup> = [
     title: "Contributing",
     links: [
       { title: "Introduction", href: "/docs/contributing/introduction" },
+      { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
