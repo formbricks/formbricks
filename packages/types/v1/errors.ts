@@ -70,6 +70,13 @@ class AuthorizationError extends Error {
   }
 }
 
+type NetworkError = {
+  code: "network_error";
+  message: string;
+  status: number;
+  url: URL;
+};
+
 export {
   ResourceNotFoundError,
   InvalidInputError,
@@ -81,3 +88,4 @@ export {
   AuthenticationError,
   AuthorizationError,
 };
+export type { NetworkError };

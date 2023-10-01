@@ -3,7 +3,6 @@
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/lib/formbricks";
-import { ResponseId } from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { Objective } from "@formbricks/types/templates";
 import { TProfile } from "@formbricks/types/v1/profile";
@@ -14,7 +13,7 @@ import { toast } from "react-hot-toast";
 type ObjectiveProps = {
   next: () => void;
   skip: () => void;
-  formbricksResponseId?: ResponseId;
+  formbricksResponseId?: string;
   profile: TProfile;
 };
 

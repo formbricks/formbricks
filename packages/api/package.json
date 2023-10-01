@@ -17,13 +17,12 @@
     "lint": "eslint ./src --fix",
     "clean": "rimraf .turbo node_modules dist"
   },
-  "dependencies": {
-    "@formbricks/lib": "workspace:*"
-  },
   "devDependencies": {
     "@formbricks/types": "workspace:*",
+    "@formbricks/lib": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
-    "eslint-config-formbricks": "workspace:*",
-    "tsup": "^7.2.0"
+    "tsup": "^7.2.0",
+    "typescript": "5.1.6",
+    "eslint-config-formbricks": "workspace:*"
   }
 }
