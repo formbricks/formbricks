@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
+import ShortenUrlModal from "@/components/UrlShortner/ShortenUrlModal";
 import { formbricksLogout } from "@/lib/formbricks";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 import formbricks from "@formbricks/js";
@@ -52,6 +53,7 @@ import {
   PlusIcon,
   UserCircleIcon,
   UsersIcon,
+  LinkIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { MenuIcon } from "lucide-react";
@@ -89,6 +91,7 @@ export default function Navigation({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [showUrlShortnerModal, setShowUrlShortnerModal] = useState(false);
   const product = products.find((product) => product.id === environment.productId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
 
@@ -179,6 +182,11 @@ export default function Navigation({
     {
       title: "Setup",
       links: [
+        {
+          icon: LinkIcon,
+          label: "Link Shortener",
+          clickHandler: () => setShowUrlShortnerModal(true),
+        },
         {
           icon: DocumentCheckIcon,
           label: "Setup checklist",
@@ -437,18 +445,24 @@ export default function Navigation({
                     {dropdownnavigation.map((item) => (
                       <DropdownMenuGroup key={item.title}>
                         <DropdownMenuSeparator />
-                        {item.links.map(
-                          (link) =>
-                            !link.hidden && (
-                              <Link href={link.href} target={link.target} key={link.label}>
-                                <DropdownMenuItem key={link.label}>
-                                  <div className="flex items-center">
-                                    <link.icon className="mr-2 h-4 w-4" />
-                                    <span>{link.label}</span>
-                                  </div>
-                                </DropdownMenuItem>
-                              </Link>
-                            )
+                        {item.links.map((link) =>
+                          !link.hidden && link.clickHandler ? (
+                            <DropdownMenuItem key={link.label}>
+                              <div onClick={link.clickHandler} className="flex items-center">
+                                <link.icon className="mr-2 h-4 w-4" />
+                                <span>{link.label}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          ) : (
+                            <Link href={link.href} target={link.target} key={link.label}>
+                              <DropdownMenuItem key={link.label}>
+                                <div className="flex items-center">
+                                  <link.icon className="mr-2 h-4 w-4" />
+                                  <span>{link.label}</span>
+                                </div>
+                              </DropdownMenuItem>
+                            </Link>
+                          )
                         )}
                       </DropdownMenuGroup>
                     ))}
@@ -489,6 +503,7 @@ export default function Navigation({
             environmentId={environment.id}
           />
           <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
+          <ShortenUrlModal open={showUrlShortnerModal} setOpen={(val) => setShowUrlShortnerModal(val)} />
         </nav>
       )}
     </>
