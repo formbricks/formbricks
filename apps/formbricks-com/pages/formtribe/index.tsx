@@ -361,7 +361,7 @@ export default function FormTribeHackathon() {
           Write code, win a Macbook 🔥
         </a>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
-          <span className="xl:inline">Let&apos;s ship Open Source Typeform in Hacktoberfest</span>
+          <span className="xl:inline">Let&apos;s ship Open Source Typeform during Hacktoberfest</span>
         </h1>
 
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-6 md:text-xl">
