@@ -6,7 +6,6 @@ import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 
 const halfHourInSeconds = 60 * 30;
@@ -34,29 +33,25 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = cache(async (environmentId: string): Promise<TActionClass[]> => {
-  validateInputs([environmentId, ZId]);
-  try {
-    let actionClasses = await prisma.eventClass.findMany({
-      where: {
-        environmentId: environmentId,
-      },
-      select,
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
-
-    return actionClasses;
-  } catch (error) {
-    throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
-  }
-});
-
-export const getActionClassesCached = (environmentId: string) =>
+export const getActionClasses = (environmentId: string): Promise<TActionClass[]> =>
   unstable_cache(
     async () => {
-      return await getActionClasses(environmentId);
+      validateInputs([environmentId, ZId]);
+      try {
+        let actionClasses = await prisma.eventClass.findMany({
+          where: {
+            environmentId: environmentId,
+          },
+          select,
+          orderBy: {
+            createdAt: "asc",
+          },
+        });
+
+        return actionClasses;
+      } catch (error) {
+        throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
+      }
     },
     getActionClassesCacheKey(environmentId),
     {
