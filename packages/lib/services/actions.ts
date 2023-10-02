@@ -11,7 +11,7 @@ import { validateInputs } from "../utils/validate";
 import { TJsActionInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { EventType } from "@prisma/client";
-import { getActionClassCacheTag, getActionClassCached } from "../services/actionClass";
+import { getActionClassCacheTag, getActionClassCached } from "../actionClass/service";
 import { getSessionCached } from "../services/session";
 
 export const getActionsByEnvironmentId = cache(
