@@ -266,8 +266,12 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "200",
+    points: "550",
     link: "https://github.com/gupta-piyush19",
+  },
+  {
+    name: "Suman",
+    points: "200",
   },
   {
     name: "Subhdeep",
@@ -275,11 +279,7 @@ const Leaderboard = [
   },
   {
     name: "Pratik",
-    points: "100",
-  },
-  {
-    name: "/home/babubaap",
-    points: "100",
+    points: "250",
   },
   {
     name: "Karuppiah",
@@ -295,7 +295,7 @@ const Leaderboard = [
   },
   {
     name: "Kelvin Parmar",
-    points: "100",
+    points: "200",
   },
   {
     name: "Arjun",
@@ -303,7 +303,7 @@ const Leaderboard = [
   },
   {
     name: "Yashhhh",
-    points: "100",
+    points: "200",
   },
   {
     name: "vishleshak",
@@ -323,7 +323,7 @@ const Leaderboard = [
   },
   {
     name: "Vishrut",
-    points: "100",
+    points: "250",
   },
   {
     name: "cataxcab",
@@ -335,6 +335,39 @@ const Leaderboard = [
   },
   {
     name: "Suyash",
+    points: "100",
+  },
+  {
+    name: "Rohan Gupta",
+    points: "100",
+  },
+  {
+    name: "Nafees Nazik",
+    points: "100",
+  },
+  {
+    name: "monk",
+    points: "100",
+  },
+  {
+    name: "Pratik Tiwari (Pratik)",
+    points: "100",
+  },
+  {
+    name: "Ardash Malviya",
+    points: "100",
+  },
+  {
+    name: "Aditya Deshlahre",
+    points: "450",
+    link: "https://github.com/adityadeshlahre",
+  },
+  {
+    name: "Rutam",
+    points: "250",
+  },
+  {
+    name: "Sagnik Sahoo",
     points: "100",
   },
 ];
