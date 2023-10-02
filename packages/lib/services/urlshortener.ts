@@ -1,45 +1,86 @@
 import { prisma } from "@formbricks/database";
-import { SHORT_SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { SHORT_SURVEY_BASE_URL } from "../../lib/constants";
 import { customAlphabet } from "nanoid";
+import { Prisma } from "@prisma/client";
+import { DatabaseError } from "@formbricks/types/v1/errors";
 
 // Create short url and return it
 export const createShortUrl = async (fullUrl: string) => {
   const nanoId = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10)();
-  const shortUrl = `${SHORT_SURVEY_BASE_URL}/${nanoId}`;
+  const shortUrl = `${SHORT_SURVEY_BASE_URL}${nanoId}`;
 
-  const inserted = await prisma.urlShortener.create({
-    data: {
-      fullUrl,
-      shortUrl,
-    },
-    select: {
-      shortUrl: true,
-    },
-  });
+  let urlEntry;
 
-  return inserted.shortUrl;
+  try {
+    urlEntry = await prisma.urlShortener.findFirst({
+      where: {
+        fullUrl,
+      },
+      select: {
+        shortUrl: true,
+      },
+    });
+
+    // If an entry with the provided fullUrl does not exist, create a new one.
+    if (!urlEntry) {
+      urlEntry = await prisma.urlShortener.create({
+        data: {
+          fullUrl,
+          shortUrl,
+        },
+        select: {
+          shortUrl: true,
+        },
+      });
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+
+  return urlEntry.shortUrl;
 };
 
 // Get full url from short url and increment the hits count
-export const getFullUrl = async (shortUrl: string) => {
-  const url = await prisma.urlShortener.findUnique({
-    where: {
-      shortUrl: shortUrl,
-    },
-  });
+export const getFullUrl = async (shortUrlParam: string) => {
+  const shortUrl = `${SHORT_SURVEY_BASE_URL}${shortUrlParam}`;
 
-  if (!url) {
-    return null;
+  let urlEntry;
+
+  try {
+    urlEntry = await prisma.urlShortener.findFirst({
+      where: {
+        shortUrl,
+      },
+    });
+
+    if (!urlEntry) {
+      return null;
+    }
+
+    await prisma.urlShortener.update({
+      where: {
+        id: urlEntry.id,
+        shortUrl,
+      },
+      data: {
+        hits: {
+          increment: 1,
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
   }
 
-  await prisma.urlShortener.update({
-    where: {
-      shortUrl,
-    },
-    data: {
-      hits: url.hits + 1,
-    },
-  });
+  console.log(urlEntry.fullUrl);
 
-  return url;
+  return urlEntry.fullUrl;
 };

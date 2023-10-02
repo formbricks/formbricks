@@ -18,12 +18,12 @@ type UrlValidationStates = "default" | "valid" | "invalid";
 type UrlShortenerFormDataProps = {
   url: string;
 };
+const defaultShortUrl = "https://formbricks.com/s/...";
 
 export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalProps) {
   const [isShorteningUrl, setIsShorteningUrl] = useState(false);
-  const [isCopying, setIsCopying] = useState(false);
   const [urlValidationState, setUrlValidationState] = useState<UrlValidationStates>("default");
-  const [shortUrl, setShortUrl] = useState("https://formbricks.com/c...");
+  const [shortUrl, setShortUrl] = useState(defaultShortUrl);
   const { register, handleSubmit, watch } = useForm<UrlShortenerFormDataProps>({
     mode: "onSubmit",
     defaultValues: {
@@ -42,6 +42,7 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
     const isValid = regexPattern.test(value);
     if (!isValid) {
       setUrlValidationState("invalid");
+      setShortUrl(defaultShortUrl);
       toast.error("Only formbricks links allowed.");
     } else {
       setUrlValidationState("valid");
@@ -50,13 +51,10 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
 
   const shortenUrl = async (data: UrlShortenerFormDataProps) => {
     if (urlValidationState !== "valid") return;
-    console.log({ data });
 
     setIsShorteningUrl(true);
-
     const shortUrl = await createShortUrlAction(data.url);
     setShortUrl(shortUrl);
-
     setIsShorteningUrl(false);
   };
 
@@ -73,14 +71,6 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
         selection.addRange(range);
       }
     }
-  };
-
-  const copyUrl = () => {
-    setIsCopying(true);
-    new Promise((resolve) => setTimeout(resolve, 3000));
-    navigator.clipboard.writeText("https://formbricks.com/c...");
-    toast.success("URL copied to clipboard!");
-    setIsCopying(false);
   };
 
   return (
@@ -153,8 +143,10 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
               size="sm"
               className="col-span-1 flex items-center justify-center"
               type="submit"
-              loading={isCopying}
-              onClick={copyUrl}>
+              onClick={() => {
+                navigator.clipboard.writeText(shortUrl);
+                toast.success("URL copied to clipboard!");
+              }}>
               <span>Copy</span>
             </Button>
           </div>

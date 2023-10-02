@@ -91,7 +91,7 @@ export default function Navigation({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-  const [showLinkShortenerModal, setShowLinkShortenerModal] = useState(true);
+  const [showLinkShortenerModal, setShowLinkShortenerModal] = useState(false);
   const product = products.find((product) => product.id === environment.productId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
 
