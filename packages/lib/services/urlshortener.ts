@@ -80,7 +80,5 @@ export const getFullUrl = async (shortUrlParam: string) => {
     throw error;
   }
 
-  console.log(urlEntry.fullUrl);
-
   return urlEntry.fullUrl;
 };
