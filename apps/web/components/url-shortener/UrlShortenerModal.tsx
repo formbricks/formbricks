@@ -6,11 +6,11 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import clsx from "clsx";
 import { createShortUrlAction } from "./actions";
-import { env } from "@/env.mjs";
 
 type UrlShortenerModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
+  surveyBaseUrl: string;
 };
 type UrlShortenerFormDataProps = {
   url: string;
@@ -19,7 +19,7 @@ type UrlValidationState = "default" | "valid" | "invalid";
 
 const defaultShortUrl = "https://formbricks.com/s/...";
 
-export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalProps) {
+export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlShortenerModalProps) {
   const linkTextRef = useRef(null);
   const [urlValidationState, setUrlValidationState] = useState<UrlValidationState>("default");
   const [shortUrl, setShortUrl] = useState(defaultShortUrl);
@@ -28,6 +28,7 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
     handleSubmit,
     watch,
     formState: { isSubmitting },
+    reset,
   } = useForm<UrlShortenerFormDataProps>({
     mode: "onSubmit",
     defaultValues: {
@@ -42,7 +43,7 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
       return;
     }
 
-    const regexPattern = new RegExp("^" + env.NEXT_PUBLIC_SURVEY_BASE_URL);
+    const regexPattern = new RegExp("^" + surveyBaseUrl);
     const isValid = regexPattern.test(value);
     if (!isValid) {
       setUrlValidationState("invalid");
@@ -73,8 +74,21 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
     }
   };
 
+  const resetForm = () => {
+    setUrlValidationState("default");
+    setShortUrl(defaultShortUrl);
+    reset();
+  };
+
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
+    <Modal
+      open={open}
+      setOpen={(v) => {
+        setOpen(v);
+        resetForm();
+      }}
+      noPadding
+      closeOnOutsideClick={false}>
       <div className="flex h-full flex-col rounded-lg pb-4">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">

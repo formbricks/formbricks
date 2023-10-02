@@ -73,6 +73,7 @@ interface NavigationProps {
   products: TProduct[];
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
+  surveyBaseUrl: string;
 }
 
 export default function Navigation({
@@ -83,6 +84,7 @@ export default function Navigation({
   products,
   environments,
   isFormbricksCloud,
+  surveyBaseUrl,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -192,7 +194,6 @@ export default function Navigation({
           icon: LinkIcon,
           label: "Link Shortener",
           href: pathname,
-          hidden: widgetSetupCompleted,
           onClick: () => {
             setShowLinkShortenerModal(true);
           },
@@ -504,6 +505,7 @@ export default function Navigation({
           <UrlShortenerModal
             open={showLinkShortenerModal}
             setOpen={(val) => setShowLinkShortenerModal(val)}
+            surveyBaseUrl={surveyBaseUrl}
           />
         </nav>
       )}
