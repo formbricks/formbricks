@@ -81,7 +81,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
+                className="max-w-10 relative flex max-h-10 flex-1 cursor-pointer justify-center bg-white text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     className={cn(
@@ -133,7 +133,7 @@ export default function RatingQuestion({
                 ) : (
                   <label
                     className={cn(
-                      "text-align: -webkit-center flex items-center justify-center  text-slate-800",
+                      "flex items-center justify-center  text-slate-800",
                       question.range === 10 ? "h-6 w-6" : "h-full w-full"
                     )}>
                     <HiddenRadioInput number={number} />
