@@ -3,6 +3,7 @@ import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
+import { questionTypes } from "@/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface ConsentSummaryProps {
@@ -18,6 +19,8 @@ interface ChoiceResult {
 }
 
 export default function ConsentSummary({ questionSummary }: ConsentSummaryProps) {
+  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+
   const ctr: ChoiceResult = useMemo(() => {
     const total = questionSummary.responses.length;
     const clickedAbs = questionSummary.responses.filter((response) => response.value !== "dismissed").length;
@@ -38,7 +41,10 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="rounded-lg bg-slate-100 p-2">Consent</div>
+          <div className=" flex items-center rounded-lg bg-slate-100 p-2">
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"}
+          </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {ctr.count} responses
