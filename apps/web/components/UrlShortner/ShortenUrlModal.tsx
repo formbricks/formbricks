@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Modal from "@/components/shared/Modal";
 import { Button, Input, Label } from "@formbricks/ui";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,7 @@ const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
 
   const [shortenUrl, setShortenUrl] = useState("");
 
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, reset } = useForm({
     mode: "onBlur",
   });
 
@@ -35,6 +35,11 @@ const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    reset();
+    setShortenUrl("");
+  }, [open]);
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
@@ -82,7 +87,10 @@ const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
                   </span>
                 </div>
               </div>
-              <Button className="flex h-11 justify-center self-end" variant="secondary">
+              <Button
+                onClick={() => navigator.clipboard.writeText(shortenUrl)}
+                className="flex h-11 justify-center self-end"
+                variant="secondary">
                 Copy
               </Button>
             </div>
