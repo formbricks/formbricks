@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/services/response";
 import { TResponse, ZResponseUpdateInput } from "@formbricks/types/v1/responses";
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
@@ -21,7 +21,7 @@ const canUserAccessResponse = async (authentication: any, response: TResponse): 
   if (!survey) return false;
 
   if (authentication.type === "session") {
-    return await hasUserEnvironmentAccess(authentication.session.user, survey.environmentId);
+    return await hasUserEnvironmentAccess(authentication.session.user.id, survey.environmentId);
   } else if (authentication.type === "apiKey") {
     return survey.environmentId === authentication.environmentId;
   } else {
