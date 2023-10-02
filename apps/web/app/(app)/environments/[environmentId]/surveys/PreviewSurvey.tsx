@@ -30,13 +30,17 @@ let surveyNameTemp;
 const previewParentContainerVariant: Variants = {
   expanded: {
     position: "fixed",
-    height: "100vh",
-    width: "100vw",
+    height: "100%",
+    width: "100%",
     backgroundColor: "rgba(0, 0, 0, 0.4)",
     backdropFilter: "blur(15px)",
     left: 0,
     top: 0,
     zIndex: 1040,
+    transition: {
+      ease: "easeIn",
+      duration: 0.001,
+    },
   },
   shrink: {
     backgroundColor: "transparent",
@@ -46,15 +50,24 @@ const previewParentContainerVariant: Variants = {
 const previewScreenVariants: Variants = {
   expanded: {
     position: "absolute",
-    width: "90%",
-    height: "90%",
+    width: ["0%", "20%", "45%", "90%"],
+    height: ["0%", "20%", "45%", "90%"],
     left: "5%",
     top: "5%",
-    transform: "translate(0%, 0%)",
     boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
+    transition: {
+      ease: "easeInOut",
+      duration: 0.3, // Adjust the duration to your preference
+    },
   },
-  preview: {
+  shrink: {
     position: "relative",
+    width: ["0%", "100%"],
+    height: ["0%", "100%"],
+    transition: {
+      ease: "easeIn",
+      duration: 0.3, // Adjust the duration to your preference
+    },
   },
 };
 
