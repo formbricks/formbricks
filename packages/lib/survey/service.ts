@@ -18,17 +18,10 @@ import { getDisplaysCacheTag } from "../services/displays";
 import { getResponsesCacheTag } from "../services/response";
 
 // surveys cache key and tags
-const getSurveysCacheKey = (environmentId: string): string => `environments-${environmentId}-surveys`;
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
 
 // survey cache key and tags
-export const getSurveyCacheKey = (surveyId: string): string => `surveys-${surveyId}`;
 export const getSurveyCacheTag = (surveyId: string): string => `surveys-${surveyId}`;
-
-// survey with analytics cache key
-const getSurveysWithAnalyticsCacheKey = (environmentId: string): string =>
-  `environments-${environmentId}-surveysWithAnalytics`;
-const getSurveyWithAnalyticsCacheKey = (surveyId: string): string => `surveyWithAnalytics-${surveyId}`;
 
 export const selectSurvey = {
   id: true,
@@ -143,7 +136,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveyWithAnalyticsCacheKey(surveyId)],
+    [`surveyWithAnalytics-${surveyId}`],
     {
       tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), getResponsesCacheTag(surveyId)],
       revalidate: 60 * 30,
@@ -202,7 +195,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveyCacheKey(surveyId)],
+    [`surveys-${surveyId}`],
     {
       tags: [getSurveyCacheTag(surveyId)],
       revalidate: 60 * 30,
@@ -327,7 +320,7 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveysCacheKey(environmentId)],
+    [`environments-${environmentId}-surveys`],
     {
       tags: [getSurveysCacheTag(environmentId)],
       revalidate: 60 * 30,
@@ -391,7 +384,7 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
         throw new ValidationError("Data validation of survey failed");
       }
     },
-    [getSurveysWithAnalyticsCacheKey(environmentId)],
+    [`environments-${environmentId}-surveysWithAnalytics`],
     {
       tags: [getSurveysCacheTag(environmentId)], // TODO: add tags for displays and responses
     }

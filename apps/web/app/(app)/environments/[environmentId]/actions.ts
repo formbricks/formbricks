@@ -337,11 +337,9 @@ export const deleteSurveyAction = async (surveyId: string) => {
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (isAuthorized) {
-    await deleteSurvey(surveyId);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  await deleteSurvey(surveyId);
 };
 
 export const createProductAction = async (environmentId: string, productName: string) => {
@@ -349,12 +347,10 @@ export const createProductAction = async (environmentId: string, productName: st
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (isAuthorized) {
-    const productCreated = await createProduct(environmentId, productName);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-    const newEnvironment = productCreated.environments[0];
-    return newEnvironment;
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  const productCreated = await createProduct(environmentId, productName);
+
+  const newEnvironment = productCreated.environments[0];
+  return newEnvironment;
 };

@@ -12,11 +12,9 @@ export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, survey.id);
-  if (isAuthorized) {
-    return await updateSurvey(survey);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await updateSurvey(survey);
 }
 
 export const deleteSurveyAction = async (surveyId: string) => {
@@ -24,9 +22,7 @@ export const deleteSurveyAction = async (surveyId: string) => {
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (isAuthorized) {
-    await deleteSurvey(surveyId);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  await deleteSurvey(surveyId);
 };

@@ -11,10 +11,7 @@ export async function createSurveyAction(environmentId: string, surveyBody: any)
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  if (isAuthorized) {
-    return await createSurvey(environmentId, surveyBody);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  return await createSurvey(environmentId, surveyBody);
 }
