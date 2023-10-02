@@ -1,5 +1,5 @@
 import { ZId } from "@formbricks/types/v1/environment";
-import { validateInputs } from "utils/validate";
+import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getActionClass } from "./service";
 import { unstable_cache } from "next/cache";
