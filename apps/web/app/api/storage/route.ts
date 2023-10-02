@@ -12,8 +12,7 @@ import path from "path";
 import { env } from "@/env.mjs";
 import { ZAccessType, ZFileName } from "@formbricks/types/v1/storage";
 import { responses } from "@/lib/api/response";
-
-const UPLOADS_DIR = path.resolve("./uploads");
+import { UPLOADS_DIR } from "@formbricks/lib/constants";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
