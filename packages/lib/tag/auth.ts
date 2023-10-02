@@ -1,11 +1,13 @@
+import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getTag } from "./service";
 import { unstable_cache } from "next/cache";
+import { ZId } from "@formbricks/types/v1/environment";
 
 export const canUserAccessTag = async (userId: string, tagId: string): Promise<boolean> =>
   await unstable_cache(
     async () => {
-      if (!userId) return false;
+      validateInputs([userId, ZId], [tagId, ZId]);
 
       const tag = await getTag(tagId);
       if (!tag) return false;

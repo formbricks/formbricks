@@ -78,6 +78,8 @@ const responseSelection = {
 
 export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-responses`;
 
+export const getResponseCacheTag = (responseId: string) => `responses-${responseId}`;
+
 export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
   validateInputs([personId, ZId]);
   try {

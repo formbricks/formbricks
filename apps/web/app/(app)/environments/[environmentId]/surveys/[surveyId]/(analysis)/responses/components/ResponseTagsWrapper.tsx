@@ -9,9 +9,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@formbricks/ui";
 import { TTag } from "@formbricks/types/v1/tags";
 import {
-  addTagToResponeAction,
+  createTagToResponeAction,
   createTagAction,
-  removeTagFromResponseAction,
+  deleteTagOnResponseAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 
 interface ResponseTagsWrapperProps {
@@ -38,7 +38,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const onDelete = async (tagId: string) => {
     try {
-      await removeTagFromResponseAction(responseId, tagId);
+      await deleteTagOnResponseAction(responseId, tagId);
 
       router.refresh();
     } catch (e) {
@@ -89,7 +89,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                     tagName: tag.name,
                   },
                 ]);
-                addTagToResponeAction(responseId, tag.id).then(() => {
+                createTagToResponeAction(responseId, tag.id).then(() => {
                   setSearchValue("");
                   setOpen(false);
                   router.refresh();
@@ -121,7 +121,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
               },
             ]);
 
-            addTagToResponeAction(responseId, tagId).then(() => {
+            createTagToResponeAction(responseId, tagId).then(() => {
               setSearchValue("");
               setOpen(false);
               router.refresh();
