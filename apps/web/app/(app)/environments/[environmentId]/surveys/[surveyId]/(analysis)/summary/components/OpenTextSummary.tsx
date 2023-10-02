@@ -6,6 +6,7 @@ import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
 import { PersonAvatar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { questionTypes } from "@/lib/questions";
 
 interface OpenTextSummaryProps {
   questionSummary: QuestionSummary<TSurveyOpenTextQuestion>;
@@ -17,13 +18,18 @@ function findEmail(person) {
 }
 
 export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
+  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="rounded-lg bg-slate-100 p-2 ">Open Text Question</div>
+          <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
+          </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4" />
             {questionSummary.responses.length} Responses
