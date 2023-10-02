@@ -2,11 +2,23 @@
 
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { INTERNAL_SECRET, SHORT_SURVEY_BASE_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { createProduct } from "@formbricks/lib/services/product";
+import { customAlphabet } from "nanoid";
+import { shortenUrl } from "@/../../packages/lib/services/shortUrl";
+
+export async function getShortUrl(longUrl: string): Promise<string> {
+  const nanoId = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 10);
+
+  const shortUrl = await shortenUrl(nanoId(), longUrl);
+
+  const newUrl = `${SHORT_SURVEY_BASE_URL}${shortUrl.shortUrl}`;
+
+  return newUrl;
+}
 
 export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
   const newTeam = await prisma.team.create({

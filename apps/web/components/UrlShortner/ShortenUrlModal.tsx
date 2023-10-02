@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import { Button, Input, Label } from "@formbricks/ui";
 import { useForm } from "react-hook-form";
 import { LinkIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-// import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { getShortUrl } from "@/app/(app)/environments/[environmentId]/actions";
 
 interface ShortenUrlModalProps {
   open: boolean;
@@ -16,16 +16,24 @@ const SURVEY_BASE_URL = "https://formbricks.com/i/";
 const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
   const [loading, setLoading] = useState(false);
 
+  const [shortenUrl, setShortenUrl] = useState("");
+
   const { register, handleSubmit } = useForm({
     mode: "onBlur",
   });
 
-  const submitUrl = async (data) => {
-    setLoading(true);
-
-    console.log(data);
-
-    setLoading(false);
+  const submitUrl = async (data: { url: string }) => {
+    try {
+      setLoading(true);
+      const url = await getShortUrl(data.url);
+      if (url) {
+        setShortenUrl(url);
+      }
+    } catch (_) {
+      toast.error("Unable to create url!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,11 +78,11 @@ const ShortenUrlModal = ({ open, setOpen }: ShortenUrlModalProps) => {
                     style={{
                       wordBreak: "break-all",
                     }}>
-                    https://formbricks.com/c...
+                    {shortenUrl}
                   </span>
                 </div>
               </div>
-              <Button className="h-11 self-end" variant="secondary">
+              <Button className="flex h-11 justify-center self-end" variant="secondary">
                 Copy
               </Button>
             </div>
