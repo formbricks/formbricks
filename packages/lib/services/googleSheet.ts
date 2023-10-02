@@ -7,6 +7,11 @@ import {
   TGoogleSheetIntegration,
   TGoogleSpreadsheet,
 } from "@formbricks/types/v1/integrations";
+import {
+  GOOGLE_SHEETS_CLIENT_ID,
+  GOOGLE_SHEETS_CLIENT_SECRET,
+  GOOGLE_SHEETS_REDIRECT_URL,
+} from "../constants";
 
 const { google } = require("googleapis");
 
@@ -111,9 +116,9 @@ export async function writeData(credentials: TGoogleCredential, spreadsheetId: s
 }
 
 const authorize = (credentials: any) => {
-  const client_id = process.env.GOOGLE_APP_CLIENT_ID;
-  const client_secret = process.env.GOOGLE_APP_CLIENT_SECRET;
-  const redirect_uri = process.env.GOOGLE_APP_REDIRECT_URL;
+  const client_id = GOOGLE_SHEETS_CLIENT_ID;
+  const client_secret = GOOGLE_SHEETS_CLIENT_SECRET;
+  const redirect_uri = GOOGLE_SHEETS_REDIRECT_URL;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
   oAuth2Client.setCredentials(credentials);
 

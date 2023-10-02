@@ -3,37 +3,46 @@
 import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/MergeTagsCombobox";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags";
-import { useTagsCountForEnvironment, useTagsForEnvironment } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TTag, TTagsCount } from "@formbricks/types/v1/tags";
 import { Button, Input } from "@formbricks/ui";
-import React from "react";
+import React, { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import {
+  deleteTagAction,
+  mergeTagsAction,
+  updateTagNameAction,
+} from "@/app/(app)/environments/[environmentId]/settings/tags/actions";
+import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 
 interface IEditTagsWrapperProps {
-  environmentId: string;
+  environment: TEnvironment;
+  environmentTags: TTag[];
+  environmentTagsCount: TTagsCount;
 }
 
 const SingleTag: React.FC<{
   tagId: string;
   tagName: string;
-  environmentId: string;
   tagCount?: number;
   tagCountLoading?: boolean;
   updateTagsCount?: () => void;
+  environmentTags: TTag[];
 }> = ({
-  environmentId,
   tagId,
   tagName,
   tagCount = 0,
   tagCountLoading = false,
   updateTagsCount = () => {},
+  environmentTags,
 }) => {
-  const { mutate: refetchEnvironmentTags, data: environmentTags } = useTagsForEnvironment(environmentId);
-  const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, tagId);
-
-  const { updateTag, updateTagError } = useUpdateTag(environmentId, tagId);
-  const { mergeTags, isMergingTags } = useMergeTags(environmentId);
+  const router = useRouter();
+  // const { updateTag, updateTagError } = useUpdateTag(environment.id, tagId);
+  // const { mergeTags, isMergingTags } = useMergeTags(environment.id);
+  const [updateTagError, setUpdateTagError] = useState(false);
+  const [isMergingTags, setIsMergingTags] = useState(false);
 
   return (
     <div className="w-full" key={tagId}>
@@ -49,18 +58,24 @@ const SingleTag: React.FC<{
               )}
               defaultValue={tagName}
               onBlur={(e) => {
-                updateTag(
-                  { name: e.target.value.trim() },
-                  {
-                    onSuccess: () => {
-                      toast.success("Tag updated");
-                      refetchEnvironmentTags();
-                    },
-                    onError: (error) => {
-                      toast.error(error?.message ?? "Failed to update tag");
-                    },
-                  }
-                );
+                updateTagNameAction(tagId, e.target.value.trim())
+                  .then(() => {
+                    setUpdateTagError(false);
+                    toast.success("Tag updated");
+                  })
+                  .catch((error) => {
+                    if (error?.message.includes("Unique constraint failed on the fields")) {
+                      toast.error("Tag already exists", {
+                        duration: 2000,
+                        icon: <ExclamationCircleIcon className="h-5 w-5 text-orange-500" />,
+                      });
+                    } else {
+                      toast.error(error?.message ?? "Something went wrong", {
+                        duration: 2000,
+                      });
+                    }
+                    setUpdateTagError(true);
+                  });
               }}
             />
           </div>
@@ -84,19 +99,19 @@ const SingleTag: React.FC<{
                     ?.map((tag) => ({ label: tag.name, value: tag.id })) ?? []
                 }
                 onSelect={(newTagId) => {
-                  mergeTags(
-                    {
-                      originalTagId: tagId,
-                      newTagId,
-                    },
-                    {
-                      onSuccess: () => {
-                        toast.success("Tags merged");
-                        refetchEnvironmentTags();
-                        updateTagsCount();
-                      },
-                    }
-                  );
+                  setIsMergingTags(true);
+                  mergeTagsAction(tagId, newTagId)
+                    .then(() => {
+                      toast.success("Tags merged");
+                      updateTagsCount();
+                      router.refresh();
+                    })
+                    .catch((error) => {
+                      toast.error(error?.message ?? "Something went wrong");
+                    })
+                    .finally(() => {
+                      setIsMergingTags(false);
+                    });
                 }}
               />
             )}
@@ -106,16 +121,14 @@ const SingleTag: React.FC<{
             <Button
               variant="alert"
               size="sm"
-              loading={isDeletingTag}
+              // loading={isDeletingTag}
               className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
               onClick={() => {
                 if (confirm("Are you sure you want to delete this tag?")) {
-                  deleteTag(null, {
-                    onSuccess: () => {
-                      toast.success("Tag deleted");
-                      refetchEnvironmentTags();
-                      updateTagsCount();
-                    },
+                  deleteTagAction(tagId).then(() => {
+                    toast.success("Tag deleted");
+                    updateTagsCount();
+                    router.refresh();
                   });
                 }
               }}>
@@ -129,19 +142,7 @@ const SingleTag: React.FC<{
 };
 
 const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
-  const { environmentId } = props;
-  const { data: environmentTags, isLoading: isLoadingEnvironmentTags } = useTagsForEnvironment(environmentId);
-
-  const { tagsCount, isLoadingTagsCount, mutateTagsCount } = useTagsCountForEnvironment(environmentId);
-
-  if (isLoadingEnvironmentTags) {
-    return (
-      <div className="text-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
+  const { environment, environmentTags, environmentTagsCount } = props;
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="rounded-lg border border-slate-200">
@@ -152,18 +153,16 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
         </div>
 
         {!environmentTags?.length ? (
-          <EmptySpaceFiller environmentId={environmentId} type="tag" noWidgetRequired />
+          <EmptySpaceFiller environment={environment} type="tag" noWidgetRequired />
         ) : null}
 
         {environmentTags?.map((tag) => (
           <SingleTag
             key={tag.id}
-            environmentId={environmentId}
             tagId={tag.id}
             tagName={tag.name}
-            tagCount={tagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0}
-            tagCountLoading={isLoadingTagsCount}
-            updateTagsCount={mutateTagsCount}
+            tagCount={environmentTagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0}
+            environmentTags={environmentTags}
           />
         ))}
       </div>

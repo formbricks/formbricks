@@ -1,0 +1,107 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import MonorepoImage from "./formbricks-monorepo-folder-structure.png";
+import HeaderImage from "./create-a-new-survey-with-formbricks.png";
+import GitpodImage from "./setup-formbricks-via-gitpod.png";
+import PackagesFolderImage from "./formbricks-packages-folder.png";
+import AuthorBox from "@/components/shared/AuthorBox";
+
+export const meta = {
+  title: "Join the FormTribe 🔥",
+  description: "Here is everything you need to know about joining the Formbricks community",
+  date: "2023-10-01",
+  publishedTime: "2023-10-01T00:00:00",
+  authors: ["Johannes"],
+  section: "Open-Source",
+  tags: ["Open-Source", "No-Code", "Formbricks", "Geting started", "Welcome guide"],
+};
+
+<AuthorBox name="Johannes" title="Co-Founder" date="October 1st, 2023" duration="4" />
+
+<Image src={HeaderImage} alt="Title Image" className="w-full rounded-lg" />
+
+_Get a quick intro to the Formbricks community, also known as FormTribe, and learn all the deets about making awesome contributions to the project._
+
+## Welcome to the Formbricks community!
+
+We are so excited to have you with us 😊
+
+In this post we will be helping you get familiar with the Formbricks codebase and get you up to speed contributing in no time. If you want to learn about Formbricks check out our [docs intro](https://formbricks.com/docs/introduction/what-is-formbricks), for more info about our founding story and why we're building open source checkout out our [blog](https://formbricks.com/blog).
+
+### Prerequisites
+
+Our codebase is written fully in Typescript and we love it 😍. To power our the experience management solution, here is the stack behind it all:
+
+[Next.js](https://nextjs.org/) - React Framework
+
+[Prisma](https://www.prisma.io/) - ORM
+
+[Typescript](https://www.typescriptlang.org/) - Language
+
+[Lucide React](https://lucide.dev/guide/packages/lucide-react) - Icons
+
+[TalwindCSS](https://tailwindcss.com/) - Styling
+
+[Zod](https://zod.dev/) - Validation
+
+[Auth.js](https://authjs.dev/) - Authentication
+
+### 😎 Installation and Setup
+
+To get up and running we have 2 options: Gitpod and local.
+
+#### Get started with Gitpod
+
+With Gitpod you can run all of Formbricks in the cloud. With one click you can start coding right away in your browser:
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
+
+<Image src={GitpodImage} alt="Setup Formbricks via Gitpod" className="w-full rounded-lg" />
+
+#### Run on a local machine
+
+If you choose to get setup locally, we also have a well documented guide to hold you through the process, you can find it [here](https://formbricks.com/docs/contributing/setup)
+
+### 👩🏽‍💻 Codebase Overview
+
+Our codebase is a [monorepo](https://en.wikipedia.org/wiki/Monorepo) which means we have different projects in one repository. At moment we have 3 different projects:
+
+1. **demo** `apps/demo` - It's a simple React app that you can run locally and use to trigger actions and set **[Attributes](https://formbricks.com/docs/attributes/why)**. It allows you to test your setup easily.
+2. **formbricks-com** `apps/formbricks-com` - The landing page of [Formbricks](https://formbricks.com)
+3. **web** `apps/web` - Our [cloud offering](https://app.formbricks.com/) for Formbricks.
+
+<Image src={MonorepoImage} alt="Formbricks monorepo folder structure" className="w-full rounded-lg" />
+
+#### TurboRepo and our own packages
+
+To manage all of these projects in one repository we use [turborepo](https://turbo.build/repo/docs/core-concepts/monorepos). Depending on what part of the codebase you need to contribute in, now you know where to begin 😃
+
+We also have a set of packages which we manage: They are located in the `packages` folder. There we keep our styling library, components, database migrations and connection, a couple of configurations and much more. We do this to use any of these packages seamlessly between our mono repos.
+
+<Image src={PackagesFolderImage} alt="Formbricks packages folder" className="w-full rounded-lg" />
+
+### ⚖️ Contribution Guidelines
+
+You want to get started contributing? Amazing! Checkout our must-read post on [How we Code at Formbricks](https://formbricks.com/docs/contributing/how-we-code). This will give you everything you need to know about successfully contributing to our codebase in no time.
+
+### 🤗 Our Community
+
+We really value our community. It might be small but it is close to our hearts. Join our [Discord](https://formbricks.com/discord) to learn from other contributors and meet the Formbricks community.
+
+### Conclusion
+
+Contributing to open source projects like Formbricks can be a rewarding experience. By contributing, you have the opportunity to make a meaningful impact on a project used by many and gain valuable experience in the process.
+
+Whether you are a seasoned developer or just starting out, your contributions are appreciated. We might not always have to onboard everyone but try our best. You can help improve the codebase, fix bugs, add new features, or even contribute to the documentation. Every contribution, no matter how small, can make a difference.
+
+Not only will you be able to showcase your skills and build your portfolio, but you will also have the chance to collaborate with other talented designers and developers in the Formbricks community. You can learn from their expertise and share your own knowledge.
+
+### So, why wait?
+
+Join the Formbricks community today and start contributing to an up and coming open source project. Your contributions can help shape the future of Formbricks and make a positive impact on the lives of tens of thousands of users worldwide.
+
+We look forward to seeing your contributions and welcoming you to the Formbricks community!
+
+### [Say Hi 👋](https://formbricks.com/discord)
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

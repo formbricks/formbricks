@@ -14,8 +14,8 @@ import { addSyncEventListener, removeSyncEventListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
 
-export const addEventListeners = (): void => {
-  addSyncEventListener();
+export const addEventListeners = (debug: boolean = false): void => {
+  addSyncEventListener(debug);
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();

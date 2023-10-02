@@ -21,7 +21,6 @@ import { formbricksLogout } from "@/lib/formbricks";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TTeam } from "@formbricks/types/v1/teams";
@@ -71,6 +70,7 @@ interface NavigationProps {
   team: TTeam;
   products: TProduct[];
   environments: TEnvironment[];
+  isFormbricksCloud: boolean;
 }
 
 export default function Navigation({
@@ -80,6 +80,7 @@ export default function Navigation({
   session,
   products,
   environments,
+  isFormbricksCloud,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -171,7 +172,7 @@ export default function Navigation({
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environment.id}/settings/billing`,
-          hidden: !IS_FORMBRICKS_CLOUD,
+          hidden: !isFormbricksCloud,
         },
       ],
     },
@@ -453,7 +454,7 @@ export default function Navigation({
                     ))}
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                      {IS_FORMBRICKS_CLOUD && (
+                      {isFormbricksCloud && (
                         <DropdownMenuItem>
                           <button
                             onClick={() => {

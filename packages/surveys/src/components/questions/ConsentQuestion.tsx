@@ -28,7 +28,7 @@ export default function ConsentQuestion({
 }: ConsentQuestionProps) {
   return (
     <div>
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
       <form

@@ -7,7 +7,7 @@ import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 export default function MissedTrialPagePage() {
   return (
     <Layout
-      title="Improve Trial Conversion"
+      title="Improve Trial Conversion with Formbricks"
       description="Take the guessing out, convert more trials to paid users with insights.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">

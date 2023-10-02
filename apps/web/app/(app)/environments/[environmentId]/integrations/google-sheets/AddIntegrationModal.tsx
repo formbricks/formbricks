@@ -68,7 +68,7 @@ export default function AddIntegrationModal({
         setSelectedQuestions(questionIds);
       }
     }
-  }, [selectedSurvey]);
+  }, [selectedIntegration, selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
@@ -85,7 +85,7 @@ export default function AddIntegrationModal({
       return;
     }
     resetForm();
-  }, [selectedIntegration]);
+  }, [selectedIntegration, surveys]);
 
   const linkSheet = async () => {
     try {
