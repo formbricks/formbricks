@@ -73,6 +73,7 @@ interface NavigationProps {
   products: TProduct[];
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
+  surveyBaseUrl: string;
 }
 
 export default function Navigation({
@@ -83,6 +84,7 @@ export default function Navigation({
   products,
   environments,
   isFormbricksCloud,
+  surveyBaseUrl,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -499,6 +501,7 @@ export default function Navigation({
           />
           <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
           <CreateUrlShortenerModal
+            surveyBaseUrl={surveyBaseUrl}
             open={showUrlShortenerModal}
             setOpen={(val) => setShowUrlShortenerModal(val)}
           />

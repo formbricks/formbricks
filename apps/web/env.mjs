@@ -71,7 +71,6 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-    NEXT_PUBLIC_SURVEY_BASE_URL: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -120,6 +119,5 @@ export const env = createEnv({
     SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     SHORT_SURVEY_BASE_URL: process.env.SHORT_SURVEY_BASE_URL,
-    NEXT_PUBLIC_SURVEY_BASE_URL: process.env.NEXT_PUBLIC_SURVEY_BASE_URL,
   },
 });

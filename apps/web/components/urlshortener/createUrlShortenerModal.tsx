@@ -1,37 +1,44 @@
 "use client";
 import { createShortUrl } from "@/app/(app)/environments/[environmentId]/actions";
 import Modal from "@/components/shared/Modal";
-import { useProfile } from "@/lib/profile";
 import { Button, Input, Label } from "@formbricks/ui";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { LinkIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { env } from "@/env.mjs";
 
 interface CreateUrlShortenerModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
+  surveyBaseUrl: string;
 }
 
-export default function CreateUrlShortenerModal({ open, setOpen }: CreateUrlShortenerModalProps) {
+export default function CreateUrlShortenerModal({
+  open,
+  setOpen,
+  surveyBaseUrl,
+}: CreateUrlShortenerModalProps) {
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
   const [shortenedUrl, setShortenedUrl] = useState("");
 
   const submitURL = async (data) => {
-    if (!data.url.startsWith(env.NEXT_PUBLIC_SURVEY_BASE_URL)) {
+    if (!data.url.startsWith(surveyBaseUrl)) {
       toast.error("Only formbricks links allowed");
       return;
     }
     setLoading(true);
 
-    const shortUrl = await createShortUrl(data.url);
+    const shortUrl = await createShortUrl(data.url.trim());
     setShortenedUrl(shortUrl);
     toast.success("Short URL created successfully!");
     setLoading(false);
   };
+
+  useEffect(() => {
+    setShortenedUrl("");
+    reset();
+  }, [open]);
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
@@ -40,7 +47,7 @@ export default function CreateUrlShortenerModal({ open, setOpen }: CreateUrlShor
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-10 w-10 text-slate-500">
-                <PlusCircleIcon />
+                <LinkIcon />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">URL shortener</div>
