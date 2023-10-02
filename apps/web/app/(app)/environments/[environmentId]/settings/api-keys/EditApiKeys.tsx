@@ -34,19 +34,29 @@ export default function EditAPIKeys({
   };
 
   const handleDeleteKey = async () => {
-    await deleteApiKeyAction(activeKey.id);
-    const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
-    setApiKeysLocal(updatedApiKeys);
-    setOpenDeleteKeyModal(false);
-    toast.success("API Key deleted");
+    try {
+      await deleteApiKeyAction(activeKey.id);
+      const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
+      setApiKeysLocal(updatedApiKeys);
+      toast.success("API Key deleted");
+    } catch (e) {
+      toast.error("Unable to delete API Key");
+    } finally {
+      setOpenDeleteKeyModal(false);
+    }
   };
 
   const handleAddAPIKey = async (data) => {
-    const apiKey = await createApiKeyAction(environmentTypeId, { label: data.label });
-    const updatedApiKeys = [...apiKeysLocal!, apiKey];
-    setApiKeysLocal(updatedApiKeys);
-    setOpenAddAPIKeyModal(false);
-    toast.success("API key created");
+    try {
+      const apiKey = await createApiKeyAction(environmentTypeId, { label: data.label });
+      const updatedApiKeys = [...apiKeysLocal!, apiKey];
+      setApiKeysLocal(updatedApiKeys);
+      toast.success("API key created");
+    } catch (e) {
+      toast.error("Unable to create API Key");
+    } finally {
+      setOpenAddAPIKeyModal(false);
+    }
   };
 
   return (
