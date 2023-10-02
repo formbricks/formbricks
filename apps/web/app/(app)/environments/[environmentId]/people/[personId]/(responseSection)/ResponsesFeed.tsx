@@ -3,20 +3,21 @@ import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { TResponseWithSurvey } from "@formbricks/types/v1/responses";
 import Link from "next/link";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 export default function ResponseFeed({
   responses,
   sortByDate,
-  environmentId,
+  environment,
 }: {
   responses: TResponseWithSurvey[];
   sortByDate: boolean;
-  environmentId: string;
+  environment: TEnvironment;
 }) {
   return (
     <>
       {responses.length === 0 ? (
-        <EmptySpaceFiller type="response" environmentId={environmentId} />
+        <EmptySpaceFiller type="response" environment={environment} />
       ) : (
         <div>
           {responses
@@ -53,12 +54,12 @@ export default function ResponseFeed({
                           <div className="flex items-center justify-center space-x-2  rounded-full bg-slate-50 px-3 py-1 text-sm text-slate-600">
                             <Link
                               className="hover:underline"
-                              href={`/environments/${environmentId}/surveys/${response.survey.id}/summary`}>
+                              href={`/environments/${environment.id}/surveys/${response.survey.id}/summary`}>
                               {response.survey.name}
                             </Link>
                             <SurveyStatusIndicator
                               status={response.survey.status}
-                              environmentId={environmentId}
+                              environment={environment}
                             />
                           </div>
                         </div>

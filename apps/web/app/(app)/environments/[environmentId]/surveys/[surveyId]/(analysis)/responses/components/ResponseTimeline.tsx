@@ -6,19 +6,23 @@ import { createId } from "@paralleldrive/cuid2";
 import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TTag } from "@formbricks/types/v1/tags";
 
 interface ResponseTimelineProps {
-  environmentId: string;
+  environment: TEnvironment;
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
+  environmentTags: TTag[];
 }
 
 export default function ResponseTimeline({
-  environmentId,
+  environment,
   surveyId,
   responses,
   survey,
+  environmentTags,
 }: ResponseTimelineProps) {
   const matchQandA = useMemo(() => {
     if (survey && responses) {
@@ -67,11 +71,13 @@ export default function ResponseTimeline({
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && responses.length === 0 && <EmptyInAppSurveys environmentId={environmentId} />}
+      {survey.type === "web" && responses.length === 0 && (
+        <EmptyInAppSurveys environmentId={environment.id} />
+      )}
       {survey.type !== "web" && responses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
-          environmentId={environmentId}
+          environment={environment}
           noWidgetRequired={survey.type === "link"}
         />
       ) : (
@@ -82,7 +88,8 @@ export default function ResponseTimeline({
                 key={updatedResponse.id}
                 data={updatedResponse}
                 surveyId={surveyId}
-                environmentId={environmentId}
+                environmentId={environment.id}
+                environmentTags={environmentTags}
               />
             );
           })}

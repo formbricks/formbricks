@@ -308,9 +308,9 @@ export const getMonthlyActivePeopleCount = async (environmentId: string): Promis
 
       return aggregations._count.id;
     },
-    [`env-${environmentId}-mau`],
+    [`environments-${environmentId}-mau`],
     {
-      tags: [`env-${environmentId}-mau`],
+      tags: [`environments-${environmentId}-mau`],
       revalidate: 60 * 60 * 6, // 6 hours
     }
   )();
