@@ -77,9 +77,6 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          return;
-        }
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
