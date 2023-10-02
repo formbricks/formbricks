@@ -84,7 +84,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
         noCodeConfig: filteredNoCodeConfig,
         type: "noCode",
       } as TActionClassInput;
-      await updateActionAction(actionClass.id, updatedData);
+      await updateActionAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
       router.refresh();
       toast.success("Action updated successfully");
@@ -98,7 +98,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionAction(actionClass.id);
+      await deleteActionAction(environmentId, actionClass.id);
       router.refresh();
       toast.success("Action deleted successfully");
       setOpen(false);

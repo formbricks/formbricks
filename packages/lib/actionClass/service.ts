@@ -96,7 +96,7 @@ export const deleteActionClass = async (
     if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     // revalidate cache
-    revalidateTag(getActionClassesCacheTag(environmentId));
+    revalidateTag(getActionClassesCacheTag(result.environmentId));
 
     return result;
   } catch (error) {
@@ -157,8 +157,8 @@ export const updateActionClass = async (
     });
 
     // revalidate cache
-    revalidateTag(getActionClassCacheTag(result.name, environmentId));
-    revalidateTag(getActionClassesCacheTag(environmentId));
+    revalidateTag(getActionClassCacheTag(result.name, result.environmentId));
+    revalidateTag(getActionClassesCacheTag(result.environmentId));
 
     return result;
   } catch (error) {
