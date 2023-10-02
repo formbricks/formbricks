@@ -3,6 +3,7 @@ import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface ConsentSummaryProps {
   questionSummary: QuestionSummary<TSurveyConsentQuestion>;
@@ -35,11 +36,7 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <div>
-          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
-            {questionSummary.question.headline}
-          </h3>
-        </div>
+        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="rounded-lg bg-slate-100 p-2">Consent</div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
