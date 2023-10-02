@@ -27,6 +27,7 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
+        "ASSET_PREFIX_URL",
         "CRON_SECRET",
         "DEBUG",
         "PRISMA_GENERATE_DATAPROXY",

@@ -7,7 +7,7 @@ import { createId } from "@paralleldrive/cuid2";
 const isCloud = process.env.IS_FORMBRICKS_CLOUD === "1";
 
 const nextConfig = {
-  assetPrefix: isCloud ? process.env.WEBAPP_URL : undefined,
+  assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
     serverActions: true,
