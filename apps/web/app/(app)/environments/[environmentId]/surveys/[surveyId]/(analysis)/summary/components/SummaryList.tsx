@@ -26,25 +26,10 @@ interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
+  summaryData: QuestionSummary<TSurveyQuestion>[];
 }
 
-export default function SummaryList({ environment, survey, responses }: SummaryListProps) {
-  const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
-    survey.questions.map((question) => {
-      const questionResponses = responses
-        .filter((response) => question.id in response.data)
-        .map((r) => ({
-          id: r.id,
-          value: r.data[question.id],
-          updatedAt: r.updatedAt,
-          person: r.person,
-        }));
-      return {
-        question,
-        responses: questionResponses,
-      };
-    });
-
+export default function SummaryList({ environment, survey, responses, summaryData }: SummaryListProps) {
   return (
     <>
       <div className="mt-10 space-y-8">
@@ -60,7 +45,7 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
           />
         ) : (
           <>
-            {getSummaryData().map((questionSummary) => {
+            {summaryData.map((questionSummary) => {
               if (questionSummary.question.type === QuestionType.OpenText) {
                 return (
                   <OpenTextSummary

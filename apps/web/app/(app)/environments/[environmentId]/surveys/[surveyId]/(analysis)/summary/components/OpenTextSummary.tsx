@@ -48,7 +48,7 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
           return (
             <div
               key={response.id}
-              className="grid  grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
+              className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
               <div className="pl-4 md:pl-6">
                 {response.person ? (
                   <Link
