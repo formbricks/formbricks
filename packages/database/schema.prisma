@@ -304,6 +304,7 @@ enum EnvironmentType {
 
 enum IntegrationType {
   googleSheets
+  airtable
 }
 
 model Integration {
