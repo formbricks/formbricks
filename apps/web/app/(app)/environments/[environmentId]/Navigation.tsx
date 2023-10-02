@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
+import CreateUrlShortenerModal from "@/components/urlshortener/createUrlShortenerModal";
 import { formbricksLogout } from "@/lib/formbricks";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 import formbricks from "@formbricks/js";
@@ -47,6 +48,7 @@ import {
   CodeBracketIcon,
   CreditCardIcon,
   DocumentCheckIcon,
+  LinkIcon,
   HeartIcon,
   PaintBrushIcon,
   PlusIcon,
@@ -91,6 +93,7 @@ export default function Navigation({
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   const product = products.find((product) => product.id === environment.productId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
+  const [showUrlShortenerModal, setShowUrlShortenerModal] = useState(false);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -184,6 +187,12 @@ export default function Navigation({
           label: "Setup checklist",
           href: `/environments/${environment.id}/settings/setup`,
           hidden: widgetSetupCompleted,
+        },
+        {
+          icon: LinkIcon,
+          label: "Link Shortener",
+          href: pathname,
+          handleClick: () => setShowUrlShortenerModal(true),
         },
         {
           icon: CodeBracketIcon,
@@ -441,7 +450,7 @@ export default function Navigation({
                           (link) =>
                             !link.hidden && (
                               <Link href={link.href} target={link.target} key={link.label}>
-                                <DropdownMenuItem key={link.label}>
+                                <DropdownMenuItem onClick={link?.handleClick} key={link.label}>
                                   <div className="flex items-center">
                                     <link.icon className="mr-2 h-4 w-4" />
                                     <span>{link.label}</span>
@@ -489,6 +498,10 @@ export default function Navigation({
             environmentId={environment.id}
           />
           <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
+          <CreateUrlShortenerModal
+            open={showUrlShortenerModal}
+            setOpen={(val) => setShowUrlShortenerModal(val)}
+          />
         </nav>
       )}
     </>
