@@ -114,7 +114,7 @@ export const putFileToS3 = async (
     const bufferKB = bufferBytes / 1024;
 
     if (bufferKB > 10240) {
-      const err = new Error("File size is greater than 1MB");
+      const err = new Error("File size is greater than 10MB");
       err.name = "FileTooLargeError";
 
       throw err;
@@ -153,7 +153,7 @@ export const putFileToLocalStorage = async (
     const bufferKB = bufferBytes / 1024;
 
     if (bufferKB > 10240) {
-      const err = new Error("File size is greater than 1MB");
+      const err = new Error("File size is greater than 10MB");
       err.name = "FileTooLargeError";
 
       throw err;
