@@ -8,9 +8,9 @@ import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
-import { canUserAccessSurveyCached } from "@formbricks/lib/survey/auth";
+import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { createProduct } from "@formbricks/lib/services/product";
-import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export async function createTeam(teamName: string): Promise<Team> {
   const session = await getServerSession(authOptions);
@@ -138,7 +138,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("You are not authorized to perform this action.");
 
-  const isAuthorized = await canUserAccessSurveyCached(session.user.id, surveyId);
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new Error("You are not authorized to perform this action.");
 
   const existingSurvey = await getSurvey(surveyId);
@@ -194,21 +194,21 @@ export async function copyToOtherEnvironmentAction(
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("You are not authorized to perform this action.");
 
-  const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccessCached(
+  const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccess(
     session.user.id,
     environmentId
   );
   if (!isAuthorizedToAccessSourceEnvironment)
     throw new Error("You are not authorized to perform this action.");
 
-  const isAuthorizedToAccessTargetEnvironment = await hasUserEnvironmentAccessCached(
+  const isAuthorizedToAccessTargetEnvironment = await hasUserEnvironmentAccess(
     session.user.id,
     targetEnvironmentId
   );
   if (!isAuthorizedToAccessTargetEnvironment)
     throw new Error("You are not authorized to perform this action.");
 
-  const isAuthorized = await canUserAccessSurveyCached(session.user.id, surveyId);
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new Error("You are not authorized to perform this action.");
 
   const existingSurvey = await prisma.survey.findFirst({
@@ -338,7 +338,7 @@ export const deleteSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("You are not authorized to perform this action.");
 
-  const isAuthorized = await canUserAccessSurveyCached(session.user.id, surveyId);
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (isAuthorized) {
     await deleteSurvey(surveyId);
   } else {
@@ -350,7 +350,7 @@ export const createProductAction = async (environmentId: string, productName: st
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("You are not authorized to perform this action.");
 
-  const isAuthorized = await hasUserEnvironmentAccessCached(session.user.id, environmentId);
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (isAuthorized) {
     const productCreated = await createProduct(environmentId, productName);
 
