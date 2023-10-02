@@ -1,11 +1,13 @@
+import { ZId } from "@formbricks/types/v1/environment";
+import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getApiKey } from "./service";
 import { unstable_cache } from "next/cache";
 
-export const canUserAccessApiKey = async (userId: string, apiKeyId: string): Promise<boolean> => {
-  return await unstable_cache(
+export const canUserAccessApiKey = async (userId: string, apiKeyId: string): Promise<boolean> =>
+  await unstable_cache(
     async () => {
-      if (!userId) return false;
+      validateInputs([userId, ZId], [apiKeyId, ZId]);
 
       const apiKeyFromServer = await getApiKey(apiKeyId);
       if (!apiKeyFromServer) return false;
@@ -19,4 +21,3 @@ export const canUserAccessApiKey = async (userId: string, apiKeyId: string): Pro
     [`users-${userId}-apiKeys-${apiKeyId}`],
     { revalidate: 30 * 60, tags: [`apiKeys-${apiKeyId}`] }
   )(); // 30 minutes
-};

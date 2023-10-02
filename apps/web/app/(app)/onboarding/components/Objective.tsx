@@ -42,7 +42,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
         try {
           setIsProfileUpdating(true);
           const updatedProfile = { ...profile, objective: selectedObjective.id };
-          await updateProfileAction(profile.id, updatedProfile);
+          await updateProfileAction(updatedProfile);
           setIsProfileUpdating(false);
         } catch (e) {
           setIsProfileUpdating(false);

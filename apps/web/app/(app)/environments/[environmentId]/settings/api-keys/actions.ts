@@ -11,22 +11,18 @@ import { AuthorizationError } from "@formbricks/types/v1/errors";
 export async function deleteApiKeyAction(id: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
-  const isAuthorized = await canUserAccessApiKey(session.user.id, id);
 
-  if (isAuthorized) {
-    return await deleteApiKey(id);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  const isAuthorized = await canUserAccessApiKey(session.user.id, id);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await deleteApiKey(id);
 }
 export async function createApiKeyAction(environmentId: string, apiKeyData: TApiKeyCreateInput) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
 
-  if (isAuthorized) {
-    return await createApiKey(environmentId, apiKeyData);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await createApiKey(environmentId, apiKeyData);
 }
