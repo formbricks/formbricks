@@ -12,15 +12,9 @@ const halfHourInSeconds = 60 * 30;
 
 export const getActionClassCacheTag = (name: string, environmentId: string): string =>
   `environments-${environmentId}-actionClass-${name}`;
-const getActionClassCacheKey = (name: string, environmentId: string): string[] => [
-  getActionClassCacheTag(name, environmentId),
-];
 
 const getActionClassesCacheTag = (environmentId: string): string =>
   `environments-${environmentId}-actionClasses`;
-const getActionClassesCacheKey = (environmentId: string): string[] => [
-  getActionClassesCacheTag(environmentId),
-];
 
 const select = {
   id: true,
@@ -53,9 +47,9 @@ export const getActionClasses = (environmentId: string): Promise<TActionClass[]>
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
     },
-    getActionClassesCacheKey(environmentId),
+    [`environments-${environmentId}-actionClasses`],
     {
-      tags: getActionClassesCacheKey(environmentId),
+      tags: [getActionClassesCacheTag(environmentId)],
       revalidate: halfHourInSeconds,
     }
   )();
@@ -171,9 +165,9 @@ export const getActionClassCached = async (name: string, environmentId: string) 
         },
       });
     },
-    getActionClassCacheKey(name, environmentId),
+    [`environments-${environmentId}-actionClasses-${name}`],
     {
-      tags: getActionClassCacheKey(name, environmentId),
+      tags: [getActionClassesCacheTag(environmentId)],
       revalidate: halfHourInSeconds,
     }
   )();

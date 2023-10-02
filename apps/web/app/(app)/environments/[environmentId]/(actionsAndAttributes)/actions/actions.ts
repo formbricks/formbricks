@@ -20,13 +20,9 @@ export async function deleteActionClassAction(environmentId, actionClassId: stri
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  if (isAuthorized) {
-    // the environmentId is only needed for logging hence we can just pass whatever the client sends even if they want to tamper it
-    await deleteActionClass(environmentId, actionClassId);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  await deleteActionClass(environmentId, actionClassId);
 }
 
 export async function updateActionClassAction(
@@ -38,13 +34,9 @@ export async function updateActionClassAction(
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  if (isAuthorized) {
-    // the environmentId is only needed for logging hence we can just pass whatever the client sends even if they want to tamper it
-    return await updateActionClass(environmentId, actionClassId, updatedAction);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  return await updateActionClass(environmentId, actionClassId, updatedAction);
 }
 
 export async function createActionClassAction(action: TActionClassInput) {
@@ -52,12 +44,9 @@ export async function createActionClassAction(action: TActionClassInput) {
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, action.environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  if (isAuthorized) {
-    return await createActionClass(action.environmentId, action);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  return await createActionClass(action.environmentId, action);
 }
 
 export const getActionCountInLastHourAction = async (actionClassId: string) => {
@@ -65,11 +54,9 @@ export const getActionCountInLastHourAction = async (actionClassId: string) => {
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
-  if (isAuthorized) {
-    return await getActionCountInLastHour(actionClassId);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getActionCountInLastHour(actionClassId);
 };
 
 export const getActionCountInLast24HoursAction = async (actionClassId: string) => {
@@ -77,11 +64,9 @@ export const getActionCountInLast24HoursAction = async (actionClassId: string) =
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
-  if (isAuthorized) {
-    return await getActionCountInLast24Hours(actionClassId);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getActionCountInLast24Hours(actionClassId);
 };
 
 export const getActionCountInLast7DaysAction = async (actionClassId: string) => {
@@ -89,11 +74,9 @@ export const getActionCountInLast7DaysAction = async (actionClassId: string) => 
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
-  if (isAuthorized) {
-    return await getActionCountInLast7Days(actionClassId);
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getActionCountInLast7Days(actionClassId);
 };
 
 export const GetActiveInactiveSurveysAction = async (
@@ -103,14 +86,12 @@ export const GetActiveInactiveSurveysAction = async (
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
-  if (isAuthorized) {
-    const surveys = await getSurveysByActionClassId(actionClassId);
-    const response = {
-      activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
-      inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
-    };
-    return response;
-  } else {
-    throw new AuthorizationError("Not authorized");
-  }
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const surveys = await getSurveysByActionClassId(actionClassId);
+  const response = {
+    activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
+    inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
+  };
+  return response;
 };
