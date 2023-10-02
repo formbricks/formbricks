@@ -13,7 +13,7 @@ interface UrlShortenerModalProps {
   setOpen: (v: boolean) => void;
 }
 
-type UrlValidationStates = "default" | "valid" | "invalid";
+type UrlValidationState = "default" | "valid" | "invalid";
 
 type UrlShortenerFormDataProps = {
   url: string;
@@ -21,10 +21,15 @@ type UrlShortenerFormDataProps = {
 const defaultShortUrl = "https://formbricks.com/s/...";
 
 export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalProps) {
-  const [isShorteningUrl, setIsShorteningUrl] = useState(false);
-  const [urlValidationState, setUrlValidationState] = useState<UrlValidationStates>("default");
+  const linkTextRef = useRef(null);
+  const [urlValidationState, setUrlValidationState] = useState<UrlValidationState>("default");
   const [shortUrl, setShortUrl] = useState(defaultShortUrl);
-  const { register, handleSubmit, watch } = useForm<UrlShortenerFormDataProps>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { isSubmitting },
+  } = useForm<UrlShortenerFormDataProps>({
     mode: "onSubmit",
     defaultValues: {
       url: "",
@@ -43,7 +48,7 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
     if (!isValid) {
       setUrlValidationState("invalid");
       setShortUrl(defaultShortUrl);
-      toast.error("Only formbricks links allowed.");
+      toast.error("Only formbricks survey links allowed.");
     } else {
       setUrlValidationState("valid");
     }
@@ -52,13 +57,9 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
   const shortenUrl = async (data: UrlShortenerFormDataProps) => {
     if (urlValidationState !== "valid") return;
 
-    setIsShorteningUrl(true);
-    const shortUrl = await createShortUrlAction(data.url);
+    const shortUrl = await createShortUrlAction(data.url.trim());
     setShortUrl(shortUrl);
-    setIsShorteningUrl(false);
   };
-
-  const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
     if (linkTextRef.current) {
@@ -118,7 +119,7 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
                 size="sm"
                 className="col-span-1 text-center"
                 type="submit"
-                loading={isShorteningUrl}>
+                loading={isSubmitting}>
                 Shorten
               </Button>
             </div>
@@ -131,12 +132,7 @@ export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalPr
               ref={linkTextRef}
               className="col-span-5 w-full overflow-auto rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-800"
               onClick={() => handleTextSelection()}>
-              <span
-                style={{
-                  wordBreak: "break-all",
-                }}>
-                {shortUrl}
-              </span>
+              <span className="break-all">{shortUrl}</span>
             </div>
             <Button
               variant="secondary"
