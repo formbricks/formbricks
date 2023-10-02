@@ -1,25 +1,16 @@
 "use client";
 
-import { useEnvironment } from "@/lib/environments/environments";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { ArchiveBoxIcon, CheckIcon, PauseIcon } from "@heroicons/react/24/solid";
 
 interface SurveyStatusIndicatorProps {
   status: string;
   tooltip?: boolean;
-  environmentId: string;
+  environment: TEnvironment;
 }
 
-export default function SurveyStatusIndicator({
-  status,
-  tooltip,
-  environmentId,
-}: SurveyStatusIndicatorProps) {
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
-
-  if (isLoadingEnvironment) return <></>;
-  if (isErrorEnvironment) return <></>;
-
+export default function SurveyStatusIndicator({ status, tooltip, environment }: SurveyStatusIndicatorProps) {
   if (!environment.widgetSetupCompleted) return null;
   if (tooltip) {
     return (

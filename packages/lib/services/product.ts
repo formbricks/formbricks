@@ -9,8 +9,12 @@ import { cache } from "react";
 import "server-only";
 import { z } from "zod";
 import { validateInputs } from "../utils/validate";
+import { EnvironmentType } from "@prisma/client";
+import { EventType } from "@prisma/client";
+import { getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
 
-const getProductCacheTag = (environmentId: string): string => `env-${environmentId}-product`;
+export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
+const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
 const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
 
 const selectProduct = {
@@ -29,25 +33,61 @@ const selectProduct = {
   environments: true,
 };
 
-export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
-  validateInputs([teamId, ZId]);
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        teamId,
+const populateEnvironment = {
+  eventClasses: {
+    create: [
+      {
+        name: "New Session",
+        description: "Gets fired when a new session is created",
+        type: EventType.automatic,
       },
-      select: selectProduct,
-    });
+      {
+        name: "Exit Intent (Desktop)",
+        description: "A user on Desktop leaves the website with the cursor.",
+        type: EventType.automatic,
+      },
+      {
+        name: "50% Scroll",
+        description: "A user scrolled 50% of the current page",
+        type: EventType.automatic,
+      },
+    ],
+  },
+  attributeClasses: {
+    create: [
+      { name: "userId", description: "The internal ID of the person", type: EventType.automatic },
+      { name: "email", description: "The email of the person", type: EventType.automatic },
+    ],
+  },
+};
 
-    return products;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+export const getProducts = async (teamId: string): Promise<TProduct[]> =>
+  unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+      try {
+        const products = await prisma.product.findMany({
+          where: {
+            teamId,
+          },
+          select: selectProduct,
+        });
+
+        return products;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`teams-${teamId}-products`],
+    {
+      tags: [getProductsCacheTag(teamId)],
+      revalidate: 30 * 60, // 30 minutes
     }
-
-    throw error;
-  }
-});
+  )();
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct | null> => {
   if (!environmentId) {
@@ -113,6 +153,7 @@ export const updateProduct = async (
   try {
     const product = ZProduct.parse(updatedProduct);
 
+    revalidateTag(getProductsCacheTag(product.teamId));
     product.environments.forEach((environment) => {
       // revalidate environment cache
       revalidateTag(getProductCacheTag(environment.id));
@@ -155,12 +196,55 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   });
 
   if (product) {
+    revalidateTag(getProductsCacheTag(product.teamId));
+    revalidateTag(getEnvironmentsCacheTag(product.id));
     product.environments.forEach((environment) => {
       // revalidate product cache
       revalidateTag(getProductCacheTag(environment.id));
-      revalidateTag(environment.id);
+      revalidateTag(getEnvironmentCacheTag(environment.id));
     });
   }
 
   return product;
 });
+
+export const createProduct = async (environmentId: string, productName: string): Promise<TProduct> => {
+  const environment = await prisma.environment.findUnique({
+    where: { id: environmentId },
+    select: {
+      product: {
+        select: {
+          teamId: true,
+        },
+      },
+    },
+  });
+
+  if (!environment) {
+    throw new Error("Invalid environment");
+  }
+
+  const newProduct = await prisma.product.create({
+    data: {
+      name: productName,
+      team: {
+        connect: { id: environment.product.teamId },
+      },
+      environments: {
+        create: [
+          {
+            type: EnvironmentType.production,
+            ...populateEnvironment,
+          },
+          {
+            type: EnvironmentType.development,
+            ...populateEnvironment,
+          },
+        ],
+      },
+    },
+    select: selectProduct,
+  });
+
+  return newProduct;
+};

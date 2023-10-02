@@ -2,7 +2,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 
 import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -59,6 +59,7 @@ export default async function LinkSurveyPage({ params, searchParams }) {
       personId={person?.id}
       emailVerificationStatus={emailVerificationStatus}
       prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+      webAppUrl={WEBAPP_URL}
     />
   );
 }

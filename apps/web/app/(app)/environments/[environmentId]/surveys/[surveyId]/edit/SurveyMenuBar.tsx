@@ -205,8 +205,8 @@ export default function SurveyMenuBar({
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
           <div className="mr-4 flex items-center">
             <SurveyStatusDropdown
-              surveyId={localSurvey.id}
-              environmentId={environment.id}
+              survey={survey}
+              environment={environment}
               updateLocalSurveyStatus={updateLocalSurveyStatus}
             />
           </div>

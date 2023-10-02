@@ -9,6 +9,7 @@ import { Prisma as prismaClient } from "@prisma/client/";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
 import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
+import { createProduct } from "@formbricks/lib/services/product";
 
 export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
   const newTeam = await prisma.team.create({
@@ -317,4 +318,11 @@ export const deleteSurveyAction = async (surveyId: string) => {
   } else {
     throw new Error("You are not authorized to perform this action.");
   }
+};
+
+export const createProductAction = async (environmentId: string, productName: string) => {
+  const productCreated = await createProduct(environmentId, productName);
+
+  const newEnvironment = productCreated.environments[0];
+  return newEnvironment;
 };

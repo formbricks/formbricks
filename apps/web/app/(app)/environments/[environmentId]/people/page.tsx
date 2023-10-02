@@ -3,6 +3,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
 import { PEOPLE_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getPeople, getPeopleCount } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Pagination, PersonAvatar } from "@formbricks/ui";
@@ -19,7 +20,13 @@ export default async function PeoplePage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const pageNumber = searchParams.page ? parseInt(searchParams.page as string) : 1;
-  const totalPeople = await getPeopleCount(params.environmentId);
+  const [environment, totalPeople] = await Promise.all([
+    getEnvironment(params.environmentId),
+    getPeopleCount(params.environmentId),
+  ]);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
   const maxPageNumber = Math.ceil(totalPeople / PEOPLE_PER_PAGE);
   let hidePagination = false;
 
@@ -37,7 +44,7 @@ export default async function PeoplePage({
       {people.length === 0 ? (
         <EmptySpaceFiller
           type="table"
-          environmentId={params.environmentId}
+          environment={environment}
           emptyMessage="Your users will appear here as soon as they use your app ⏲️"
         />
       ) : (

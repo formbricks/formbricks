@@ -1,10 +1,8 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProduct } from "@/lib/products/products";
 import { getQuestionDefaults, questionTypes, universalQuestionPresets } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
-import { ErrorComponent } from "@formbricks/ui";
+import { TProduct } from "@formbricks/types/v1/product";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -12,16 +10,11 @@ import { useState } from "react";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
-  environmentId: string;
+  product: TProduct;
 }
 
-export default function AddQuestionButton({ addQuestion, environmentId }: AddQuestionButtonProps) {
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
+export default function AddQuestionButton({ addQuestion, product }: AddQuestionButtonProps) {
   const [open, setOpen] = useState(false);
-
-  if (isLoadingProduct) return <LoadingSpinner />;
-  if (isErrorProduct) return <ErrorComponent />;
 
   return (
     <Collapsible.Root

@@ -5,13 +5,13 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { unstable_cache } from "next/cache";
 
 const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
-  `env-${environmentId}-surveys`,
-  `env-${environmentId}-product`,
+  `environments-${environmentId}-surveys`,
+  `environments-${environmentId}-product`,
   personId,
 ];
 
 const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
-  `env-${environmentId}-person-${personId}-syncSurveys`,
+  `environments-${environmentId}-person-${personId}-syncSurveys`,
 ];
 
 export const getSurveysCached = (environmentId: string, person: TPerson) =>

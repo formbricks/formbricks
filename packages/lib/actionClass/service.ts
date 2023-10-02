@@ -12,12 +12,13 @@ import { validateInputs } from "../utils/validate";
 const halfHourInSeconds = 60 * 30;
 
 export const getActionClassCacheTag = (name: string, environmentId: string): string =>
-  `env-${environmentId}-actionClass-${name}`;
+  `environments-${environmentId}-actionClass-${name}`;
 const getActionClassCacheKey = (name: string, environmentId: string): string[] => [
   getActionClassCacheTag(name, environmentId),
 ];
 
-const getActionClassesCacheTag = (environmentId: string): string => `env-${environmentId}-actionClasses`;
+const getActionClassesCacheTag = (environmentId: string): string =>
+  `environments-${environmentId}-actionClasses`;
 const getActionClassesCacheKey = (environmentId: string): string[] => [
   getActionClassesCacheTag(environmentId),
 ];
@@ -95,7 +96,7 @@ export const deleteActionClass = async (
     if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     // revalidate cache
-    revalidateTag(getActionClassesCacheTag(environmentId));
+    revalidateTag(getActionClassesCacheTag(result.environmentId));
 
     return result;
   } catch (error) {
@@ -156,8 +157,8 @@ export const updateActionClass = async (
     });
 
     // revalidate cache
-    revalidateTag(getActionClassCacheTag(result.name, environmentId));
-    revalidateTag(getActionClassesCacheTag(environmentId));
+    revalidateTag(getActionClassCacheTag(result.name, result.environmentId));
+    revalidateTag(getActionClassesCacheTag(result.environmentId));
 
     return result;
   } catch (error) {
