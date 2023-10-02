@@ -21,7 +21,6 @@ interface OpenQuestionFormProps {
 }
 
 export default function OpenQuestionForm({
-  localSurvey,
   question,
   questionIdx,
   updateQuestion,
