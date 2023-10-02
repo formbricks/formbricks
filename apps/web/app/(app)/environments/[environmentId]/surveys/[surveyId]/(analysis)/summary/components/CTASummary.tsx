@@ -4,6 +4,7 @@ import { TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
 import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
+import { questionTypes } from "@/lib/questions";
 
 interface CTASummaryProps {
   questionSummary: QuestionSummary<TSurveyCTAQuestion>;
@@ -15,6 +16,8 @@ interface ChoiceResult {
 }
 
 export default function CTASummary({ questionSummary }: CTASummaryProps) {
+  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+
   const ctr: ChoiceResult = useMemo(() => {
     const clickedAbs = questionSummary.responses.filter((response) => response.value === "clicked").length;
     const count = questionSummary.responses.length;
@@ -31,7 +34,10 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
         <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="rounded-lg bg-slate-100 p-2 ">Call-to-Action</div>
+          <div className=" flex items-center rounded-lg bg-slate-100 p-2 ">
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"}
+          </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {ctr.count} responses

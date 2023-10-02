@@ -9,6 +9,7 @@ import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
 } from "@formbricks/types/v1/surveys";
+import { questionTypes } from "@/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface MultipleChoiceSummaryProps {
@@ -38,6 +39,8 @@ export default function MultipleChoiceSummary({
   surveyType,
 }: MultipleChoiceSummaryProps) {
   const isSingleChoice = questionSummary.question.type === QuestionType.MultipleChoiceSingle;
+
+  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];
@@ -129,10 +132,9 @@ export default function MultipleChoiceSummary({
         <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="rounded-lg bg-slate-100 p-2">
-            {isSingleChoice
-              ? "Multiple-Choice Single Select Question"
-              : "Multiple-Choice Multi Select Question"}
+          <div className="flex items-center rounded-lg bg-slate-100 p-2">
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            Multiple-Choice {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
