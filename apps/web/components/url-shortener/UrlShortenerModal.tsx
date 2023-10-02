@@ -8,16 +8,15 @@ import clsx from "clsx";
 import { createShortUrlAction } from "./actions";
 import { env } from "@/env.mjs";
 
-interface UrlShortenerModalProps {
+type UrlShortenerModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
-}
-
-type UrlValidationState = "default" | "valid" | "invalid";
-
+};
 type UrlShortenerFormDataProps = {
   url: string;
 };
+type UrlValidationState = "default" | "valid" | "invalid";
+
 const defaultShortUrl = "https://formbricks.com/s/...";
 
 export default function UrlShortenerModal({ open, setOpen }: UrlShortenerModalProps) {
