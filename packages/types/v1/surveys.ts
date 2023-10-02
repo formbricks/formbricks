@@ -145,6 +145,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   placeholder: z.string().optional(),
   longAnswer: z.boolean().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
+  inputType: z.enum(["text", "email", "url", "number", "phone"]).optional().default("text"),
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;

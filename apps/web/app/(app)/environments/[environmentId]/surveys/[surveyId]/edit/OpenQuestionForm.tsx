@@ -1,7 +1,15 @@
+import React, { useState, useEffect } from "react";
 import { TSurveyOpenTextQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Button, Input, Label, Select } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+
+const questionTypes = [
+  { value: "text", label: "Text" },
+  { value: "email", label: "Email" },
+  { value: "url", label: "URL" },
+  { value: "number", label: "Number" },
+  { value: "phone", label: "Phone Number" },
+];
 
 interface OpenQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
@@ -13,12 +21,22 @@ interface OpenQuestionFormProps {
 }
 
 export default function OpenQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
   isInValid,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+
+  // Function to handle question type change
+  const handleQuestionTypeChange = (value: string) => {
+    updateQuestion(questionIdx, { inputType: value });
+  };
+
+  useEffect(() => {
+    handleQuestionTypeChange("text");
+  }, []);
 
   return (
     <form>
@@ -74,6 +92,23 @@ export default function OpenQuestionForm({
             value={question.placeholder}
             onChange={(e) => updateQuestion(questionIdx, { placeholder: e.target.value })}
           />
+        </div>
+      </div>
+
+      {/* Add a dropdown to select the question type */}
+      <div className="mt-3">
+        <Label htmlFor="questionType">Question Type</Label>
+        <div className="flex items-center">
+          {questionTypes.map((type) => (
+            <div
+              key={type.value}
+              onClick={() => handleQuestionTypeChange(type.value)}
+              className={`mr-2 cursor-pointer rounded-md border p-2 ${
+                question.inputType === type.value ? "bg-slate-50" : "bg-white"
+              }`}>
+              {type.label}
+            </div>
+          ))}
         </div>
       </div>
     </form>
