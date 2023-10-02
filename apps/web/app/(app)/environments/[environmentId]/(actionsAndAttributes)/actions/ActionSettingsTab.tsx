@@ -14,8 +14,8 @@ import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAn
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/InnerHtmlSelector";
 import {
-  deleteActionAction,
-  updateActionAction,
+  deleteActionClassAction,
+  updateActionClassAction,
 } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface ActionSettingsTabProps {
@@ -84,7 +84,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
         noCodeConfig: filteredNoCodeConfig,
         type: "noCode",
       } as TActionClassInput;
-      await updateActionAction(environmentId, actionClass.id, updatedData);
+      await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
       router.refresh();
       toast.success("Action updated successfully");
@@ -98,7 +98,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionAction(environmentId, actionClass.id);
+      await deleteActionClassAction(environmentId, actionClass.id);
       router.refresh();
       toast.success("Action deleted successfully");
       setOpen(false);

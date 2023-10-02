@@ -2,41 +2,33 @@ import { prisma } from "@formbricks/database";
 import { unstable_cache } from "next/cache";
 
 export const hasUserEnvironmentAccess = async (userId: string, environmentId: string) => {
-  if (!userId) return false;
-  const environment = await prisma.environment.findUnique({
-    where: {
-      id: environmentId,
-    },
-    select: {
-      product: {
+  return await unstable_cache(
+    async () => {
+      if (!userId) return false;
+      const environment = await prisma.environment.findUnique({
+        where: {
+          id: environmentId,
+        },
         select: {
-          team: {
+          product: {
             select: {
-              memberships: {
+              team: {
                 select: {
-                  userId: true,
+                  memberships: {
+                    select: {
+                      userId: true,
+                    },
+                  },
                 },
               },
             },
           },
         },
-      },
+      });
+      const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
+      return environmentUsers.includes(userId);
     },
-  });
-  const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
-  if (environmentUsers.includes(userId)) {
-    return true;
-  }
-  return false;
+    [`users-${userId}-environments-${environmentId}`],
+    { revalidate: 30 * 60, tags: [`environments-${environmentId}`] }
+  )(); // 30 minutes
 };
-
-export const hasUserEnvironmentAccessCached = async (userId: string, environmentId: string) =>
-  await unstable_cache(
-    async () => {
-      return await hasUserEnvironmentAccess(userId, environmentId);
-    },
-    [`${userId}-${environmentId}`],
-    {
-      revalidate: 5 * 60, // 5 minutes
-    }
-  )();
