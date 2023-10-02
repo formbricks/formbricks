@@ -77,9 +77,6 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          return;
-        }
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
@@ -89,7 +86,7 @@ export default function MultipleChoiceSingleQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2">
-            {questionChoices.map((choice) => (
+            {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
                 className={cn(
@@ -113,6 +110,7 @@ export default function MultipleChoiceSingleQuestion({
                     }}
                     checked={Array.isArray(value) && value.includes(choice.label)}
                     style={{ borderColor: brandColor, color: brandColor }}
+                    required={question.required && idx === 0}
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
