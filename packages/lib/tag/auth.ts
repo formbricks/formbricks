@@ -1,5 +1,6 @@
 import { hasUserEnvironmentAccessCached } from "../environment/auth";
 import { getTag } from "./service";
+import { unstable_cache } from "next/cache";
 
 export const canUserAccessTag = async (userId: string, tagId: string): Promise<boolean> => {
   if (!userId) return false;
@@ -12,3 +13,14 @@ export const canUserAccessTag = async (userId: string, tagId: string): Promise<b
 
   return true;
 };
+
+export const canUserAccessTagCached = async (userId: string, tagId: string) =>
+  await unstable_cache(
+    async () => {
+      return await canUserAccessTag(userId, tagId);
+    },
+    [`${userId}-${tagId}`],
+    {
+      revalidate: 30 * 60, // 30 minutes
+    }
+  )();
