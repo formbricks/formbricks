@@ -12,7 +12,7 @@ import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import "server-only";
-import { getPerson, transformPrismaPerson } from "./person";
+import { getPerson, transformPrismaPerson } from "../services/person";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
