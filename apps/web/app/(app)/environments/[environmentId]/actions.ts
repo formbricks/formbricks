@@ -7,6 +7,19 @@ import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { createProduct } from "@formbricks/lib/services/product";
+import { nanoid } from "nanoid";
+import { createShortenedUrl } from "@formbricks/lib/services/shortenedUrl";
+import { SHORT_SURVEY_BASE_URL } from "@formbricks/lib/constants";
+
+export async function createShortUrl(url: string): Promise<string> {
+  const shortUrl = nanoid(10);
+
+  const newShortUrl = await createShortenedUrl(shortUrl, url);
+
+  const newUrl = `${SHORT_SURVEY_BASE_URL}${newShortUrl.shortUrl as string}`;
+
+  return newUrl;
+}
 
 export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
   const newTeam = await prisma.team.create({
