@@ -4,7 +4,7 @@ import { customAlphabet } from "nanoid";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 
-// Create short url and return it
+// Create the short url and return it
 export const createShortUrl = async (fullUrl: string): Promise<string> => {
   const nanoId = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10)();
   const shortUrl = `${SHORT_SURVEY_BASE_URL}${nanoId}`;
@@ -44,7 +44,7 @@ export const createShortUrl = async (fullUrl: string): Promise<string> => {
   return urlEntry.shortUrl;
 };
 
-// Get full url from short url and increment the hits count
+// Get the full url from short url and return it
 export const getFullUrl = async (shortUrlParam: string): Promise<string | null> => {
   const shortUrl = `${SHORT_SURVEY_BASE_URL}${shortUrlParam}`;
 
@@ -56,22 +56,6 @@ export const getFullUrl = async (shortUrlParam: string): Promise<string | null> 
         shortUrl,
       },
     });
-
-    if (!urlEntry) {
-      return null;
-    }
-
-    await prisma.urlShortener.update({
-      where: {
-        id: urlEntry.id,
-        shortUrl,
-      },
-      data: {
-        hits: {
-          increment: 1,
-        },
-      },
-    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -80,5 +64,5 @@ export const getFullUrl = async (shortUrlParam: string): Promise<string | null> 
     throw error;
   }
 
-  return urlEntry.fullUrl;
+  return urlEntry?.fullUrl ?? null;
 };

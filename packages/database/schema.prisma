@@ -507,5 +507,4 @@ model UrlShortener {
   updatedAt DateTime @updatedAt @map(name: "updated_at")
   fullUrl   String
   shortUrl  String
-  hits      Int      @default(0)
 }
