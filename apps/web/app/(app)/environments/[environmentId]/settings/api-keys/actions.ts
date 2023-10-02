@@ -1,11 +1,32 @@
 "use server";
 
-import { deleteApiKey, createApiKey } from "@formbricks/lib/services/apiKey";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { deleteApiKey, createApiKey } from "@formbricks/lib/apiKey/service";
+import { canUserAccessApiKey } from "@formbricks/lib/apiKey/auth";
 import { TApiKeyCreateInput } from "@formbricks/types/v1/apiKeys";
+import { getServerSession } from "next-auth";
+import { AuthorizationError } from "@formbricks/types/v1/errors";
 
 export async function deleteApiKeyAction(id: string) {
-  return await deleteApiKey(id);
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+  const isAuthorized = await canUserAccessApiKey(session.user.id, id);
+
+  if (isAuthorized) {
+    return await deleteApiKey(id);
+  } else {
+    throw new AuthorizationError("Not authorized");
+  }
 }
 export async function createApiKeyAction(environmentId: string, apiKeyData: TApiKeyCreateInput) {
-  return await createApiKey(environmentId, apiKeyData);
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+
+  if (isAuthorized) {
+    return await createApiKey(environmentId, apiKeyData);
+  } else {
+    throw new AuthorizationError("Not authorized");
+  }
 }

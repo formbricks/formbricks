@@ -1,15 +1,16 @@
 "use client";
 
 import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponsesFeed";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TResponseWithSurvey } from "@formbricks/types/v1/responses";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
 export default function ResponseTimeline({
-  environmentId,
+  environment,
   responses,
 }: {
-  environmentId: string;
+  environment: TEnvironment;
   responses: TResponseWithSurvey[];
 }) {
   const [responsesAscending, setResponsesAscending] = useState(true);
@@ -29,7 +30,7 @@ export default function ResponseTimeline({
           </button>
         </div>
       </div>
-      <ResponseFeed responses={responses} sortByDate={responsesAscending} environmentId={environmentId} />
+      <ResponseFeed responses={responses} sortByDate={responsesAscending} environment={environment} />
     </div>
   );
 }

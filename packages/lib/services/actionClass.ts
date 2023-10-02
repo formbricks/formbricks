@@ -12,12 +12,13 @@ import { validateInputs } from "../utils/validate";
 const halfHourInSeconds = 60 * 30;
 
 export const getActionClassCacheTag = (name: string, environmentId: string): string =>
-  `env-${environmentId}-actionClass-${name}`;
+  `environments-${environmentId}-actionClass-${name}`;
 const getActionClassCacheKey = (name: string, environmentId: string): string[] => [
   getActionClassCacheTag(name, environmentId),
 ];
 
-const getActionClassesCacheTag = (environmentId: string): string => `env-${environmentId}-actionClasses`;
+const getActionClassesCacheTag = (environmentId: string): string =>
+  `environments-${environmentId}-actionClasses`;
 const getActionClassesCacheKey = (environmentId: string): string[] => [
   getActionClassesCacheTag(environmentId),
 ];
@@ -63,6 +64,22 @@ export const getActionClassesCached = (environmentId: string) =>
       revalidate: halfHourInSeconds,
     }
   )();
+
+export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> => {
+  validateInputs([actionClassId, ZId]);
+  try {
+    let actionClass = await prisma.eventClass.findUnique({
+      where: {
+        id: actionClassId,
+      },
+      select,
+    });
+
+    return actionClass;
+  } catch (error) {
+    throw new DatabaseError(`Database error when fetching action`);
+  }
+};
 
 export const deleteActionClass = async (
   environmentId: string,
