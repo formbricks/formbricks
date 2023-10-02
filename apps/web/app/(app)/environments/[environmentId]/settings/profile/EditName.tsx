@@ -19,7 +19,7 @@ export function EditName({ profile }: { profile: TProfile }) {
         className="w-full max-w-sm items-center"
         onSubmit={handleSubmit(async (data) => {
           try {
-            await profileEditAction(profile.id, data);
+            await profileEditAction(data);
             toast.success("Your name was updated successfully.");
           } catch (error) {
             toast.error(`Error: ${error.message}`);
