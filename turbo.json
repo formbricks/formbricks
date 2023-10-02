@@ -87,10 +87,10 @@
         "TELEMETRY_DISABLED",
         "VERCEL_URL",
         "WEBAPP_URL",
-        "S3_BUCKET_NAME",
-        "S3_REGION",
         "AWS_ACCESS_KEY",
-        "AWS_SECRET_KEY"
+        "AWS_SECRET_KEY",
+        "S3_REGION",
+        "S3_BUCKET_NAME"
       ]
     },
     "post-install": {
