@@ -15,7 +15,7 @@ import {
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/CssSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/InnerHtmlSelector";
-import { createActionAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface AddNoCodeActionModalProps {
   environmentId: string;
@@ -84,7 +84,7 @@ export default function AddNoCodeActionModal({
         type: "noCode",
       } as TActionClassInput;
 
-      const newActionClass: TActionClass = await createActionAction(updatedData);
+      const newActionClass: TActionClass = await createActionClassAction(updatedData);
       if (setActionClassArray) {
         setActionClassArray((prevActionClassArray: TActionClass[]) => [
           ...prevActionClassArray,

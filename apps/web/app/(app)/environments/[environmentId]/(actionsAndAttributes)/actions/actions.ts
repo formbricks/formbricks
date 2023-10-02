@@ -15,7 +15,7 @@ import {
 import { getSurveysByActionClassId } from "@formbricks/lib/services/survey";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
 
-export async function deleteActionAction(environmentId, actionClassId: string) {
+export async function deleteActionClassAction(environmentId, actionClassId: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -29,7 +29,7 @@ export async function deleteActionAction(environmentId, actionClassId: string) {
   }
 }
 
-export async function updateActionAction(
+export async function updateActionClassAction(
   environmentId: string,
   actionClassId: string,
   updatedAction: Partial<TActionClassInput>
@@ -47,7 +47,7 @@ export async function updateActionAction(
   }
 }
 
-export async function createActionAction(action: TActionClassInput) {
+export async function createActionClassAction(action: TActionClassInput) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
