@@ -10,21 +10,21 @@ import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 
-export const getApiKey = async (apiKey: string): Promise<TApiKey | null> => {
-  validateInputs([apiKey, z.string()]);
-  if (!apiKey) {
+export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
+  validateInputs([apiKeyId, z.string()]);
+  if (!apiKeyId) {
     throw new InvalidInputError("API key cannot be null or undefined.");
   }
 
   try {
     const apiKeyData = await prisma.apiKey.findUnique({
       where: {
-        hashedKey: getHash(apiKey),
+        id: apiKeyId,
       },
     });
 
     if (!apiKeyData) {
-      throw new ResourceNotFoundError("API Key", apiKey);
+      throw new ResourceNotFoundError("API Key from ID", apiKeyId);
     }
 
     return apiKeyData;

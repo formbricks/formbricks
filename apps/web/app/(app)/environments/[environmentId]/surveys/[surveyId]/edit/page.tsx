@@ -5,7 +5,7 @@ import SurveyEditor from "./SurveyEditor";
 import { getSurveyWithAnalytics } from "@formbricks/lib/services/survey";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getActionClasses } from "@formbricks/lib/services/actionClass";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/services/attributeClass";
 import { ErrorComponent } from "@formbricks/ui";
 
