@@ -4,7 +4,7 @@ import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { getPerson } from "@formbricks/lib/services/person";
-import { getResponsesByPersonId } from "@formbricks/lib/services/response";
+import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSessionCount } from "@formbricks/lib/services/session";
 
 export default async function AttributesSection({ personId }: { personId: string }) {

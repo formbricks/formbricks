@@ -1,9 +1,9 @@
 import { Fence } from "@/components/shared/Fence";
 
 export const meta = {
-  title: "Responses API",
+  title: "Formbricks Responses API Documentation - Manage Your Survey Data Seamlessly",
   description:
-    "Explore the Formbricks Public Client API for client-side tasks and integration into your website.",
+    "Unlock the full potential of Formbricks' Responses API. From fetching to updating survey responses, our comprehensive guide helps you integrate and manage survey data efficiently without compromising security. Ideal for client-side interactions.",
 };
 
 #### Management API
@@ -14,7 +14,7 @@ The Public Client API is designed for the JavaScript SDK and does not require au
 
 ---
 
-## List all responses {{ tag: 'GET', label: '/api/v1/responses' }}
+## List all responses {{ tag: 'GET', label: '/api/v1/management/responses' }}
 
 <Row>
   <Col>
@@ -39,11 +39,11 @@ The Public Client API is designed for the JavaScript SDK and does not require au
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/api/v1/responses">
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/responses">
 
     ```bash {{ title: 'cURL' }}
     curl --location \
-    'https://app.formbricks.com/api/v1/responses' \
+    'https://app.formbricks.com/api/v1/management/responses' \
     --header \
     'x-api-key: <your-api-key>'
     ```

@@ -1,11 +1,11 @@
-import LayoutWaitlist from "@/components/shared/LayoutLight";
 import DemoView from "@/components/dummyUI/DemoView";
+import LayoutWaitlist from "@/pages/formtribe/LayoutLight";
 
 export default function DemoPage() {
   return (
     <LayoutWaitlist
       title="Formbricks Demo"
-      description="Leverage 30+ templates to kick-start your experience management.">
+      description="Play around with our pre-defined 30+ templates and them to kick-start your survey & experience management.">
       <DemoView />
     </LayoutWaitlist>
   );

@@ -4,7 +4,6 @@ import { cn } from "@formbricks/lib/cn";
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/lib/formbricks";
-import { ResponseId, SurveyId } from "@formbricks/js";
 import { TProfile } from "@formbricks/types/v1/profile";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
@@ -13,7 +12,7 @@ import { toast } from "react-hot-toast";
 type RoleProps = {
   next: () => void;
   skip: () => void;
-  setFormbricksResponseId: (id: ResponseId) => void;
+  setFormbricksResponseId: (id: string) => void;
   profile: TProfile;
 };
 
@@ -41,7 +40,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
         try {
           setIsUpdating(true);
           const updatedProfile = { ...profile, role: selectedRole.id };
-          await updateProfileAction(profile.id, updatedProfile);
+          await updateProfileAction(updatedProfile);
           setIsUpdating(false);
         } catch (e) {
           setIsUpdating(false);
@@ -49,7 +48,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
           console.error(e);
         }
         if (formbricksEnabled && env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID) {
-          const res = await createResponse(env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID as SurveyId, {
+          const res = await createResponse(env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID, {
             role: selectedRole.label,
           });
           if (res.ok) {

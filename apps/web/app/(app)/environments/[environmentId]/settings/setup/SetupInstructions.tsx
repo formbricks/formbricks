@@ -1,21 +1,27 @@
 "use client";
 
 import CodeBlock from "@/components/shared/CodeBlock";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TabBar } from "@formbricks/ui";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 import packageJson from "@/package.json";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 const tabs = [
   { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
   { id: "html", label: "HTML", icon: <IoLogoHtml5 /> },
 ];
 
-export default function SetupInstructions({ environmentId }) {
+export default function SetupInstructions({
+  environmentId,
+  webAppUrl,
+  isFormbricksCloud,
+}: {
+  environmentId: string;
+  webAppUrl: string;
+  isFormbricksCloud: boolean;
+}) {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   return (
@@ -33,7 +39,7 @@ export default function SetupInstructions({ environmentId }) {
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
-    apiHost: "${WEBAPP_URL}",
+    apiHost: "${webAppUrl}",
     debug: true, // remove when in production 
   });
 }`}</CodeBlock>
@@ -142,7 +148,7 @@ if (typeof window !== "undefined") {
             </ul>
           </div>
         ) : null}
-        {!IS_FORMBRICKS_CLOUD && (
+        {!isFormbricksCloud && (
           <div>
             <hr className="my-3" />
             <p className="flex w-full justify-end text-sm text-slate-700">
