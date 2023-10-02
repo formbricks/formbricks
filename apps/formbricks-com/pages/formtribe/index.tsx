@@ -266,7 +266,7 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "450",
+    points: "550",
     link: "https://github.com/gupta-piyush19",
   },
   {
@@ -279,11 +279,7 @@ const Leaderboard = [
   },
   {
     name: "Pratik",
-    points: "100",
-  },
-  {
-    name: "/home/babubaap",
-    points: "200",
+    points: "250",
   },
   {
     name: "Karuppiah",
@@ -327,7 +323,7 @@ const Leaderboard = [
   },
   {
     name: "Vishrut",
-    points: "100",
+    points: "250",
   },
   {
     name: "cataxcab",
@@ -363,8 +359,16 @@ const Leaderboard = [
   },
   {
     name: "Aditya Deshlahre",
-    points: "250",
+    points: "450",
     link: "https://github.com/adityadeshlahre",
+  },
+  {
+    name: "Rutam",
+    points: "250",
+  },
+  {
+    name: "Sagnik Sahoo",
+    points: "100",
   },
 ];
 
