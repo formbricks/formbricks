@@ -280,6 +280,9 @@ importers:
       eslint-config-next:
         specifier: ^13.5.3
         version: 13.5.3(eslint@8.50.0)(typescript@5.2.2)
+      framer-motion:
+        specifier: 10.16.4
+        version: 10.16.4(react-dom@18.2.0)(react@18.2.0)
       googleapis:
         specifier: ^126.0.1
         version: 126.0.1(encoding@0.1.13)

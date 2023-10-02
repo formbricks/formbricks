@@ -8,7 +8,13 @@ import type { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
-import { ComputerDesktopIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
+import {
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+} from "@heroicons/react/24/solid";
+import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 interface PreviewSurveyProps {
@@ -21,6 +27,37 @@ interface PreviewSurveyProps {
 }
 let surveyNameTemp;
 
+const previewParentContainerVariant: Variants = {
+  expanded: {
+    position: "fixed",
+    height: "100vh",
+    width: "100vw",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backdropFilter: "blur(15px)",
+    left: 0,
+    top: 0,
+    zIndex: 1040,
+  },
+  shrink: {
+    backgroundColor: "transparent",
+  },
+};
+
+const previewScreenVariants: Variants = {
+  expanded: {
+    position: "absolute",
+    width: "90%",
+    height: "90%",
+    left: "5%",
+    top: "5%",
+    transform: "translate(0%, 0%)",
+    boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
+  },
+  preview: {
+    position: "relative",
+  },
+};
+
 export default function PreviewSurvey({
   survey,
   setActiveQuestionId,
@@ -30,6 +67,7 @@ export default function PreviewSurvey({
   environment,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [previewMode, setPreviewMode] = useState("desktop");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -82,21 +120,89 @@ export default function PreviewSurvey({
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
-      <div className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
-        {previewMode === "mobile" && (
-          <>
-            <div className="absolute right-0 top-0 m-2">
-              <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
-            </div>
-            <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
-              {/* below element is use to create notch for the mobile device mockup   */}
-              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
+      <motion.div
+        variants={previewParentContainerVariant}
+        className="z-10 flex h-[95%] w-5/6"
+        animate={isFullScreenPreview ? "expanded" : "shrink"}>
+        <motion.div
+          variants={previewScreenVariants}
+          className="relative flex h-[95%] max-h-[95%] w-full items-center justify-center rounded-lg border border-slate-300 bg-gray-500 bg-slate-200">
+          {previewMode === "mobile" && (
+            <>
+              <div className="absolute right-0 top-0 m-2">
+                <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+              </div>
+              <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
+                {/* below element is use to create notch for the mobile device mockup   */}
+                <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
+                {previewType === "modal" ? (
+                  <Modal
+                    isOpen={isModalOpen}
+                    placement={product.placement}
+                    highlightBorderColor={product.highlightBorderColor}
+                    previewMode="mobile">
+                    <SurveyInline
+                      survey={survey}
+                      brandColor={product.brandColor}
+                      activeQuestionId={activeQuestionId || undefined}
+                      formbricksSignature={product.formbricksSignature}
+                      onActiveQuestionChange={setActiveQuestionId}
+                      isRedirectDisabled={true}
+                    />
+                  </Modal>
+                ) : (
+                  <div
+                    className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
+                    ref={ContentRef}>
+                    <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                      <div className="w-full max-w-md px-4">
+                        <SurveyInline
+                          survey={survey}
+                          brandColor={product.brandColor}
+                          activeQuestionId={activeQuestionId || undefined}
+                          formbricksSignature={product.formbricksSignature}
+                          onActiveQuestionChange={setActiveQuestionId}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          {previewMode === "desktop" && (
+            <div className="flex h-full w-5/6 flex-1 flex-col">
+              <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
+                <div className="ml-6 flex space-x-2">
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+                </div>
+                <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                  {previewType === "modal" ? "Your web app" : "Preview"}
+                  <div className="flex items-center space-x-2">
+                    {isFullScreenPreview ? (
+                      <ArrowsPointingInIcon
+                        className="h-4 w-4 cursor-pointer"
+                        onClick={() => setIsFullScreenPreview(false)}
+                      />
+                    ) : (
+                      <ArrowsPointingOutIcon
+                        className="h-4 w-4 cursor-pointer"
+                        onClick={() => setIsFullScreenPreview(true)}
+                      />
+                    )}
+                    <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                  </div>
+                </p>
+              </div>
+
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
                   placement={product.placement}
                   highlightBorderColor={product.highlightBorderColor}
-                  previewMode="mobile">
+                  previewMode="desktop">
                   <SurveyInline
                     survey={survey}
                     brandColor={product.brandColor}
@@ -107,73 +213,26 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div
-                  className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
-                  ref={ContentRef}>
-                  <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
-                    <div className="w-full max-w-md px-4">
+                <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
+                  <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
+                    <div className="w-full max-w-md">
                       <SurveyInline
                         survey={survey}
                         brandColor={product.brandColor}
                         activeQuestionId={activeQuestionId || undefined}
                         formbricksSignature={product.formbricksSignature}
                         onActiveQuestionChange={setActiveQuestionId}
+                        isRedirectDisabled={true}
                       />
                     </div>
                   </div>
                 </div>
               )}
             </div>
-          </>
-        )}
-        {previewMode === "desktop" && (
-          <div className="flex h-full w-5/6 flex-1 flex-col">
-            <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
-              <div className="ml-6 flex space-x-2">
-                <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-              </div>
-              <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                {previewType === "modal" ? "Your web app" : "Preview"}
-                <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
-              </p>
-            </div>
+          )}
+        </motion.div>
+      </motion.div>
 
-            {previewType === "modal" ? (
-              <Modal
-                isOpen={isModalOpen}
-                placement={product.placement}
-                highlightBorderColor={product.highlightBorderColor}
-                previewMode="desktop">
-                <SurveyInline
-                  survey={survey}
-                  brandColor={product.brandColor}
-                  activeQuestionId={activeQuestionId || undefined}
-                  formbricksSignature={product.formbricksSignature}
-                  onActiveQuestionChange={setActiveQuestionId}
-                  isRedirectDisabled={true}
-                />
-              </Modal>
-            ) : (
-              <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
-                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
-                  <div className="w-full max-w-md">
-                    <SurveyInline
-                      survey={survey}
-                      brandColor={product.brandColor}
-                      activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
-                      onActiveQuestionChange={setActiveQuestionId}
-                      isRedirectDisabled={true}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
       {/* for toggling between mobile and desktop mode  */}
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
