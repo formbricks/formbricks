@@ -15,7 +15,7 @@ import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { getDisplaysCacheTag } from "../services/displays";
-import { getResponsesCacheTag } from "../services/response";
+import { getResponsesCacheTag } from "../response/service";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
