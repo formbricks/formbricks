@@ -12,7 +12,7 @@ import {
   getActionCountInLast7Days,
   getActionCountInLastHour,
 } from "@formbricks/lib/services/actions";
-import { getSurveysByActionClassId } from "@formbricks/lib/services/survey";
+import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 
 export async function deleteActionAction(environmentId, actionClassId: string) {
   const session = await getServerSession(authOptions);

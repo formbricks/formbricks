@@ -8,16 +8,20 @@ import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
-import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
+import { canUserAccessSurveyCached } from "@formbricks/lib/survey/auth";
 import { createProduct } from "@formbricks/lib/services/product";
+import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
 
-export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
+export async function createTeam(teamName: string): Promise<Team> {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new Error("You are not authorized to perform this action.");
+
   const newTeam = await prisma.team.create({
     data: {
       name: teamName,
       memberships: {
         create: {
-          user: { connect: { id: ownerUserId } },
+          user: { connect: { id: session.user.id } },
           role: "owner",
           accepted: true,
         },
@@ -131,6 +135,12 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
 }
 
 export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new Error("You are not authorized to perform this action.");
+
+  const isAuthorized = await canUserAccessSurveyCached(session.user.id, surveyId);
+  if (!isAuthorized) throw new Error("You are not authorized to perform this action.");
+
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -181,6 +191,26 @@ export async function copyToOtherEnvironmentAction(
   surveyId: string,
   targetEnvironmentId: string
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new Error("You are not authorized to perform this action.");
+
+  const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccessCached(
+    session.user.id,
+    environmentId
+  );
+  if (!isAuthorizedToAccessSourceEnvironment)
+    throw new Error("You are not authorized to perform this action.");
+
+  const isAuthorizedToAccessTargetEnvironment = await hasUserEnvironmentAccessCached(
+    session.user.id,
+    targetEnvironmentId
+  );
+  if (!isAuthorizedToAccessTargetEnvironment)
+    throw new Error("You are not authorized to perform this action.");
+
+  const isAuthorized = await canUserAccessSurveyCached(session.user.id, surveyId);
+  if (!isAuthorized) throw new Error("You are not authorized to perform this action.");
+
   const existingSurvey = await prisma.survey.findFirst({
     where: {
       id: surveyId,
@@ -308,11 +338,7 @@ export const deleteSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("You are not authorized to perform this action.");
 
-  const survey = await getSurvey(surveyId);
-  if (!survey) throw new Error("Survey not found");
-
-  const isAuthorized = await hasUserEnvironmentAccessCached(session.user.id, survey.environmentId);
-
+  const isAuthorized = await canUserAccessSurveyCached(session.user.id, surveyId);
   if (isAuthorized) {
     await deleteSurvey(surveyId);
   } else {
@@ -321,8 +347,16 @@ export const deleteSurveyAction = async (surveyId: string) => {
 };
 
 export const createProductAction = async (environmentId: string, productName: string) => {
-  const productCreated = await createProduct(environmentId, productName);
+  const session = await getServerSession(authOptions);
+  if (!session) throw new Error("You are not authorized to perform this action.");
 
-  const newEnvironment = productCreated.environments[0];
-  return newEnvironment;
+  const isAuthorized = await hasUserEnvironmentAccessCached(session.user.id, environmentId);
+  if (isAuthorized) {
+    const productCreated = await createProduct(environmentId, productName);
+
+    const newEnvironment = productCreated.environments[0];
+    return newEnvironment;
+  } else {
+    throw new Error("You are not authorized to perform this action.");
+  }
 };
