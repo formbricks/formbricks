@@ -20,7 +20,7 @@
   --fb-tyc-shadow: rgb(190, 190, 190);
   --fb-rating-fill: var(--yellow-300);
   --fb-rating-hover: var(--yellow-500);
-  --fb-back-btn-border: transparent;
+  --fb-back-btn-border: currentColor;
   --fb-submit-btn-border: transparent;
   --fb-rating-selected: black;
 }
