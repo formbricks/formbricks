@@ -81,6 +81,13 @@ model AttributeClass {
   @@unique([name, environmentId])
 }
 
+model ShortenedUrl {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  longUrl   String
+  shortUrl  String   @unique
+}
+
 model Person {
   id            String      @id @default(cuid())
   createdAt     DateTime    @default(now()) @map(name: "created_at")
