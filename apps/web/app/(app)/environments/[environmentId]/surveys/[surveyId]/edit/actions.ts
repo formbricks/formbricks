@@ -7,7 +7,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
 
-export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
+export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

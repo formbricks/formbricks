@@ -1,7 +1,7 @@
 import { ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getSurvey } from "./service";
+import { getSurvey, getSurveyCacheTag } from "./service";
 import { unstable_cache } from "next/cache";
 
 export const canUserAccessSurvey = async (userId: string, surveyId: string): Promise<boolean> =>
@@ -20,5 +20,5 @@ export const canUserAccessSurvey = async (userId: string, surveyId: string): Pro
       return true;
     },
     [`users-${userId}-surveys-${surveyId}`],
-    { revalidate: 30 * 60, tags: [`surveys-${surveyId}`] }
+    { revalidate: 30 * 60, tags: [getSurveyCacheTag(surveyId)] }
   )(); // 30 minutes
