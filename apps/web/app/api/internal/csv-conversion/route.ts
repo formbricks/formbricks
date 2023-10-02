@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AsyncParser } from "@json2csv/node";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { responses } from "@/lib/api/response";
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return responses.unauthorizedResponse();
+  }
+
   const data = await request.json();
   let csv: string = "";
 
