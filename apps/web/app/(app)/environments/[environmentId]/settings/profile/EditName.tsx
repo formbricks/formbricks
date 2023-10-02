@@ -3,7 +3,7 @@
 import { Button, Input, Label } from "@formbricks/ui";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { profileEditAction } from "./actions";
+import { updateProfileAction } from "./actions";
 import { TProfile } from "@formbricks/types/v1/profile";
 
 export function EditName({ profile }: { profile: TProfile }) {
@@ -19,7 +19,7 @@ export function EditName({ profile }: { profile: TProfile }) {
         className="w-full max-w-sm items-center"
         onSubmit={handleSubmit(async (data) => {
           try {
-            await profileEditAction(profile.id, data);
+            await updateProfileAction(data);
             toast.success("Your name was updated successfully.");
           } catch (error) {
             toast.error(`Error: ${error.message}`);
