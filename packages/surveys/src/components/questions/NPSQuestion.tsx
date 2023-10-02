@@ -43,7 +43,9 @@ export default function NPSQuestion({
               <label
                 key={number}
                 className={cn(
-                  value === number ? "z-10 border-slate-400 bg-slate-50" : "",
+                  value === number
+                    ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
+                    : "border-[--fb-border]",
                   "relative h-10 flex-1 cursor-pointer border bg-[--fb-bg] text-center text-sm leading-10 text-[--fb-text] first:rounded-l-md last:rounded-r-md hover:bg-[--fb-bg-2] focus:outline-none"
                 )}>
                 <input
