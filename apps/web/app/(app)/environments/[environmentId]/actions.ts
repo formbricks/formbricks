@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { Team } from "@prisma/client";
@@ -14,7 +14,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export async function createTeam(teamName: string): Promise<Team> {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("You are not authorized to perform this action.");
+  if (!session) throw new AuthorizationError("Not authorized");
 
   const newTeam = await prisma.team.create({
     data: {
@@ -136,10 +136,10 @@ export async function createTeam(teamName: string): Promise<Team> {
 
 export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("You are not authorized to perform this action.");
+  if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new Error("You are not authorized to perform this action.");
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const existingSurvey = await getSurvey(surveyId);
 
@@ -192,24 +192,22 @@ export async function copyToOtherEnvironmentAction(
   targetEnvironmentId: string
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("You are not authorized to perform this action.");
+  if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccess(
     session.user.id,
     environmentId
   );
-  if (!isAuthorizedToAccessSourceEnvironment)
-    throw new Error("You are not authorized to perform this action.");
+  if (!isAuthorizedToAccessSourceEnvironment) throw new AuthorizationError("Not authorized");
 
   const isAuthorizedToAccessTargetEnvironment = await hasUserEnvironmentAccess(
     session.user.id,
     targetEnvironmentId
   );
-  if (!isAuthorizedToAccessTargetEnvironment)
-    throw new Error("You are not authorized to perform this action.");
+  if (!isAuthorizedToAccessTargetEnvironment) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new Error("You are not authorized to perform this action.");
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const existingSurvey = await prisma.survey.findFirst({
     where: {
@@ -336,19 +334,19 @@ export async function copyToOtherEnvironmentAction(
 
 export const deleteSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("You are not authorized to perform this action.");
+  if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (isAuthorized) {
     await deleteSurvey(surveyId);
   } else {
-    throw new Error("You are not authorized to perform this action.");
+    throw new AuthorizationError("Not authorized");
   }
 };
 
 export const createProductAction = async (environmentId: string, productName: string) => {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("You are not authorized to perform this action.");
+  if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (isAuthorized) {
@@ -357,6 +355,6 @@ export const createProductAction = async (environmentId: string, productName: st
     const newEnvironment = productCreated.environments[0];
     return newEnvironment;
   } else {
-    throw new Error("You are not authorized to perform this action.");
+    throw new AuthorizationError("Not authorized");
   }
 };
