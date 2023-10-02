@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TSurveyOpenTextQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Button, Input, Label, Select } from "@formbricks/ui";
+import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 
 const questionTypes = [
