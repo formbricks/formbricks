@@ -208,27 +208,34 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   return product;
 });
 
-export const createProduct = async (environmentId: string, productName: string): Promise<TProduct> => {
-  const environment = await prisma.environment.findUnique({
-    where: { id: environmentId },
-    select: {
-      product: {
-        select: {
-          teamId: true,
+export const createProduct = async (
+  productName: string,
+  environmentId?: string,
+  teamId?: string
+): Promise<TProduct> => {
+  if (!teamId) {
+    const environment = await prisma.environment.findUnique({
+      where: { id: environmentId },
+      select: {
+        product: {
+          select: {
+            teamId: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!environment) {
-    throw new Error("Invalid environment");
+    if (!environment) {
+      throw new Error("Invalid environment");
+    }
+    teamId = environment.product.teamId;
   }
 
   const newProduct = await prisma.product.create({
     data: {
       name: productName,
       team: {
-        connect: { id: environment.product.teamId },
+        connect: { id: teamId },
       },
       environments: {
         create: [

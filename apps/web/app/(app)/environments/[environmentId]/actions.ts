@@ -2,7 +2,6 @@
 
 import { prisma } from "@formbricks/database";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
@@ -11,125 +10,16 @@ import { getServerSession } from "next-auth";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { createProduct } from "@formbricks/lib/services/product";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { createTeam } from "@formbricks/lib/services/team";
 
-export async function createTeam(teamName: string): Promise<Team> {
+export async function createTeamAction(teamName: string): Promise<Team> {
+  console.log("createTeamAction");
+
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const newTeam = await prisma.team.create({
-    data: {
-      name: teamName,
-      memberships: {
-        create: {
-          user: { connect: { id: session.user.id } },
-          role: "owner",
-          accepted: true,
-        },
-      },
-      products: {
-        create: [
-          {
-            name: "My Product",
-            environments: {
-              create: [
-                {
-                  type: "production",
-                  eventClasses: {
-                    create: [
-                      {
-                        name: "New Session",
-                        description: "Gets fired when a new session is created",
-                        type: "automatic",
-                      },
-                      {
-                        name: "Exit Intent (Desktop)",
-                        description: "A user on Desktop leaves the website with the cursor.",
-                        type: "automatic",
-                      },
-                      {
-                        name: "50% Scroll",
-                        description: "A user scrolled 50% of the current page",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                  attributeClasses: {
-                    create: [
-                      {
-                        name: "userId",
-                        description: "The internal ID of the person",
-                        type: "automatic",
-                      },
-                      {
-                        name: "email",
-                        description: "The email of the person",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                },
-                {
-                  type: "development",
-                  eventClasses: {
-                    create: [
-                      {
-                        name: "New Session",
-                        description: "Gets fired when a new session is created",
-                        type: "automatic",
-                      },
-                      {
-                        name: "Exit Intent (Desktop)",
-                        description: "A user on Desktop leaves the website with the cursor.",
-                        type: "automatic",
-                      },
-                      {
-                        name: "50% Scroll",
-                        description: "A user scrolled 50% of the current page",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                  attributeClasses: {
-                    create: [
-                      {
-                        name: "userId",
-                        description: "The internal ID of the person",
-                        type: "automatic",
-                      },
-                      {
-                        name: "email",
-                        description: "The email of the person",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    include: {
-      memberships: true,
-      products: {
-        include: {
-          environments: true,
-        },
-      },
-    },
-  });
-
-  const teamId = newTeam?.id;
-
-  if (teamId) {
-    fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
-      method: "POST",
-      headers: {
-        "x-api-key": INTERNAL_SECRET,
-      },
-    });
-  }
+  const newTeam = await createTeam(teamName, session.user.id);
+  await createProduct("My Product", undefined, newTeam.id);
 
   return newTeam;
 }
@@ -349,7 +239,7 @@ export const createProductAction = async (environmentId: string, productName: st
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const productCreated = await createProduct(environmentId, productName);
+  const productCreated = await createProduct(productName, environmentId, undefined);
 
   const newEnvironment = productCreated.environments[0];
   return newEnvironment;
