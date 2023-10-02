@@ -11,7 +11,7 @@ export default function Headline({ headline, questionId, style, required = true 
       <div className={"flex justify-between gap-4"} style={style}>
         {headline}
         {!required && (
-          <span className="self-start font-light text-gray-500" tabIndex={-1}>
+          <span className="self-start text-sm	 font-normal leading-5 text-slate-400" tabIndex={-1}>
             Optional
           </span>
         )}
