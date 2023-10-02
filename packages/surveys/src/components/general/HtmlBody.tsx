@@ -5,7 +5,7 @@ export default function HtmlBody({ htmlString, questionId }: { htmlString?: stri
   return (
     <label
       htmlFor={questionId}
-      className="fb-htmlbody" // change the styles in global.css because otherwise they wont apply to the html inside dangerouslySetInnerHTML
+      className="fb-htmlbody" // styles are in global.css
       dangerouslySetInnerHTML={{ __html: cleanHtml(htmlString) }}></label>
   );
 }
