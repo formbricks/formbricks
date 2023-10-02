@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { QuestionType } from "@formbricks/types/questions";
 import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
-import { StarIcon } from "@heroicons/react/24/solid";
+import { questionTypes } from "@/lib/questions";
 
 interface RatingSummaryProps {
   questionSummary: QuestionSummary<TSurveyRatingQuestion>;
@@ -18,6 +18,8 @@ interface ChoiceResult {
 }
 
 export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
+  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+
   const results: ChoiceResult[] = useMemo(() => {
     if (questionSummary.question.type !== QuestionType.Rating) return [];
     // build a dictionary of choices
@@ -85,8 +87,8 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
         </div>
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <StarIcon className="mr-2 h-4 w-4 " />
-            Rating Question
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />

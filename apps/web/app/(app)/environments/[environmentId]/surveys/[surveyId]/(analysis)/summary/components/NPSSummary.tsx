@@ -3,7 +3,7 @@ import { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
 import { HalfCircle, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { PresentationChartBarIcon } from "@heroicons/react/24/solid";
+import { questionTypes } from "@/lib/questions";
 
 interface NPSSummaryProps {
   questionSummary: QuestionSummary<TSurveyNPSQuestion>;
@@ -28,6 +28,8 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
     const result = count / total;
     return result || 0;
   };
+
+  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const result: Result = useMemo(() => {
     let data = {
@@ -83,7 +85,8 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
         </div>
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <PresentationChartBarIcon className="mr-2 h-4 w-4 " /> Net Promoter Score (NPS)
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"}
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
