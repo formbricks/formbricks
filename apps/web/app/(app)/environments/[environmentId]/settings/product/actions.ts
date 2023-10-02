@@ -3,12 +3,12 @@
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/services/product";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { getServerSession } from "next-auth";
-import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/services/membership";
-import { hasUserEnvironmentAccessCached } from "@formbricks/lib/environment/auth";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export const updateProductAction = async (
   environmentId: string,
@@ -34,8 +34,8 @@ export const updateProductAction = async (
     throw err;
   }
 
-  if (!hasUserEnvironmentAccessCached(session.user.id, environment.id)) {
-    throw new AuthenticationError("You don't have access to this environment");
+  if (!hasUserEnvironmentAccess(session.user.id, environment.id)) {
+    throw new AuthorizationError("Not authorized");
   }
 
   const updatedProduct = await updateProduct(productId, data);
@@ -62,15 +62,15 @@ export const deleteProductAction = async (environmentId: string, userId: string,
     throw err;
   }
 
-  if (!hasUserEnvironmentAccessCached(session.user.id, environment.id)) {
-    throw new AuthenticationError("You don't have access to this environment");
+  if (!hasUserEnvironmentAccess(session.user.id, environment.id)) {
+    throw new AuthorizationError("Not authorized");
   }
 
   const team = await getTeamByEnvironmentId(environmentId);
   const membership = team ? await getMembershipByUserIdTeamId(userId, team.id) : null;
 
   if (membership?.role !== "admin" && membership?.role !== "owner") {
-    throw new AuthenticationError("You are not allowed to delete products.");
+    throw new AuthorizationError("You are not allowed to delete products.");
   }
 
   const availableProducts = team ? await getProducts(team.id) : null;
