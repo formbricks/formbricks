@@ -20,7 +20,7 @@ export default function ThankYouCard({
 }: ThankYouCardProps) {
   return (
     <div className="text-center">
-      <div className="flex items-center justify-center text-[--fb-tyc-icon-color]">
+      <div className="flex items-center justify-center text-[--fb-primary]">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -36,7 +36,7 @@ export default function ThankYouCard({
         </svg>
       </div>
 
-      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-[--fb-tyc-icon-shadow]"></span>
+      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-[--fb-tyc-shadow]"></span>
 
       <div>
         <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />

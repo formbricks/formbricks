@@ -68,13 +68,15 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-[--fb-q-mcsq-bg] py-0.5 pr-2">
+          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-[--fb-bg] py-0.5 pr-2">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
                 className={cn(
-                  value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-q-mcsq-color] hover:bg-[--fb-q-mcsq-bg-hover] focus:outline-none"
+                  value === choice.label
+                    ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
+                    : "border-[--fb-border]",
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] hover:bg-[--fb-bg-2] focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -82,7 +84,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
-                    className="h-4 w-4 border border-[--fb-q-mcsq-input-border] text-[--fb-q-mcsq-input-color] focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setOtherSelected(false);
@@ -100,8 +102,10 @@ export default function MultipleChoiceSingleQuestion({
             {otherOption && (
               <label
                 className={cn(
-                  value === otherOption.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-q-mcsq-color] hover:bg-[--fb-q-mcsq-bg-hover] focus:outline-none"
+                  value === otherOption.label
+                    ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
+                    : "border-[--fb-border]",
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] hover:bg-[--fb-bg-2] focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -109,7 +113,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={otherOption.id}
                     name={question.id}
                     value={otherOption.label}
-                    className="h-4 w-4 border border-[--fb-q-mcsq-input-border] text-[--fb-q-mcsq-input-color] focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={() => {
                       setOtherSelected(!otherSelected);
@@ -131,7 +135,7 @@ export default function MultipleChoiceSingleQuestion({
                       onChange({ [question.id]: e.currentTarget.value });
                     }}
                     placeholder="Please specify"
-                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-q-mcsq-other-border] bg-[--fb-q-mcsq-other-bg] px-3 py-2 text-sm text-[--fb-q-mcsq-other-color] placeholder:text-[--fb-q-mcsq-other-placeholder] focus:outline-none  focus:ring-2 focus:ring-[--fb-q-mcsq-other-ring-focus] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-border] bg-[--fb-bg] px-3 py-2 text-sm text-[--fb-text] placeholder:text-[--fb-placeholder] focus:outline-none  focus:ring-2 focus:ring-[--fb-ring-focus] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

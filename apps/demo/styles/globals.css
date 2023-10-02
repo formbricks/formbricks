@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Example on overriding packages/js colors */
+.dark {
+  --fb-primary: rgb(0, 157, 168);
+  --fb-on-primary: black;
+  --fb-border: var(--slate-300);
+  --fb-border-highlight: var(--slate-500);
+  --fb-ring-focus: var(--slate-500);
+  --fb-text: #f1ffff;
+  --fb-text-2: rgb(226, 232, 240);
+  --fb-text-3: rgb(209, 209, 209);
+  --fb-text-4: rgb(165 164 170);
+  --fb-bg: #080b15;
+  --fb-bg-2: rgb(44, 50, 60);
+  --fb-bg-selected: rgb(30, 34, 41);
+  --fb-placeholder: rgb(168, 168, 168);
+  --fb-tyc-shadow: rgb(190, 190, 190);
+  --fb-rating-fill: var(--yellow-300);
+  --fb-rating-hover: var(--yellow-500);
+  --fb-back-btn-border: transparent;
+  --fb-submit-btn-border: transparent;
+  --fb-rating-selected: black;
+}

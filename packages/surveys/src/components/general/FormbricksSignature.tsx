@@ -4,12 +4,10 @@ export default function FormbricksSignature() {
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
       className="mb-5 mt-2 flex justify-center">
-      <p className="text-xs text-[var(--fb-signature-color)]">
+      <p className="text-xs text-[--fb-text-4]">
         Powered by{" "}
         <b>
-          <span className="text-[var(--fb-signature-color-highlight)] hover:text-[var(--fb-signature-color-highlight-hover)]">
-            Formbricks
-          </span>
+          <span className="text-[--fb-text-3] hover:text-[--fb-text]">Formbricks</span>
         </b>
       </p>
     </a>

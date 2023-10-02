@@ -5,7 +5,7 @@ export default function HtmlBody({ htmlString, questionId }: { htmlString?: stri
   return (
     <label
       htmlFor={questionId}
-      className="block text-sm font-normal leading-6 text-[var(--fb-html-body-color)]"
+      className="fb-htmlbody" // change the styles in global.css because otherwise they wont apply to the html inside dangerouslySetInnerHTML
       dangerouslySetInnerHTML={{ __html: cleanHtml(htmlString) }}></label>
   );
 }
