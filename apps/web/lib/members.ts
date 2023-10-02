@@ -1,21 +1,3 @@
-import useSWR from "swr";
-import { fetcher } from "@formbricks/lib/fetcher";
-
-export const useMembers = (environmentId: string) => {
-  const { data, isLoading, error, mutate, isValidating } = useSWR(
-    `/api/v1/environments/${environmentId}/members/`,
-    fetcher
-  );
-
-  return {
-    team: data,
-    isLoadingTeam: isLoading,
-    isErrorTeam: error,
-    isValidatingTeam: isValidating,
-    mutateTeam: mutate,
-  };
-};
-
 export const updateMemberRole = async (teamId: string, userId: string, role: string) => {
   try {
     const result = await fetch(`/api/v1/teams/${teamId}/members/${userId}/`, {

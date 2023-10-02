@@ -1,14 +1,18 @@
 "use client";
 
 import TagsCombobox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TagsCombobox";
-import { removeTagFromResponse, useAddTagToResponse, useCreateTag } from "@/lib/tags/mutateTags";
-import { useTagsForEnvironment } from "@/lib/tags/tags";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Tag } from "./Tag";
 import { ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { Button } from "@formbricks/ui";
+import { TTag } from "@formbricks/types/v1/tags";
+import {
+  addTagToResponeAction,
+  createTagAction,
+  removeTagFromResponseAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -16,15 +20,15 @@ interface ResponseTagsWrapperProps {
     tagName: string;
   }[];
   environmentId: string;
-  surveyId: string;
   responseId: string;
+  environmentTags: TTag[];
 }
 
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
   environmentId,
   responseId,
-  surveyId,
+  environmentTags,
 }) => {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
@@ -32,13 +36,9 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const [tagsState, setTagsState] = useState(tags);
   const [tagIdToHighlight, setTagIdToHighlight] = useState("");
 
-  const { createTag } = useCreateTag(environmentId);
-  const { data: environmentTags, mutate: refetchEnvironmentTags } = useTagsForEnvironment(environmentId);
-  const { addTagToRespone } = useAddTagToResponse(environmentId, surveyId, responseId);
-
   const onDelete = async (tagId: string) => {
     try {
-      await removeTagFromResponse(environmentId, surveyId, responseId, tagId);
+      await removeTagFromResponseAction(responseId, tagId);
 
       router.refresh();
     } catch (e) {
@@ -79,60 +79,38 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
           setSearchValue={setSearchValue}
           tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
           currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
-          createTag={(tagName) => {
-            createTag(
-              {
-                name: tagName?.trim() ?? "",
-              },
-              {
-                onSuccess: (data) => {
-                  setTagsState((prevTags) => [
-                    ...prevTags,
-                    {
-                      tagId: data.id,
-                      tagName: data.name,
-                    },
-                  ]);
-                  addTagToRespone(
-                    {
-                      tagIdToAdd: data.id,
-                    },
-                    {
-                      onSuccess: () => {
-                        setSearchValue("");
-                        setOpen(false);
-
-                        refetchEnvironmentTags();
-                        router.refresh();
-                      },
-                    }
-                  );
-                },
-                onError: (err) => {
-                  if (err?.cause === "DUPLICATE_RECORD") {
-                    toast.error(err?.message ?? "Something went wrong", {
-                      duration: 2000,
-                      icon: <ExclamationCircleIcon className="h-5 w-5 text-orange-500" />,
-                    });
-
-                    const tag = tags.find((tag) => tag.tagName === tagName?.trim() ?? "");
-                    setTagIdToHighlight(tag?.tagId ?? "");
-                  } else {
-                    toast.error(err?.message ?? "Something went wrong", {
-                      duration: 2000,
-                    });
-                  }
-
+          createTag={async (tagName) => {
+            await createTagAction(environmentId, tagName?.trim() ?? "")
+              .then((tag) => {
+                setTagsState((prevTags) => [
+                  ...prevTags,
+                  {
+                    tagId: tag.id,
+                    tagName: tag.name,
+                  },
+                ]);
+                addTagToResponeAction(responseId, tag.id).then(() => {
                   setSearchValue("");
                   setOpen(false);
-
-                  refetchEnvironmentTags();
-
                   router.refresh();
-                },
-                throwOnError: false,
-              }
-            );
+                });
+              })
+              .catch((err) => {
+                if (err?.message.includes("Unique constraint failed on the fields")) {
+                  toast.error("Tag already exists", {
+                    duration: 2000,
+                    icon: <ExclamationCircleIcon className="h-5 w-5 text-orange-500" />,
+                  });
+                } else {
+                  toast.error(err?.message ?? "Something went wrong", {
+                    duration: 2000,
+                  });
+                }
+
+                setSearchValue("");
+                setOpen(false);
+                router.refresh();
+              });
           }}
           addTag={(tagId) => {
             setTagsState((prevTags) => [
@@ -143,20 +121,11 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
               },
             ]);
 
-            addTagToRespone(
-              {
-                tagIdToAdd: tagId,
-              },
-              {
-                onSuccess: () => {
-                  setSearchValue("");
-                  setOpen(false);
-                  refetchEnvironmentTags();
-
-                  router.refresh();
-                },
-              }
-            );
+            addTagToResponeAction(responseId, tagId).then(() => {
+              setSearchValue("");
+              setOpen(false);
+              router.refresh();
+            });
           }}
         />
       </div>

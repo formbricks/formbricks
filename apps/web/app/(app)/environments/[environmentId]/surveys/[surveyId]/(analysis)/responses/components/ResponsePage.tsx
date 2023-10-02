@@ -10,16 +10,29 @@ import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TTag } from "@formbricks/types/v1/tags";
 
 interface ResponsePageProps {
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
+  product: TProduct;
+  environmentTags: TTag[];
 }
 
-const ResponsePage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl }: ResponsePageProps) => {
+const ResponsePage = ({
+  environment,
+  survey,
+  surveyId,
+  responses,
+  surveyBaseUrl,
+  product,
+  environmentTags,
+}: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const searchParams = useSearchParams();
@@ -37,23 +50,25 @@ const ResponsePage = ({ environmentId, survey, surveyId, responses, surveyBaseUr
   return (
     <ContentWrapper>
       <SummaryHeader
-        environmentId={environmentId}
+        environment={environment}
         survey={survey}
         surveyId={surveyId}
         surveyBaseUrl={surveyBaseUrl}
+        product={product}
       />
       <CustomFilter
-        environmentId={environmentId}
+        environmentTags={environmentTags}
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
       />
-      <SurveyResultsTabs activeId="responses" environmentId={environmentId} surveyId={surveyId} />
+      <SurveyResultsTabs activeId="responses" environmentId={environment.id} surveyId={surveyId} />
       <ResponseTimeline
-        environmentId={environmentId}
+        environment={environment}
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
+        environmentTags={environmentTags}
       />
     </ContentWrapper>
   );
