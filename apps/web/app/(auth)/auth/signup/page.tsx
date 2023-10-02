@@ -1,15 +1,25 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { SignupForm } from "@/components/auth/SignupForm";
 import FormWrapper from "@/components/auth/FormWrapper";
 import Testimonial from "@/components/auth/Testimonial";
-import { env } from "@/env.mjs";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  GITHUB_OAUTH_ENABLED,
+  GOOGLE_OAUTH_ENABLED,
+  INVITE_DISABLED,
+  PASSWORD_RESET_DISABLED,
+  PRIVACY_URL,
+  SIGNUP_ENABLED,
+  TERMS_URL,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 
-export default function SignUpPage() {
-  const searchParams = useSearchParams();
-  const inviteToken = searchParams?.get("inviteToken");
+export default function SignUpPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const inviteToken = searchParams["inviteToken"] ?? null;
 
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
@@ -18,9 +28,7 @@ export default function SignUpPage() {
       </div>
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
-          {(
-            inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
-          ) ? (
+          {(inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) ? (
             <>
               <h1 className="leading-2 mb-4 text-center font-bold">Sign up disabled</h1>
               <p className="text-center">
@@ -35,7 +43,15 @@ export default function SignUpPage() {
               </Link>
             </>
           ) : (
-            <SignupForm />
+            <SignupForm
+              webAppUrl={WEBAPP_URL}
+              termsUrl={TERMS_URL}
+              privacyUrl={PRIVACY_URL}
+              passwordResetEnabled={!PASSWORD_RESET_DISABLED}
+              emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
+              googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
+              githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+            />
           )}
         </FormWrapper>
       </div>

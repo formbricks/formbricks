@@ -130,3 +130,51 @@ export const createAction = async (data: TJsActionInput) => {
   revalidateTag(sessionId);
   revalidateTag(getActionClassCacheTag(name, environmentId));
 };
+
+export const getActionCountInLastHour = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLastHour = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLastHour;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getActionCountInLast24Hours = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLast24Hours = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLast24Hours;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getActionCountInLast7Days = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLast7Days = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLast7Days;
+  } catch (error) {
+    throw error;
+  }
+});

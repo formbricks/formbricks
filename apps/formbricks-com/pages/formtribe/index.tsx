@@ -48,33 +48,84 @@ const HowTo = [
 
 const SideQuests = [
   {
-    points: "100 Points:",
-    quest: "You think you're smart removing the blur to see the side quests first?",
+    points: "Join the Tribe Tweet (100 Points)",
+    quest: "Tweet a single “🧱” emoji before the 7th of October EOD to join the #FormTribe.",
+    proof: "Share the link to the tweet in the “side-quest” channel.",
   },
   {
-    points: "150 Points:",
+    points: "Spread the Word Tweet (100 Points)",
+    quest: "Tweet “🧱🚀” on the day of the ProductHunt launch to spread the word.",
+    proof: "Share the link to the tweet in the “side-quest” channel.",
+  },
+  {
+    points: "Setup Insights (200 Points)",
+    quest: "Screen record yourself setting up the Formbricks dev environment.",
+    proof: "Upload to WeTransfer and send to johannes@formbricks.com",
+  },
+  {
+    points: "Meme Magic (50 Points + up to 100 Points)",
     quest:
-      "You are! Take a screenshot of this and share it in the 'side-quest' channel on Discord to get 100 points.",
+      "Craft a meme where a brick plays a role. For extra points, tweet it, tag us and score +5 for each like.",
+    proof: "Share meme or link to the tweet in the “side-quest” channel.",
   },
   {
-    points: "200 Points:",
-    quest: "The rest of the side quests will be released on the 1st of October.",
+    points: "GIF Magic (100 Points)",
+    quest:
+      "Create a branded gif related to Formbricks. Upload it to Giphy. For extra points, tweet it, tag us and score +5 for each like.",
+    proof: "Share link to Giphy in the “side-quest” channel.",
   },
   {
-    points: "250 Points:",
-    quest: "Follow us on Twitter and join us on Discord to be the first to know!",
+    points: "Design a background (250 Points)",
+    quest: "Illustrate a captivating background for survey enthusiasts (more infos on Notion).",
+    proof: "Share the design in the “side-quest” channel.",
   },
   {
-    points: "Pushmaster Prime | +500 Points + Hoodie:",
-    quest: "Merge the highest amount of Formbricks PRs in October.",
+    points: "Transform Animation to CSS (350 Points per background)",
+    quest: "Animate an existing background to CSS versions (more infos on Notion).",
+    proof: "Share the animated background.",
   },
   {
-    points: "Guidance Guru | +500 Points + Hoodie:",
-    quest: "Most active and helpful in the community helping other contributors.",
+    points: "Enhance Docs (50-250 Points)",
+    quest:
+      "Add a new section to our docs where you see gaps. Follow the current style of documentation incl. code snippets and screenshots. Pls no spam.",
+    proof: "Open a PR with “docs” in the title",
   },
   {
-    points: "Buzz Builder Guru | +500 Points + Hoodie:",
-    quest: "Marketing Genie with great and effective ideas to spread the word about FormTribe",
+    points: "Starry-eyed Supporter (250 Points)",
+    quest: "Get five friends to star our repository.",
+    proof: "Share 5 screenshots of the chats where you asked them and they confirmed + their GitHub names",
+  },
+  {
+    points: "Bug Hunter (50-250 Points)",
+    quest: "Find and report any functionality bugs.",
+    proof: "Open a bug issue in our repository.",
+  },
+  {
+    points: "Brickify someone famous with AI (200 Points + up to 100 Points)",
+    quest:
+      "Find someone whose name would be funny as a play on words with “brick”. Then, with the help of AI, create a brick version of this person like Brick Astley, Brickj Minaj, etc. For extra points, tweet it, tag us and score +5 for each like.",
+    proof: "Share your art or link to the tweet in the “side-quest” channel.",
+  },
+  {
+    points: "SEO Sage (50-250 Points)",
+    quest: "Provide detailed SEO recommendations or improvements for our main website.",
+    proof: "Share your insights.",
+  },
+  {
+    points: "Community Connector (50 points each, up to 250 points)",
+    quest:
+      "Introduce and onboard new members to the community. Have them join Discord and reply to their automated welcome message with your discord handle (in “say-hi” channel).",
+    proof: "New member joined and commented with your Discord handle",
+  },
+  {
+    points: "Feedback Fanatic (50 Points)",
+    quest: "Fill out our feedback survey after the hackathon with suggestions for improvement.",
+    proof: "Submit the survey.",
+  },
+  {
+    points: "Side Quest Babo (500 Points)",
+    quest: "Complete all side quests.",
+    proof: "All quests marked as completed.",
   },
 ];
 
@@ -212,6 +263,111 @@ const FAQ = [
   },
 ];
 
+const Leaderboard = [
+  {
+    name: "Piyush",
+    points: "450",
+    link: "https://github.com/gupta-piyush19",
+  },
+  {
+    name: "Suman",
+    points: "200",
+  },
+  {
+    name: "Subhdeep",
+    points: "100",
+  },
+  {
+    name: "Pratik",
+    points: "100",
+  },
+  {
+    name: "/home/babubaap",
+    points: "200",
+  },
+  {
+    name: "Karuppiah",
+    points: "100",
+  },
+  {
+    name: "Arth",
+    points: "100",
+  },
+  {
+    name: "Neztep",
+    points: "100",
+  },
+  {
+    name: "Kelvin Parmar",
+    points: "200",
+  },
+  {
+    name: "Arjun",
+    points: "100",
+  },
+  {
+    name: "Yashhhh",
+    points: "200",
+  },
+  {
+    name: "vishleshak",
+    points: "100",
+  },
+  {
+    name: "Ashu999",
+    points: "100",
+  },
+  {
+    name: "Sachin H",
+    points: "100",
+  },
+  {
+    name: "Suraj Jadhav",
+    points: "100",
+  },
+  {
+    name: "Vishrut",
+    points: "100",
+  },
+  {
+    name: "cataxcab",
+    points: "100",
+  },
+  {
+    name: "Eldemarkki",
+    points: "100",
+  },
+  {
+    name: "Suyash",
+    points: "100",
+  },
+  {
+    name: "Rohan Gupta",
+    points: "100",
+  },
+  {
+    name: "Nafees Nazik",
+    points: "100",
+  },
+  {
+    name: "monk",
+    points: "100",
+  },
+  {
+    name: "Pratik Tiwari (Pratik)",
+    points: "100",
+  },
+  {
+    name: "Ardash Malviya",
+    points: "100",
+  },
+  {
+    name: "Aditya Deshlahre",
+    points: "250",
+    link: "https://github.com/adityadeshlahre",
+  },
+];
+
 export default function FormTribeHackathon() {
   // dark mode fix
   useEffect(() => {
@@ -234,7 +390,7 @@ export default function FormTribeHackathon() {
           Write code, win a Macbook 🔥
         </a>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
-          <span className="xl:inline">Let&apos;s ship Open Source Typeform in Hacktoberfest</span>
+          <span className="xl:inline">Let&apos;s ship Open Source Typeform during Hacktoberfest</span>
         </h1>
 
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-6 md:text-xl">
@@ -462,40 +618,57 @@ export default function FormTribeHackathon() {
           </div>
         ))}
       </div>
-
-      <div className="mt-12 flex h-64 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
-        <div className="text-center">
-          <p>No issues released yet.</p>
-          <a
-            href="https://formbricks.com/discord"
-            target="_blank"
-            className="text-slate-700 underline decoration-[#013C27] underline-offset-4">
-            Join Discord to get notified first.
-          </a>
-        </div>
+      <div className="text-center">
+        <Button
+          variant="darkCTA"
+          href="https://github.com/formbricks/formbricks/issues"
+          target="_blank"
+          className="mx-auto mt-12 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] px-20 text-white ">
+          View Issues on GitHub
+        </Button>
       </div>
+
       {/* Side Quests */}
-      <div className="mt-16">
+      <div className="mt-16" id="side-quests">
         <h3 className="font-kablammo my-4 text-4xl font-bold text-slate-800">
           🏰 Side Quests: Increase your chances
         </h3>
         <p className="w-3/4 text-slate-600">
           While code contributions are what gives the most points, everyone gets to bump up their chance of
-          winning. Here is a list of side quests you can complete:{" "}
+          winning. Here is a list of side quests you can complete:
         </p>
-        <div className="mt-8 blur">
-          {SideQuests.map((quest) => (
-            <div key={quest.points} className="mb-2 flex select-none items-center gap-x-4">
-              <div className="text-2xl">✅</div>
-              <div>
-                <p className="text-lg font-bold text-slate-700">
-                  {quest.points} <span className="font-normal">{quest.quest}</span>
-                </p>
+        <div className="mt-8">
+          <TooltipProvider delayDuration={50}>
+            {SideQuests.map((quest) => (
+              <div key={quest.points}>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="mb-2 flex items-center gap-x-6">
+                      <div className="text-2xl">✅</div>
+                      <p className="text-left font-bold text-slate-700">
+                        {quest.points}: <span className="font-normal">{quest.quest}</span>
+                      </p>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side={"top"}>
+                    <p className="py-2 text-center text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-sm text-slate-600">Proof: {quest.proof}</p>
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            </div>
-          ))}
+            ))}
+          </TooltipProvider>
         </div>
+        <Button
+          variant="darkCTA"
+          href="https://formbricks.notion.site/FormTribe-Side-Quests-4ab3b294cfa04e94b77dfddd66378ea2?pvs=4"
+          target="_blank"
+          className="mt-6 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] text-white ">
+          Copy Notion Template
+        </Button>
       </div>
+
       {/* The Leaderboard */}
 
       <SectionHeading
@@ -504,13 +677,21 @@ export default function FormTribeHackathon() {
         title="The Leaderboard"
         description="We keep track of all contributions and side quests in Discord. Join to take part!"
       />
-      <div className="mt-12 flex h-64 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
-        <div className="text-center">
-          <p>Not live yet.</p>
-          <a href="#join" className="pl-2 text-slate-700 underline decoration-[#013C27] underline-offset-4">
-            Sign up to get notified on kick-off.
-          </a>
+      <div className="rounded-lg border border-slate-200">
+        <div className=" grid grid-cols-2 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+          <div className="m-2 pl-6">User</div>
+          <div className="m-2 pr-6 text-right">Points</div>
         </div>
+        {Leaderboard.sort((a, b) => parseInt(b.points) - parseInt(a.points)).map((player) => (
+          <a href={player.link} key={player.name} className="w-full" target="_blank">
+            <div className="m-4 grid grid-cols-2 content-center rounded-lg hover:bg-slate-100">
+              <div className="flex items-center  text-sm">
+                <div className="m-2 font-medium text-slate-900">{player.name}</div>
+              </div>
+              <div className="m-2 my-auto text-right text-sm text-slate-900">{player.points} Points</div>
+            </div>
+          </a>
+        ))}
       </div>
 
       {/* The Timeline */}

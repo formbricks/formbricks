@@ -23,7 +23,7 @@ import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/v1/me
 import { TTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { getServerSession } from "next-auth";
 import { hasTeamAccess, hasTeamAuthority, hasTeamOwnership, isOwner } from "@formbricks/lib/auth";
-import { env } from "@/env.mjs";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
 
 export const updateTeamAction = async (teamId: string, data: TTeamUpdateInput) => {
   return await updateTeam(teamId, data);
@@ -154,7 +154,7 @@ export const inviteUserAction = async (
 
   const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
 
-  if (env.NEXT_PUBLIC_INVITE_DISABLED === "1") {
+  if (INVITE_DISABLED) {
     throw new AuthenticationError("Invite disabled");
   }
 

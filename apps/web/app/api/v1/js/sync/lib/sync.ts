@@ -1,7 +1,7 @@
 import { getSurveysCached } from "@/app/api/v1/js/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClassesCached } from "@formbricks/lib/actionClass/service";
-import { getEnvironmentCached } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/services/environment";
 import { createPerson, getMonthlyActivePeopleCount, getPersonCached } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
 import { createSession, extendSession, getSessionCached } from "@formbricks/lib/services/session";
@@ -26,7 +26,7 @@ export const getUpdatedState = async (
   let session: TSession | null;
 
   // check if environment exists
-  environment = await getEnvironmentCached(environmentId);
+  environment = await getEnvironment(environmentId);
 
   if (!environment) {
     throw new Error("Environment does not exist");
