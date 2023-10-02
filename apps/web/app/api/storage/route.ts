@@ -9,6 +9,7 @@ import {
   putFileToS3,
 } from "@formbricks/lib/services/storage";
 import path from "path";
+import { env } from "@/env.mjs";
 
 const UPLOADS_DIR = path.resolve("./uploads");
 
@@ -48,12 +49,7 @@ export async function GET(req: NextRequest) {
   }
 
   const getFile = async () => {
-    if (
-      !process.env.AWS_ACCESS_KEY ||
-      !process.env.AWS_SECRET_KEY ||
-      !process.env.S3_REGION ||
-      !process.env.S3_BUCKET_NAME
-    ) {
+    if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
       try {
         const { fileBuffer, metaData } = await getFileFromLocalStorage(
           path.join(UPLOADS_DIR, environmentId, accessType, baseFileName)
@@ -203,12 +199,7 @@ export async function POST(req: NextRequest) {
   const uploadFile = async () => {
     // if s3 is not configured, we'll upload to a local folder named uploads
 
-    if (
-      !process.env.AWS_ACCESS_KEY ||
-      !process.env.AWS_SECRET_KEY ||
-      !process.env.S3_REGION ||
-      !process.env.S3_BUCKET_NAME
-    ) {
+    if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
       try {
         await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
 

@@ -1,13 +1,14 @@
 import { PutObjectCommand, S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { access, mkdir, writeFile, readFile } from "fs/promises";
 import mime from "mime";
+import { env } from "@/env.mjs";
 
 // global variables
 
-const AWS_BUCKET_NAME = process.env.S3_BUCKET_NAME!;
-const AWS_REGION = process.env.S3_REGION!;
-const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY!;
-const AWS_SECRET_KEY = process.env.AWS_SECRET_KEY!;
+const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
+const AWS_REGION = env.S3_REGION!;
+const AWS_ACCESS_KEY = env.AWS_ACCESS_KEY!;
+const AWS_SECRET_KEY = env.AWS_SECRET_KEY!;
 
 // S3Client Singleton
 
