@@ -17,6 +17,7 @@ import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { revalidateTag } from "next/cache";
+import { deleteDisplayByResponseId } from "../services/displays";
 
 const responseSelection = {
   id: true,
@@ -334,6 +335,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
+    deleteDisplayByResponseId(responseId);
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
