@@ -1,4 +1,5 @@
 import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma, EnvironmentType } from "@prisma/client";
@@ -8,6 +9,7 @@ import { populateEnvironment } from "../utils/createDemoProductHelpers";
 import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
 import { unstable_cache, revalidateTag } from "next/cache";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const getEnvironmentCacheTag = (environmentId: string) => `environments-${environmentId}`;
 export const getEnvironmentsCacheTag = (productId: string) => `products-${productId}-environments`;
@@ -45,7 +47,7 @@ export const getEnvironment = (environmentId: string) =>
     [`environments-${environmentId}`],
     {
       tags: [getEnvironmentCacheTag(environmentId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -92,7 +94,7 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
     [`products-${productId}-environments`],
     {
       tags: [getEnvironmentsCacheTag(productId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

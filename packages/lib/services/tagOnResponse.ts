@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { TTagsCount } from "@formbricks/types/v1/tags";
 import { cache } from "react";
