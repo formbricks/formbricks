@@ -21,7 +21,7 @@ function validateInput(value: string, questionType: string, required: boolean): 
       const numberPattern = /^[0-9]*$/;
       return numberPattern.test(value);
     case "phone":
-      const phonePattern = /^\+?[0-9]+$/;
+      const phonePattern = /^\+[0-9]+$/;
       return phonePattern.test(value);
     default:
       return true;
