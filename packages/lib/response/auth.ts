@@ -3,7 +3,7 @@ import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getResponse, getResponseCacheTag } from "./service";
 import { unstable_cache } from "next/cache";
-import { getSurvey } from "../services/survey";
+import { getSurvey } from "../survey/service";
 
 export const canUserAccessResponse = async (userId: string, responseId: string): Promise<boolean> =>
   await unstable_cache(

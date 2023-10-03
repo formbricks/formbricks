@@ -8,18 +8,49 @@ import { Prisma as prismaClient } from "@prisma/client/";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { createProduct } from "@formbricks/lib/services/product";
+import { createProduct, updateProduct } from "@formbricks/lib/services/product";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { createTeam } from "@formbricks/lib/services/team";
+import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/services/team";
+import { createMembership } from "@formbricks/lib/services/membership";
+import { createEnvironment } from "@formbricks/lib/services/environment";
+import { populateEnvironment } from "@formbricks/lib/utils/createDemoProductHelpers";
 
 export async function createTeamAction(teamName: string): Promise<Team> {
-  console.log("createTeamAction");
-
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const newTeam = await createTeam(teamName, session.user.id);
-  await createProduct("My Product", undefined, newTeam.id);
+  const newTeam = await createTeam({
+    name: teamName,
+    plan: "free",
+    stripeCustomerId: null,
+  });
+
+  await createMembership(newTeam.id, session.user.id, {
+    role: "owner",
+    accepted: true,
+  });
+
+  const product = await createProduct(newTeam.id, {
+    name: "My Product",
+  });
+
+  const devEnvironment = await createEnvironment({
+    type: "development",
+    productId: product.id,
+    eventClasses: populateEnvironment.eventClasses.create,
+    attributeClasses: populateEnvironment.attributeClasses.create,
+  });
+
+  const prodEnvironment = await createEnvironment({
+    type: "production",
+    productId: product.id,
+    eventClasses: populateEnvironment.eventClasses.create,
+    attributeClasses: populateEnvironment.attributeClasses.create,
+  });
+
+  await updateProduct(product.id, {
+    environments: [devEnvironment, prodEnvironment],
+  });
 
   return newTeam;
 }
@@ -239,8 +270,31 @@ export const createProductAction = async (environmentId: string, productName: st
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const productCreated = await createProduct(productName, environmentId, undefined);
+  const team = await getTeamByEnvironmentId(environmentId);
+  if (!team) throw new ResourceNotFoundError("Team from environment", environmentId);
 
-  const newEnvironment = productCreated.environments[0];
+  const product = await createProduct(team.id, {
+    name: productName,
+  });
+
+  const devEnvironment = await createEnvironment({
+    type: "development",
+    productId: product.id,
+    eventClasses: populateEnvironment.eventClasses.create,
+    attributeClasses: populateEnvironment.attributeClasses.create,
+  });
+
+  const prodEnvironment = await createEnvironment({
+    type: "production",
+    productId: product.id,
+    eventClasses: populateEnvironment.eventClasses.create,
+    attributeClasses: populateEnvironment.attributeClasses.create,
+  });
+
+  const updatedProduct = await updateProduct(product.id, {
+    environments: [devEnvironment, prodEnvironment],
+  });
+
+  const newEnvironment = updatedProduct.environments[0];
   return newEnvironment;
 };

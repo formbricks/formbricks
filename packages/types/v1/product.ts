@@ -26,7 +26,6 @@ export const ZProductUpdateInput = ZProduct.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  environments: true,
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

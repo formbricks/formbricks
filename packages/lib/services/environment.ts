@@ -3,7 +3,12 @@ import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma, EnvironmentType } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import type { TEnvironment, TEnvironmentId, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
+import type {
+  TEnvironment,
+  TEnvironmentCreateInput,
+  TEnvironmentId,
+  TEnvironmentUpdateInput,
+} from "@formbricks/types/v1/environment";
 import { populateEnvironment } from "../utils/createDemoProductHelpers";
 import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
@@ -205,4 +210,29 @@ export const getEnvironmentByUser = async (user: any): Promise<TEnvironment | TE
     return null;
   }
   return firstEnvironment;
+};
+
+export const createEnvironment = async (
+  environmentInput: Partial<TEnvironmentCreateInput>
+): Promise<TEnvironment> => {
+  try {
+    if (!environmentInput.productId) throw new Error("productId is required");
+    const newEnvironment = await prisma.environment.create({
+      data: {
+        type: environmentInput.type || "development",
+        productId: environmentInput.productId,
+        widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
+        eventClasses: {
+          create: environmentInput.eventClasses,
+        },
+        attributeClasses: {
+          create: environmentInput.attributeClasses,
+        },
+      },
+    });
+
+    return newEnvironment;
+  } catch (error) {
+    throw error;
+  }
 };

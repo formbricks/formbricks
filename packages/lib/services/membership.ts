@@ -60,6 +60,26 @@ export const getMembershipsByUserId = cache(async (userId: string): Promise<TMem
   return memberships;
 });
 
+export const createMembership = async (
+  teamId: string,
+  userId: string,
+  data: Partial<TMembership>
+): Promise<TMembership> => {
+  try {
+    const membership = await prisma.membership.create({
+      data: {
+        userId,
+        teamId,
+        accepted: data.accepted,
+        role: data.role as TMembership["role"],
+      },
+    });
+
+    return membership;
+  } catch (error) {
+    throw error;
+  }
+};
 export const updateMembership = async (
   userId: string,
   teamId: string,
