@@ -1,3 +1,5 @@
+import "server-only";
+
 import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getTag } from "./service";
