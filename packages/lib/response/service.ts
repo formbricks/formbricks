@@ -10,6 +10,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/error
 import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { cache } from "react";
 import "server-only";
 import { getPerson, transformPrismaPerson } from "../services/person";
@@ -117,6 +118,7 @@ export const getResponsesByPersonId = async (personId: string): Promise<Array<TR
 
 export const getResponseBySingleUseId = cache(
   async (surveyId: string, singleUseId?: string): Promise<TResponse | null> => {
+    validateInputs([surveyId, ZId], [singleUseId, z.string()]);
     try {
       if (!singleUseId) {
         return null;

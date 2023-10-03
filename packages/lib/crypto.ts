@@ -4,7 +4,6 @@ export const getHash = (key: string): string => createHash("sha256").update(key)
 
 // create an aes128 encryption function
 export const encryptAES128 = (encryptionKey: string, data: string): string => {
-  console.log(encryptionKey);
   const cipher = createCipheriv("aes-128-ecb", Buffer.from(encryptionKey, "base64"), "");
   let encrypted = cipher.update(data, "utf-8", "hex");
   encrypted += cipher.final("hex");
