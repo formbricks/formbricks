@@ -96,7 +96,7 @@ export default function LinkSurvey({
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
             if (!isPreview) {
-              const { id } = await createDisplay({ surveyId: survey.id }, window?.location?.origin);
+              const { id } = await createDisplay({ surveyId: survey.id }, webAppUrl);
               const newSurveyState = surveyState.copy();
               newSurveyState.updateDisplayId(id);
               setSurveyState(newSurveyState);
