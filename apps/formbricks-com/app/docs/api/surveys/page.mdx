@@ -10,7 +10,13 @@ export const meta = {
 
 # Surveys API
 
-The Survey API currently has one endpoint that allows you to get all the surveys you have in your Formbricks environment. You will need the [API Key](/docs/api/api-key-setup) to access the same!
+This set of API can be used to
+- [List All Surveys](#list-all-surveys)
+- [Get Survey](#get-survey-by-id)
+- [Create Survey](#create-survey)
+- [Delete Survey](#delete-survey-by-id)
+
+<Note>You will need an API Key to interact with these APIs.</Note>
 
 ---
 
@@ -161,6 +167,487 @@ The Survey API currently has one endpoint that allows you to get all the surveys
                 "closeOnDate": null
             }
         ]
+    }
+    ```
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Survey by ID {{ tag: 'GET', label: '/api/v1/management/surveys/<survey-id>' }}
+
+<Row>
+  <Col>
+
+    Get a specific survey by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/surveys/<survey-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/surveys/<survey-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+    "data": {
+            "id": "cln8k0tjz00n5z87nwq527h3z",
+            "createdAt": "2023-10-02T07:13:19.775Z",
+            "updatedAt": "2023-10-02T07:13:19.775Z",
+            "name": "Churn Survey",
+            "type": "link",
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "status": "inProgress",
+            "attributeFilters": [],
+            "displayOption": "displayOnce",
+            "autoClose": null,
+            "triggers": [],
+            "redirectUrl": null,
+            "recontactDays": null,
+            "questions": [
+                {
+                    "id": "churn-reason",
+                    "type": "multipleChoiceSingle",
+                    "headline": "Why did you cancel your subscription?",
+                    "subheader": "We're sorry to see you leave. Help us do better:",
+                    "required": true,
+                    "logic": [
+                        {
+                            "condition": "equals",
+                            "value": "Difficult to use",
+                            "destination": "easier-to-use"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "It's too expensive",
+                            "destination": "30-off"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "I am missing features",
+                            "destination": "missing-features"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "Poor customer service",
+                            "destination": "poor-service"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "I just didn't need it anymore",
+                            "destination": "end"
+                        }
+                    ],
+                    "choices": [
+                        {
+                            "id": "isud2xethsw63dlwl89kr4kj",
+                            "label": "Difficult to use"
+                        },
+                        {
+                            "id": "opuu4ba3dlele3n0gjkuh27c",
+                            "label": "It's too expensive"
+                        },
+                        {
+                            "id": "gnypapo0rhvkt8pwosrphvbl",
+                            "label": "I am missing features"
+                        },
+                        {
+                            "id": "wkgsrsrazd9kfunqhzjezx6t",
+                            "label": "Poor customer service"
+                        },
+                        {
+                            "id": "pykmgyyw74vg0gaeryj6bo4c",
+                            "label": "I just didn't need it anymore"
+                        }
+                    ]
+                },
+                {
+                    "id": "easier-to-use",
+                    "type": "openText",
+                    "headline": "What would have made {{productName}} easier to use?",
+                    "subheader": "",
+                    "required": true,
+                    "buttonLabel": "Send",
+                    "logic": [
+                        {
+                            "condition": "submitted",
+                            "destination": "end"
+                        }
+                    ]
+                },
+                {
+                    "id": "30-off",
+                    "type": "cta",
+                    "headline": "Get 30% off for the next year!",
+                    "required": true,
+                    "buttonLabel": "Get 30% off",
+                    "logic": [
+                        {
+                            "condition": "clicked",
+                            "destination": "end"
+                        }
+                    ],
+                    "html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>We'd love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>",
+                    "buttonUrl": "https://formbricks.com",
+                    "buttonExternal": true,
+                    "dismissButtonLabel": "Skip"
+                },
+                {
+                    "id": "missing-features",
+                    "type": "openText",
+                    "headline": "What features are you missing?",
+                    "subheader": "",
+                    "required": true,
+                    "logic": [
+                        {
+                            "condition": "submitted",
+                            "destination": "end"
+                        }
+                    ]
+                },
+                {
+                    "id": "poor-service",
+                    "type": "cta",
+                    "headline": "So sorry to hear 😔 Talk to our CEO directly!",
+                    "required": true,
+                    "buttonLabel": "Send email to CEO",
+                    "logic": [
+                        {
+                            "condition": "clicked",
+                            "destination": "end"
+                        }
+                    ],
+                    "html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>",
+                    "buttonUrl": "mailto:ceo@company.com",
+                    "buttonExternal": true,
+                    "dismissButtonLabel": "Skip"
+                }
+            ],
+            "thankYouCard": {
+                "enabled": false
+            },
+            "delay": 0,
+            "autoComplete": null,
+            "closeOnDate": null,
+            "surveyClosedMessage": null,
+            "verifyEmail": null
+        }
+    }
+    ```
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Create Survey {{ tag: 'POST', label: '/api/v1/management/surveys' }}
+
+<Row>
+  <Col>
+
+    Create a survey
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+    ### Body
+
+    <CodeGroup title="Request Body">
+    ```json {{ title: 'cURL' }}
+    {
+        "environmentId": "clmlmwdqq0003196ufewo6ibg",
+        "type": "link",
+        "name": "My new Survey"
+    }
+    ```
+    </CodeGroup>
+
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/management/surveys">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE \
+    'https://app.formbricks.com/api/v1/management/surveys' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://app.formbricks.com/api/v1/management/surveys/ \
+     --header 'Content-Type: application/json' \
+     --header 'x-api-key: <your-api-key>' \
+     -d '{"environmentId": "cln8k0t47000fz87njmmu2bck", "name": "My Survey from API", "type": "link"}'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+    "data": {
+        "id": "clna6bqnz000az8zubq3e757t",
+            "createdAt": "2023-10-03T10:25:26.975Z",
+            "updatedAt": "2023-10-03T10:25:26.975Z",
+            "name": "My new Survey",
+            "redirectUrl": null,
+            "type": "link",
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "status": "draft",
+            "questions": [],
+            "thankYouCard": {
+                "enabled": false
+            },
+            "displayOption": "displayOnce",
+            "recontactDays": null,
+            "autoClose": null,
+            "delay": 0,
+            "autoComplete": null,
+            "closeOnDate": null,
+            "surveyClosedMessage": null,
+            "verifyEmail": null
+        }
+    }
+    ```
+    
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+
+## Delete Survey by ID {{ tag: 'DELETE', label: '/api/v1/management/surveys/<survey-id>' }}
+
+<Row>
+  <Col>
+
+    Delete a survey by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/management/surveys/<survey-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE \
+    'https://app.formbricks.com/api/v1/management/surveys/<survey-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+    "data": {
+            "id": "cln8k0tjz00n5z87nwq527h3z",
+            "createdAt": "2023-10-02T07:13:19.775Z",
+            "updatedAt": "2023-10-02T07:13:19.775Z",
+            "name": "Churn Survey",
+            "type": "link",
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "status": "inProgress",
+            "attributeFilters": [],
+            "displayOption": "displayOnce",
+            "autoClose": null,
+            "triggers": [],
+            "redirectUrl": null,
+            "recontactDays": null,
+            "questions": [
+                {
+                    "id": "churn-reason",
+                    "type": "multipleChoiceSingle",
+                    "headline": "Why did you cancel your subscription?",
+                    "subheader": "We're sorry to see you leave. Help us do better:",
+                    "required": true,
+                    "logic": [
+                        {
+                            "condition": "equals",
+                            "value": "Difficult to use",
+                            "destination": "easier-to-use"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "It's too expensive",
+                            "destination": "30-off"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "I am missing features",
+                            "destination": "missing-features"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "Poor customer service",
+                            "destination": "poor-service"
+                        },
+                        {
+                            "condition": "equals",
+                            "value": "I just didn't need it anymore",
+                            "destination": "end"
+                        }
+                    ],
+                    "choices": [
+                        {
+                            "id": "isud2xethsw63dlwl89kr4kj",
+                            "label": "Difficult to use"
+                        },
+                        {
+                            "id": "opuu4ba3dlele3n0gjkuh27c",
+                            "label": "It's too expensive"
+                        },
+                        {
+                            "id": "gnypapo0rhvkt8pwosrphvbl",
+                            "label": "I am missing features"
+                        },
+                        {
+                            "id": "wkgsrsrazd9kfunqhzjezx6t",
+                            "label": "Poor customer service"
+                        },
+                        {
+                            "id": "pykmgyyw74vg0gaeryj6bo4c",
+                            "label": "I just didn't need it anymore"
+                        }
+                    ]
+                },
+                {
+                    "id": "easier-to-use",
+                    "type": "openText",
+                    "headline": "What would have made {{productName}} easier to use?",
+                    "subheader": "",
+                    "required": true,
+                    "buttonLabel": "Send",
+                    "logic": [
+                        {
+                            "condition": "submitted",
+                            "destination": "end"
+                        }
+                    ]
+                },
+                {
+                    "id": "30-off",
+                    "type": "cta",
+                    "headline": "Get 30% off for the next year!",
+                    "required": true,
+                    "buttonLabel": "Get 30% off",
+                    "logic": [
+                        {
+                            "condition": "clicked",
+                            "destination": "end"
+                        }
+                    ],
+                    "html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>We'd love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>",
+                    "buttonUrl": "https://formbricks.com",
+                    "buttonExternal": true,
+                    "dismissButtonLabel": "Skip"
+                },
+                {
+                    "id": "missing-features",
+                    "type": "openText",
+                    "headline": "What features are you missing?",
+                    "subheader": "",
+                    "required": true,
+                    "logic": [
+                        {
+                            "condition": "submitted",
+                            "destination": "end"
+                        }
+                    ]
+                },
+                {
+                    "id": "poor-service",
+                    "type": "cta",
+                    "headline": "So sorry to hear 😔 Talk to our CEO directly!",
+                    "required": true,
+                    "buttonLabel": "Send email to CEO",
+                    "logic": [
+                        {
+                            "condition": "clicked",
+                            "destination": "end"
+                        }
+                    ],
+                    "html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>",
+                    "buttonUrl": "mailto:ceo@company.com",
+                    "buttonExternal": true,
+                    "dismissButtonLabel": "Skip"
+                }
+            ],
+            "thankYouCard": {
+                "enabled": false
+            },
+            "delay": 0,
+            "autoComplete": null,
+            "closeOnDate": null,
+            "surveyClosedMessage": null,
+            "verifyEmail": null
+        }
     }
     ```
     ```json {{ title: '401 Not Authenticated' }}

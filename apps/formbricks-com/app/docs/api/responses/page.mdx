@@ -10,29 +10,27 @@ export const meta = {
 
 # Responses API
 
-The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+This set of API can be used to
+- [List Responses](#list-all-responses)
+- [Get Response](#get-response-by-id)
+- [Delete Response](#delete-a-response)
+
+<Note>You will need an API Key to interact with these APIs.</Note>
 
 ---
 
-## List all responses {{ tag: 'GET', label: '/api/v1/management/responses' }}
+## List all Responses {{ tag: 'GET', label: '/api/v1/management/responses' }}
 
 <Row>
   <Col>
 
-    Retrieve all the responses you have received for all your surveys.
+    Retrieve all the responses you have received in your environment.
 
     ### Mandatory Headers
 
     <Properties>
       <Property name="x-Api-Key" type="string">
         Your Formbricks API key.
-      </Property>
-    </Properties>
-
-    ### Optional Query Params
-    <Properties>
-      <Property name="surveyId" type="string">
-        SurveyId to filter responses by.
       </Property>
     </Properties>
 
@@ -56,42 +54,132 @@ The Public Client API is designed for the JavaScript SDK and does not require au
     {
       "data":[
         {
-          "id":"cllnfybxd051rpl0gieavthr9",
-          "createdAt":"2023-08-23T07:56:33.121Z",
-          "updatedAt":"2023-08-23T07:56:41.793Z",
-          "surveyId":"cllnfy2780fromy0hy7uoxvtn",
-          "finished":true,
-          "data":{
-              "ec7agikkr58j8uonhioinkyk":"Loved it!",
-              "gml6mgy71efgtq8np3s9je5p":"clicked",
-              "klvpwd4x08x8quesihvw5l92":"Product Manager",
-              "kp62fbqe8cfzmvy8qwpr81b2":"Very disappointed",
-              "lkjaxb73ulydzeumhd51sx9g":"Not interesed.",
-              "ryo75306flyg72iaeditbv51":"Would love if it had dark theme."
-          },
-          "meta":{
-              "url":"https://app.formbricks.com/s/cllnfy2780fromy0hy7uoxvtn",
-              "userAgent":{
-                "os":"Linux",
-                "browser":"Chrome"
-              }
-          },
-          "personAttributes":null,
-          "person":null,
-          "notes":[],
-          "tags":[]
-        }
+            "id": "cln8k0tqv00pcz87no4qrw333",
+            "createdAt": "2023-10-02T07:13:20.023Z",
+            "updatedAt": "2023-10-02T07:13:20.023Z",
+            "surveyId": "cln8k0tqu00p7z87nqr4thi3k",
+            "finished": true,
+            "data": {
+                "interview-prompt": "clicked"
+            },
+            "meta": {
+                "userAgent": {
+                    "os": "MacOS",
+                    "browser": "Chrome"
+                }
+            },
+            "personAttributes": null,
+            "person": {
+                "id": "e0x4i5tvsp8puxfztyrwykvn",
+                "attributes": {
+                    "userId": "CYO675",
+                    "email": "ravi@netflix.com",
+                    "Name": "Ravi Kumar",
+                    "Role": "Manager",
+                    "Company": "Netflix",
+                    "Experience": "6 years",
+                    "Usage Frequency": "Monthly",
+                    "Company Size": "4610 employees",
+                    "Product Satisfaction Score": "43",
+                    "Recommendation Likelihood": "4"
+                },
+                "environmentId": "cln8k0t47000fz87njmmu2bck",
+                "createdAt": "2023-10-02T07:13:19.444Z",
+                "updatedAt": "2023-10-02T07:13:19.444Z"
+            },
+            "notes": [],
+            "tags": []
+        },
       ]
     }
     ```
 
-    ```json {{ title: '404 Not Found' }}
+    ```json {{ title: '401 Not Authenticated' }}
     {
-      "code": "not_found",
-      "message": "cllnfy2780fromy0hy7uoxvt not found",
+      "code": "not_authenticated",
+      "message": "Not authenticated",
       "details": {
-        "resource_id": "survey",
-        "resource_type": "cllnfy2780fromy0hy7uoxvt"
+        "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Response by ID {{ tag: 'GET', label: '/api/v1/management/responses/<response-id>' }}
+
+<Row>
+  <Col>
+
+    Retrieve a response by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/responses/<response-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/responses/<response-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data":
+      {
+        "id": "cln8k0tqv00pbz87nwo5lr72b",
+        "createdAt": "2023-10-02T07:13:20.023Z",
+        "updatedAt": "2023-10-02T07:13:20.023Z",
+        "surveyId": "cln8k0tqu00p7z87nqr4thi3k",
+        "finished": true,
+        "data": {
+            "interview-prompt": "clicked"
+        },
+        "meta": {
+            "userAgent": {
+                "os": "Windows",
+                "browser": "Edge"
+            }
+        },
+        "personAttributes": null,
+        "person": {
+            "id": "hsx38f15v50ua8383uadagq5",
+            "attributes": {
+                "userId": "CYO278",
+                "email": "jorge@facebook.com",
+                "Name": "Jorge Sanchez",
+                "Role": "Product Manager",
+                "Company": "Facebook",
+                "Experience": "10 years",
+                "Usage Frequency": "Daily",
+                "Company Size": "1685 employees",
+                "Product Satisfaction Score": "84",
+                "Recommendation Likelihood": "6"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+        },
+        "notes": [],
+        "tags": []
       }
     }
     ```
@@ -112,73 +200,29 @@ The Public Client API is designed for the JavaScript SDK and does not require au
 
 ---
 
-## Create a response {{ tag: 'POST', label: '/api/v1/client/responses' }}
-
-Add a new response to a survey.
+## Delete a response {{ tag: 'DELETE', label: '/api/v1/client/responses/<response-id>' }}
 
 <Row>
   <Col>
 
-    ### Mandatory Body Fields
+    Delete Response by ID
+
+    ### Mandatory Headers
 
     <Properties>
-      <Property name="surveyId" type="string">
-        The id of the survey the response belongs to.
-      </Property>
-      <Property name="finished" type="boolean">
-        Marks whether the response is complete or not.
-      </Property>
-      <Property name="data" type="string">
-        The data of the response as JSON object (key: questionId, value: answer).
-      </Property>
-
-    </Properties>
-
-    ### Optional Body Fields
-
-    <Properties>
-      <Property name="personId" type="string" required>
-        Internal Formbricks id to identify the user sending the response
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
       </Property>
     </Properties>
-
-### Parameters Explained
-
-| field name | required | default | description                                                                                                                                    |
-| ---------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| data       | yes      | -       | The response data object (answers to the survey). In this object the key is the questionId, the value the answer of the user to this question. |
-| personId   | no       | -       | The person this response is connected to.                                                                                                      |
-| surveyId   | yes      | -       | The survey this response is connected to.                                                                                                      |
-| finished   | yes      | false   | Mark a response as complete to be able to filter accordingly.                                                                                  |
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/api/v1/client/responses">
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/client/responses/<response-id>">
 
     ```bash {{ title: 'cURL' }}
-    curl --location --request POST 'https://app.formbricks.com/api/v1/client/responses' \
-    --data-raw '{
-      "surveyId":"clfqz1esd0000yzah51trddn8",
-      "personId": "clfqjny0v000ayzgsycx54a2c",
-      "finished": true,
-      "data": {
-          "clfqjny0v0003yzgscnog1j9i": 10,
-          "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
-        }
-    }'
-    ```
-
-    ```json {{ title: 'Example Request Body' }}
-    {
-      "personId": "clfqjny0v000ayzgsycx54a2c",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
-      "finished": true,
-      "data": {
-          "clfqjny0v0003yzgscnog1j9i": 10,
-          "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
-        }
-    }
+    curl -X DELETE https://app.formbricks.com/api/v1/management/resposnes/<response-id> \
+     --header 'x-api-key: <your-api-key>'
     ```
 
     </CodeGroup>
@@ -187,20 +231,42 @@ Add a new response to a survey.
 
     ```json {{ title: '200 Success' }}
     {
-    "data": {
-      "id": "clisyqeoi000219t52m5gopke",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
-      "finished": true,
-      "person": {
-        "id": "clfqjny0v000ayzgsycx54a2c",
-        "attributes": {
-          "email": "me@johndoe.com"
-        }
-      },
       "data": {
-          "clfqjny0v0003yzgscnog1j9i": 10,
-          "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
-        }
+        "id": "cln8k0tqv00pbz87nwo5lr72b",
+        "createdAt": "2023-10-02T07:13:20.023Z",
+        "updatedAt": "2023-10-02T07:13:20.023Z",
+        "surveyId": "cln8k0tqu00p7z87nqr4thi3k",
+        "finished": true,
+        "data": {
+            "interview-prompt": "clicked"
+        },
+        "meta": {
+            "userAgent": {
+                "os": "Windows",
+                "browser": "Edge"
+            }
+        },
+        "personAttributes": null,
+        "person": {
+            "id": "hsx38f15v50ua8383uadagq5",
+            "attributes": {
+                "userId": "CYO278",
+                "email": "jorge@facebook.com",
+                "Name": "Jorge Sanchez",
+                "Role": "Product Manager",
+                "Company": "Facebook",
+                "Experience": "10 years",
+                "Usage Frequency": "Daily",
+                "Company Size": "1685 employees",
+                "Product Satisfaction Score": "84",
+                "Recommendation Likelihood": "6"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+        },
+        "notes": [],
+        "tags": []
       }
     }
     ```
@@ -221,100 +287,3 @@ Add a new response to a survey.
 </Row>
 
 ---
-
-## Update a response {{ tag: 'POST', label: '/api/v1/client/responses/[responseId]' }}
-
-Update an existing response in a survey.
-
-<Row>
-  <Col>
-
-    ### Mandatory Body Fields
-
-    <Properties>
-      <Property name="data" type="string">
-        The data of the response as JSON object (key: questionId, value: answer).
-      </Property>
-    </Properties>
-
-### Parameters Explained
-
-| field name | required | default | description                                                                                                                                    |
-| ---------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| data       | yes      | -       | The response data object (answers to the survey). In this object the key is the questionId, the value the answer of the user to this question. |
-| finished   | yes      | false   | Mark a response as complete to be able to filter accordingly.                                                                                  |
-
-  </Col>
-  <Col sticky>
-
-    <CodeGroup title="Request" tag="POST" label="/api/v1/client/responses/[responseId]">
-
-    ```bash {{ title: 'cURL' }}
-    curl --location --request POST 'https://app.formbricks.com/api/v1/client/responses/[responseId]' \
-    --data-raw '{
-      "personId": "clfqjny0v000ayzgsycx54a2c",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
-      "finished": true,
-      "data": {
-          "clggpvpvu0009n40g8ikawby8": 5,
-      }
-    }'
-    ```
-
-    ```json {{ title: 'Example Request Body' }}
-    {
-      "personId": "clfqjny0v000ayzgsycx54a2c",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
-      "finished": true,
-      "data": {
-          "clggpvpvu0009n40g8ikawby8": 5,
-      }
-    }
-    ```
-
-    </CodeGroup>
-
-    <CodeGroup title="Response">
-
-    ```json {{ title: '200 Success' }}
-    {
-      "data": {
-        "id": "clisyqeoi000219t52m5gopke",
-        "surveyId": "clfqz1esd0000yzah51trddn8",
-        "finished": true,
-        "person": {
-          "id": "clfqjny0v000ayzgsycx54a2c",
-          "attributes": {
-            "email": "me@johndoe.com"
-          }
-        },
-        "data": {
-          "clfqjny0v0003yzgscnog1j9i": 10,
-          "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks",
-          "clggpvpvu0009n40g8ikawby8": 5
-        }
-      }
-    }
-    ```
-
-    ```json {{ title: '400 Bad Request' }}
-    {
-      "code": "bad_request",
-      "message": "data was not provided.",
-      "details": {
-        "data": "This field is required."
-      }
-    }
-    ```
-
-    ```json {{ title: '404 Not Found' }}
-    {
-      "code": "not_found",
-      "message": "Response not found"
-    }
-    ```
-
-    </CodeGroup>
-
-  </Col>
-</Row>

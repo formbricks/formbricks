@@ -10,38 +10,40 @@ export const meta = {
 
 # People API
 
-The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+This set of API can be used to
+- [List People](#list-people)
+- [Get Person](#get-person)
+- [Delete Person](#delete-person)
+
+<Note>You will need an API Key to interact with these APIs.</Note>
 
 ---
 
-## Get or Create Person {{ tag: 'GET', label: '/api/v1/client/people/getOrCreate' }}
+## List People {{ tag: 'GET', label: '/api/v1/management/people' }}
 
 <Row>
   <Col>
 
-    Fetch a Person or create (if they don't exist) by their userId and the environmentId.
+    List People
 
-    ### Mandatory Query Parameters
-    <Properties>
-      <Property name="userId" type="string">
-        User ID to fetch or create (if it does not exist)
-      </Property>
-    </Properties>
+    ### Mandatory Headers
 
     <Properties>
-      <Property name="enviornmentId" type="string">
-        Formbricks Environment ID
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
       </Property>
     </Properties>
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/api/v1/client/people/getOrCreate">
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/people">
 
     ```bash {{ title: 'cURL' }}
     curl --location \
-    'https://app.formbricks.com/api/v1/client/people/getOrCreate?userId=<user-id>&environmentId=<env-id>'
+    'https://app.formbricks.com/api/v1/management/people' \
+    --header \
+    'x-api-key: <your-api-key>'
     ```
 
     </CodeGroup>
@@ -50,12 +52,44 @@ The Public Client API is designed for the JavaScript SDK and does not require au
 
     ```json {{title:'200 Success'}}
     {
-      "data": {
-        "person": {
-            "id": "clm4bcxms02hspj0ht05k6q5c",
-            "environmentId": "cll2m30r70004mx0huqkitgqv"
-            }
-        }
+      "data": [
+          {
+            "id": "b4wgrzl363dn3zb6yy5gf265",
+            "attributes": {
+                "userId": "CYO618",
+                "email": "sophia@amazon.com",
+                "Name": "Sophia Johnson",
+                "Role": "Designer",
+                "Company": "Amazon",
+                "Experience": "7 years",
+                "Usage Frequency": "Yearly",
+                "Company Size": "1628 employees",
+                "Product Satisfaction Score": "62",
+                "Recommendation Likelihood": "9"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+          },
+          {
+            "id": "jrb5iyzqvnkg9322ckhde3j4",
+            "attributes": {
+                "userId": "CYO511",
+                "email": "antonio@ibm.com",
+                "Name": "Antonio García",
+                "Role": "Designer",
+                "Company": "IBM",
+                "Experience": "1 years",
+                "Usage Frequency": "Weekly",
+                "Company Size": "4023 employees",
+                "Product Satisfaction Score": "77",
+                "Recommendation Likelihood": "4"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+          },
+      ]
     }
     ```
 
@@ -66,6 +100,130 @@ The Public Client API is designed for the JavaScript SDK and does not require au
       "details": {
         "userId": ""
         }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Person {{ tag: 'GET', label: '/api/v1/management/people/<person-id>' }}
+
+<Row>
+  <Col>
+
+    Get Person by ID
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/people/<person-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/people/<person-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "id": "jrb5iyzqvnkg9322ckhde3j4",
+        "attributes": {
+            "userId": "CYO511",
+            "email": "antonio@ibm.com",
+            "Name": "Antonio García",
+            "Role": "Designer",
+            "Company": "IBM",
+            "Experience": "1 years",
+            "Usage Frequency": "Weekly",
+            "Company Size": "4023 employees",
+            "Product Satisfaction Score": "77",
+            "Recommendation Likelihood": "4"
+        },
+        "environmentId": "cln8k0t47000fz87njmmu2bck",
+        "createdAt": "2023-10-02T07:13:19.444Z",
+        "updatedAt": "2023-10-02T07:13:19.444Z"
+      }
+    }
+    ```
+
+    ```json {{ title: '404 Not Found' }}
+    {
+      "code": "not_found",
+      "message": "Person not found",
+      "details": {
+          "resource_id": "clmlmykc2000019vz5o3jglsa",
+          "resource_type": "Person"
+      }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Delete Person {{ tag: 'DELETE', label: '/api/v1/management/people/<person-id>' }}
+
+<Row>
+  <Col>
+
+    Delete Person by ID
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/management/people/<person-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE https://app.formbricks.com/api/v1/management/people/<person-id> \
+     --header 'x-api-key: <your-api-key>'
+    ```
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "success": "Person deleted successfully"
+      }
+    }
+    ```
+
+    ```json {{ title: '404 Not Found' }}
+    {
+      "code": "not_found",
+      "message": "Person not found",
+      "details": {
+          "resource_id": "clmlmykc2000019vz5o3jglsa",
+          "resource_type": "Person"
+      }
     }
     ```
     </CodeGroup>

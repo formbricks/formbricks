@@ -264,8 +264,11 @@ export const navigation: Array<NavGroup> = [
     title: "API",
     links: [
       { title: "Overview", href: "/docs/api/overview" },
+      { title: "Action Class", href: "/docs/api/action-classes" },
       { title: "API Key Setup", href: "/docs/api/api-key-setup" },
+      { title: "Attribute Class", href: "/docs/api/attribute-classes" },
       { title: "Displays", href: "/docs/api/display" },
+      { title: "Me", href: "/docs/api/me" },
       { title: "People", href: "/docs/api/people" },
       { title: "Responses", href: "/docs/api/responses" },
       { title: "Surveys", href: "/docs/api/surveys" },
