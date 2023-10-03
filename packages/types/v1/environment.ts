@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { ZActionClassAutomaticInput } from "./actionClasses";
-import { ZAttributeClassAutomaticInput } from "./attributeClasses";
 
 export const ZEnvironment = z.object({
   id: z.string().cuid2(),
@@ -28,11 +26,8 @@ export const ZEnvironmentUpdateInput = z.object({
 export const ZId = z.string().cuid2();
 
 export const ZEnvironmentCreateInput = z.object({
-  type: z.enum(["development", "production"]),
-  productId: z.string(),
-  widgetSetupCompleted: z.boolean(),
-  eventClasses: z.array(ZActionClassAutomaticInput),
-  attributeClasses: z.array(ZAttributeClassAutomaticInput),
+  type: z.enum(["development", "production"]).optional(),
+  widgetSetupCompleted: z.boolean().optional(),
 });
 
 export type TEnvironmentCreateInput = z.infer<typeof ZEnvironmentCreateInput>;

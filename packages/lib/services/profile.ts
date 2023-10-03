@@ -146,6 +146,19 @@ const deleteUser = async (userId: string): Promise<TProfile> => {
   return profile;
 };
 
+export const createProfile = async (data: TProfileUpdateInput): Promise<TProfile> => {
+  validateInputs([data, ZProfileUpdateInput]);
+  const profile = await prisma.user.create({
+    data: data,
+    select: responseSelection,
+  });
+
+  revalidateTag(getProfileByEmailCacheTag(profile.email));
+  revalidateTag(getProfileCacheTag(profile.id));
+
+  return profile;
+};
+
 // function to delete a user's profile including teams
 export const deleteProfile = async (userId: string): Promise<void> => {
   validateInputs([userId, ZId]);

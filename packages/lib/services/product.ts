@@ -9,7 +9,7 @@ import { cache } from "react";
 import "server-only";
 import { z } from "zod";
 import { validateInputs } from "../utils/validate";
-import { getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
+import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
@@ -191,7 +191,7 @@ export const createProduct = async (
   }
   const { environments, ...data } = productInput;
 
-  const newProduct = await prisma.product.create({
+  let product = await prisma.product.create({
     data: {
       ...data,
       name: productInput.name,
@@ -200,5 +200,17 @@ export const createProduct = async (
     select: selectProduct,
   });
 
-  return newProduct;
+  const devEnvironment = await createEnvironment(product.id, {
+    type: "development",
+  });
+
+  const prodEnvironment = await createEnvironment(product.id, {
+    type: "production",
+  });
+
+  product = await updateProduct(product.id, {
+    environments: [devEnvironment, prodEnvironment],
+  });
+
+  return product;
 };

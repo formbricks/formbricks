@@ -1,19 +1,17 @@
 "use server";
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { prisma } from "@formbricks/database";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { createMembership } from "@formbricks/lib/services/membership";
+import { createProduct } from "@formbricks/lib/services/product";
+import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/services/team";
+import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
+import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { createProduct, updateProduct } from "@formbricks/lib/services/product";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/services/team";
-import { createMembership } from "@formbricks/lib/services/membership";
-import { createEnvironment } from "@formbricks/lib/services/environment";
-import { populateEnvironment } from "@formbricks/lib/utils/createDemoProductHelpers";
 
 export async function createTeamAction(teamName: string): Promise<Team> {
   const session = await getServerSession(authOptions);
@@ -28,26 +26,8 @@ export async function createTeamAction(teamName: string): Promise<Team> {
     accepted: true,
   });
 
-  const product = await createProduct(newTeam.id, {
+  await createProduct(newTeam.id, {
     name: "My Product",
-  });
-
-  const devEnvironment = await createEnvironment({
-    type: "development",
-    productId: product.id,
-    eventClasses: populateEnvironment.eventClasses.create,
-    attributeClasses: populateEnvironment.attributeClasses.create,
-  });
-
-  const prodEnvironment = await createEnvironment({
-    type: "production",
-    productId: product.id,
-    eventClasses: populateEnvironment.eventClasses.create,
-    attributeClasses: populateEnvironment.attributeClasses.create,
-  });
-
-  await updateProduct(product.id, {
-    environments: [devEnvironment, prodEnvironment],
   });
 
   return newTeam;
@@ -275,24 +255,6 @@ export const createProductAction = async (environmentId: string, productName: st
     name: productName,
   });
 
-  const devEnvironment = await createEnvironment({
-    type: "development",
-    productId: product.id,
-    eventClasses: populateEnvironment.eventClasses.create,
-    attributeClasses: populateEnvironment.attributeClasses.create,
-  });
-
-  const prodEnvironment = await createEnvironment({
-    type: "production",
-    productId: product.id,
-    eventClasses: populateEnvironment.eventClasses.create,
-    attributeClasses: populateEnvironment.attributeClasses.create,
-  });
-
-  const updatedProduct = await updateProduct(product.id, {
-    environments: [devEnvironment, prodEnvironment],
-  });
-
-  const newEnvironment = updatedProduct.environments[0];
+  const newEnvironment = product.environments[0];
   return newEnvironment;
 };

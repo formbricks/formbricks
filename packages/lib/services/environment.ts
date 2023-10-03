@@ -1,18 +1,21 @@
-import "server-only";
 import { prisma } from "@formbricks/database";
-import { z } from "zod";
-import { Prisma, EnvironmentType } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import type {
   TEnvironment,
   TEnvironmentCreateInput,
-  TEnvironmentId,
   TEnvironmentUpdateInput,
 } from "@formbricks/types/v1/environment";
-import { populateEnvironment } from "../utils/createDemoProductHelpers";
-import { ZEnvironment, ZEnvironmentUpdateInput, ZId } from "@formbricks/types/v1/environment";
+import {
+  ZEnvironment,
+  ZEnvironmentCreateInput,
+  ZEnvironmentUpdateInput,
+  ZId,
+} from "@formbricks/types/v1/environment";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
+import { EventType, Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
+import "server-only";
+import { z } from "zod";
 import { validateInputs } from "../utils/validate";
-import { unstable_cache, revalidateTag } from "next/cache";
 
 export const getEnvironmentCacheTag = (environmentId: string) => `environments-${environmentId}`;
 export const getEnvironmentsCacheTag = (productId: string) => `products-${productId}-environments`;
@@ -128,111 +131,83 @@ export const updateEnvironment = async (
   }
 };
 
-export const getEnvironmentByUser = async (user: any): Promise<TEnvironment | TEnvironmentId | null> => {
-  const firstMembership = await prisma.membership.findFirst({
-    where: {
-      userId: user.id,
-    },
-    select: {
-      teamId: true,
-    },
-  });
-
-  if (!firstMembership) {
-    // create a new team and return environment
-    const membership = await prisma.membership.create({
-      data: {
-        accepted: true,
-        role: "owner",
-        user: { connect: { id: user.id } },
-        team: {
-          create: {
-            name: `${user.name}'s Team`,
-            products: {
-              create: {
-                name: "My Product",
-                environments: {
-                  create: [
-                    {
-                      type: EnvironmentType.production,
-                      ...populateEnvironment,
-                    },
-                    {
-                      type: EnvironmentType.development,
-                      ...populateEnvironment,
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-      },
-      include: {
-        team: {
-          include: {
-            products: {
-              include: {
-                environments: true,
+export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
+  validateInputs([userId, ZId]);
+  let environmentPrisma;
+  try {
+    environmentPrisma = await prisma.environment.findFirst({
+      where: {
+        product: {
+          team: {
+            memberships: {
+              some: {
+                userId,
               },
             },
           },
         },
       },
     });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
 
-    const environment = membership.team.products[0].environments[0];
+    throw error;
+  }
 
+  try {
+    const environment = ZEnvironment.parse(environmentPrisma);
     return environment;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2));
+    }
+    throw new ValidationError("Data validation of environment failed");
   }
-
-  const firstProduct = await prisma.product.findFirst({
-    where: {
-      teamId: firstMembership.teamId,
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (firstProduct === null) {
-    return null;
-  }
-  const firstEnvironment = await prisma.environment.findFirst({
-    where: {
-      productId: firstProduct.id,
-      type: "production",
-    },
-    select: {
-      id: true,
-    },
-  });
-  if (firstEnvironment === null) {
-    return null;
-  }
-  return firstEnvironment;
 };
 
 export const createEnvironment = async (
+  productId: string,
   environmentInput: Partial<TEnvironmentCreateInput>
 ): Promise<TEnvironment> => {
-  try {
-    if (!environmentInput.productId) throw new Error("productId is required");
-    const newEnvironment = await prisma.environment.create({
-      data: {
-        type: environmentInput.type || "development",
-        productId: environmentInput.productId,
-        widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
-        eventClasses: {
-          create: environmentInput.eventClasses,
-        },
-        attributeClasses: {
-          create: environmentInput.attributeClasses,
-        },
-      },
-    });
+  validateInputs([productId, ZId], [environmentInput, ZEnvironmentCreateInput]);
 
-    return newEnvironment;
-  } catch (error) {
-    throw error;
-  }
+  return await prisma.environment.create({
+    data: {
+      type: environmentInput.type || "development",
+      product: { connect: { id: productId } },
+      widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
+      eventClasses: {
+        create: populateEnvironment.eventClasses,
+      },
+      attributeClasses: {
+        create: populateEnvironment.attributeClasses,
+      },
+    },
+  });
+};
+
+export const populateEnvironment = {
+  eventClasses: [
+    {
+      name: "New Session",
+      description: "Gets fired when a new session is created",
+      type: EventType.automatic,
+    },
+    {
+      name: "Exit Intent (Desktop)",
+      description: "A user on Desktop leaves the website with the cursor.",
+      type: EventType.automatic,
+    },
+    {
+      name: "50% Scroll",
+      description: "A user scrolled 50% of the current page",
+      type: EventType.automatic,
+    },
+  ],
+  attributeClasses: [
+    { name: "userId", description: "The internal ID of the person", type: EventType.automatic },
+    { name: "email", description: "The email of the person", type: EventType.automatic },
+  ],
 };
