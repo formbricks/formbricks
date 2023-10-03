@@ -1,25 +1,25 @@
-import toast from "react-hot-toast";
+import { sendEmailAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import CodeBlock from "@/components/shared/CodeBlock";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Input, Button } from "@formbricks/ui";
-import { DocumentDuplicateIcon, EnvelopeIcon, CodeBracketIcon } from "@heroicons/react/24/solid";
-import {
-  Section,
-  Tailwind,
-  render,
-  Button as EmailButton,
-  Text,
-  Link,
-  Container,
-  Row,
-  Column,
-} from "@react-email/components";
-import { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
-import { TProfile } from "@formbricks/types/v1/profile";
 import { TProduct } from "@formbricks/types/v1/product";
-import { sendEmailAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
+import { TProfile } from "@formbricks/types/v1/profile";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { Button, Input } from "@formbricks/ui";
+import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
+import {
+  Column,
+  Container,
+  Button as EmailButton,
+  Link,
+  Row,
+  Section,
+  Tailwind,
+  Text,
+  render,
+} from "@react-email/components";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -149,10 +149,10 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
     case QuestionType.OpenText:
       return (
         <EmailTemplateWrapper surveyUrl={surveyUrl}>
-          <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
-          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
             {firstQuestion.subheader}
           </Text>
           <Section className="mt-4 block h-20 w-full rounded-lg border border-solid border-gray-200 bg-slate-50" />
@@ -162,10 +162,10 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
     case QuestionType.Consent:
       return (
         <EmailTemplateWrapper surveyUrl={surveyUrl}>
-          <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+          <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
-          <Container className="m-0 text-sm font-normal leading-6 text-slate-600">
+          <Container className="m-0 text-sm font-normal leading-6 text-slate-500">
             <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
           </Container>
 
@@ -193,24 +193,24 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       return (
         <EmailTemplateWrapper surveyUrl={surveyUrl}>
           <Section>
-            <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+            <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
               {firstQuestion.headline}
             </Text>
-            <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+            <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
               {firstQuestion.subheader}
             </Text>
             <Container className="mx-0 mt-4 flex w-max flex-col">
-              <Section className="block overflow-hidden rounded-md border border-solid border-gray-200">
+              <Section className="block overflow-hidden rounded-md border border-gray-200">
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
                     key={i}
                     href={`${surveyUrl}?${firstQuestion.id}=${i}`}
-                    className="m-0 inline-flex h-10 w-10 items-center justify-center border border-solid border-gray-200 p-0 text-slate-800">
+                    className="m-0 inline-flex h-10 w-10 items-center justify-center  border-gray-200 p-0 text-slate-800">
                     {i}
                   </EmailButton>
                 ))}
               </Section>
-              <Section className="m-0 px-1.5 text-xs leading-6 text-slate-500">
+              <Section className="mt-2 px-1.5 text-xs leading-6 text-slate-500">
                 <Row>
                   <Column>
                     <Text className="m-0 inline-block w-max p-0">{firstQuestion.lowerLabel}</Text>
@@ -236,10 +236,10 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
     case QuestionType.CTA:
       return (
         <EmailTemplateWrapper surveyUrl={surveyUrl}>
-          <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+          <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
-          <Container className="m-0 text-sm font-normal leading-6 text-slate-600">
+          <Container className="mt-2 text-sm font-normal leading-6 text-slate-500">
             <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
           </Container>
 
@@ -253,7 +253,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
             )}
             <EmailButton
               href={`${surveyUrl}?${firstQuestion.id}=clicked`}
-              className="bg-brand-color ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
+              className="bg-brand-color inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
               {firstQuestion.buttonLabel}
             </EmailButton>
           </Container>
@@ -264,10 +264,10 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       return (
         <EmailTemplateWrapper surveyUrl={surveyUrl}>
           <Section>
-            <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+            <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
               {firstQuestion.headline}
             </Text>
-            <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+            <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
               {firstQuestion.subheader}
             </Text>
             <Container className="mx-0 mt-4 flex">
@@ -280,14 +280,14 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
                     key={i}
                     href={`${surveyUrl}?${firstQuestion.id}=${i + 1}`}
                     className={cn(
-                      "m-0 inline-flex h-10 w-10 items-center justify-center p-0 text-slate-800",
+                      "m-0 inline-flex h-16 w-16 items-center justify-center p-0 text-slate-800",
                       {
                         ["border border-solid border-gray-200"]: firstQuestion.scale === "number",
                       }
                     )}>
-                    {firstQuestion.scale === "smiley" && "😃"}
+                    {firstQuestion.scale === "smiley" && <Text className="text-3xl">😃</Text>}
                     {firstQuestion.scale === "number" && i + 1}
-                    {firstQuestion.scale === "star" && "⭐"}
+                    {firstQuestion.scale === "star" && <Text className="text-3xl">⭐</Text>}
                   </EmailButton>
                 ))}
               </Section>
@@ -316,16 +316,16 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
     case QuestionType.MultipleChoiceMulti:
       return (
         <EmailTemplateWrapper surveyUrl={surveyUrl}>
-          <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
-          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
             {firstQuestion.subheader}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Section
-                className="mt-4 block w-full rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
+                className="mt-2 block w-full rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
                 key={choice.id}>
                 {choice.label}
               </Section>
@@ -337,10 +337,10 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
     case QuestionType.MultipleChoiceSingle:
       return (
         <EmailTemplateWrapper surveyUrl={surveyUrl}>
-          <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
-          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-600">
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
             {firstQuestion.subheader}
           </Text>
           <Container className="mx-0 max-w-none">
@@ -349,7 +349,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
               .map((choice) => (
                 <Link
                   key={choice.id}
-                  className="mt-4 block rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
+                  className="mt-2 block rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
                   href={`${surveyUrl}?${firstQuestion.id}=${choice.label}`}>
                   {choice.label}
                 </Link>
@@ -366,7 +366,7 @@ const EmailTemplateWrapper = ({ children, surveyUrl }) => {
     <Link
       href={surveyUrl}
       target="_blank"
-      className="mx-0 my-2 block rounded-lg border border-solid border-black bg-white px-4 py-2 font-sans text-inherit">
+      className="mx-0 my-2 block rounded-lg border border-solid border-slate-300 bg-white p-8 font-sans text-inherit ">
       {children}
     </Link>
   );
@@ -374,13 +374,9 @@ const EmailTemplateWrapper = ({ children, surveyUrl }) => {
 
 const EmailFooter = () => {
   return (
-    <Container className="m-auto mt-4 text-center">
-      <Text className="m-0 inline-block p-0 text-xs text-slate-400">Powered by</Text>
-      <Link
-        href="https://formbricks.com/"
-        target="_blank"
-        className="m-0 ml-1 inline-block p-0 text-sm text-slate-700">
-        Formbricks
+    <Container className="m-auto mt-8 text-center ">
+      <Link href="https://formbricks.com/" target="_blank" className="text-xs text-slate-400">
+        Powered by Formbricks
       </Link>
     </Container>
   );
