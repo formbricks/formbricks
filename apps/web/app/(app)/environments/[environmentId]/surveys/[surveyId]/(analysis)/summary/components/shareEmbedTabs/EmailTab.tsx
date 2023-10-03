@@ -34,39 +34,39 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
   const brandColor = product.brandColor;
   const subject = "Formbricks Email Survey Preview";
 
-  const emailTemplate = useMemo(() => {
-    return getEmailTemplate(survey, surveyUrl);
+  const PreviewEmailTemplate = useMemo(() => {
+    return getEmailTemplate(survey, surveyUrl, brandColor, true);
   }, [survey, surveyUrl]);
 
-  const Email = (
-    <Tailwind
-      config={{
-        theme: {
-          extend: {
-            colors: {
-              "brand-color": brandColor,
-            },
-          },
-        },
-      }}>
-      {emailTemplate}
-    </Tailwind>
-  );
+  const EmailTemplate = useMemo(() => {
+    return getEmailTemplate(survey, surveyUrl, brandColor, false);
+  }, [survey, surveyUrl]);
 
-  const emailHtml = render(Email, { pretty: true });
-  const emailHtmlWithoutDoctype = emailHtml.replace(
-    '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
-    ""
+  const previewEmailHtml = render(PreviewEmailTemplate, { pretty: true });
+  const emailHtml = render(EmailTemplate, { pretty: true });
+
+  const previewEmailHtmlWithoutDoctype = useMemo(
+    () =>
+      previewEmailHtml.replace(
+        '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
+        ""
+      ),
+    [previewEmailHtml]
+  );
+  const emailHtmlWithoutDoctype = useMemo(
+    () =>
+      emailHtml.replace(
+        '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
+        ""
+      ),
+    [emailHtml]
   );
 
   const sendPreviewEmail = async () => {
-    const emailPreviewHtml = emailHtmlWithoutDoctype
-      .replace(`${surveyUrl}?`, `${surveyUrl}?preview=true&`)
-      .replace(`"${surveyUrl}"`, `"${surveyUrl}?preview=true"`);
-
-    await sendEmailAction({ html: emailPreviewHtml, subject, to: email });
+    await sendEmailAction({ html: previewEmailHtmlWithoutDoctype, subject, to: email });
     toast.success("Email sent!");
   };
+
   return (
     <div className="flex h-full grow flex-col gap-5">
       <div className="flex items-center gap-4">
@@ -133,7 +133,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
                 To : {email || "user@mail.com"}
               </div>
               <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
-              <div className="p-4">{Email}</div>
+              <div className="p-4">{PreviewEmailTemplate}</div>
             </div>
           </div>
         )}
@@ -142,13 +142,15 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
   );
 }
 
-const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
+const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string, preview: boolean) => {
+  const url = preview ? `${surveyUrl}?preview=true` : surveyUrl;
+  const urlWithPrefilling = preview ? `${surveyUrl}?preview=true&` : `${surveyUrl}?`;
+
   const firstQuestion = survey.questions[0];
-  console.log("firstQuestion", firstQuestion);
   switch (firstQuestion.type) {
     case QuestionType.OpenText:
       return (
-        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
             {firstQuestion.headline}
           </Text>
@@ -161,7 +163,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       );
     case QuestionType.Consent:
       return (
-        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
             {firstQuestion.headline}
           </Text>
@@ -175,13 +177,13 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
           <Container className="mx-0 mt-4 flex max-w-none justify-end">
             {!firstQuestion.required && (
               <EmailButton
-                href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
                 className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
                 Reject
               </EmailButton>
             )}
             <EmailButton
-              href={`${surveyUrl}?${firstQuestion.id}=accepted`}
+              href={`${urlWithPrefilling}${firstQuestion.id}=accepted`}
               className="bg-brand-color ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
               Accept
             </EmailButton>
@@ -191,7 +193,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       );
     case QuestionType.NPS:
       return (
-        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
             <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
               {firstQuestion.headline}
@@ -204,7 +206,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
                     key={i}
-                    href={`${surveyUrl}?${firstQuestion.id}=${i}`}
+                    href={`${urlWithPrefilling}${firstQuestion.id}=${i}`}
                     className="m-0 inline-flex h-10 w-10 items-center justify-center border border-solid border-gray-200 p-0 text-slate-800">
                     {i}
                   </EmailButton>
@@ -223,7 +225,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
             </Container>
             {/* {!firstQuestion.required && (
                 <EmailButton
-                  href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                  href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
                   className="mt-4 cursor-pointer appearance-none rounded-md bg-brand-color px-6 py-3 text-sm font-medium text-white">
                   {firstQuestion.buttonLabel || "Skip"}
                 </EmailButton>
@@ -235,7 +237,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       );
     case QuestionType.CTA:
       return (
-        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
             {firstQuestion.headline}
           </Text>
@@ -246,13 +248,13 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
           <Container className="mx-0 mt-4 max-w-none">
             {!firstQuestion.required && (
               <EmailButton
-                href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
                 className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
                 {firstQuestion.dismissButtonLabel || "Skip"}
               </EmailButton>
             )}
             <EmailButton
-              href={`${surveyUrl}?${firstQuestion.id}=clicked`}
+              href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}
               className="bg-brand-color ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
               {firstQuestion.buttonLabel}
             </EmailButton>
@@ -262,7 +264,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       );
     case QuestionType.Rating:
       return (
-        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
             <Text className="m-0 mb-1.5 block text-base font-semibold leading-6 text-slate-900">
               {firstQuestion.headline}
@@ -278,7 +280,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
                 {Array.from({ length: firstQuestion.range }, (_, i) => (
                   <EmailButton
                     key={i}
-                    href={`${surveyUrl}?${firstQuestion.id}=${i + 1}`}
+                    href={`${urlWithPrefilling}${firstQuestion.id}=${i + 1}`}
                     className={cn(
                       "m-0 inline-flex h-10 w-10 items-center justify-center p-0 text-slate-800",
                       {
@@ -304,7 +306,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
             </Container>
             {/* {!firstQuestion.required && (
                 <EmailButton
-                  href={`${surveyUrl}?${firstQuestion.id}=dismissed`}
+                  href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
                   className="mt-4 cursor-pointer appearance-none rounded-md bg-brand-color px-6 py-3 text-sm font-medium text-white">
                   {firstQuestion.buttonLabel || "Skip"}
                 </EmailButton>
@@ -315,7 +317,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       );
     case QuestionType.MultipleChoiceMulti:
       return (
-        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
             {firstQuestion.headline}
           </Text>
@@ -336,7 +338,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
       );
     case QuestionType.MultipleChoiceSingle:
       return (
-        <EmailTemplateWrapper surveyUrl={surveyUrl}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mb-1.5 mr-8 block p-0 text-base font-semibold leading-6 text-slate-900">
             {firstQuestion.headline}
           </Text>
@@ -350,7 +352,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
                 <Link
                   key={choice.id}
                   className="mt-4 block rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
-                  href={`${surveyUrl}?${firstQuestion.id}=${choice.label}`}>
+                  href={`${urlWithPrefilling}${firstQuestion.id}=${choice.label}`}>
                   {choice.label}
                 </Link>
               ))}
@@ -361,14 +363,25 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string) => {
   }
 };
 
-const EmailTemplateWrapper = ({ children, surveyUrl }) => {
+const EmailTemplateWrapper = ({ children, surveyUrl, brandColor }) => {
   return (
-    <Link
-      href={surveyUrl}
-      target="_blank"
-      className="mx-0 my-2 block rounded-lg border border-solid border-black bg-white px-4 py-2 font-sans text-inherit">
-      {children}
-    </Link>
+    <Tailwind
+      config={{
+        theme: {
+          extend: {
+            colors: {
+              "brand-color": brandColor,
+            },
+          },
+        },
+      }}>
+      <Link
+        href={surveyUrl}
+        target="_blank"
+        className="mx-0 my-2 block rounded-lg border border-solid border-black bg-white px-4 py-2 font-sans text-inherit">
+        {children}
+      </Link>
+    </Tailwind>
   );
 };
 
