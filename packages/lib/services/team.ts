@@ -24,6 +24,7 @@ import {
   updateEnvironmentArgs,
 } from "../utils/createDemoProductHelpers";
 import { validateInputs } from "../utils/validate";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const select = {
   id: true,
@@ -64,7 +65,7 @@ export const getTeamsByUserId = async (userId: string): Promise<TTeam[]> =>
     [`users-${userId}-teams`],
     {
       tags: [getTeamsByUserIdCacheTag(userId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -100,7 +101,7 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     [`environments-${environmentId}-team`],
     {
       tags: [getTeamByEnvironmentIdCacheTag(environmentId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

@@ -12,6 +12,7 @@ import { validateInputs } from "../utils/validate";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import { cache } from "react";
 import { revalidateTag, unstable_cache } from "next/cache";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 const attributeClassesCacheTag = (environmentId: string): string =>
   `environments-${environmentId}-attributeClasses`;
@@ -99,7 +100,7 @@ export const getAttributeClassByNameCached = async (environmentId: string, name:
     getAttributeClassesCacheKey(environmentId),
     {
       tags: getAttributeClassesCacheKey(environmentId),
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 

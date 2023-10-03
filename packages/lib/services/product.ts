@@ -12,6 +12,7 @@ import { validateInputs } from "../utils/validate";
 import { EnvironmentType } from "@prisma/client";
 import { EventType } from "@prisma/client";
 import { getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
@@ -85,7 +86,7 @@ export const getProducts = async (teamId: string): Promise<TProduct[]> =>
     [`teams-${teamId}-products`],
     {
       tags: [getProductsCacheTag(teamId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -124,7 +125,7 @@ export const getProductByEnvironmentIdCached = (environmentId: string) =>
     getProductCacheKey(environmentId),
     {
       tags: getProductCacheKey(environmentId),
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
