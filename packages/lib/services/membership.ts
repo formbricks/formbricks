@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TMember, TMembership, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";

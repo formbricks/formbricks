@@ -64,6 +64,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         data: true,
         meta: true,
         personAttributes: true,
+        singleUseId: true,
         person: {
           select: {
             id: true,

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { TInvite, TInviteUpdateInput } from "@formbricks/types/v1/invites";
@@ -19,7 +21,7 @@ const inviteSelect = {
   role: true,
 };
 
-export const getInviteesByTeamId = cache(async (teamId: string): Promise<TInvite[] | null> => {
+export const getInvitesByTeamId = cache(async (teamId: string): Promise<TInvite[] | null> => {
   const invites = await prisma.invite.findMany({
     where: { teamId },
     select: inviteSelect,

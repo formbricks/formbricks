@@ -76,7 +76,9 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
       surveyClosedMessage: existingSurvey.surveyClosedMessage
         ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
         : prismaClient.JsonNull,
-
+      singleUse: existingSurvey.singleUse
+        ? JSON.parse(JSON.stringify(existingSurvey.singleUse))
+        : prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : prismaClient.JsonNull,
@@ -225,6 +227,7 @@ export async function copyToOtherEnvironmentAction(
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
+      singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
     },
   });
