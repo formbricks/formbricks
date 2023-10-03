@@ -42,12 +42,12 @@ export const renderWidget = (survey: TSurvey) => {
     surveyState
   );
 
-  const productOverwrites = survey.productOverwrites || {};
-  const brandColor = productOverwrites.brandColor || product.brandColor;
-  const highlightBorderColor = productOverwrites.highlightBorderColor || product.highlightBorderColor;
-  const clickOutside = productOverwrites.clickOutside || product.clickOutsideClose;
-  const darkOverlay = productOverwrites.darkOverlay || product.darkOverlay;
-  const placement = productOverwrites.placement || product.placement;
+  const productOverwrites = survey.productOverwrites ?? {};
+  const brandColor = productOverwrites.brandColor ?? product.brandColor;
+  const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
+  const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
+  const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
+  const placement = productOverwrites.placement ?? product.placement;
 
   setTimeout(() => {
     renderSurveyModal({

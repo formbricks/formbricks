@@ -17,79 +17,29 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
   const [open, setOpen] = useState(false);
 
   const { type, productOverwrites } = localSurvey;
-  const {
-    brandColor,
-    clickOutside: surveyClickOutside,
-    darkOverlay,
-    placement,
-    highlightBorderColor,
-  } = productOverwrites ?? {};
+  const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
 
   const togglePlacement = () => {
-    if (!!placement) {
-      const updatedSurvey: TSurveyWithAnalytics = {
-        ...localSurvey,
-        productOverwrites: {
-          ...localSurvey.productOverwrites,
-          placement: null,
-          clickOutside: true,
-          darkOverlay: false,
-        },
-      };
-      setLocalSurvey(updatedSurvey);
-    } else {
-      const updatedSurvey: TSurveyWithAnalytics = {
-        ...localSurvey,
-        productOverwrites: {
-          ...localSurvey.productOverwrites,
-          placement: "bottomRight",
-        },
-      };
-      setLocalSurvey(updatedSurvey);
-    }
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        placement: !!placement ? null : "bottomRight",
+      },
+    });
   };
 
   const toggleBrandColor = () => {
-    if (!!brandColor) {
-      setLocalSurvey({
-        ...localSurvey,
-        productOverwrites: {
-          ...localSurvey.productOverwrites,
-          brandColor: null,
-        },
-      });
-    } else {
-      setLocalSurvey({
-        ...localSurvey,
-        productOverwrites: {
-          ...localSurvey.productOverwrites,
-          brandColor: "#64748b",
-        },
-      });
-    }
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        brandColor: !!brandColor ? null : "#64748b",
+      },
+    });
   };
 
-  const toggleBorderColor = () => {
-    if (!!highlightBorderColor) {
-      setLocalSurvey({
-        ...localSurvey,
-        productOverwrites: {
-          ...localSurvey.productOverwrites,
-          highlightBorderColor: null,
-        },
-      });
-    } else {
-      setLocalSurvey({
-        ...localSurvey,
-        productOverwrites: {
-          ...localSurvey.productOverwrites,
-          highlightBorderColor: "#64748b",
-        },
-      });
-    }
-  };
-
-  const toggleBorderColorSetting = () => {
+  const toggleHighlightBorderColor = () => {
     setLocalSurvey({
       ...localSurvey,
       productOverwrites: {
@@ -129,8 +79,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
-  const handleOverlay = (overlay: string) => {
-    const darkOverlay = overlay === "darkOverlay";
+  const handleOverlay = (overlayType: string) => {
+    const darkOverlay = overlayType === "dark";
 
     setLocalSurvey({
       ...localSurvey,
@@ -141,20 +91,15 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
-  const handlClickOutside = (isClickOutside: string) => {
-    const clickOutsideClose = isClickOutside === "allow";
-
+  const handleClickOutside = (clickOutside: boolean) => {
     setLocalSurvey({
       ...localSurvey,
       productOverwrites: {
-        clickOutside: clickOutsideClose,
+        ...localSurvey.productOverwrites,
+        clickOutside,
       },
     });
   };
-
-  const overlay = !darkOverlay ? "" : darkOverlay ? "darkOverlay" : "lightOverlay";
-
-  const clickOutside = !surveyClickOutside ? "" : surveyClickOutside ? "allow" : "disallow";
 
   return (
     <Collapsible.Root
@@ -215,9 +160,9 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                         currentPlacement={placement}
                         setCurrentPlacement={handlePlacementChange}
                         setOverlay={handleOverlay}
-                        overlay={overlay}
-                        setClickOutside={handlClickOutside}
-                        clickOutside={clickOutside}
+                        overlay={darkOverlay ? "dark" : "light"}
+                        setClickOutside={handleClickOutside}
+                        clickOutside={!!clickOutside}
                       />
                     </div>
                   </div>
@@ -232,7 +177,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 <Switch
                   id="autoComplete"
                   checked={!!highlightBorderColor}
-                  onCheckedChange={toggleBorderColorSetting}
+                  onCheckedChange={toggleHighlightBorderColor}
                 />
                 <Label htmlFor="autoComplete" className="cursor-pointer">
                   <div className="ml-2">
@@ -249,7 +194,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                     <Switch
                       id="highlightBorder"
                       checked={!!highlightBorderColor}
-                      onCheckedChange={toggleBorderColor}
+                      onCheckedChange={toggleHighlightBorderColor}
                     />
                     <h2 className="text-sm font-medium text-slate-800">Show highlight border</h2>
                   </div>
