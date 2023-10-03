@@ -33,7 +33,7 @@ Fixes # (issue)
 
 ### Required
 
-- [ ] Filled out the "How to test" section in this PR if a UI change was made
+- [ ] Filled out the "How to test" section in this PR
 - [ ] Read [How we Code at Formbricks]([https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md](https://formbricks.com/docs/contributing/how-we-code))
 - [ ] Self-reviewed my own code
 - [ ] Commented on my code in hard-to-understand bits
@@ -45,6 +45,6 @@ Fixes # (issue)
 
 ### Not Required
 
-- [ ] Added a screen recording or screenshots to this PR
+- [ ] Added a screen recording or screenshots to this PR if a UI change was made
 - [ ] Updated the Formbricks Docs if changes were necessary
 
