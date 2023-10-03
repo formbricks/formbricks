@@ -50,6 +50,7 @@ export const selectSurvey = {
   verifyEmail: true,
   redirectUrl: true,
   surveyClosedMessage: true,
+  singleUse: true,
   triggers: {
     select: {
       eventClass: {
