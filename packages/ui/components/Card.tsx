@@ -31,7 +31,7 @@ export const Card: React.FC<CardProps> = ({
 }) => (
   <div className="relative rounded-lg bg-white p-8 text-left shadow-sm ">
     {connected != undefined && statusText != undefined && (
-      <div className="absolute right-4 top-4 flex items-center rounded bg-slate-200 px-2 py-1 text-xs text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+      <div className="absolute right-4 top-4 flex items-center rounded bg-slate-200 px-2 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
         {connected === true ? (
           <span className="relative mr-1 flex h-2 w-2">
             <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
