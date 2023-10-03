@@ -4,7 +4,7 @@ import WebhookRowData from "@/app/(app)/environments/[environmentId]/integration
 import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTable";
 import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTableHeading";
 import GoBackButton from "@/components/shared/GoBackButton";
-import { getSurveys } from "@formbricks/lib/services/survey";
+import { getSurveys } from "@formbricks/lib/survey/service";
 import { getWebhooks } from "@formbricks/lib/services/webhook";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/services/environment";
