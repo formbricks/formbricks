@@ -50,9 +50,9 @@ export function Survey({
           const responseobj = responses.filter((response) => {
             return response.hasOwnProperty(id);
           });
-          console.log(responseobj);
+          
           const ans: string = String(responseobj[0][id]);
-          console.log("ans " + ans);
+          
           survey.questions.forEach((question) => {
             if (question.id === questionId) {
               question.headline = question.headline.replace(pattern, ans);
@@ -106,7 +106,7 @@ export function Survey({
   };
 
   const onSubmit = (responseData: TResponseData) => {
-    console.log(responseData);
+    
     setLoadingElement(true);
     setResponses([...responses, responseData]);
     const nextQuestionId = getNextQuestionId(responseData);
