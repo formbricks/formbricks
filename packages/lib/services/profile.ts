@@ -10,6 +10,7 @@ import { unstable_cache, revalidateTag } from "next/cache";
 import { validateInputs } from "../utils/validate";
 import { deleteTeam } from "./team";
 import { z } from "zod";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 const responseSelection = {
   id: true,
@@ -52,7 +53,7 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
     [`profiles-${userId}`],
     {
       tags: [getProfileByEmailCacheTag(userId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -84,7 +85,7 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
     [`profiles-${email}`],
     {
       tags: [getProfileCacheTag(email)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
