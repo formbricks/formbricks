@@ -140,6 +140,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
   try {
     environmentPrisma = await prisma.environment.findFirst({
       where: {
+        type: "production",
         product: {
           team: {
             memberships: {

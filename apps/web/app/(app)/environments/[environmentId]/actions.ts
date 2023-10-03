@@ -258,6 +258,9 @@ export const createProductAction = async (environmentId: string, productName: st
     name: productName,
   });
 
-  const newEnvironment = product.environments[0];
-  return newEnvironment;
+  // get production environment
+  const productionEnvironment = product.environments.find((environment) => environment.type === "production");
+  if (!productionEnvironment) throw new ResourceNotFoundError("Production environment", environmentId);
+
+  return productionEnvironment;
 };
