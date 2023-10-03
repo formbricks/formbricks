@@ -1,6 +1,11 @@
 import { writeData } from "@formbricks/lib/services/googleSheet";
+import { writeData as airTableWriteData } from "@formbricks/lib/services/airTable";
 import { getSurvey } from "@formbricks/lib/services/survey";
-import { TGoogleSheetIntegration, TIntegration } from "@formbricks/types/v1/integrations";
+import {
+  TAirTableIntegration,
+  TGoogleSheetIntegration,
+  TIntegration,
+} from "@formbricks/types/v1/integrations";
 import { TPipelineInput } from "@formbricks/types/v1/pipelines";
 
 export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {
@@ -9,6 +14,21 @@ export async function handleIntegrations(integrations: TIntegration[], data: TPi
       case "googleSheets":
         await handleGoogleSheetsIntegration(integration as TGoogleSheetIntegration, data);
         break;
+      case "airtable":
+        await handleAirtableIntegration(integration as TAirTableIntegration, data);
+        break;
+    }
+  }
+}
+
+async function handleAirtableIntegration(integration: TAirTableIntegration, data: TPipelineInput) {
+  if (integration.config.data.length > 0) {
+    for (const element of integration.config.data) {
+      if (element.surveyId === data.surveyId) {
+        const values = await extractResponses(data, element.questionIds);
+
+        await airTableWriteData(integration.config.key, element, values);
+      }
     }
   }
 }
