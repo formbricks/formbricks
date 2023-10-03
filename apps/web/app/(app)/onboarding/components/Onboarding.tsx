@@ -10,7 +10,6 @@ import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
-import { ResponseId } from "@formbricks/js";
 import { TProfile } from "@formbricks/types/v1/profile";
 import { TProduct } from "@formbricks/types/v1/product";
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
@@ -25,7 +24,7 @@ interface OnboardingProps {
 }
 
 export default function Onboarding({ session, environmentId, profile, product }: OnboardingProps) {
-  const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
+  const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -55,7 +54,7 @@ export default function Onboarding({ session, environmentId, profile, product }:
 
     try {
       const updatedProfile = { ...profile, onboardingCompleted: true };
-      await updateProfileAction(profile.id, updatedProfile);
+      await updateProfileAction(updatedProfile);
 
       if (environmentId) {
         router.push(`/environments/${environmentId}/surveys`);

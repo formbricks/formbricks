@@ -1,16 +1,16 @@
 "use client";
 
-import { useRef } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useRef } from "react";
 
+import { remToPx } from "@/lib/remToPx";
 import { Button } from "./Button";
 import { useIsInsideMobileNavigation } from "./MobileNavigation";
 import { useSectionStore } from "./SectionProvider";
 import { Tag } from "./Tag";
-import { remToPx } from "@/lib/remToPx";
 
 interface NavGroup {
   title: string;
@@ -253,7 +253,9 @@ export const navigation: Array<NavGroup> = [
     title: "Contributing",
     links: [
       { title: "Introduction", href: "/docs/contributing/introduction" },
+      { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
+      { title: "Gitpod", href: "/docs/contributing/gitpod" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
     ],

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import {
   TResponse,
@@ -11,8 +13,7 @@ import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
-import "server-only";
-import { getPerson, transformPrismaPerson } from "./person";
+import { getPerson, transformPrismaPerson } from "../services/person";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
@@ -77,6 +78,8 @@ const responseSelection = {
 };
 
 export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-responses`;
+
+export const getResponseCacheTag = (responseId: string) => `responses-${responseId}`;
 
 export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
   validateInputs([personId, ZId]);

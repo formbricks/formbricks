@@ -1,9 +1,9 @@
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export const PricingTable = ({ leadRow, pricing, endRow }) => {
   return (
-    <div className="-mt-16 grid grid-cols-1 px-4 md:gap-4 md:px-16 ">
+    <div className="grid grid-cols-1 px-4 md:gap-4 md:px-16 ">
       <div className="rounded-xl px-4 md:px-12">
         <div className="flex items-center gap-x-4">
           <div className="w-1/3 text-left font-semibold text-slate-700 dark:text-slate-200 md:text-xl">
@@ -11,7 +11,7 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
           </div>
           <div
             className="flex w-1/3 items-center justify-center text-center text-sm font-semibold
-           text-slate-700 dark:text-slate-200 md:text-lg">
+           text-slate-500 dark:text-slate-200 md:text-lg">
             {leadRow.free}
           </div>
 
@@ -34,7 +34,7 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
             </div>
             <div className="flex w-1/3 items-center justify-center text-center text-sm text-slate-800 dark:text-slate-100">
               {feature.addOnText ? (
-                <TooltipProvider>
+                <TooltipProvider delayDuration={50}>
                   <Tooltip>
                     <TooltipTrigger>
                       <u>{feature.free}</u>

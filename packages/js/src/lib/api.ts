@@ -1,4 +1,4 @@
-import { FormbricksAPI, EnvironmentId } from "@formbricks/api";
+import { FormbricksAPI } from "@formbricks/api";
 import { Config } from "./config";
 
 export const getApi = (): FormbricksAPI => {
@@ -11,6 +11,6 @@ export const getApi = (): FormbricksAPI => {
 
   return new FormbricksAPI({
     apiHost,
-    environmentId: environmentId as EnvironmentId,
+    environmentId,
   });
 };
