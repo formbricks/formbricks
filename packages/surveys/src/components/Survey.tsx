@@ -25,15 +25,48 @@ export function Survey({
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0]?.id);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const [responses, setResponses] = useState<TResponseData[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
+
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
+
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setQuestionId(activeQuestionId || survey.questions[0].id);
   }, [activeQuestionId, survey.questions]);
+  useEffect(() => {
+    //code for adding recall
+    if (currentQuestion && currentQuestion?.headline.includes("@recall")) {
+      var inputString = currentQuestion.headline;
+      var pattern = /@recall:(\w+)/;
+      var match = inputString.match(pattern);
 
+      if (match) {
+        // Extract the ID from the match
+        var id = match[1];
+        if (history.includes(id)) {
+          const responseobj = responses.filter((response) => {
+            return response.hasOwnProperty(id);
+          });
+          console.log(responseobj);
+          const ans: string = String(responseobj[0][id]);
+          console.log("ans " + ans);
+          survey.questions.forEach((question) => {
+            if (question.id === questionId) {
+              question.headline = question.headline.replace(pattern, ans);
+              // setHeadline( question.headline.replace(pattern,ans))
+            }
+          });
+        } else {
+          // code for fall back
+        }
+      } else {
+        console.log("No ID found in the string.");
+      }
+    }
+  }, [currentQuestion, questionId, history]);
   useEffect(() => {
     // scroll to top when question changes
     if (contentRef.current) {
@@ -73,7 +106,9 @@ export function Survey({
   };
 
   const onSubmit = (responseData: TResponseData) => {
+    console.log(responseData);
     setLoadingElement(true);
+    setResponses([...responses, responseData]);
     const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, finished });
@@ -122,6 +157,7 @@ export function Survey({
                 (question, idx) =>
                   questionId === question.id && (
                     <QuestionConditional
+                      // headline={headline}
                       question={question}
                       value={responseData[question.id]}
                       onChange={onChange}

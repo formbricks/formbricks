@@ -1,8 +1,8 @@
 import { TSurveyOpenTextQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
-
+import { useRef, useState } from "react";
+import RecallDropdown from "@/components/shared/recallDrop";
 interface OpenQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
   question: TSurveyOpenTextQuestion;
@@ -13,12 +13,24 @@ interface OpenQuestionFormProps {
 }
 
 export default function OpenQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
   isInValid,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const [showRecallDropdown, setShowRecallDropdown] = useState(false);
+
+  const headlineRef = useRef<HTMLInputElement | null>(null);
+  const handleRecallItemClick = (recallQuestion) => {
+    let newQuestionHeadLine = question.headline;
+    newQuestionHeadLine += `recall:${recallQuestion.id}`;
+
+    if (headlineRef.current) {
+      headlineRef.current.value = newQuestionHeadLine;
+    }
+  };
 
   return (
     <form>
@@ -29,10 +41,26 @@ export default function OpenQuestionForm({
             autoFocus
             id="headline"
             name="headline"
+            ref={headlineRef}
             value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
+            onChange={(e) => {
+              if (e.target.value.endsWith("@")) {
+                setShowRecallDropdown(true);
+              } else {
+                setShowRecallDropdown(false);
+              }
+              updateQuestion(questionIdx, { headline: e.target.value });
+            }}
             isInvalid={isInValid && question.headline.trim() === ""}
           />
+
+          {showRecallDropdown && (
+            <RecallDropdown
+              localSurvey={localSurvey}
+              questionIdx={questionIdx}
+              handleRecallItemClick={handleRecallItemClick}
+            />
+          )}
         </div>
       </div>
 
