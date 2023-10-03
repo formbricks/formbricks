@@ -1,3 +1,5 @@
+import "server-only";
+
 import { validateInputs } from "../utils/validate";
 import { unstable_cache } from "next/cache";
 import { ZId } from "@formbricks/types/v1/environment";
