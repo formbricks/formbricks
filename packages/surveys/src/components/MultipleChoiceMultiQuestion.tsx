@@ -86,12 +86,18 @@ export default function MultipleChoiceSingleQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2">
-            {questionChoices.map((choice) => (
+            {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
+                tabIndex={idx + 1}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    addItem(choice.label);
+                  }
+                }}
                 className={cn(
                   value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none focus:[&>input]:ring-0 focus:[&>input]:ring-offset-0"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -110,9 +116,7 @@ export default function MultipleChoiceSingleQuestion({
                     }}
                     checked={Array.isArray(value) && value.includes(choice.label)}
                     style={{ borderColor: brandColor, color: brandColor }}
-                    required={
-                      question.required && Array.isArray(value) && value.length ? false : question.required
-                    }
+                    required={question.required && idx === 0}
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
@@ -173,9 +177,16 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && <BackButton backButtonLabel={question.backButtonLabel} onClick={onBack} />}
+        {!isFirstQuestion && (
+          <BackButton
+            tabIndex={questionChoices.length + 3}
+            backButtonLabel={question.backButtonLabel}
+            onClick={onBack}
+          />
+        )}
         <div></div>
         <SubmitButton
+          tabIndex={questionChoices.length + 2}
           question={question}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
