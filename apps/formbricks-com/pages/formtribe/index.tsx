@@ -561,6 +561,7 @@ export default function FormTribeHackathon() {
             <li>🎉 1 x MacBook Air M2</li>
             <li>🎉 3 x Limited FormTribe Premium Hoodie</li>
             <li>🎉 10 x Limited FormTribe Premium Shirt</li>
+            <li>🎉 10 x 250h for Gitpod</li>
             <li>🎉 50 x Sets of Formbricks Stickers</li>
           </ul>
         </div>
