@@ -9,7 +9,6 @@ import Image from "next/image";
 import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/services/webhook";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getIntegrations } from "@formbricks/lib/services/integrations";
-import { TGoogleSheetIntegration } from "@formbricks/types/v1/integrations";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
@@ -21,8 +20,8 @@ export default async function IntegrationsPage({ params }) {
     getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
   ]);
 
-  const googleSheetIntegration: TGoogleSheetIntegration | undefined = integrations?.find(
-    (integration): integration is TGoogleSheetIntegration => integration.type === "googleSheets"
+  const containsGoogleSheetIntegration = integrations.some(
+    (integration) => integration.type === "googleSheets"
   );
 
   const integrationCards = [
@@ -66,7 +65,7 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
-      connectText: "Connect",
+      connectText: `${containsGoogleSheetIntegration ? "Manage Sheets" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/google-sheets",
       docsText: "Docs",
@@ -74,8 +73,8 @@ export default async function IntegrationsPage({ params }) {
       label: "Google Sheets",
       description: "Instantly populate your spreadsheets with survey data",
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
-      connected: googleSheetIntegration ? true : false,
-      statusText: googleSheetIntegration ? "Connected" : "Not Connected",
+      connected: containsGoogleSheetIntegration ? true : false,
+      statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
@@ -108,6 +107,7 @@ export default async function IntegrationsPage({ params }) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {integrationCards.map((card) => (
           <Card
+            key={card.label}
             docsHref={card.docsHref}
             docsText={card.docsText}
             docsNewTab={card.docsNewTab}

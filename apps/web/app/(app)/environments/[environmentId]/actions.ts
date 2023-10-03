@@ -6,6 +6,7 @@ import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
+import { createProduct } from "@formbricks/lib/services/product";
 
 export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
   const newTeam = await prisma.team.create({
@@ -302,4 +303,11 @@ export async function copyToOtherEnvironmentAction(
 
 export const deleteSurveyAction = async (surveyId: string) => {
   await deleteSurvey(surveyId);
+};
+
+export const createProductAction = async (environmentId: string, productName: string) => {
+  const productCreated = await createProduct(environmentId, productName);
+
+  const newEnvironment = productCreated.environments[0];
+  return newEnvironment;
 };

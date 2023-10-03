@@ -70,7 +70,7 @@ export default function RatingQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
         <fieldset>

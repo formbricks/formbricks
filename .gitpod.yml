@@ -32,7 +32,7 @@ tasks:
     command: |
       gp sync-await init &&
       cp .env.example .env &&
-      sed -i -r "s#^(NEXT_PUBLIC_WEBAPP_URL=).*#\1 $(gp url 3000)#" .env &&
+      sed -i -r "s#^(WEBAPP_URL=).*#\1 $(gp url 3000)#" .env &&
       sed -i -r "s#^(NEXTAUTH_URL=).*#\1 $(gp url 3000)#" .env &&
       turbo --filter "@formbricks/web" go
       
@@ -57,7 +57,7 @@ ports:
     onOpen: ignore
   - port: 8025
     visibility: public
-    onOpen: ignore
+    onOpen: open-browser
     
 github:
   prebuilds:

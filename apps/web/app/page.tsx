@@ -1,27 +1,9 @@
 import ClientLogout from "@/app/ClientLogout";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getEnvironmentByUser } from "@formbricks/lib/services/environment";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-async function getEnvironment() {
-  const cookie = headers().get("cookie") || "";
-  const res = await fetch(`${WEBAPP_URL}/api/v1/environments/find-first`, {
-    headers: {
-      cookie,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json();
-    console.error(error);
-    throw new Error("Failed to fetch data");
-  }
-
-  return res.json();
-}
 
 export default async function Home() {
   const session: Session | null = await getServerSession(authOptions);
@@ -36,7 +18,7 @@ export default async function Home() {
 
   let environment;
   try {
-    environment = await getEnvironment();
+    environment = await getEnvironmentByUser(session?.user);
   } catch (error) {
     console.error("error getting environment", error);
   }

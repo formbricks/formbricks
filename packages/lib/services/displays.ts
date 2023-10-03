@@ -23,6 +23,7 @@ const selectDisplay = {
       id: true,
       createdAt: true,
       updatedAt: true,
+      environmentId: true,
       attributes: {
         select: {
           value: true,
@@ -37,6 +38,8 @@ const selectDisplay = {
   },
   status: true,
 };
+
+export const getDisplaysCacheTag = (surveyId: string) => `surveys-${surveyId}-displays`;
 
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayInput]);
@@ -68,6 +71,10 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
 
     if (displayInput.personId) {
       revalidateTag(displayInput.personId);
+    }
+
+    if (displayInput.surveyId) {
+      revalidateTag(getDisplaysCacheTag(displayInput.surveyId));
     }
 
     return display;

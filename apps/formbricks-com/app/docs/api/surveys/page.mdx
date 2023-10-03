@@ -1,9 +1,9 @@
 import { Fence } from "@/components/shared/Fence";
 
 export const meta = {
-  title: "Surveys API",
+  title: "Formbricks Surveys API Documentation - How to Retrieve All Surveys",
   description:
-    "Explore the Formbricks Public Client API for client-side tasks and integration into your website.",
+    "Explore the comprehensive guide to the Formbricks Surveys API. Learn how to effectively retrieve all the surveys in your environment with the necessary headers and API key setup. Includes sample request and response formats.",
 };
 
 #### Management API
@@ -14,7 +14,7 @@ The Survey API currently has one endpoint that allows you to get all the surveys
 
 ---
 
-## List all surveys {{ tag: 'GET', label: '/api/v1/surveys' }}
+## List all surveys {{ tag: 'GET', label: '/api/v1/management/surveys' }}
 
 <Row>
   <Col>
@@ -32,11 +32,11 @@ The Survey API currently has one endpoint that allows you to get all the surveys
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/api/v1/surveys">
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/surveys">
 
     ```bash {{ title: 'cURL' }}
     curl --location \
-    'https://app.formbricks.com/api/v1/surveys' \
+    'https://app.formbricks.com/api/v1/management/surveys' \
     --header \
     'x-api-key: <your-api-key>'
     ```
