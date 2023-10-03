@@ -116,6 +116,7 @@ export const updateProfile = async (
         id: personId,
       },
       data: data,
+      select: responseSelection,
     });
 
     revalidateTag(getProfileByEmailCacheTag(updatedProfile.email));
@@ -137,6 +138,7 @@ const deleteUser = async (userId: string): Promise<TProfile> => {
     where: {
       id: userId,
     },
+    select: responseSelection,
   });
   revalidateTag(getProfileByEmailCacheTag(profile.email));
   revalidateTag(getProfileCacheTag(userId));

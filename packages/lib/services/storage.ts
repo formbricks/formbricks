@@ -103,21 +103,24 @@ export const putFileToS3 = async (
   fileType: string,
   fileBuffer: Buffer,
   accessType: string,
-  environmentId: string
+  environmentId: string,
+  isPublic: boolean = false
 ) => {
   try {
     const buffer = Buffer.from(fileBuffer);
 
-    //check the size of buffer and if it is greater than 10MB, return error
+    if (isPublic) {
+      //check the size of buffer and if it is greater than 10MB, return error
 
-    const bufferBytes = buffer.byteLength;
-    const bufferKB = bufferBytes / 1024;
+      const bufferBytes = buffer.byteLength;
+      const bufferKB = bufferBytes / 1024;
 
-    if (bufferKB > 10240) {
-      const err = new Error("File size is greater than 10MB");
-      err.name = "FileTooLargeError";
+      if (bufferKB > 10240) {
+        const err = new Error("File size is greater than 10MB");
+        err.name = "FileTooLargeError";
 
-      throw err;
+        throw err;
+      }
     }
 
     const putObjectCommand = new PutObjectCommand({
@@ -138,7 +141,8 @@ export const putFileToLocalStorage = async (
   fileBuffer: Buffer,
   accessType: string,
   environmentId: string,
-  rootDir: string
+  rootDir: string,
+  isPublic: boolean = false
 ) => {
   try {
     await ensureDirectoryExists(`${rootDir}/${environmentId}/${accessType}`);
@@ -147,16 +151,18 @@ export const putFileToLocalStorage = async (
 
     const buffer = Buffer.from(fileBuffer);
 
-    //check the size of buffer and if it is greater than 10MB, return error
+    if (isPublic) {
+      //check the size of buffer and if it is greater than 10MB, return error
 
-    const bufferBytes = buffer.byteLength;
-    const bufferKB = bufferBytes / 1024;
+      const bufferBytes = buffer.byteLength;
+      const bufferKB = bufferBytes / 1024;
 
-    if (bufferKB > 10240) {
-      const err = new Error("File size is greater than 10MB");
-      err.name = "FileTooLargeError";
+      if (bufferKB > 10240) {
+        const err = new Error("File size is greater than 10MB");
+        err.name = "FileTooLargeError";
 
-      throw err;
+        throw err;
+      }
     }
 
     await writeFile(uploadPath, buffer);
