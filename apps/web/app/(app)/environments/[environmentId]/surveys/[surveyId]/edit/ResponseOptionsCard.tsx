@@ -1,7 +1,17 @@
 "use client";
 
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { AdvancedOptionToggle, DatePicker, Input, Label, Switch } from "@formbricks/ui";
+import {
+  AdvancedOptionToggle,
+  DatePicker,
+  Input,
+  Label,
+  Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
@@ -10,9 +20,14 @@ import toast from "react-hot-toast";
 interface ResponseOptionsCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  isEncryptionKeySet: boolean;
 }
 
-export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
+export default function ResponseOptionsCard({
+  localSurvey,
+  setLocalSurvey,
+  isEncryptionKeySet,
+}: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
@@ -32,7 +47,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     subheading: "You can only use this link once.",
   });
 
-  const [singleUseEncryption, setSingleUseEncryption] = useState(true);
+  const [singleUseEncryption, setSingleUseEncryption] = useState(isEncryptionKeySet);
   const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
     name: "",
     subheading: "",
@@ -403,19 +418,35 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
                     <Label htmlFor="headline">URL Encryption</Label>
-                    <div className="mt-2 flex items-center space-x-1 ">
-                      <Switch
-                        id="encryption-switch"
-                        checked={singleUseEncryption}
-                        onCheckedChange={hangleSingleUseEncryptionToggle}
-                      />
-                      <Label htmlFor="encryption-label">
-                        <div className="ml-2">
-                          <p className="text-sm font-normal text-slate-600">
-                            Enable encryption of Single Use Id (suId) in survey URL.
-                          </p>
-                        </div>
-                      </Label>
+                    <div>
+                      <TooltipProvider delayDuration={50}>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className="mt-2 flex items-center space-x-1 ">
+                              <Switch
+                                id="encryption-switch"
+                                checked={singleUseEncryption}
+                                onCheckedChange={hangleSingleUseEncryptionToggle}
+                                disabled={!isEncryptionKeySet}
+                              />
+                              <Label htmlFor="encryption-label">
+                                <div className="ml-2">
+                                  <p className="text-sm font-normal text-slate-600">
+                                    Enable encryption of Single Use Id (suId) in survey URL.
+                                  </p>
+                                </div>
+                              </Label>
+                            </div>
+                          </TooltipTrigger>
+                          {!isEncryptionKeySet && (
+                            <TooltipContent side={"top"}>
+                              <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                                FORMBRICKS_ENCRYPTION_KEY needs to be set to enable this feature.
+                              </p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 </div>

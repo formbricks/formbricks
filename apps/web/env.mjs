@@ -70,7 +70,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-    FORMBRICKS_ENCRYPTION_KEY: z.string().optional(),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)).optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,

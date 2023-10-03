@@ -4,12 +4,12 @@ import cuid2 from "@paralleldrive/cuid2";
 
 // generate encrypted single use id for the survey
 export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
-  if (!FORMBRICKS_ENCRYPTION_KEY) {
-    throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
-  }
   const cuid = cuid2.createId();
   if (!isEncrypted) {
     return cuid;
+  }
+  if (!FORMBRICKS_ENCRYPTION_KEY) {
+    throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
   }
   const encryptedCuid = encryptAES128(FORMBRICKS_ENCRYPTION_KEY, cuid);
   return encryptedCuid;
