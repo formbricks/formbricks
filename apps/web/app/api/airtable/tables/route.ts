@@ -33,5 +33,5 @@ export async function GET(req: NextRequest) {
 
   const tables = await getTables(integration.config.key, baseId.data);
 
-  return NextResponse.json({ tables }, { status: 200 });
+  return NextResponse.json(tables, { status: 200 });
 }
