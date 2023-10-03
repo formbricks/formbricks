@@ -31,8 +31,16 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   surveyBaseUrl: string;
   product: TProduct;
+  singleUseIds?: string[];
 }
-const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }: SummaryHeaderProps) => {
+const SummaryHeader = ({
+  surveyId,
+  environment,
+  survey,
+  surveyBaseUrl,
+  product,
+  singleUseIds,
+}: SummaryHeaderProps) => {
   const router = useRouter();
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
@@ -46,7 +54,9 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} />}
+        {survey.type === "link" && (
+          <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} singleUseIds={singleUseIds} />
+        )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
@@ -72,6 +82,7 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
+                  singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -149,7 +160,12 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage environment={environment} survey={survey} surveyBaseUrl={surveyBaseUrl} />
+      <SuccessMessage
+        environment={environment}
+        survey={survey}
+        surveyBaseUrl={surveyBaseUrl}
+        singleUseIds={singleUseIds}
+      />
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
@@ -10,7 +12,6 @@ import {
 } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import "server-only";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
@@ -49,6 +50,7 @@ export const selectSurvey = {
   verifyEmail: true,
   redirectUrl: true,
   surveyClosedMessage: true,
+  singleUse: true,
   triggers: {
     select: {
       eventClass: {
