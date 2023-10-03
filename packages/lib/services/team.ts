@@ -182,15 +182,8 @@ export const deleteTeam = async (teamId: string) => {
 
 export const createDemoProduct = async (teamId: string) => {
   validateInputs([teamId, ZId]);
-  const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({
-    include: {
-      environments: true,
-    },
-  });
 
-  type ProductWithEnvironment = Prisma.ProductGetPayload<typeof productWithEnvironment>;
-
-  const demoProduct: ProductWithEnvironment = await prisma.product.create({
+  const demoProduct = await prisma.product.create({
     data: {
       name: "Demo Product",
       team: {
