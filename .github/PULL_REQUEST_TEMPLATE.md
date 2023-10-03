@@ -31,9 +31,10 @@ Fixes # (issue)
 
 <!-- We're starting to get more and more contributions. Please help us making this efficient for all of us and go through this checklist. Please tick off what you did  -->
 
-- [ ] Added a screen recording or screenshots to this PR
+### Required
+
 - [ ] Filled out the "How to test" section in this PR
-- [ ] Read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
+- [ ] Read [How we Code at Formbricks](<[https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md](https://formbricks.com/docs/contributing/how-we-code)>)
 - [ ] Self-reviewed my own code
 - [ ] Commented on my code in hard-to-understand bits
 - [ ] Ran `pnpm build`
@@ -41,4 +42,8 @@ Fixes # (issue)
 - [ ] Removed all `console.logs`
 - [ ] Merged the latest changes from main onto my branch with `git pull origin main`
 - [ ] My changes don't cause any responsiveness issues
+
+### Appreciated
+
+- [ ] If a UI change was made: Added a screen recording or screenshots to this PR
 - [ ] Updated the Formbricks Docs if changes were necessary
