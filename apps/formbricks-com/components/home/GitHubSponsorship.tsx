@@ -1,5 +1,4 @@
-import GitHubMarkWhite from "@/images/github-mark-white.svg";
-import GitHubMarkDark from "@/images/github-mark.svg";
+import HackIconGold from "@/images/formtribe/hack-icon-gold.svg";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,7 +9,7 @@ export const GitHubSponsorship: React.FC = () => {
         @media (min-width: 426px);
       `}</style>
       <div className="right-24 lg:absolute">
-        <Image
+        {/*         <Image
           src={GitHubMarkDark}
           alt="GitHub Sponsors Formbricks badge"
           width={100}
@@ -22,19 +21,24 @@ export const GitHubSponsorship: React.FC = () => {
           alt="GitHub Sponsors Formbricks badge"
           width={100}
           height={100}
-          className="mr-12 hidden dark:block md:mr-4  "
+          className="mr-12 hidden dark:block md:mr-4"
+        /> */}
+        <Image
+          src={HackIconGold}
+          alt="Hacktober Icon Gold"
+          width={100}
+          height={100}
+          className="mr-12 md:mr-4"
         />
       </div>
       <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 lg:text-2xl">
-        Proudly Open-Source 🤍
+        The FormTribe goes Hacktoberfest 🥨
       </h2>
       <p className="lg:text-md mt-4 max-w-3xl  text-slate-500 dark:text-slate-400">
-        We&apos;re proud to to be supported by GitHubs Open-Source Program!{" "}
+        Write code, win a Mac! We&apos;re running a Hacktoberfest community Hackathon:
         <span>
-          <Link
-            href="/blog/inaugural-batch-github-accelerator"
-            className="decoration-brand-dark underline underline-offset-4">
-            Read more.
+          <Link href="/formtribe" className="decoration-brand-dark ml-2 underline underline-offset-4">
+            Find out more.
           </Link>
         </span>
       </p>

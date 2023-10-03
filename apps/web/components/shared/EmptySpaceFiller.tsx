@@ -2,27 +2,21 @@
 
 import React from "react";
 import Link from "next/link";
-import { useEnvironment } from "@/lib/environments/environments";
-import LoadingSpinner from "./LoadingSpinner";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 type EmptySpaceFillerProps = {
   type: "table" | "response" | "event" | "linkResponse" | "tag";
-  environmentId: string;
+  environment: TEnvironment;
   noWidgetRequired?: boolean;
   emptyMessage?: string;
 };
 
 const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
   type,
-  environmentId,
+  environment,
   noWidgetRequired,
   emptyMessage,
 }) => {
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
-
-  if (isLoadingEnvironment) return <LoadingSpinner />;
-  if (isErrorEnvironment) return <span>Error</span>;
-
   if (type === "table") {
     return (
       <div className="group">
@@ -34,7 +28,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex w-full items-center justify-center"
-                href={`/environments/${environmentId}/settings/setup`}>
+                href={`/environments/${environment.id}/settings/setup`}>
                 <span className="decoration-brand-dark underline  transition-all duration-300  ease-in-out">
                   Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
@@ -63,7 +57,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
-                href={`/environments/${environmentId}/settings/setup`}>
+                href={`/environments/${environment.id}/settings/setup`}>
                 <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
                   Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
@@ -94,7 +88,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
-                href={`/environments/${environmentId}/settings/setup`}>
+                href={`/environments/${environment.id}/settings/setup`}>
                 <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
                   Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
@@ -122,7 +116,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
           {!environment.widgetSetupCompleted && !noWidgetRequired && (
             <Link
               className="flex h-full w-full items-center justify-center"
-              href={`/environments/${environmentId}/settings/setup`}>
+              href={`/environments/${environment.id}/settings/setup`}>
               <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
                 Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
               </span>

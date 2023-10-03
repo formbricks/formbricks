@@ -3,7 +3,6 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { SurveyInline } from "@/components/shared/Survey";
 import { createDisplay } from "@formbricks/lib/client/display";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/v1/product";
@@ -21,6 +20,7 @@ interface LinkSurveyProps {
   personId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
+  webAppUrl: string;
 }
 
 export default function LinkSurvey({
@@ -29,6 +29,7 @@ export default function LinkSurvey({
   personId,
   emailVerificationStatus,
   prefillAnswer,
+  webAppUrl,
 }: LinkSurveyProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
@@ -43,7 +44,7 @@ export default function LinkSurvey({
     () =>
       new ResponseQueue(
         {
-          apiHost: WEBAPP_URL,
+          apiHost: webAppUrl,
           retryAttempts: 2,
           onResponseSendingFailed: (response) => {
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
@@ -53,7 +54,7 @@ export default function LinkSurvey({
         },
         surveyState
       ),
-    []
+    [personId, webAppUrl]
   );
   const [autoFocus, setAutofocus] = useState(false);
 
@@ -63,6 +64,10 @@ export default function LinkSurvey({
       setAutofocus(true);
     }
   }, []);
+
+  useEffect(() => {
+    responseQueue.updateSurveyState(surveyState);
+  }, [responseQueue, surveyState]);
 
   if (emailVerificationStatus && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
@@ -91,12 +96,17 @@ export default function LinkSurvey({
           brandColor={product.brandColor}
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
-            const display = await createDisplay({ surveyId: survey.id }, window?.location?.origin);
-            setDisplayId(display.id);
+            if (!isPreview) {
+              const { id } = await createDisplay({ surveyId: survey.id }, window?.location?.origin);
+              setDisplayId(id);
+              const newSurveyState = surveyState.copy();
+              newSurveyState.updateDisplayId(id);
+              setSurveyState(newSurveyState);
+            }
           }}
           onResponse={(responseUpdate: TResponseUpdate) => {
             responseUpdate.displayId = displayId!;
-            responseQueue.add(responseUpdate);
+            !isPreview && responseQueue.add(responseUpdate);
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

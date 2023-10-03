@@ -9,11 +9,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
-import { deleteActionClass, updateActionClass } from "@formbricks/lib/services/actionClass";
 import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/CssSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/InnerHtmlSelector";
+import {
+  deleteActionClassAction,
+  updateActionClassAction,
+} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -77,10 +80,11 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
       const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
       const updatedData: TActionClassInput = {
         ...data,
+        environmentId,
         noCodeConfig: filteredNoCodeConfig,
         type: "noCode",
       } as TActionClassInput;
-      await updateActionClass(environmentId, actionClass.id, updatedData);
+      await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
       router.refresh();
       toast.success("Action updated successfully");
@@ -94,7 +98,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionClass(environmentId, actionClass.id);
+      await deleteActionClassAction(environmentId, actionClass.id);
       router.refresh();
       toast.success("Action deleted successfully");
       setOpen(false);
