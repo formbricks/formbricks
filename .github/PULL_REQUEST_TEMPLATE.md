@@ -43,7 +43,7 @@ Fixes # (issue)
 - [ ] Merged the latest changes from main onto my branch with `git pull origin main`
 - [ ] My changes don't cause any responsiveness issues
 
-### Not Required
+### Optional
 
 - [ ] Added a screen recording or screenshots to this PR if a UI change was made
 - [ ] Updated the Formbricks Docs if changes were necessary
