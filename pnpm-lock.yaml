@@ -1,5 +1,9 @@
 lockfileVersion: "6.0"
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 importers:
   .:
     devDependencies:
@@ -326,6 +330,9 @@ importers:
       ua-parser-js:
         specifier: ^1.0.36
         version: 1.0.36
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       "@formbricks/tsconfig":
         specifier: workspace:*
@@ -433,7 +440,7 @@ importers:
         version: 9.0.0(eslint@8.50.0)
       eslint-config-turbo:
         specifier: latest
-        version: 1.10.14(eslint@8.50.0)
+        version: 1.8.8(eslint@8.50.0)
       eslint-plugin-react:
         specifier: 7.33.2
         version: 7.33.2(eslint@8.50.0)
@@ -8581,6 +8588,14 @@ packages:
     engines: { node: ">=0.4.0" }
     hasBin: true
 
+  /adler-32@1.3.1:
+    resolution:
+      {
+        integrity: sha512-ynZ4w/nUUv5rrsR8UUGoe1VC9hZj6V5hU9Qw1HlMDJGEJw5S7TfTErWTjMys6M7vr0YWcPqs3qAr4ss0nDfP+A==,
+      }
+    engines: { node: ">=0.8" }
+    dev: false
+
   /agent-base@6.0.2:
     resolution:
       {
@@ -10602,6 +10617,17 @@ packages:
       }
     dev: false
 
+  /cfb@1.2.2:
+    resolution:
+      {
+        integrity: sha512-KfdUZsSOw19/ObEWasvBP/Ac4reZvAGauZhs6S/gqNhXhI7cKwvlH7ulj+dOEYnca4bm4SGo8C1bTAQvnTjgQA==,
+      }
+    engines: { node: ">=0.8" }
+    dependencies:
+      adler-32: 1.3.1
+      crc-32: 1.2.2
+    dev: false
+
   /chalk@1.1.3:
     resolution:
       {
@@ -11162,6 +11188,14 @@ packages:
       }
     engines: { node: ">=0.10.0" }
     dev: true
+
+  /codepage@1.15.0:
+    resolution:
+      {
+        integrity: sha512-3g6NUTPd/YtuuGrhMnOMRjFc+LJw/bnMp3+0r/Wcz3IXUuCosKRJvMphm5+Q+bvTVGcJJuRvVLuYba+WojaFaA==,
+      }
+    engines: { node: ">=0.8" }
+    dev: false
 
   /collect-v8-coverage@1.0.1:
     resolution:
@@ -11728,7 +11762,6 @@ packages:
       }
     engines: { node: ">=0.8" }
     hasBin: true
-    dev: true
 
   /crc32-stream@4.0.2:
     resolution:
@@ -14079,7 +14112,7 @@ packages:
       eslint: ">6.6.0"
     dependencies:
       eslint: 8.50.0
-      eslint-plugin-turbo: 1.10.14(eslint@8.50.0)
+      eslint-plugin-turbo: 1.8.8(eslint@8.50.0)
     dev: true
 
   /eslint-import-resolver-node@0.3.9:
@@ -14323,7 +14356,6 @@ packages:
     peerDependencies:
       eslint: ">6.6.0"
     dependencies:
-      dotenv: 16.0.3
       eslint: 8.50.0
     dev: true
 
@@ -15434,6 +15466,14 @@ packages:
         integrity: sha512-0eu5ULPS2c/jsa1lGFneEFFEdTbembJv8e4QKXeVJ3lm/5hyve06dlKZrpxmMwJt6rYen7sxmHHK2CLaXvWuWQ==,
       }
     dev: true
+
+  /frac@1.1.2:
+    resolution:
+      {
+        integrity: sha512-w/XBfkibaTl3YDqASwfDUqkna4Z2p9cFSr1aHDt0WoMTECnRfBOv2WArlZILlqgWlmdIlALXGpM2AOhEk5W3IA==,
+      }
+    engines: { node: ">=0.8" }
+    dev: false
 
   /fraction.js@4.3.6:
     resolution:
@@ -28117,6 +28157,16 @@ packages:
       }
     dev: true
 
+  /ssf@0.11.2:
+    resolution:
+      {
+        integrity: sha512-+idbmIXoYET47hH+d7dfm2epdOMUDjqcB4648sTZ+t2JwoyBFL/insLfB/racrDmsKB3diwsDA696pZMieAC5g==,
+      }
+    engines: { node: ">=0.8" }
+    dependencies:
+      frac: 1.1.2
+    dev: false
+
   /sshpk@1.17.0:
     resolution:
       {
@@ -29818,10 +29868,10 @@ packages:
     dev: true
     optional: true
 
-  /turbo-darwin-arm64@1.10.14:
+  /turbo-darwin-arm64@1.10.13:
     resolution:
       {
-        integrity: sha512-KAdUWryJi/XX7OD0alOuOa0aJ5TLyd4DNIYkHPHYcM6/d7YAovYvxRNwmx9iv6Vx6IkzTnLeTiUB8zy69QkG9Q==,
+        integrity: sha512-eMoJC+k7gIS4i2qL6rKmrIQGP6Wr9nN4odzzgHFngLTMimok2cGLK3qbJs5O5F/XAtEeRAmuxeRnzQwTl/iuAw==,
       }
     cpu: [arm64]
     os: [darwin]
@@ -29829,10 +29879,10 @@ packages:
     dev: true
     optional: true
 
-  /turbo-linux-64@1.10.14:
+  /turbo-linux-64@1.10.13:
     resolution:
       {
-        integrity: sha512-BOBzoREC2u4Vgpap/WDxM6wETVqVMRcM8OZw4hWzqCj2bqbQ6L0wxs1LCLWVrghQf93JBQtIGAdFFLyCSBXjWQ==,
+        integrity: sha512-0CyYmnKTs6kcx7+JRH3nPEqCnzWduM0hj8GP/aodhaIkLNSAGAa+RiYZz6C7IXN+xUVh5rrWTnU2f1SkIy7Gdg==,
       }
     cpu: [x64]
     os: [linux]
@@ -29840,10 +29890,10 @@ packages:
     dev: true
     optional: true
 
-  /turbo-linux-arm64@1.10.14:
+  /turbo-linux-arm64@1.10.13:
     resolution:
       {
-        integrity: sha512-D8T6XxoTdN5D4V5qE2VZG+/lbZX/89BkAEHzXcsSUTRjrwfMepT3d2z8aT6hxv4yu8EDdooZq/2Bn/vjMI32xw==,
+        integrity: sha512-0iBKviSGQQlh2OjZgBsGjkPXoxvRIxrrLLbLObwJo3sOjIH0loGmVIimGS5E323soMfi/o+sidjk2wU1kFfD7Q==,
       }
     cpu: [arm64]
     os: [linux]
@@ -29851,10 +29901,10 @@ packages:
     dev: true
     optional: true
 
-  /turbo-windows-64@1.10.14:
+  /turbo-windows-64@1.10.13:
     resolution:
       {
-        integrity: sha512-zKNS3c1w4i6432N0cexZ20r/aIhV62g69opUn82FLVs/zk3Ie0GVkSB6h0rqIvMalCp7enIR87LkPSDGz9K4UA==,
+        integrity: sha512-S5XySRfW2AmnTeY1IT+Jdr6Goq7mxWganVFfrmqU+qqq3Om/nr0GkcUX+KTIo9mPrN0D3p5QViBRzulwB5iuUQ==,
       }
     cpu: [x64]
     os: [win32]
@@ -29862,10 +29912,10 @@ packages:
     dev: true
     optional: true
 
-  /turbo-windows-arm64@1.10.14:
+  /turbo-windows-arm64@1.10.13:
     resolution:
       {
-        integrity: sha512-rkBwrTPTxNSOUF7of8eVvvM+BkfkhA2OvpHM94if8tVsU+khrjglilp8MTVPHlyS9byfemPAmFN90oRIPB05BA==,
+        integrity: sha512-nKol6+CyiExJIuoIc3exUQPIBjP9nIq5SkMJgJuxsot2hkgGrafAg/izVDRDrRduQcXj2s8LdtxJHvvnbI8hEQ==,
       }
     cpu: [arm64]
     os: [win32]
@@ -29873,19 +29923,20 @@ packages:
     dev: true
     optional: true
 
-  /turbo@1.10.14:
+  /turbo@1.10.13:
     resolution:
       {
-        integrity: sha512-hr9wDNYcsee+vLkCDIm8qTtwhJ6+UAMJc3nIY6+PNgUTtXcQgHxCq8BGoL7gbABvNWv76CNbK5qL4Lp9G3ZYRA==,
+        integrity: sha512-vOF5IPytgQPIsgGtT0n2uGZizR2N3kKuPIn4b5p5DdeLoI0BV7uNiydT7eSzdkPRpdXNnO8UwS658VaI4+YSzQ==,
       }
     hasBin: true
+    requiresBuild: true
     optionalDependencies:
-      turbo-darwin-64: 1.10.14
-      turbo-darwin-arm64: 1.10.14
-      turbo-linux-64: 1.10.14
-      turbo-linux-arm64: 1.10.14
-      turbo-windows-64: 1.10.14
-      turbo-windows-arm64: 1.10.14
+      turbo-darwin-64: 1.10.13
+      turbo-darwin-arm64: 1.10.13
+      turbo-linux-64: 1.10.13
+      turbo-linux-arm64: 1.10.13
+      turbo-windows-64: 1.10.13
+      turbo-windows-arm64: 1.10.13
     dev: true
 
   /tween-functions@1.2.0:
@@ -31750,6 +31801,14 @@ packages:
       }
     dev: true
 
+  /wmf@1.0.2:
+    resolution:
+      {
+        integrity: sha512-/p9K7bEh0Dj6WbXg4JG0xvLQmIadrner1bi45VMJTfnbVHsc7yIajZyoSoK60/dtVBs12Fm6WkUI5/3WAVsNMw==,
+      }
+    engines: { node: ">=0.8" }
+    dev: false
+
   /word-wrap@1.2.3:
     resolution:
       {
@@ -31757,6 +31816,14 @@ packages:
       }
     engines: { node: ">=0.10.0" }
     dev: true
+
+  /word@0.3.0:
+    resolution:
+      {
+        integrity: sha512-OELeY0Q61OXpdUfTp+oweA/vtLVg5VDOXh+3he3PNzLGG/y0oylSOC1xRVj0+l4vQ3tj/bB1HVHv1ocXkQceFA==,
+      }
+    engines: { node: ">=0.8" }
+    dev: false
 
   /workbox-background-sync@6.5.4:
     resolution:
@@ -32152,6 +32219,23 @@ packages:
       }
     engines: { node: ">=8" }
 
+  /xlsx@0.18.5:
+    resolution:
+      {
+        integrity: sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==,
+      }
+    engines: { node: ">=0.8" }
+    hasBin: true
+    dependencies:
+      adler-32: 1.3.1
+      cfb: 1.2.2
+      codepage: 1.15.0
+      crc-32: 1.2.2
+      ssf: 0.11.2
+      wmf: 1.0.2
+      word: 0.3.0
+    dev: false
+
   /xml-name-validator@3.0.0:
     resolution:
       {
@@ -32463,7 +32547,3 @@ packages:
         integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==,
       }
     dev: false
-
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false

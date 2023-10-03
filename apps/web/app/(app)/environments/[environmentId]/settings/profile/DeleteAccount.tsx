@@ -3,14 +3,13 @@
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { formbricksLogout } from "@/lib/formbricks";
-import { TProfile } from "@formbricks/types/v1/profile";
 import { Button, Input, ProfileAvatar } from "@formbricks/ui";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
-import { profileDeleteAction } from "./actions";
+import { deleteProfileAction } from "./actions";
 
 export function EditAvatar({ session }) {
   return (
@@ -38,10 +37,9 @@ interface DeleteAccountModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   session: Session;
-  profile: TProfile;
 }
 
-function DeleteAccountModal({ setOpen, open, session, profile }: DeleteAccountModalProps) {
+function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
@@ -52,7 +50,7 @@ function DeleteAccountModal({ setOpen, open, session, profile }: DeleteAccountMo
   const deleteAccount = async () => {
     try {
       setDeleting(true);
-      await profileDeleteAction(profile.id);
+      await deleteProfileAction();
       await signOut();
       await formbricksLogout();
     } catch (error) {
@@ -105,7 +103,7 @@ function DeleteAccountModal({ setOpen, open, session, profile }: DeleteAccountMo
   );
 }
 
-export function DeleteAccount({ session, profile }: { session: Session | null; profile: TProfile }) {
+export function DeleteAccount({ session }: { session: Session | null }) {
   const [isModalOpen, setModalOpen] = useState(false);
 
   if (!session) {
@@ -114,7 +112,7 @@ export function DeleteAccount({ session, profile }: { session: Session | null; p
 
   return (
     <div>
-      <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} session={session} profile={profile} />
+      <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} session={session} />
       <p className="text-sm text-slate-700">
         Delete your account with all personal data. <strong>This cannot be undone!</strong>
       </p>
