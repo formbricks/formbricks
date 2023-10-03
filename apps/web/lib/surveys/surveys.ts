@@ -466,14 +466,14 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
   if (!isEncrypted) {
     return cuid;
   }
-  const encryptedCuid = encryptAES128(env.NEXT_PUBLIC_FORMBRICKS_ENCRYPTION_KEY!, cuid);
+  const encryptedCuid = encryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, cuid);
   return encryptedCuid;
 };
 
 // validate the survey single use id
 export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
   try {
-    const decryptedCuid = decryptAES128(env.NEXT_PUBLIC_FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
+    const decryptedCuid = decryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
     if (cuid2.isCuid(decryptedCuid)) {
       return decryptedCuid;
     } else {
