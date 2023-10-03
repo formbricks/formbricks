@@ -47,7 +47,8 @@
     "react-hot-toast": "^2.4.1",
     "react-icons": "^4.11.0",
     "swr": "^2.2.4",
-    "ua-parser-js": "^1.0.36"
+    "ua-parser-js": "^1.0.36",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",

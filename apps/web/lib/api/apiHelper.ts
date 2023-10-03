@@ -1,5 +1,6 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { prisma } from "@formbricks/database";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createHash } from "crypto";
 import { NextApiRequest, NextApiResponse } from "next";
 import type { Session } from "next-auth";
@@ -22,40 +23,12 @@ export const hasEnvironmentAccess = async (
     if (!user) {
       return false;
     }
-    const ownership = await hasUserEnvironmentAccess(user, environmentId);
+    const ownership = await hasUserEnvironmentAccess(user.id, environmentId);
     if (!ownership) {
       return false;
     }
   }
   return true;
-};
-
-export const hasUserEnvironmentAccess = async (user, environmentId) => {
-  const environment = await prisma.environment.findUnique({
-    where: {
-      id: environmentId,
-    },
-    select: {
-      product: {
-        select: {
-          team: {
-            select: {
-              memberships: {
-                select: {
-                  userId: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-  const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
-  if (environmentUsers.includes(user.id)) {
-    return true;
-  }
-  return false;
 };
 
 export const getPlan = async (req, res) => {

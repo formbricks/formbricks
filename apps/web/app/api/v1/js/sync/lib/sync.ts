@@ -1,6 +1,6 @@
 import { getSurveysCached } from "@/app/api/v1/js/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
-import { getActionClassesCached } from "@formbricks/lib/services/actionClass";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { createPerson, getMonthlyActivePeopleCount, getPersonCached } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
@@ -101,7 +101,7 @@ export const getUpdatedState = async (
   // get/create rest of the state
   const [surveys, noCodeActionClasses, product] = await Promise.all([
     getSurveysCached(environmentId, person),
-    getActionClassesCached(environmentId),
+    getActionClasses(environmentId),
     getProductByEnvironmentIdCached(environmentId),
   ]);
 
