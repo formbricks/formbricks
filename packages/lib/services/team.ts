@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { TTeam, TTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
@@ -236,7 +236,7 @@ export const createDemoProduct = async (teamId: string) => {
 
   // check if updatedEnvironment exists and it has attributeClasses
   if (!updatedEnvironment || !updatedEnvironment.attributeClasses) {
-    throw new Error("Attribute classes could not be created");
+    throw new ValidationError("Attribute classes could not be created");
   }
 
   const attributeClasses = updatedEnvironment.attributeClasses;
@@ -323,8 +323,12 @@ export const createDemoProduct = async (teamId: string) => {
         })),
       }),
     ]);
-  } catch (err: any) {
-    throw new Error(err);
+  } catch (error: any) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
   }
 
   // Create a function that creates a survey

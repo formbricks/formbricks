@@ -22,6 +22,14 @@ class ValidationError extends Error {
   }
 }
 
+class UnknownError extends Error {
+  statusCode = 500;
+  constructor(message: string) {
+    super(message);
+    this.name = "DatabaseError";
+  }
+}
+
 class DatabaseError extends Error {
   statusCode = 500;
   constructor(message: string) {
@@ -83,6 +91,7 @@ export {
   ValidationError,
   DatabaseError,
   UniqueConstraintError,
+  UnknownError,
   ForeignKeyConstraintError,
   OperationNotAllowedError,
   AuthenticationError,

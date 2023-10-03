@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
 import { cache } from "react";
 import {
   TGoogleCredential,
@@ -87,8 +87,7 @@ export async function writeData(credentials: TGoogleCredential, spreadsheetId: s
       },
       (err: Error) => {
         if (err) {
-          throw new Error(`Error while appending data: ${err.message}`);
-        } else {
+          throw new UnknownError(`Error while appending data: ${err.message}`);
         }
       }
     );
@@ -102,8 +101,7 @@ export async function writeData(credentials: TGoogleCredential, spreadsheetId: s
       },
       (err: Error) => {
         if (err) {
-          throw new Error(`Error while appending data: ${err.message}`);
-        } else {
+          throw new UnknownError(`Error while appending data: ${err.message}`);
         }
       }
     );

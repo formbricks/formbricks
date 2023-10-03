@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TPerson, TPersonUpdateInput } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
@@ -249,7 +249,7 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
     const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
 
     if (!userIdAttributeClass) {
-      throw new Error("Attribute class not found for the given environmentId");
+      throw new ResourceNotFoundError("Attribute class not found for the given environment", environmentId);
     }
 
     const personPrisma = await prisma.person.create({

@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ValidationError } from "@formbricks/types/v1/errors";
+import { DatabaseError, ValidationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
 import { Prisma } from "@prisma/client";
@@ -221,7 +221,7 @@ export const createProduct = async (environmentId: string, productName: string):
   });
 
   if (!environment) {
-    throw new Error("Invalid environment");
+    throw new ResourceNotFoundError("Environment", environmentId);
   }
 
   const newProduct = await prisma.product.create({
