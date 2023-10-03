@@ -1,7 +1,7 @@
 import EditTagsWrapper from "./EditTagsWrapper";
 import SettingsTitle from "../SettingsTitle";
 import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getTagsByEnvironmentId } from "@formbricks/lib/services/tag";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/services/tagOnResponse";
 
 export default async function MembersSettingsPage({ params }) {

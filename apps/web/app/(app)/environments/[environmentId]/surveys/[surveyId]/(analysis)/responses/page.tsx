@@ -8,7 +8,7 @@ import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constant
 import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getTagsByEnvironmentId } from "@formbricks/lib/services/tag";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
