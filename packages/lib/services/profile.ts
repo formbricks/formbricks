@@ -4,7 +4,12 @@ import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/memberships";
-import { TProfile, TProfileUpdateInput, ZProfileUpdateInput } from "@formbricks/types/v1/profile";
+import {
+  TProfile,
+  TProfileCreateInput,
+  TProfileUpdateInput,
+  ZProfileUpdateInput,
+} from "@formbricks/types/v1/profile";
 import { MembershipRole, Prisma } from "@prisma/client";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { validateInputs } from "../utils/validate";
@@ -149,7 +154,7 @@ const deleteUser = async (userId: string): Promise<TProfile> => {
   return profile;
 };
 
-export const createProfile = async (data: TProfileUpdateInput): Promise<TProfile> => {
+export const createProfile = async (data: TProfileCreateInput): Promise<TProfile> => {
   validateInputs([data, ZProfileUpdateInput]);
   const profile = await prisma.user.create({
     data: data,
