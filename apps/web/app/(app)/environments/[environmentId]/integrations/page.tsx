@@ -61,6 +61,17 @@ export default async function IntegrationsPage({ params }) {
           icon={<Image src={GoogleSheetsLogo} alt="Google sheets Logo" />}
         />
         <Card
+          connectHref={`/environments/${params.environmentId}/integrations/airtable`}
+          connectText={`${containsGoogleSheetIntegration ? "Manage Table" : "Connect"}`}
+          connectNewTab={false}
+          docsHref="https://formbricks.com/docs/integrations/airtable"
+          docsText="Docs"
+          docsNewTab={true}
+          label="Airtable"
+          description="Instantly populate your airtable table with survey data"
+          icon={<Image src={GoogleSheetsLogo} alt="Google sheets Logo" />}
+        />
+        <Card
           docsHref="https://formbricks.com/docs/integrations/n8n"
           docsText="Docs"
           docsNewTab={true}
