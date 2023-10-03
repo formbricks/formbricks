@@ -43,30 +43,37 @@ const previewParentContainerVariant: Variants = {
     },
   },
   shrink: {
-    backgroundColor: "transparent",
+    display: "none",
+    position: "fixed",
+    backgroundColor: "rgba(0, 0, 0, 0.0)",
+    backdropFilter: "blur(0px)",
+    transition: {
+      duration: 0,
+    },
   },
 };
 
 const previewScreenVariants: Variants = {
   expanded: {
-    position: "absolute",
-    width: ["0%", "20%", "45%", "90%"],
-    height: ["0%", "20%", "45%", "90%"],
-    left: "5%",
-    top: "5%",
+    position: "fixed",
+    width: "90vw",
+    height: "90vh",
+    right: "5%",
+    bottom: "5%",
+    zIndex: 1050,
     boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
     transition: {
       ease: "easeInOut",
-      duration: 0.3, // Adjust the duration to your preference
+      duration: 0.3,
     },
+    float: "right",
   },
   shrink: {
-    position: "relative",
-    width: ["0%", "100%"],
-    height: ["0%", "100%"],
+    display: "relative",
+    width: ["90%"],
+    height: ["100%"],
     transition: {
-      ease: "easeIn",
-      duration: 0.3, // Adjust the duration to your preference
+      duration: 1,
     },
   },
 };
@@ -135,87 +142,27 @@ export default function PreviewSurvey({
     <div className="flex h-full w-full flex-col items-center justify-items-center">
       <motion.div
         variants={previewParentContainerVariant}
-        className="z-10 flex h-[95%] w-5/6"
-        animate={isFullScreenPreview ? "expanded" : "shrink"}>
-        <motion.div
-          variants={previewScreenVariants}
-          className="relative flex h-[95%] max-h-[95%] w-full items-center justify-center rounded-lg border border-slate-300 bg-gray-500 bg-slate-200">
-          {previewMode === "mobile" && (
-            <>
-              <div className="absolute right-0 top-0 m-2">
-                <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
-              </div>
-              <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
-                {/* below element is use to create notch for the mobile device mockup   */}
-                <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
-                {previewType === "modal" ? (
-                  <Modal
-                    isOpen={isModalOpen}
-                    placement={product.placement}
-                    highlightBorderColor={product.highlightBorderColor}
-                    previewMode="mobile">
-                    <SurveyInline
-                      survey={survey}
-                      brandColor={product.brandColor}
-                      activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
-                      onActiveQuestionChange={setActiveQuestionId}
-                      isRedirectDisabled={true}
-                    />
-                  </Modal>
-                ) : (
-                  <div
-                    className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
-                    ref={ContentRef}>
-                    <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
-                      <div className="w-full max-w-md px-4">
-                        <SurveyInline
-                          survey={survey}
-                          brandColor={product.brandColor}
-                          activeQuestionId={activeQuestionId || undefined}
-                          formbricksSignature={product.formbricksSignature}
-                          onActiveQuestionChange={setActiveQuestionId}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-          {previewMode === "desktop" && (
-            <div className="flex h-full w-5/6 flex-1 flex-col">
-              <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
-                <div className="ml-6 flex space-x-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                  <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                  <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-                </div>
-                <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                  {previewType === "modal" ? "Your web app" : "Preview"}
-                  <div className="flex items-center space-x-2">
-                    {isFullScreenPreview ? (
-                      <ArrowsPointingInIcon
-                        className="h-4 w-4 cursor-pointer"
-                        onClick={() => setIsFullScreenPreview(false)}
-                      />
-                    ) : (
-                      <ArrowsPointingOutIcon
-                        className="h-4 w-4 cursor-pointer"
-                        onClick={() => setIsFullScreenPreview(true)}
-                      />
-                    )}
-                    <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
-                  </div>
-                </p>
-              </div>
-
+        className="fixed hidden h-[95%] w-5/6"
+        animate={isFullScreenPreview ? "expanded" : "shrink"}
+      />
+      <motion.div
+        variants={previewScreenVariants}
+        animate={isFullScreenPreview ? "expanded" : "shrink"}
+        className="relative flex w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        {previewMode === "mobile" && (
+          <>
+            <div className="absolute right-0 top-0 m-2">
+              <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+            </div>
+            <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
+              {/* below element is use to create notch for the mobile device mockup   */}
+              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
                   placement={product.placement}
                   highlightBorderColor={product.highlightBorderColor}
-                  previewMode="desktop">
+                  previewMode="mobile">
                   <SurveyInline
                     survey={survey}
                     brandColor={product.brandColor}
@@ -226,24 +173,85 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
-                  <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
-                    <div className="w-full max-w-md">
+                <div
+                  className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
+                  ref={ContentRef}>
+                  <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                    <div className="w-full max-w-md px-4">
                       <SurveyInline
                         survey={survey}
                         brandColor={product.brandColor}
                         activeQuestionId={activeQuestionId || undefined}
                         formbricksSignature={product.formbricksSignature}
                         onActiveQuestionChange={setActiveQuestionId}
-                        isRedirectDisabled={true}
                       />
                     </div>
                   </div>
                 </div>
               )}
             </div>
-          )}
-        </motion.div>
+          </>
+        )}
+        {previewMode === "desktop" && (
+          <div className="flex h-full w-5/6 flex-1 flex-col">
+            <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
+              <div className="ml-6 flex space-x-2">
+                <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+              </div>
+              <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                {previewType === "modal" ? "Your web app" : "Preview"}
+                <div className="flex items-center">
+                  {isFullScreenPreview ? (
+                    <ArrowsPointingInIcon
+                      className="mr-2 h-4 w-4 cursor-pointer"
+                      onClick={() => setIsFullScreenPreview(false)}
+                    />
+                  ) : (
+                    <ArrowsPointingOutIcon
+                      className="mr-2 h-4 w-4 cursor-pointer"
+                      onClick={() => setIsFullScreenPreview(true)}
+                    />
+                  )}
+                  <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                </div>
+              </p>
+            </div>
+
+            {previewType === "modal" ? (
+              <Modal
+                isOpen={isModalOpen}
+                placement={product.placement}
+                highlightBorderColor={product.highlightBorderColor}
+                previewMode="desktop">
+                <SurveyInline
+                  survey={survey}
+                  brandColor={product.brandColor}
+                  activeQuestionId={activeQuestionId || undefined}
+                  formbricksSignature={product.formbricksSignature}
+                  onActiveQuestionChange={setActiveQuestionId}
+                  isRedirectDisabled={true}
+                />
+              </Modal>
+            ) : (
+              <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
+                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
+                  <div className="w-full max-w-md">
+                    <SurveyInline
+                      survey={survey}
+                      brandColor={product.brandColor}
+                      activeQuestionId={activeQuestionId || undefined}
+                      formbricksSignature={product.formbricksSignature}
+                      onActiveQuestionChange={setActiveQuestionId}
+                      isRedirectDisabled={true}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </motion.div>
 
       {/* for toggling between mobile and desktop mode  */}
