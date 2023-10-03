@@ -6,7 +6,10 @@ import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 import { useState } from "preact/hooks";
 
-function validateInput(value: string, questionType: string): boolean {
+function validateInput(value: string, questionType: string, required: boolean): boolean {
+  if (!required && (value == undefined || value == "" || value == null || value.length <= 0)) {
+    return true;
+  }
   switch (questionType) {
     case "email":
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,7 +18,8 @@ function validateInput(value: string, questionType: string): boolean {
       const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
       return urlPattern.test(value);
     case "number":
-      return !isNaN(parseFloat(value));
+      const numberPattern = /^[0-9]*$/;
+      return numberPattern.test(value);
     case "phone":
       const phonePattern = /^\+?[0-9]+$/;
       return phonePattern.test(value);
@@ -47,10 +51,12 @@ export default function OpenTextQuestion({
   brandColor,
   autoFocus = true,
 }: OpenTextQuestionProps) {
-  const [isValid, setIsValid] = useState(true);
+  const [isValid, setIsValid] = useState(
+    validateInput(value as string, question.inputType, question.required)
+  );
 
   const handleInputChange = (inputValue: string) => {
-    const isValidInput = validateInput(inputValue, question.inputType);
+    const isValidInput = validateInput(inputValue, question.inputType, question.required);
     setIsValid(isValidInput);
     onChange({ [question.id]: inputValue });
   };
@@ -59,6 +65,7 @@ export default function OpenTextQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        validateInput(value as string, question.inputType, question.required);
         if (isValid) {
           onSubmit({ [question.id]: value, inputType: question.inputType });
         }
@@ -94,6 +101,7 @@ export default function OpenTextQuestion({
               isValid ? "border-slate-100" : "border-red-500" // Apply red border for invalid input
             } bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm`}></textarea>
         )}
+        {!isValid && <p className="text-red-500">Please enter a valid {question.inputType}</p>}
       </div>
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (

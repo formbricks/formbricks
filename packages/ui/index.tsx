@@ -73,6 +73,7 @@ export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./comp
 export { AddVariablesDropdown, Editor } from "./components/editor";
 export { Skeleton } from "./components/Skeleton";
 export { NoMobileOverlay } from "./components/NoMobileOverlay";
+export { QuestionTypeSelector } from "./components/QuestionTypeSelector";
 
 /* Icons */
 export { AngryBirdRage2Icon } from "./components/icons/AngryBirdRage2Icon";
