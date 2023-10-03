@@ -19,7 +19,7 @@ const inviteSelect = {
   role: true,
 };
 
-export const getInviteesByTeamId = cache(async (teamId: string): Promise<TInvite[] | null> => {
+export const getInvitesByTeamId = cache(async (teamId: string): Promise<TInvite[] | null> => {
   const invites = await prisma.invite.findMany({
     where: { teamId },
     select: inviteSelect,
