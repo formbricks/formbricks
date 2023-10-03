@@ -21,11 +21,11 @@ export const ZProfile = z.object({
 export type TProfile = z.infer<typeof ZProfile>;
 
 export const ZProfileUpdateInput = z.object({
-  name: z.string().nullable(),
-  email: z.string(),
-  onboardingCompleted: z.boolean(),
-  role: ZRole.nullable(),
-  objective: ZObjective.nullable(),
+  name: z.string().optional(),
+  email: z.string().optional(),
+  onboardingCompleted: z.boolean().optional(),
+  role: ZRole.optional(),
+  objective: ZObjective.optional(),
 });
 
 export type TProfileUpdateInput = z.infer<typeof ZProfileUpdateInput>;

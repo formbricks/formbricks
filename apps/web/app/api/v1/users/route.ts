@@ -43,6 +43,11 @@ export async function POST(request: Request) {
         accepted: true,
         role: invite.role,
       });
+
+      if (!EMAIL_VERIFICATION_DISABLED) {
+        await sendVerificationEmail(profile);
+      }
+
       await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
       await deleteInvite(inviteId);
 
