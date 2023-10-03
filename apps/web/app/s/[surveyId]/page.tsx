@@ -11,7 +11,7 @@ import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/v1/responses";
-import { validateSurveySingleUseId } from "@/lib/surveys/surveys";
+import { validateSurveySingleUseId } from "@/lib/singleUseSurveys";
 
 interface LinkSurveyPageProps {
   params: {

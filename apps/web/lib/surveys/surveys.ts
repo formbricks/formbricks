@@ -7,13 +7,10 @@ import {
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/ResponseFilter";
-import { env } from "@/env.mjs";
-import { decryptAES128, encryptAES128 } from "@formbricks/lib/crypto";
 import { QuestionType } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TTag } from "@formbricks/types/v1/tags";
-import cuid2 from "@paralleldrive/cuid2";
 import { isWithinInterval } from "date-fns";
 
 export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
@@ -459,27 +456,3 @@ function matchAndUpdateArray(choices: any, responseValue: string[]) {
 
   return responseValue;
 }
-
-// generate encrypted single use id for the survey
-export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
-  const cuid = cuid2.createId();
-  if (!isEncrypted) {
-    return cuid;
-  }
-  const encryptedCuid = encryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, cuid);
-  return encryptedCuid;
-};
-
-// validate the survey single use id
-export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
-  try {
-    const decryptedCuid = decryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
-    if (cuid2.isCuid(decryptedCuid)) {
-      return decryptedCuid;
-    } else {
-      return undefined;
-    }
-  } catch (error) {
-    return undefined;
-  }
-};

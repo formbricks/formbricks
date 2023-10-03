@@ -14,6 +14,7 @@ export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" :
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
+export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY;
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
 

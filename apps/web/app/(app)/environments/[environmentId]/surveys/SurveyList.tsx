@@ -10,7 +10,7 @@ import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { generateSurveySingleUseId } from "@/lib/surveys/surveys";
+import { generateSurveySingleUseId } from "@/lib/singleUseSurveys";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
