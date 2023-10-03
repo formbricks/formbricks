@@ -1,10 +1,7 @@
 "use client";
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/AddNoCodeActionModal";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import {
   AdvancedOptionToggle,
   Badge,
@@ -19,32 +16,60 @@ import {
 } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 interface WhenToSendCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
+  actionClasses: TActionClass[];
 }
 
-export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
+export default function WhenToSendCard({
+  environmentId,
+  localSurvey,
+  setLocalSurvey,
+  actionClasses,
+}: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
-  const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [actionClassArray, setActionClassArray] = useState<TActionClass[]>(actionClasses);
 
   const autoClose = localSurvey.autoClose !== null;
 
-  const addTriggerEvent = () => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = [...localSurvey.triggers, ""];
-    setLocalSurvey(updatedSurvey);
-  };
+  let newTrigger = useMemo(
+    () => ({
+      id: "", // Set the appropriate value for the id
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "",
+      type: "code" as const, // Set the appropriate value for the type
+      environmentId: "",
+      description: null,
+      noCodeConfig: null,
+    }),
+    []
+  );
 
-  const setTriggerEvent = (idx: number, eventClassId: string) => {
+  const addTriggerEvent = useCallback(() => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = eventClassId;
+    updatedSurvey.triggers = [...localSurvey.triggers, newTrigger];
     setLocalSurvey(updatedSurvey);
-  };
+  }, [newTrigger, localSurvey, setLocalSurvey]);
+
+  const setTriggerEvent = useCallback(
+    (idx: number, actionClassId: string) => {
+      const updatedSurvey = { ...localSurvey };
+      updatedSurvey.triggers[idx] = actionClassArray!.find((actionClass) => {
+        return actionClass.id === actionClassId;
+      })!;
+      setLocalSurvey(updatedSurvey);
+    },
+    [actionClassArray, localSurvey, setLocalSurvey]
+  );
 
   const removeTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
@@ -54,10 +79,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const handleCheckMark = () => {
     if (autoClose) {
-      const updatedSurvey: Survey = { ...localSurvey, autoClose: null };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: Survey = { ...localSurvey, autoClose: 10 };
+      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: 10 };
       setLocalSurvey(updatedSurvey);
     }
   };
@@ -67,15 +92,28 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
     if (value < 1) value = 1;
 
-    const updatedSurvey: Survey = { ...localSurvey, autoClose: value };
+    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoClose: value };
     setLocalSurvey(updatedSurvey);
   };
 
   const handleTriggerDelay = (e: any) => {
     let value = parseInt(e.target.value);
-    const updatedSurvey: Survey = { ...localSurvey, delay: value };
+    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, delay: value };
     setLocalSurvey(updatedSurvey);
   };
+
+  useEffect(() => {
+    if (activeIndex !== null) {
+      const newActionClassId = actionClassArray[actionClassArray.length - 1].id;
+      const currentActionClassId = localSurvey.triggers[activeIndex]?.id;
+
+      if (newActionClassId !== currentActionClassId) {
+        setTriggerEvent(activeIndex, newActionClassId);
+      }
+
+      setActiveIndex(null);
+    }
+  }, [actionClassArray, activeIndex, setTriggerEvent]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -88,15 +126,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     if (localSurvey.triggers.length === 0) {
       addTriggerEvent();
     }
-  }, []);
-
-  if (isLoadingEventClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorEventClasses) {
-    return <div>Error</div>;
-  }
+  }, [addTriggerEvent, localSurvey.triggers.length]);
 
   return (
     <>
@@ -118,9 +148,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           )}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {!localSurvey.triggers ||
-              localSurvey.triggers.length === 0 ||
-              localSurvey.triggers[0] === "" ? (
+              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0]?.id ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"
@@ -152,41 +180,46 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
-          {localSurvey.triggers?.map((triggerEventClassId, idx) => (
-            <div className="mt-2" key={idx}>
-              <div className="inline-flex items-center">
-                <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-                <Select
-                  value={triggerEventClassId}
-                  onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
-                  <SelectTrigger className="w-[240px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <button
-                      className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
-                      value="none"
-                      onClick={() => {
-                        setAddEventModalOpen(true);
-                      }}>
-                      <PlusIcon className="mr-1 h-5 w-5" />
-                      Add Action
-                    </button>
-                    <SelectSeparator />
-                    {eventClasses.map((eventClass) => (
-                      <SelectItem value={eventClass.id} key={eventClass.id}>
-                        {eventClass.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="mx-2 text-sm">action is performed</p>
-                <button onClick={() => removeTriggerEvent(idx)}>
-                  <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-                </button>
+          {!isAddEventModalOpen &&
+            localSurvey.triggers?.map((triggerEventClass, idx) => (
+              <div className="mt-2" key={idx}>
+                <div className="inline-flex items-center">
+                  <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
+                  <Select
+                    value={triggerEventClass.id}
+                    onValueChange={(actionClassId) => setTriggerEvent(idx, actionClassId)}>
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <button
+                        className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
+                        value="none"
+                        onClick={() => {
+                          setAddEventModalOpen(true);
+                          setActiveIndex(idx);
+                        }}>
+                        <PlusIcon className="mr-1 h-5 w-5" />
+                        Add Action
+                      </button>
+                      <SelectSeparator />
+                      {actionClassArray.map((actionClass) => (
+                        <SelectItem
+                          value={actionClass.id}
+                          key={actionClass.id}
+                          title={actionClass.description ? actionClass.description : ""}>
+                          {actionClass.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mx-2 text-sm">action is performed</p>
+                  <button onClick={() => removeTriggerEvent(idx)}>
+                    <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           <div className="px-6 py-4">
             <Button
               variant="secondary"
@@ -212,7 +245,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       id="triggerDelay"
                       value={localSurvey.delay.toString()}
                       onChange={(e) => handleTriggerDelay(e)}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
                     seconds before showing the survey.
                   </p>
@@ -249,6 +282,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
+        setActionClassArray={setActionClassArray}
       />
     </>
   );

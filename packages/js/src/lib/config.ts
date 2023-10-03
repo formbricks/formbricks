@@ -6,6 +6,19 @@ const LOCAL_STORAGE_KEY = "formbricks-js";
 export class Config {
   private static instance: Config | undefined;
   private config: TJsConfig = this.loadFromLocalStorage();
+  private _isSyncAllowed: boolean = true;
+
+  public allowSync() {
+    this._isSyncAllowed = true;
+  }
+
+  public disallowSync() {
+    this._isSyncAllowed = false;
+  }
+
+  public get isSyncAllowed() {
+    return this._isSyncAllowed;
+  }
 
   static getInstance(): Config {
     if (!Config.instance) {

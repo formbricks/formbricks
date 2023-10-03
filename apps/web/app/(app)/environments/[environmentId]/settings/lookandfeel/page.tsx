@@ -8,9 +8,13 @@ import { EditFormbricksSignature } from "./EditSignature";
 import { EditBrandColor } from "./EditBrandColor";
 import { EditPlacement } from "./EditPlacement";
 import { EditHighlightBorder } from "./EditHighlightBorder";
+import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
   return (
     <div>
       <SettingsTitle title="Look & Feel" />
@@ -26,7 +30,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         noPadding
         title="Highlight Border"
         description="Make sure your users notice the survey you display">
-        <EditHighlightBorder product={product} />
+        <EditHighlightBorder product={product} defaultBrandColor={DEFAULT_BRAND_COLOR} />
       </SettingsCard>
       <SettingsCard
         title="Formbricks Signature"

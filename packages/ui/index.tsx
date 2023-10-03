@@ -50,6 +50,7 @@ export {
 export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
+export { Pagination } from "./components/Pagination";
 export { PasswordInput } from "./components/PasswordInput";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";
 export { HalfCircle, ProgressBar } from "./components/ProgressBar";
@@ -70,6 +71,8 @@ export { Switch } from "./components/Switch";
 export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/Tooltip";
 export { AddVariablesDropdown, Editor } from "./components/editor";
+export { Skeleton } from "./components/Skeleton";
+export { NoMobileOverlay } from "./components/NoMobileOverlay";
 
 /* Icons */
 export { AngryBirdRage2Icon } from "./components/icons/AngryBirdRage2Icon";

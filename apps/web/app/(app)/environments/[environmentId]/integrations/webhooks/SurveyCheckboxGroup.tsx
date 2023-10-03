@@ -8,6 +8,7 @@ interface SurveyCheckboxGroupProps {
   selectedAllSurveys: boolean;
   onSelectAllSurveys: () => void;
   onSelectedSurveyChange: (surveyId: string) => void;
+  allowChanges: boolean;
 }
 
 export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
@@ -16,6 +17,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
   selectedAllSurveys,
   onSelectAllSurveys,
   onSelectedSurveyChange,
+  allowChanges,
 }) => {
   return (
     <div className="mt-1 rounded-lg border border-slate-200">
@@ -28,10 +30,13 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
             value=""
             checked={selectedAllSurveys}
             onCheckedChange={onSelectAllSurveys}
+            disabled={!allowChanges}
           />
           <label
             htmlFor="allSurveys"
-            className={`flex cursor-pointer items-center ${selectedAllSurveys ? "font-semibold" : ""}`}>
+            className={`flex cursor-pointer items-center ${selectedAllSurveys ? "font-semibold" : ""} ${
+              !allowChanges ? "cursor-not-allowed opacity-50" : ""
+            }`}>
             All current and new surveys
           </label>
         </div>
@@ -43,14 +48,18 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
               value={survey.id}
               className="bg-white"
               checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
-              disabled={selectedAllSurveys}
-              onCheckedChange={() => onSelectedSurveyChange(survey.id)}
+              disabled={selectedAllSurveys || !allowChanges}
+              onCheckedChange={() => {
+                if (allowChanges) {
+                  onSelectedSurveyChange(survey.id);
+                }
+              }}
             />
             <label
               htmlFor={survey.id}
               className={`flex cursor-pointer items-center ${
                 selectedAllSurveys ? "cursor-not-allowed opacity-50" : ""
-              }`}>
+              } ${!allowChanges ? "cursor-not-allowed opacity-50" : ""}`}>
               {survey.name}
             </label>
           </div>

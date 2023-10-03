@@ -1,7 +1,7 @@
 "use client";
 
+import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
 import Modal from "@/components/shared/Modal";
-import { createProduct } from "@/lib/products/products";
 import { Button, Input, Label } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
@@ -19,9 +19,9 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm();
 
-  const submitProduct = async (data) => {
+  const submitProduct = async (data: { name: string }) => {
     setLoading(true);
-    const newEnv = await createProduct(environmentId, data);
+    const newEnv = await createProductAction(environmentId, data.name);
     router.push(`/environments/${newEnv.id}/`);
     setOpen(false);
     setLoading(false);

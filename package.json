@@ -1,5 +1,5 @@
 {
-  "name": "turbo",
+  "name": "formbricks",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
@@ -17,23 +17,46 @@
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",
-    "go": "turbo run go --concurrency 16",
+    "go": "turbo run go --concurrency 20",
     "dev": "turbo run dev --parallel",
+    "pre-commit": "lint-staged",
     "start": "turbo run start --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=js... && changeset publish",
-    "test": "turbo run test"
+    "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
+    "test": "turbo run test",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
+    "eslint-config-formbricks": "workspace:*",
+    "husky": "^8.0.3",
+    "lint-staged": "^14.0.1",
     "rimraf": "^5.0.1",
     "tsx": "^3.12.7",
     "turbo": "latest"
   },
+  "lint-staged": {
+    "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.json": [
+      "prettier --write"
+    ],
+    "packages/database/schema.prisma": [
+      "prisma format"
+    ]
+  },
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@8.1.1"
+  "packageManager": "pnpm@8.1.1",
+  "nextBundleAnalysis": {
+    "budget": 358400,
+    "budgetPercentIncreaseRed": 20,
+    "minimumChangeThreshold": 0,
+    "showDetails": true
+  }
 }

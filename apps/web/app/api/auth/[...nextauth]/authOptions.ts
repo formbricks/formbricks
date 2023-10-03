@@ -1,8 +1,9 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
-import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { verifyToken } from "@formbricks/lib/jwt";
+import { getProfileByEmail } from "@formbricks/lib/services/profile";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -44,20 +45,17 @@ export const authOptions: NextAuthOptions = {
           throw Error("Internal server error. Please try again later");
         }
 
-        if (!user) {
-          throw new Error("User not found");
-        }
-        if (!credentials) {
-          throw new Error("No credentials");
+        if (!user || !credentials) {
+          throw new Error("No user matches the provided credentials");
         }
         if (!user.password) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         return {
@@ -86,6 +84,9 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials, _req) {
         let user;
         try {
+          if (!credentials?.token) {
+            throw new Error("Token not found");
+          }
           const { id } = await verifyToken(credentials?.token);
           user = await prisma.user.findUnique({
             where: {
@@ -94,11 +95,11 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (e) {
           console.error(e);
-          throw new Error("Token is not valid or expired");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (!user) {
-          throw new Error("User not found");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (user.emailVerified) {
@@ -133,42 +134,16 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token }) {
-      const existingUser = await prisma.user.findFirst({
-        where: { email: token.email! },
-        select: {
-          id: true,
-          createdAt: true,
-          onboardingCompleted: true,
-          memberships: {
-            select: {
-              teamId: true,
-              role: true,
-              team: {
-                select: {
-                  plan: true,
-                },
-              },
-            },
-          },
-          name: true,
-        },
-      });
+      const existingUser = await getProfileByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
       }
 
-      const teams = existingUser.memberships.map((membership) => ({
-        id: membership.teamId,
-        role: membership.role,
-        plan: membership.team.plan,
-      }));
-
       const additionalAttributs = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
-        teams,
         name: existingUser.name,
       };
 
@@ -185,14 +160,13 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
-      session.user.teams = token?.teams;
       session.user.name = token.name || "";
 
       return session;
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
-        if (!user.emailVerified && env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+        if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
         }
         return true;

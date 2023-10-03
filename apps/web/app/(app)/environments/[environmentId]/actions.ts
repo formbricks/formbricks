@@ -1,11 +1,12 @@
 "use server";
 
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError } from "@formbricks/errors";
+import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
+import { createProduct } from "@formbricks/lib/services/product";
 
 export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
   const newTeam = await prisma.team.create({
@@ -163,6 +164,12 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
       surveyClosedMessage: existingSurvey.surveyClosedMessage
         ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
         : prismaClient.JsonNull,
+      singleUse: existingSurvey.singleUse
+        ? JSON.parse(JSON.stringify(existingSurvey.singleUse))
+        : prismaClient.JsonNull,
+      verifyEmail: existingSurvey.verifyEmail
+        ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
+        : prismaClient.JsonNull,
     },
   });
   return newSurvey;
@@ -290,6 +297,8 @@ export async function copyToOtherEnvironmentAction(
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
+      singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
+      verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
     },
   });
   return newSurvey;
@@ -297,4 +306,11 @@ export async function copyToOtherEnvironmentAction(
 
 export const deleteSurveyAction = async (surveyId: string) => {
   await deleteSurvey(surveyId);
+};
+
+export const createProductAction = async (environmentId: string, productName: string) => {
+  const productCreated = await createProduct(environmentId, productName);
+
+  const newEnvironment = productCreated.environments[0];
+  return newEnvironment;
 };

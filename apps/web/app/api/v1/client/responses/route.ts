@@ -1,9 +1,9 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { sendToPipeline } from "@/lib/pipelines";
-import { InvalidInputError } from "@formbricks/errors";
+import { InvalidInputError } from "@formbricks/types/v1/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { createResponse } from "@formbricks/lib/services/response";
+import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";

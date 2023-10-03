@@ -1,10 +1,17 @@
-import { env } from "@/env.mjs";
 import { getQuestionResponseMapping } from "@/lib/responses/questionResponseMapping";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import {
+  MAIL_FROM,
+  SMTP_HOST,
+  SMTP_PASSWORD,
+  SMTP_PORT,
+  SMTP_SECURE_ENABLED,
+  SMTP_USER,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { withEmailTemplate } from "./email-template";
-import { createInviteToken, createToken } from "./jwt";
+import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 
 const nodemailer = require("nodemailer");
 
@@ -18,18 +25,18 @@ interface sendEmailData {
 
 export const sendEmail = async (emailData: sendEmailData) => {
   let transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_SECURE_ENABLED === "1", // true for 465, false for other ports
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
     auth: {
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASSWORD,
+      user: SMTP_USER,
+      pass: SMTP_PASSWORD,
     },
     // logger: true,
     // debug: true,
   });
   const emailDefaults = {
-    from: `Formbricks <${env.MAIL_FROM || "noreply@formbricks.com"}>`,
+    from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
@@ -53,6 +60,26 @@ export const sendVerificationEmail = async (user) => {
     <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
     Your Formbricks Team`),
+  });
+};
+
+export const sendLinkSurveyToVerifiedEmail = async (data) => {
+  const surveyId = data.surveyId;
+  const email = data.email;
+  const surveyData = data.surveyData;
+  const token = createTokenForLinkSurvey(surveyId, email);
+  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: data.email,
+    subject: "Your Formbricks Survey",
+    html: withEmailTemplate(`<h1>Hey 👋</h1>
+    Thanks for validating your email. Here is your Survey.<br/><br/>
+    <strong>${surveyData.name}</strong>
+    <p>${surveyData.subheading}</p>
+    <a class="button" href="${surveyLink}">Take survey</a><br/>
+    <br/>
+    All the best,<br/>
+    Your Formbricks Team 🤍`),
   });
 };
 
@@ -127,7 +154,7 @@ export const sendResponseFinishedEmail = async (
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
-    replyTo: personEmail?.toString() || env.MAIL_FROM,
+    replyTo: personEmail?.toString() || MAIL_FROM,
     html: withEmailTemplate(`<h1>Hey 👋</h1>Someone just completed your survey <strong>${
       survey.name
     }</strong><br/>
@@ -140,7 +167,7 @@ export const sendResponseFinishedEmail = async (
           question.answer &&
           `<div style="margin-top:1em;">
           <p style="margin:0px;">${question.question}</p>
-          <p style="font-weight: 500; margin:0px;">${question.answer}</p>  
+          <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
         </div>`
       )
       .join("")} 

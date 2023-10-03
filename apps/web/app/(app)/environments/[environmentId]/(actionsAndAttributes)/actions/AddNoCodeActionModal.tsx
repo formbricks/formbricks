@@ -7,21 +7,29 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
-import { createActionClass } from "@formbricks/lib/services/actionClass";
-import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
-import { useRouter } from "next/navigation";
+import {
+  TActionClassInput,
+  TActionClassNoCodeConfig,
+  TActionClass,
+} from "@formbricks/types/v1/actionClasses";
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/CssSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/InnerHtmlSelector";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface AddNoCodeActionModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
+  setActionClassArray?;
 }
 
-export default function AddNoCodeActionModal({ environmentId, open, setOpen }: AddNoCodeActionModalProps) {
-  const router = useRouter();
+export default function AddNoCodeActionModal({
+  environmentId,
+  open,
+  setOpen,
+  setActionClassArray,
+}: AddNoCodeActionModalProps) {
   const { register, control, handleSubmit, watch, reset } = useForm();
   const [isPageUrl, setIsPageUrl] = useState(false);
   const [isCssSelector, setIsCssSelector] = useState(false);
@@ -71,12 +79,18 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
       const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
       const updatedData: TActionClassInput = {
         ...data,
+        environmentId,
         noCodeConfig: filteredNoCodeConfig,
         type: "noCode",
       } as TActionClassInput;
 
-      await createActionClass(environmentId, updatedData);
-      router.refresh();
+      const newActionClass: TActionClass = await createActionClassAction(updatedData);
+      if (setActionClassArray) {
+        setActionClassArray((prevActionClassArray: TActionClass[]) => [
+          ...prevActionClassArray,
+          newActionClass,
+        ]);
+      }
       reset();
       resetAllStates(false);
       toast.success("Action added successfully.");

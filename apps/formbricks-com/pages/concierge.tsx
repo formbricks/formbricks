@@ -1,14 +1,13 @@
 import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import Cal, { getCalApi } from "@calcom/embed-react";
-import { useEffect } from "react";
-import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import { Button } from "@formbricks/ui";
+import { useEffect } from "react";
 
 const XMOffer = [
   {
     step: "1",
-    header: "Kick-off call (FREE)",
+    header: "Kick-off call",
     description: "Share with our seasoned PMs which areas of customer experience need improvement.",
   },
   {
@@ -48,10 +47,10 @@ const ConciergePage = () => {
 
   return (
     <Layout
-      title="Community | Formbricks Open Source Forms & Surveys"
-      description="You're building open source forms and surveys? So are we! Get support for anything your building - or just say hi!">
+      title="Concierge | Formbricks Open Source Experience Management"
+      description="We help you get started! Get the worry-free setup with our guidance.">
       <HeroTitle
-        headingPt1="XM"
+        headingPt1=""
         headingTeal="Concierge"
         headingPt2="Service"
         subheading="Let's set up your system for continuous user discovery together."
@@ -69,10 +68,10 @@ const ConciergePage = () => {
               </div>
             </div>
           ))}
-          <div className="border-b border-t border-slate-300 p-6  text-4xl font-semibold text-slate-800">
+          {/*           <div className="border-b border-t border-slate-300 p-6  text-4xl font-semibold text-slate-800">
             <p className="mr-2 font-light">$1.290</p>
           </div>
-          <div className="p-6 text-sm text-slate-800">
+{          <div className="border-t border-slate-300 p-6 text-sm text-slate-800">
             <p>
               <CheckBadgeIcon className="mr-1 inline h-5 w-5 text-slate-800" />
               100% Risk-free: Pay after the kick-off call, if you liked it.
@@ -81,14 +80,14 @@ const ConciergePage = () => {
               <CheckBadgeIcon className="mr-1 inline h-5 w-5 text-slate-800" />
               Money-back: If you&apos;re not happy, get a full refund.
             </p>
-          </div>
+          </div> */}
           <div className="px-6">
             <Button
               variant="darkCTA"
               className="w-full justify-center"
               href="https://cal.com/johannes/kick-off"
               target="_blank">
-              Book free Kick-Off call
+              Schedule free Kick-Off call
             </Button>
           </div>
         </div>
