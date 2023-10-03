@@ -8,14 +8,15 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookDetailModal";
 import { Webhook } from "lucide-react";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 export default function WebhookTable({
-  environmentId,
+  environment,
   webhooks,
   surveys,
   children: [TableHeading, webhookRows],
 }: {
-  environmentId: string;
+  environment: TEnvironment;
   webhooks: TWebhook[];
   surveys: TSurvey[];
   children: [JSX.Element, JSX.Element[]];
@@ -24,10 +25,11 @@ export default function WebhookTable({
   const [isAddWebhookModalOpen, setAddWebhookModalOpen] = useState(false);
 
   const [activeWebhook, setActiveWebhook] = useState<TWebhook>({
-    environmentId,
+    environmentId: environment.id,
     id: "",
     name: "",
     url: "",
+    source: "user",
     triggers: [],
     surveyIds: [],
     createdAt: new Date(),
@@ -56,7 +58,7 @@ export default function WebhookTable({
       {webhooks.length === 0 ? (
         <EmptySpaceFiller
           type="table"
-          environmentId={environmentId}
+          environment={environment}
           noWidgetRequired={true}
           emptyMessage="Your webhooks will appear here as soon as you add them. ⏲️"
         />
@@ -79,14 +81,14 @@ export default function WebhookTable({
       )}
 
       <WebhookModal
-        environmentId={environmentId}
+        environmentId={environment.id}
         open={isWebhookDetailModalOpen}
         setOpen={setWebhookDetailModalOpen}
         webhook={activeWebhook}
         surveys={surveys}
       />
       <AddWebhookModal
-        environmentId={environmentId}
+        environmentId={environment.id}
         surveys={surveys}
         open={isAddWebhookModalOpen}
         setOpen={setAddWebhookModalOpen}

@@ -37,10 +37,11 @@ export const ZActionClass = z.object({
 export type TActionClass = z.infer<typeof ZActionClass>;
 
 export const ZActionClassInput = z.object({
+  environmentId: z.string(),
   name: z.string(),
-  description: z.union([z.string(), z.null()]),
-  noCodeConfig: z.union([ZActionClassNoCodeConfig, z.null()]),
-  type: z.enum(["code", "noCode", "automatic"]),
+  description: z.string().optional(),
+  noCodeConfig: ZActionClassNoCodeConfig.nullish(),
+  type: z.enum(["code", "noCode"]),
 });
 
 export type TActionClassInput = z.infer<typeof ZActionClassInput>;

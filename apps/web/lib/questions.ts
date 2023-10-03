@@ -93,7 +93,7 @@ export const questionTypes: QuestionType[] = [
     preset: {
       headline: "How would you rate {{productName}}",
       subheader: "Don't worry, be honest.",
-      scale: "number",
+      scale: "star",
       range: 5,
       lowerLabel: "Not good",
       upperLabel: "Very good",

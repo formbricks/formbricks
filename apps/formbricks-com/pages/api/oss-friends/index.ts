@@ -94,6 +94,28 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://openbb.co",
         },
         {
+          name: "OpenStatus",
+          description: "Open-source monitoring platform with beautiful status pages",
+          href: "https://www.openstatus.dev",
+        },
+        {
+          name: "Papermark",
+          description:
+            "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
+          href: "https://www.papermark.io/",
+        },
+        {
+          name: "Requestly",
+          description:
+            "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
+          href: "https://requestly.io",
+        },
+        {
+          name: "Rivet",
+          description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
+          href: "https://rivet.gg",
+        },
+        {
           name: "Sniffnet",
           description:
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
@@ -102,7 +124,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         {
           name: "Tolgee",
           description: "Software localization from A to Z made really easy.",
-          href: "https://tolgee.io/",
+          href: "https://tolgee.io",
         },
         {
           name: "Trigger.dev",
@@ -135,7 +157,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Spark.NET",
-          description: "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
+          description:
+            "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
           href: "https://spark-framework.net",
         },
       ],

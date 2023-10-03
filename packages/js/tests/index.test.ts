@@ -6,7 +6,7 @@ import formbricks from "../src/index";
 import {
   mockEventTrackResponse,
   mockInitResponse,
-  mockLogoutResponse,
+  mockResetResponse,
   mockRegisterRouteChangeResponse,
   mockSetCustomAttributeResponse,
   mockSetEmailIdResponse,
@@ -145,9 +145,9 @@ test("Formbricks should register for route change", async () => {
   expect(consoleLogMock).toHaveBeenCalledWith(expect.stringMatching(/Checking page url/));
 });
 
-test("Formbricks should logout", async () => {
-  mockLogoutResponse();
-  await formbricks.logout();
+test("Formbricks should reset", async () => {
+  mockResetResponse();
+  await formbricks.reset();
   const currentStatePerson = formbricks.getPerson();
   const currentStatePersonAttributes = currentStatePerson.attributes;
 

@@ -2,98 +2,159 @@
 
 import { Placement } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/EditPlacement";
 import { PlacementType } from "@formbricks/types/js";
-import type { Survey } from "@formbricks/types/surveys";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { ColorPicker, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 
 interface StylingCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurveyWithAnalytics>>;
 }
 
 export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
   const [open, setOpen] = useState(false);
 
+  const { type, productOverwrites } = localSurvey;
   const {
     brandColor,
-    placement,
+    clickOutside: surveyClickOutside,
     darkOverlay,
-    clickOutsideClose,
-    type,
+    placement,
     highlightBorderColor,
-    overwriteBorderHighlight,
-  } = localSurvey;
-
-  const isBrandColor = brandColor !== null;
-  const ishighlightBorder = highlightBorderColor !== null;
-  const isPosition = placement !== null;
+  } = productOverwrites ?? {};
 
   const togglePlacement = () => {
-    if (isPosition) {
-      const updatedSurvey: Survey = {
+    if (!!placement) {
+      const updatedSurvey: TSurveyWithAnalytics = {
         ...localSurvey,
-        placement: null,
-        clickOutsideClose: true,
-        darkOverlay: false,
+        productOverwrites: {
+          ...localSurvey.productOverwrites,
+          placement: null,
+          clickOutside: true,
+          darkOverlay: false,
+        },
       };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: Survey = { ...localSurvey, placement: "bottomRight" };
+      const updatedSurvey: TSurveyWithAnalytics = {
+        ...localSurvey,
+        productOverwrites: {
+          ...localSurvey.productOverwrites,
+          placement: "bottomRight",
+        },
+      };
       setLocalSurvey(updatedSurvey);
     }
   };
 
   const toggleBrandColor = () => {
-    if (isBrandColor) {
-      setLocalSurvey({ ...localSurvey, brandColor: null });
+    if (!!brandColor) {
+      setLocalSurvey({
+        ...localSurvey,
+        productOverwrites: {
+          ...localSurvey.productOverwrites,
+          brandColor: null,
+        },
+      });
     } else {
-      setLocalSurvey({ ...localSurvey, brandColor: "#64748b" });
+      setLocalSurvey({
+        ...localSurvey,
+        productOverwrites: {
+          ...localSurvey.productOverwrites,
+          brandColor: "#64748b",
+        },
+      });
     }
   };
 
   const toggleBorderColor = () => {
-    if (ishighlightBorder) {
-      setLocalSurvey({ ...localSurvey, highlightBorderColor: null });
+    if (!!highlightBorderColor) {
+      setLocalSurvey({
+        ...localSurvey,
+        productOverwrites: {
+          ...localSurvey.productOverwrites,
+          highlightBorderColor: null,
+        },
+      });
     } else {
-      setLocalSurvey({ ...localSurvey, highlightBorderColor: "#64748b" });
+      setLocalSurvey({
+        ...localSurvey,
+        productOverwrites: {
+          ...localSurvey.productOverwrites,
+          highlightBorderColor: "#64748b",
+        },
+      });
     }
   };
 
   const toggleBorderColorSetting = () => {
-    if (overwriteBorderHighlight) {
-      setLocalSurvey({ ...localSurvey, overwriteBorderHighlight: false });
-    } else {
-      setLocalSurvey({ ...localSurvey, overwriteBorderHighlight: true });
-    }
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        highlightBorderColor: !!highlightBorderColor ? null : "#64748b",
+      },
+    });
   };
 
   const handleColorChange = (color: string) => {
-    setLocalSurvey({ ...localSurvey, brandColor: color });
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        brandColor: color,
+      },
+    });
   };
 
   const handleBorderColorChange = (color: string) => {
-    setLocalSurvey({ ...localSurvey, highlightBorderColor: color });
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        highlightBorderColor: color,
+      },
+    });
   };
 
   const handlePlacementChange = (placement: PlacementType) => {
-    setLocalSurvey({ ...localSurvey, placement });
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        placement,
+      },
+    });
   };
 
   const handleOverlay = (overlay: string) => {
     const darkOverlay = overlay === "darkOverlay";
-    setLocalSurvey({ ...localSurvey, darkOverlay });
+
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        darkOverlay,
+      },
+    });
   };
 
   const handlClickOutside = (isClickOutside: string) => {
     const clickOutsideClose = isClickOutside === "allow";
-    setLocalSurvey({ ...localSurvey, clickOutsideClose });
+
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        clickOutside: clickOutsideClose,
+      },
+    });
   };
 
-  const overlay = darkOverlay === null ? "" : darkOverlay ? "darkOverlay" : "lightOverlay";
+  const overlay = !darkOverlay ? "" : darkOverlay ? "darkOverlay" : "lightOverlay";
 
-  const clickOutside = clickOutsideClose === null ? "" : clickOutsideClose ? "allow" : "disallow";
+  const clickOutside = !surveyClickOutside ? "" : surveyClickOutside ? "allow" : "disallow";
 
   return (
     <Collapsible.Root
@@ -117,7 +178,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
           {/* Brand Color */}
           <div className="p-3">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoComplete" checked={isBrandColor} onCheckedChange={toggleBrandColor} />
+              <Switch id="autoComplete" checked={!!brandColor} onCheckedChange={toggleBrandColor} />
               <Label htmlFor="autoComplete" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Overwrite Brand Color</h3>
@@ -138,7 +199,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
           {type !== "link" && (
             <div className="p-3 ">
               <div className="ml-2 flex items-center space-x-1">
-                <Switch id="surveyDeadline" checked={isPosition} onCheckedChange={togglePlacement} />
+                <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
                 <Label htmlFor="surveyDeadline" className="cursor-pointer">
                   <div className="ml-2">
                     <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
@@ -170,7 +231,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
               <div className="ml-2 flex items-center space-x-1">
                 <Switch
                   id="autoComplete"
-                  checked={overwriteBorderHighlight}
+                  checked={!!highlightBorderColor}
                   onCheckedChange={toggleBorderColorSetting}
                 />
                 <Label htmlFor="autoComplete" className="cursor-pointer">
@@ -182,17 +243,17 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                   </div>
                 </Label>
               </div>
-              {overwriteBorderHighlight && (
+              {!!highlightBorderColor && (
                 <div className="ml-2 mt-4 rounded-lg border bg-slate-50 p-4">
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="highlightBorder"
-                      checked={ishighlightBorder}
+                      checked={!!highlightBorderColor}
                       onCheckedChange={toggleBorderColor}
                     />
                     <h2 className="text-sm font-medium text-slate-800">Show highlight border</h2>
                   </div>
-                  {ishighlightBorder && (
+                  {!!highlightBorderColor && (
                     <div className="mt-6 w-full max-w-xs">
                       <Label htmlFor="brandcolor">Color (HEX)</Label>
                       <ColorPicker color={highlightBorderColor || ""} onChange={handleBorderColorChange} />

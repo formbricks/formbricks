@@ -5,7 +5,7 @@ import Image from "next/image";
 export default function WaitlistForm() {
   return (
     <div className="not-prose text-md mx-auto mt-12 max-w-7xl rounded-lg bg-slate-200 p-10 text-slate-500 shadow-lg dark:bg-slate-800 dark:text-slate-400">
-      <p className="my-0 text-2xl font-bold text-slate-600 dark:text-slate-300">Build in public</p>
+      <p className="my-0 text-2xl font-bold text-slate-600 dark:text-slate-300">Stay in the loop!</p>
       Get all the juicy details of our journey building Formbricks in public 👇
       <div className="mt-8 gap-4 md:grid md:grid-cols-2">
         <form method="post" action="https://listmonk.formbricks.com/subscription/form">
@@ -19,7 +19,7 @@ export default function WaitlistForm() {
                 name="email"
                 required
                 placeholder="Email"
-                className="block w-full rounded-xl text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
+                className="block w-full rounded-xl px-3 py-2 text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
               />
               <label htmlFor="email" className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
                 Work or personal
@@ -31,7 +31,7 @@ export default function WaitlistForm() {
                 name="name"
                 placeholder="Name"
                 required
-                className="mt-4 block w-full rounded-xl text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
+                className="mt-4 block w-full rounded-xl px-3 py-2 text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
               />
               <label htmlFor="name" className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
                 Optional but appreciated

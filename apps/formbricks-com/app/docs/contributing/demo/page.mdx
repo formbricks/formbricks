@@ -1,0 +1,90 @@
+import Image from "next/image";
+
+import DemoApp from "./demoapp.webp";
+
+export const meta = {
+  title: "Formbricks Demo App Guide: Play around with Formbricks",
+  description: "To test in-app surveys, trigger actions and set attributes, you can use the Demo App. This guide provides hands-on examples of sending both code and no-code actions",
+};
+
+#### Contributing
+
+# Demo App
+
+To play around with the in-app [User Actions](/docs/actions/why), you can use the Demo App. It's a simple React app that you can run locally and use to trigger actions and set [Attributes](/docs/attributes/why).
+
+<Image src={DemoApp} alt="Demo App Preview" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+
+## Functionality
+
+### Code Action
+
+This button sends a <a href="/docs/actions/code">Code Action</a> to the Formbricks API called 'Code Action'. You will find it in the Actions Tab.
+
+<CodeGroup title="Track Code action">
+
+```javascript
+formbricks.track("Code Action");
+```
+
+</CodeGroup>
+
+### No Code Action
+
+This button sends a <a href="/docs/actions/no-code">No Code Action</a> as long as you created it beforehand in the Formbricks App. For it to work, you need to add the No Code Action within Formbricks.
+
+<CodeGroup title="Track No-Code action">
+
+```tsx
+<button>No-Code Action</button>
+```
+
+</CodeGroup>
+
+### Set Plan to "Free"
+
+This button sets the <a href="/docs/attributes/custom-attributes">attribute</a> 'Plan' to 'Free'. If the attribute does not exist, it creates it.
+
+<CodeGroup title="Set Plan to Free">
+
+```tsx
+formbricks.setAttribute("Plan", "Free");
+```
+
+</CodeGroup>
+
+### Set Plan to "Paid"
+
+This button sets the <a href="/docs/attributes/custom-attributes">attribute</a> 'Plan' to 'Paid'. If the attribute does not exist, it creates it.
+
+<CodeGroup title="Set Plan to Paid">
+
+```tsx
+formbricks.setAttribute("Plan", "Paid");
+```
+
+</CodeGroup>
+
+### Set Email
+
+This button sets the <a href="/docs/attributes/identify-users">user email</a> 'test@web.com'
+
+<CodeGroup title="Set Email">
+
+```tsx
+formbricks.setEmail("test@web.com");
+```
+
+</CodeGroup>
+
+### Set UserId
+
+This button sets an external <a href="/docs/attributes/identify-users">user ID</a> to 'THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING'
+
+<CodeGroup title="Set User ID">
+
+```tsx
+formbricks.setUserId("THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING");
+```
+
+</CodeGroup>

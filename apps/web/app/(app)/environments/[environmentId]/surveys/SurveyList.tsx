@@ -2,22 +2,29 @@ import { UsageAttributesUpdater } from "@/app/(app)/FormbricksClient";
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/SurveyStarter";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurveysWithAnalytics } from "@formbricks/lib/services/survey";
+import { getSurveys } from "@formbricks/lib/services/survey";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   const environment = await getEnvironment(environmentId);
-  const surveys: TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+  const surveys = await getSurveys(environmentId);
+
   const environments: TEnvironment[] = await getEnvironments(product.id);
-  const otherEnvironment = environments.find((e) => e.type !== environment.type);
-  const totalSubmissions = surveys.reduce((acc, survey) => acc + (survey.analytics?.numResponses || 0), 0);
+  const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   if (surveys.length === 0) {
     return <SurveyStarter environmentId={environmentId} environment={environment} product={product} />;
@@ -37,7 +44,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
           </li>
         </Link>
         {surveys
-          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+          .sort((a, b) => b.updatedAt?.getTime() - a.updatedAt?.getTime())
           .map((survey) => (
             <li key={survey.id} className="relative col-span-1 h-56">
               <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
@@ -69,14 +76,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                     <div className="flex items-center">
                       {survey.status !== "draft" && (
                         <>
-                          <SurveyStatusIndicator
-                            status={survey.status}
-                            tooltip
-                            environmentId={environmentId}
-                          />
-                          <p className="ml-2 text-xs text-slate-400 ">
-                            {survey.analytics.numResponses} responses
-                          </p>
+                          <SurveyStatusIndicator status={survey.status} tooltip environment={environment} />
                         </>
                       )}
                       {survey.status === "draft" && (
@@ -85,10 +85,11 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                     </div>
                     <SurveyDropDownMenu
                       survey={survey}
-                      key={`survey-${survey.id}`}
+                      key={`surveys-${survey.id}`}
                       environmentId={environmentId}
                       environment={environment}
-                      otherEnvironment={otherEnvironment}
+                      otherEnvironment={otherEnvironment!}
+                      surveyBaseUrl={SURVEY_BASE_URL}
                     />
                   </div>
                 </div>
@@ -96,7 +97,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
             </li>
           ))}
       </ul>
-      <UsageAttributesUpdater numSurveys={surveys.length} totalSubmissions={totalSubmissions} />
+      <UsageAttributesUpdater numSurveys={surveys.length} />
     </>
   );
 }

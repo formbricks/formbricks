@@ -15,7 +15,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import type { TSurvey } from "@formbricks/types/v1/surveys";
 import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,
@@ -27,14 +27,15 @@ import {
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
-  survey: TSurveyWithAnalytics;
+  survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
+  surveyBaseUrl: string;
 }
 
 export default function SurveyDropDownMenu({
@@ -42,10 +43,13 @@ export default function SurveyDropDownMenu({
   survey,
   environment,
   otherEnvironment,
+  surveyBaseUrl,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey.id, surveyBaseUrl]);
 
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);
@@ -161,9 +165,7 @@ export default function SurveyDropDownMenu({
                   <button
                     className="flex w-full items-center"
                     onClick={() => {
-                      navigator.clipboard.writeText(
-                        `${window.location.protocol}//${window.location.host}/s/${survey.id}`
-                      );
+                      navigator.clipboard.writeText(surveyUrl);
                       toast.success("Copied link to clipboard");
                     }}>
                     <LinkIcon className="mr-2 h-4 w-4" />

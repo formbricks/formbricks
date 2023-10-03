@@ -1,23 +1,25 @@
 "use client";
 
-import type { Survey } from "@formbricks/types/surveys";
+import React from "react";
 import { createId } from "@paralleldrive/cuid2";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
-import { Question } from "@formbricks/types/questions";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { validateQuestion } from "./Validation";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface QuestionsViewProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
+  localSurvey: TSurveyWithAnalytics;
+  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
-  environmentId: string;
+  product: TProduct;
   invalidQuestions: String[] | null;
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
 }
@@ -27,7 +29,7 @@ export default function QuestionsView({
   setActiveQuestionId,
   localSurvey,
   setLocalSurvey,
-  environmentId,
+  product,
   invalidQuestions,
   setInvalidQuestions,
 }: QuestionsViewProps) {
@@ -38,7 +40,13 @@ export default function QuestionsView({
     }, {});
   }, []);
 
-  const handleQuestionLogicChange = (survey: Survey, compareId: string, updatedId: string): Survey => {
+  const [backButtonLabel, setbackButtonLabel] = useState(null);
+
+  const handleQuestionLogicChange = (
+    survey: TSurveyWithAnalytics,
+    compareId: string,
+    updatedId: string
+  ): TSurveyWithAnalytics => {
     survey.questions.forEach((question) => {
       if (!question.logic) return;
       question.logic.forEach((rule) => {
@@ -51,7 +59,7 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateSurvey = (question: Question) => {
+  const validateSurvey = (question: TSurveyQuestion) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;
@@ -68,6 +76,7 @@ export default function QuestionsView({
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
@@ -89,13 +98,20 @@ export default function QuestionsView({
       ...updatedSurvey.questions[questionIdx],
       ...updatedAttributes,
     };
+
+    if ("backButtonLabel" in updatedAttributes) {
+      updatedSurvey.questions.forEach((question) => {
+        question.backButtonLabel = updatedAttributes.backButtonLabel;
+      });
+      setbackButtonLabel(updatedAttributes.backButtonLabel);
+    }
     setLocalSurvey(updatedSurvey);
     validateSurvey(updatedSurvey.questions[questionIdx]);
   };
 
   const deleteQuestion = (questionIdx: number) => {
     const questionId = localSurvey.questions[questionIdx].id;
-    let updatedSurvey: Survey = JSON.parse(JSON.stringify(localSurvey));
+    let updatedSurvey: TSurveyWithAnalytics = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
 
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
@@ -138,6 +154,9 @@ export default function QuestionsView({
 
   const addQuestion = (question: any) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    if (backButtonLabel) {
+      question.backButtonLabel = backButtonLabel;
+    }
     updatedSurvey.questions.push({ ...question, isDraft: true });
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
@@ -194,7 +213,7 @@ export default function QuestionsView({
           </StrictModeDroppable>
         </div>
       </DragDropContext>
-      <AddQuestionButton addQuestion={addQuestion} environmentId={environmentId} />
+      <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5">
         <EditThankYouCard
           localSurvey={localSurvey}

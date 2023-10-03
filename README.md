@@ -1,6 +1,6 @@
 <p align="center">
-<a href="https://github.com/formbricks/formbricks">
-    <img src="https://user-images.githubusercontent.com/675065/203262290-3c2bc5b8-839c-468a-b675-e26a369c7fe2.png" alt="Logo" width="500">
+<a href="https://formbricks.com">
+    <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
   </a>
   <h3 align="center">Formbricks</h3>
 
@@ -48,7 +48,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 - 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code
 - 🔗 Create shareable **link surveys**
 - 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys
-- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier and more**
+- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier, n8n and more**
 - 🔒 All **open source**, transparent and self-hostable
 
 ### Built on Open Source
@@ -63,15 +63,53 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ## 🚀 Getting started
 
+We've got several options depending on your need to help you quickly get started with Formbricks
+
 ### ☁️ Cloud Version
 
 Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com)
 
 ### 🐳 Self-hosted version
 
-Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription. To get started with self-hosting, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
+Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription.
 
-(In the future we may develop additional features that aren't in the free Open-Source version)
+(In the future we may develop additional features that aren't in the free Open-Source version).
+
+If you opt for self-hosting Formbricks, here are a few options to consider:
+
+#### Docker
+
+To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
+
+#### Community managed One Click Hosting
+
+##### Railway
+
+You can deploy Formbricks on [Railway](https://railway.app) using the button below.
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
+
+### 👨‍💻 Development
+
+#### Prerequisites
+
+Here is what you need to be able to run Formbricks
+
+- Node.js (Version: >=18.x)
+- [Pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
+
+#### Local Setup
+
+To get started locally, we've got a [guide to help you](https://formbricks.com/docs/contributing/setup).
+
+#### Gitpod Setup
+
+1. Click the button below to open this project in Gitpod.
+
+2. This will open a fully configured workspace in your browser with all the necessary dependencies already installed.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
 
 ## ✍️ Contribution
 

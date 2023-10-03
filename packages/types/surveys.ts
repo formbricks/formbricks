@@ -12,6 +12,19 @@ export interface SurveyClosedMessage {
   subheading?: string;
 }
 
+export interface VerifyEmail {
+  name?: string;
+  subheading?: string;
+}
+
+export interface SurveyProductOverwrites {
+  brandColor: string;
+  highlightBorderColor: string | null;
+  placement: PlacementType;
+  clickOutside: boolean;
+  darkOverlay: boolean;
+}
+
 export interface Survey {
   id: string;
   createdAt: string;
@@ -20,7 +33,7 @@ export interface Survey {
   redirectUrl: string | null;
   type: "web" | "email" | "link" | "mobile";
   environmentId: string;
-  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  status: "draft" | "inProgress" | "paused" | "completed";
   recontactDays: number | null;
   questions: Question[];
   thankYouCard: ThankYouCard;
@@ -33,14 +46,10 @@ export interface Survey {
   delay: number;
   autoComplete: number | null;
   surveyClosedMessage: SurveyClosedMessage | null;
+  verifyEmail: VerifyEmail | null;
   closeOnDate: Date | null;
   _count: { responses: number | null } | null;
-  brandColor: string | null;
-  highlightBorderColor: string | null;
-  overwriteBorderHighlight: boolean;
-  placement: PlacementType | null;
-  clickOutsideClose: boolean | null;
-  darkOverlay: boolean | null;
+  productOverwrites: SurveyProductOverwrites | null;
 }
 
 export interface AttributeFilter {
@@ -57,6 +66,6 @@ export interface SurveyNotificationData {
   responseCompletedLength: number;
   latestResponse: any;
   questions: Question[];
-  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  status: "draft" | "inProgress" | "paused" | "completed";
   name: String;
 }

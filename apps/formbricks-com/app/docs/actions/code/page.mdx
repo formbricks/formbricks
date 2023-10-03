@@ -1,0 +1,33 @@
+export const meta = {
+  title: "Implementing Code Actions in Formbricks | Real-time User Action Tracking",
+  description:
+    "Dive into the world of Formbricks' code actions. Learn how to seamlessly integrate formbricks.track() method into your codebase, enabling real-time tracking of user actions like button clicks, visiting a specfic URL. Up your survey game with precise and exact triggers.",
+};
+
+#### Actions
+
+# Code Actions
+
+Actions can also be set in the code base. You can fire an action using `formbricks.track()`
+
+<CodeGroup title="Track an action">
+
+```javascript
+formbricks.track("Action Name");
+```
+
+</CodeGroup>
+
+Here is an example of how to fire an action when a user clicks a button:
+
+<CodeGroup title="Track Button Click">
+
+```javascript
+const handleClick = () => {
+  formbricks.track("Button Clicked");
+};
+
+return <button onClick={handleClick}>Click Me</button>;
+```
+
+</CodeGroup>

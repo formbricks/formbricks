@@ -250,7 +250,7 @@ export default function Header() {
           </Link>
  */}
           <Link
-            href="https://formbricks.com/#pricing"
+            href="/pricing"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Pricing
           </Link>
@@ -267,7 +267,7 @@ export default function Header() {
           {/*           <Link
             href="/careers"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">2</p>
+            Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link> */}
 
           <Link

@@ -2,14 +2,15 @@
 
 import ActivityFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivityFeed";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
 export default function ActivityTimeline({
-  environmentId,
+  environment,
   activities,
 }: {
-  environmentId: string;
+  environment: TEnvironment;
   activities: TActivityFeedItem[];
 }) {
   const [activityAscending, setActivityAscending] = useState(true);
@@ -30,7 +31,7 @@ export default function ActivityTimeline({
         </div>
       </div>
 
-      <ActivityFeed activities={activities} sortByDate={activityAscending} environmentId={environmentId} />
+      <ActivityFeed activities={activities} sortByDate={activityAscending} environment={environment} />
     </>
   );
 }

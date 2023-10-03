@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { verifyToken } from "@/lib/jwt";
+import { verifyToken } from "@formbricks/lib/jwt";
 import { NextResponse } from "next/server";
 import { sendPasswordResetNotifyEmail } from "@/lib/email";
 
