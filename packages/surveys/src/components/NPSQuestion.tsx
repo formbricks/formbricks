@@ -39,12 +39,18 @@ export default function NPSQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="flex">
-            {Array.from({ length: 11 }, (_, i) => i).map((number) => (
+            {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => (
               <label
                 key={number}
+                tabIndex={idx + 1}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    onSubmit({ [question.id]: number });
+                  }
+                }}
                 className={cn(
                   value === number ? "z-10 border-slate-400 bg-slate-50" : "",
-                  "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm leading-10 text-slate-800 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:outline-none"
+                  "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm leading-10 text-slate-800 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
                 )}>
                 <input
                   type="radio"
@@ -76,6 +82,7 @@ export default function NPSQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
+            tabIndex={question.required ? 12 : 13}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
               onBack();
@@ -85,6 +92,7 @@ export default function NPSQuestion({
         <div></div>
         {!question.required && (
           <SubmitButton
+            tabIndex={12}
             question={question}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
