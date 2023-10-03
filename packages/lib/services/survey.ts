@@ -51,6 +51,7 @@ export const selectSurvey = {
   redirectUrl: true,
   productOverwrites: true,
   surveyClosedMessage: true,
+  singleUse: true,
   triggers: {
     select: {
       eventClass: {

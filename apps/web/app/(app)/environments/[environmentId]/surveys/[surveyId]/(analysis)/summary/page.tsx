@@ -9,16 +9,28 @@ import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
+import { generateSurveySingleUseId } from "@/lib/singleUseSurveys";
+
+const generateSingleUseIds = (isEncrypted: boolean) => {
+  return Array(5)
+    .fill(null)
+    .map(() => {
+      return generateSurveySingleUseId(isEncrypted);
+    });
+};
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
   }
+
   const [{ responses, survey }, environment] = await Promise.all([
     getAnalysisData(params.surveyId, params.environmentId),
     getEnvironment(params.environmentId),
   ]);
+  const isSingleUseSurvey = survey.singleUse?.enabled ?? false;
+  const singleUseIds = generateSingleUseIds(survey.singleUse?.isEncrypted ?? false);
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -38,6 +50,7 @@ export default async function Page({ params }) {
         survey={survey}
         surveyId={params.surveyId}
         surveyBaseUrl={SURVEY_BASE_URL}
+        singleUseIds={isSingleUseSurvey ? singleUseIds : undefined}
         product={product}
         environmentTags={tags}
       />

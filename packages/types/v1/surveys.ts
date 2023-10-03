@@ -28,6 +28,17 @@ export const ZSurveyClosedMessage = z
   .nullable()
   .optional();
 
+export const ZSurveySingleUse = z
+  .object({
+    enabled: z.boolean(),
+    heading: z.optional(z.string()),
+    subheading: z.optional(z.string()),
+    isEncrypted: z.boolean(),
+  })
+  .nullable();
+
+export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
+
 export const ZSurveyVerifyEmail = z
   .object({
     name: z.optional(z.string()),
@@ -271,6 +282,7 @@ export const ZSurvey = z.object({
   closeOnDate: z.date().nullable(),
   productOverwrites: ZSurveyProductOverwrites.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+  singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 

@@ -12,6 +12,12 @@ export interface SurveyClosedMessage {
   subheading?: string;
 }
 
+export interface SurveySingleUse {
+  enabled: boolean;
+  heading?: string;
+  subheading?: string;
+}
+
 export interface VerifyEmail {
   name?: string;
   subheading?: string;
@@ -48,6 +54,7 @@ export interface Survey {
   surveyClosedMessage: SurveyClosedMessage | null;
   verifyEmail: VerifyEmail | null;
   closeOnDate: Date | null;
+  singleUse: SurveySingleUse | null;
   _count: { responses: number | null } | null;
   productOverwrites: SurveyProductOverwrites | null;
 }
