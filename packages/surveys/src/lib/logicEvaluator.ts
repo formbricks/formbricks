@@ -5,7 +5,7 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
     case "equals":
       return (
         (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
-        responseValue.toString() === logic.value
+        responseValue?.toString() === logic.value
       );
     case "notEquals":
       return responseValue !== logic.value;
