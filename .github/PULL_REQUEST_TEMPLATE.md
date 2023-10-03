@@ -34,7 +34,7 @@ Fixes # (issue)
 ### Required
 
 - [ ] Filled out the "How to test" section in this PR
-- [ ] Read [How we Code at Formbricks]([https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md](https://formbricks.com/docs/contributing/how-we-code))
+- [ ] Read [How we Code at Formbricks](<[https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md](https://formbricks.com/docs/contributing/how-we-code)>)
 - [ ] Self-reviewed my own code
 - [ ] Commented on my code in hard-to-understand bits
 - [ ] Ran `pnpm build`
@@ -43,8 +43,7 @@ Fixes # (issue)
 - [ ] Merged the latest changes from main onto my branch with `git pull origin main`
 - [ ] My changes don't cause any responsiveness issues
 
-### Optional
+### Appreciated
 
-- [ ] Added a screen recording or screenshots to this PR if a UI change was made
+- [ ] If a UI change was made: Added a screen recording or screenshots to this PR
 - [ ] Updated the Formbricks Docs if changes were necessary
-
