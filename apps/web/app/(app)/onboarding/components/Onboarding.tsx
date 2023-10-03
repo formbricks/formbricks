@@ -54,7 +54,7 @@ export default function Onboarding({ session, environmentId, profile, product }:
 
     try {
       const updatedProfile = { ...profile, onboardingCompleted: true };
-      await updateProfileAction(profile.id, updatedProfile);
+      await updateProfileAction(updatedProfile);
 
       if (environmentId) {
         router.push(`/environments/${environmentId}/surveys`);

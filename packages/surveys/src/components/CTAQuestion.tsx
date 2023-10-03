@@ -26,7 +26,7 @@ export default function CTAQuestion({
 }: CTAQuestionProps) {
   return (
     <div>
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-between">

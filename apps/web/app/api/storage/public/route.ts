@@ -4,8 +4,8 @@ import { env } from "@/env.mjs";
 import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/services/storage";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 // api endpoint for uploading public files
 // uploaded files will be public, anyone can access the file
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     return responses.notAuthenticatedResponse();
   }
 
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user, environmentId);
+  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
 
   if (!isUserAuthorized) {
     return responses.unauthorizedResponse();

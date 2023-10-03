@@ -38,7 +38,7 @@ export default function ThankYouCard({
       <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-slate-300"></span>
 
       <div>
-        <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />
+        <Headline headline={headline} questionId="thankYouCard" style={{ "justify-content": "center" }} />
         <Subheader subheader={subheader} questionId="thankYouCard" />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
       </div>

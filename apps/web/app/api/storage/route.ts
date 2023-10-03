@@ -1,5 +1,4 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/services/storage";
@@ -8,6 +7,7 @@ import { env } from "@/env.mjs";
 import { ZFileName } from "@formbricks/types/v1/storage";
 import { responses } from "@/lib/api/response";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
     return responses.notAuthenticatedResponse();
   }
 
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user, environmentId);
+  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
 
   if (!isUserAuthorized) {
     return responses.unauthorizedResponse();
