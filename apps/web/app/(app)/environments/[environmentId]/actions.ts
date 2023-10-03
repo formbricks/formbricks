@@ -21,8 +21,6 @@ export async function createTeamAction(teamName: string): Promise<Team> {
 
   const newTeam = await createTeam({
     name: teamName,
-    plan: "free",
-    stripeCustomerId: null,
   });
 
   await createMembership(newTeam.id, session.user.id, {
