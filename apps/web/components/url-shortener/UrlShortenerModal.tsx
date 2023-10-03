@@ -17,7 +17,7 @@ type UrlShortenerFormDataProps = {
 };
 type UrlValidationState = "default" | "valid" | "invalid";
 
-const defaultShortUrl = "https://formbricks.com/s/...";
+const defaultShortUrl = "https://formbricks.com/i/...";
 
 export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlShortenerModalProps) {
   const linkTextRef = useRef(null);
@@ -111,7 +111,7 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
             <div className="grid grid-cols-6 gap-3">
               <Input
                 autoFocus
-                placeholder="https://formbricks.com/c..."
+                placeholder="https://formbricks.com/s/..."
                 className={clsx(
                   "col-span-5",
                   urlValidationState === "valid"
