@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError, DatabaseError } from "@formbricks/types/v1/errors";
+import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
 import { TMember, TMembership, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
@@ -130,6 +130,7 @@ export const transferOwnership = async (currentOwnerId: string, newOwnerId: stri
       throw new DatabaseError("Database operation failed");
     }
 
-    throw error;
+    const message = error instanceof Error ? error.message : "";
+    throw new UnknownError(`Error while transfering ownership: ${message}`);
   }
 };
