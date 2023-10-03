@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
 import { TProduct } from "@formbricks/types/v1/product";
+import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SummaryMetadataProps {
@@ -14,6 +15,7 @@ interface SummaryMetadataProps {
   survey: TSurvey;
   surveyBaseUrl: string;
   product: TProduct;
+  singleUseIds?: string[];
 }
 
 export default function SuccessMessage({
@@ -21,7 +23,10 @@ export default function SuccessMessage({
   survey,
   surveyBaseUrl,
   product,
+  singleUseIds,
 }: SummaryMetadataProps) {
+  const isSingleUse = survey.singleUse?.enabled ?? false;
+
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -52,7 +57,14 @@ export default function SuccessMessage({
 
   return (
     <>
-      {showLinkModal && (
+      {showLinkModal && isSingleUse && singleUseIds ? (
+        <LinkSingleUseSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          singleUseIds={singleUseIds}
+        />
+      ) : (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}

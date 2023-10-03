@@ -31,8 +31,16 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   surveyBaseUrl: string;
   product: TProduct;
+  singleUseIds?: string[];
 }
-const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }: SummaryHeaderProps) => {
+const SummaryHeader = ({
+  surveyId,
+  environment,
+  survey,
+  surveyBaseUrl,
+  product,
+  singleUseIds,
+}: SummaryHeaderProps) => {
   const router = useRouter();
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
@@ -47,7 +55,12 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && (
-          <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} product={product} />
+          <LinkSurveyShareButton
+            survey={survey}
+            surveyBaseUrl={surveyBaseUrl}
+            singleUseIds={singleUseIds}
+            product={product}
+          />
         )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
@@ -75,6 +88,7 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
                   product={product}
+                  singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -157,6 +171,7 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
         survey={survey}
         surveyBaseUrl={surveyBaseUrl}
         product={product}
+        singleUseIds={singleUseIds}
       />
     </div>
   );

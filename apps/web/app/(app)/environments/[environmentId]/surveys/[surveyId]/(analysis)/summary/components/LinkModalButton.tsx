@@ -7,12 +7,14 @@ import { useState } from "react";
 import clsx from "clsx";
 import { TProduct } from "@formbricks/types/v1/product";
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
+import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   surveyBaseUrl: string;
   product: TProduct;
+  singleUseIds?: string[];
 }
 
 export default function LinkSurveyShareButton({
@@ -20,8 +22,10 @@ export default function LinkSurveyShareButton({
   className,
   surveyBaseUrl,
   product,
+  singleUseIds,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const isSingleUse = survey.singleUse?.enabled ?? false;
 
   return (
     <>
@@ -34,8 +38,14 @@ export default function LinkSurveyShareButton({
         onClick={() => setShowLinkModal(true)}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-
-      {showLinkModal && (
+      {showLinkModal && isSingleUse && singleUseIds ? (
+        <LinkSingleUseSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          singleUseIds={singleUseIds}
+        />
+      ) : (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}

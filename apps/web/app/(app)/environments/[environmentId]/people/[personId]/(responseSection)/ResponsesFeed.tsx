@@ -3,6 +3,7 @@ import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { TResponseWithSurvey } from "@formbricks/types/v1/responses";
 import Link from "next/link";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 
 export default function ResponseFeed({
@@ -63,6 +64,7 @@ export default function ResponseFeed({
                             />
                           </div>
                         </div>
+
                         <div className="mt-3 space-y-3">
                           {response.survey.questions.map((question) => (
                             <div key={question.id}>
@@ -74,6 +76,18 @@ export default function ResponseFeed({
                               </p>
                             </div>
                           ))}
+                        </div>
+                        <div className="flex w-full justify-end">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <p className="text-sm text-slate-500">{response.singleUseId}</p>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-sm text-slate-500">Single Use Id</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </div>
                     </div>
