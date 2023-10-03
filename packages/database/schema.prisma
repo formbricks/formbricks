@@ -114,9 +114,9 @@ model Response {
   /// [ResponsePersonAttributes]
   personAttributes Json?
   // singleUseId, used to prevent multiple responses
-  suId             String?
+  singleUseId      String?
 
-  @@unique([surveyId, suId])
+  @@unique([surveyId, singleUseId])
 }
 
 model ResponseNote {

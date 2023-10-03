@@ -1,7 +1,6 @@
 "use client";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import { deleteSubmission } from "@/lib/responses/responses";
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
@@ -17,6 +16,8 @@ import toast from "react-hot-toast";
 import ResponseNote from "./ResponseNote";
 import ResponseTagsWrapper from "./ResponseTagsWrapper";
 import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
+import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
+import { TTag } from "@formbricks/types/v1/tags";
 
 export interface OpenTextSummaryProps {
   environmentId: string;
@@ -31,6 +32,7 @@ export interface OpenTextSummaryProps {
       range?: number;
     }[];
   };
+  environmentTags: TTag[];
 }
 
 function findEmail(person) {
@@ -59,7 +61,12 @@ function TooltipRenderer(props: TooltipRendererProps) {
   return <>{children}</>;
 }
 
-export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
+export default function SingleResponse({
+  data,
+  environmentId,
+  surveyId,
+  environmentTags,
+}: OpenTextSummaryProps) {
   const router = useRouter();
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || (data.person && truncate(data.person.id, 16)) || null;
@@ -69,9 +76,9 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
-    const deleteResponse = await deleteSubmission(environmentId, data?.surveyId, data?.id);
+    const deleteResponseStatus = await deleteResponseAction(data?.id);
     router.refresh();
-    if (deleteResponse?.id?.length > 0) toast.success("Submission deleted successfully.");
+    if (deleteResponseStatus) toast.success("Submission deleted successfully.");
     setDeleteDialogOpen(false);
     setIsDeleting(false);
   };
@@ -140,9 +147,9 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
             )}
 
             <div className="flex space-x-4 text-sm">
-              {data.suId && (
+              {data.singleUseId && (
                 <span className="flex items-center rounded-full bg-slate-100 px-3 text-slate-600">
-                  {data.suId}
+                  {data.singleUseId}
                 </span>
               )}
               {data.finished && (
@@ -187,10 +194,10 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
 
         <ResponseTagsWrapper
           environmentId={environmentId}
-          surveyId={surveyId}
           responseId={data.id}
           tags={data.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
           key={data.tags.map((tag) => tag.id).join("-")}
+          environmentTags={environmentTags}
         />
 
         <DeleteDialog

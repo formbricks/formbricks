@@ -2,6 +2,7 @@ import { TResponseUpdate } from "@formbricks/types/v1/responses";
 
 export class SurveyState {
   responseId: string | null = null;
+  displayId: string | null = null;
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {} };
   singleUseId: string | null;
@@ -40,6 +41,14 @@ export class SurveyState {
    */
   updateResponseId(id: string) {
     this.responseId = id;
+  }
+
+  /**
+   * Update the response ID after a successful response creation
+   * @param id - The response ID
+   */
+  updateDisplayId(id: string) {
+    this.displayId = id;
   }
 
   /**

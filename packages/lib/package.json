@@ -16,16 +16,17 @@
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
     "date-fns": "^2.30.0",
-    "jsonwebtoken": "^9.0.1",
-    "markdown-it": "^13.0.1",
-    "nodemailer": "^6.9.4",
+    "next-auth": "^4.22.3",
+    "jsonwebtoken": "^9.0.2",
+    "markdown-it": "^13.0.2",
+    "nodemailer": "^6.9.5",
     "posthog-node": "^3.1.2",
     "server-only": "^0.0.1",
     "tailwind-merge": "^1.14.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
-    "@types/jsonwebtoken": "^9.0.2",
+    "@types/jsonwebtoken": "^9.0.3",
     "eslint-config-formbricks": "workspace:*"
   }
 }

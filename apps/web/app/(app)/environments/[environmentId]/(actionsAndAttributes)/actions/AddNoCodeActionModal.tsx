@@ -7,7 +7,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
-import { createActionClass } from "@formbricks/lib/services/actionClass";
 import {
   TActionClassInput,
   TActionClassNoCodeConfig,
@@ -16,6 +15,7 @@ import {
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/CssSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/InnerHtmlSelector";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface AddNoCodeActionModalProps {
   environmentId: string;
@@ -79,11 +79,12 @@ export default function AddNoCodeActionModal({
       const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
       const updatedData: TActionClassInput = {
         ...data,
+        environmentId,
         noCodeConfig: filteredNoCodeConfig,
         type: "noCode",
       } as TActionClassInput;
 
-      const newActionClass: TActionClass = await createActionClass(environmentId, updatedData);
+      const newActionClass: TActionClass = await createActionClassAction(updatedData);
       if (setActionClassArray) {
         setActionClassArray((prevActionClassArray: TActionClass[]) => [
           ...prevActionClassArray,

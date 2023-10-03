@@ -12,23 +12,30 @@ import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TTag } from "@formbricks/types/v1/tags";
 
 interface SummaryPageProps {
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurveyWithAnalytics;
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
   singleUseIds?: string[];
+  product: TProduct;
+  environmentTags: TTag[];
 }
 
 const SummaryPage = ({
-  environmentId,
+  environment,
   survey,
   surveyId,
   responses,
   surveyBaseUrl,
   singleUseIds,
+  product,
+  environmentTags,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const searchParams = useSearchParams();
@@ -38,6 +45,7 @@ const SummaryPage = ({
       resetState();
     }
   }, [searchParams]);
+
   // get the filtered array when the selected filter value changes
   const filterResponses: TResponse[] = useMemo(() => {
     return getFilterResponses(responses, selectedFilter, survey, dateRange);
@@ -46,21 +54,22 @@ const SummaryPage = ({
   return (
     <ContentWrapper>
       <SummaryHeader
-        environmentId={environmentId}
+        environment={environment}
         survey={survey}
         surveyId={surveyId}
         surveyBaseUrl={surveyBaseUrl}
         singleUseIds={singleUseIds}
+        product={product}
       />
       <CustomFilter
-        environmentId={environmentId}
+        environmentTags={environmentTags}
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
       />
-      <SurveyResultsTabs activeId="summary" environmentId={environmentId} surveyId={surveyId} />
+      <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
       <SummaryMetadata responses={filterResponses} survey={survey} />
-      <SummaryList responses={filterResponses} survey={survey} environmentId={environmentId} />
+      <SummaryList responses={filterResponses} survey={survey} environment={environment} />
     </ContentWrapper>
   );
 };

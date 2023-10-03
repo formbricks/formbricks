@@ -1,7 +1,6 @@
 "use client";
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
-import { env } from "@/env.mjs";
 import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
@@ -10,7 +9,17 @@ import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 
-export const SigninForm = () => {
+export const SigninForm = ({
+  publicSignUpEnabled,
+  passwordResetEnabled,
+  googleOAuthEnabled,
+  githubOAuthEnabled,
+}: {
+  publicSignUpEnabled: boolean;
+  passwordResetEnabled: boolean;
+  googleOAuthEnabled: boolean;
+  githubOAuthEnabled: boolean;
+}) => {
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -79,7 +88,7 @@ export const SigninForm = () => {
                     className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                   />
                 </div>
-                {env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
+                {passwordResetEnabled && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -109,18 +118,18 @@ export const SigninForm = () => {
             </Button>
           </form>
 
-          {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
+          {googleOAuthEnabled && (
             <>
               <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
-          {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          {githubOAuthEnabled && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>
-        {env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
+        {publicSignUpEnabled && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />

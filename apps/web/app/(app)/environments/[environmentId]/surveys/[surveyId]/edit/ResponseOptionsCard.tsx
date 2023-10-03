@@ -207,7 +207,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       setCloseOnDate(localSurvey.closeOnDate);
       setSurveyCloseOnDateToggle(true);
     }
-  }, []);
+  }, [localSurvey]);
 
   const handleCheckMark = () => {
     if (autoComplete) {
