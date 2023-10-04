@@ -37,6 +37,7 @@ export const ZAirTableConfigData = z
   .object({
     tableId: z.string(),
     baseId: z.string(),
+    tableName: z.string(),
   })
   .merge(ZBaseSurveyData);
 
