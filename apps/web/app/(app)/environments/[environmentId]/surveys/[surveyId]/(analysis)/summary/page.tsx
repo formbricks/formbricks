@@ -30,7 +30,12 @@ export default async function Page({ params }) {
     getEnvironment(params.environmentId),
   ]);
   const isSingleUseSurvey = survey.singleUse?.enabled ?? false;
-  const singleUseIds = generateSingleUseIds(survey.singleUse?.isEncrypted ?? false);
+
+  let singleUseIds: string[] | undefined = undefined;
+  if (isSingleUseSurvey) {
+    singleUseIds = generateSingleUseIds(survey.singleUse?.isEncrypted ?? false);
+  }
+
   if (!environment) {
     throw new Error("Environment not found");
   }
