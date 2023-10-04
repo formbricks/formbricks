@@ -83,6 +83,7 @@ export default function MultipleChoiceSingleQuestion({
                 )}>
                 <span className="flex items-center text-sm">
                   <input
+                    tabIndex={-1}
                     type="radio"
                     id={choice.id}
                     name={question.id}
