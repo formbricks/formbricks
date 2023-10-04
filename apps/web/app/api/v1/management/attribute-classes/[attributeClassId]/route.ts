@@ -5,7 +5,7 @@ import {
   deleteAttributeClass,
   getAttributeClass,
   updatetAttributeClass,
-} from "@formbricks/lib/services/attributeClass";
+} from "@formbricks/lib/attributeClass/service";
 import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/v1/attributeClasses";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { authenticateRequest } from "@/app/api/v1/auth";
