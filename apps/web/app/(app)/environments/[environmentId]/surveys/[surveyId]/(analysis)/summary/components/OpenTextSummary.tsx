@@ -1,4 +1,4 @@
-import { getPersonIdentifier } from "@formbricks/lib/helpers/people";
+import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { timeSince } from "@formbricks/lib/time";
 import type { QuestionSummary } from "@formbricks/types/responses";

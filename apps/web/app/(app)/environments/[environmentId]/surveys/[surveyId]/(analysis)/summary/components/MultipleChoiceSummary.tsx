@@ -4,7 +4,7 @@ import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
-import { getPersonIdentifier } from "@formbricks/lib/helpers/people";
+import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
