@@ -6,7 +6,7 @@ import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getAttributeClasses } from "@formbricks/lib/services/attributeClass";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { ErrorComponent } from "@formbricks/ui";
 
 export default async function SurveysEditPage({ params }) {
