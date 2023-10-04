@@ -258,7 +258,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Gitpod", href: "/docs/contributing/gitpod" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
-      { title: "FaQ", href: "/docs/faq" },
+      { title: "FAQ", href: "/docs/faq" },
     ],
   },
   {

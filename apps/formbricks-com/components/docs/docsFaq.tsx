@@ -52,7 +52,7 @@ export const faqJsonLdData = FAQ_DATA.map((faq) => ({
   acceptedAnswerText: faq.answer(),
 }));
 
-export default function FaQ() {
+export default function FAQ() {
   return (
     <>
       <FaqJsonLdComponent data={faqJsonLdData} />
