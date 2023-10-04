@@ -3,13 +3,18 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TIntegration } from "@formbricks/types/v1/integrations";
+import {
+  TIntegration,
+  TGoogleSheetIntegration,
+  TAirTableIntegration,
+} from "@formbricks/types/v1/integrations";
 import { cache } from "react";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
   integrationData: any
 ): Promise<TIntegration> {
+  const { environmentId: _, ...rest } = integrationData;
   try {
     const integration = await prisma.integration.upsert({
       where: {
@@ -19,11 +24,11 @@ export async function createOrUpdateIntegration(
         },
       },
       update: {
-        ...integrationData,
+        ...rest,
         environment: { connect: { id: environmentId } },
       },
       create: {
-        ...integrationData,
+        ...rest,
         environment: { connect: { id: environmentId } },
       },
     });
