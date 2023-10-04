@@ -2,9 +2,11 @@
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { prisma } from "@formbricks/database";
+import { SHORT_SURVEY_BASE_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createMembership } from "@formbricks/lib/services/membership";
 import { createProduct } from "@formbricks/lib/services/product";
+import { createShortUrl } from "@formbricks/lib/services/shortUrl";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
@@ -12,8 +14,6 @@ import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { getServerSession } from "next-auth";
-import { createShortUrl, getShortUrl } from "@formbricks/lib/services/shortUrl";
-import { SHORT_SURVEY_BASE_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 
 export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
@@ -27,11 +27,6 @@ export const createShortUrlAction = async (url: string) => {
   const shortUrl = await createShortUrl(url);
   const fullShortUrl = SHORT_SURVEY_BASE_URL + shortUrl.id;
   return fullShortUrl;
-};
-
-export const getFullUrlAction = async (shortUrlId: string) => {
-  const shortUrl = await getShortUrl(shortUrlId);
-  return shortUrl.url;
 };
 
 export async function createTeamAction(teamName: string): Promise<Team> {

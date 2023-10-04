@@ -1,10 +1,10 @@
 import Modal from "@/components/shared/Modal";
 import { Button, Input, Label } from "@formbricks/ui";
 import { LinkIcon } from "@heroicons/react/24/outline";
-import { useRef, useState } from "react";
+import clsx from "clsx";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import clsx from "clsx";
 import { createShortUrlAction } from "../actions";
 
 type UrlShortenerModalProps = {
@@ -17,18 +17,14 @@ type UrlShortenerFormDataProps = {
 };
 type UrlValidationState = "default" | "valid" | "invalid";
 
-const defaultShortUrl = "https://formbricks.com/i/...";
-
 export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlShortenerModalProps) {
-  const linkTextRef = useRef(null);
   const [urlValidationState, setUrlValidationState] = useState<UrlValidationState>("default");
-  const [shortUrl, setShortUrl] = useState(defaultShortUrl);
+  const [shortUrl, setShortUrl] = useState("");
   const {
     register,
     handleSubmit,
     watch,
     formState: { isSubmitting },
-    reset,
   } = useForm<UrlShortenerFormDataProps>({
     mode: "onSubmit",
     defaultValues: {
@@ -47,7 +43,6 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
     const isValid = regexPattern.test(value);
     if (!isValid) {
       setUrlValidationState("invalid");
-      setShortUrl(defaultShortUrl);
       toast.error("Only formbricks survey links allowed.");
     } else {
       setUrlValidationState("valid");
@@ -61,23 +56,14 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
     setShortUrl(shortUrl);
   };
 
-  const handleTextSelection = () => {
-    if (linkTextRef.current) {
-      const range = document.createRange();
-      range.selectNodeContents(linkTextRef.current);
-
-      const selection = window.getSelection();
-      if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    }
-  };
-
   const resetForm = () => {
     setUrlValidationState("default");
-    setShortUrl(defaultShortUrl);
-    reset();
+    setShortUrl("");
+  };
+
+  const copyShortUrlToClipboard = () => {
+    navigator.clipboard.writeText(shortUrl);
+    toast.success("URL copied to clipboard!");
   };
 
   return (
@@ -111,7 +97,7 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
             <div className="grid grid-cols-6 gap-3">
               <Input
                 autoFocus
-                placeholder="https://formbricks.com/s/..."
+                placeholder={`${surveyBaseUrl}...`}
                 className={clsx(
                   "col-span-5",
                   urlValidationState === "valid"
@@ -141,21 +127,21 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
         <div className="grid w-full space-y-2 rounded-lg px-6 py-4">
           <Label>Short URL</Label>
           <div className="grid grid-cols-6 gap-3">
-            <div
-              ref={linkTextRef}
-              className="col-span-5 w-full overflow-auto rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-800"
-              onClick={() => handleTextSelection()}>
-              <span className="break-all">{shortUrl}</span>
-            </div>
+            <span
+              className="col-span-5 cursor-pointer rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700"
+              onClick={() => {
+                if (shortUrl) {
+                  copyShortUrlToClipboard();
+                }
+              }}>
+              {shortUrl}
+            </span>
             <Button
               variant="secondary"
               size="sm"
-              className="col-span-1 flex items-center justify-center"
-              type="submit"
-              onClick={() => {
-                navigator.clipboard.writeText(shortUrl);
-                toast.success("URL copied to clipboard!");
-              }}>
+              className="col-span-1 justify-center"
+              type="button"
+              onClick={() => copyShortUrlToClipboard()}>
               <span>Copy</span>
             </Button>
           </div>
