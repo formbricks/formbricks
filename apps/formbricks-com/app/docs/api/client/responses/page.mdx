@@ -14,104 +14,6 @@ The Public Client API is designed for the JavaScript SDK and does not require au
 
 ---
 
-## List all responses {{ tag: 'GET', label: '/api/v1/management/responses' }}
-
-<Row>
-  <Col>
-
-    Retrieve all the responses you have received for all your surveys.
-
-    ### Mandatory Headers
-
-    <Properties>
-      <Property name="x-Api-Key" type="string">
-        Your Formbricks API key.
-      </Property>
-    </Properties>
-
-    ### Optional Query Params
-    <Properties>
-      <Property name="surveyId" type="string">
-        SurveyId to filter responses by.
-      </Property>
-    </Properties>
-
-  </Col>
-  <Col sticky>
-
-    <CodeGroup title="Request" tag="GET" label="/api/v1/management/responses">
-
-    ```bash {{ title: 'cURL' }}
-    curl --location \
-    'https://app.formbricks.com/api/v1/management/responses' \
-    --header \
-    'x-api-key: <your-api-key>'
-    ```
-
-    </CodeGroup>
-
-    <CodeGroup title="Response">
-
-    ```json {{title:'200 Success'}}
-    {
-      "data":[
-        {
-          "id":"cllnfybxd051rpl0gieavthr9",
-          "createdAt":"2023-08-23T07:56:33.121Z",
-          "updatedAt":"2023-08-23T07:56:41.793Z",
-          "surveyId":"cllnfy2780fromy0hy7uoxvtn",
-          "finished":true,
-          "data":{
-              "ec7agikkr58j8uonhioinkyk":"Loved it!",
-              "gml6mgy71efgtq8np3s9je5p":"clicked",
-              "klvpwd4x08x8quesihvw5l92":"Product Manager",
-              "kp62fbqe8cfzmvy8qwpr81b2":"Very disappointed",
-              "lkjaxb73ulydzeumhd51sx9g":"Not interesed.",
-              "ryo75306flyg72iaeditbv51":"Would love if it had dark theme."
-          },
-          "meta":{
-              "url":"https://app.formbricks.com/s/cllnfy2780fromy0hy7uoxvtn",
-              "userAgent":{
-                "os":"Linux",
-                "browser":"Chrome"
-              }
-          },
-          "personAttributes":null,
-          "person":null,
-          "notes":[],
-          "tags":[]
-        }
-      ]
-    }
-    ```
-
-    ```json {{ title: '404 Not Found' }}
-    {
-      "code": "not_found",
-      "message": "cllnfy2780fromy0hy7uoxvt not found",
-      "details": {
-        "resource_id": "survey",
-        "resource_type": "cllnfy2780fromy0hy7uoxvt"
-      }
-    }
-    ```
-
-    ```json {{ title: '401 Not Authenticated' }}
-    {
-      "code": "not_authenticated",
-      "message": "Not authenticated",
-      "details": {
-        "x-Api-Key": "Header not provided or API Key invalid"
-        }
-    }
-    ```
-    </CodeGroup>
-
-  </Col>
-</Row>
-
----
-
 ## Create a response {{ tag: 'POST', label: '/api/v1/client/responses' }}
 
 Add a new response to a survey.
@@ -222,7 +124,7 @@ Add a new response to a survey.
 
 ---
 
-## Update a response {{ tag: 'POST', label: '/api/v1/client/responses/[responseId]' }}
+## Update a response {{ tag: 'POST', label: '/api/v1/client/responses/<response-id>' }}
 
 Update an existing response in a survey.
 
@@ -247,10 +149,10 @@ Update an existing response in a survey.
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/api/v1/client/responses/[responseId]">
+    <CodeGroup title="Request" tag="POST" label="/api/v1/client/responses/<response-id>">
 
     ```bash {{ title: 'cURL' }}
-    curl --location --request POST 'https://app.formbricks.com/api/v1/client/responses/[responseId]' \
+    curl --location --request POST 'https://app.formbricks.com/api/v1/client/responses/<response-id>' \
     --data-raw '{
       "personId": "clfqjny0v000ayzgsycx54a2c",
       "surveyId": "clfqz1esd0000yzah51trddn8",
