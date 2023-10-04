@@ -82,7 +82,7 @@ export default function NPSQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            tabIndex={question.required ? 12 : 13}
+            tabIndex={isLastQuestion ? 12 : 13}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
               onBack();
