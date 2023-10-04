@@ -4,7 +4,7 @@ version: "3.3"
 # docker compose --env-file /dev/null up
 
 # This should be the same as below if you are running via docker compose up
-x-webapp-url: &webapp_url http://formbricks:3000
+x-webapp-url: &webapp_url http://localhost:3000
 
 # PostgreSQL DB for Formbricks to connect to
 x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
@@ -35,8 +35,7 @@ x-smtp-password: &smtp_password
 # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
 x-email-verification-disabled: &email_verification_disabled 1
 
-
-# Set the below two values to your public-facing URL, e.g., https://example.com
+# Set the below value to your public-facing URL, e.g., https://example.com
 x-survey-base-url: &survey_base_url http://localhost:3000/s
 
 # Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
