@@ -50,6 +50,7 @@ const ZGoogleSheetsConfig = z.object({
 const ZAirTableConfig = z.object({
   key: z.string(),
   data: z.array(ZAirTableConfigData),
+  email: z.string(),
 });
 
 // Define a dynamic schema for config based on integration type

@@ -5,12 +5,12 @@ import { cache } from "react";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import * as z from "zod";
 
-export const connectAirtable = async (environmentId: string, key: string) => {
+export const connectAirtable = async (environmentId: string, key: string, email: string) => {
   const type: TAirTableIntegration["type"] = "airtable";
 
   const baseData: Pick<TAirTableIntegration, "type" | "config"> = {
     type,
-    config: { data: [], key },
+    config: { data: [], key, email },
   };
 
   await prisma.integration.upsert({

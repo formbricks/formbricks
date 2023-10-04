@@ -33,8 +33,18 @@ export async function POST(req: NextRequest) {
   });
 
   if (req_.ok) {
-    await connectAirtable(environmentId, data.data.key);
-    return NextResponse.json({ message: "successfully added Airtable integration" }, { status: 200 });
+    const res = await req_.json();
+    const email = z.string().safeParse(res?.email);
+
+    if (!email.success) {
+      return NextResponse.json(
+        { Error: "set user.email:read scope for the personal token" },
+        { status: 401 }
+      );
+    }
+
+    await connectAirtable(environmentId, data.data.key, email.data);
+    return NextResponse.json({ message: "successfully added airtable integration" }, { status: 200 });
   }
-  return NextResponse.json({ Error: "invalid key" }, { status: 401 });
+  return NextResponse.json({ Error: "invalid personal access token" }, { status: 401 });
 }
