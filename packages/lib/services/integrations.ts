@@ -3,11 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import {
-  TIntegration,
-  TGoogleSheetIntegration,
-  TAirTableIntegration,
-} from "@formbricks/types/v1/integrations";
+import { TIntegration } from "@formbricks/types/v1/integrations";
 import { cache } from "react";
 
 export async function createOrUpdateIntegration(
