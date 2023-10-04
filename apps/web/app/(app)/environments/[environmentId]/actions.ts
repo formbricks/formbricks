@@ -3,9 +3,9 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { prisma } from "@formbricks/database";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { createMembership } from "@formbricks/lib/services/membership";
-import { createProduct } from "@formbricks/lib/services/product";
-import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/services/team";
+import { createMembership } from "@formbricks/lib/membership/service";
+import { createProduct } from "@formbricks/lib/product/service";
+import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
@@ -78,6 +78,9 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
         : prismaClient.JsonNull,
       singleUse: existingSurvey.singleUse
         ? JSON.parse(JSON.stringify(existingSurvey.singleUse))
+        : prismaClient.JsonNull,
+      productOverwrites: existingSurvey.productOverwrites
+        ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
         : prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
@@ -228,6 +231,7 @@ export async function copyToOtherEnvironmentAction(
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
       singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
+      productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
     },
   });

@@ -51,6 +51,8 @@ export default function SurveyEditor({
     if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
       setActiveQuestionId(localSurvey.questions[0].id);
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
   if (!localSurvey) {

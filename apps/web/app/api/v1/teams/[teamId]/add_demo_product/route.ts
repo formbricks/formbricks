@@ -1,5 +1,5 @@
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
-import { createDemoProduct } from "@formbricks/lib/services/team";
+import { createDemoProduct } from "@formbricks/lib/team/service";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { responses } from "@/lib/api/response";

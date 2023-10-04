@@ -1,6 +1,6 @@
 "use server";
 
-import { updateEnvironment } from "@formbricks/lib/services/environment";
+import { updateEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment, TEnvironmentUpdateInput } from "@formbricks/types/v1/environment";
 
 export async function updateEnvironmentAction(
