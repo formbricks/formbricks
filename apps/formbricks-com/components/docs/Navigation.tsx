@@ -263,21 +263,21 @@ export const navigation: Array<NavGroup> = [
   {
     title: "Client API",
     links: [
-      { title: "Overview", href: "/docs/api/client-api/overview" },
-      { title: "Displays", href: "/docs/api/client-api/display" },
-      { title: "Responses", href: "/docs/api/client-api/responses" },
+      { title: "Overview", href: "/docs/api/client/overview" },
+      { title: "Displays", href: "/docs/api/client/displays" },
+      { title: "Responses", href: "/docs/api/client/responses" },
     ],
   },
   {
     title: "Management API",
     links: [
-      { title: "API Key Setup", href: "/docs/api/management-api/api-key-setup" },
-      { title: "Action Class", href: "/docs/api/management-api/action-classes" },
-      { title: "Attribute Class", href: "/docs/api/management-api/attribute-classes" },
-      { title: "Me", href: "/docs/api/management-api/me" },
-      { title: "People", href: "/docs/api/management-api/people" },
-      { title: "Surveys", href: "/docs/api/management-api/surveys" },
-      { title: "Webhook", href: "/docs/api/management-api/webhooks" },
+      { title: "API Key Setup", href: "/docs/api/management/api-key-setup" },
+      { title: "Action Classes", href: "/docs/api/management/action-classes" },
+      { title: "Attribute Classes", href: "/docs/api/management/attribute-classes" },
+      { title: "Me", href: "/docs/api/management/me" },
+      { title: "People", href: "/docs/api/management/people" },
+      { title: "Surveys", href: "/docs/api/management/surveys" },
+      { title: "Webhooks", href: "/docs/api/management/webhooks" },
     ],
   },
 ];
