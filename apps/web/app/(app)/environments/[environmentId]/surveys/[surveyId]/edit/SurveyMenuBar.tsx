@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
-import { deleteSurveyAction, surveyMutateAction } from "./actions";
+import { deleteSurveyAction, updateSurveyAction } from "./actions";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurveyWithAnalytics;
@@ -143,7 +143,7 @@ export default function SurveyMenuBar({
     }
 
     try {
-      await surveyMutateAction({ ...strippedSurvey });
+      await updateSurveyAction({ ...strippedSurvey });
       router.refresh();
       setIsMutatingSurvey(false);
       toast.success("Changes saved.");
@@ -242,7 +242,7 @@ export default function SurveyMenuBar({
                 if (!validateSurvey(localSurvey)) {
                   return;
                 }
-                await surveyMutateAction({ ...localSurvey, status: "inProgress" });
+                await updateSurveyAction({ ...localSurvey, status: "inProgress" });
                 router.refresh();
                 setIsMutatingSurvey(false);
                 router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);

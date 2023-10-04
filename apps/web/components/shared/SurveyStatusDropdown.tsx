@@ -1,6 +1,6 @@
 "use client";
 
-import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TSurvey } from "@formbricks/types/v1/surveys";
@@ -44,7 +44,7 @@ export default function SurveyStatusDropdown({
           disabled={isStatusChangeDisabled}
           onValueChange={(value) => {
             const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
-            surveyMutateAction({ ...survey, status: castedValue })
+            updateSurveyAction({ ...survey, status: castedValue })
               .then(() => {
                 toast.success(
                   value === "inProgress"

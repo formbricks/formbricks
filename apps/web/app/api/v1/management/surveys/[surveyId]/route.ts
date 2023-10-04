@@ -1,6 +1,6 @@
 import { responses } from "@/lib/api/response";
 import { NextResponse } from "next/server";
-import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/services/survey";
+import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey, ZSurveyInput } from "@formbricks/types/v1/surveys";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { authenticateRequest } from "@/app/api/v1/auth";
