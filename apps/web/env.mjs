@@ -9,7 +9,6 @@ export const env = createEnv({
   server: {
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
-    PRISMA_GENERATE_DATAPROXY: z.enum(["true", ""]).optional(),
     NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
@@ -81,7 +80,6 @@ export const env = createEnv({
   runtimeEnv: {
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
-    PRISMA_GENERATE_DATAPROXY: process.env.PRISMA_GENERATE_DATAPROXY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     MAIL_FROM: process.env.MAIL_FROM,

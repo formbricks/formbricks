@@ -161,12 +161,6 @@ x-environment: &environment
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
-    # Uncomment to enable a dedicated connection pool for Prisma using Prisma Data Proxy
-    # Cold boots will be faster and you'll be able to scale your DB independently of your app.
-    # @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
-    # PRISMA_GENERATE_DATAPROXY: true
-    PRISMA_GENERATE_DATAPROXY:
-
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: $(openssl rand -base64 32) to generate one

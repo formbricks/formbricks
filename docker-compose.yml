@@ -18,11 +18,6 @@ x-nextauth-secret: &nextauth_secret RANDOM_STRING
 # You do not need the NEXTAUTH_URL environment variable in Vercel.
 x-nextauth-url: &nextauth_url http://localhost:3000
 
-# Set it to true to enable a dedicated connection pool for Prisma using Prisma Data Proxy
-# Cold boots will be faster and you'll be able to scale your DB independently of your app.
-# @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
-x-prisma-generate-data-proxy: &prisma_generate_data_proxy
-
 # Necessary if email verification and password reset are enabled.
 # See further below if you want to disable these features.
 x-mail-from: &mail_from
@@ -34,7 +29,6 @@ x-smtp-user: &smtp_user
 x-smtp-password: &smtp_password
 
 # Set the below two values to your public-facing URL, e.g., https://example.com
-x-next-public-webapp-url: &next_public_webapp_url http://localhost:3000
 x-next-public-survey-base-url: &next_public_survey_base_url http://localhost:3000/s
 
 # Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.
@@ -88,7 +82,6 @@ services:
       context: .
       dockerfile: ./apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_WEBAPP_URL: *next_public_webapp_url
         NEXT_PUBLIC_SURVEY_BASE_URL: *next_public_survey_base_url
         NEXT_PUBLIC_PRIVACY_URL: *next_public_privacy_url
         NEXT_PUBLIC_TERMS_URL: *next_public_terms_url
@@ -121,7 +114,6 @@ services:
       DATABASE_URL: *database_url
       NEXTAUTH_SECRET: *nextauth_secret
       NEXTAUTH_URL: *nextauth_url
-      PRISMA_GENERATE_DATAPROXY: *prisma_generate_data_proxy
       MAIL_FROM: *mail_from
       SMTP_HOST: *smtp_host
       SMTP_PORT: *smtp_port
