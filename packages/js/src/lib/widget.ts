@@ -60,6 +60,7 @@ export const renderWidget = (survey: TSurvey) => {
           },
           config.get().apiHost
         );
+        displayId = id;
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
