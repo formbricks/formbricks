@@ -11,7 +11,7 @@ import {
   getActionCountInLast24Hours,
   getActionCountInLast7Days,
   getActionCountInLastHour,
-} from "@formbricks/lib/actions/service";
+} from "@formbricks/lib/action/service";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
 
