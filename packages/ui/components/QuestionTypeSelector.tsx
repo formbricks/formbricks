@@ -1,4 +1,11 @@
 import React from "react";
+import {
+  PhoneIcon,
+  LinkIcon,
+  EnvelopeIcon,
+  ChatBubbleBottomCenterTextIcon,
+  HashtagIcon,
+} from "@heroicons/react/24/solid";
 
 interface QuestionType {
   value: string;
@@ -11,24 +18,34 @@ interface QuestionTypeSelectorProps {
   handleTypeChange: (value: string) => void;
 }
 
+const typeIcons: { [key: string]: React.ReactNode } = {
+  text: <ChatBubbleBottomCenterTextIcon />,
+  email: <EnvelopeIcon />,
+  url: <LinkIcon />,
+  number: <HashtagIcon />,
+  phone: <PhoneIcon />,
+};
+
 export function QuestionTypeSelector({
   questionTypes,
   currentType,
   handleTypeChange,
 }: QuestionTypeSelectorProps): JSX.Element {
   return (
-    <div className="flex items-center rounded-md border p-2">
-      {questionTypes.map((type, index) => (
+    <div className="flex w-full items-center justify-between rounded-md border p-2">
+      {questionTypes.map((type) => (
         <div
           key={type.value}
           onClick={() => handleTypeChange(type.value)}
-          className={`mr-2 cursor-pointer rounded-md ${
+          className={`flex-grow cursor-pointer rounded-md bg-${
             (currentType === undefined && type.value === "text") || currentType === type.value
-              ? "bg-slate-100"
-              : "bg-white"
-          }`}
-          style={{ marginLeft: index !== 0 ? "8px" : "0" }}>
-          {type.label}
+              ? "slate-100"
+              : "white"
+          } p-2 text-center`}>
+          <div className="flex items-center justify-center">
+            <span className="mr-2">{type.label}</span>
+            <div className="h-4 w-4">{typeIcons[type.value]}</div>
+          </div>
         </div>
       ))}
     </div>

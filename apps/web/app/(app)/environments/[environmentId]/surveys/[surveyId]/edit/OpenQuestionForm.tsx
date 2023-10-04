@@ -4,11 +4,11 @@ import { Button, Input, Label, QuestionTypeSelector } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 
 const questionTypes = [
-  { value: "text", label: "Text 📝" },
-  { value: "email", label: "Email 📧" },
-  { value: "url", label: "URL 🌐" },
-  { value: "number", label: "Number 1️⃣" },
-  { value: "phone", label: "Phone ☎️" },
+  { value: "text", label: "Text" },
+  { value: "email", label: "Email" },
+  { value: "url", label: "URL" },
+  { value: "number", label: "Number" },
+  { value: "phone", label: "Phone" },
 ];
 
 interface OpenQuestionFormProps {
@@ -28,8 +28,13 @@ export default function OpenQuestionForm({
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
-  const handleQuestionTypeChange = (value: string) => {
-    updateQuestion(questionIdx, { inputType: value });
+  const handleInputChange = (inputType: string) => {
+    const updatedAttributes = {
+      inputType: inputType,
+      placeholder: getPlaceholderByInputType(inputType),
+      longAnswer: inputType === "text" ? question.longAnswer : false,
+    };
+    updateQuestion(questionIdx, updatedAttributes);
   };
 
   return (
@@ -91,15 +96,30 @@ export default function OpenQuestionForm({
 
       {/* Add a dropdown to select the question type */}
       <div className="mt-3">
-        <Label htmlFor="questionType">Question Type</Label>
+        <Label htmlFor="questionType">Input Type</Label>
         <div className="flex items-center">
           <QuestionTypeSelector
             questionTypes={questionTypes}
             currentType={question.inputType}
-            handleTypeChange={handleQuestionTypeChange}
+            handleTypeChange={handleInputChange} // Use the merged function
           />
         </div>
       </div>
     </form>
   );
+}
+
+function getPlaceholderByInputType(inputType: string) {
+  switch (inputType) {
+    case "email":
+      return "example@email.com";
+    case "url":
+      return "http://...";
+    case "number":
+      return "42";
+    case "phone":
+      return "+1 123 456 789";
+    default:
+      return "Type your answer here...";
+  }
 }
