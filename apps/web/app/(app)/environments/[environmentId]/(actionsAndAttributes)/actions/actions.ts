@@ -12,7 +12,7 @@ import {
   getActionCountInLast7Days,
   getActionCountInLastHour,
 } from "@formbricks/lib/services/actions";
-import { getSurveysByActionClassId } from "@formbricks/lib/services/survey";
+import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
 
 export async function deleteActionClassAction(environmentId, actionClassId: string) {

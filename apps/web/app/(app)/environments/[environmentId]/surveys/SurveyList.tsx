@@ -5,7 +5,7 @@ import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurveys } from "@formbricks/lib/services/survey";
+import { getSurveys } from "@formbricks/lib/survey/service";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
