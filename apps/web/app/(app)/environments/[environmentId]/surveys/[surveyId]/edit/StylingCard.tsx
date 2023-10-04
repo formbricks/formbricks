@@ -1,6 +1,6 @@
 "use client";
 
-import { Placement } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/EditPlacement";
+import Placement from "./Placement";
 import { PlacementType } from "@formbricks/types/js";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { ColorPicker, Label, Switch } from "@formbricks/ui";

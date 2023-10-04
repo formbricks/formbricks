@@ -1,14 +1,9 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Button, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { updateProductAction } from "./actions";
-
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
   { name: "Top Right", value: "topRight", disabled: false },
@@ -17,37 +12,25 @@ const placements = [
   { name: "Centered Modal", value: "center", disabled: false },
 ];
 
-interface EditPlacementProps {
-  product: TProduct;
-}
+type TPlacementProps = {
+  currentPlacement: PlacementType;
+  setCurrentPlacement: (placement: PlacementType) => void;
+  setOverlay: (overlay: string) => void;
+  overlay: string;
+  setClickOutside: (clickOutside: boolean) => void;
+  clickOutside: boolean;
+};
 
-export function EditPlacement({ product }: EditPlacementProps) {
-  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>(product.placement);
-  const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
-  const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
-  const [updatingPlacement, setUpdatingPlacement] = useState(false);
-
-  const handleUpdatePlacement = async () => {
-    try {
-      setUpdatingPlacement(true);
-      let inputProduct: Partial<TProductUpdateInput> = {
-        placement: currentPlacement,
-        darkOverlay: overlay === "darkOverlay",
-        clickOutsideClose: clickOutside === "allow",
-      };
-
-      await updateProductAction(product.id, inputProduct);
-
-      toast.success("Placement updated successfully.");
-    } catch (error) {
-      toast.error(`Error: ${error.message}`);
-    } finally {
-      setUpdatingPlacement(false);
-    }
-  };
-
+export default function Placement({
+  setCurrentPlacement,
+  currentPlacement,
+  setOverlay,
+  overlay,
+  setClickOutside,
+  clickOutside,
+}: TPlacementProps) {
   return (
-    <div className="w-full items-center">
+    <>
       <div className="flex">
         <RadioGroup onValueChange={(e) => setCurrentPlacement(e as PlacementType)} value={currentPlacement}>
           {placements.map((placement) => (
@@ -69,20 +52,22 @@ export function EditPlacement({ product }: EditPlacementProps) {
             )}></div>
         </div>
       </div>
-
       {currentPlacement === "center" && (
         <>
           <div className="mt-6 space-y-2">
             <Label className="font-semibold">Centered modal overlay color</Label>
-            <RadioGroup onValueChange={(e) => setOverlay(e)} value={overlay} className="flex space-x-4">
+            <RadioGroup
+              onValueChange={(overlay) => setOverlay(overlay)}
+              value={overlay}
+              className="flex space-x-4">
               <div className="flex items-center space-x-2 whitespace-nowrap">
-                <RadioGroupItem id="lightOverlay" value="lightOverlay" />
+                <RadioGroupItem id="lightOverlay" value="light" />
                 <Label htmlFor="lightOverlay" className="text-slate-900">
                   Light Overlay
                 </Label>
               </div>
               <div className="flex items-center space-x-2 whitespace-nowrap">
-                <RadioGroupItem id="darkOverlay" value="darkOverlay" />
+                <RadioGroupItem id="darkOverlay" value="dark" />
                 <Label htmlFor="darkOverlay" className="text-slate-900">
                   Dark Overlay
                 </Label>
@@ -92,8 +77,8 @@ export function EditPlacement({ product }: EditPlacementProps) {
           <div className="mt-6 space-y-2">
             <Label className="font-semibold">Allow users to exit by clicking outside the study</Label>
             <RadioGroup
-              onValueChange={(e) => setClickOutside(e)}
-              value={clickOutside}
+              onValueChange={(value) => setClickOutside(value === "allow")}
+              value={clickOutside ? "allow" : "disallow"}
               className="flex space-x-4">
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <RadioGroupItem id="disallow" value="disallow" />
@@ -111,9 +96,6 @@ export function EditPlacement({ product }: EditPlacementProps) {
           </div>
         </>
       )}
-      <Button variant="darkCTA" className="mt-4" loading={updatingPlacement} onClick={handleUpdatePlacement}>
-        Save
-      </Button>
-    </div>
+    </>
   );
 }
