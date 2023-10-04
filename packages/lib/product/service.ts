@@ -11,7 +11,7 @@ import { cache } from "react";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
+import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "../environment/service";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;

@@ -4,7 +4,7 @@ import { InvalidInputError } from "@formbricks/types/v1/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createDisplay } from "@formbricks/lib/display/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
+import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { TDisplay, ZDisplayInput } from "@formbricks/types/v1/displays";
 import { NextResponse } from "next/server";
 
