@@ -22,29 +22,71 @@ export const meta = {
 - Click the button below to open this project in Gitpod.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
+ 
+## Gitpod Setup Overview
 
-## Gitpod Guide
+    **Building custom image for the workspace:**
+    - This includes : Installing `yq` and `turbo` globally before the workspace starts. This is accomplished within the `.gitpod.Dockerfile` along with starting upon a base custom image building on [workspace-full](https://hub.docker.com/r/gitpod/workspace-full/dockerfile).
 
-### Browser Redirection
+    **Initialization of Formbricks:** 
+     - During the prebuilds phase, we initialize Formbricks by performing the following tasks:
+        1. Setting up environment variables.
+        2. Installing monorepo dependencies.
+        3. Installing Docker images by extracting them from the `packages/database/docker-compose.yml` file.
+        4. Building the @formbricks/js component.
+     - When the workspace starts:
+        1. Waiting for web and demo apps to start and openening the `apps/demo/.env` file automatically such that users can start playing around with the demo app by configuring `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID` straight away!
+
+    **Web Component Initialization:** 
+     - we initialize the @formbricks/web component during prebuilds. This involves:
+        1. Installing build dependencies for the `@formbricks/web#go` task from turbo.json in prebuilds to save time.
+        2. Starting PostgreSQL and Mailhog containers for running migrations in prebuilds.
+        3. To prevent the "Init" task from running indefinitely due to prebuild rules, a cleanup `docker compose down` step i.e. `db:down` is added to `turbo.json`. This step is designed to halt the execution of containers that are currently running.
+     - When the workspace starts:
+        1. Initializing environment variables.
+        2. Replacing `NEXT_PUBLIC_WEBAPP_URL` and `NEXTAUTH_URL` to take in Gitpod URL's ports when running on VSCode browser.
+        3. Starting the `@formbricks/web` dev environment.
+
+    **Demo Component Initialization:** 
+     - Similar to the web component, the demo component is also initialized during prebuilds. This includes:
+        1. Installing build dependencies for the `formbricks/demo#go` task from turbo.json in prebuilds to save time.
+        2. Caching hits and replaying builds from the `@formbricks/js` component.
+     - When the workspace starts: 
+        1. Initializing environment variables.
+        2. Replaces `NEXT_PUBLIC_FORMBRICKS_API_HOST` to take in Gitpod URL's ports when running on VSCode browser.
+        3. Starting the `@formbricks/demo` dev environment.
+
+    **GitHub Prebuilds Configuration:** 
+     - This configures GitHub Prebuilds for the master branch, pull requests, and adding comments. This helps automate the prebuild process for the specified branches and actions.
+
+    **VSCode Extensions:** 
+     - This includes a list of VSCode extensions that are added to the configuration when using Gitpod. These extensions can enhance the development experience within Gitpod.
+
+
+## Gitpod Guide  
+
+### 1. Browser Redirection
 
 After clicking the one-click setup button, Gitpod will open a new tab or window. Please ensure that your browser allows redirection to successfully access the services:
 
-**Authorizing in Gitpod**
+### 2. Authorizing in Gitpod
 <Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 - This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs to authenticate your access to the workspace. Click on 'Continue With Github' to authorize your GitPod session.
 
-**Creating a New Workspace**
+### 3. Creating a New Workspace
 <Image src={GitpodNewWorkspace} alt="Gitpod New Worskpace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 - After authentication, Gitpod asks to create a new workspace for you. This page displays the configurations of your workspace. 
 - You can use either choose either VS Code Browser or  VS Code Desktop editor with the 'Standard Class' for your workspace class.
-- If you opt for the VS Code Desktop, Gitpod will prompt you to grant access to the VSCode app. Once approved, install the GitPod extension from the VSCode Marketplace and follow the prompts to authorize the integration.
+- If you opt for the VS Code Desktop, follow the following steps
+   1. Gitpod will prompt you to grant access to the VSCode app. Once approved, install the GitPod extension from the VSCode Marketplace and follow the prompts to authorize the integration.
+   2. Change the WEBAPP_URL and the NEXTAUTH_URL to https://localhost:3000
 
 
-**Gitpod preparing the created Workspace**
+### 4. Gitpod preparing the created Workspace
 <Image src={GitpodPreparing} alt="Gitpod Preparing Worskpace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 - Gitpod is preparing your workspace with all the necessary dependencies and configurations. You will see this page while Gitpod sets up your development environment.
 
-**Gitpod running the Workspace**
+### 5. Gitpod running the Workspace
 <Image src={GitpodRunning} alt="Gitpod Running Workspace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 - Once the workspace is fully prepared, voila, it enters the running state. You can start working on your project in this environment.
 
