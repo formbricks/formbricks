@@ -1,13 +1,21 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/memberships";
-import { TProfile, TProfileUpdateInput, ZProfileUpdateInput } from "@formbricks/types/v1/profile";
+import {
+  TProfile,
+  TProfileCreateInput,
+  TProfileUpdateInput,
+  ZProfileUpdateInput,
+} from "@formbricks/types/v1/profile";
 import { MembershipRole, Prisma } from "@prisma/client";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { validateInputs } from "../utils/validate";
 import { deleteTeam } from "./team";
 import { z } from "zod";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 const responseSelection = {
   id: true,
@@ -50,7 +58,7 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
     [`profiles-${userId}`],
     {
       tags: [getProfileByEmailCacheTag(userId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -82,7 +90,7 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
     [`profiles-${email}`],
     {
       tags: [getProfileCacheTag(email)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -146,6 +154,19 @@ const deleteUser = async (userId: string): Promise<TProfile> => {
   return profile;
 };
 
+export const createProfile = async (data: TProfileCreateInput): Promise<TProfile> => {
+  validateInputs([data, ZProfileUpdateInput]);
+  const profile = await prisma.user.create({
+    data: data,
+    select: responseSelection,
+  });
+
+  revalidateTag(getProfileByEmailCacheTag(profile.email));
+  revalidateTag(getProfileCacheTag(profile.id));
+
+  return profile;
+};
+
 // function to delete a user's profile including teams
 export const deleteProfile = async (userId: string): Promise<void> => {
   validateInputs([userId, ZId]);
@@ -195,29 +216,3 @@ export const deleteProfile = async (userId: string): Promise<void> => {
     throw error;
   }
 };
-export async function getUserIdFromEnvironment(environmentId: string) {
-  const environment = await prisma.environment.findUnique({
-    where: { id: environmentId },
-    select: {
-      product: {
-        select: {
-          team: {
-            select: {
-              memberships: {
-                select: {
-                  user: {
-                    select: {
-                      id: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return environment?.product.team.memberships[0].user.id;
-}

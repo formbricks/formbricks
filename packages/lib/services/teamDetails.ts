@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";

@@ -23,7 +23,7 @@ import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surv
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
-import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -31,8 +31,16 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   surveyBaseUrl: string;
   product: TProduct;
+  singleUseIds?: string[];
 }
-const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }: SummaryHeaderProps) => {
+const SummaryHeader = ({
+  surveyId,
+  environment,
+  survey,
+  surveyBaseUrl,
+  product,
+  singleUseIds,
+}: SummaryHeaderProps) => {
   const router = useRouter();
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
@@ -46,7 +54,9 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} />}
+        {survey.type === "link" && (
+          <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} singleUseIds={singleUseIds} />
+        )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
@@ -72,6 +82,7 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
+                  singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -97,7 +108,7 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
                         value={survey.status}
                         onValueChange={(value) => {
                           const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
-                          surveyMutateAction({ ...survey, status: castedValue })
+                          updateSurveyAction({ ...survey, status: castedValue })
                             .then(() => {
                               toast.success(
                                 value === "inProgress"
@@ -149,7 +160,12 @@ const SummaryHeader = ({ surveyId, environment, survey, surveyBaseUrl, product }
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage environment={environment} survey={survey} surveyBaseUrl={surveyBaseUrl} />
+      <SuccessMessage
+        environment={environment}
+        survey={survey}
+        surveyBaseUrl={surveyBaseUrl}
+        singleUseIds={singleUseIds}
+      />
     </div>
   );
 };

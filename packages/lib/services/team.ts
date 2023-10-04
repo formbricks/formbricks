@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
@@ -24,6 +26,7 @@ import {
   updateEnvironmentArgs,
 } from "../utils/createDemoProductHelpers";
 import { validateInputs } from "../utils/validate";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const select = {
   id: true,
@@ -64,7 +67,7 @@ export const getTeamsByUserId = async (userId: string): Promise<TTeam[]> =>
     [`users-${userId}-teams`],
     {
       tags: [getTeamsByUserIdCacheTag(userId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -100,11 +103,24 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     [`environments-${environmentId}-team`],
     {
       tags: [getTeamByEnvironmentIdCacheTag(environmentId)],
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const updateTeam = async (teamId: string, data: TTeamUpdateInput): Promise<TTeam> => {
+export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
+  try {
+    const team = await prisma.team.create({
+      data: teamInput,
+      select,
+    });
+
+    return team;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>): Promise<TTeam> => {
   try {
     const updatedTeam = await prisma.team.update({
       where: {
@@ -182,15 +198,8 @@ export const deleteTeam = async (teamId: string) => {
 
 export const createDemoProduct = async (teamId: string) => {
   validateInputs([teamId, ZId]);
-  const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({
-    include: {
-      environments: true,
-    },
-  });
 
-  type ProductWithEnvironment = Prisma.ProductGetPayload<typeof productWithEnvironment>;
-
-  const demoProduct: ProductWithEnvironment = await prisma.product.create({
+  const demoProduct = await prisma.product.create({
     data: {
       name: "Demo Product",
       team: {

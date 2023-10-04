@@ -4,7 +4,7 @@ import { transformErrorToDetails } from "@/lib/api/validator";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/response/service";
 import { TResponse, ZResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getSurvey } from "@formbricks/lib/services/survey";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 

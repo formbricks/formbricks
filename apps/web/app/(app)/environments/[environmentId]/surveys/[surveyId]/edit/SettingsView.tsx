@@ -14,6 +14,7 @@ interface SettingsViewProps {
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  isEncryptionKeySet: boolean;
 }
 
 export default function SettingsView({
@@ -22,6 +23,7 @@ export default function SettingsView({
   setLocalSurvey,
   actionClasses,
   attributeClasses,
+  isEncryptionKeySet,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -41,7 +43,11 @@ export default function SettingsView({
         actionClasses={actionClasses}
       />
 
-      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <ResponseOptionsCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        isEncryptionKeySet={isEncryptionKeySet}
+      />
 
       <RecontactOptionsCard
         localSurvey={localSurvey}
