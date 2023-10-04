@@ -2,9 +2,13 @@ import { timeSince } from "@/../../packages/lib/time";
 import { TEnvironment } from "@/../../packages/types/v1/environment";
 import { TAirTableIntegration } from "@/../../packages/types/v1/integrations";
 import { Button } from "@/../../packages/ui";
-import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
+import {
+  deleteIntegrationAction,
+  upsertIntegrationAction,
+} from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 interface handleModalProps {
@@ -12,41 +16,60 @@ interface handleModalProps {
   airTableIntegration: TAirTableIntegration;
   environment: TEnvironment;
   environmentId: string;
+  setIsConnected: (data: boolean) => void;
 }
 
 const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At", "Actions"];
 
 export default function Home(props: handleModalProps) {
-  const { handleModal, airTableIntegration, environment, environmentId } = props;
+  const { handleModal, airTableIntegration, environment, environmentId, setIsConnected } = props;
+  const { refresh } = useRouter();
+  const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const integrationData = airTableIntegration?.config?.data ?? [];
 
-  const handleDeleteIntegration = async () => {
-    if (typeof selectedId === "number") {
-      setIsDeleting(true);
-      try {
-        const integrationCopy = { ...airTableIntegration };
-        integrationCopy.config.data.splice(selectedId, 1);
-        console.log({ integrationCopy });
+  const handleDelete = async (index: number) => {
+    try {
+      const integrationCopy = { ...airTableIntegration };
+      integrationCopy.config.data.splice(index, 1);
 
-        await upsertIntegrationAction(environmentId, integrationCopy);
+      await upsertIntegrationAction(environmentId, integrationCopy);
+      refresh();
 
-        toast.success(`Integration deleted successfully`);
-        setIsDeleteIntegrationModalOpen(false);
-        setSelectedId(null);
-      } catch (e) {
-        toast.error(e.message);
-      } finally {
-        setIsDeleting(false);
-      }
+      toast.success(`Integration deleted successfully`);
+    } catch (e) {
+      toast.error(e.message);
     }
   };
+
+  const handleDeleteIntegration = async () => {
+    try {
+      setisDeleting(true);
+      await deleteIntegrationAction(airTableIntegration.id);
+      setIsConnected(false);
+      toast.success("Integration removed successfully");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setisDeleting(false);
+      setIsDeleteIntegrationModalOpen(false);
+    }
+  };
+
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end">
+      <div className="flex w-full justify-end gap-x-2">
+        <div className=" flex items-center">
+          <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
+          <span
+            className="cursor-pointer text-slate-500"
+            onClick={() => {
+              setIsDeleteIntegrationModalOpen(true);
+            }}>
+            Connected with {airTableIntegration.config.email}
+          </span>
+        </div>
         <Button onClick={() => handleModal(true)} variant="darkCTA">
           Link new table
         </Button>
@@ -86,9 +109,8 @@ export default function Home(props: handleModalProps) {
                     <td className="flex gap-x-2 p-2 align-middle">
                       <Button size="sm">Edit</Button>
                       <Button
-                        onClick={() => {
-                          setIsDeleteIntegrationModalOpen(true);
-                          setSelectedId(index);
+                        onClick={async () => {
+                          await handleDelete(index);
                         }}
                         variant="alert"
                         size="sm">
@@ -105,7 +127,7 @@ export default function Home(props: handleModalProps) {
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat="Google Connection"
+        deleteWhat="airtable connection"
         onDelete={handleDeleteIntegration}
         text="Are you sure? Your integrations will break."
         isDeleting={isDeleting}

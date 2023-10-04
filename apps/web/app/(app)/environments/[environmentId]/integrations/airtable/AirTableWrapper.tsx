@@ -23,7 +23,7 @@ export default function AirTableWrapper({
   environment,
 }: AirTableWrapperProps) {
   const [isConnected, setIsConnected_] = useState(
-    airtableIntegration ? airtableIntegration.config?.key : false
+    typeof airtableIntegration?.config.key !== undefined ? true : false
   );
   const [isModalOpen, setModalOpen] = useState(false);
   const setIsConnected = (data: boolean) => {
@@ -33,6 +33,9 @@ export default function AirTableWrapper({
   const handleModal = (data: boolean) => {
     setModalOpen(data);
   };
+
+  console.log({ isConnected, airtableIntegration });
+
   return isConnected && airtableIntegration ? (
     <>
       <AddIntegrationModal
@@ -48,6 +51,7 @@ export default function AirTableWrapper({
         environment={environment}
         airTableIntegration={airtableIntegration}
         handleModal={handleModal}
+        setIsConnected={setIsConnected}
       />
     </>
   ) : (

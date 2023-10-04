@@ -14,6 +14,8 @@ export default async function IntegrationsPage({ params }) {
     (integration) => integration.type === "googleSheets"
   );
 
+  const containsAirTableIntegration = integrations.some((integration) => integration.type === "airtable");
+
   return (
     <div>
       <h1 className="my-2 text-3xl font-bold text-slate-800">Integrations</h1>
@@ -62,7 +64,7 @@ export default async function IntegrationsPage({ params }) {
         />
         <Card
           connectHref={`/environments/${params.environmentId}/integrations/airtable`}
-          connectText={`${containsGoogleSheetIntegration ? "Manage Table" : "Connect"}`}
+          connectText={`${containsAirTableIntegration ? "Manage Table" : "Connect"}`}
           connectNewTab={false}
           docsHref="https://formbricks.com/docs/integrations/airtable"
           docsText="Docs"

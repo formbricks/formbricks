@@ -77,6 +77,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         config: {
           key: airtableIntegration?.config.key ?? "",
           data: airtableIntegration?.config.data ?? [],
+          email: airtableIntegration?.config.email ?? "",
         },
       };
 
@@ -118,7 +119,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         <div className="flex rounded-lg p-6">
           <div className="flex w-full flex-col gap-y-4 pt-5">
             <div className="flex w-full flex-col">
-              <Label htmlFor="token">Airtable base</Label>
+              <Label htmlFor="base">Airtable base</Label>
               <div className="mt-1 flex">
                 <Controller
                   control={control}
@@ -152,7 +153,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
 
             {tables.length ? (
               <div className="flex w-full flex-col">
-                <Label htmlFor="token">Table</Label>
+                <Label htmlFor="table">Table</Label>
                 <div className="mt-1 flex">
                   <Controller
                     control={control}
@@ -182,7 +183,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
 
             {tables.length && surveys.length ? (
               <div className="flex w-full flex-col">
-                <Label htmlFor="token">Select Survey</Label>
+                <Label htmlFor="survey">Select Survey</Label>
                 <div className="mt-1 flex">
                   <Controller
                     control={control}
@@ -191,7 +192,10 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                       <Select
                         required
                         disabled={isPending}
-                        onValueChange={field.onChange}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          setValue("questions", []);
+                        }}
                         defaultValue={field.value}>
                         <SelectTrigger>
                           <SelectValue />
