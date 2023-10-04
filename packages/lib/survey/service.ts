@@ -42,6 +42,7 @@ export const selectSurvey = {
   autoComplete: true,
   verifyEmail: true,
   redirectUrl: true,
+  productOverwrites: true,
   surveyClosedMessage: true,
   singleUse: true,
   triggers: {
