@@ -92,7 +92,9 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
 export const markDisplayResponded = async (displayId: string): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);
   try {
-    if (!displayId) throw new Error("Display ID is required");
+    if (!displayId) {
+      throw new ResourceNotFoundError("Display", displayId);
+    }
 
     const displayPrisma = await prisma.display.update({
       where: {
