@@ -36,6 +36,7 @@ export default function CTAQuestion({
         <div className="flex w-full justify-end">
           {!question.required && (
             <button
+              tabIndex={0}
               type="button"
               onClick={() => {
                 onSubmit({ [question.id]: "dismissed" });
