@@ -222,7 +222,7 @@ echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
 newgrp docker <<END
 
-docker compose up -d
+docker compose --env-file /dev/null up
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""

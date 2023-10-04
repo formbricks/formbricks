@@ -1,22 +1,26 @@
 version: "3.3"
 
-# NOTE: If using Docker, ensure there's no .env file in the root directory. If one exists, rename it. 
-# Docker Compose might conflict with NextJs 13.4.19's .env format.
+# If you already have a local .env then please run this using
+# docker compose --env-file /dev/null up
 
 # This should be the same as below if you are running via docker compose up
 x-webapp-url: &webapp_url http://formbricks:3000
 
 # PostgreSQL DB for Formbricks to connect to
-x-database-url: &database_url "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
 
 # NextJS Auth
 # @see: https://next-auth.js.org/configuration/options#nextauth_secret
 # You can use: `openssl rand -base64 32` to generate one
-x-nextauth-secret: &nextauth_secret RANDOM_STRING
+x-nextauth-secret: &nextauth_secret luJthrnoDpVgGakjVYlccsZ1FdlwxIWogWIsrxzoQ6E=
 
 # Set this to your public-facing URL, e.g., https://example.com
 # You do not need the NEXTAUTH_URL environment variable in Vercel.
 x-nextauth-url: &nextauth_url http://localhost:3000
+
+# Encryption key
+# You can use: `openssl rand -base64 16` to generate one
+x-formbricks-encryption-key: &formbricks_encryption_key
 
 # Necessary if email verification and password reset are enabled.
 # See further below if you want to disable these features.
@@ -28,41 +32,43 @@ x-smtp-secure-enabled: &smtp_secure_enabled
 x-smtp-user: &smtp_user
 x-smtp-password: &smtp_password
 
-# Set the below two values to your public-facing URL, e.g., https://example.com
-x-next-public-survey-base-url: &next_public_survey_base_url http://localhost:3000/s
-
-# Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.
-x-next-public-privacy-url: &next_public_privacy_url
-x-next-public-terms-url: &next_public_terms_url
-x-next-public-imprint-url: &next_public_imprint_url
-
 # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
-x-next-public-email-verification-disabled: &next_public_email_verification_disabled 1
+x-email-verification-disabled: &email_verification_disabled 1
+
+
+# Set the below two values to your public-facing URL, e.g., https://example.com
+x-survey-base-url: &survey_base_url http://localhost:3000/s
 
 # Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
-x-next-public-password-reset-disabled: &next_public_password_reset_disabled 1
+x-password-reset-disabled: &password_reset_disabled 1
 
 # Signup. Disable the ability for new users to create an account.
-x-next-public-signup-disabled: &next_public_signup_disabled 0
+x-signup-disabled: &signup_disabled 0
 
 # Team Invite. Disable the ability for invited users to create an account.
-x-next-public-invite-disabled: &next_public_invite_disabled 0
+x-invite-disabled: &invite_disabled 0
+
+# Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.
+x-privacy-url: &privacy_url
+x-terms-url: &terms_url
+x-imprint-url: &imprint_url
+
+
+# Configure Github Login
+x-github-auth-enabled: &github_auth_enabled 0
+x-github-id: &github_id
+x-github-secret: &github_secret
+
+# Configure Google Login
+x-google-auth-enabled: &google_auth_enabled 0
+x-google-client-id: &google_client_id
+x-google-client-secret: &google_client_secret
 
 # Disable Sentry warning
 x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error
 
 # Enable Sentry Error Tracking
 x-next-public-sentry-dsn: &next_public_sentry_dsn
-
-# Configure Github Login
-x-next-public-github-auth-enabled: &next_public_github_auth_enabled 0
-x-github-id: &github_id
-x-github-secret: &github_secret
-
-# Configure Google Login
-x-next-public-google-auth-enabled: &next_public_google_auth_enabled 0
-x-google-client-id: &google_client_id
-x-google-client-secret: &google_client_secret
 
 # Cron Secret
 x-cron-secret: &cron_secret
@@ -82,28 +88,9 @@ services:
       context: .
       dockerfile: ./apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_SURVEY_BASE_URL: *next_public_survey_base_url
-        NEXT_PUBLIC_PRIVACY_URL: *next_public_privacy_url
-        NEXT_PUBLIC_TERMS_URL: *next_public_terms_url
-        NEXT_PUBLIC_IMPRINT_URL: *next_public_imprint_url
-        NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED: *next_public_email_verification_disabled
-        NEXT_PUBLIC_PASSWORD_RESET_DISABLED: *next_public_password_reset_disabled
-        NEXT_PUBLIC_SIGNUP_DISABLED: *next_public_signup_disabled
-        NEXT_PUBLIC_INVITE_DISABLED: *next_public_invite_disabled
-        SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
-        NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
-        NEXT_PUBLIC_GITHUB_AUTH_ENABLED: *next_public_github_auth_enabled
-        GITHUB_ID: *github_id
-        GITHUB_SECRET: *github_secret
-        NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: *next_public_google_auth_enabled
-        GOOGLE_CLIENT_ID: *google_client_id
-        GOOGLE_CLIENT_SECRET: *google_client_secret
-        CRON_SECRET: *cron_secret
-        WEBAPP_URL: *webapp_url
         DATABASE_URL: *database_url
         NEXTAUTH_SECRET: *nextauth_secret
-        NEXTAUTH_URL: *nextauth_url
-
+    
     depends_on:
       - postgres
     ports:
@@ -120,6 +107,28 @@ services:
       SMTP_SECURE_ENABLED: *smtp_secure_enabled
       SMTP_USER: *smtp_user
       SMTP_PASSWORD: *smtp_password
+      FORMBRICKS_ENCRYPTION_KEY: *formbricks_encryption_key
+      SURVEY_BASE_URL: *survey_base_url
+      PRIVACY_URL: *privacy_url
+      TERMS_URL: *terms_url
+      IMPRINT_URL: *imprint_url
+      EMAIL_VERIFICATION_DISABLED: *email_verification_disabled
+      PASSWORD_RESET_DISABLED: *password_reset_disabled
+      SIGNUP_DISABLED: *signup_disabled
+      INVITE_DISABLED: *invite_disabled
+      SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
+      NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
+      GITHUB_AUTH_ENABLED: *github_auth_enabled
+      GITHUB_ID: *github_id
+      GITHUB_SECRET: *github_secret
+      GOOGLE_AUTH_ENABLED: *google_auth_enabled
+      GOOGLE_CLIENT_ID: *google_client_id
+      GOOGLE_CLIENT_SECRET: *google_client_secret
+      CRON_SECRET: *cron_secret
+      # WEBAPP_URL: *webapp_url
+      # DATABASE_URL: *database_url
+      # NEXTAUTH_SECRET: *nextauth_secret
+      # NEXTAUTH_URL: *nextauth_url
 
 volumes:
   postgres:
