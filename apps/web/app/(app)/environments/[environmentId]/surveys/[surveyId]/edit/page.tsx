@@ -3,7 +3,7 @@ import React from "react";
 import { FORMBRICKS_ENCRYPTION_KEY, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SurveyEditor from "./SurveyEditor";
 import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";

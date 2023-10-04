@@ -1,7 +1,7 @@
 import GoogleSheetWrapper from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/GoogleSheetWrapper";
 import GoBackButton from "@/components/shared/GoBackButton";
-import { getSpreadSheets } from "@formbricks/lib/services/googleSheet";
-import { getIntegrations } from "@formbricks/lib/services/integrations";
+import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
+import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TGoogleSheetIntegration, TGoogleSpreadsheet } from "@formbricks/types/v1/integrations";
 import {

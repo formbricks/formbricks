@@ -1,6 +1,6 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";

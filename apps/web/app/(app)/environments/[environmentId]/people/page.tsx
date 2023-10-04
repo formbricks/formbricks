@@ -4,7 +4,7 @@ import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
 import { PEOPLE_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getPeople, getPeopleCount } from "@formbricks/lib/services/person";
+import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Pagination, PersonAvatar } from "@formbricks/ui";
 import Link from "next/link";

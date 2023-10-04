@@ -2,7 +2,7 @@ import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/attributeClass/service";
-import { getPersonCached, updatePersonAttribute } from "@formbricks/lib/services/person";
+import { getPersonCached, updatePersonAttribute } from "@formbricks/lib/person/service";
 import { ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
 

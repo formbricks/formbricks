@@ -1,7 +1,7 @@
 "use server";
 
-import { getSpreadSheets } from "@formbricks/lib/services/googleSheet";
-import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/services/integrations";
+import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
+import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { TGoogleSheetIntegration } from "@formbricks/types/v1/integrations";
 
 export async function upsertIntegrationAction(

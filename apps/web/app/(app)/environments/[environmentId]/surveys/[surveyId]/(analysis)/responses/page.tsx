@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function Page({ params }) {

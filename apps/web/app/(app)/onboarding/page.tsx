@@ -3,8 +3,8 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getProfile } from "@formbricks/lib/services/profile";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProfile } from "@formbricks/lib/profile/service";
 import { getServerSession } from "next-auth";
 import Onboarding from "./components/Onboarding";
 

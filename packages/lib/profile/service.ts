@@ -13,7 +13,7 @@ import {
 import { MembershipRole, Prisma } from "@prisma/client";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { validateInputs } from "../utils/validate";
-import { deleteTeam } from "./team";
+import { deleteTeam } from "../team/service";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
