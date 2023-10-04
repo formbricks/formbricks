@@ -2,7 +2,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import React from "react";
 import { FORMBRICKS_ENCRYPTION_KEY, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SurveyEditor from "./SurveyEditor";
-import { getSurveyWithAnalytics } from "@formbricks/lib/services/survey";
+import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";

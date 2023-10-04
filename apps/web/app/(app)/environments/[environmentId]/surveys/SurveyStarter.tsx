@@ -4,6 +4,7 @@ import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templ
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
+import { TSurveyInput } from "@formbricks/types/v1/surveys";
 import { TTemplate } from "@formbricks/types/v1/templates";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -28,7 +29,7 @@ export default function SurveyStarter({
       ...template.preset,
       type: surveyType,
       autoComplete,
-    };
+    } as Partial<TSurveyInput>;
     try {
       const survey = await createSurveyAction(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);

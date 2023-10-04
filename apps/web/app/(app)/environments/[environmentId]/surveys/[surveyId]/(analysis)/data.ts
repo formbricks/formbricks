@@ -1,7 +1,7 @@
 import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
 import { getSurveyResponses } from "@formbricks/lib/response/service";
-import { getSurveyWithAnalytics } from "@formbricks/lib/services/survey";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 
 export const getAnalysisData = async (surveyId: string, environmentId: string) => {

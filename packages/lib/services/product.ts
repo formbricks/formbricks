@@ -9,11 +9,9 @@ import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { z } from "zod";
-import { validateInputs } from "../utils/validate";
-import { EnvironmentType } from "@prisma/client";
-import { EventType } from "@prisma/client";
-import { getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { validateInputs } from "../utils/validate";
+import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
@@ -33,34 +31,6 @@ const selectProduct = {
   clickOutsideClose: true,
   darkOverlay: true,
   environments: true,
-};
-
-const populateEnvironment = {
-  eventClasses: {
-    create: [
-      {
-        name: "New Session",
-        description: "Gets fired when a new session is created",
-        type: EventType.automatic,
-      },
-      {
-        name: "Exit Intent (Desktop)",
-        description: "A user on Desktop leaves the website with the cursor.",
-        type: EventType.automatic,
-      },
-      {
-        name: "50% Scroll",
-        description: "A user scrolled 50% of the current page",
-        type: EventType.automatic,
-      },
-    ],
-  },
-  attributeClasses: {
-    create: [
-      { name: "userId", description: "The internal ID of the person", type: EventType.automatic },
-      { name: "email", description: "The email of the person", type: EventType.automatic },
-    ],
-  },
 };
 
 export const getProducts = async (teamId: string): Promise<TProduct[]> =>
@@ -135,6 +105,7 @@ export const updateProduct = async (
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
+  const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({
@@ -142,7 +113,10 @@ export const updateProduct = async (
         id: productId,
       },
       data: {
-        ...inputProduct,
+        ...data,
+        environments: {
+          connect: environments?.map((environment) => ({ id: environment.id })) ?? [],
+        },
       },
       select: selectProduct,
     });
@@ -210,43 +184,35 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   return product;
 });
 
-export const createProduct = async (environmentId: string, productName: string): Promise<TProduct> => {
-  const environment = await prisma.environment.findUnique({
-    where: { id: environmentId },
-    select: {
-      product: {
-        select: {
-          teamId: true,
-        },
-      },
-    },
-  });
-
-  if (!environment) {
-    throw new Error("Invalid environment");
+export const createProduct = async (
+  teamId: string,
+  productInput: Partial<TProductUpdateInput>
+): Promise<TProduct> => {
+  if (!productInput.name) {
+    throw new ValidationError("Product Name is required");
   }
+  const { environments, ...data } = productInput;
 
-  const newProduct = await prisma.product.create({
+  let product = await prisma.product.create({
     data: {
-      name: productName,
-      team: {
-        connect: { id: environment.product.teamId },
-      },
-      environments: {
-        create: [
-          {
-            type: EnvironmentType.production,
-            ...populateEnvironment,
-          },
-          {
-            type: EnvironmentType.development,
-            ...populateEnvironment,
-          },
-        ],
-      },
+      ...data,
+      name: productInput.name,
+      teamId,
     },
     select: selectProduct,
   });
 
-  return newProduct;
+  const devEnvironment = await createEnvironment(product.id, {
+    type: "development",
+  });
+
+  const prodEnvironment = await createEnvironment(product.id, {
+    type: "production",
+  });
+
+  product = await updateProduct(product.id, {
+    environments: [devEnvironment, prodEnvironment],
+  });
+
+  return product;
 };

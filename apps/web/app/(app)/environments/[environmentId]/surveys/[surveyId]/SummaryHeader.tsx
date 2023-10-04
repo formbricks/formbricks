@@ -23,7 +23,7 @@ import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surv
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
-import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -108,7 +108,7 @@ const SummaryHeader = ({
                         value={survey.status}
                         onValueChange={(value) => {
                           const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
-                          surveyMutateAction({ ...survey, status: castedValue })
+                          updateSurveyAction({ ...survey, status: castedValue })
                             .then(() => {
                               toast.success(
                                 value === "inProgress"
