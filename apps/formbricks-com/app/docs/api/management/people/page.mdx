@@ -1,0 +1,234 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Formbricks People API: Fetch or Create Person Overview",
+  description:
+    "Dive into Formbricks' People API within the Public Client API suite, designed to work without authentication requirements. Seamlessly fetch or create a person by their userId and environmentId, optimizing client-side interactions while maintaining data privacy.",
+};
+
+#### Management API
+
+# People API
+
+This set of API can be used to
+- [List People](#list-people)
+- [Get Person](#get-person)
+- [Delete Person](#delete-person)
+
+<Note>You will need an API Key to interact with these APIs.</Note>
+
+---
+
+## List People {{ tag: 'GET', label: '/api/v1/management/people' }}
+
+<Row>
+  <Col>
+
+    List People
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/people">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/people' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": [
+          {
+            "id": "b4wgrzl363dn3zb6yy5gf265",
+            "attributes": {
+                "userId": "CYO618",
+                "email": "sophia@amazon.com",
+                "Name": "Sophia Johnson",
+                "Role": "Designer",
+                "Company": "Amazon",
+                "Experience": "7 years",
+                "Usage Frequency": "Yearly",
+                "Company Size": "1628 employees",
+                "Product Satisfaction Score": "62",
+                "Recommendation Likelihood": "9"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+          },
+          {
+            "id": "jrb5iyzqvnkg9322ckhde3j4",
+            "attributes": {
+                "userId": "CYO511",
+                "email": "antonio@ibm.com",
+                "Name": "Antonio García",
+                "Role": "Designer",
+                "Company": "IBM",
+                "Experience": "1 years",
+                "Usage Frequency": "Weekly",
+                "Company Size": "4023 employees",
+                "Product Satisfaction Score": "77",
+                "Recommendation Likelihood": "4"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+          },
+      ]
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "Fields are missing or incorrectly formatted",
+      "details": {
+        "userId": ""
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Person {{ tag: 'GET', label: '/api/v1/management/people/<person-id>' }}
+
+<Row>
+  <Col>
+
+    Get Person by ID
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/people/<person-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/people/<person-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "id": "jrb5iyzqvnkg9322ckhde3j4",
+        "attributes": {
+            "userId": "CYO511",
+            "email": "antonio@ibm.com",
+            "Name": "Antonio García",
+            "Role": "Designer",
+            "Company": "IBM",
+            "Experience": "1 years",
+            "Usage Frequency": "Weekly",
+            "Company Size": "4023 employees",
+            "Product Satisfaction Score": "77",
+            "Recommendation Likelihood": "4"
+        },
+        "environmentId": "cln8k0t47000fz87njmmu2bck",
+        "createdAt": "2023-10-02T07:13:19.444Z",
+        "updatedAt": "2023-10-02T07:13:19.444Z"
+      }
+    }
+    ```
+
+    ```json {{ title: '404 Not Found' }}
+    {
+      "code": "not_found",
+      "message": "Person not found",
+      "details": {
+          "resource_id": "clmlmykc2000019vz5o3jglsa",
+          "resource_type": "Person"
+      }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Delete Person {{ tag: 'DELETE', label: '/api/v1/management/people/<person-id>' }}
+
+<Row>
+  <Col>
+
+    Delete Person by ID
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/management/people/<person-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE https://app.formbricks.com/api/v1/management/people/<person-id> \
+     --header 'x-api-key: <your-api-key>'
+    ```
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "success": "Person deleted successfully"
+      }
+    }
+    ```
+
+    ```json {{ title: '404 Not Found' }}
+    {
+      "code": "not_found",
+      "message": "Person not found",
+      "details": {
+          "resource_id": "clmlmykc2000019vz5o3jglsa",
+          "resource_type": "Person"
+      }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
