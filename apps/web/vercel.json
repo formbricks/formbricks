@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "app/api/v1/js/sync/*.ts": {
+      "maxDuration": 5
+    },
+    "app/api/**/*.ts": {
+      "maxDuration": 10
+    }
+  }
+}

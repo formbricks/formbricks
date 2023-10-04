@@ -8,6 +8,12 @@ export const ZPerson = z.object({
   attributes: ZPersonAttributes,
   createdAt: z.date(),
   updatedAt: z.date(),
+  environmentId: z.string().cuid2(),
 });
 
+export const ZPersonUpdateInput = z.object({
+  attributes: ZPersonAttributes,
+});
+
+export type TPersonUpdateInput = z.infer<typeof ZPersonUpdateInput>;
 export type TPerson = z.infer<typeof ZPerson>;

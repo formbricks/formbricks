@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/v1/errors";
@@ -6,11 +8,13 @@ import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
-import "server-only";
 import { z } from "zod";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
+import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
 
-const getProductCacheTag = (environmentId: string): string => `env-${environmentId}-product`;
+export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
+const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
 const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
 
 const selectProduct = {
@@ -29,25 +33,33 @@ const selectProduct = {
   environments: true,
 };
 
-export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
-  validateInputs([teamId, ZId]);
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        teamId,
-      },
-      select: selectProduct,
-    });
+export const getProducts = async (teamId: string): Promise<TProduct[]> =>
+  unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+      try {
+        const products = await prisma.product.findMany({
+          where: {
+            teamId,
+          },
+          select: selectProduct,
+        });
 
-    return products;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+        return products;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`teams-${teamId}-products`],
+    {
+      tags: [getProductsCacheTag(teamId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
-
-    throw error;
-  }
-});
+  )();
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct | null> => {
   if (!environmentId) {
@@ -84,7 +96,7 @@ export const getProductByEnvironmentIdCached = (environmentId: string) =>
     getProductCacheKey(environmentId),
     {
       tags: getProductCacheKey(environmentId),
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -93,6 +105,7 @@ export const updateProduct = async (
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
+  const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({
@@ -100,7 +113,10 @@ export const updateProduct = async (
         id: productId,
       },
       data: {
-        ...inputProduct,
+        ...data,
+        environments: {
+          connect: environments?.map((environment) => ({ id: environment.id })) ?? [],
+        },
       },
       select: selectProduct,
     });
@@ -113,6 +129,7 @@ export const updateProduct = async (
   try {
     const product = ZProduct.parse(updatedProduct);
 
+    revalidateTag(getProductsCacheTag(product.teamId));
     product.environments.forEach((environment) => {
       // revalidate environment cache
       revalidateTag(getProductCacheTag(environment.id));
@@ -155,12 +172,47 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   });
 
   if (product) {
+    revalidateTag(getProductsCacheTag(product.teamId));
+    revalidateTag(getEnvironmentsCacheTag(product.id));
     product.environments.forEach((environment) => {
       // revalidate product cache
       revalidateTag(getProductCacheTag(environment.id));
-      revalidateTag(environment.id);
+      revalidateTag(getEnvironmentCacheTag(environment.id));
     });
   }
 
   return product;
 });
+
+export const createProduct = async (
+  teamId: string,
+  productInput: Partial<TProductUpdateInput>
+): Promise<TProduct> => {
+  if (!productInput.name) {
+    throw new ValidationError("Product Name is required");
+  }
+  const { environments, ...data } = productInput;
+
+  let product = await prisma.product.create({
+    data: {
+      ...data,
+      name: productInput.name,
+      teamId,
+    },
+    select: selectProduct,
+  });
+
+  const devEnvironment = await createEnvironment(product.id, {
+    type: "development",
+  });
+
+  const prodEnvironment = await createEnvironment(product.id, {
+    type: "production",
+  });
+
+  product = await updateProduct(product.id, {
+    environments: [devEnvironment, prodEnvironment],
+  });
+
+  return product;
+};

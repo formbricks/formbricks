@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZPersonAttributes } from "./people";
+import { ZPerson, ZPersonAttributes } from "./people";
 import { ZSurvey } from "./surveys";
 import { ZTag } from "./tags";
 
@@ -46,20 +46,14 @@ export const ZResponse = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   surveyId: z.string().cuid2(),
-  person: z
-    .object({
-      id: z.string().cuid2(),
-      attributes: z.record(z.union([z.string(), z.number()])),
-      createdAt: z.date(),
-      updatedAt: z.date(),
-    })
-    .nullable(),
+  person: ZPerson.nullable(),
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
   meta: ZResponseMeta.nullable(),
+  singleUseId: z.string().nullable(),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
@@ -67,6 +61,7 @@ export type TResponse = z.infer<typeof ZResponse>;
 export const ZResponseInput = z.object({
   surveyId: z.string().cuid2(),
   personId: z.string().cuid2().nullable(),
+  singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
   data: ZResponseData,
   meta: z

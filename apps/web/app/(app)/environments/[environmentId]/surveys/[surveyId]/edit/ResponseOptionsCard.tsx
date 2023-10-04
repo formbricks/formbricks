@@ -1,7 +1,17 @@
 "use client";
 
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { AdvancedOptionToggle, DatePicker, Input, Label } from "@formbricks/ui";
+import {
+  AdvancedOptionToggle,
+  DatePicker,
+  Input,
+  Label,
+  Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
@@ -10,9 +20,14 @@ import toast from "react-hot-toast";
 interface ResponseOptionsCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  isEncryptionKeySet: boolean;
 }
 
-export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
+export default function ResponseOptionsCard({
+  localSurvey,
+  setLocalSurvey,
+  isEncryptionKeySet,
+}: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
@@ -27,6 +42,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     subheading: "This free & open-source survey has been closed",
   });
 
+  const [singleUseMessage, setSingleUseMessage] = useState({
+    heading: "The survey has already been answered.",
+    subheading: "You can only use this link once.",
+  });
+
+  const [singleUseEncryption, setSingleUseEncryption] = useState(isEncryptionKeySet);
   const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
     name: "",
     subheading: "",
@@ -104,6 +125,53 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
   };
 
+  const handleSingleUseSurveyToggle = () => {
+    if (!localSurvey.singleUse?.enabled) {
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: singleUseEncryption },
+      });
+    } else {
+      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false, isEncrypted: false } });
+    }
+  };
+
+  const handleSingleUseSurveyMessageChange = ({
+    heading,
+    subheading,
+  }: {
+    heading?: string;
+    subheading?: string;
+  }) => {
+    const message = {
+      heading: heading ?? singleUseMessage.heading,
+      subheading: subheading ?? singleUseMessage.subheading,
+    };
+
+    const localSurveySingleUseEnabled = localSurvey.singleUse?.enabled ?? false;
+    setSingleUseMessage(message);
+    setLocalSurvey({
+      ...localSurvey,
+      singleUse: { enabled: localSurveySingleUseEnabled, ...message, isEncrypted: singleUseEncryption },
+    });
+  };
+
+  const hangleSingleUseEncryptionToggle = () => {
+    if (!singleUseEncryption) {
+      setSingleUseEncryption(true);
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: true },
+      });
+    } else {
+      setSingleUseEncryption(false);
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: false },
+      });
+    }
+  };
+
   const handleVerifyEmailSurveyDetailsChange = ({
     name,
     subheading,
@@ -134,6 +202,14 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       setSurveyClosedMessageToggle(true);
     }
 
+    if (localSurvey.singleUse?.enabled) {
+      setSingleUseMessage({
+        heading: localSurvey.singleUse.heading ?? singleUseMessage.heading,
+        subheading: localSurvey.singleUse.subheading ?? singleUseMessage.subheading,
+      });
+      setSingleUseEncryption(localSurvey.singleUse.isEncrypted);
+    }
+
     if (localSurvey.verifyEmail) {
       setVerifyEmailSurveyDetails({
         name: localSurvey.verifyEmail.name!,
@@ -146,7 +222,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       setCloseOnDate(localSurvey.closeOnDate);
       setSurveyCloseOnDateToggle(true);
     }
-  }, []);
+  }, [localSurvey]);
 
   const handleCheckMark = () => {
     if (autoComplete) {
@@ -302,6 +378,81 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 </div>
               </AdvancedOptionToggle>
 
+              {/* Single User Survey Options */}
+              <AdvancedOptionToggle
+                htmlId="singleUserSurveyOptions"
+                isChecked={!!localSurvey.singleUse?.enabled}
+                onToggle={handleSingleUseSurveyToggle}
+                title="Single-Use Survey Links"
+                description="Allow only 1 response per survey link."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <div className="row mb-2 flex cursor-default items-center space-x-2">
+                      <Label htmlFor="howItWorks">How it works</Label>
+                    </div>
+                    <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
+                      <li className="text-sm text-slate-600">
+                        Blocks survey if the survey URL has no Single Use Id (suId).
+                      </li>
+                      <li className="text-sm text-slate-600">
+                        Blocks survey if a submission with the Single Use Id (suId) in the URL exists already.
+                      </li>
+                    </ul>
+                    <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
+                    <Input
+                      autoFocus
+                      id="heading"
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      defaultValue={singleUseMessage.heading}
+                      onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
+                    />
+
+                    <Label htmlFor="headline">Subheading</Label>
+                    <Input
+                      className="mb-4 mt-2 bg-white"
+                      id="subheading"
+                      name="subheading"
+                      defaultValue={singleUseMessage.subheading}
+                      onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
+                    />
+                    <Label htmlFor="headline">URL Encryption</Label>
+                    <div>
+                      <TooltipProvider delayDuration={50}>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className="mt-2 flex items-center space-x-1 ">
+                              <Switch
+                                id="encryption-switch"
+                                checked={singleUseEncryption}
+                                onCheckedChange={hangleSingleUseEncryptionToggle}
+                                disabled={!isEncryptionKeySet}
+                              />
+                              <Label htmlFor="encryption-label">
+                                <div className="ml-2">
+                                  <p className="text-sm font-normal text-slate-600">
+                                    Enable encryption of Single Use Id (suId) in survey URL.
+                                  </p>
+                                </div>
+                              </Label>
+                            </div>
+                          </TooltipTrigger>
+                          {!isEncryptionKeySet && (
+                            <TooltipContent side={"top"}>
+                              <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                                FORMBRICKS_ENCRYPTION_KEY needs to be set to enable this feature.
+                              </p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+
+              {/* Verify Email Section */}
               <AdvancedOptionToggle
                 htmlId="verifyEmailBeforeSubmission"
                 isChecked={verifyEmailToggle}
