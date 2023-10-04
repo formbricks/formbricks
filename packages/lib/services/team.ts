@@ -107,7 +107,20 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     }
   )();
 
-export const updateTeam = async (teamId: string, data: TTeamUpdateInput): Promise<TTeam> => {
+export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
+  try {
+    const team = await prisma.team.create({
+      data: teamInput,
+      select,
+    });
+
+    return team;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>): Promise<TTeam> => {
   try {
     const updatedTeam = await prisma.team.update({
       where: {

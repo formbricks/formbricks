@@ -299,8 +299,8 @@ const Leaderboard = [
     points: "200",
   },
   {
-    name: "Arjun",
-    points: "100",
+    name: "Naitik Kapadia (Arjun)",
+    points: "200",
   },
   {
     name: "Yashhhh",
@@ -332,7 +332,7 @@ const Leaderboard = [
   },
   {
     name: "Eldemarkki",
-    points: "100",
+    points: "500",
   },
   {
     name: "Suyash",
@@ -360,15 +360,55 @@ const Leaderboard = [
   },
   {
     name: "Aditya Deshlahre",
-    points: "450",
+    points: "550",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "250",
+    points: "350",
   },
   {
     name: "Sagnik Sahoo",
+    points: "100",
+  },
+  {
+    name: "Prasoon Mahawar",
+    points: "100",
+  },
+  {
+    name: "Dushmanta",
+    points: "100",
+  },
+  {
+    name: "Arjavv",
+    points: "100",
+  },
+  {
+    name: "Ashish Khare",
+    points: "100",
+  },
+  {
+    name: "Rohit Mondal",
+    points: "100",
+  },
+  {
+    name: "noobcoder",
+    points: "100",
+  },
+  {
+    name: "Rayyan Alam (Rayy)",
+    points: "100",
+  },
+  {
+    name: "Ayush",
+    points: "100",
+  },
+  {
+    name: "Zechariah",
+    points: "100",
+  },
+  {
+    name: "Rajarshi Misra",
     points: "100",
   },
 ];

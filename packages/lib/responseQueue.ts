@@ -73,7 +73,12 @@ export class ResponseQueue {
         await updateResponse(responseUpdate, this.surveyState.responseId, this.config.apiHost);
       } else {
         const response = await createResponse(
-          { ...responseUpdate, surveyId: this.surveyState.surveyId, personId: this.config.personId || null },
+          {
+            ...responseUpdate,
+            surveyId: this.surveyState.surveyId,
+            personId: this.config.personId || null,
+            singleUseId: this.surveyState.singleUseId || null,
+          },
           this.config.apiHost
         );
         if (responseUpdate.displayId) {

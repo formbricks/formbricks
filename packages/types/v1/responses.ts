@@ -53,6 +53,7 @@ export const ZResponse = z.object({
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
   meta: ZResponseMeta.nullable(),
+  singleUseId: z.string().nullable(),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
@@ -60,6 +61,7 @@ export type TResponse = z.infer<typeof ZResponse>;
 export const ZResponseInput = z.object({
   surveyId: z.string().cuid2(),
   personId: z.string().cuid2().nullable(),
+  singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
   data: ZResponseData,
   meta: z

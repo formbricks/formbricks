@@ -12,7 +12,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/prefilling";
-import { TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
+import SurveyLinkUsed from "@/app/s/[surveyId]/SurveyLinkUsed";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -20,6 +21,8 @@ interface LinkSurveyProps {
   personId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
+  singleUseId?: string;
+  singleUseResponse?: TResponse;
   webAppUrl: string;
 }
 
@@ -29,11 +32,15 @@ export default function LinkSurvey({
   personId,
   emailVerificationStatus,
   prefillAnswer,
+  singleUseId,
+  singleUseResponse,
   webAppUrl,
 }: LinkSurveyProps) {
+  const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
-  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
+  // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
+  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
   const [displayId, setDisplayId] = useState<string>();
   const prefillResponseData: TResponseData | undefined = prefillAnswer
@@ -57,6 +64,13 @@ export default function LinkSurvey({
     [personId, webAppUrl]
   );
   const [autoFocus, setAutofocus] = useState(false);
+  const hasFinishedSingleUseResponse = useMemo(() => {
+    if (singleUseResponse && singleUseResponse.finished) {
+      return true;
+    }
+    return false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
@@ -68,6 +82,10 @@ export default function LinkSurvey({
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);
   }, [responseQueue, surveyState]);
+
+  if (!surveyState.isResponseFinished() && hasFinishedSingleUseResponse) {
+    return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
+  }
 
   if (emailVerificationStatus && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
