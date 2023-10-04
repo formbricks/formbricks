@@ -101,7 +101,7 @@ export default function SurveyMenuBar({
     const existingLogicConditions = new Set();
     const existingQuestionIds = new Set();
 
-    if (localSurvey.questions.length === 0) {
+    if (survey.questions.length === 0) {
       toast.error("Please add at least one question");
       return;
     }
@@ -314,6 +314,7 @@ export default function SurveyMenuBar({
               onClick={async () => {
                 setIsMutatingSurvey(true);
                 if (!validateSurvey(localSurvey)) {
+                  setIsMutatingSurvey(false);
                   return;
                 }
                 await updateSurveyAction({ ...localSurvey, status: "inProgress" });
