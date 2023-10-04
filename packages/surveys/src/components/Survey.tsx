@@ -22,7 +22,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
 }: SurveyBaseProps) {
-  const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
+  const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0]?.id);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});

@@ -33,7 +33,7 @@ export default function NPSQuestion({
         e.preventDefault();
         onSubmit({ [question.id]: value });
       }}>
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
         <fieldset>
@@ -55,7 +55,7 @@ export default function NPSQuestion({
                   onClick={() => {
                     if (question.required) {
                       onSubmit({
-                        [question.id]: value,
+                        [question.id]: number,
                       });
                     }
                     onChange({ [question.id]: number });

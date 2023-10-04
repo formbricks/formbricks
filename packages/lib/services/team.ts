@@ -1,10 +1,12 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TTeam, TTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
-import { cache } from "react";
+import { revalidateTag, unstable_cache } from "next/cache";
 import {
   ChurnResponses,
   ChurnSurvey,
@@ -24,6 +26,7 @@ import {
   updateEnvironmentArgs,
 } from "../utils/createDemoProductHelpers";
 import { validateInputs } from "../utils/validate";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const select = {
   id: true,
@@ -34,67 +37,118 @@ export const select = {
   stripeCustomerId: true,
 };
 
-export const getTeamsByUserId = cache(async (userId: string): Promise<TTeam[]> => {
-  try {
-    const teams = await prisma.team.findMany({
-      where: {
-        memberships: {
-          some: {
-            userId,
-          },
-        },
-      },
-      select,
-    });
+export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
+export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
-    return teams;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
-  }
-});
-
-export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
-  validateInputs([environmentId, ZId]);
-  try {
-    const team = await prisma.team.findFirst({
-      where: {
-        products: {
-          some: {
-            environments: {
+export const getTeamsByUserId = async (userId: string): Promise<TTeam[]> =>
+  unstable_cache(
+    async () => {
+      try {
+        const teams = await prisma.team.findMany({
+          where: {
+            memberships: {
               some: {
-                id: environmentId,
+                userId,
               },
             },
           },
-        },
-      },
+          select,
+        });
+
+        return teams;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`users-${userId}-teams`],
+    {
+      tags: [getTeamsByUserIdCacheTag(userId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> =>
+  unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+      try {
+        const team = await prisma.team.findFirst({
+          where: {
+            products: {
+              some: {
+                environments: {
+                  some: {
+                    id: environmentId,
+                  },
+                },
+              },
+            },
+          },
+          select: { ...select, memberships: true }, // include memberships
+        });
+
+        return team;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`environments-${environmentId}-team`],
+    {
+      tags: [getTeamByEnvironmentIdCacheTag(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
+  try {
+    const team = await prisma.team.create({
+      data: teamInput,
       select,
     });
 
     return team;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
     throw error;
   }
-});
+};
 
-export const updateTeam = async (teamId: string, data: TTeamUpdateInput) => {
+export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>): Promise<TTeam> => {
   try {
     const updatedTeam = await prisma.team.update({
       where: {
         id: teamId,
       },
       data,
+      select: { ...select, memberships: true, products: { select: { environments: true } } }, // include memberships & environments
     });
 
-    return updatedTeam;
+    // revalidate cache for members
+    updatedTeam?.memberships.forEach((membership) => {
+      revalidateTag(getTeamsByUserIdCacheTag(membership.userId));
+    });
+
+    // revalidate cache for environments
+    updatedTeam?.products.forEach((product) => {
+      product.environments.forEach((environment) => {
+        revalidateTag(getTeamByEnvironmentIdCacheTag(environment.id));
+      });
+    });
+
+    const team = {
+      ...updatedTeam,
+      memberships: undefined,
+      products: undefined,
+    };
+
+    return team;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
       throw new ResourceNotFoundError("Team", teamId);
@@ -107,11 +161,32 @@ export const updateTeam = async (teamId: string, data: TTeamUpdateInput) => {
 export const deleteTeam = async (teamId: string) => {
   validateInputs([teamId, ZId]);
   try {
-    await prisma.team.delete({
+    const deletedTeam = await prisma.team.delete({
       where: {
         id: teamId,
       },
+      select: { ...select, memberships: true, products: { select: { environments: true } } }, // include memberships & environments
     });
+
+    // revalidate cache for members
+    deletedTeam?.memberships.forEach((membership) => {
+      revalidateTag(getTeamsByUserIdCacheTag(membership.userId));
+    });
+
+    // revalidate cache for environments
+    deletedTeam?.products.forEach((product) => {
+      product.environments.forEach((environment) => {
+        revalidateTag(getTeamByEnvironmentIdCacheTag(environment.id));
+      });
+    });
+
+    const team = {
+      ...deletedTeam,
+      memberships: undefined,
+      products: undefined,
+    };
+
+    return team;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -121,17 +196,10 @@ export const deleteTeam = async (teamId: string) => {
   }
 };
 
-export const createDemoProduct = cache(async (teamId: string) => {
+export const createDemoProduct = async (teamId: string) => {
   validateInputs([teamId, ZId]);
-  const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({
-    include: {
-      environments: true,
-    },
-  });
 
-  type ProductWithEnvironment = Prisma.ProductGetPayload<typeof productWithEnvironment>;
-
-  const demoProduct: ProductWithEnvironment = await prisma.product.create({
+  const demoProduct = await prisma.product.create({
     data: {
       name: "Demo Product",
       team: {
@@ -300,4 +368,4 @@ export const createDemoProduct = cache(async (teamId: string) => {
   );
 
   return demoProduct;
-});
+};

@@ -22,6 +22,24 @@ export const getWebhooks = cache(async (environmentId: string): Promise<TWebhook
   }
 });
 
+export const getCountOfWebhooksBasedOnSource = async (
+  environmentId: string,
+  source: TWebhookInput["source"]
+): Promise<number> => {
+  validateInputs([environmentId, ZId], [source, ZId]);
+  try {
+    const count = await prisma.webhook.count({
+      where: {
+        environmentId,
+        source,
+      },
+    });
+    return count;
+  } catch (error) {
+    throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
+  }
+};
+
 export const getWebhook = async (id: string): Promise<TWebhook | null> => {
   validateInputs([id, ZId]);
   const webhook = await prisma.webhook.findUnique({

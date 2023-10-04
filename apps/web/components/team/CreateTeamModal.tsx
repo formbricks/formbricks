@@ -1,6 +1,5 @@
-import { createTeam } from "@/app/(app)/environments/[environmentId]/actions";
+import { createTeamAction } from "@/app/(app)/environments/[environmentId]/actions";
 import Modal from "@/components/shared/Modal";
-import { useProfile } from "@/lib/profile";
 import { Button, Input, Label } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
@@ -15,13 +14,12 @@ interface CreateTeamModalProps {
 
 export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
   const router = useRouter();
-  const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm();
 
   const submitTeam = async (data) => {
     setLoading(true);
-    const newTeam = await createTeam(data.name, (profile as any).id);
+    const newTeam = await createTeamAction(data.name);
 
     toast.success("Team created successfully!");
     router.push(`/teams/${newTeam.id}`);

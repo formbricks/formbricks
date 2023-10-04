@@ -1,14 +1,15 @@
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface ActivityFeedProps {
   activities: TActivityFeedItem[];
   sortByDate: boolean;
-  environmentId: string;
+  environment: TEnvironment;
 }
 
-export default function ActivityFeed({ activities, sortByDate, environmentId }: ActivityFeedProps) {
+export default function ActivityFeed({ activities, sortByDate, environment }: ActivityFeedProps) {
   const sortedActivities: TActivityFeedItem[] = activities.sort((a, b) =>
     sortByDate
       ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -17,7 +18,7 @@ export default function ActivityFeed({ activities, sortByDate, environmentId }: 
   return (
     <>
       {sortedActivities.length === 0 ? (
-        <EmptySpaceFiller type={"event"} environmentId={environmentId} />
+        <EmptySpaceFiller type={"event"} environment={environment} />
       ) : (
         <div>
           {sortedActivities.map((activityItem) => (

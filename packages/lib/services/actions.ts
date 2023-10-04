@@ -11,7 +11,7 @@ import { validateInputs } from "../utils/validate";
 import { TJsActionInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { EventType } from "@prisma/client";
-import { getActionClassCacheTag, getActionClassCached } from "../services/actionClass";
+import { getActionClassCacheTag, getActionClassCached } from "../actionClass/service";
 import { getSessionCached } from "../services/session";
 
 export const getActionsByEnvironmentId = cache(
@@ -130,3 +130,51 @@ export const createAction = async (data: TJsActionInput) => {
   revalidateTag(sessionId);
   revalidateTag(getActionClassCacheTag(name, environmentId));
 };
+
+export const getActionCountInLastHour = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLastHour = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLastHour;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getActionCountInLast24Hours = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLast24Hours = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLast24Hours;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const getActionCountInLast7Days = cache(async (actionClassId: string) => {
+  try {
+    const numEventsLast7Days = await prisma.event.count({
+      where: {
+        eventClassId: actionClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    return numEventsLast7Days;
+  } catch (error) {
+    throw error;
+  }
+});
