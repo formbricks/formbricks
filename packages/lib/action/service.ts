@@ -12,7 +12,7 @@ import { TJsActionInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { EventType } from "@prisma/client";
 import { getActionClassCacheTag, getActionClassCached } from "../actionClass/service";
-import { getSessionCached } from "../services/session";
+import { getSessionCached } from "../session/service";
 
 export const getActionsByEnvironmentId = cache(
   async (environmentId: string, limit?: number): Promise<TAction[]> => {

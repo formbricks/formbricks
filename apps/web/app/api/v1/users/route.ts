@@ -2,11 +2,11 @@ import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { deleteInvite } from "@formbricks/lib/services/invite";
-import { createMembership } from "@formbricks/lib/services/membership";
-import { createProduct } from "@formbricks/lib/services/product";
-import { createProfile } from "@formbricks/lib/services/profile";
-import { createTeam } from "@formbricks/lib/services/team";
+import { deleteInvite } from "@formbricks/lib/invite/service";
+import { createMembership } from "@formbricks/lib/membership/service";
+import { createProduct } from "@formbricks/lib/product/service";
+import { createProfile } from "@formbricks/lib/profile/service";
+import { createTeam } from "@formbricks/lib/team/service";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {

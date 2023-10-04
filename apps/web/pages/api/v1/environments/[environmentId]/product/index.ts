@@ -1,6 +1,6 @@
 import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
-import { createProduct } from "@formbricks/lib/services/product";
+import { createProduct } from "@formbricks/lib/product/service";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
