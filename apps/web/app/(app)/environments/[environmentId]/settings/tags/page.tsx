@@ -1,6 +1,6 @@
 import EditTagsWrapper from "./EditTagsWrapper";
 import SettingsTitle from "../SettingsTitle";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/services/tagOnResponse";
 

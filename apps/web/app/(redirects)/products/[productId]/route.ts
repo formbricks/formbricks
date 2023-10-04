@@ -1,6 +1,6 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { hasTeamAccess } from "@/lib/api/apiHelper";
-import { getEnvironments } from "@formbricks/lib/services/environment";
+import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProduct } from "@formbricks/lib/services/product";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/v1/errors";
 import { getServerSession } from "next-auth";

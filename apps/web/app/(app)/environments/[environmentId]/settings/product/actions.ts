@@ -4,7 +4,7 @@ import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/servi
 import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { getServerSession } from "next-auth";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/services/membership";

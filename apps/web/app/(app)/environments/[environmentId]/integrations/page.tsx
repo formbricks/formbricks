@@ -7,7 +7,7 @@ import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui";
 import Image from "next/image";
 import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/services/webhook";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/services/integrations";
 
 export default async function IntegrationsPage({ params }) {

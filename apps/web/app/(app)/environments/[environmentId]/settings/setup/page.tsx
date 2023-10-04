@@ -5,7 +5,7 @@ import EnvironmentNotice from "@/components/shared/EnvironmentNotice";
 import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getActionsByEnvironmentId } from "@formbricks/lib/services/actions";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { ErrorComponent } from "@formbricks/ui";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";

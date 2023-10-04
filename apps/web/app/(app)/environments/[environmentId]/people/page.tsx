@@ -3,7 +3,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
 import { PEOPLE_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Pagination, PersonAvatar } from "@formbricks/ui";

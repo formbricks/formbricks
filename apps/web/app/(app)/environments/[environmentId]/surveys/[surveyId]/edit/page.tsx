@@ -4,7 +4,7 @@ import { FORMBRICKS_ENCRYPTION_KEY, REVALIDATION_INTERVAL } from "@formbricks/li
 import SurveyEditor from "./SurveyEditor";
 import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { ErrorComponent } from "@formbricks/ui";
