@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { selectSurvey } from "@formbricks/lib/services/survey";
+import { selectSurvey } from "@formbricks/lib/survey/service";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { unstable_cache } from "next/cache";
@@ -164,6 +164,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
     })
     .map((survey) => ({
       ...survey,
+      singleUse: survey.singleUse ? JSON.parse(JSON.stringify(survey.singleUse)) : null,
       triggers: survey.triggers.map((trigger) => trigger.eventClass),
       attributeFilters: survey.attributeFilters.map((af) => ({
         ...af,

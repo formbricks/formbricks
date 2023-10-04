@@ -5,11 +5,12 @@ import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurveys } from "@formbricks/lib/services/survey";
+import { getSurveys } from "@formbricks/lib/survey/service";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { generateSurveySingleUseId } from "@/lib/singleUseSurveys";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
@@ -45,57 +46,63 @@ export default async function SurveysList({ environmentId }: { environmentId: st
         </Link>
         {surveys
           .sort((a, b) => b.updatedAt?.getTime() - a.updatedAt?.getTime())
-          .map((survey) => (
-            <li key={survey.id} className="relative col-span-1 h-56">
-              <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
-                <div className="px-6 py-4">
-                  <Badge
-                    StartIcon={survey.type === "link" ? LinkIcon : ComputerDesktopIcon}
-                    startIconClassName="mr-2"
-                    text={
-                      survey.type === "link"
-                        ? "Link Survey"
-                        : survey.type === "web"
-                        ? "In-Product Survey"
-                        : ""
+          .map((survey) => {
+            const isSingleUse = survey.singleUse?.enabled ?? false;
+            const isEncrypted = survey.singleUse?.isEncrypted ?? false;
+            const singleUseId = isSingleUse ? generateSurveySingleUseId(isEncrypted) : undefined;
+            return (
+              <li key={survey.id} className="relative col-span-1 h-56">
+                <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
+                  <div className="px-6 py-4">
+                    <Badge
+                      StartIcon={survey.type === "link" ? LinkIcon : ComputerDesktopIcon}
+                      startIconClassName="mr-2"
+                      text={
+                        survey.type === "link"
+                          ? "Link Survey"
+                          : survey.type === "web"
+                          ? "In-Product Survey"
+                          : ""
+                      }
+                      type="gray"
+                      size={"tiny"}
+                      className="font-base"></Badge>
+                    <p className="my-2 line-clamp-3 text-lg">{survey.name}</p>
+                  </div>
+                  <Link
+                    href={
+                      survey.status === "draft"
+                        ? `/environments/${environmentId}/surveys/${survey.id}/edit`
+                        : `/environments/${environmentId}/surveys/${survey.id}/summary`
                     }
-                    type="gray"
-                    size={"tiny"}
-                    className="font-base"></Badge>
-                  <p className="my-2 line-clamp-3 text-lg">{survey.name}</p>
-                </div>
-                <Link
-                  href={
-                    survey.status === "draft"
-                      ? `/environments/${environmentId}/surveys/${survey.id}/edit`
-                      : `/environments/${environmentId}/surveys/${survey.id}/summary`
-                  }
-                  className="absolute h-full w-full"></Link>
-                <div className="divide-y divide-slate-100">
-                  <div className="flex justify-between px-4 py-2 text-right sm:px-6">
-                    <div className="flex items-center">
-                      {survey.status !== "draft" && (
-                        <>
-                          <SurveyStatusIndicator status={survey.status} tooltip environment={environment} />
-                        </>
-                      )}
-                      {survey.status === "draft" && (
-                        <span className="text-xs italic text-slate-400">Draft</span>
-                      )}
+                    className="absolute h-full w-full"></Link>
+                  <div className="divide-y divide-slate-100">
+                    <div className="flex justify-between px-4 py-2 text-right sm:px-6">
+                      <div className="flex items-center">
+                        {survey.status !== "draft" && (
+                          <>
+                            <SurveyStatusIndicator status={survey.status} tooltip environment={environment} />
+                          </>
+                        )}
+                        {survey.status === "draft" && (
+                          <span className="text-xs italic text-slate-400">Draft</span>
+                        )}
+                      </div>
+                      <SurveyDropDownMenu
+                        survey={survey}
+                        key={`surveys-${survey.id}`}
+                        environmentId={environmentId}
+                        environment={environment}
+                        otherEnvironment={otherEnvironment!}
+                        surveyBaseUrl={SURVEY_BASE_URL}
+                        singleUseId={singleUseId}
+                      />
                     </div>
-                    <SurveyDropDownMenu
-                      survey={survey}
-                      key={`surveys-${survey.id}`}
-                      environmentId={environmentId}
-                      environment={environment}
-                      otherEnvironment={otherEnvironment!}
-                      surveyBaseUrl={SURVEY_BASE_URL}
-                    />
                   </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
       </ul>
       <UsageAttributesUpdater numSurveys={surveys.length} />
     </>
