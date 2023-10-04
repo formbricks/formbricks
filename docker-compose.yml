@@ -125,10 +125,6 @@ services:
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
-      # WEBAPP_URL: *webapp_url
-      # DATABASE_URL: *database_url
-      # NEXTAUTH_SECRET: *nextauth_secret
-      # NEXTAUTH_URL: *nextauth_url
 
 volumes:
   postgres:

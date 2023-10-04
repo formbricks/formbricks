@@ -176,6 +176,37 @@ x-environment: &environment
     # Email configuration
     $email_config
 
+    # Uncomment the below and set it to 1 to disable Email Verification for new signups
+    # EMAIL_VERIFICATION_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Password Reset
+    # PASSWORD_RESET_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Signups
+    # SIGNUP_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Invites
+    # INVITE_DISABLED:
+
+    # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
+    # PRIVACY_URL:
+
+    # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
+    # TERMS_URL:
+
+    # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
+    # IMPRINT_URL:
+
+    # Uncomment the below and set to 1 if you want to enable GitHub OAuth
+    # GITHUB_AUTH_ENABLED:
+    # GITHUB_ID: 
+    # GITHUB_SECRET:
+
+    # Uncomment the below and set to 1 if you want to enable Google OAuth
+    # GOOGLE_AUTH_ENABLED:
+    # GOOGLE_CLIENT_ID:
+    # GOOGLE_CLIENT_SECRET:
+
 services:
   postgres:
     restart: always
@@ -223,6 +254,8 @@ echo "🚗 NEXTAUTH_SECRET updated successfully!"
 newgrp docker <<END
 
 docker compose --env-file /dev/null up
+
+echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
