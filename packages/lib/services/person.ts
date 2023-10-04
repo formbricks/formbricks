@@ -10,6 +10,7 @@ import { cache } from "react";
 import { PEOPLE_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClassByName } from "./attributeClass";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const selectPerson = {
   id: true,
@@ -100,7 +101,7 @@ export const getPersonCached = async (personId: string) =>
     getPersonCacheKey(personId),
     {
       tags: getPersonCacheKey(personId),
-      revalidate: 30 * 60, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -308,9 +309,9 @@ export const getMonthlyActivePeopleCount = async (environmentId: string): Promis
 
       return aggregations._count.id;
     },
-    [`env-${environmentId}-mau`],
+    [`environments-${environmentId}-mau`],
     {
-      tags: [`env-${environmentId}-mau`],
+      tags: [`environments-${environmentId}-mau`],
       revalidate: 60 * 60 * 6, // 6 hours
     }
   )();

@@ -17,14 +17,14 @@ import {
 } from "@/lib/surveys/surveys";
 import toast from "react-hot-toast";
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
-import { convertToCSV } from "@/lib/csvConversion";
+import { fetchFile } from "@/lib/fetchFile";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import ResponseFilter from "./ResponseFilter";
 import { DateRange, useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
-import { useTagsForEnvironment } from "@/lib/tags/tags";
+import { TTag } from "@formbricks/types/v1/tags";
 
 enum DateSelected {
   FROM = "from",
@@ -44,7 +44,7 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
-  environmentId: string;
+  environmentTags: TTag[];
   survey: TSurvey;
   responses: TResponse[];
   totalResponses: TResponse[];
@@ -61,7 +61,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentId, responses, survey, totalResponses }: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -73,7 +73,6 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
-  const { data: environmentTags } = useTagsForEnvironment(environmentId);
 
   // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
   useEffect(() => {
@@ -132,7 +131,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
     return [];
   };
 
-  const csvFileName = useMemo(() => {
+  const downloadFileName = useMemo(() => {
     if (survey) {
       const formattedDateString = getTodaysDateFormatted("_");
       return `${survey.name.split(" ").join("_")}_responses_${formattedDateString}`.toLocaleLowerCase();
@@ -142,12 +141,12 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
   }, [survey]);
 
   const downloadResponses = useCallback(
-    async (filter: FilterDownload) => {
+    async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
       const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, downloadResponse);
       const matchQandA = getMatchQandA(downloadResponse, survey);
-      const csvData = matchQandA.map((response) => {
-        const csvResponse = {
+      const jsonData = matchQandA.map((response) => {
+        const fileResponse = {
           "Response ID": response.id,
           Timestamp: response.createdAt,
           Finished: response.finished,
@@ -167,26 +166,25 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
               transformedAnswer = answer;
             }
           }
-          csvResponse[questionName] = matchingQuestion ? transformedAnswer : "";
+          fileResponse[questionName] = matchingQuestion ? transformedAnswer : "";
         });
 
-        return csvResponse;
+        return fileResponse;
       });
 
-      // Add attribute columns to the CSV
-
+      // Add attribute columns to the file
       Object.keys(attributeMap).forEach((attributeName) => {
         const attributeValues = attributeMap[attributeName];
         Object.keys(attributeValues).forEach((personId) => {
           const value = attributeValues[personId];
-          const matchingResponse = csvData.find((response) => response["Formbricks User ID"] === personId);
+          const matchingResponse = jsonData.find((response) => response["Formbricks User ID"] === personId);
           if (matchingResponse) {
             matchingResponse[attributeName] = value;
           }
         });
       });
 
-      // Fields which will be used as column headers in the CSV
+      // Fields which will be used as column headers in the file
       const fields = [
         "Response ID",
         "Timestamp",
@@ -200,23 +198,40 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
       let response;
 
       try {
-        response = await convertToCSV({
-          json: csvData,
-          fields,
-          fileName: csvFileName,
-        });
+        response = await fetchFile(
+          {
+            json: jsonData,
+            fields,
+            fileName: downloadFileName,
+          },
+          filetype
+        );
       } catch (err) {
-        toast.error("Error downloading CSV");
+        toast.error(`Error downloading ${filetype === "csv" ? "CSV" : "Excel"}`);
         return;
       }
 
-      const blob = new Blob([response.csvResponse], { type: "text/csv;charset=utf-8;" });
+      let blob: Blob;
+      if (filetype === "csv") {
+        blob = new Blob([response.fileResponse], { type: "text/csv;charset=utf-8;" });
+      } else if (filetype === "xlsx") {
+        const binaryString = atob(response["fileResponse"]);
+        const byteArray = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          byteArray[i] = binaryString.charCodeAt(i);
+        }
+        blob = new Blob([byteArray], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+      } else {
+        throw new Error(`Unsupported filetype: ${filetype}`);
+      }
+
       const downloadUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = downloadUrl;
-
-      link.download = `${csvFileName}.csv`;
+      link.download = `${downloadFileName}.${filetype}`;
 
       document.body.appendChild(link);
       link.click();
@@ -225,7 +240,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
 
       URL.revokeObjectURL(downloadUrl);
     },
-    [csvFileName, responses, totalResponses, survey]
+    [downloadFileName, responses, totalResponses, survey]
   );
 
   const handleDateHoveredChange = (date: Date) => {
@@ -376,16 +391,30 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.ALL);
+                  downloadResponses(FilterDownload.ALL, "csv");
                 }}>
                 <p className="text-slate-700">All responses (CSV)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.FILTER);
+                  downloadResponses(FilterDownload.ALL, "xlsx");
+                }}>
+                <p className="text-slate-700">All responses (Excel)</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:ring-0"
+                onClick={() => {
+                  downloadResponses(FilterDownload.FILTER, "csv");
                 }}>
                 <p className="text-slate-700">Current selection (CSV)</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:ring-0"
+                onClick={() => {
+                  downloadResponses(FilterDownload.FILTER, "xlsx");
+                }}>
+                <p className="text-slate-700">Current selection (Excel)</p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

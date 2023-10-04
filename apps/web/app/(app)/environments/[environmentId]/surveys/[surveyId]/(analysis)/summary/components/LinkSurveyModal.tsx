@@ -19,7 +19,7 @@ export default function LinkSurveyModal({ survey, open, setOpen, surveyBaseUrl }
   const linkTextRef = useRef(null);
   const [showEmbed, setShowEmbed] = useState(false);
 
-  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
+  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey.id, surveyBaseUrl]);
 
   const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; 
 overflow:auto;"> 

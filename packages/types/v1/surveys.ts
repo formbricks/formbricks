@@ -17,6 +17,17 @@ export const ZSurveyClosedMessage = z
   .nullable()
   .optional();
 
+export const ZSurveySingleUse = z
+  .object({
+    enabled: z.boolean(),
+    heading: z.optional(z.string()),
+    subheading: z.optional(z.string()),
+    isEncrypted: z.boolean(),
+  })
+  .nullable();
+
+export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
+
 export const ZSurveyVerifyEmail = z
   .object({
     name: z.optional(z.string()),
@@ -259,6 +270,7 @@ export const ZSurvey = z.object({
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+  singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
@@ -295,3 +307,15 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
 });
 
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;
+
+export const ZSurveyQuestionType = z.union([
+  z.literal("openText"),
+  z.literal("multipleChoiceSingle"),
+  z.literal("multipleChoiceMulti"),
+  z.literal("nps"),
+  z.literal("cta"),
+  z.literal("rating"),
+  z.literal("consent"),
+]);
+
+export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import {
   TDisplay,
@@ -39,6 +41,8 @@ const selectDisplay = {
   status: true,
 };
 
+export const getDisplaysCacheTag = (surveyId: string) => `surveys-${surveyId}-displays`;
+
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayInput]);
   try {
@@ -69,6 +73,10 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
 
     if (displayInput.personId) {
       revalidateTag(displayInput.personId);
+    }
+
+    if (displayInput.surveyId) {
+      revalidateTag(getDisplaysCacheTag(displayInput.surveyId));
     }
 
     return display;

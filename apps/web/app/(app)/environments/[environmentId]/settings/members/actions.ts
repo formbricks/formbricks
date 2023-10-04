@@ -20,13 +20,22 @@ import {
 import { deleteTeam, updateTeam } from "@formbricks/lib/services/team";
 import { TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
-import { TTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { getServerSession } from "next-auth";
 import { hasTeamAccess, hasTeamAuthority, hasTeamOwnership, isOwner } from "@formbricks/lib/auth";
-import { env } from "@/env.mjs";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
 
-export const updateTeamAction = async (teamId: string, data: TTeamUpdateInput) => {
-  return await updateTeam(teamId, data);
+export const updateTeamNameAction = async (teamId: string, teamName: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
+  if (!isUserAuthorized) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  return await updateTeam(teamId, { name: teamName });
 };
 
 export const updateMembershipAction = async (
@@ -154,7 +163,7 @@ export const inviteUserAction = async (
 
   const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
 
-  if (env.NEXT_PUBLIC_INVITE_DISABLED === "1") {
+  if (INVITE_DISABLED) {
     throw new AuthenticationError("Invite disabled");
   }
 

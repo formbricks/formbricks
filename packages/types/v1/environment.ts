@@ -25,4 +25,11 @@ export const ZEnvironmentUpdateInput = z.object({
 
 export const ZId = z.string().cuid2();
 
+export const ZEnvironmentCreateInput = z.object({
+  type: z.enum(["development", "production"]).optional(),
+  widgetSetupCompleted: z.boolean().optional(),
+});
+
+export type TEnvironmentCreateInput = z.infer<typeof ZEnvironmentCreateInput>;
+
 export type TEnvironmentUpdateInput = z.infer<typeof ZEnvironmentUpdateInput>;

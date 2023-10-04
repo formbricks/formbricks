@@ -4,13 +4,14 @@ import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { timeSince } from "@formbricks/lib/time";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TGoogleSheetIntegration, TGoogleSheetsConfigData } from "@formbricks/types/v1/integrations";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 interface HomeProps {
-  environmentId: string;
+  environment: TEnvironment;
   googleSheetIntegration: TGoogleSheetIntegration;
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
@@ -19,7 +20,7 @@ interface HomeProps {
 }
 
 export default function Home({
-  environmentId,
+  environment,
   googleSheetIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
@@ -83,7 +84,7 @@ export default function Home({
         <div className="mt-4 w-full">
           <EmptySpaceFiller
             type="table"
-            environmentId={environmentId}
+            environment={environment}
             noWidgetRequired={true}
             emptyMessage="Your google sheet integrations will appear here as soon as you add them. ⏲️"
           />
