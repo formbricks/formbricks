@@ -9,7 +9,7 @@ export const ZProduct = z.object({
   name: z.string(),
   teamId: z.string(),
   brandColor: ZColor,
-  highlightBorderColor: ZColor.nullish(),
+  highlightBorderColor: ZColor.nullable(),
   recontactDays: z.number().int(),
   formbricksSignature: z.boolean(),
   placement: ZSurveyPlacement,
