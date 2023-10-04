@@ -3,17 +3,21 @@
 import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponsesFeed";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
+import { TTag } from "@formbricks/types/v1/tags";
 
 export default function ResponseTimeline({
   surveys,
+  environment,
   responses,
-  environmentId,
+  environmentTags,
 }: {
   surveys: TSurvey[];
   responses: TResponse[];
-  environmentId: string;
+  environment: TEnvironment;
+  environmentTags: TTag[];
 }) {
   const [responsesAscending, setResponsesAscending] = useState(false);
   const [sortedResponses, setSortedResponses] = useState(responses);
@@ -37,7 +41,12 @@ export default function ResponseTimeline({
           </button>
         </div>
       </div>
-      <ResponseFeed responses={sortedResponses} environmentId={environmentId} surveys={surveys} />
+      <ResponseFeed
+        responses={sortedResponses}
+        environment={environment}
+        surveys={surveys}
+        environmentTags={environmentTags}
+      />
     </div>
   );
 }

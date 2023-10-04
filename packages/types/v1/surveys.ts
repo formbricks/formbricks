@@ -10,10 +10,23 @@ export const ZSurveyThankYouCard = z.object({
 
 export const ZSurveyClosedMessage = z
   .object({
+    enabled: z.boolean().optional(),
+    heading: z.string().optional(),
+    subheading: z.string().optional(),
+  })
+  .nullable()
+  .optional();
+
+export const ZSurveySingleUse = z
+  .object({
+    enabled: z.boolean(),
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
+    isEncrypted: z.boolean(),
   })
-  .optional();
+  .nullable();
+
+export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
 export const ZSurveyVerifyEmail = z
   .object({
@@ -26,7 +39,7 @@ export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
-export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
+export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
@@ -135,6 +148,7 @@ const ZSurveyQuestionBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
+  isDraft: z.boolean().optional(),
 });
 
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
@@ -223,36 +237,66 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
 export const ZSurveyAttributeFilter = z.object({
-  id: z.string().cuid2(),
-  attributeClassId: z.string(),
+  attributeClassId: z.string().cuid2(),
   condition: z.enum(["equals", "notEquals"]),
   value: z.string(),
 });
+
+export type TSurveyAttributeFilter = z.infer<typeof ZSurveyAttributeFilter>;
+
+const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
+
+const ZSurveyType = z.enum(["web", "email", "link", "mobile"]);
+
+const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
 
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  type: z.enum(["web", "email", "link", "mobile"]),
+  type: ZSurveyType,
   environmentId: z.string(),
-  status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
+  status: ZSurveyStatus,
   attributeFilters: z.array(ZSurveyAttributeFilter),
-  displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
-  autoClose: z.union([z.number(), z.null()]),
+  displayOption: ZSurveyDisplayOption,
+  autoClose: z.number().nullable(),
   triggers: z.array(ZActionClass),
   redirectUrl: z.string().url().nullable(),
-  recontactDays: z.union([z.number(), z.null()]),
+  recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
-  autoComplete: z.union([z.number(), z.null()]),
+  autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
-  surveyClosedMessage: ZSurveyClosedMessage,
+  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+  singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
 });
 
+export const ZSurveyInput = z.object({
+  name: z.string(),
+  type: ZSurveyType.optional(),
+  environmentId: z.string(),
+  status: ZSurveyStatus.optional(),
+  displayOption: ZSurveyDisplayOption.optional(),
+  autoClose: z.number().optional(),
+  redirectUrl: z.string().url().optional(),
+  recontactDays: z.number().optional(),
+  questions: ZSurveyQuestions.optional(),
+  thankYouCard: ZSurveyThankYouCard.optional(),
+  delay: z.number().optional(),
+  autoComplete: z.number().optional(),
+  closeOnDate: z.date().optional(),
+  surveyClosedMessage: ZSurveyClosedMessage.optional(),
+  verifyEmail: ZSurveyVerifyEmail.optional(),
+  // TODO: Update survey create endpoint to accept attributeFilters and triggers like the survey update endpoint
+  // attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
+  //triggers: z.array(ZActionClass).optional(),
+});
+
 export type TSurvey = z.infer<typeof ZSurvey>;
+export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({
@@ -263,3 +307,15 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
 });
 
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;
+
+export const ZSurveyQuestionType = z.union([
+  z.literal("openText"),
+  z.literal("multipleChoiceSingle"),
+  z.literal("multipleChoiceMulti"),
+  z.literal("nps"),
+  z.literal("cta"),
+  z.literal("rating"),
+  z.literal("consent"),
+]);
+
+export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;

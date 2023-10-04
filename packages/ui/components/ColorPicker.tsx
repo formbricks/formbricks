@@ -9,10 +9,10 @@ export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: 
   return (
     <div className="my-2">
       <div className="flex w-full items-center justify-between space-x-1 rounded-md border border-slate-300 px-2 text-sm text-slate-400">
-        <div>
+        <div className="flex w-full items-center">
           #
           <HexColorInput
-            className="ml-2 mr-2 h-10 w-32 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
+            className="ml-2 mr-2 h-10 w-32 flex-1 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
             color={color}
             onChange={onChange}
           />

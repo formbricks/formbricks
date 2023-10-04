@@ -4,9 +4,9 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProfile } from "@/lib/profile";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { cn } from "@formbricks/lib/cn";
-import type { Template } from "@formbricks/types/templates";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
+import { TTemplate } from "@formbricks/types/v1/templates";
 import {
   Button,
   ErrorComponent,
@@ -22,10 +22,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSurveyAction } from "./actions";
 import { customSurvey, templates } from "./templates";
+import { TSurveyInput } from "@formbricks/types/v1/surveys";
 
 type TemplateList = {
   environmentId: string;
-  onTemplateClick: (template: Template) => void;
+  onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
@@ -41,7 +42,7 @@ export default function TemplateList({
   templateSearch,
 }: TemplateList) {
   const router = useRouter();
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(RECOMMENDED_CATEGORY_NAME);
   const { profile, isLoadingProfile, isErrorProfile } = useProfile();
@@ -77,7 +78,7 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-    };
+    } as Partial<TSurveyInput>;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
@@ -153,7 +154,7 @@ export default function TemplateList({
             </div>
           )}
         </button>
-        {filteredTemplates.map((template: Template) => (
+        {filteredTemplates.map((template: TTemplate) => (
           <div
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);

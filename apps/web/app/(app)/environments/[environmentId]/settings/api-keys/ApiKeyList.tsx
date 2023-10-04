@@ -1,6 +1,6 @@
 import EditApiKeys from "./EditApiKeys";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getApiKeys } from "@formbricks/lib/services/apiKey";
+import { getApiKeys } from "@formbricks/lib/apiKey/service";
 import { getEnvironments } from "@formbricks/lib/services/environment";
 
 export default async function ApiKeyList({
@@ -20,6 +20,10 @@ export default async function ApiKeyList({
   };
 
   const product = await getProductByEnvironmentId(environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   const environments = await getEnvironments(product.id);
   const environmentTypeId = findEnvironmentByType(environments, environmentType);
   const apiKeys = await getApiKeys(environmentTypeId);

@@ -132,6 +132,18 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return {
+      fallback: [
+        // These rewrites are checked after both pages/public files
+        // and dynamic routes are checked
+        {
+          source: "/:path*",
+          destination: `https://app.formbricks.com/s/:path*`,
+        },
+      ],
+    };
+  },
 };
 
 export default withPlausibleProxy({ customDomain: "https://plausible.formbricks.com" })(

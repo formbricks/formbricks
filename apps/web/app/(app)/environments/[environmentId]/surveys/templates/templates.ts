@@ -1,5 +1,6 @@
 import { QuestionType } from "@formbricks/types/questions";
-import type { Template } from "@formbricks/types/templates";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TTemplate } from "@formbricks/types/v1/templates";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
@@ -8,7 +9,7 @@ const thankYouCardDefault = {
   subheader: "We appreciate your feedback.",
 };
 
-export const templates: Template[] = [
+export const templates: TTemplate[] = [
   {
     name: "Product Market Fit (Superhuman)",
     category: "Product Experience",
@@ -2018,7 +2019,7 @@ export const templates: Template[] = [
   },  */
 ];
 
-export const customSurvey: Template = {
+export const customSurvey: TTemplate = {
   name: "Start from scratch",
   description: "Create a survey without template.",
   preset: {
@@ -2035,4 +2036,31 @@ export const customSurvey: Template = {
     ],
     thankYouCard: thankYouCardDefault,
   },
+};
+
+export const minimalSurvey: TSurvey = {
+  id: "someUniqueId1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  name: "Minimal Survey",
+  type: "web",
+  environmentId: "someEnvId1",
+  status: "draft",
+  attributeFilters: [],
+  displayOption: "displayOnce",
+  autoClose: null,
+  triggers: [],
+  redirectUrl: null,
+  recontactDays: null,
+  questions: [],
+  thankYouCard: {
+    enabled: false,
+  },
+  delay: 0, // No delay
+  autoComplete: null,
+  closeOnDate: null,
+  surveyClosedMessage: {
+    enabled: false,
+  },
+  singleUse: null,
 };

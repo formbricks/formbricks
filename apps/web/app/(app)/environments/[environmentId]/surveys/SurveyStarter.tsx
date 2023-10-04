@@ -1,10 +1,11 @@
 "use client";
-import { Template } from "@/../../packages/types/templates";
 import { createSurveyAction } from "./actions";
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
+import { TSurveyInput } from "@formbricks/types/v1/surveys";
+import { TTemplate } from "@formbricks/types/v1/templates";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -20,7 +21,7 @@ export default function SurveyStarter({
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
-  const newSurveyFromTemplate = async (template: Template) => {
+  const newSurveyFromTemplate = async (template: TTemplate) => {
     setIsCreateSurveyLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
     const autoComplete = surveyType === "web" ? 50 : null;
@@ -28,7 +29,7 @@ export default function SurveyStarter({
       ...template.preset,
       type: surveyType,
       autoComplete,
-    };
+    } as Partial<TSurveyInput>;
     try {
       const survey = await createSurveyAction(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);

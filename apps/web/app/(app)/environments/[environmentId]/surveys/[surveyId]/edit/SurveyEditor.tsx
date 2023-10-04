@@ -1,10 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProduct } from "@/lib/products/products";
-import { useSurvey } from "@/lib/surveys/surveys";
-import type { Survey } from "@formbricks/types/surveys";
-import { ErrorComponent } from "@formbricks/ui";
+import React from "react";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
@@ -12,24 +8,33 @@ import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
 import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { ErrorComponent } from "@formbricks/ui";
 
 interface SurveyEditorProps {
-  environmentId: string;
-  surveyId: string;
+  survey: TSurveyWithAnalytics;
+  product: TProduct;
   environment: TEnvironment;
+  actionClasses: TActionClass[];
+  attributeClasses: TAttributeClass[];
+  isEncryptionKeySet: boolean;
 }
 
 export default function SurveyEditor({
-  environmentId,
-  surveyId,
+  survey,
+  product,
   environment,
+  actionClasses,
+  attributeClasses,
+  isEncryptionKeySet,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<Survey | null>();
+  const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId, true);
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
 
   useEffect(() => {
     if (survey) {
@@ -41,63 +46,66 @@ export default function SurveyEditor({
     }
   }, [survey]);
 
-  if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
-    return <LoadingSpinner />;
-  }
+  // when the survey type changes, we need to reset the active question id to the first question
+  useEffect(() => {
+    if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
+      setActiveQuestionId(localSurvey.questions[0].id);
+    }
+  }, [localSurvey?.type]);
 
-  if (isErrorSurvey || isErrorProduct) {
+  if (!localSurvey) {
     return <ErrorComponent />;
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <SurveyMenuBar
-        setLocalSurvey={setLocalSurvey}
-        localSurvey={localSurvey}
-        survey={survey}
-        environmentId={environmentId}
-        environment={environment}
-        activeId={activeView}
-        setActiveId={setActiveView}
-        setInvalidQuestions={setInvalidQuestions}
-      />
-      <div className="relative z-0 flex flex-1 overflow-hidden">
-        <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
-          <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
-          {activeView === "questions" ? (
-            <QuestionsView
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              activeQuestionId={activeQuestionId}
+    <>
+      <div className="flex h-full flex-col">
+        <SurveyMenuBar
+          setLocalSurvey={setLocalSurvey}
+          localSurvey={localSurvey}
+          survey={survey}
+          environment={environment}
+          activeId={activeView}
+          setActiveId={setActiveView}
+          setInvalidQuestions={setInvalidQuestions}
+          product={product}
+        />
+        <div className="relative z-0 flex flex-1 overflow-hidden">
+          <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
+            <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
+            {activeView === "questions" ? (
+              <QuestionsView
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                activeQuestionId={activeQuestionId}
+                setActiveQuestionId={setActiveQuestionId}
+                product={product}
+                invalidQuestions={invalidQuestions}
+                setInvalidQuestions={setInvalidQuestions}
+              />
+            ) : (
+              <SettingsView
+                environment={environment}
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                actionClasses={actionClasses}
+                attributeClasses={attributeClasses}
+                isEncryptionKeySet={isEncryptionKeySet}
+              />
+            )}
+          </main>
+          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
+            <PreviewSurvey
+              survey={localSurvey}
               setActiveQuestionId={setActiveQuestionId}
-              environmentId={environmentId}
-              invalidQuestions={invalidQuestions}
-              setInvalidQuestions={setInvalidQuestions}
+              activeQuestionId={activeQuestionId}
+              product={product}
+              environment={environment}
+              previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
             />
-          ) : (
-            <SettingsView
-              environmentId={environmentId}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-            />
-          )}
-        </main>
-        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
-          <PreviewSurvey
-            activeQuestionId={activeQuestionId}
-            setActiveQuestionId={setActiveQuestionId}
-            questions={localSurvey.questions}
-            brandColor={product.brandColor}
-            environmentId={environmentId}
-            product={product}
-            environment={environment}
-            surveyType={localSurvey.type}
-            thankYouCard={localSurvey.thankYouCard}
-            previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
-            autoClose={localSurvey.autoClose}
-          />
-        </aside>
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

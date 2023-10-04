@@ -9,4 +9,12 @@ export const ZTeam = z.object({
   stripeCustomerId: z.string().nullable(),
 });
 
+export const ZTeamUpdateInput = z.object({
+  name: z.string(),
+  plan: z.enum(["free", "pro"]).optional(),
+  stripeCustomerId: z.string().nullish(),
+});
+
+export type TTeamUpdateInput = z.infer<typeof ZTeamUpdateInput>;
+
 export type TTeam = z.infer<typeof ZTeam>;

@@ -14,9 +14,10 @@ export const metadata: Metadata = {
 
 export default async function AttributesPage({ params }) {
   let attributeClasses = await getAttributeClasses(params.environmentId);
+
   return (
     <>
-      <AttributeClassesTable environmentId={params.environmentId} attributeClasses={attributeClasses}>
+      <AttributeClassesTable attributeClasses={attributeClasses}>
         <AttributeTableHeading />
         <HowToAddAttributesButton />
 

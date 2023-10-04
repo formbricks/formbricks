@@ -1,8 +1,13 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 
 export const getTeamDetails = async (environmentId: string) => {
+  validateInputs([environmentId, ZId]);
   try {
     const environment = await prisma.environment.findUnique({
       where: {

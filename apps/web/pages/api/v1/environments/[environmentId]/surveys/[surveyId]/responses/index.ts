@@ -1,7 +1,8 @@
-import { env } from "@/env.mjs";
 import { getPlan, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -72,7 +73,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    if (env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1") {
+    if (IS_FORMBRICKS_CLOUD) {
       const plan = await getPlan(req, res);
       if (plan === "free" && responses.length > RESPONSES_LIMIT_FREE) {
         return res.json({

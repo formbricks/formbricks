@@ -1,8 +1,8 @@
 "use client";
 
-import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/RatingResponse";
-import ResponseNote from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/ResponseNote";
-import ResponseTagsWrapper from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/ResponseTagsWrapper";
+import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
+import ResponseNotes from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseNote";
+import ResponseTagsWrapper from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTagsWrapper";
 import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import QuestionSkip from "@/components/shared/QuestionSkip";
@@ -20,11 +20,15 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import { getPersonIdentifier } from "@formbricks/lib/helpers/people";
+import { TTag } from "@formbricks/types/v1/tags";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
   pageType: string;
+  environmentTags: TTag[];
+  environment: TEnvironment;
 }
 
 interface TooltipRendererProps {
@@ -49,7 +53,13 @@ function TooltipRenderer(props: TooltipRendererProps) {
   return <>{children}</>;
 }
 
-export default function SingleResponseCard({ survey, response, pageType }: SingleResponseCardProps) {
+export default function SingleResponseCard({
+  survey,
+  response,
+  pageType,
+  environmentTags,
+  environment,
+}: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
   const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
@@ -70,7 +80,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
 
   if (response.finished) {
     survey.questions.forEach((question) => {
-      if (question.id in response.data && !isValidValue(response.data[question.id])) {
+      if (!response.data[question.id]) {
         temp.push(question.id);
       } else {
         if (temp.length > 0) {
@@ -85,11 +95,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
       if (!response.data[question.id]) {
         if (skippedQuestions.length === 0) {
           temp.push(question.id);
-        } else if (
-          skippedQuestions.length > 0 &&
-          question.id in response.data &&
-          !isValidValue(response.data[question.id])
-        ) {
+        } else if (skippedQuestions.length > 0 && !isValidValue(response.data[question.id])) {
           temp.push(question.id);
         }
       } else {
@@ -142,6 +148,12 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
 
   const tooltipContent = (
     <>
+      {response.singleUseId && (
+        <div>
+          <p className="py-1 font-bold text-slate-700">SingleUse ID:</p>
+          <span>{response.singleUseId}</span>
+        </div>
+      )}
       {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
         <div>
           <p className="py-1 font-bold text-slate-700">Person attributes:</p>
@@ -210,7 +222,9 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
 
             {pageType === "people" && (
               <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-                <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+                {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                  <SurveyStatusIndicator status={survey.status} />
+                )}
                 <Link
                   className="hover:underline"
                   href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
@@ -300,10 +314,9 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
 
         <ResponseTagsWrapper
           environmentId={environmentId}
-          surveyId={survey.id}
           responseId={response.id}
           tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-          key={response.tags.map((tag) => tag.id).join("-")}
+          environmentTags={environmentTags}
         />
 
         <DeleteDialog
@@ -315,7 +328,7 @@ export default function SingleResponseCard({ survey, response, pageType }: Singl
         />
       </div>
       {pageType === "response" && (
-        <ResponseNote
+        <ResponseNotes
           responseId={response.id}
           notes={response.notes}
           environmentId={environmentId}
