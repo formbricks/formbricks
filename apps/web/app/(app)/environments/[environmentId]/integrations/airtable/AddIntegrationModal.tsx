@@ -80,6 +80,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         },
       };
 
+      const currentTable = tables.find((item) => item.id === data.table);
       const integrationData: TZAirTableConfigData = {
         surveyId: selectedSurvey.id,
         surveyName: selectedSurvey.name,
@@ -89,6 +90,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         createdAt: new Date(),
         baseId: data.base,
         tableId: data.table,
+        tableName: currentTable?.name ?? "",
       };
 
       airtableIntegrationData.config?.data.push(integrationData);

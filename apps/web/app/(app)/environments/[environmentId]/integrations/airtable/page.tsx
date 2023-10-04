@@ -35,6 +35,7 @@ export default async function AirTable({ params }) {
           airTableArray={airTableArray}
           environmentId={environment.id}
           surveys={surveys}
+          environment={environment}
         />
       </div>
     </>

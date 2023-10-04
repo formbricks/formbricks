@@ -5,12 +5,14 @@ import Home from "./Home";
 import { useState } from "react";
 import AddIntegrationModal from "./AddIntegrationModal";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
+import { TEnvironment } from "@/../../packages/types/v1/environment";
 
 interface AirTableWrapperProps {
   environmentId: string;
   airTableArray: TAirtable[];
   airtableIntegration: TAirTableIntegration | undefined;
   surveys: TSurvey[];
+  environment: TEnvironment;
 }
 
 export default function AirTableWrapper({
@@ -18,6 +20,7 @@ export default function AirTableWrapper({
   airTableArray,
   airtableIntegration,
   surveys,
+  environment,
 }: AirTableWrapperProps) {
   const [isConnected, setIsConnected_] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
@@ -30,7 +33,7 @@ export default function AirTableWrapper({
   const handleModal = (data: boolean) => {
     setModalOpen(data);
   };
-  return isConnected ? (
+  return isConnected && airtableIntegration ? (
     <>
       <AddIntegrationModal
         airTableArray={airTableArray}
@@ -40,7 +43,12 @@ export default function AirTableWrapper({
         surveys={surveys}
         airtableIntegration={airtableIntegration}
       />
-      <Home handleModal={handleModal} />
+      <Home
+        environmentId={environmentId}
+        environment={environment}
+        airTableIntegration={airtableIntegration}
+        handleModal={handleModal}
+      />
     </>
   ) : (
     <Connect environmentId={environmentId} setIsConnected={setIsConnected} />
