@@ -10,7 +10,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
 import { generateSurveySingleUseId } from "@/lib/singleUseSurveys";
-import { getProfile } from "@formbricks/lib/services/profile";
+import { getProfile } from "@formbricks/lib/profile/service";
 
 const generateSingleUseIds = (isEncrypted: boolean) => {
   return Array(5)
