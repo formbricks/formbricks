@@ -1,6 +1,6 @@
 import { TSurveyClosedMessage } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
-import { CheckCircleIcon, PauseCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, PauseCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import footerLogo from "./footerlogo.svg";
@@ -9,17 +9,19 @@ const SurveyInactive = ({
   status,
   surveyClosedMessage,
 }: {
-  status: "paused" | "completed";
+  status: "paused" | "completed" | "link invalid";
   surveyClosedMessage?: TSurveyClosedMessage | null;
 }) => {
   const icons = {
     paused: <PauseCircleIcon className="h-20 w-20" />,
     completed: <CheckCircleIcon className="h-20 w-20" />,
+    "link invalid": <QuestionMarkCircleIcon className="h-20 w-20" />,
   };
 
   const descriptions = {
     paused: "This free & open-source survey is temporarily paused.",
     completed: "This free & open-source survey has been closed.",
+    "link invalid": "This survey can only be taken by invitation.",
   };
 
   return (
@@ -31,12 +33,11 @@ const SurveyInactive = ({
           {status === "completed" && surveyClosedMessage ? surveyClosedMessage.heading : `Survey ${status}.`}
         </h1>
         <p className="text-lg leading-10 text-gray-500">
-          {" "}
           {status === "completed" && surveyClosedMessage
             ? surveyClosedMessage.subheading
             : descriptions[status]}
         </p>
-        {!(status === "completed" && surveyClosedMessage) && (
+        {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
           <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
             Create your own
           </Button>
