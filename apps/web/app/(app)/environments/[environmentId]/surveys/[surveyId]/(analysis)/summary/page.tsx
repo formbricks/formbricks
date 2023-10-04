@@ -10,7 +10,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
 import { generateSurveySingleUseId } from "@/lib/singleUseSurveys";
-import { getProfile } from "@formbricks/lib/services/profile";
 
 const generateSingleUseIds = (isEncrypted: boolean) => {
   return Array(5)
@@ -45,12 +44,6 @@ export default async function Page({ params }) {
   if (!product) {
     throw new Error("Product not found");
   }
-
-  const profile = await getProfile(session.user.id);
-  if (!profile) {
-    throw new Error("Profile not found");
-  }
-
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
   return (
@@ -64,7 +57,6 @@ export default async function Page({ params }) {
         surveyBaseUrl={SURVEY_BASE_URL}
         singleUseIds={isSingleUseSurvey ? singleUseIds : undefined}
         product={product}
-        profile={profile}
         environmentTags={tags}
       />
     </>

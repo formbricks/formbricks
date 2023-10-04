@@ -9,7 +9,6 @@ import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { getProfile } from "@formbricks/lib/services/profile";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -27,11 +26,6 @@ export default async function Page({ params }) {
   if (!product) {
     throw new Error("Product not found");
   }
-
-  const profile = await getProfile(session.user.id);
-  if (!profile) {
-    throw new Error("Profile not found");
-  }
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
   return (
@@ -45,7 +39,6 @@ export default async function Page({ params }) {
         surveyBaseUrl={SURVEY_BASE_URL}
         product={product}
         environmentTags={tags}
-        profile={profile}
       />
     </>
   );
