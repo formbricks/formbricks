@@ -9,7 +9,7 @@ import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { getProfile } from "@formbricks/lib/services/profile";
+import { getProfile } from "@formbricks/lib/profile/service";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
