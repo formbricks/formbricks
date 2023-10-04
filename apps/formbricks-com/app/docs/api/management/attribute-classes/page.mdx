@@ -1,0 +1,292 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Formbricks People API: Fetch or Create Person Overview",
+  description:
+    "Dive into Formbricks' People API within the Public Client API suite, designed to work without authentication requirements. Seamlessly fetch or create a person by their userId and environmentId, optimizing client-side interAttributes while maintaining data privacy.",
+};
+
+#### Management API
+
+# Attribute Classes API
+
+This set of API can be used to
+- [List Attributes](#get-all-attribute-classes)
+- [Get Attributes](#get-attribute-class-by-id)
+- [Create Attributes](#create-attribute-class)
+- [Delete Attributes](#delete-attribute-class)
+
+<Note>You will need an API Key to interact with these APIs.</Note>
+
+---
+
+## Get all Attribute Classes {{ tag: 'GET', label: '/api/v1/management/attribute-classes' }}
+
+<Row>
+  <Col>
+
+    Get all the existing attribute classes in your environment.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key. 
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/attribute-classes">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/attribute-classes' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": [
+        {
+            "id": "cln8k0t47000kz87n3lh23zf0",
+            "createdAt": "2023-10-02T07:13:19.207Z",
+            "updatedAt": "2023-10-02T07:13:19.207Z",
+            "name": "email",
+            "description": "The email of the person",
+            "archived": false,
+            "type": "automatic",
+            "environmentId": "cln8k0t47000fz87njmmu2bck"
+        },
+        {
+            "id": "cln8k0t55000xz87nrtwbo7sf",
+            "createdAt": "2023-10-02T07:13:19.241Z",
+            "updatedAt": "2023-10-02T07:13:19.241Z",
+            "name": "Name",
+            "description": "Full Name of the Person",
+            "archived": false,
+            "type": "code",
+            "environmentId": "cln8k0t47000fz87njmmu2bck"
+        },
+        ]
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Attribute Class by ID {{ tag: 'GET', label: '/api/v1/management/attribute-classes/<attribute-class-id>' }}
+
+<Row>
+  <Col>
+
+    Fetch an Attribute class by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/attribute-classes/<attribute-class-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/attribute-classes/<attribute-class-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+     "data": {
+        "id": "cln8k0t47000jz87nfwcey6mh",
+        "createdAt": "2023-10-02T07:13:19.207Z",
+        "updatedAt": "2023-10-02T07:13:19.207Z",
+        "name": "userId",
+        "description": "The internal ID of the person",
+        "archived": false,
+        "type": "automatic",
+        "environmentId": "cln8k0t47000fz87njmmu2bck"
+      }
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Create Attribute Class {{ tag: 'POST', label: '/api/v1/management/attribute-classes/' }}
+
+<Row>
+  <Col>
+
+    Create an Attribute class.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+    ### Body
+
+    <CodeGroup title="Request Body">
+    ```json {{ title: 'cURL' }}
+    {
+        "environmentId": "clmlmwdqq0003196ufewo6ibg",
+        "name": "My Attribute from API",
+        "type": "code",
+        "description": "My description"
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/management/attribute-classes/">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://app.formbricks.com/api/v1/management/attribute-classes/ \
+     --header 'Content-Type: application/json' \
+     --header 'x-api-key: <your-api-key>' \
+     -d '{"environmentId": "clmlmwdqq0003196ufewo6ibg", "name": "My Attribute from API", "type": "code", "description":"My description"}'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+    "data": {
+        "id": "clna0hd7z0009z8zue2z3a7wy",
+        "createdAt": "2023-10-03T07:41:51.792Z",
+        "updatedAt": "2023-10-03T07:41:51.792Z",
+        "name": "My Attribute from API",
+        "description": null,
+        "archived": false,
+        "type": "code",
+        "environmentId": "cln8k0t47000fz87njmmu2bck"
+      }
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Delete Attribute Class {{ tag: 'DELETE', label: '/api/v1/management/attribute-classes/<attribute-class-id>' }}
+
+<Row>
+  <Col>
+
+    Delete an Attribute class by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/management/attribute-classes/<attribute-class-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE https://app.formbricks.com/api/v1/management/attribute-classes/<attribute-class-id> \
+     --header 'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+    "data": {
+        "id": "clna0hd7z0009z8zue2z3a7wy",
+        "createdAt": "2023-10-03T07:41:51.792Z",
+        "updatedAt": "2023-10-03T07:41:51.792Z",
+        "name": "My Attribute from API",
+        "description": null,
+        "archived": false,
+        "type": "code",
+        "environmentId": "cln8k0t47000fz87njmmu2bck"
+      }
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
