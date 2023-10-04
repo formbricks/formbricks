@@ -9,7 +9,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { PEOPLE_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { getAttributeClassByName } from "./attributeClass";
+import { getAttributeClassByName } from "../attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const selectPerson = {
