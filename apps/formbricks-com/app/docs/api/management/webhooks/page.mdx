@@ -1,29 +1,30 @@
 export const meta = {
   title: "Formbricks Webhook API Documentation - List, Retrieve, Create, and Delete Webhooks",
-  description: "Explore the comprehensive guide to the Formbricks Webhooks API. This is all you need to interact and play with the Formbricks Webhooks and integrate them into any third party app of your choice",
+  description:
+    "Explore the comprehensive guide to the Formbricks Webhooks API. This is all you need to interact and play with the Formbricks Webhooks and integrate them into any third party app of your choice",
 };
 
-#### Webhook API
+#### Management API
 
 # Webhook API
 
-Formbricks' Webhook API offers a powerful interface for interacting with webhooks. Webhooks in Formbricks allow you to receive real-time HTTP notifications of changes to specific objects in the Formbricks environment.
-
-Before you start managing webhooks, you need to create an API key. This will be used for authorization when making requests to the Webhook API. Please see the [API key setup page](/docs/api/api-key-setup) for more details on how to create and manage your API keys.
+Formbricks' Webhook API offers a powerful interface for interacting with webhooks. Webhooks allow you to receive real-time HTTP notifications of changes to specific objects in the Formbricks environment.
 
 The behavior of the webhooks is determined by their trigger settings. The trigger determines which updates the webhook sends. Current available triggers include "responseCreated", "responseUpdated", and "responseFinished". This allows you to customize your webhooks to only send notifications for the events that are relevant to your application.
 
 Webhooks are tied to a specific Formbricks environment. Once set, a webhook will receive updates from all surveys within this environment. This makes it easy to manage your data flow and ensure that all relevant updates are caught by the webhook.
 
-Our API has several REST endpoints enabling you to manage these webhooks, providing a great deal of flexibility:
+This set of API can be used to
+- [List All Webhooks](#list-webhooks)
+- [Get Webhook](#retrieve-webhook-by-id)
+- [Create Webhook](#create-webhook)
+- [Delete Webhook](#delete-webhook-by-id)
 
-1. **List Webhooks:** Retrieve a list of all existing webhooks.
-1. **Retrieve Webhook by ID:** Retrieve a specific webhook by it's ID.
-1. **Create a New Webhook:** Add a new webhook to your system.
-1. **Get a Specific Webhook:** Query the details of a specific webhook using its unique ID.
-1. **Delete a Webhook:** Remove an existing webhook.
+And the detailed Webhook Paylod is elaborated [here](#webhook-payload).
 
 These APIs are designed to facilitate seamless integration of Formbricks with third-party systems. By making use of our webhook API, you can automate the process of sending data to these systems whenever significant events occur within your Formbricks environment.
+
+<Note>You will need an API Key to interact with these APIs.</Note>
 
 ---
 
@@ -92,7 +93,7 @@ These APIs are designed to facilitate seamless integration of Formbricks with th
 
 ---
 
-## Retrieve Webhook by ID {{ tag: 'GET', label: '/api/v1/webhooks/[webhookId]' }}
+## Retrieve Webhook by ID {{ tag: 'GET', label: '/api/v1/webhooks/<webhook-id>' }}
 
 <Row>
   <Col>
@@ -108,11 +109,11 @@ These APIs are designed to facilitate seamless integration of Formbricks with th
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="GET" label="/api/v1/webhooks/[webhookId]">
+    <CodeGroup title="Request" tag="GET" label="/api/v1/webhooks/<webhook-id>">
 
     ```bash {{ title: 'cURL' }}
     curl --location \
-    'https://app.formbricks.com/api/v1/webhooks/[webhookId]' \
+    'https://app.formbricks.com/api/v1/webhooks/<webhook-id>' \
     --header \
     'x-api-key: <your-api-key>'
     ```
@@ -255,7 +256,7 @@ Add a webhook to your product.
 
 ---
 
-## Delete Webhook by ID {{ tag: 'DELETE', label: '/api/v1/webhooks/[webhookId]' }}
+## Delete Webhook by ID {{ tag: 'DELETE', label: '/api/v1/webhooks/<webhook-id>' }}
 
 <Row>
   <Col>
@@ -271,10 +272,10 @@ Add a webhook to your product.
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="DELETE" label="/api/v1/webhooks/[webhookId]">
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/webhooks/<webhook-id>">
 
     ```bash {{ title: 'cURL' }}
-    curl --location --request DELETE 'https://app.formbricks.com/api/v1/webhooks/[webhookId]' \
+    curl --location --request DELETE 'https://app.formbricks.com/api/v1/webhooks/<webhook-id>' \
     --header 'x-api-key: <your-api-key>'
     ```
 
