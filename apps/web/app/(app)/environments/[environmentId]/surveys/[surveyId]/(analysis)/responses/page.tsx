@@ -6,9 +6,10 @@ import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/survey
 import { getServerSession } from "next-auth";
 import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
-import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
+import { getProfile } from "@formbricks/lib/profile/service";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -26,6 +27,11 @@ export default async function Page({ params }) {
   if (!product) {
     throw new Error("Product not found");
   }
+
+  const profile = await getProfile(session.user.id);
+  if (!profile) {
+    throw new Error("Profile not found");
+  }
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
   return (
@@ -39,6 +45,7 @@ export default async function Page({ params }) {
         surveyBaseUrl={SURVEY_BASE_URL}
         product={product}
         environmentTags={tags}
+        profile={profile}
       />
     </>
   );

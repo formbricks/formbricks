@@ -1,7 +1,7 @@
 import EditApiKeys from "./EditApiKeys";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getApiKeys } from "@formbricks/lib/apiKey/service";
-import { getEnvironments } from "@formbricks/lib/services/environment";
+import { getEnvironments } from "@formbricks/lib/environment/service";
 
 export default async function ApiKeyList({
   environmentId,

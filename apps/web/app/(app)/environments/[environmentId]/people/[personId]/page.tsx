@@ -5,7 +5,7 @@ import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[
 import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponseSection";
 import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/HeadingSection";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function PersonPage({ params }) {
   const environment = await getEnvironment(params.environmentId);

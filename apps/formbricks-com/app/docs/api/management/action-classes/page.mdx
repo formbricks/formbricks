@@ -1,0 +1,301 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Formbricks People API: Fetch or Create Person Overview",
+  description:
+    "Dive into Formbricks' People API within the Public Client API suite, designed to work without authentication requirements. Seamlessly fetch or create a person by their userId and environmentId, optimizing client-side interactions while maintaining data privacy.",
+};
+
+#### Management API
+
+# Action Classes API
+
+This set of API can be used to
+- [List Actions](#get-all-action-classes)
+- [Get Action](#get-action-class-by-id)
+- [Create Actions](#create-action-class)
+- [Delete Actions](#delete-action-class)
+
+<Note>You will need an API Key to interact with these APIs.</Note>
+
+---
+
+## Get all Action Classes {{ tag: 'GET', label: '/api/v1/management/action-classes' }}
+
+<Row>
+  <Col>
+
+    Get all the existing action classes in your environment.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/action-classes">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/action-classes' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": [
+        {
+            "id": "cln8k0t47000gz87nw4ibwv35",
+            "createdAt": "2023-10-02T07:13:19.207Z",
+            "updatedAt": "2023-10-02T07:13:19.207Z",
+            "name": "New Session",
+            "description": "Gets fired when a new session is created",
+            "type": "automatic",
+            "noCodeConfig": null,
+            "environmentId": "cln8k0t47000fz87njmmu2bck"
+        },
+        {
+            "id": "cln8k0t55000uz87noerwdooj",
+            "createdAt": "2023-10-02T07:13:19.241Z",
+            "updatedAt": "2023-10-02T07:13:19.241Z",
+            "name": "Invited Team Member",
+            "description": "Person invited a team member",
+            "type": "noCode",
+            "noCodeConfig": {
+                "type": "innerHtml",
+                "innerHtml": {
+                    "value": "Add Team Member"
+                }
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck"
+        },
+        ]
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Action Class by ID {{ tag: 'GET', label: '/api/v1/management/action-classes/<action-class-id>' }}
+
+<Row>
+  <Col>
+
+    Fetch an action class by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/action-classes/<action-class-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/action-classes/<action-class-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "id": "cln8k0t55000uz87noerwdooj",
+        "createdAt": "2023-10-02T07:13:19.241Z",
+        "updatedAt": "2023-10-02T07:13:19.241Z",
+        "name": "Invited Team Member",
+        "description": "Person invited a team member",
+        "type": "noCode",
+        "noCodeConfig": {
+            "type": "innerHtml",
+            "innerHtml": {
+                "value": "Add Team Member"
+            }
+        },
+        "environmentId": "cln8k0t47000fz87njmmu2bck"
+        }
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Create Action Class {{ tag: 'POST', label: '/api/v1/management/action-classes/' }}
+
+<Row>
+  <Col>
+
+    Create an action class.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+    ### Body
+
+    <CodeGroup title="Request Body">
+    ```json {{ title: 'cURL' }}
+    {
+        "environmentId": "cln8k0t47000fz87njmmu2bck",
+        "name": "My Action from API",
+        "type": "code"
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/management/action-classes/">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://app.formbricks.com/api/v1/management/action-classes/ \
+     --header 'Content-Type: application/json' \
+     --header 'x-api-key: <your-api-key>' \
+     -d '{"environmentId": "cln8k0t47000fz87njmmu2bck", "name": "My Action from API", "type": "code"}'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+    "data": {
+        "id": "cln9w1cno0008z8zu79nk5w0c",
+        "createdAt": "2023-10-03T05:37:26.100Z",
+        "updatedAt": "2023-10-03T05:37:26.100Z",
+        "name": "My Action from API",
+        "description": null,
+        "type": "code",
+        "noCodeConfig": null,
+        "environmentId": "cln8k0t47000fz87njmmu2bck"
+        }
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Delete Action Class {{ tag: 'DELETE', label: '/api/v1/management/action-classes/<action-class-id>' }}
+
+<Row>
+  <Col>
+
+    Delete an action class by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/management/action-classes/<action-class-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE https://app.formbricks.com/api/v1/management/action-classes/<action-class-id> \
+     --header 'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+    "data": {
+        "id": "cln9w1cno0008z8zu79nk5w0c",
+        "createdAt": "2023-10-03T05:37:26.100Z",
+        "updatedAt": "2023-10-03T05:37:26.100Z",
+        "name": "My Action from API",
+        "description": null,
+        "type": "code",
+        "noCodeConfig": null,
+        "environmentId": "cln8k0t47000fz87njmmu2bck"
+        }
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---

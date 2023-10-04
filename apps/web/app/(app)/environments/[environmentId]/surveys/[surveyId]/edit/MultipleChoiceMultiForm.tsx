@@ -33,6 +33,7 @@ export default function MultipleChoiceMultiForm({
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
+  const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
 
   const shuffleOptionsTypes = {
     none: {
@@ -76,6 +77,24 @@ export default function MultipleChoiceMultiForm({
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
+  const findDuplicateLabel = () => {
+    for (let i = 0; i < question.choices.length; i++) {
+      for (let j = i + 1; j < question.choices.length; j++) {
+        if (question.choices[i].label.trim() === question.choices[j].label.trim()) {
+          return question.choices[i].label.trim(); // Return the duplicate label
+        }
+      }
+    }
+    return null;
+  };
+
+  const findEmptyLabel = () => {
+    for (let i = 0; i < question.choices.length; i++) {
+      if (question.choices[i].label.trim() === "") return true;
+    }
+    return false;
+  };
+
   const addChoice = (choiceIdx?: number) => {
     setIsNew(false); // This question is no longer new.
     let newChoices = !question.choices ? [] : question.choices;
@@ -112,6 +131,9 @@ export default function MultipleChoiceMultiForm({
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
 
     const choiceValue = question.choices[choiceIdx].label;
+    if (isInvalidValue === choiceValue) {
+      setIsInvalidValue(null);
+    }
     let newLogic: any[] = [];
     question.logic?.forEach((logic) => {
       let newL: string | string[] | undefined = logic.value;
@@ -198,7 +220,20 @@ export default function MultipleChoiceMultiForm({
                   className={cn(choice.id === "other" && "border-dashed")}
                   placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
-                  isInvalid={isInValid && choice.label.trim() === ""}
+                  onBlur={() => {
+                    const duplicateLabel = findDuplicateLabel();
+                    if (duplicateLabel) {
+                      setIsInvalidValue(duplicateLabel);
+                    } else if (findEmptyLabel()) {
+                      setIsInvalidValue("");
+                    } else {
+                      setIsInvalidValue(null);
+                    }
+                  }}
+                  isInvalid={
+                    (isInvalidValue === "" && choice.label.trim() === "") ||
+                    (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim())
+                  }
                 />
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon
