@@ -109,7 +109,7 @@ export default function LinkSingleUseSurveyModal({
               title="Preview survey"
               aria-label="Preview survey"
               className="flex justify-center"
-              href={`${defaultSurveyUrl}?suId=${singleUseIds[0]}?preview=true`}
+              href={`${defaultSurveyUrl}?suId=${singleUseIds[0]}&preview=true`}
               target="_blank"
               EndIcon={EyeIcon}>
               Preview
