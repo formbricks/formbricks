@@ -5,6 +5,7 @@ import { TActivityFeedItem } from "@formbricks/types/v1/activity";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { cache } from "react";
+import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
 
 export const getActivityTimeline = cache(async (personId: string): Promise<TActivityFeedItem[]> => {
   validateInputs([personId, ZId]);
@@ -34,8 +35,9 @@ export const getActivityTimeline = cache(async (personId: string): Promise<TActi
       },
     },
   });
+
   if (!person) {
-    throw new Error("No such person found");
+    throw new ResourceNotFoundError("Person", personId);
   }
   const { attributes, displays, sessions } = person;
 
