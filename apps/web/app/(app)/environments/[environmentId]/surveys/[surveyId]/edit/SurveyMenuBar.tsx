@@ -142,7 +142,7 @@ export default function SurveyMenuBar({
           );
 
         if (haveSameChoices) {
-          toast.error("You have 2 same choices. Please update or delete one.");
+          toast.error("You have two identical choices.");
           return false;
         }
       }
