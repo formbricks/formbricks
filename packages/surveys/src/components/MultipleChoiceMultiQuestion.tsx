@@ -97,13 +97,14 @@ export default function MultipleChoiceSingleQuestion({
                 }}
                 className={cn(
                   value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none "
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:border-slate-400 focus:bg-slate-50 focus:outline-none "
                 )}>
                 <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
                     id={choice.id}
                     name={question.id}
+                    tabIndex={-1}
                     value={choice.label}
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
@@ -140,6 +141,7 @@ export default function MultipleChoiceSingleQuestion({
                 <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
+                    tabIndex={-1}
                     id={otherOption.id}
                     name={question.id}
                     value={otherOption.label}

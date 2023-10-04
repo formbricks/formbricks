@@ -87,6 +87,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
+                    tabIndex={-1}
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
@@ -120,7 +121,7 @@ export default function MultipleChoiceSingleQuestion({
                   <input
                     type="radio"
                     id={otherOption.id}
-                    tabIndex={questionChoices.length + 1}
+                    tabIndex={-1}
                     name={question.id}
                     value={otherOption.label}
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"

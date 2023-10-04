@@ -78,7 +78,7 @@ export default function OpenTextQuestion({
             onKeyDown={(e) => {
               if (e.key == "Enter") onSubmit({ [question.id]: value });
             }}
-            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
+            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"></textarea>
         )}
       </div>
       <div className="mt-4 flex w-full justify-between">
