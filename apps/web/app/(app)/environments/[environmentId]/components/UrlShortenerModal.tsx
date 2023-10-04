@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import clsx from "clsx";
-import { createShortUrlAction } from "./actions";
+import { createShortUrlAction } from "../actions";
 
 type UrlShortenerModalProps = {
   open: boolean;

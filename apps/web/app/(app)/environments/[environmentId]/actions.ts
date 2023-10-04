@@ -8,10 +8,31 @@ import { createProduct } from "@formbricks/lib/services/product";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { getServerSession } from "next-auth";
+import { createShortUrl, getShortUrl } from "@formbricks/lib/services/shortUrl";
+import { SHORT_SURVEY_BASE_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+
+export const createShortUrlAction = async (url: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthenticationError("Not authenticated");
+
+  const regexPattern = new RegExp("^" + SURVEY_BASE_URL);
+  const isValidUrl = regexPattern.test(url);
+
+  if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
+
+  const shortUrl = await createShortUrl(url);
+  const fullShortUrl = SHORT_SURVEY_BASE_URL + shortUrl.id;
+  return fullShortUrl;
+};
+
+export const getFullUrlAction = async (shortUrlId: string) => {
+  const shortUrl = await getShortUrl(shortUrlId);
+  return shortUrl.url;
+};
 
 export async function createTeamAction(teamName: string): Promise<Team> {
   const session = await getServerSession(authOptions);
