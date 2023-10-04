@@ -97,7 +97,7 @@ export default function MultipleChoiceSingleQuestion({
                 }}
                 className={cn(
                   value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none focus:[&>input]:ring-0 focus:[&>input]:ring-offset-0"
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none "
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -126,10 +126,17 @@ export default function MultipleChoiceSingleQuestion({
             ))}
             {otherOption && (
               <label
+                tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === otherOption.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
-                )}>
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 focus-within:border-slate-400 focus-within:bg-slate-50  hover:bg-slate-50 focus:outline-none"
+                )}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    setOtherSelected(!otherSelected);
+                    onChange({ [question.id]: "" });
+                  }
+                }}>
                 <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
@@ -159,6 +166,7 @@ export default function MultipleChoiceSingleQuestion({
                     ref={otherSpecify}
                     id={`${otherOption.id}-label`}
                     name={question.id}
+                    tabIndex={questionChoices.length + 1}
                     value={otherValue}
                     onChange={(e) => {
                       setOtherValue(e.currentTarget.value);
