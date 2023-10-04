@@ -13,8 +13,14 @@ export default async function OnboardingPage() {
   if (!session) {
     throw new Error("No session found");
   }
-  const environment = await getFirstEnvironmentByUserId(session?.user.id);
-  const profile = await getProfile(session?.user.id!);
+  const userId = session?.user.id;
+  const environment = await getFirstEnvironmentByUserId(userId);
+
+  if (!environment) {
+    throw new Error("No environment found for user");
+  }
+
+  const profile = await getProfile(userId);
   const product = await getProductByEnvironmentId(environment?.id!);
 
   if (!environment || !profile || !product) {
