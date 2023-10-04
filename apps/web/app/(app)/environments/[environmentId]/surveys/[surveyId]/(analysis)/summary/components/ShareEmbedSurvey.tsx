@@ -1,20 +1,23 @@
+"use client";
+
 import LinkTab from "./shareEmbedTabs/LinkTab";
 import EmailTab from "./shareEmbedTabs/EmailTab";
 import WebpageTab from "./shareEmbedTabs/WebpageTab";
 import { useMemo, useState } from "react";
-import { useProfile } from "@/lib/profile";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { cn } from "@formbricks/lib/cn";
 import { DialogContent, Button, Dialog } from "@formbricks/ui";
 import { LinkIcon, EnvelopeIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
   open: boolean;
-  setOpen: (open: boolean) => void;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   surveyBaseUrl: string;
   product: TProduct;
+  profile: TProfile;
 }
 
 export default function ShareEmbedSurvey({
@@ -23,20 +26,28 @@ export default function ShareEmbedSurvey({
   setOpen,
   surveyBaseUrl,
   product,
+  profile,
 }: ShareEmbedSurveyProps) {
   const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
-  const { profile } = useProfile();
+
+  const { email } = profile;
+  const { brandColor } = product;
 
   const [activeId, setActiveId] = useState(tabs[0].id);
 
   const componentMap = {
-    link: <LinkTab surveyUrl={surveyUrl} survey={survey} product={product} />,
-    email: <EmailTab survey={survey} surveyUrl={surveyUrl} profile={profile} product={product} />,
+    link: <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={brandColor} />,
+    email: <EmailTab survey={survey} surveyUrl={surveyUrl} email={email} brandColor={brandColor} />,
     webpage: <WebpageTab surveyUrl={surveyUrl} />,
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        setActiveId(tabs[0].id);
+        setOpen(open);
+      }}>
       <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[960px]">
         <div className="border-b border-gray-200 px-4 py-3 lg:px-6 lg:py-4 ">Share or embed your survey</div>
         <div className="flex grow overflow-x-hidden overflow-y-scroll">

@@ -24,6 +24,7 @@ import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -31,6 +32,7 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   surveyBaseUrl: string;
   product: TProduct;
+  profile: TProfile;
   singleUseIds?: string[];
 }
 const SummaryHeader = ({
@@ -39,6 +41,7 @@ const SummaryHeader = ({
   survey,
   surveyBaseUrl,
   product,
+  profile,
   singleUseIds,
 }: SummaryHeaderProps) => {
   const router = useRouter();
@@ -60,6 +63,7 @@ const SummaryHeader = ({
             surveyBaseUrl={surveyBaseUrl}
             singleUseIds={singleUseIds}
             product={product}
+            profile={profile}
           />
         )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
@@ -88,6 +92,7 @@ const SummaryHeader = ({
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
                   product={product}
+                  profile={profile}
                   singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
@@ -171,6 +176,7 @@ const SummaryHeader = ({
         survey={survey}
         surveyBaseUrl={surveyBaseUrl}
         product={product}
+        profile={profile}
         singleUseIds={singleUseIds}
       />
     </div>

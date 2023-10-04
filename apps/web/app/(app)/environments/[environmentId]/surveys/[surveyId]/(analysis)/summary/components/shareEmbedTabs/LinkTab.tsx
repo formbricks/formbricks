@@ -1,7 +1,8 @@
+"use client";
+
 import toast from "react-hot-toast";
 import { SurveyInline } from "@/components/shared/Survey";
 import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
@@ -11,10 +12,10 @@ import { useRef } from "react";
 interface EmailTabProps {
   surveyUrl: string;
   survey: TSurvey;
-  product: TProduct;
+  brandColor: string;
 }
 
-export default function LinkTab({ surveyUrl, survey, product }: EmailTabProps) {
+export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps) {
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
@@ -53,7 +54,7 @@ export default function LinkTab({ surveyUrl, survey, product }: EmailTabProps) {
       </div>
       <div className="relative grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
         <SurveyInline
-          brandColor={product.brandColor}
+          brandColor={brandColor}
           survey={survey}
           formbricksSignature={false}
           autoFocus={false}

@@ -1,3 +1,5 @@
+"use client";
+
 import toast from "react-hot-toast";
 import CodeBlock from "@/components/shared/CodeBlock";
 import { Button } from "@formbricks/ui";

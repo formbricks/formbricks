@@ -1,11 +1,12 @@
-import { sendEmailAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import CodeBlock from "@/components/shared/CodeBlock";
+"use client";
+
 import { cn } from "@formbricks/lib/cn";
-import { QuestionType } from "@formbricks/types/questions";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button, Input } from "@formbricks/ui";
+import { QuestionType } from "@formbricks/types/questions";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { AuthenticationError } from "@formbricks/types/v1/errors";
+import { sendEmailAction } from "../../actions";
+import CodeBlock from "@/components/shared/CodeBlock";
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import {
   Column,
@@ -24,61 +25,40 @@ import toast from "react-hot-toast";
 interface EmailTabProps {
   survey: TSurvey;
   surveyUrl: string;
-  profile: TProfile;
-  product: TProduct;
+  email: string;
+  brandColor: string;
 }
 
-export default function EmailTab({ survey, surveyUrl, profile, product }: EmailTabProps) {
-  const [email] = useState(profile.email);
+export default function EmailTab({ survey, surveyUrl, email, brandColor }: EmailTabProps) {
   const [showEmbed, setShowEmbed] = useState(false);
-  const brandColor = product.brandColor;
   const subject = "Formbricks Email Survey Preview";
 
-  const PreviewEmailTemplate = useMemo(() => {
-    return getEmailTemplate(survey, surveyUrl, brandColor, true);
-  }, [survey, surveyUrl]);
+  const emailValues = useMemo(() => {
+    return getEmailValues({ brandColor, survey, surveyUrl, preview: false });
+  }, []);
 
-  const EmailTemplate = useMemo(() => {
-    return getEmailTemplate(survey, surveyUrl, brandColor, false);
-  }, [survey, surveyUrl]);
-
-  const previewEmailHtml = render(PreviewEmailTemplate, { pretty: true });
-  const emailHtml = render(EmailTemplate, { pretty: true });
-
-  const previewEmailHtmlWithoutDoctype = useMemo(
-    () =>
-      previewEmailHtml.replace(
-        '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
-        ""
-      ),
-    [previewEmailHtml]
-  );
-  const emailHtmlWithoutDoctype = useMemo(
-    () =>
-      emailHtml.replace(
-        '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
-        ""
-      ),
-    [emailHtml]
-  );
+  const previewEmailValues = useMemo(() => {
+    return getEmailValues({ brandColor, survey, surveyUrl, preview: true });
+  }, []);
 
   const sendPreviewEmail = async () => {
-    await sendEmailAction({ html: previewEmailHtmlWithoutDoctype, subject, to: email });
-    toast.success("Email sent!");
+    try {
+      await sendEmailAction({ html: previewEmailValues.html, subject, to: email });
+      toast.success("Email sent!");
+    } catch (err) {
+      if (err instanceof AuthenticationError) {
+        toast.error("You are not authenticated to perform this action.");
+        return;
+      }
+
+      toast.error("Something went wrong. Please try again later.");
+    }
   };
 
   return (
     <div className="flex h-full grow flex-col gap-5">
       <div className="flex items-center gap-4">
-        <Input
-          type="email"
-          placeholder="user@mail.com"
-          className="h-11 grow bg-white"
-          value={email}
-          onChange={() => {
-            // setEmail(e.target.value)
-          }}
-        />
+        <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
         {showEmbed ? (
           <Button
             variant="darkCTA"
@@ -86,7 +66,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
             aria-label="Embed survey in your website"
             onClick={() => {
               toast.success("Embed code copied to clipboard!");
-              navigator.clipboard.writeText(emailHtmlWithoutDoctype);
+              navigator.clipboard.writeText(emailValues.html);
             }}
             className="shrink-0"
             EndIcon={DocumentDuplicateIcon}>
@@ -119,7 +99,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
             customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
             language="html"
             showCopyToClipboard={false}>
-            {emailHtmlWithoutDoctype}
+            {emailValues.html}
           </CodeBlock>
         ) : (
           <div className="">
@@ -133,7 +113,7 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
                 To : {email || "user@mail.com"}
               </div>
               <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
-              <div className="p-4">{PreviewEmailTemplate}</div>
+              <div className="p-4">{previewEmailValues.Component}</div>
             </div>
           </div>
         )}
@@ -141,6 +121,17 @@ export default function EmailTab({ survey, surveyUrl, profile, product }: EmailT
     </div>
   );
 }
+
+const getEmailValues = ({ survey, surveyUrl, brandColor, preview }) => {
+  const doctype =
+    '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+
+  const Template = getEmailTemplate(survey, surveyUrl, brandColor, preview);
+  const html = render(Template, { pretty: true });
+  const htmlWithoutDoctype = html.replace(doctype, "");
+
+  return { Component: Template, html: htmlWithoutDoctype };
+};
 
 const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string, preview: boolean) => {
   const url = preview ? `${surveyUrl}?preview=true` : surveyUrl;
@@ -347,7 +338,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices
-              .filter((c) => c.id !== "other")
+              .filter((choice) => choice.id !== "other")
               .map((choice) => (
                 <Link
                   key={choice.id}
