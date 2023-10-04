@@ -98,6 +98,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         body.surveyClosedMessage = prismaClient.JsonNull;
       }
 
+      if (!body.singleUse) {
+        body.singleUse = prismaClient.JsonNull;
+      }
+
       if (!body.verifyEmail) {
         body.verifyEmail = prismaClient.JsonNull;
       }
@@ -228,6 +232,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     if (data.surveyClosedMessage === null) {
       data.surveyClosedMessage = prismaClient.JsonNull;
+    }
+
+    if (data.singleUse === null) {
+      data.singleUse = prismaClient.JsonNull;
     }
 
     if (data.verifyEmail === null) {

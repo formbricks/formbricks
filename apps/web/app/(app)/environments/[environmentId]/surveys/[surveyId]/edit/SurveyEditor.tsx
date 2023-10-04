@@ -20,6 +20,7 @@ interface SurveyEditorProps {
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  isEncryptionKeySet: boolean;
 }
 
 export default function SurveyEditor({
@@ -28,6 +29,7 @@ export default function SurveyEditor({
   environment,
   actionClasses,
   attributeClasses,
+  isEncryptionKeySet,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
+                isEncryptionKeySet={isEncryptionKeySet}
               />
             )}
           </main>

@@ -22,11 +22,19 @@ export const ZAttributeClassInput = z.object({
   environmentId: z.string(),
 });
 
+export const ZAttributeClassAutomaticInput = z.object({
+  name: z.string(),
+  description: z.string(),
+  type: z.enum(["automatic"]),
+});
+
 export const ZAttributeClassUpdateInput = z.object({
   name: z.string(),
   description: z.string().optional(),
   archived: z.boolean().optional(),
 });
+
+export type TAttributeClassAutomaticInput = z.infer<typeof ZAttributeClassAutomaticInput>;
 
 export type TAttributeClassUpdateInput = z.infer<typeof ZAttributeClassUpdateInput>;
 

@@ -13,7 +13,7 @@ import { Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
-import { transformPrismaPerson } from "./person";
+import { transformPrismaPerson } from "../services/person";
 
 const selectDisplay = {
   id: true,

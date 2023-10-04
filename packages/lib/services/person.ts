@@ -2,14 +2,14 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TPerson, TPersonUpdateInput } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 import { PEOPLE_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { getAttributeClassByName } from "./attributeClass";
+import { getAttributeClassByName } from "../attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const selectPerson = {
@@ -250,7 +250,7 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
     const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
 
     if (!userIdAttributeClass) {
-      throw new Error("Attribute class not found for the given environmentId");
+      throw new ResourceNotFoundError("Attribute class not found for the given environment", environmentId);
     }
 
     const personPrisma = await prisma.person.create({
