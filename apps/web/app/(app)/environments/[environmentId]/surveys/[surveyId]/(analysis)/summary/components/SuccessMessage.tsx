@@ -6,15 +6,23 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import LinkSurveyModal from "./LinkSurveyModal";
+import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyBaseUrl: string;
+  singleUseIds?: string[];
 }
 
-export default function SuccessMessage({ environment, survey, surveyBaseUrl }: SummaryMetadataProps) {
+export default function SuccessMessage({
+  environment,
+  survey,
+  surveyBaseUrl,
+  singleUseIds,
+}: SummaryMetadataProps) {
+  const isSingleUse = survey.singleUse?.enabled ?? false;
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -45,7 +53,14 @@ export default function SuccessMessage({ environment, survey, surveyBaseUrl }: S
 
   return (
     <>
-      {showLinkModal && (
+      {showLinkModal && isSingleUse && singleUseIds ? (
+        <LinkSingleUseSurveyModal
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          singleUseIds={singleUseIds}
+        />
+      ) : (
         <LinkSurveyModal
           survey={survey}
           open={showLinkModal}

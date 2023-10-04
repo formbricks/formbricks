@@ -1,6 +1,6 @@
 "use server";
 
-import { getSurveysByAttributeClassId } from "@formbricks/lib/services/survey";
+import { getSurveysByAttributeClassId } from "@formbricks/lib/survey/service";
 
 export const GetActiveInactiveSurveysAction = async (
   attributeClassId: string
