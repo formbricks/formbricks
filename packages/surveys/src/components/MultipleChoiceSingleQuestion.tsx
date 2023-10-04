@@ -120,6 +120,7 @@ export default function MultipleChoiceSingleQuestion({
                   <input
                     type="radio"
                     id={otherOption.id}
+                    tabIndex={questionChoices.length + 1}
                     name={question.id}
                     value={otherOption.label}
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
