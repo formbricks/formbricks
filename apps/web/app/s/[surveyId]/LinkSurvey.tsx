@@ -3,7 +3,6 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { SurveyInline } from "@/components/shared/Survey";
 import { createDisplay } from "@formbricks/lib/client/display";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/v1/product";
@@ -13,7 +12,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/prefilling";
-import { TResponseData } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseData } from "@formbricks/types/v1/responses";
+import SurveyLinkUsed from "@/app/s/[surveyId]/SurveyLinkUsed";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -21,6 +21,9 @@ interface LinkSurveyProps {
   personId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
+  singleUseId?: string;
+  singleUseResponse?: TResponse;
+  webAppUrl: string;
 }
 
 export default function LinkSurvey({
@@ -29,10 +32,15 @@ export default function LinkSurvey({
   personId,
   emailVerificationStatus,
   prefillAnswer,
+  singleUseId,
+  singleUseResponse,
+  webAppUrl,
 }: LinkSurveyProps) {
+  const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
-  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id));
+  // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
+  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
@@ -42,7 +50,7 @@ export default function LinkSurvey({
     () =>
       new ResponseQueue(
         {
-          apiHost: WEBAPP_URL,
+          apiHost: webAppUrl,
           retryAttempts: 2,
           onResponseSendingFailed: (response) => {
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
@@ -52,9 +60,16 @@ export default function LinkSurvey({
         },
         surveyState
       ),
-    []
+    [personId, webAppUrl]
   );
   const [autoFocus, setAutofocus] = useState(false);
+  const hasFinishedSingleUseResponse = useMemo(() => {
+    if (singleUseResponse && singleUseResponse.finished) {
+      return true;
+    }
+    return false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
@@ -62,6 +77,14 @@ export default function LinkSurvey({
       setAutofocus(true);
     }
   }, []);
+
+  useEffect(() => {
+    responseQueue.updateSurveyState(surveyState);
+  }, [responseQueue, surveyState]);
+
+  if (!surveyState.isResponseFinished() && hasFinishedSingleUseResponse) {
+    return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
+  }
 
   if (emailVerificationStatus && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
@@ -89,9 +112,16 @@ export default function LinkSurvey({
           survey={survey}
           brandColor={product.brandColor}
           formbricksSignature={product.formbricksSignature}
-          onDisplay={() => createDisplay({ surveyId: survey.id }, window?.location?.origin)}
+          onDisplay={async () => {
+            if (!isPreview) {
+              const { id } = await createDisplay({ surveyId: survey.id }, webAppUrl);
+              const newSurveyState = surveyState.copy();
+              newSurveyState.updateDisplayId(id);
+              setSurveyState(newSurveyState);
+            }
+          }}
           onResponse={(responseUpdate) => {
-            responseQueue.add(responseUpdate);
+            !isPreview && responseQueue.add(responseUpdate);
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

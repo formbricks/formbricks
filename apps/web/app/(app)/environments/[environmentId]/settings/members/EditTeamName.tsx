@@ -1,69 +1,82 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useTeamMutation } from "@/lib/teams/mutateTeams";
-import { useTeam } from "@/lib/teams/teams";
-import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
-import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { updateTeamNameAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
+import { TTeam } from "@formbricks/types/v1/teams";
+import { Button, Input, Label } from "@formbricks/ui";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
-export default function EditTeamName({ environmentId }) {
-  const { team, isLoadingTeam, isErrorTeam, mutateTeam } = useTeam(environmentId);
-  const { register, control, handleSubmit, setValue } = useForm();
-  const [teamId, setTeamId] = useState("");
+type TEditTeamNameForm = {
+  name: string;
+};
+
+type TEditTeamNameProps = {
+  environmentId: string;
+  team: TTeam;
+};
+
+export default function EditTeamName({ team }: TEditTeamNameProps) {
+  const router = useRouter();
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TEditTeamNameForm>({
+    defaultValues: {
+      name: team.name,
+    },
+  });
+  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
 
   const teamName = useWatch({
     control,
     name: "name",
   });
+
   const isTeamNameInputEmpty = !teamName?.trim();
   const currentTeamName = teamName?.trim().toLowerCase() ?? "";
   const previousTeamName = team?.name?.trim().toLowerCase() ?? "";
 
-  useEffect(() => {
-    if (team && team.id !== "") {
-      setTeamId(team.id);
+  const handleUpdateTeamName: SubmitHandler<TEditTeamNameForm> = async (data) => {
+    try {
+      setIsUpdatingTeam(true);
+      await updateTeamNameAction(team.id, data.name);
+
+      setIsUpdatingTeam(false);
+      toast.success("Team name updated successfully.");
+
+      router.refresh();
+    } catch (err) {
+      setIsUpdatingTeam(false);
+      toast.error(`Error: ${err.message}`);
     }
-    setValue("name", team?.name ?? "");
-  }, [team]);
-
-  const { isMutatingTeam, triggerTeamMutate } = useTeamMutation(teamId);
-
-  if (isLoadingTeam) {
-    return <LoadingSpinner />;
-  }
-  if (isErrorTeam) {
-    return <ErrorComponent />;
-  }
+  };
 
   return (
-    <form
-      className="w-full max-w-sm items-center"
-      onSubmit={handleSubmit((data) => {
-        triggerTeamMutate({ ...data })
-          .catch((error) => {
-            toast.error(`Error: ${error.message}`);
-          })
-          .then(() => {
-            toast.success("Team name updated successfully.");
-            mutateTeam(); // Added to trigger SWR to update the team name in menus
-          });
-      })}>
+    <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(handleUpdateTeamName)}>
       <Label htmlFor="teamname">Team Name</Label>
       <Input
         type="text"
         id="teamname"
         defaultValue={team?.name ?? ""}
-        {...register("name")}
-        className={isTeamNameInputEmpty ? "border-red-300 focus:border-red-300" : ""}
+        {...register("name", {
+          required: {
+            message: "Team name is required.",
+            value: true,
+          },
+        })}
       />
+
+      {errors?.name?.message && <p className="text-xs text-red-500">{errors.name.message}</p>}
 
       <Button
         type="submit"
         className="mt-4"
         variant="darkCTA"
-        loading={isMutatingTeam}
+        loading={isUpdatingTeam}
         disabled={isTeamNameInputEmpty || currentTeamName === previousTeamName}>
         Update
       </Button>

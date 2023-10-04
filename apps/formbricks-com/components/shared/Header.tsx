@@ -250,7 +250,7 @@ export default function Header() {
           </Link>
  */}
           <Link
-            href="https://formbricks.com/#pricing"
+            href="/pricing"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Pricing
           </Link>
@@ -264,11 +264,11 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
-          <Link
+          {/*           <Link
             href="/careers"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
-          </Link>
+          </Link> */}
 
           <Link
             href="/concierge"
@@ -372,7 +372,7 @@ export default function Header() {
                 <Link href="#pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
-                <Link href="/careers">Careers</Link>
+                {/*   <Link href="/careers">Careers</Link> */}
                 <Button
                   variant="secondary"
                   EndIcon={GitHubIcon}

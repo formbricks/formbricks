@@ -15,15 +15,15 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview"
   },
-  "dependencies": {},
   "devDependencies": {
-    "preact": "^10.17.1",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "^2.5.0",
-    "autoprefixer": "^10.4.15",
+    "autoprefixer": "^10.4.16",
     "eslint-config-formbricks": "workspace:*",
-    "postcss": "^8.4.29",
+    "postcss": "^8.4.30",
+    "preact": "^10.17.1",
     "tailwindcss": "^3.3.3",
+    "terser": "^5.20.0",
     "typescript": "^5.2.2",
     "vite": "^4.4.9"
   }

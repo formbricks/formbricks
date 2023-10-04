@@ -1,10 +1,13 @@
 "use client";
 
-import React from "react";
 import AlertDialog from "@/components/shared/AlertDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
@@ -12,11 +15,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
-import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { deleteSurveyAction, surveyMutateAction } from "./actions";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { QuestionType } from "@formbricks/types/questions";
+import { deleteSurveyAction, updateSurveyAction } from "./actions";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurveyWithAnalytics;
@@ -217,7 +216,7 @@ export default function SurveyMenuBar({
     }
 
     try {
-      await surveyMutateAction({ ...strippedSurvey });
+      await updateSurveyAction({ ...strippedSurvey });
       router.refresh();
       setIsMutatingSurvey(false);
       toast.success("Changes saved.");
@@ -229,6 +228,7 @@ export default function SurveyMenuBar({
         } else {
           router.push(`/environments/${environment.id}/surveys`);
         }
+        router.refresh();
       }
     } catch (e) {
       console.error(e);
@@ -270,16 +270,16 @@ export default function SurveyMenuBar({
         {!!localSurvey.analytics.responseRate && (
           <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
             <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
-            <p className="max-w-[90%] pl-1 text-xs lg:text-sm">
-              This survey received responses. To keep the data consistent, make changes with caution.
+            <p className=" pl-1 text-xs lg:text-sm">
+              This survey received responses, make changes with caution.
             </p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
           <div className="mr-4 flex items-center">
             <SurveyStatusDropdown
-              surveyId={localSurvey.id}
-              environmentId={environment.id}
+              survey={survey}
+              environment={environment}
               updateLocalSurveyStatus={updateLocalSurveyStatus}
             />
           </div>
@@ -315,7 +315,7 @@ export default function SurveyMenuBar({
                 if (!validateSurvey(localSurvey)) {
                   return;
                 }
-                await surveyMutateAction({ ...localSurvey, status: "inProgress" });
+                await updateSurveyAction({ ...localSurvey, status: "inProgress" });
                 router.refresh();
                 setIsMutatingSurvey(false);
                 router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);

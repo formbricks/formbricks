@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZEnvironment } from "./environment";
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -10,12 +11,13 @@ export const ZProduct = z.object({
   highlightBorderColor: z
     .string()
     .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
-    .nullish(),
+    .nullable(),
   recontactDays: z.number().int(),
   formbricksSignature: z.boolean(),
   placement: z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]),
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
+  environments: z.array(ZEnvironment),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;

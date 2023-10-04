@@ -1,13 +1,21 @@
 import "server-only";
+
 import { prisma } from "@formbricks/database";
-import { z } from "zod";
-import { Prisma } from "@prisma/client";
-import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
+import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/v1/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
+import { Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
+import { z } from "zod";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
+import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "./environment";
+
+export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
+const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
+const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
 
 const selectProduct = {
   id: true,
@@ -22,33 +30,43 @@ const selectProduct = {
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,
+  environments: true,
 };
 
-export const getProducts = cache(async (teamId: string): Promise<TProduct[]> => {
-  validateInputs([teamId, ZId]);
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        teamId,
-      },
-      select: selectProduct,
-    });
+export const getProducts = async (teamId: string): Promise<TProduct[]> =>
+  unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+      try {
+        const products = await prisma.product.findMany({
+          where: {
+            teamId,
+          },
+          select: selectProduct,
+        });
 
-    return products;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+        return products;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`teams-${teamId}-products`],
+    {
+      tags: [getProductsCacheTag(teamId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
-
-    throw error;
-  }
-});
+  )();
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct | null> => {
   if (!environmentId) {
     throw new ValidationError("EnvironmentId is required");
   }
   let productPrisma;
+
   try {
     productPrisma = await prisma.product.findFirst({
       where: {
@@ -70,11 +88,24 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
   }
 });
 
+export const getProductByEnvironmentIdCached = (environmentId: string) =>
+  unstable_cache(
+    async () => {
+      return await getProductByEnvironmentId(environmentId);
+    },
+    getProductCacheKey(environmentId),
+    {
+      tags: getProductCacheKey(environmentId),
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
 export const updateProduct = async (
   productId: string,
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
-  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
+  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
+  const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {
     updatedProduct = await prisma.product.update({
@@ -82,7 +113,10 @@ export const updateProduct = async (
         id: productId,
       },
       data: {
-        ...inputProduct,
+        ...data,
+        environments: {
+          connect: environments?.map((environment) => ({ id: environment.id })) ?? [],
+        },
       },
       select: selectProduct,
     });
@@ -90,10 +124,17 @@ export const updateProduct = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw error;
   }
+
   try {
     const product = ZProduct.parse(updatedProduct);
+
+    revalidateTag(getProductsCacheTag(product.teamId));
+    product.environments.forEach((environment) => {
+      // revalidate environment cache
+      revalidateTag(getProductCacheTag(environment.id));
+    });
+
     return product;
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -121,3 +162,57 @@ export const getProduct = cache(async (productId: string): Promise<TProduct | nu
     throw error;
   }
 });
+
+export const deleteProduct = cache(async (productId: string): Promise<TProduct> => {
+  const product = await prisma.product.delete({
+    where: {
+      id: productId,
+    },
+    select: selectProduct,
+  });
+
+  if (product) {
+    revalidateTag(getProductsCacheTag(product.teamId));
+    revalidateTag(getEnvironmentsCacheTag(product.id));
+    product.environments.forEach((environment) => {
+      // revalidate product cache
+      revalidateTag(getProductCacheTag(environment.id));
+      revalidateTag(getEnvironmentCacheTag(environment.id));
+    });
+  }
+
+  return product;
+});
+
+export const createProduct = async (
+  teamId: string,
+  productInput: Partial<TProductUpdateInput>
+): Promise<TProduct> => {
+  if (!productInput.name) {
+    throw new ValidationError("Product Name is required");
+  }
+  const { environments, ...data } = productInput;
+
+  let product = await prisma.product.create({
+    data: {
+      ...data,
+      name: productInput.name,
+      teamId,
+    },
+    select: selectProduct,
+  });
+
+  const devEnvironment = await createEnvironment(product.id, {
+    type: "development",
+  });
+
+  const prodEnvironment = await createEnvironment(product.id, {
+    type: "production",
+  });
+
+  product = await updateProduct(product.id, {
+    environments: [devEnvironment, prodEnvironment],
+  });
+
+  return product;
+};

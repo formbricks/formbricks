@@ -151,7 +151,7 @@ function BestPractice({ resource }: { resource: BestPractice }) {
   );
 }
 
-export function BestPractices() {
+export default function BestPractices() {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="resources">

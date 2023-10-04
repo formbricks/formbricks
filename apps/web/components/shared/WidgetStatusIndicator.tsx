@@ -31,7 +31,7 @@ export default function WidgetStatusIndicator({
     if (!environment?.widgetSetupCompleted && actions && actions.length > 0) {
       updateEnvironmentAction(environment.id, { widgetSetupCompleted: true });
     }
-  }, [environment, actions]);
+  }, [environment, actions, updateEnvironmentAction]);
 
   const stati = {
     notImplemented: {

@@ -1,26 +1,20 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { TagIcon } from "@heroicons/react/24/solid";
-import type { AttributeClass } from "@prisma/client";
 import AttributeActivityTab from "./AttributeActivityTab";
 import AttributeSettingsTab from "./AttributeSettingsTab";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 interface AttributeDetailModalProps {
-  environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
-  attributeClass: AttributeClass;
+  attributeClass: TAttributeClass;
 }
 
-export default function AttributeDetailModal({
-  environmentId,
-  open,
-  setOpen,
-  attributeClass,
-}: AttributeDetailModalProps) {
+export default function AttributeDetailModal({ open, setOpen, attributeClass }: AttributeDetailModalProps) {
   const tabs = [
     {
       title: "Activity",
-      children: <AttributeActivityTab environmentId={environmentId} attributeClassId={attributeClass.id} />,
+      children: <AttributeActivityTab attributeClass={attributeClass} />,
     },
     {
       title: "Settings",

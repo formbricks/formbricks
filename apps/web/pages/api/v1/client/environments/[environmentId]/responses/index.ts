@@ -109,6 +109,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         data: true,
         meta: true,
         personAttributes: true,
+        singleUseId: true,
         person: {
           select: {
             id: true,
@@ -138,6 +139,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 name: true,
               },
             },
+            isResolved: true,
+            isEdited: true,
           },
         },
         tags: {
@@ -170,6 +173,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         attributes: attributes,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
+        environmentId: environmentId,
       };
     };
 

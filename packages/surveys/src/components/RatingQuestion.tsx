@@ -70,7 +70,7 @@ export default function RatingQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
         <fieldset>
@@ -81,7 +81,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
+                className="max-w-10 relative flex max-h-10 flex-1 cursor-pointer justify-center bg-white text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     className={cn(
@@ -131,7 +131,11 @@ export default function RatingQuestion({
                     )}
                   </label>
                 ) : (
-                  <label className="flex h-full w-full justify-center text-slate-800">
+                  <label
+                    className={cn(
+                      "flex items-center justify-center  text-slate-800",
+                      question.range === 10 ? "h-6 w-6" : "h-full w-full"
+                    )}>
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={value === number || hoveredNumber === number}

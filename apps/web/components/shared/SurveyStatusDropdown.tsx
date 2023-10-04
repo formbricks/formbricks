@@ -1,11 +1,10 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
-import { useSurvey } from "@/lib/surveys/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import {
-  ErrorComponent,
   Select,
   SelectContent,
   SelectItem,
@@ -20,42 +19,32 @@ import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/rea
 import toast from "react-hot-toast";
 
 export default function SurveyStatusDropdown({
-  surveyId,
-  environmentId,
+  environment,
   updateLocalSurveyStatus,
+  survey,
 }: {
-  surveyId: string;
-  environmentId: string;
+  environment: TEnvironment;
   updateLocalSurveyStatus?: (status: "draft" | "inProgress" | "paused" | "completed" | "archived") => void;
+  survey: TSurvey;
 }) {
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
-  const { triggerSurveyMutate } = useSurveyMutation(environmentId, surveyId);
-
-  if (isLoadingSurvey) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorSurvey) {
-    return <ErrorComponent />;
-  }
-
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
 
   return (
     <>
-      {survey.status === "draft" || survey.status === "archived" ? (
+      {survey.status === "draft" ? (
         <div className="flex items-center">
-          <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+          <SurveyStatusIndicator status={survey.status} environment={environment} />
           {survey.status === "draft" && <p className="text-sm italic text-slate-600">Draft</p>}
-          {survey.status === "archived" && <p className="text-sm italic text-slate-600">Archived</p>}
         </div>
       ) : (
         <Select
+          value={survey.status}
           disabled={isStatusChangeDisabled}
           onValueChange={(value) => {
-            triggerSurveyMutate({ status: value })
+            const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
+            updateSurveyAction({ ...survey, status: castedValue })
               .then(() => {
                 toast.success(
                   value === "inProgress"
@@ -80,13 +69,11 @@ export default function SurveyStatusDropdown({
                 <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+                      <SurveyStatusIndicator status={survey.status} environment={environment} />
                       <span className="ml-2 text-sm text-slate-700">
-                        {survey.status === "draft" && "Draft"}
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}
-                        {survey.status === "archived" && "Archived"}
                       </span>
                     </div>
                   </SelectValue>
