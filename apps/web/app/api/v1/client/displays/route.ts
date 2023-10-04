@@ -2,7 +2,7 @@ import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { InvalidInputError } from "@formbricks/types/v1/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { createDisplay } from "@formbricks/lib/services/displays";
+import { createDisplay } from "@formbricks/lib/display/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
 import { TDisplay, ZDisplayInput } from "@formbricks/types/v1/displays";
