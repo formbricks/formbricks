@@ -41,14 +41,6 @@ const selectDisplay = {
   },
   status: true,
 };
-export const getDisplayCount = async (surveyId) => {
-  const numDisplays = await prisma.display.findMany({
-    where: {
-      surveyId,
-    },
-  });
-  return numDisplays;
-};
 
 export const updateDisplay = async (
   displayId: string,
@@ -214,7 +206,7 @@ export const getDisplaysOfPerson = cache(
   }
 );
 
-export const deleteDisplayByResponseId = async (responseId: string): Promise<void> => {
+export const deleteDisplayByResponseId = async (responseId: string, surveyId: string): Promise<void> => {
   validateInputs([responseId, ZId]);
   try {
     await prisma.display.delete({
@@ -222,13 +214,11 @@ export const deleteDisplayByResponseId = async (responseId: string): Promise<voi
         responseId,
       },
     });
-    console.log("deleted");
+    revalidateTag(getDisplaysCacheTag(surveyId));
   } catch (error) {
-    console.log(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-
     throw error;
   }
 };

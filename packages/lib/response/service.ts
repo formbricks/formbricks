@@ -374,7 +374,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
-    deleteDisplayByResponseId(responseId);
+    deleteDisplayByResponseId(responseId, response.surveyId);
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
