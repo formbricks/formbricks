@@ -80,7 +80,7 @@ export default function OpenTextQuestion({
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
             pattern={question.inputType === "phone" ? "[+][0-9]+" : undefined}
-            title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
+            title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
             className={`block w-full rounded-md border
        border-slate-100
        bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm`}
