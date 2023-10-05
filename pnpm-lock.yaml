@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 importers:
 
   .:
@@ -458,7 +462,7 @@ importers:
         version: 9.0.0(eslint@8.50.0)
       eslint-config-turbo:
         specifier: latest
-        version: 1.10.14(eslint@8.50.0)
+        version: 1.8.8(eslint@8.50.0)
       eslint-plugin-react:
         specifier: 7.33.2
         version: 7.33.2(eslint@8.50.0)
@@ -564,6 +568,9 @@ importers:
       markdown-it:
         specifier: ^13.0.2
         version: 13.0.2
+      nanoid:
+        specifier: ^5.0.1
+        version: 5.0.1
       next-auth:
         specifier: ^4.22.3
         version: 4.23.2(next@13.5.3)(nodemailer@6.9.5)(react-dom@18.2.0)(react@18.2.0)
@@ -11221,13 +11228,13 @@ packages:
     resolution: {integrity: sha512-NB/L/1Y30qyJcG5xZxCJKW/+bqyj+llbcCwo9DEz8bESIP0SLTOQ8T1DWCCFc+wJ61AMEstj4511PSScqMMfCw==}
     dev: true
 
-  /eslint-config-turbo@1.10.14(eslint@8.50.0):
-    resolution: {integrity: sha512-ZeB+IcuFXy1OICkLuAplVa0euoYbhK+bMEQd0nH9+Lns18lgZRm33mVz/iSoH9VdUzl/1ZmFmoK+RpZc+8R80A==}
+  /eslint-config-turbo@1.8.8(eslint@8.50.0):
+    resolution: {integrity: sha512-+yT22sHOT5iC1sbBXfLIdXfbZuiv9bAyOXsxTxFCWelTeFFnANqmuKB3x274CFvf7WRuZ/vYP/VMjzU9xnFnxA==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
       eslint: 8.50.0
-      eslint-plugin-turbo: 1.10.14(eslint@8.50.0)
+      eslint-plugin-turbo: 1.8.8(eslint@8.50.0)
     dev: true
 
   /eslint-import-resolver-node@0.3.9:
@@ -11462,8 +11469,8 @@ packages:
       semver: 6.3.1
       string.prototype.matchall: 4.0.10
 
-  /eslint-plugin-turbo@1.10.14(eslint@8.50.0):
-    resolution: {integrity: sha512-sBdBDnYr9AjT1g4lR3PBkZDonTrMnR4TvuGv5W0OiF7z9az1rI68yj2UHJZvjkwwcGu5mazWA1AfB0oaagpmfg==}
+  /eslint-plugin-turbo@1.8.8(eslint@8.50.0):
+    resolution: {integrity: sha512-zqyTIvveOY4YU5jviDWw9GXHd4RiKmfEgwsjBrV/a965w0PpDwJgEUoSMB/C/dU310Sv9mF3DSdEjxjJLaw6rA==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
@@ -16940,6 +16947,12 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  /nanoid@5.0.1:
+    resolution: {integrity: sha512-vWeVtV5Cw68aML/QaZvqN/3QQXc6fBfIieAlu05m7FZW2Dgb+3f0xc0TTxuJW+7u30t7iSDTV/j3kVI0oJqIfQ==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+    dev: false
+
   /nanomatch@1.2.13:
     resolution: {integrity: sha512-fpoe2T0RbHwBTBUOftAfBPaDEi06ufaUai0mE6Yn1kacc3SnTErfb/h+X94VXzI64rKFHYImXSvdwGGCmwOqCA==}
     engines: {node: '>=0.10.0'}
@@ -18372,23 +18385,7 @@ packages:
       yaml: 2.3.1
     dev: true
 
-  /postcss-load-config@4.0.1(postcss@8.4.31):
-    resolution: {integrity: sha512-vEJIc8RdiBRu3oRAI0ymerOn+7rPuMvRXslTvZUKZonDHFIczxztIyJ1urxM1x9JXEikvpWWTUUqal5j/8QgvA==}
-    engines: {node: '>= 14'}
-    peerDependencies:
-      postcss: '>=8.0.9'
-      ts-node: '>=9.0.0'
-    peerDependenciesMeta:
-      postcss:
-        optional: true
-      ts-node:
-        optional: true
-    dependencies:
-      lilconfig: 2.1.0
-      postcss: 8.4.31
-      yaml: 2.3.1
-
-  /postcss-loader@4.3.0(postcss@8.4.31)(webpack@4.47.0):
+  /postcss-loader@4.3.0(postcss@8.4.27)(webpack@4.46.0):
     resolution: {integrity: sha512-M/dSoIiNDOo8Rk0mUqoj4kpGq91gcxCfb9PoyZVdZ76/AuhxylHDYZblNE8o+EQ9AMSASeMFEKxZf5aU6wlx1Q==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
@@ -22505,7 +22502,7 @@ packages:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.1
+      postcss-load-config: 4.0.1(postcss@8.4.27)
       resolve-from: 5.0.0
       rollup: 3.29.4
       source-map: 0.8.0-beta.0

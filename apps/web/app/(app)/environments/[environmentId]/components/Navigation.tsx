@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
+import UrlShortenerModal from "./UrlShortenerModal";
 import { formbricksLogout } from "@/lib/formbricks";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 import formbricks from "@formbricks/js";
@@ -52,6 +53,7 @@ import {
   PlusIcon,
   UserCircleIcon,
   UsersIcon,
+  LinkIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { MenuIcon } from "lucide-react";
@@ -71,6 +73,7 @@ interface NavigationProps {
   products: TProduct[];
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
+  surveyBaseUrl: string;
 }
 
 export default function Navigation({
@@ -81,6 +84,7 @@ export default function Navigation({
   products,
   environments,
   isFormbricksCloud,
+  surveyBaseUrl,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -89,6 +93,7 @@ export default function Navigation({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [showLinkShortenerModal, setShowLinkShortenerModal] = useState(false);
   const product = products.find((product) => product.id === environment.productId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
 
@@ -184,6 +189,14 @@ export default function Navigation({
           label: "Setup checklist",
           href: `/environments/${environment.id}/settings/setup`,
           hidden: widgetSetupCompleted,
+        },
+        {
+          icon: LinkIcon,
+          label: "Link Shortener",
+          href: pathname,
+          onClick: () => {
+            setShowLinkShortenerModal(true);
+          },
         },
         {
           icon: CodeBracketIcon,
@@ -441,7 +454,7 @@ export default function Navigation({
                           (link) =>
                             !link.hidden && (
                               <Link href={link.href} target={link.target} key={link.label}>
-                                <DropdownMenuItem key={link.label}>
+                                <DropdownMenuItem key={link.label} onClick={link?.onClick}>
                                   <div className="flex items-center">
                                     <link.icon className="mr-2 h-4 w-4" />
                                     <span>{link.label}</span>
@@ -489,6 +502,11 @@ export default function Navigation({
             environmentId={environment.id}
           />
           <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
+          <UrlShortenerModal
+            open={showLinkShortenerModal}
+            setOpen={(val) => setShowLinkShortenerModal(val)}
+            surveyBaseUrl={surveyBaseUrl}
+          />
         </nav>
       )}
     </>
