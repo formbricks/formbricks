@@ -42,8 +42,8 @@ export function QuestionTypeSelector({
               ? "slate-100"
               : "white"
           } p-2 text-center`}>
-          <div className="flex items-center justify-center">
-            <span className="mr-2">{type.label}</span>
+          <div className="flex items-center justify-center space-x-2">
+            <span>{type.label}</span>
             <div className="h-4 w-4">{typeIcons[type.value]}</div>
           </div>
         </div>

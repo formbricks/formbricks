@@ -27,6 +27,7 @@ export default function OpenQuestionForm({
   isInValid,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
 
   const handleInputChange = (inputType: string) => {
     const updatedAttributes = {
@@ -88,7 +89,7 @@ export default function OpenQuestionForm({
           <Input
             id="placeholder"
             name="placeholder"
-            value={question.placeholder}
+            value={question.placeholder ?? defaultPlaceholder}
             onChange={(e) => updateQuestion(questionIdx, { placeholder: e.target.value })}
           />
         </div>
