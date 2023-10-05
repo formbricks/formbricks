@@ -47,7 +47,8 @@ export const env = createEnv({
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().optional(),
-    SURVEY_BASE_URL: z.string().optional(),
+    SURVEY_BASE_URL: z.string().url().optional(),
+    SHORT_SURVEY_BASE_URL: z.string().url().optional().or(z.string().length(0)),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
@@ -116,6 +117,7 @@ export const env = createEnv({
     FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
     VERCEL_URL: process.env.VERCEL_URL,
     SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
+    SHORT_SURVEY_BASE_URL: process.env.SHORT_SURVEY_BASE_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
 });

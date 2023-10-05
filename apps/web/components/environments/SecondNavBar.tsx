@@ -1,7 +1,7 @@
 import { cn } from "@formbricks/lib/cn";
 import SurveyNavBarName from "@/components/shared/SurveyNavBarName";
 import Link from "next/link";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 
 interface SecondNavbarProps {

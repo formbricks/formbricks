@@ -1,7 +1,7 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/services/membership";
-import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
+import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { Skeleton } from "@formbricks/ui";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
