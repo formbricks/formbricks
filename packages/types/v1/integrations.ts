@@ -68,4 +68,5 @@ export type TGoogleSpreadsheet = z.infer<typeof ZGoogleSpreadsheet>;
 export type TGoogleSheetsConfig = z.infer<typeof ZGoogleSheetsConfig>;
 export type TGoogleSheetsConfigData = z.infer<typeof ZGoogleSheetsConfigData>;
 export type TGoogleSheetIntegration = z.infer<typeof ZGoogleSheetIntegration>;
+export type TGoogleSheetIntegrationUpsert = Omit<TGoogleSheetIntegration, "environmentId" | "id">;
 export type TPlaceHolderIntegration = z.infer<typeof ZPlaceHolderIntegration>;

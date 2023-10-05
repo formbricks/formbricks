@@ -62,27 +62,29 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   return deletedInvite;
 };
 
-export const getInviteToken = cache(async (inviteId: string) => {
-  const invite = await prisma.invite.findUnique({
-    where: {
-      id: inviteId,
-    },
-    select: {
-      email: true,
-    },
-  });
+export const getInviteToken = cache(
+  async (inviteId: string): Promise<{ inviteId: string; email: string }> => {
+    const invite = await prisma.invite.findUnique({
+      where: {
+        id: inviteId,
+      },
+      select: {
+        email: true,
+      },
+    });
 
-  if (!invite) {
-    throw new ResourceNotFoundError("Invite", inviteId);
+    if (!invite) {
+      throw new ResourceNotFoundError("Invite", inviteId);
+    }
+
+    return {
+      inviteId,
+      email: invite.email,
+    };
   }
+);
 
-  return {
-    inviteId,
-    email: invite.email,
-  };
-});
-
-export const resendInvite = async (inviteId: string) => {
+export const resendInvite = async (inviteId: string): Promise<TInvite> => {
   const invite = await prisma.invite.findUnique({
     where: {
       id: inviteId,
@@ -120,7 +122,7 @@ export const inviteUser = async ({
   teamId: string;
   invitee: { name: string; email: string; role: TMembershipRole };
   currentUser: { id: string; name: string };
-}) => {
+}): Promise<TInvite> => {
   const { name, email, role } = invitee;
   const { id: currentUserId, name: currentUserName } = currentUser;
   const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });

@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { TTeam, TTeamUpdateInput } from "@formbricks/types/v1/teams";
+import { TProductUpdateInput } from "@formbricks/types/v1/product";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
@@ -158,7 +159,7 @@ export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>
   }
 };
 
-export const deleteTeam = async (teamId: string) => {
+export const deleteTeam = async (teamId: string): Promise<TTeam> => {
   validateInputs([teamId, ZId]);
   try {
     const deletedTeam = await prisma.team.delete({
@@ -196,7 +197,7 @@ export const deleteTeam = async (teamId: string) => {
   }
 };
 
-export const createDemoProduct = async (teamId: string) => {
+export const createDemoProduct = async (teamId: string): Promise<TProductUpdateInput> => {
   validateInputs([teamId, ZId]);
 
   const demoProduct = await prisma.product.create({

@@ -3,12 +3,12 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TIntegration } from "@formbricks/types/v1/integrations";
+import { TIntegration, TGoogleSheetIntegrationUpsert } from "@formbricks/types/v1/integrations";
 import { cache } from "react";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
-  integrationData: any
+  integrationData: TGoogleSheetIntegrationUpsert
 ): Promise<TIntegration> {
   try {
     const integration = await prisma.integration.upsert({

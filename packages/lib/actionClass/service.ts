@@ -156,7 +156,7 @@ export const updateActionClass = async (
 
 export const getActionClassCached = async (name: string, environmentId: string) =>
   unstable_cache(
-    async () => {
+    async (): Promise<TActionClass | null> => {
       return await prisma.eventClass.findFirst({
         where: {
           name,

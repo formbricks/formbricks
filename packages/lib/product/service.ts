@@ -61,34 +61,35 @@ export const getProducts = async (teamId: string): Promise<TProduct[]> =>
     }
   )();
 
-export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct | null> => {
-  if (!environmentId) {
-    throw new ValidationError("EnvironmentId is required");
-  }
-  let productPrisma;
+export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> =>
+  cache(async () => {
+    if (!environmentId) {
+      throw new ValidationError("EnvironmentId is required");
+    }
+    let productPrisma;
 
-  try {
-    productPrisma = await prisma.product.findFirst({
-      where: {
-        environments: {
-          some: {
-            id: environmentId,
+    try {
+      productPrisma = await prisma.product.findFirst({
+        where: {
+          environments: {
+            some: {
+              id: environmentId,
+            },
           },
         },
-      },
-      select: selectProduct,
-    });
+        select: selectProduct,
+      });
 
-    return productPrisma;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      return productPrisma;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Database operation failed");
+      }
+      throw error;
     }
-    throw error;
-  }
-});
+  })();
 
-export const getProductByEnvironmentIdCached = (environmentId: string) =>
+export const getProductByEnvironmentIdCached = (environmentId: string): Promise<TProduct | null> =>
   unstable_cache(
     async () => {
       return await getProductByEnvironmentId(environmentId);
@@ -144,24 +145,25 @@ export const updateProduct = async (
   }
 };
 
-export const getProduct = cache(async (productId: string): Promise<TProduct | null> => {
-  let productPrisma;
-  try {
-    productPrisma = await prisma.product.findUnique({
-      where: {
-        id: productId,
-      },
-      select: selectProduct,
-    });
+export const getProduct = (productId: string): Promise<TProduct | null> =>
+  cache(async () => {
+    let productPrisma;
+    try {
+      productPrisma = await prisma.product.findUnique({
+        where: {
+          id: productId,
+        },
+        select: selectProduct,
+      });
 
-    return productPrisma;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      return productPrisma;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Database operation failed");
+      }
+      throw error;
     }
-    throw error;
-  }
-});
+  })();
 
 export const deleteProduct = cache(async (productId: string): Promise<TProduct> => {
   const product = await prisma.product.delete({

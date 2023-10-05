@@ -95,7 +95,7 @@ export const updatetAttributeClass = async (
 
 export const getAttributeClassByNameCached = async (environmentId: string, name: string) =>
   await unstable_cache(
-    async () => {
+    async (): Promise<TAttributeClass | null> => {
       return await getAttributeClassByName(environmentId, name);
     },
     getAttributeClassesCacheKey(environmentId),

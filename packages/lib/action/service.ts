@@ -54,7 +54,7 @@ export const getActionsByEnvironmentId = cache(
   }
 );
 
-export const createAction = async (data: TJsActionInput) => {
+export const createAction = async (data: TJsActionInput): Promise<void> => {
   const { environmentId, name, properties, sessionId } = data;
 
   let eventType: EventType = EventType.code;
@@ -131,7 +131,7 @@ export const createAction = async (data: TJsActionInput) => {
   revalidateTag(getActionClassCacheTag(name, environmentId));
 };
 
-export const getActionCountInLastHour = cache(async (actionClassId: string) => {
+export const getActionCountInLastHour = cache(async (actionClassId: string): Promise<number> => {
   try {
     const numEventsLastHour = await prisma.event.count({
       where: {
@@ -147,7 +147,7 @@ export const getActionCountInLastHour = cache(async (actionClassId: string) => {
   }
 });
 
-export const getActionCountInLast24Hours = cache(async (actionClassId: string) => {
+export const getActionCountInLast24Hours = cache(async (actionClassId: string): Promise<number> => {
   try {
     const numEventsLast24Hours = await prisma.event.count({
       where: {
@@ -163,7 +163,7 @@ export const getActionCountInLast24Hours = cache(async (actionClassId: string) =
   }
 });
 
-export const getActionCountInLast7Days = cache(async (actionClassId: string) => {
+export const getActionCountInLast7Days = cache(async (actionClassId: string): Promise<number> => {
   try {
     const numEventsLast7Days = await prisma.event.count({
       where: {

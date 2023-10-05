@@ -121,7 +121,11 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
   return deletedMembership;
 };
 
-export const transferOwnership = async (currentOwnerId: string, newOwnerId: string, teamId: string) => {
+export const transferOwnership = async (
+  currentOwnerId: string,
+  newOwnerId: string,
+  teamId: string
+): Promise<void> => {
   try {
     await prisma.$transaction([
       prisma.membership.update({

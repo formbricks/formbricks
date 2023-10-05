@@ -297,6 +297,7 @@ export const ZSurveyInput = z.object({
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
+export type TSurveyInputWithoutIds = Omit<Omit<TSurveyInput, "id">, "environmentId">;
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({
