@@ -179,7 +179,7 @@ x-environment: &environment
     # Set the below value if you want to have another base URL apart from your Domain Name
     # SURVEY_BASE_URL: 
 
-    # Set the below value if you have and want to share a shorter base URL than the SURVEY_BASE_URL
+    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
     # SHORT_SURVEY_BASE_URL:
 
     # Uncomment the below and set it to 1 to disable Email Verification for new signups
