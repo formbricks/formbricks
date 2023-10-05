@@ -19,6 +19,7 @@
     "next-auth": "^4.22.3",
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^13.0.2",
+    "nanoid": "^5.0.1",
     "nodemailer": "^6.9.5",
     "posthog-node": "^3.1.2",
     "server-only": "^0.0.1",

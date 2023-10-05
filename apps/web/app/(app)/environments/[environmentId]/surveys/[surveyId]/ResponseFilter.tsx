@@ -1,6 +1,6 @@
 "use client";
 
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionFilterComboBox";
 import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
 import { Button, Checkbox, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
