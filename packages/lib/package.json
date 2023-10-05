@@ -12,6 +12,7 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
   "dependencies": {
+    "@formbricks/api": "*",
     "@formbricks/database": "*",
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",

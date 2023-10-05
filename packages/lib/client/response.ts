@@ -1,17 +1,17 @@
 import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
+import { FormbricksAPI } from "@formbricks/api";
 
 export const createResponse = async (responseInput: TResponseInput, apiHost: string): Promise<TResponse> => {
-  const res = await fetch(`${apiHost}/api/v1/client/responses`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseInput),
+  const api = new FormbricksAPI({
+    apiHost,
+    environmentId: "",
   });
+  const res = await api.client.response.create(responseInput);
   if (!res.ok) {
-    console.error(res.text);
+    console.error(res.error);
     throw new Error("Could not create response");
   }
-  const resJson = await res.json();
-  return resJson.data;
+  return res.data;
 };
 
 export const updateResponse = async (
@@ -19,14 +19,13 @@ export const updateResponse = async (
   responseId: string,
   apiHost: string
 ): Promise<TResponse> => {
-  const res = await fetch(`${apiHost}/api/v1/client/responses/${responseId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseInput),
+  const api = new FormbricksAPI({
+    apiHost,
+    environmentId: "",
   });
+  const res = await api.client.response.update({ ...responseInput, responseId });
   if (!res.ok) {
     throw new Error("Could not update response");
   }
-  const resJson = await res.json();
-  return resJson.data;
+  return res.data;
 };
