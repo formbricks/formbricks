@@ -1,4 +1,4 @@
-import { Button, Input, Label } from "@/../../packages/ui";
+import { Button, Label, PasswordInput } from "@/../../packages/ui";
 import Modal from "@/components/shared/Modal";
 import { useForm } from "react-hook-form";
 import { createIntegration } from "@formbricks/lib/client/airtable";
@@ -39,10 +39,22 @@ export default function AirTableConnectIntegrationModal(props: AirTableConnectIn
         <div className="flex rounded-lg p-6">
           <div className="flex w-full flex-col gap-y-4 pt-5">
             <div className="flex w-full flex-col">
-              <Label htmlFor="token">Airtable Auth Token</Label>
-              <div className="mt-1 flex">
-                <Input type="text" id="token" {...register("token", { required: true })} />
+              <Label htmlFor="token">Airtable personal Access token</Label>
+              <div className="mt-2 flex">
+                <PasswordInput
+                  containerClassName="w-full"
+                  id="token"
+                  {...register("token", { required: true })}
+                />
               </div>
+              <p className="pt-2 text-sm leading-loose text-slate-500">
+                Token should have following scopes enabled{" "}
+                <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">data.records:read</code> ,{" "}
+                <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">data.records:write</code> ,{" "}
+                <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">schema.bases:read</code> ,{" "}
+                <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">schema.bases:write</code> and{" "}
+                <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">user.email:read</code>
+              </p>
             </div>
 
             <div className="flex justify-end ">
