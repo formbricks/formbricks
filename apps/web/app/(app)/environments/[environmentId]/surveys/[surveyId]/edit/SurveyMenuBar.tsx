@@ -3,6 +3,7 @@
 import AlertDialog from "@/components/shared/AlertDialog";
 import DeleteDialog from "@formbricks/ui/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
@@ -97,6 +98,13 @@ export default function SurveyMenuBar({
   };
 
   const validateSurvey = (survey) => {
+    const existingQuestionIds = new Set();
+
+    if (survey.questions.length === 0) {
+      toast.error("Please add at least one question");
+      return;
+    }
+
     faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
@@ -109,7 +117,69 @@ export default function SurveyMenuBar({
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
-      toast.error("Please fill required fields");
+      toast.error("Please fill all required fields.");
+      return false;
+    }
+
+    for (const question of survey.questions) {
+      const existingLogicConditions = new Set();
+
+      if (existingQuestionIds.has(question.id)) {
+        toast.error("There are 2 identical question IDs. Please update one.");
+        return false;
+      }
+      existingQuestionIds.add(question.id);
+
+      if (
+        question.type === QuestionType.MultipleChoiceSingle ||
+        question.type === QuestionType.MultipleChoiceMulti
+      ) {
+        const haveSameChoices =
+          question.choices.some((element) => element.label.trim() === "") ||
+          question.choices.some((element, index) =>
+            question.choices
+              .slice(index + 1)
+              .some((nextElement) => nextElement.label.trim() === element.label.trim())
+          );
+
+        if (haveSameChoices) {
+          toast.error("You have two identical choices.");
+          return false;
+        }
+      }
+
+      for (const logic of question.logic || []) {
+        const validFields = ["condition", "destination", "value"].filter(
+          (field) => logic[field] !== undefined
+        ).length;
+
+        if (validFields < 2) {
+          setInvalidQuestions([question.id]);
+          toast.error("Incomplete logic jumps detected: Please fill or delete them.");
+          return false;
+        }
+
+        if (question.required && logic.condition === "skipped") {
+          toast.error("You have a missing logic condition. Please update or delete it.");
+          return false;
+        }
+
+        const thisLogic = `${logic.condition}-${logic.value}`;
+        if (existingLogicConditions.has(thisLogic)) {
+          setInvalidQuestions([question.id]);
+          toast.error("You have 2 competing logic conditons. Please update or delete one.");
+          return false;
+        }
+        existingLogicConditions.add(thisLogic);
+      }
+    }
+
+    if (
+      survey.redirectUrl &&
+      !survey.redirectUrl.includes("https://") &&
+      !survey.redirectUrl.includes("http://")
+    ) {
+      toast.error("Please enter a valid URL for redirecting respondents.");
       return false;
     }
 
@@ -128,6 +198,10 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = async (shouldNavigateBack = false) => {
+    if (localSurvey.questions.length === 0) {
+      toast.error("Please add at least one question.");
+      return;
+    }
     setIsMutatingSurvey(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
@@ -139,6 +213,7 @@ export default function SurveyMenuBar({
     };
 
     if (!validateSurvey(localSurvey)) {
+      setIsMutatingSurvey(false);
       return;
     }
 
@@ -240,6 +315,7 @@ export default function SurveyMenuBar({
               onClick={async () => {
                 setIsMutatingSurvey(true);
                 if (!validateSurvey(localSurvey)) {
+                  setIsMutatingSurvey(false);
                   return;
                 }
                 await updateSurveyAction({ ...localSurvey, status: "inProgress" });

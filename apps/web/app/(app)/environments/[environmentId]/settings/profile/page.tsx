@@ -8,7 +8,7 @@ import SettingsTitle from "../SettingsTitle";
 import { DeleteAccount } from "./DeleteAccount";
 import { EditName } from "./EditName";
 import { EditAvatar } from "./EditAvatar";
-import { getProfile } from "@formbricks/lib/services/profile";
+import { getProfile } from "@formbricks/lib/profile/service";
 
 export default async function ProfileSettingsPage() {
   const session = await getServerSession(authOptions);

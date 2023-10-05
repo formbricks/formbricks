@@ -24,6 +24,7 @@ import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -31,6 +32,7 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   surveyBaseUrl: string;
   product: TProduct;
+  profile: TProfile;
   singleUseIds?: string[];
 }
 const SummaryHeader = ({
@@ -39,6 +41,7 @@ const SummaryHeader = ({
   survey,
   surveyBaseUrl,
   product,
+  profile,
   singleUseIds,
 }: SummaryHeaderProps) => {
   const router = useRouter();
@@ -55,7 +58,13 @@ const SummaryHeader = ({
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && (
-          <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} singleUseIds={singleUseIds} />
+          <LinkSurveyShareButton
+            survey={survey}
+            surveyBaseUrl={surveyBaseUrl}
+            singleUseIds={singleUseIds}
+            product={product}
+            profile={profile}
+          />
         )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
@@ -82,6 +91,8 @@ const SummaryHeader = ({
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
+                  product={product}
+                  profile={profile}
                   singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
@@ -166,6 +177,8 @@ const SummaryHeader = ({
         environment={environment}
         survey={survey}
         surveyBaseUrl={surveyBaseUrl}
+        product={product}
+        profile={profile}
         singleUseIds={singleUseIds}
       />
     </div>

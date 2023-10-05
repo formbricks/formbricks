@@ -46,6 +46,8 @@ export default function LinkSurvey({
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
 
+  const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
+
   const responseQueue = useMemo(
     () =>
       new ResponseQueue(
@@ -110,7 +112,7 @@ export default function LinkSurvey({
         )}
         <SurveyInline
           survey={survey}
-          brandColor={product.brandColor}
+          brandColor={brandColor}
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
             if (!isPreview) {

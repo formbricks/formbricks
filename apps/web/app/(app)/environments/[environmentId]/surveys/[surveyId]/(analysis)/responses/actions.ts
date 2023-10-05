@@ -1,8 +1,8 @@
 "use server";
 import { deleteResponse } from "@formbricks/lib/response/service";
-import { updateResponseNote, resolveResponseNote } from "@formbricks/lib/services/responseNote";
+import { updateResponseNote, resolveResponseNote } from "@formbricks/lib/responseNote/service";
 import { createTag } from "@formbricks/lib/tag/service";
-import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/services/tagOnResponse";
+import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnResponse/service";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";

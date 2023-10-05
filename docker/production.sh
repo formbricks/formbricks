@@ -161,12 +161,6 @@ x-environment: &environment
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
-    # Uncomment to enable a dedicated connection pool for Prisma using Prisma Data Proxy
-    # Cold boots will be faster and you'll be able to scale your DB independently of your app.
-    # @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
-    # PRISMA_GENERATE_DATAPROXY: true
-    PRISMA_GENERATE_DATAPROXY:
-
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: $(openssl rand -base64 32) to generate one
@@ -181,6 +175,47 @@ x-environment: &environment
 
     # Email configuration
     $email_config
+
+    # Set the below value if you want to have another base URL apart from your Domain Name
+    # SURVEY_BASE_URL: 
+
+    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
+    # SHORT_SURVEY_BASE_URL:
+
+    # Uncomment the below and set it to 1 to disable Email Verification for new signups
+    # EMAIL_VERIFICATION_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Password Reset
+    # PASSWORD_RESET_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Signups
+    # SIGNUP_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Invites
+    # INVITE_DISABLED:
+
+    # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
+    # PRIVACY_URL:
+
+    # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
+    # TERMS_URL:
+
+    # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
+    # IMPRINT_URL:
+
+    # Uncomment the below and set to 1 if you want to enable GitHub OAuth
+    # GITHUB_AUTH_ENABLED:
+    # GITHUB_ID: 
+    # GITHUB_SECRET:
+
+    # Uncomment the below and set to 1 if you want to enable Google OAuth
+    # GOOGLE_AUTH_ENABLED:
+    # GOOGLE_CLIENT_ID:
+    # GOOGLE_CLIENT_SECRET:
+
+    # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+    # ASSET_PREFIX_URL: *asset_prefix_url
+
 
 services:
   postgres:
@@ -228,7 +263,9 @@ echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
 newgrp docker <<END
 
-docker compose up -d
+docker compose --env-file /dev/null up
+
+echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
