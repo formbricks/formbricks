@@ -213,6 +213,10 @@ x-environment: &environment
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
 
+    # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+    # ASSET_PREFIX_URL: *asset_prefix_url
+
+
 services:
   postgres:
     restart: always

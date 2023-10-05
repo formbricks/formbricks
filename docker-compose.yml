@@ -75,6 +75,9 @@ x-next-public-sentry-dsn: &next_public_sentry_dsn
 # Cron Secret
 x-cron-secret: &cron_secret
 
+# Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+x-asset-prefix-url: &asset_prefix_url
+
 services:
   postgres:
     restart: always
@@ -128,6 +131,7 @@ services:
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
+      ASSET_PREFIX_URL: *asset_prefix_url
 
 volumes:
   postgres:
