@@ -1,7 +1,14 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../..";
 import { ChevronDoubleDownIcon, XCircleIcon } from "@heroicons/react/20/solid";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 
-export default function QuestionSkip({ skippedQuestions, status, questions }) {
+interface QuestionSkipProps {
+  skippedQuestions: string[] | undefined;
+  status: string;
+  questions: TSurveyQuestion[];
+}
+
+export default function QuestionSkip({ skippedQuestions, status, questions }: QuestionSkipProps) {
   return (
     <>
       {skippedQuestions && (
@@ -32,7 +39,7 @@ export default function QuestionSkip({ skippedQuestions, status, questions }) {
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId).headline}
+                        {questions.find((question) => question.id === questionId)!.headline}
                       </p>
                     );
                   })}
@@ -57,7 +64,7 @@ export default function QuestionSkip({ skippedQuestions, status, questions }) {
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId).headline}
+                        {questions.find((question) => question.id === questionId)!.headline}
                       </p>
                     );
                   })}

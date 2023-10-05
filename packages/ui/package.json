@@ -6,6 +6,7 @@
   "main": "./index.tsx",
   "exports": {
     ".": "./index.tsx",
+    "./*": "./*/index.tsx",
     "./components/icon": "./components/icon/index.ts"
   },
   "types": "./index.tsx",
@@ -14,6 +15,7 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
+    "@formbricks/types": "workspace:*",
     "concurrently": "^8.2.1",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.30",

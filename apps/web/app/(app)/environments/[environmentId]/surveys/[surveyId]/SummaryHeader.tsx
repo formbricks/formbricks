@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui";
 import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import SurveyStatusIndicator from "@formbricks/ui/SurveyStatusIndicator";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";

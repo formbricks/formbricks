@@ -1,11 +1,12 @@
 "use client";
-import { RatingResponse } from "../../../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
-import ResponseNotes from "../../../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseNote";
-import ResponseTagsWrapper from "../../../../apps/web/app//(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTagsWrapper";
-import { deleteResponseAction } from "../../../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
-import DeleteDialog from "/shared/DeleteDialog";
-import QuestionSkip from "@/components/shared/QuestionSkip";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+
+import { RatingResponse } from "./components/RatingResponse";
+import ResponseNotes from "./components/ResponseNote";
+import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
+import { deleteResponseAction } from "./actions";
+import DeleteDialog from "../DeleteDialog";
+import QuestionSkip from "./components/QuestionSkip";
+import SurveyStatusIndicator from "../SurveyStatusIndicator";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
@@ -69,7 +70,7 @@ export default function SingleResponseCard({
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
 
-  function isValidValue(value) {
+  function isValidValue(value: any) {
     return (
       (typeof value === "string" && value.trim() !== "") ||
       (Array.isArray(value) && value.length > 0) ||
@@ -127,7 +128,7 @@ export default function SingleResponseCard({
       toast.success("Submission deleted successfully.");
       setDeleteDialogOpen(false);
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof Error) toast.error(error.message);
     } finally {
       setIsDeleting(false);
     }

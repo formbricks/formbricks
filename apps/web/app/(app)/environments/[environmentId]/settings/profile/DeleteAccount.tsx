@@ -1,6 +1,6 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import DeleteDialog from "@formbricks/ui/DeleteDialog";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { formbricksLogout } from "@/lib/formbricks";
 import { Button, Input, ProfileAvatar } from "@formbricks/ui";

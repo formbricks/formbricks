@@ -3,10 +3,10 @@
 import TagsCombobox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TagsCombobox";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Tag } from "./Tag";
+import { Tag } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Tag";
 import { ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { Button } from "@formbricks/ui";
+import { Button } from "../..";
 import { TTag } from "@formbricks/types/v1/tags";
 import {
   createTagToResponeAction,

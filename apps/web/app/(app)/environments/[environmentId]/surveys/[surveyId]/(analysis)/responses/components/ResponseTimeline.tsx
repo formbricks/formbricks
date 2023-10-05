@@ -2,7 +2,7 @@
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import SingleResponseCard from "@/components/shared/SingleResponseCard";
+import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TTag } from "@formbricks/types/v1/tags";

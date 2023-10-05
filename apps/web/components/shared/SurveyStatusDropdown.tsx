@@ -1,7 +1,7 @@
 "use client";
 
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import SurveyStatusIndicator from "@formbricks/ui/SurveyStatusIndicator";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import {

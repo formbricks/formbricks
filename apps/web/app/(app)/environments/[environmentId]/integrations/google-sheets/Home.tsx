@@ -1,7 +1,7 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import DeleteDialog from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";

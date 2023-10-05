@@ -5,7 +5,7 @@ import {
   deleteSurveyAction,
   duplicateSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import DeleteDialog from "@formbricks/ui/DeleteDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
