@@ -26,8 +26,6 @@
     "@mdx-js/react": "^2.3.0",
     "@next/mdx": "13.4.19",
     "@paralleldrive/cuid2": "^2.2.2",
-    "@radix-ui/react-slider": "^1.1.2",
-    "@radix-ui/react-tooltip": "^1.0.6",
     "@sindresorhus/slugify": "^2.2.1",
     "@tailwindcss/typography": "^0.5.10",
     "@types/node": "20.6.0",
@@ -49,6 +47,8 @@
     "node-fetch": "^3.3.2",
     "prism-react-renderer": "^2.0.6",
     "prismjs": "^1.29.0",
+    "@radix-ui/react-slider": "^1.1.2",
+    "@radix-ui/react-tooltip": "^1.0.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-highlight-words": "^0.20.0",
@@ -68,8 +68,6 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@types/react": "18.2.23",
-    "eslint-config-formbricks": "workspace:*",
-    "typescript": "5.2.2"
+    "eslint-config-formbricks": "workspace:*"
   }
 }
