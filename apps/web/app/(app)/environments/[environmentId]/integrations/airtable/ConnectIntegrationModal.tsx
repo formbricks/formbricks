@@ -3,6 +3,7 @@ import Modal from "@/components/shared/Modal";
 import { useForm } from "react-hook-form";
 import { createIntegration } from "@formbricks/lib/client/airtable";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 interface AirTableConnectIntegrationModalProps {
   open: boolean;
@@ -17,8 +18,12 @@ type Inputs = {
 
 export default function AirTableConnectIntegrationModal(props: AirTableConnectIntegrationModalProps) {
   const { open, setOpenWithStates, environmentId, setIsConnected } = props;
-
-  const { register, handleSubmit } = useForm<Inputs>();
+  const router = useRouter();
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<Inputs>();
 
   const submitHandler = async (data: Inputs) => {
     const res = await createIntegration(environmentId, data.token);
@@ -27,6 +32,7 @@ export default function AirTableConnectIntegrationModal(props: AirTableConnectIn
       toast.success(res.message);
       setOpenWithStates(false);
       setIsConnected(true);
+      router.refresh();
     } else {
       const message = res?.Error ?? "An unknown error occurred";
 
@@ -48,7 +54,12 @@ export default function AirTableConnectIntegrationModal(props: AirTableConnectIn
                 />
               </div>
               <p className="pt-2 text-sm leading-loose text-slate-500">
-                Token should have following scopes enabled{" "}
+                <a
+                  className="underline underline-offset-2 hover:text-slate-900"
+                  href="https://airtable.com/developers/web/guides/personal-access-tokens">
+                  Token
+                </a>{" "}
+                should have following scopes enabled{" "}
                 <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">data.records:read</code> ,{" "}
                 <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">data.records:write</code> ,{" "}
                 <code className="rounded-md bg-slate-200 p-0.5 text-slate-600">schema.bases:read</code> ,{" "}
@@ -58,7 +69,9 @@ export default function AirTableConnectIntegrationModal(props: AirTableConnectIn
             </div>
 
             <div className="flex justify-end ">
-              <Button type="submit">save</Button>
+              <Button loading={isSubmitting} type="submit">
+                save
+              </Button>
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ export default function AirTableWrapper({
   surveys,
   environment,
 }: AirTableWrapperProps) {
-  const [isConnected, setIsConnected_] = useState(
+  const [isConnected, setIsConnected_] = useState(() =>
     typeof airtableIntegration?.config.key !== undefined ? true : false
   );
 
