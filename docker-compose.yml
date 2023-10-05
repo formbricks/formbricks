@@ -32,14 +32,14 @@ x-smtp-secure-enabled: &smtp_secure_enabled
 x-smtp-user: &smtp_user
 x-smtp-password: &smtp_password
 
-# Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
-x-email-verification-disabled: &email_verification_disabled 1
-
 # Set the below value to your public-facing URL, e.g., https://example.com
 x-survey-base-url: &survey_base_url http://localhost:3000/s
 
 # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 x-short-survey-base-url: &short_survey_base_url 
+
+# Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
+x-email-verification-disabled: &email_verification_disabled 1
 
 # Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
 x-password-reset-disabled: &password_reset_disabled 1
