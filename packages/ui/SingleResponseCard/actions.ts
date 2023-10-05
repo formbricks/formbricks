@@ -5,7 +5,7 @@ import { AuthorizationError } from "../../types/v1/errors";
 import { authOptions } from "../../../apps/web/app/api/auth/[...nextauth]/authOptions";
 import { deleteResponse } from "@formbricks/lib/response/service";
 import { canUserAccessResponse } from "@formbricks/lib/response/auth";
-import { updateResponseNote, resolveResponseNote } from "@formbricks/lib/services/responseNote";
+import { updateResponseNote, resolveResponseNote } from "@formbricks/lib/responseNote/service";
 
 export const deleteResponseAction = async (responseId: string) => {
   const session = await getServerSession(authOptions);

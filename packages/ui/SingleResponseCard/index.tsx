@@ -11,7 +11,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
