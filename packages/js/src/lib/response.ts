@@ -6,13 +6,7 @@ export const createResponse = async (
   responseInput: TResponseInput
 ): Promise<Result<TResponse, NetworkError>> => {
   const api = getApi();
-  const res = await api.client.response.create({
-    surveyId: responseInput.surveyId,
-    personId: responseInput.personId,
-    finished: responseInput.finished,
-    data: responseInput.data,
-  });
-
+  const res = await api.client.response.create(responseInput);
   if (!res.ok) {
     return err({
       code: "network_error",
@@ -31,12 +25,7 @@ export const updateResponse = async (
   responseId: string
 ): Promise<Result<TResponse, NetworkError>> => {
   const api = getApi();
-  const res = await api.client.response.update({
-    responseId,
-    finished: responseInput.finished,
-    data: responseInput.data,
-  });
-
+  const res = await api.client.response.update({ ...responseInput, responseId });
   if (!res.ok) {
     return err({
       code: "network_error",

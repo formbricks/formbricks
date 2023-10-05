@@ -6,11 +6,7 @@ export const createDisplay = async (
   displayCreateRequest: TDisplayInput
 ): Promise<Result<TDisplay, NetworkError>> => {
   const api = getApi();
-  const res = await api.client.display.markDisplayedForPerson({
-    surveyId: displayCreateRequest.surveyId,
-    personId: displayCreateRequest.personId,
-  });
-
+  const res = await api.client.display.markDisplayedForPerson(displayCreateRequest);
   if (!res.ok) {
     return err({
       code: "network_error",
@@ -26,10 +22,7 @@ export const createDisplay = async (
 
 export const markDisplayResponded = async (displayId: string): Promise<Result<void, NetworkError>> => {
   const api = getApi();
-  const res = await api.client.display.markResponded({
-    displayId,
-  });
-
+  const res = await api.client.display.markResponded({ displayId });
   if (!res.ok) {
     return err({
       code: "network_error",
