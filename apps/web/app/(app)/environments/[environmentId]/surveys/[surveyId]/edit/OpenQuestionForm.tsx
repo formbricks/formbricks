@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { TSurveyOpenTextQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import {
+  TSurveyOpenTextQuestion,
+  TSurveyOpenTextQuestionInputType,
+  TSurveyWithAnalytics,
+} from "@formbricks/types/v1/surveys";
 import { Button, Input, Label, QuestionTypeSelector } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 
@@ -29,7 +33,7 @@ export default function OpenQuestionForm({
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
 
-  const handleInputChange = (inputType: string) => {
+  const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
       inputType: inputType,
       placeholder: getPlaceholderByInputType(inputType),
@@ -110,7 +114,7 @@ export default function OpenQuestionForm({
   );
 }
 
-function getPlaceholderByInputType(inputType: string) {
+function getPlaceholderByInputType(inputType: TSurveyOpenTextQuestionInputType) {
   switch (inputType) {
     case "email":
       return "example@email.com";
