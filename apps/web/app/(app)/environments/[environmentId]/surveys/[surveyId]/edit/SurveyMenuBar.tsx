@@ -98,7 +98,6 @@ export default function SurveyMenuBar({
   };
 
   const validateSurvey = (survey) => {
-    const existingLogicConditions = new Set();
     const existingQuestionIds = new Set();
 
     if (survey.questions.length === 0) {
@@ -123,6 +122,8 @@ export default function SurveyMenuBar({
     }
 
     for (const question of survey.questions) {
+      const existingLogicConditions = new Set();
+
       if (existingQuestionIds.has(question.id)) {
         toast.error("There are 2 identical question IDs. Please update one.");
         return false;

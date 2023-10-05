@@ -15,6 +15,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   if (!product) {
     throw new Error("Product not found");
   }
+
   return (
     <div>
       <SettingsTitle title="Look & Feel" />

@@ -1,12 +1,23 @@
 import { z } from "zod";
 import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
+import { ZColor, ZSurveyPlacement } from "./common";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: z.optional(z.string()),
   subheader: z.optional(z.string()),
 });
+
+export const ZSurveyProductOverwrites = z.object({
+  brandColor: ZColor.nullish(),
+  highlightBorderColor: ZColor.nullish(),
+  placement: ZSurveyPlacement.nullish(),
+  clickOutside: z.boolean().nullish(),
+  darkOverlay: z.boolean().nullish(),
+});
+
+export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
 export const ZSurveyClosedMessage = z
   .object({
@@ -269,6 +280,7 @@ export const ZSurvey = z.object({
   delay: z.number(),
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
+  productOverwrites: ZSurveyProductOverwrites.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),

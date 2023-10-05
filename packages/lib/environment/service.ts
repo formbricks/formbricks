@@ -136,9 +136,8 @@ export const updateEnvironment = async (
 
 export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
   validateInputs([userId, ZId]);
-  let environmentPrisma;
   try {
-    environmentPrisma = await prisma.environment.findFirst({
+    return await prisma.environment.findFirst({
       where: {
         type: "production",
         product: {
@@ -158,16 +157,6 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
     }
 
     throw error;
-  }
-
-  try {
-    const environment = ZEnvironment.parse(environmentPrisma);
-    return environment;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
-    }
-    throw new ValidationError("Data validation of environment failed");
   }
 };
 

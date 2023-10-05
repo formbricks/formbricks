@@ -3,6 +3,7 @@ import { TIntegrationConfig } from "@formbricks/types/v1/integrations";
 import { TResponsePersonAttributes, TResponseData, TResponseMeta } from "@formbricks/types/v1/responses";
 import {
   TSurveyClosedMessage,
+  TSurveyProductOverwrites,
   TSurveyQuestions,
   TSurveySingleUse,
   TSurveyThankYouCard,
@@ -20,6 +21,7 @@ declare global {
     export type ResponsePersonAttributes = TResponsePersonAttributes;
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyThankYouCard = TSurveyThankYouCard;
+    export type SurveyProductOverwrites = TSurveyProductOverwrites;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
