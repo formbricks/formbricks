@@ -18,7 +18,6 @@ const validationRules = {
     return question.label.trim() !== "";
   },
   defaultValidation: (question: TSurveyQuestion) => {
-    console.log(question);
     return (
       question.headline.trim() !== "" &&
       question.buttonLabel?.trim() !== "" &&
