@@ -18,21 +18,25 @@ import {
   TAirtable,
   TZAirTableConfigData,
 } from "@/../../packages/types/v1/integrations";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { TAirtableTables } from "@/../../packages/lib/services/airTable";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
 import { upsertIntegrationAction } from "./actions";
 
-interface AddIntegrationModalProps {
+type EditModeProps =
+  | { isEditMode: false; defaultData?: never }
+  | { isEditMode: true; defaultData: IntegrationModalInputs & { index: number } };
+
+type AddIntegrationModalProps = {
   open: boolean;
   setOpenWithStates: (v: boolean) => void;
   environmentId: string;
   airTableArray: TAirtable[];
   surveys: TSurvey[];
   airtableIntegration: TAirTableIntegration | undefined;
-}
+} & EditModeProps;
 
-type Inputs = {
+export type IntegrationModalInputs = {
   base: string;
   table: string;
   survey: string;
@@ -40,21 +44,34 @@ type Inputs = {
 };
 
 export default function AddIntegrationModal(props: AddIntegrationModalProps) {
-  const { open, setOpenWithStates, environmentId, airTableArray, surveys, airtableIntegration } = props;
+  const {
+    open,
+    setOpenWithStates,
+    environmentId,
+    airTableArray,
+    surveys,
+    airtableIntegration,
+    isEditMode,
+    defaultData,
+  } = props;
   const [tables, setTables] = useState<TAirtableTables["tables"]>([]);
   const [isPending, startTransition] = useTransition();
-  const {
-    handleSubmit,
-    control,
-    watch,
-    setValue,
+  const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
 
-    reset,
-  } = useForm<Inputs>();
+  useEffect(() => {
+    if (isEditMode) {
+      const { index: _index, ...rest } = defaultData;
+      reset(rest);
+      fetchTable(defaultData.base);
+    } else {
+      reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode]);
+
   const survey = watch("survey");
-  const questions = watch("questions", []);
   const selectedSurvey = surveys.find((item) => item.id === survey);
-  const submitHandler = async (data: Inputs) => {
+  const submitHandler = async (data: IntegrationModalInputs) => {
     try {
       if (!data.base) {
         throw new Error("Please select a base");
@@ -94,10 +111,18 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         tableName: currentTable?.name ?? "",
       };
 
-      airtableIntegrationData.config?.data.push(integrationData);
+      if (isEditMode) {
+        // update action
+        airtableIntegrationData.config!.data[defaultData.index] = integrationData;
+      } else {
+        // create action
+        airtableIntegrationData.config?.data.push(integrationData);
+      }
+
+      const actionMessage = isEditMode ? "updated" : "added";
 
       await upsertIntegrationAction(environmentId, airtableIntegrationData);
-      toast.success(`Integration added successfully`);
+      toast.success(`Integration ${actionMessage} successfully`);
       reset();
       setOpenWithStates(false);
     } catch (e) {
@@ -113,43 +138,49 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
     }
   };
 
+  const fetchTable = (val: string) => {
+    startTransition(async () => {
+      await handleTable(val);
+    });
+  };
+
   return (
     <Modal open={open} setOpen={setOpenWithStates} noPadding>
       <form onSubmit={handleSubmit(submitHandler)}>
         <div className="flex rounded-lg p-6">
           <div className="flex w-full flex-col gap-y-4 pt-5">
-            <div className="flex w-full flex-col">
-              <Label htmlFor="base">Airtable base</Label>
-              <div className="mt-1 flex">
-                <Controller
-                  control={control}
-                  name="base"
-                  render={({ field }) => (
-                    <Select
-                      required
-                      disabled={isPending}
-                      onValueChange={async (val) => {
-                        field.onChange(val);
-                        startTransition(async () => {
-                          await handleTable(val);
-                        });
-                      }}
-                      defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {airTableArray.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
+            {isEditMode && isPending ? null : (
+              <div className="flex w-full flex-col">
+                <Label htmlFor="base">Airtable base</Label>
+                <div className="mt-1 flex">
+                  <Controller
+                    control={control}
+                    name="base"
+                    render={({ field }) => (
+                      <Select
+                        required
+                        disabled={isPending}
+                        onValueChange={async (val) => {
+                          field.onChange(val);
+                          fetchTable(val);
+                        }}
+                        defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {airTableArray.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {tables.length ? (
               <div className="flex w-full flex-col">
@@ -162,7 +193,10 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                       <Select
                         required
                         disabled={isPending}
-                        onValueChange={field.onChange}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          setValue("questions", []);
+                        }}
                         defaultValue={field.value}>
                         <SelectTrigger>
                           <SelectValue />
@@ -220,17 +254,17 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
               </p>
             ) : null}
 
-            {survey && selectedSurvey && (
+            {survey && selectedSurvey && !isPending && (
               <div>
                 <Label htmlFor="Surveys">Questions</Label>
                 <div className="mt-1 rounded-lg border border-slate-200">
                   <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {selectedSurvey?.questions.map((question, i) => (
+                    {selectedSurvey?.questions.map((question) => (
                       <Controller
                         key={question.id}
                         control={control}
-                        name={`questions.${i}`}
-                        render={() => (
+                        name={"questions"}
+                        render={({ field }) => (
                           <div className="my-1 flex items-center space-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox
@@ -238,13 +272,11 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                                 id={question.id}
                                 value={question.id}
                                 className="bg-white"
-                                onCheckedChange={(val) => {
-                                  if (val) {
-                                    setValue("questions", [...questions, question.id]);
-                                  } else {
-                                    const newValue = [...questions].filter((id) => id !== question.id);
-                                    setValue("questions", newValue);
-                                  }
+                                checked={field.value?.includes(question.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...field.value, question.id])
+                                    : field.onChange(field.value?.filter((value) => value !== question.id));
                                 }}
                               />
                               <span className="ml-2">{question.headline}</span>

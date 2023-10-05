@@ -3,7 +3,6 @@ import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integ
 import Connect from "./Connect";
 import Home from "./Home";
 import { useState } from "react";
-import AddIntegrationModal from "./AddIntegrationModal";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
 import { TEnvironment } from "@/../../packages/types/v1/environment";
 
@@ -25,35 +24,20 @@ export default function AirTableWrapper({
   const [isConnected, setIsConnected_] = useState(
     typeof airtableIntegration?.config.key !== undefined ? true : false
   );
-  const [isModalOpen, setModalOpen] = useState(false);
+
   const setIsConnected = (data: boolean) => {
     setIsConnected_(data);
   };
 
-  const handleModal = (data: boolean) => {
-    setModalOpen(data);
-  };
-
-  console.log({ isConnected, airtableIntegration });
-
   return isConnected && airtableIntegration ? (
-    <>
-      <AddIntegrationModal
-        airTableArray={airTableArray}
-        open={isModalOpen}
-        setOpenWithStates={handleModal}
-        environmentId={environmentId}
-        surveys={surveys}
-        airtableIntegration={airtableIntegration}
-      />
-      <Home
-        environmentId={environmentId}
-        environment={environment}
-        airTableIntegration={airtableIntegration}
-        handleModal={handleModal}
-        setIsConnected={setIsConnected}
-      />
-    </>
+    <Home
+      airTableArray={airTableArray}
+      environmentId={environmentId}
+      environment={environment}
+      airTableIntegration={airtableIntegration}
+      setIsConnected={setIsConnected}
+      surveys={surveys}
+    />
   ) : (
     <Connect environmentId={environmentId} setIsConnected={setIsConnected} />
   );

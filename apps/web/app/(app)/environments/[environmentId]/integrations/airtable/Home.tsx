@@ -1,7 +1,11 @@
 import { timeSince } from "@/../../packages/lib/time";
 import { TEnvironment } from "@/../../packages/types/v1/environment";
-import { TAirTableIntegration } from "@/../../packages/types/v1/integrations";
+import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integrations";
+import { TSurvey } from "@/../../packages/types/v1/surveys";
 import { Button } from "@/../../packages/ui";
+import AddIntegrationModal, {
+  IntegrationModalInputs,
+} from "@/app/(app)/environments/[environmentId]/integrations/airtable/AddIntegrationModal";
 import {
   deleteIntegrationAction,
   upsertIntegrationAction,
@@ -12,20 +16,25 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 interface handleModalProps {
-  handleModal: (data: boolean) => void;
   airTableIntegration: TAirTableIntegration;
   environment: TEnvironment;
   environmentId: string;
   setIsConnected: (data: boolean) => void;
+  surveys: TSurvey[];
+  airTableArray: TAirtable[];
 }
 
 const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At", "Actions"];
 
 export default function Home(props: handleModalProps) {
-  const { handleModal, airTableIntegration, environment, environmentId, setIsConnected } = props;
+  const { airTableIntegration, environment, environmentId, setIsConnected, surveys, airTableArray } = props;
   const { refresh } = useRouter();
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
+  const [defaultValues, setDefaultValues] = useState<(IntegrationModalInputs & { index: number }) | null>(
+    null
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const integrationData = airTableIntegration?.config?.data ?? [];
 
@@ -57,6 +66,11 @@ export default function Home(props: handleModalProps) {
     }
   };
 
+  const handleModal = (val: boolean) => {
+    setIsModalOpen(val);
+  };
+
+  const isEditMode = defaultValues ? true : false;
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
       <div className="flex w-full justify-end gap-x-2">
@@ -70,7 +84,12 @@ export default function Home(props: handleModalProps) {
             Connected with {airTableIntegration.config.email}
           </span>
         </div>
-        <Button onClick={() => handleModal(true)} variant="darkCTA">
+        <Button
+          onClick={() => {
+            setDefaultValues(null);
+            handleModal(true);
+          }}
+          variant="darkCTA">
           Link new table
         </Button>
       </div>
@@ -107,7 +126,20 @@ export default function Home(props: handleModalProps) {
                     <td className="p-2 align-middle">{data.questions}</td>
                     <td className="p-2 align-middle">{timeSince(data.createdAt.toString())}</td>
                     <td className="flex gap-x-2 p-2 align-middle">
-                      <Button size="sm">Edit</Button>
+                      <Button
+                        onClick={() => {
+                          setDefaultValues({
+                            base: data.baseId,
+                            questions: data.questionIds,
+                            survey: data.surveyId,
+                            table: data.tableId,
+                            index,
+                          });
+                          setIsModalOpen(true);
+                        }}
+                        size="sm">
+                        Edit
+                      </Button>
                       <Button
                         onClick={async () => {
                           await handleDelete(index);
@@ -131,6 +163,17 @@ export default function Home(props: handleModalProps) {
         onDelete={handleDeleteIntegration}
         text="Are you sure? Your integrations will break."
         isDeleting={isDeleting}
+      />
+
+      <AddIntegrationModal
+        key={String(isEditMode)}
+        airTableArray={airTableArray}
+        open={isModalOpen}
+        setOpenWithStates={handleModal}
+        environmentId={environmentId}
+        surveys={surveys}
+        airtableIntegration={airTableIntegration}
+        {...(defaultValues ? { isEditMode: true, defaultData: defaultValues } : { isEditMode: false })}
       />
     </div>
   );
