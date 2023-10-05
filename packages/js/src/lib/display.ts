@@ -1,52 +1,42 @@
 import type { TDisplay, TDisplayInput } from "../../../types/v1/displays";
-import type { TJsConfig } from "../../../types/v1/js";
+import { getApi } from "./api";
 import { NetworkError, Result, err, ok, okVoid } from "./errors";
 
 export const createDisplay = async (
-  displayCreateRequest: TDisplayInput,
-  config: TJsConfig
+  displayCreateRequest: TDisplayInput
 ): Promise<Result<TDisplay, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/displays`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(displayCreateRequest),
+  const api = getApi();
+  const res = await api.client.display.markDisplayedForPerson({
+    surveyId: displayCreateRequest.surveyId,
+    personId: displayCreateRequest.personId,
   });
 
   if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not create display",
-      status: res.status,
-      url,
-      responseMessage: await res.text(),
+      status: 400,
+      url: "/api/v1/client/displays",
+      responseMessage: res.error.message,
     });
   }
 
-  const jsonRes = await res.json();
-
-  return ok(jsonRes.data as TDisplay);
+  return ok(res.data as TDisplay);
 };
 
-export const markDisplayResponded = async (
-  displayId: string,
-  config: TJsConfig
-): Promise<Result<void, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/displays/${displayId}/responded`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+export const markDisplayResponded = async (displayId: string): Promise<Result<void, NetworkError>> => {
+  const api = getApi();
+  const res = await api.client.display.markResponded({
+    displayId,
   });
 
   if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not mark display as responded",
-      status: res.status,
-      url,
-      responseMessage: await res.text(),
+      status: 400,
+      url: `/api/v1/client/displays/${displayId}/responded`,
+      responseMessage: res.error.message,
     });
   }
 

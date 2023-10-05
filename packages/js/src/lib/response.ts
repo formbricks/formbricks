@@ -1,58 +1,51 @@
-import type { TJsConfig } from "../../../types/v1/js";
+import { getApi } from "./api";
 import type { TResponse, TResponseInput } from "../../../types/v1/responses";
 import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (
-  responseInput: TResponseInput,
-  config
+  responseInput: TResponseInput
 ): Promise<Result<TResponse, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/responses`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseInput),
+  const api = getApi();
+  const res = await api.client.response.create({
+    surveyId: responseInput.surveyId,
+    personId: responseInput.personId,
+    finished: responseInput.finished,
+    data: responseInput.data,
   });
-
-  const jsonRes = await res.json();
 
   if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not create response",
-      status: res.status,
-      url,
-      responseMessage: jsonRes.message,
+      status: 400,
+      url: "/api/v1/client/responses",
+      responseMessage: res.error.message,
     });
   }
 
-  return ok(jsonRes.data as TResponse);
+  return ok(res.data as TResponse);
 };
 
 export const updateResponse = async (
   responseInput: TResponseInput,
-  responseId: string,
-  config: TJsConfig
+  responseId: string
 ): Promise<Result<TResponse, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/responses/${responseId}`;
-
-  const res = await fetch(url, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseInput),
+  const api = getApi();
+  const res = await api.client.response.update({
+    responseId,
+    finished: responseInput.finished,
+    data: responseInput.data,
   });
-
-  const resJson = await res.json();
 
   if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not update response",
-      status: res.status,
-      url,
-      responseMessage: resJson.message,
+      status: 400,
+      url: `/api/v1/client/responses/${responseId}`,
+      responseMessage: res.error.message,
     });
   }
 
-  return ok(resJson.data as TResponse);
+  return ok(res.data as TResponse);
 };
