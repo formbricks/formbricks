@@ -14,6 +14,7 @@ export const fetchTables = async (environmentId: string, baseId: string) => {
   const res = await fetch(`/api/airtable/tables?baseId=${baseId}`, {
     method: "GET",
     headers: { environmentId: environmentId },
+    cache: "no-store",
   });
 
   return res.json() as Promise<TAirtableTables>;
