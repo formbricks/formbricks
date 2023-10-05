@@ -170,6 +170,10 @@ x-environment: &environment
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: "https://$domain_name"
 
+    # Formbricks Encryption Key is used to generate encrypted single use URLs for Link Surveys
+    # You can use: $(openssl rand -base64 32) to generate one
+    FORMBRICKS_ENCRYPTION_KEY:
+
     # PostgreSQL password
     POSTGRES_PASSWORD: postgres
 
@@ -250,6 +254,11 @@ EOT
 echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
 nextauth_secret=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
 echo "🚗 NEXTAUTH_SECRET updated successfully!"
+
+echo "🚙 Updating FORMBRICKS_ENCRYPTION_KEY in the Formbricks container..."
+formbricks_encryption_key=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16) && sed -i "/FORMBRICKS_ENCRYPTION_KEY:$/s/FORMBRICKS_ENCRYPTION_KEY:.*/FORMBRICKS_ENCRYPTION_KEY: $formbricks_encryption_key/" docker-compose.yml
+echo "🚗 NEXTAUTH_SECRET updated successfully!"
+
 
 newgrp docker <<END
 
