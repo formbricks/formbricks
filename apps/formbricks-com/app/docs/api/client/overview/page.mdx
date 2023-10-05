@@ -1,0 +1,45 @@
+export const meta = {
+  title: "Formbricks API Overview: Public Client & Management API Breakdown",
+  description:
+    "Get a detailed understanding of Formbricks' dual API offerings: the unauthenticated Public Client API optimized for client-side tasks and the secured Management API for advanced account operations. Choose the perfect fit for your integration needs and ensure robust data handling",
+};
+
+#### API
+
+# API Overview
+
+Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has different authentication requirements, and provides access to different data and settings.
+
+Checkout the [API Key Setup](/docs/api/api-key-setup) - to generate, store, or delete API Keys.
+
+## Public Client API
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+- [Displays API](/docs/api/client/displays) - Mark Survey as Displayed or Responded for a Person
+- [Responses API](/docs/api/client/responses) - Create & update responses for a survey
+
+## Management API
+
+The Management API provides access to all data and settings that are visible in the Formbricks App. This API requires a personal API Key for authentication, which can be generated in the Settings section of the Formbricks App. With the Management API, you can manage your Formbricks account programmatically, accessing and modifying data and settings as needed.
+
+**Auth:** Personal API Key
+
+API requests made to the Management API are authorized using a personal API key. This key grants the same rights and access as if you were logged in at formbricks.com. It's essential to keep your API key secure and not share it with others.
+
+To generate, store, or delete an API key, follow the instructions provided on the following page [API Key](/docs/api/api-key-setup).
+
+- [Action Class API](/docs/api/management/action-classes) - Create, Update, and Delete Action Classes
+- [Attribute Class API](/docs/api/management/attribute-classes) - Create, Update, and Delete Attribute Classes
+- [Me API](/docs/api/management/me) - Retrieve Account Information
+- [People API](/docs/api/management/people) - Create, Update, and Delete People
+- [Responses API](/docs/api/management/responses) - Create, Update, and Delete Responses
+- [Surveys API](/docs/api/management/surveys) - Create, Update, and Delete Surveys
+- [Webhook API](/docs/api/management/webhooks) - Create, Update, and Delete Webhooks
+
+<Note>
+  By understanding the differences between these two APIs, you can choose the appropriate one for your needs,
+  ensuring a secure and efficient integration with the Formbricks platform.
+</Note>
+
+---

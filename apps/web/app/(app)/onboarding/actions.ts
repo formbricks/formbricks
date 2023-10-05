@@ -1,8 +1,8 @@
 "use server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { updateProduct } from "@formbricks/lib/services/product";
-import { updateProfile } from "@formbricks/lib/services/profile";
+import { updateProduct } from "@formbricks/lib/product/service";
+import { updateProfile } from "@formbricks/lib/profile/service";
 import { TProductUpdateInput } from "@formbricks/types/v1/product";
 import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
 import { getServerSession } from "next-auth";

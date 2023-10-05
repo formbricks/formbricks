@@ -1,6 +1,6 @@
 import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getWebhook } from "../services/webhook";
+import { getWebhook } from "./service";
 import { unstable_cache } from "next/cache";
 import { ZId } from "@formbricks/types/v1/environment";
 

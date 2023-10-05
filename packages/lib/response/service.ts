@@ -1,3 +1,5 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import {
   TResponse,
@@ -10,9 +12,9 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/error
 import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { cache } from "react";
-import "server-only";
-import { getPerson, transformPrismaPerson } from "../services/person";
+import { getPerson, transformPrismaPerson } from "../person/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
@@ -27,6 +29,7 @@ const responseSelection = {
   data: true,
   meta: true,
   personAttributes: true,
+  singleUseId: true,
   person: {
     select: {
       id: true,
@@ -114,6 +117,41 @@ export const getResponsesByPersonId = async (personId: string): Promise<Array<TR
   }
 };
 
+export const getResponseBySingleUseId = cache(
+  async (surveyId: string, singleUseId?: string): Promise<TResponse | null> => {
+    validateInputs([surveyId, ZId], [singleUseId, z.string()]);
+    try {
+      if (!singleUseId) {
+        return null;
+      }
+      const responsePrisma = await prisma.response.findUnique({
+        where: {
+          surveyId_singleUseId: { surveyId, singleUseId },
+        },
+        select: responseSelection,
+      });
+
+      if (!responsePrisma) {
+        return null;
+      }
+
+      const response: TResponse = {
+        ...responsePrisma,
+        person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      };
+
+      return response;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Database operation failed");
+      }
+
+      throw error;
+    }
+  }
+);
+
 export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput.partial()]);
   captureTelemetry("response created");
@@ -142,6 +180,7 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
           personAttributes: person?.attributes,
         }),
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
+        singleUseId: responseInput.singleUseId,
       },
       select: responseSelection,
     });

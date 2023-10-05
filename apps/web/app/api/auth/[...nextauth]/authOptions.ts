@@ -3,7 +3,7 @@ import { verifyPassword } from "@/lib/auth";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyToken } from "@formbricks/lib/jwt";
-import { getProfileByEmail } from "@formbricks/lib/services/profile";
+import { getProfileByEmail } from "@formbricks/lib/profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
