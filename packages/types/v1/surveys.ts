@@ -1,11 +1,16 @@
 import { z } from "zod";
-import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
+import { ZActionClass } from "./actionClasses";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: z.optional(z.string()),
   subheader: z.optional(z.string()),
+});
+
+export const ZHiddenFieldsCard = z.object({
+  enabled: z.boolean(),
+  hiddenFields: z.array(z.string()).default([]),
 });
 
 export const ZSurveyClosedMessage = z
@@ -255,6 +260,7 @@ export const ZSurvey = z.object({
   recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
+  hiddenFieldsCard: ZHiddenFieldsCard,
   delay: z.number(),
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),

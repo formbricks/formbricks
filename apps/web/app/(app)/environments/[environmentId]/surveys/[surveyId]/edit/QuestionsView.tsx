@@ -1,6 +1,8 @@
 "use client";
 
-import React from "react";
+import HiddenFieldCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/HiddenFieldCard";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
@@ -9,10 +11,7 @@ import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
-import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { validateQuestion } from "./Validation";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { TProduct } from "@formbricks/types/v1/product";
 
 interface QuestionsViewProps {
   localSurvey: TSurveyWithAnalytics;
@@ -221,6 +220,9 @@ export default function QuestionsView({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
         />
+      </div>
+      <div className="mt-5">
+        <HiddenFieldCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
       </div>
     </div>
   );
