@@ -5,9 +5,9 @@ import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/
 import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTableHeading";
 import GoBackButton from "@/components/shared/GoBackButton";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { getWebhooks } from "@formbricks/lib/services/webhook";
+import { getWebhooks } from "@formbricks/lib/webhook/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function CustomWebhookPage({ params }) {
   const [webhooksUnsorted, surveys, environment] = await Promise.all([

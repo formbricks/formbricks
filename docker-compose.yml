@@ -32,11 +32,14 @@ x-smtp-secure-enabled: &smtp_secure_enabled
 x-smtp-user: &smtp_user
 x-smtp-password: &smtp_password
 
-# Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
-x-email-verification-disabled: &email_verification_disabled 1
-
 # Set the below value to your public-facing URL, e.g., https://example.com
 x-survey-base-url: &survey_base_url http://localhost:3000/s
+
+# Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
+x-short-survey-base-url: &short_survey_base_url 
+
+# Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
+x-email-verification-disabled: &email_verification_disabled 1
 
 # Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
 x-password-reset-disabled: &password_reset_disabled 1
@@ -71,6 +74,9 @@ x-next-public-sentry-dsn: &next_public_sentry_dsn
 
 # Cron Secret
 x-cron-secret: &cron_secret
+
+# Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+x-asset-prefix-url: &asset_prefix_url
 
 services:
   postgres:
@@ -108,6 +114,7 @@ services:
       SMTP_PASSWORD: *smtp_password
       FORMBRICKS_ENCRYPTION_KEY: *formbricks_encryption_key
       SURVEY_BASE_URL: *survey_base_url
+      SHORT_SURVEY_BASE_URL: *short_survey_base_url
       PRIVACY_URL: *privacy_url
       TERMS_URL: *terms_url
       IMPRINT_URL: *imprint_url
@@ -124,6 +131,7 @@ services:
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
+      ASSET_PREFIX_URL: *asset_prefix_url
 
 volumes:
   postgres:

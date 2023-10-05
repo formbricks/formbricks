@@ -1,6 +1,6 @@
 import ClientLogout from "@/app/ClientLogout";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getFirstEnvironmentByUserId } from "@formbricks/lib/services/environment";
+import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";

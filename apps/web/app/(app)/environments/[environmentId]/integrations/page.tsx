@@ -6,9 +6,9 @@ import n8nLogo from "@/images/n8n.png";
 import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui";
 import Image from "next/image";
-import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/services/webhook";
-import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getIntegrations } from "@formbricks/lib/services/integrations";
+import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getIntegrations } from "@formbricks/lib/integration/service";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;

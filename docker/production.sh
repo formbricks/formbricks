@@ -171,7 +171,7 @@ x-environment: &environment
     NEXTAUTH_URL: "https://$domain_name"
 
     # Formbricks Encryption Key is used to generate encrypted single use URLs for Link Surveys
-    # You can use: $(openssl rand -base64 32) to generate one
+    # You can use: $(openssl rand -base64 16) to generate one
     FORMBRICKS_ENCRYPTION_KEY:
 
     # PostgreSQL password
@@ -179,6 +179,12 @@ x-environment: &environment
 
     # Email configuration
     $email_config
+
+    # Set the below value if you want to have another base URL apart from your Domain Name
+    # SURVEY_BASE_URL: 
+
+    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
+    # SHORT_SURVEY_BASE_URL:
 
     # Uncomment the below and set it to 1 to disable Email Verification for new signups
     # EMAIL_VERIFICATION_DISABLED:
@@ -210,6 +216,10 @@ x-environment: &environment
     # GOOGLE_AUTH_ENABLED:
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
+
+    # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+    # ASSET_PREFIX_URL: *asset_prefix_url
+
 
 services:
   postgres:

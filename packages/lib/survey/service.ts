@@ -15,7 +15,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
-import { getDisplaysCacheTag } from "../services/displays";
+import { getDisplaysCacheTag } from "../display/service";
 import { getResponsesCacheTag } from "../response/service";
 
 // surveys cache key and tags
@@ -42,6 +42,7 @@ export const selectSurvey = {
   autoComplete: true,
   verifyEmail: true,
   redirectUrl: true,
+  productOverwrites: true,
   surveyClosedMessage: true,
   singleUse: true,
   triggers: {
