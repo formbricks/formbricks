@@ -1,0 +1,289 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Formbricks Responses API Documentation - Manage Your Survey Data Seamlessly",
+  description:
+    "Unlock the full potential of Formbricks' Responses API. From fetching to updating survey responses, our comprehensive guide helps you integrate and manage survey data efficiently without compromising security. Ideal for client-side interactions.",
+};
+
+#### Management API
+
+# Responses API
+
+This set of API can be used to
+- [List Responses](#list-all-responses)
+- [Get Response](#get-response-by-id)
+- [Delete Response](#delete-a-response)
+
+<Note>You will need an API Key to interact with these APIs.</Note>
+
+---
+
+## List all Responses {{ tag: 'GET', label: '/api/v1/management/responses' }}
+
+<Row>
+  <Col>
+
+    Retrieve all the responses you have received in your environment.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/responses">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/responses' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data":[
+        {
+            "id": "cln8k0tqv00pcz87no4qrw333",
+            "createdAt": "2023-10-02T07:13:20.023Z",
+            "updatedAt": "2023-10-02T07:13:20.023Z",
+            "surveyId": "cln8k0tqu00p7z87nqr4thi3k",
+            "finished": true,
+            "data": {
+                "interview-prompt": "clicked"
+            },
+            "meta": {
+                "userAgent": {
+                    "os": "MacOS",
+                    "browser": "Chrome"
+                }
+            },
+            "personAttributes": null,
+            "person": {
+                "id": "e0x4i5tvsp8puxfztyrwykvn",
+                "attributes": {
+                    "userId": "CYO675",
+                    "email": "ravi@netflix.com",
+                    "Name": "Ravi Kumar",
+                    "Role": "Manager",
+                    "Company": "Netflix",
+                    "Experience": "6 years",
+                    "Usage Frequency": "Monthly",
+                    "Company Size": "4610 employees",
+                    "Product Satisfaction Score": "43",
+                    "Recommendation Likelihood": "4"
+                },
+                "environmentId": "cln8k0t47000fz87njmmu2bck",
+                "createdAt": "2023-10-02T07:13:19.444Z",
+                "updatedAt": "2023-10-02T07:13:19.444Z"
+            },
+            "notes": [],
+            "tags": []
+        },
+      ]
+    }
+    ```
+
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Get Response by ID {{ tag: 'GET', label: '/api/v1/management/responses/<response-id>' }}
+
+<Row>
+  <Col>
+
+    Retrieve a response by its ID.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/responses/<response-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/responses/<response-id>' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data":
+      {
+        "id": "cln8k0tqv00pbz87nwo5lr72b",
+        "createdAt": "2023-10-02T07:13:20.023Z",
+        "updatedAt": "2023-10-02T07:13:20.023Z",
+        "surveyId": "cln8k0tqu00p7z87nqr4thi3k",
+        "finished": true,
+        "data": {
+            "interview-prompt": "clicked"
+        },
+        "meta": {
+            "userAgent": {
+                "os": "Windows",
+                "browser": "Edge"
+            }
+        },
+        "personAttributes": null,
+        "person": {
+            "id": "hsx38f15v50ua8383uadagq5",
+            "attributes": {
+                "userId": "CYO278",
+                "email": "jorge@facebook.com",
+                "Name": "Jorge Sanchez",
+                "Role": "Product Manager",
+                "Company": "Facebook",
+                "Experience": "10 years",
+                "Usage Frequency": "Daily",
+                "Company Size": "1685 employees",
+                "Product Satisfaction Score": "84",
+                "Recommendation Likelihood": "6"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+        },
+        "notes": [],
+        "tags": []
+      }
+    }
+    ```
+
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Delete a response {{ tag: 'DELETE', label: '/api/v1/client/responses/<response-id>' }}
+
+<Row>
+  <Col>
+
+    Delete Response by ID
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="DELETE" label="/api/v1/client/responses/<response-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X DELETE https://app.formbricks.com/api/v1/management/resposnes/<response-id> \
+     --header 'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{ title: '200 Success' }}
+    {
+      "data": {
+        "id": "cln8k0tqv00pbz87nwo5lr72b",
+        "createdAt": "2023-10-02T07:13:20.023Z",
+        "updatedAt": "2023-10-02T07:13:20.023Z",
+        "surveyId": "cln8k0tqu00p7z87nqr4thi3k",
+        "finished": true,
+        "data": {
+            "interview-prompt": "clicked"
+        },
+        "meta": {
+            "userAgent": {
+                "os": "Windows",
+                "browser": "Edge"
+            }
+        },
+        "personAttributes": null,
+        "person": {
+            "id": "hsx38f15v50ua8383uadagq5",
+            "attributes": {
+                "userId": "CYO278",
+                "email": "jorge@facebook.com",
+                "Name": "Jorge Sanchez",
+                "Role": "Product Manager",
+                "Company": "Facebook",
+                "Experience": "10 years",
+                "Usage Frequency": "Daily",
+                "Company Size": "1685 employees",
+                "Product Satisfaction Score": "84",
+                "Recommendation Likelihood": "6"
+            },
+            "environmentId": "cln8k0t47000fz87njmmu2bck",
+            "createdAt": "2023-10-02T07:13:19.444Z",
+            "updatedAt": "2023-10-02T07:13:19.444Z"
+        },
+        "notes": [],
+        "tags": []
+      }
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "surveyId was not provided.",
+      "details": {
+        "surveyId": "This field is required."
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---

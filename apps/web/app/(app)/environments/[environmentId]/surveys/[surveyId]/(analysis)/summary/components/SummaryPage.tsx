@@ -15,6 +15,7 @@ import { useEffect, useMemo } from "react";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TTag } from "@formbricks/types/v1/tags";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface SummaryPageProps {
   environment: TEnvironment;
@@ -22,8 +23,8 @@ interface SummaryPageProps {
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
-  singleUseIds?: string[];
   product: TProduct;
+  profile: TProfile;
   environmentTags: TTag[];
 }
 
@@ -33,8 +34,8 @@ const SummaryPage = ({
   surveyId,
   responses,
   surveyBaseUrl,
-  singleUseIds,
   product,
+  profile,
   environmentTags,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
@@ -58,8 +59,8 @@ const SummaryPage = ({
         survey={survey}
         surveyId={surveyId}
         surveyBaseUrl={surveyBaseUrl}
-        singleUseIds={singleUseIds}
         product={product}
+        profile={profile}
       />
       <CustomFilter
         environmentTags={environmentTags}

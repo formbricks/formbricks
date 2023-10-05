@@ -9,15 +9,15 @@ import {
   inviteUser,
   resendInvite,
   updateInvite,
-} from "@formbricks/lib/services/invite";
+} from "@formbricks/lib/invite/service";
 import {
   deleteMembership,
   getMembershipsByUserId,
   getMembershipByUserIdTeamId,
   transferOwnership,
   updateMembership,
-} from "@formbricks/lib/services/membership";
-import { deleteTeam, updateTeam } from "@formbricks/lib/services/team";
+} from "@formbricks/lib/membership/service";
+import { deleteTeam, updateTeam } from "@formbricks/lib/team/service";
 import { TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
 import { getServerSession } from "next-auth";

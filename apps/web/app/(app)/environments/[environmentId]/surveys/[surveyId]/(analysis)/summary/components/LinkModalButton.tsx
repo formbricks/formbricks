@@ -1,17 +1,21 @@
 "use client";
 
-import LinkSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSurveyModal";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import clsx from "clsx";
+import { TProduct } from "@formbricks/types/v1/product";
+import ShareEmbedSurvey from "./ShareEmbedSurvey";
 import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
-import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/actions";
+import { TProfile } from "@formbricks/types/v1/profile";
+
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   surveyBaseUrl: string;
+  product: TProduct;
+  profile: TProfile;
   singleUseIds?: string[];
 }
 
@@ -19,24 +23,9 @@ export default function LinkSurveyShareButton({
   survey,
   className,
   surveyBaseUrl,
+  product,
+  profile,
 }: LinkSurveyShareButtonProps) {
-  const [singleUseIds, setSingleUseIds] = useState<string[] | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      console.log(singleUseIds);
-      const ids = await generateSingleUseIds(survey.singleUse?.isEncrypted ?? false);
-      setSingleUseIds(ids);
-    })();
-  }, [survey.singleUse?.isEncrypted]);
-
-  const generateSingleUseIds = async (isEncrypted: boolean) => {
-    const promises = Array(5)
-      .fill(null)
-      .map(() => generateSingleUseIdAction(isEncrypted));
-    const ids = await Promise.all(promises);
-    return ids;
-  };
   const [showLinkModal, setShowLinkModal] = useState(false);
   const isSingleUse = survey.singleUse?.enabled ?? false;
 
@@ -54,18 +43,15 @@ export default function LinkSurveyShareButton({
         <ShareIcon className="h-5 w-5" />
       </Button>
       {showLinkModal && isSingleUse ? (
-        <LinkSingleUseSurveyModal
-          survey={survey}
-          open={true}
-          setOpen={setShowLinkModal}
-          singleUseIds={singleUseIds}
-        />
+        <LinkSingleUseSurveyModal survey={survey} open={true} setOpen={setShowLinkModal} />
       ) : (
-        <LinkSurveyModal
+        <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
+          product={product}
           surveyBaseUrl={surveyBaseUrl}
+          profile={profile}
         />
       )}
     </>
