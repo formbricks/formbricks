@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
