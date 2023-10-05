@@ -267,7 +267,7 @@ echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
 echo "🚙 Updating FORMBRICKS_ENCRYPTION_KEY in the Formbricks container..."
 formbricks_encryption_key=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16) && sed -i "/FORMBRICKS_ENCRYPTION_KEY:$/s/FORMBRICKS_ENCRYPTION_KEY:.*/FORMBRICKS_ENCRYPTION_KEY: $formbricks_encryption_key/" docker-compose.yml
-echo "🚗 NEXTAUTH_SECRET updated successfully!"
+echo "🚗 FORMBRICKS_ENCRYPTION_KEY updated successfully!"
 
 
 newgrp docker <<END
