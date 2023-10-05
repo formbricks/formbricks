@@ -113,6 +113,10 @@ model Response {
   /// @zod.custom(imports.ZResponsePersonAttributes)
   /// [ResponsePersonAttributes]
   personAttributes Json?
+  // singleUseId, used to prevent multiple responses
+  singleUseId      String?
+
+  @@unique([surveyId, singleUseId])
 }
 
 model ResponseNote {
@@ -245,9 +249,18 @@ model Survey {
   /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
+  /// @zod.custom(imports.ZSurveySingleUse)
+  /// [SurveySingleUse]
+
+  /// @zod.custom(imports.ZSurveyProductOverwrites)
+  /// [SurveyProductOverwrites]
+  productOverwrites Json?
+  /// @zod.custom(imports.ZSurveySingleUse)
+  /// [SurveySingleUse]
+  singleUse         Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail         Json?
+  verifyEmail       Json?
 }
 
 model Event {

@@ -1,6 +1,7 @@
 // extend this object in order to add more validation rules
 
 import {
+  TSurveyConsentQuestion,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyQuestion,
@@ -13,8 +14,16 @@ const validationRules = {
   multipleChoiceSingle: (question: TSurveyMultipleChoiceSingleQuestion) => {
     return !question.choices.some((element) => element.label.trim() === "");
   },
+  consent: (question: TSurveyConsentQuestion) => {
+    return question.label.trim() !== "";
+  },
   defaultValidation: (question: TSurveyQuestion) => {
-    return question.headline.trim() !== "";
+    console.log(question);
+    return (
+      question.headline.trim() !== "" &&
+      question.buttonLabel?.trim() !== "" &&
+      question.backButtonLabel?.trim() !== ""
+    );
   },
 };
 

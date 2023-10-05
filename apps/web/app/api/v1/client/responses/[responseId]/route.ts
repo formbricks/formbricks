@@ -2,8 +2,8 @@ import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { sendToPipeline } from "@/lib/pipelines";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { updateResponse } from "@formbricks/lib/services/response";
-import { getSurvey } from "@formbricks/lib/services/survey";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { updateResponse } from "@formbricks/lib/response/service";
 import { ZResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
 

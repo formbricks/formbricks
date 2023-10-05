@@ -1,24 +1,34 @@
 "use client";
 
-import LinkSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSurveyModal";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";
+import { TProduct } from "@formbricks/types/v1/product";
+import ShareEmbedSurvey from "./ShareEmbedSurvey";
+import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   surveyBaseUrl: string;
+  product: TProduct;
+  profile: TProfile;
+  singleUseIds?: string[];
 }
 
 export default function LinkSurveyShareButton({
   survey,
   className,
   surveyBaseUrl,
+  product,
+  profile,
+  singleUseIds,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const isSingleUse = survey.singleUse?.enabled ?? false;
 
   return (
     <>
@@ -31,12 +41,21 @@ export default function LinkSurveyShareButton({
         onClick={() => setShowLinkModal(true)}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {showLinkModal && (
-        <LinkSurveyModal
+      {showLinkModal && isSingleUse && singleUseIds ? (
+        <LinkSingleUseSurveyModal
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
+          singleUseIds={singleUseIds}
+        />
+      ) : (
+        <ShareEmbedSurvey
+          survey={survey}
+          open={showLinkModal}
+          setOpen={setShowLinkModal}
+          product={product}
           surveyBaseUrl={surveyBaseUrl}
+          profile={profile}
         />
       )}
     </>

@@ -16,33 +16,34 @@ import { useEffect } from "react";
 const HowTo = [
   {
     step: "1",
-    header: "Pick an issue from the list below (or start with a side quest)",
+    header: "Pick a 'FormTribe 🔥' issue in our repository and comment.",
+    link: "https://formbricks.com/github",
   },
   {
     step: "2",
-    header: "Comment on the issue to signal that you started working on it.",
+    header: "Be the first to comment and get the issue assigned.",
   },
   {
     step: "3",
-    header: "Join our Discord to ask questions and submit side quests.",
-    link: "https://formbricks.com/discord",
+    header: "You now have 24h to open a draft PR ⏲️",
   },
   {
     step: "4",
-    header: "Code and open a PR with your contribution. ",
+    header: "If your PR looks promising, we'll work with you to get it merged.",
   },
   {
     step: "5",
-    header: "Get your PR merged and collect points.",
+    header: "For every merged PR you collect points ✨",
   },
   {
     step: "6",
-    header: "Tweet about your contribution and tag @formbricks",
+    header: "Solve side quests to increase your chances on the MacBook 👀",
+    link: "#prizes",
   },
   {
     step: "7",
-    header: "Solve side quests to increase your chances on the MacBook 👀",
-    link: "#prizes",
+    header: "Join our Discord to ask questions (and submit side quests).",
+    link: "https://formbricks.com/discord",
   },
 ];
 
@@ -266,8 +267,12 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "200",
+    points: "550",
     link: "https://github.com/gupta-piyush19",
+  },
+  {
+    name: "Suman",
+    points: "200",
   },
   {
     name: "Subhdeep",
@@ -275,11 +280,7 @@ const Leaderboard = [
   },
   {
     name: "Pratik",
-    points: "100",
-  },
-  {
-    name: "/home/babubaap",
-    points: "100",
+    points: "250",
   },
   {
     name: "Karuppiah",
@@ -295,15 +296,15 @@ const Leaderboard = [
   },
   {
     name: "Kelvin Parmar",
-    points: "100",
+    points: "200",
   },
   {
-    name: "Arjun",
-    points: "100",
+    name: "Naitik Kapadia (Arjun)",
+    points: "200",
   },
   {
     name: "Yashhhh",
-    points: "100",
+    points: "200",
   },
   {
     name: "vishleshak",
@@ -323,7 +324,7 @@ const Leaderboard = [
   },
   {
     name: "Vishrut",
-    points: "100",
+    points: "250",
   },
   {
     name: "cataxcab",
@@ -331,10 +332,83 @@ const Leaderboard = [
   },
   {
     name: "Eldemarkki",
-    points: "100",
+    points: "500",
   },
   {
     name: "Suyash",
+    points: "100",
+  },
+  {
+    name: "Rohan Gupta",
+    points: "100",
+  },
+  {
+    name: "Nafees Nazik",
+    points: "100",
+  },
+  {
+    name: "monk",
+    points: "100",
+  },
+  {
+    name: "Pratik Tiwari (Pratik)",
+    points: "100",
+  },
+  {
+    name: "Ardash Malviya",
+    points: "100",
+  },
+  {
+    name: "Aditya Deshlahre",
+    points: "550",
+    link: "https://github.com/adityadeshlahre",
+  },
+  {
+    name: "Rutam",
+    points: "350",
+  },
+  {
+    name: "Sagnik Sahoo",
+    points: "100",
+  },
+  {
+    name: "Prasoon Mahawar",
+    points: "100",
+  },
+  {
+    name: "Dushmanta",
+    points: "100",
+  },
+  {
+    name: "Arjavv",
+    points: "100",
+  },
+  {
+    name: "Ashish Khare",
+    points: "100",
+  },
+  {
+    name: "Rohit Mondal",
+    points: "100",
+  },
+  {
+    name: "noobcoder",
+    points: "100",
+  },
+  {
+    name: "Rayyan Alam (Rayy)",
+    points: "100",
+  },
+  {
+    name: "Ayush",
+    points: "100",
+  },
+  {
+    name: "Zechariah",
+    points: "100",
+  },
+  {
+    name: "Rajarshi Misra",
     points: "100",
   },
 ];
@@ -527,6 +601,7 @@ export default function FormTribeHackathon() {
             <li>🎉 1 x MacBook Air M2</li>
             <li>🎉 3 x Limited FormTribe Premium Hoodie</li>
             <li>🎉 10 x Limited FormTribe Premium Shirt</li>
+            <li>🎉 10 x 250h for Gitpod</li>
             <li>🎉 50 x Sets of Formbricks Stickers</li>
           </ul>
         </div>
@@ -595,7 +670,7 @@ export default function FormTribeHackathon() {
           href="https://github.com/formbricks/formbricks/issues"
           target="_blank"
           className="mx-auto mt-12 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] px-20 text-white ">
-          View Issues on GitHub
+          View FormTribe Issues on GitHub
         </Button>
       </div>
 
@@ -636,7 +711,7 @@ export default function FormTribeHackathon() {
           href="https://formbricks.notion.site/FormTribe-Side-Quests-4ab3b294cfa04e94b77dfddd66378ea2?pvs=4"
           target="_blank"
           className="mt-6 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] text-white ">
-          Copy Notion Template
+          Keep track with Notion Template
         </Button>
       </div>
 

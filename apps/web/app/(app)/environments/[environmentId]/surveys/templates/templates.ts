@@ -2062,4 +2062,6 @@ export const minimalSurvey: TSurvey = {
   surveyClosedMessage: {
     enabled: false,
   },
+  productOverwrites: null,
+  singleUse: null,
 };

@@ -1,11 +1,14 @@
-import { writeData } from "@formbricks/lib/services/googleSheet";
 import { writeData as airTableWriteData } from "@formbricks/lib/services/airTable";
-import { getSurvey } from "@formbricks/lib/services/survey";
+
 import {
   TAirTableIntegration,
   TGoogleSheetIntegration,
   TIntegration,
 } from "@formbricks/types/v1/integrations";
+
+import { writeData } from "@formbricks/lib/googleSheet/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+
 import { TPipelineInput } from "@formbricks/types/v1/pipelines";
 
 export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {

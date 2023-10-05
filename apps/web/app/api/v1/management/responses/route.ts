@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { getEnvironmentResponses } from "@formbricks/lib/services/response";
+import { getEnvironmentResponses } from "@formbricks/lib/response/service";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 

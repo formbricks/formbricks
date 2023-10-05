@@ -1,4 +1,4 @@
-import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
+import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { responses } from "@/lib/api/response";

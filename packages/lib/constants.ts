@@ -1,9 +1,11 @@
-import "server-only";
+"server-only";
+
 import { env } from "@/env.mjs";
 
 export const RESPONSES_LIMIT_FREE = 100;
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
+export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 5000 : 1000000;
 
 // URLs
@@ -14,6 +16,7 @@ export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" :
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
+export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
 
