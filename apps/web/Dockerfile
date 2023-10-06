@@ -1,11 +1,17 @@
 FROM node:18-alpine AS installer
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+ARG NEXTAUTH_SECRET
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+
 WORKDIR /app
 
 COPY . .
-# Copy .env file because Docker don't follow symlinks
-COPY .env.docker /app/apps/web/.env
+RUN touch /app/apps/web/.env
+
 
 RUN pnpm install
 
@@ -34,13 +40,13 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/publ
 COPY --from=installer --chown=nextjs:nodejs /app/packages/database/schema.prisma ./packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nodejs /app/packages/database/migrations ./packages/database/migrations
 
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-
 EXPOSE 3000
+
+ENV HOSTNAME "0.0.0.0"
 
 CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
         pnpm dlx prisma migrate deploy && node apps/web/server.js; \
     else \
-        echo "ERROR: Please set a value for NEXTAUTH_SECRET in .env.docker!"; \
+        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
         exit 1; \
     fi

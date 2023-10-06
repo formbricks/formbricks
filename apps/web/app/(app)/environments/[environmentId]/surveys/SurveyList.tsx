@@ -3,8 +3,8 @@ import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/SurveyStarter";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
-import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { Badge } from "@formbricks/ui";

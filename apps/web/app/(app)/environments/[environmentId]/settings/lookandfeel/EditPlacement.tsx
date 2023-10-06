@@ -2,11 +2,11 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { Button, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
-import { useState } from "react";
-import toast from "react-hot-toast";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { updateProductAction } from "./actions";
 
 const placements = [
@@ -35,7 +35,9 @@ export function EditPlacement({ product }: EditPlacementProps) {
         darkOverlay: overlay === "darkOverlay",
         clickOutsideClose: clickOutside === "allow",
       };
+
       await updateProductAction(product.id, inputProduct);
+
       toast.success("Placement updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

@@ -2,7 +2,7 @@ import "server-only";
 
 import z from "zod";
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TAction } from "@formbricks/types/v1/actions";
 import { ZId } from "@formbricks/types/v1/environment";
 import { Prisma } from "@prisma/client";
@@ -12,7 +12,7 @@ import { TJsActionInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { EventType } from "@prisma/client";
 import { getActionClassCacheTag, getActionClassCached } from "../actionClass/service";
-import { getSessionCached } from "../services/session";
+import { getSessionCached } from "../session/service";
 
 export const getActionsByEnvironmentId = cache(
   async (environmentId: string, limit?: number): Promise<TAction[]> => {
@@ -65,7 +65,7 @@ export const createAction = async (data: TJsActionInput) => {
   const session = await getSessionCached(sessionId);
 
   if (!session) {
-    throw new Error("Session not found");
+    throw new ResourceNotFoundError("Session", sessionId);
   }
 
   const actionClass = await getActionClassCached(name, environmentId);
