@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TPerson, TPersonUpdateInput } from "@formbricks/types/v1/people";
+import { TPerson, TPersonUpdateInput, TPersonAttributes } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
@@ -185,17 +185,23 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
   }
 };
 
-export const deletePerson = async (personId: string): Promise<void> => {
+export const deletePerson = async (personId: string): Promise<TPerson | null> => {
   validateInputs([personId, ZId]);
   try {
-    await prisma.person.delete({
+    const personPrisma = await prisma.person.delete({
       where: {
         id: personId,
       },
+      select: selectPerson,
     });
+    const person = transformPrismaPerson(personPrisma);
 
-    // revalidate person
-    revalidateTag(personId);
+    if (person) {
+      // revalidate person
+      revalidateTag(personId);
+    }
+
+    return person;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -320,8 +326,8 @@ export const updatePersonAttribute = async (
   personId: string,
   attributeClassId: string,
   value: string
-): Promise<void> => {
-  await prisma.attribute.upsert({
+): Promise<Partial<TPerson>> => {
+  const attributes = await prisma.attribute.upsert({
     where: {
       attributeClassId_personId: {
         attributeClassId,
@@ -348,4 +354,6 @@ export const updatePersonAttribute = async (
 
   // revalidate person
   revalidateTag(personId);
+
+  return attributes;
 };

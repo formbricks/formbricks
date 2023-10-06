@@ -53,13 +53,15 @@ export const getIntegrations = cache(async (environmentId: string): Promise<TInt
   }
 });
 
-export const deleteIntegration = async (integrationId: string): Promise<void> => {
+export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
   try {
-    await prisma.integration.delete({
+    const integrationData = await prisma.integration.delete({
       where: {
         id: integrationId,
       },
     });
+
+    return integrationData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

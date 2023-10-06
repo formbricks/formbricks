@@ -125,9 +125,9 @@ export const transferOwnership = async (
   currentOwnerId: string,
   newOwnerId: string,
   teamId: string
-): Promise<void> => {
+): Promise<TMembership[]> => {
   try {
-    await prisma.$transaction([
+    const owners = await prisma.$transaction([
       prisma.membership.update({
         where: {
           userId_teamId: {
@@ -151,6 +151,8 @@ export const transferOwnership = async (
         },
       }),
     ]);
+
+    return owners;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

@@ -104,14 +104,16 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
   }
 };
 
-export const deleteApiKey = async (id: string): Promise<void> => {
+export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {
   validateInputs([id, ZId]);
   try {
-    await prisma.apiKey.delete({
+    const deletedApiKeyData = await prisma.apiKey.delete({
       where: {
         id: id,
       },
     });
+
+    return deletedApiKeyData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

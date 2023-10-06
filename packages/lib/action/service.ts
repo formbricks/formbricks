@@ -54,7 +54,7 @@ export const getActionsByEnvironmentId = cache(
   }
 );
 
-export const createAction = async (data: TJsActionInput): Promise<void> => {
+export const createAction = async (data: TJsActionInput): Promise<Omit<TAction, "actionClass">> => {
   const { environmentId, name, properties, sessionId } = data;
 
   let eventType: EventType = EventType.code;
@@ -71,7 +71,7 @@ export const createAction = async (data: TJsActionInput): Promise<void> => {
   const actionClass = await getActionClassCached(name, environmentId);
 
   if (actionClass) {
-    await prisma.event.create({
+    const action = await prisma.event.create({
       data: {
         properties,
         sessionId: session.id,
@@ -79,11 +79,11 @@ export const createAction = async (data: TJsActionInput): Promise<void> => {
       },
     });
 
-    return;
+    return action;
   }
 
   // if action class does not exist, create it and then create the action
-  await prisma.$transaction([
+  const [, actionRes] = await prisma.$transaction([
     prisma.eventClass.create({
       data: {
         name,
@@ -120,15 +120,14 @@ export const createAction = async (data: TJsActionInput): Promise<void> => {
           },
         },
       },
-      select: {
-        id: true,
-      },
     }),
   ]);
 
   // revalidate cache
   revalidateTag(sessionId);
   revalidateTag(getActionClassCacheTag(name, environmentId));
+
+  return actionRes;
 };
 
 export const getActionCountInLastHour = cache(async (actionClassId: string): Promise<number> => {

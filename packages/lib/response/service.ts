@@ -235,11 +235,6 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   }
 };
 
-export const preloadSurveyResponses = (surveyId: string) => {
-  validateInputs([surveyId, ZId]);
-  void getSurveyResponses(surveyId);
-};
-
 export const getSurveyResponses = cache(async (surveyId: string): Promise<TResponse[]> => {
   validateInputs([surveyId, ZId]);
   try {
@@ -270,11 +265,6 @@ export const getSurveyResponses = cache(async (surveyId: string): Promise<TRespo
     throw error;
   }
 });
-
-export const preloadEnvironmentResponses = (environmentId: string) => {
-  validateInputs([environmentId, ZId]);
-  void getEnvironmentResponses(environmentId);
-};
 
 export const getEnvironmentResponses = cache(async (environmentId: string): Promise<TResponse[]> => {
   validateInputs([environmentId, ZId]);
