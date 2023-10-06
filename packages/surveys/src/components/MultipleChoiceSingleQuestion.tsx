@@ -75,7 +75,10 @@ export default function MultipleChoiceSingleQuestion({
                 key={choice.id}
                 tabIndex={idx + 1}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") onChange({ [question.id]: choice.label });
+                  if (e.key == "Enter") {
+                    onChange({ [question.id]: choice.label });
+                    onSubmit({ [question.id]: choice.label });
+                  }
                 }}
                 className={cn(
                   value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
