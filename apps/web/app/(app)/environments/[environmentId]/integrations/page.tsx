@@ -2,6 +2,7 @@ import JsLogo from "@/images/jslogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import GoogleSheetsLogo from "@/images/google-sheets-small.png";
+import SlackLogo from "@/images/slacklogo.png";
 import n8nLogo from "@/images/n8n.png";
 import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui";
@@ -75,6 +76,20 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
       connected: containsGoogleSheetIntegration ? true : false,
       statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/slack`,
+      connectText: "Connect",
+      connectNewTab: false,
+      // TODO - update docs
+      docsHref: "https://formbricks.com/docs/integrations/slack",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Slack",
+      description: "Instantly Connect your Slack Workspace with Formbricks",
+      icon: <Image src={SlackLogo} alt="Slack Logo" />,
+      connected: false,
+      statusText: "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
