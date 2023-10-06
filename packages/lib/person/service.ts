@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TPerson, TPersonUpdateInput, TPersonAttributes } from "@formbricks/types/v1/people";
+import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
@@ -11,6 +11,7 @@ import { PEOPLE_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClassByName } from "../attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ZNumber, ZString } from "@formbricks/types/v1/common";
 
 export const selectPerson = {
   id: true,
@@ -67,6 +68,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
 
 export const getPerson = cache(async (personId: string): Promise<TPerson | null> => {
   validateInputs([personId, ZId]);
+
   try {
     const personPrisma = await prisma.person.findUnique({
       where: {
@@ -96,6 +98,8 @@ const getPersonCacheKey = (personId: string): string[] => [personId];
 export const getPersonCached = async (personId: string) =>
   await unstable_cache(
     async () => {
+      validateInputs([personId, ZId]);
+
       return await getPerson(personId);
     },
     getPersonCacheKey(personId),
@@ -106,7 +110,8 @@ export const getPersonCached = async (personId: string) =>
   )();
 
 export const getPeople = cache(async (environmentId: string, page: number = 1): Promise<TPerson[]> => {
-  validateInputs([environmentId, ZId]);
+  validateInputs([environmentId, ZId], [page, ZNumber]);
+
   try {
     const itemsPerPage = PEOPLE_PER_PAGE;
     const people = await prisma.person.findMany({
@@ -138,6 +143,7 @@ export const getPeople = cache(async (environmentId: string, page: number = 1): 
 
 export const getPeopleCount = cache(async (environmentId: string): Promise<number> => {
   validateInputs([environmentId, ZId]);
+
   try {
     const totalCount = await prisma.person.count({
       where: {
@@ -156,6 +162,7 @@ export const getPeopleCount = cache(async (environmentId: string): Promise<numbe
 
 export const createPerson = async (environmentId: string): Promise<TPerson> => {
   validateInputs([environmentId, ZId]);
+
   try {
     const personPrisma = await prisma.person.create({
       data: {
@@ -187,6 +194,7 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
 
 export const deletePerson = async (personId: string): Promise<TPerson | null> => {
   validateInputs([personId, ZId]);
+
   try {
     const personPrisma = await prisma.person.delete({
       where: {
@@ -212,6 +220,8 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
 };
 
 export const updatePerson = async (personId: string, personInput: TPersonUpdateInput): Promise<TPerson> => {
+  validateInputs([personId, ZId], [personInput, ZPersonUpdateInput]);
+
   try {
     const personPrisma = await prisma.person.update({
       where: {
@@ -232,6 +242,8 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   }
 };
 export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> => {
+  validateInputs([userId, ZString], [environmentId, ZId]);
+
   // Check if a person with the userId attribute exists
   const personPrisma = await prisma.person.findFirst({
     where: {
@@ -294,6 +306,8 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
 export const getMonthlyActivePeopleCount = async (environmentId: string): Promise<number> =>
   await unstable_cache(
     async () => {
+      validateInputs([environmentId, ZId]);
+
       const now = new Date();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -327,6 +341,7 @@ export const updatePersonAttribute = async (
   attributeClassId: string,
   value: string
 ): Promise<Partial<TPerson>> => {
+  validateInputs([personId, ZId], [attributeClassId, ZId], [value, ZString]);
   const attributes = await prisma.attribute.upsert({
     where: {
       attributeClassId_personId: {

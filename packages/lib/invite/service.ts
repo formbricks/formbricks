@@ -2,11 +2,20 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { TInvite, TInviteUpdateInput } from "@formbricks/types/v1/invites";
+import {
+  TInvite,
+  TInvitee,
+  ZInvitee,
+  TInviteUpdateInput,
+  ZInviteUpdateInput,
+  ZCurrentUser,
+  TCurrentUser,
+} from "@formbricks/types/v1/invites";
 import { cache } from "react";
 import { ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
+import { ZString } from "@formbricks/types/v1/common";
 import { sendInviteMemberEmail } from "../emails/emails";
-import { TMembershipRole } from "@formbricks/types/v1/memberships";
+import { validateInputs } from "../utils/validate";
 
 const inviteSelect = {
   id: true,
@@ -22,19 +31,19 @@ const inviteSelect = {
 };
 
 export const getInvitesByTeamId = cache(async (teamId: string): Promise<TInvite[] | null> => {
+  validateInputs([teamId, ZString]);
+
   const invites = await prisma.invite.findMany({
     where: { teamId },
     select: inviteSelect,
   });
 
-  if (!invites) {
-    return null;
-  }
-
   return invites;
 });
 
-export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite> => {
+export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
+  validateInputs([inviteId, ZString], [data, ZInviteUpdateInput]);
+
   try {
     const invite = await prisma.invite.update({
       where: { id: inviteId },
@@ -52,7 +61,9 @@ export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): 
   }
 };
 
-export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
+export const deleteInvite = async (inviteId: string): Promise<TInvite | null> => {
+  validateInputs([inviteId, ZString]);
+
   const deletedInvite = await prisma.invite.delete({
     where: {
       id: inviteId,
@@ -64,6 +75,8 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
 
 export const getInviteToken = cache(
   async (inviteId: string): Promise<{ inviteId: string; email: string }> => {
+    validateInputs([inviteId, ZString]);
+
     const invite = await prisma.invite.findUnique({
       where: {
         id: inviteId,
@@ -85,6 +98,7 @@ export const getInviteToken = cache(
 );
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
+  validateInputs([inviteId, ZString]);
   const invite = await prisma.invite.findUnique({
     where: {
       id: inviteId,
@@ -120,9 +134,11 @@ export const inviteUser = async ({
   teamId,
 }: {
   teamId: string;
-  invitee: { name: string; email: string; role: TMembershipRole };
-  currentUser: { id: string; name: string };
+  invitee: TInvitee;
+  currentUser: TCurrentUser;
 }): Promise<TInvite> => {
+  validateInputs([teamId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
+
   const { name, email, role } = invitee;
   const { id: currentUserId, name: currentUserName } = currentUser;
   const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });

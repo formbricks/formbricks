@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { ZId } from "@formbricks/types/v1/environment";
+import { ZString } from "@formbricks/types/v1/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
@@ -157,6 +158,7 @@ export const updateActionClass = async (
 export const getActionClassCached = async (name: string, environmentId: string) =>
   unstable_cache(
     async (): Promise<TActionClass | null> => {
+      validateInputs([name, ZString], [environmentId, ZId]);
       return await prisma.eventClass.findFirst({
         where: {
           name,

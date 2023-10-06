@@ -22,18 +22,6 @@ const getAttributeClassesCacheKey = (environmentId: string): string[] => [
   attributeClassesCacheTag(environmentId),
 ];
 
-export const transformPrismaAttributeClass = (attributeClass: any): TAttributeClass | null => {
-  if (attributeClass === null) {
-    return null;
-  }
-
-  const transformedAttributeClass: TAttributeClass = {
-    ...attributeClass,
-  };
-
-  return transformedAttributeClass;
-};
-
 export const getAttributeClass = cache(async (attributeClassId: string): Promise<TAttributeClass | null> => {
   validateInputs([attributeClassId, ZId]);
   try {
@@ -42,7 +30,7 @@ export const getAttributeClass = cache(async (attributeClassId: string): Promise
         id: attributeClassId,
       },
     });
-    return transformPrismaAttributeClass(attributeClass);
+    return attributeClass;
   } catch (error) {
     throw new DatabaseError(`Database error when fetching attributeClass with id ${attributeClassId}`);
   }
@@ -51,7 +39,7 @@ export const getAttributeClass = cache(async (attributeClassId: string): Promise
 export const getAttributeClasses = cache(async (environmentId: string): Promise<TAttributeClass[]> => {
   validateInputs([environmentId, ZId]);
   try {
-    let attributeClasses = await prisma.attributeClass.findMany({
+    const attributeClasses = await prisma.attributeClass.findMany({
       where: {
         environmentId: environmentId,
       },
@@ -59,11 +47,8 @@ export const getAttributeClasses = cache(async (environmentId: string): Promise<
         createdAt: "asc",
       },
     });
-    const transformedAttributeClasses: TAttributeClass[] = attributeClasses
-      .map(transformPrismaAttributeClass)
-      .filter((attributeClass): attributeClass is TAttributeClass => attributeClass !== null);
 
-    return transformedAttributeClasses;
+    return attributeClasses;
   } catch (error) {
     throw new DatabaseError(`Database error when fetching attributeClasses for environment ${environmentId}`);
   }
@@ -75,7 +60,7 @@ export const updatetAttributeClass = async (
 ): Promise<TAttributeClass | null> => {
   validateInputs([attributeClassId, ZId], [data, ZAttributeClassUpdateInput.partial()]);
   try {
-    let attributeClass = await prisma.attributeClass.update({
+    const attributeClass = await prisma.attributeClass.update({
       where: {
         id: attributeClassId,
       },
@@ -84,10 +69,10 @@ export const updatetAttributeClass = async (
         archived: data.archived,
       },
     });
-    const transformedAttributeClass: TAttributeClass | null = transformPrismaAttributeClass(attributeClass);
 
     revalidateTag(attributeClassesCacheTag(attributeClass.environmentId));
-    return transformedAttributeClass;
+
+    return attributeClass;
   } catch (error) {
     throw new DatabaseError(`Database error when updating attribute class with id ${attributeClassId}`);
   }
@@ -113,7 +98,7 @@ export const getAttributeClassByName = cache(
         name,
       },
     });
-    return transformPrismaAttributeClass(attributeClass);
+    return attributeClass;
   }
 );
 
@@ -134,7 +119,7 @@ export const createAttributeClass = async (
     },
   });
   revalidateTag(attributeClassesCacheTag(environmentId));
-  return transformPrismaAttributeClass(attributeClass);
+  return attributeClass;
 };
 
 export const deleteAttributeClass = async (attributeClassId: string): Promise<TAttributeClass> => {

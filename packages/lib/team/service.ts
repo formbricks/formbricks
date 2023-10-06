@@ -333,7 +333,7 @@ export const createDemoProduct = async (teamId: string): Promise<TProductUpdateI
         })),
       }),
     ]);
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

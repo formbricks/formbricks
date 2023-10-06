@@ -1,6 +1,5 @@
 import "server-only";
 
-import z from "zod";
 import { prisma } from "@formbricks/database";
 import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/v1/apiKeys";
 import { Prisma } from "@prisma/client";
@@ -10,9 +9,10 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { ZString } from "@formbricks/types/v1/common";
 
 export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
-  validateInputs([apiKeyId, z.string()]);
+  validateInputs([apiKeyId, ZString]);
   if (!apiKeyId) {
     throw new InvalidInputError("API key cannot be null or undefined.");
   }
@@ -82,7 +82,7 @@ export async function createApiKey(environmentId: string, apiKeyData: TApiKeyCre
 }
 
 export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> => {
-  validateInputs([apiKey, z.string()]);
+  validateInputs([apiKey, ZString]);
   if (!apiKey) {
     throw new InvalidInputError("API key cannot be null or undefined.");
   }

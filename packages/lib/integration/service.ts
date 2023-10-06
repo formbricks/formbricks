@@ -3,13 +3,18 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
+import { ZId } from "@formbricks/types/v1/environment";
 import { TIntegration, TGoogleSheetIntegrationUpsert } from "@formbricks/types/v1/integrations";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+import { ZString } from "@formbricks/types/v1/common";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
   integrationData: TGoogleSheetIntegrationUpsert
 ): Promise<TIntegration> {
+  validateInputs([environmentId, ZId]);
+
   try {
     const integration = await prisma.integration.upsert({
       where: {
@@ -38,6 +43,8 @@ export async function createOrUpdateIntegration(
 }
 
 export const getIntegrations = cache(async (environmentId: string): Promise<TIntegration[]> => {
+  validateInputs([environmentId, ZId]);
+
   try {
     const result = await prisma.integration.findMany({
       where: {
@@ -54,6 +61,8 @@ export const getIntegrations = cache(async (environmentId: string): Promise<TInt
 });
 
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
+  validateInputs([integrationId, ZString]);
+
   try {
     const integrationData = await prisma.integration.delete({
       where: {

@@ -8,7 +8,7 @@ import { ZId } from "@formbricks/types/v1/environment";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { validateInputs } from "../utils/validate";
-import { TJsActionInput } from "@formbricks/types/v1/js";
+import { TJsActionInput, ZJsActionInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { EventType } from "@prisma/client";
 import { getActionClassCacheTag, getActionClassCached } from "../actionClass/service";
@@ -55,6 +55,7 @@ export const getActionsByEnvironmentId = cache(
 );
 
 export const createAction = async (data: TJsActionInput): Promise<Omit<TAction, "actionClass">> => {
+  validateInputs([data, ZJsActionInput]);
   const { environmentId, name, properties, sessionId } = data;
 
   let eventType: EventType = EventType.code;
@@ -131,6 +132,7 @@ export const createAction = async (data: TJsActionInput): Promise<Omit<TAction, 
 };
 
 export const getActionCountInLastHour = cache(async (actionClassId: string): Promise<number> => {
+  validateInputs([actionClassId, ZId]);
   try {
     const numEventsLastHour = await prisma.event.count({
       where: {
@@ -147,6 +149,7 @@ export const getActionCountInLastHour = cache(async (actionClassId: string): Pro
 });
 
 export const getActionCountInLast24Hours = cache(async (actionClassId: string): Promise<number> => {
+  validateInputs([actionClassId, ZId]);
   try {
     const numEventsLast24Hours = await prisma.event.count({
       where: {
@@ -163,6 +166,7 @@ export const getActionCountInLast24Hours = cache(async (actionClassId: string): 
 });
 
 export const getActionCountInLast7Days = cache(async (actionClassId: string): Promise<number> => {
+  validateInputs([actionClassId, ZId]);
   try {
     const numEventsLast7Days = await prisma.event.count({
       where: {

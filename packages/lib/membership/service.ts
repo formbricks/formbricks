@@ -2,11 +2,21 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
-import { TMember, TMembership, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
+import {
+  TMember,
+  TMembership,
+  ZMembership,
+  TMembershipUpdateInput,
+  ZMembershipUpdateInput,
+} from "@formbricks/types/v1/memberships";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
+import { validateInputs } from "../utils/validate";
+import { ZString } from "@formbricks/types/v1/common";
 
 export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[]> => {
+  validateInputs([teamId, ZString]);
+
   const membersData = await prisma.membership.findMany({
     where: { teamId },
     select: {
@@ -37,6 +47,8 @@ export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[
 
 export const getMembershipByUserIdTeamId = cache(
   async (userId: string, teamId: string): Promise<TMembership | null> => {
+    validateInputs([userId, ZString], [teamId, ZString]);
+
     const membership = await prisma.membership.findUnique({
       where: {
         userId_teamId: {
@@ -53,6 +65,7 @@ export const getMembershipByUserIdTeamId = cache(
 );
 
 export const getMembershipsByUserId = cache(async (userId: string): Promise<TMembership[]> => {
+  validateInputs([userId, ZString]);
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
@@ -67,6 +80,7 @@ export const createMembership = async (
   userId: string,
   data: Partial<TMembership>
 ): Promise<TMembership> => {
+  validateInputs([teamId, ZString], [userId, ZString], [data, ZMembership.partial()]);
   try {
     const membership = await prisma.membership.create({
       data: {
@@ -87,6 +101,8 @@ export const updateMembership = async (
   teamId: string,
   data: TMembershipUpdateInput
 ): Promise<TMembership> => {
+  validateInputs([userId, ZString], [teamId, ZString], [data, ZMembershipUpdateInput]);
+
   try {
     const membership = await prisma.membership.update({
       where: {
@@ -109,6 +125,8 @@ export const updateMembership = async (
 };
 
 export const deleteMembership = async (userId: string, teamId: string): Promise<TMembership> => {
+  validateInputs([userId, ZString], [teamId, ZString]);
+
   const deletedMembership = await prisma.membership.delete({
     where: {
       userId_teamId: {
@@ -126,6 +144,8 @@ export const transferOwnership = async (
   newOwnerId: string,
   teamId: string
 ): Promise<TMembership[]> => {
+  validateInputs([currentOwnerId, ZString], [newOwnerId, ZString], [teamId, ZString]);
+
   try {
     const owners = await prisma.$transaction([
       prisma.membership.update({
