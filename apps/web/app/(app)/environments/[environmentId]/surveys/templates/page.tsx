@@ -1,6 +1,6 @@
 import TemplateContainerWithPreview from "./TemplateContainer";
-import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
 export default async function SurveyTemplatesPage({ params }) {
   const environmentId = params.environmentId;

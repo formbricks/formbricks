@@ -1,6 +1,6 @@
 import GoBackButton from "@/components/shared/GoBackButton";
 import { DeletePersonButton } from "./DeletePersonButton";
-import { getPerson } from "@formbricks/lib/services/person";
+import { getPerson } from "@formbricks/lib/person/service";
 
 interface HeadingSectionProps {
   environmentId: string;

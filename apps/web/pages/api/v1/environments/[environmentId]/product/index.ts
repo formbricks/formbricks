@@ -1,7 +1,6 @@
 import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
-import { EnvironmentType } from "@prisma/client";
-import { populateEnvironment } from "@/lib/populate";
+import { createProduct } from "@formbricks/lib/product/service";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -93,29 +92,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // Create a new product and associate it with the current team
-    const newProduct = await prisma.product.create({
-      data: {
-        name,
-        team: {
-          connect: { id: environment.product.teamId },
-        },
-        environments: {
-          create: [
-            {
-              type: EnvironmentType.production,
-              ...populateEnvironment,
-            },
-            {
-              type: EnvironmentType.development,
-              ...populateEnvironment,
-            },
-          ],
-        },
-      },
-      select: {
-        environments: true,
-      },
-    });
+    const newProduct = await createProduct(environment.product.teamId, { name });
 
     const firstEnvironment = newProduct.environments[0];
     res.json(firstEnvironment);

@@ -1,9 +1,12 @@
+import "server-only";
+
 import { ZId } from "@formbricks/types/v1/environment";
-import { validateInputs } from "../utils/validate";
-import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getResponse, getResponseCacheTag } from "./service";
 import { unstable_cache } from "next/cache";
-import { getSurvey } from "../services/survey";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { getSurvey } from "../survey/service";
+import { validateInputs } from "../utils/validate";
+import { getResponse, getResponseCacheTag } from "./service";
 
 export const canUserAccessResponse = async (userId: string, responseId: string): Promise<boolean> =>
   await unstable_cache(
@@ -24,5 +27,5 @@ export const canUserAccessResponse = async (userId: string, responseId: string):
       return true;
     },
     [`users-${userId}-responses-${responseId}`],
-    { revalidate: 30 * 60, tags: [getResponseCacheTag(responseId)] }
-  )(); // 30 minutes
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [getResponseCacheTag(responseId)] }
+  )();

@@ -1,7 +1,7 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/services/storage";
+import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/service";
 import path from "path";
 import { env } from "@/env.mjs";
 import { ZFileName } from "@formbricks/types/v1/storage";

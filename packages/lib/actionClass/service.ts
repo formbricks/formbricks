@@ -2,13 +2,12 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
-
-const halfHourInSeconds = 60 * 30;
 
 export const getActionClassCacheTag = (name: string, environmentId: string): string =>
   `environments-${environmentId}-actionClass-${name}`;
@@ -50,7 +49,7 @@ export const getActionClasses = (environmentId: string): Promise<TActionClass[]>
     [`environments-${environmentId}-actionClasses`],
     {
       tags: [getActionClassesCacheTag(environmentId)],
-      revalidate: halfHourInSeconds,
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -168,6 +167,6 @@ export const getActionClassCached = async (name: string, environmentId: string) 
     [`environments-${environmentId}-actionClasses-${name}`],
     {
       tags: [getActionClassesCacheTag(environmentId)],
-      revalidate: halfHourInSeconds,
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

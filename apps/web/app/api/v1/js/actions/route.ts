@@ -1,6 +1,6 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { createAction } from "@formbricks/lib/services/actions";
+import { createAction } from "@formbricks/lib/action/service";
 import { ZJsActionInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
 

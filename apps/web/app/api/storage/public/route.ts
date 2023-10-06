@@ -1,7 +1,7 @@
 import { responses } from "@/lib/api/response";
 import { NextRequest } from "next/server";
 import { env } from "@/env.mjs";
-import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/services/storage";
+import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";

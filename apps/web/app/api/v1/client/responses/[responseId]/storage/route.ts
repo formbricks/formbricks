@@ -1,7 +1,7 @@
 import { responses } from "@/lib/api/response";
 import { NextRequest } from "next/server";
 import { env } from "@/env.mjs";
-import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/services/storage";
+import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
 import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
 import { prisma } from "@formbricks/database";
 
@@ -108,7 +108,10 @@ export async function POST(req: NextRequest) {
 
       const uploadedFileName = `${environmentId}/${accessType}/${fileName}`;
 
-      return { uploaded: true, url: `${WEBAPP_URL}/api/storage?fileName=${uploadedFileName}` };
+      return responses.successResponse({
+        uploaded: true,
+        url: `${WEBAPP_URL}/api/storage?fileName=${uploadedFileName}`,
+      });
     } catch (err) {
       if (err.name === "FileTooLargeError") {
         return responses.badRequestResponse(err.message);

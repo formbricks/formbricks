@@ -9,7 +9,6 @@ export const env = createEnv({
   server: {
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
-    PRISMA_GENERATE_DATAPROXY: z.enum(["true", ""]).optional(),
     NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
@@ -48,7 +47,8 @@ export const env = createEnv({
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().optional(),
-    SURVEY_BASE_URL: z.string().optional(),
+    SURVEY_BASE_URL: z.string().url().optional(),
+    SHORT_SURVEY_BASE_URL: z.string().url().optional().or(z.string().length(0)),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
@@ -74,6 +74,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)).optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -84,7 +85,6 @@ export const env = createEnv({
   runtimeEnv: {
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
-    PRISMA_GENERATE_DATAPROXY: process.env.PRISMA_GENERATE_DATAPROXY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     MAIL_FROM: process.env.MAIL_FROM,
@@ -122,8 +122,10 @@ export const env = createEnv({
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
     VERCEL_URL: process.env.VERCEL_URL,
     SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
+    SHORT_SURVEY_BASE_URL: process.env.SHORT_SURVEY_BASE_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
 });
