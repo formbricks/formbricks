@@ -61,6 +61,7 @@ export default function ResponseFeed({
                             <SurveyStatusIndicator
                               status={response.survey.status}
                               environment={environment}
+                              type={response.survey.type}
                             />
                           </div>
                         </div>
