@@ -2,7 +2,7 @@
 
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
-import { ArchiveBoxIcon, CheckIcon, PauseIcon } from "@heroicons/react/24/solid";
+import { ArchiveBoxIcon, CheckIcon, PauseIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 
 interface SurveyStatusIndicatorProps {
   status: string;
@@ -11,7 +11,13 @@ interface SurveyStatusIndicatorProps {
 }
 
 export default function SurveyStatusIndicator({ status, tooltip, environment }: SurveyStatusIndicatorProps) {
-  if (!environment.widgetSetupCompleted) return null;
+  if (!environment.widgetSetupCompleted) {
+    return (
+      <div>
+        <ExclamationTriangleIcon className="h-4 w-4 text-amber-500" />
+      </div>
+    );
+  }
   if (tooltip) {
     return (
       <TooltipProvider>
