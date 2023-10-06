@@ -11,6 +11,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.418.0",
+    "@aws-sdk/s3-request-presigner": "^3.418.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
@@ -34,6 +36,7 @@
     "googleapis": "^126.0.1",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "mime": "^3.0.0",
     "lucide-react": "^0.284.0",
     "next": "13.5.4",
     "next-auth": "^4.23.2",
