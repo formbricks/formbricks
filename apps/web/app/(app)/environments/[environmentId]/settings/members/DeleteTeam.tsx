@@ -1,7 +1,7 @@
 "use client";
 
 import { deleteTeamAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import DeleteDialog from "@formbricks/ui/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { Button, Input } from "@formbricks/ui";
 import { useRouter } from "next/navigation";

@@ -1,4 +1,4 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { responses } from "@/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";

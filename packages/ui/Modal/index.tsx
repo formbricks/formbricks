@@ -16,7 +16,7 @@ type Modal = {
   closeOnOutsideClick?: boolean;
 };
 
-const Modal: React.FC<Modal> = ({
+export const Modal: React.FC<Modal> = ({
   open,
   setOpen,
   children,
@@ -81,5 +81,3 @@ const Modal: React.FC<Modal> = ({
     </>
   );
 };
-
-export default Modal;

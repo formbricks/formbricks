@@ -8,7 +8,7 @@ interface SurveyStatusIndicatorProps {
   tooltip?: boolean;
 }
 
-export default function SurveyStatusIndicator({ status, tooltip }: SurveyStatusIndicatorProps) {
+export function SurveyStatusIndicator({ status, tooltip }: SurveyStatusIndicatorProps) {
   if (tooltip) {
     return (
       <TooltipProvider>

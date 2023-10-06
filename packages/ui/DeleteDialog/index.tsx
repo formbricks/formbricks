@@ -1,6 +1,6 @@
 "use client";
 
-import Modal from "@/components/shared/Modal";
+import { Modal } from "../Modal";
 import Button from "../components/Button";
 
 interface DeleteDialogProps {
@@ -16,7 +16,7 @@ interface DeleteDialogProps {
   disabled?: boolean;
 }
 
-export default function DeleteDialog({
+export function DeleteDialog({
   open,
   setOpen,
   deleteWhat,

@@ -1,6 +1,6 @@
 "use client";
 
-import DeleteDialog from "@formbricks/ui/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";

@@ -7,7 +7,7 @@ import {
   deleteMembershipAction,
   resendInviteAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import DeleteDialog from "@formbricks/ui/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import { TInvite } from "@formbricks/types/v1/invites";
 import { TMember } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";

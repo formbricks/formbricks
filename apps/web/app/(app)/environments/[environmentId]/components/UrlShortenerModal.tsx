@@ -1,4 +1,4 @@
-import Modal from "@/components/shared/Modal";
+import { Modal } from "@formbricks/ui";
 import { Button, Input, Label } from "@formbricks/ui";
 import { LinkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";

@@ -1,7 +1,7 @@
 import { UsageAttributesUpdater } from "@/app/(app)/FormbricksClient";
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/SurveyStarter";
-import SurveyStatusIndicator from "@formbricks/ui/SurveyStatusIndicator";
+import { SurveyStatusIndicator } from "@formbricks/ui";
 import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";

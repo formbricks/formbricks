@@ -1,7 +1,7 @@
 "use client";
 
 import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/people/[personId]/actions";
-import DeleteDialog from "@formbricks/ui/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

@@ -1,4 +1,4 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { prisma } from "@formbricks/database";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createHash } from "crypto";

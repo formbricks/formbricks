@@ -1,7 +1,7 @@
 "use client";
 
 import AlertDialog from "@/components/shared/AlertDialog";
-import DeleteDialog from "@formbricks/ui/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";

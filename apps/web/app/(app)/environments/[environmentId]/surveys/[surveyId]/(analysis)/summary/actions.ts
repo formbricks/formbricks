@@ -1,7 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import { AuthenticationError } from "@formbricks/types/v1/errors";
 

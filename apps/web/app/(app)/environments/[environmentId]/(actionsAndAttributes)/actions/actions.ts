@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createActionClass, deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { canUserAccessActionClass } from "@formbricks/lib/actionClass/auth";

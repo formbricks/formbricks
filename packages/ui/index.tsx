@@ -75,6 +75,9 @@ export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/Tooltip";
 export { AddVariablesDropdown, Editor } from "./components/editor";
 export { RatingResponse } from "./SingleResponseCard/components/RatingResponse";
+export { DeleteDialog } from "./DeleteDialog";
+export { Modal } from "./Modal";
+export { SurveyStatusIndicator } from "./SurveyStatusIndicator";
 
 /* Icons */
 export { AngryBirdRage2Icon } from "./components/icons/AngryBirdRage2Icon";

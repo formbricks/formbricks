@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { updateProduct } from "@formbricks/lib/product/service";
 import { updateProfile } from "@formbricks/lib/profile/service";
 import { TProductUpdateInput } from "@formbricks/types/v1/product";
