@@ -24,7 +24,9 @@ function SubmitButton({
 }: SubmitButtonProps) {
   const buttonRef = useCallback((currentButton: HTMLButtonElement | null) => {
     if (currentButton && focus) {
-      currentButton.focus();
+      setTimeout(() => {
+        currentButton.focus();
+      }, 200);
     }
   }, []);
 
