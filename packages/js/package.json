@@ -42,8 +42,8 @@
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@types/jest": "^29.5.5",
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "@typescript-eslint/parser": "^6.7.3",
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
     "babel-jest": "^29.7.0",
     "cross-env": "^7.0.3",
     "eslint-config-formbricks": "workspace:*",
@@ -54,11 +54,11 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-preset-preact": "^4.1.0",
     "microbundle": "^0.15.1",
-    "preact": "10.17.1",
+    "preact": "10.18.1",
     "preact-cli": "^3.5.0",
-    "preact-render-to-string": "^6.2.1",
+    "preact-render-to-string": "^6.2.2",
     "regenerator-runtime": "^0.14.0",
-    "terser": "^5.20.0"
+    "terser": "^5.21.0"
   },
   "jest": {
     "transformIgnorePatterns": [
