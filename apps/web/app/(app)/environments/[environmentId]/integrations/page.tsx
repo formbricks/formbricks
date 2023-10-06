@@ -1,14 +1,15 @@
+import AirtableLogo from "@/images/airtable.svg";
+import GoogleSheetsLogo from "@/images/google-sheets-small.png";
 import JsLogo from "@/images/jslogo.png";
+import MakeLogo from "@/images/make-small.png";
+import n8nLogo from "@/images/n8n.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
-import GoogleSheetsLogo from "@/images/google-sheets-small.png";
-import n8nLogo from "@/images/n8n.png";
-import MakeLogo from "@/images/make-small.png";
-import { Card } from "@formbricks/ui";
-import Image from "next/image";
-import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
+import { Card } from "@formbricks/ui";
+import Image from "next/image";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
@@ -87,7 +88,7 @@ export default async function IntegrationsPage({ params }) {
       docsNewTab: true,
       label: "Airtable",
       description: "Instantly populate your airtable table with survey data",
-      icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
+      icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
       connected: containsAirTableIntegration ? true : false,
       statusText: containsAirTableIntegration ? "Connected" : "Not Connected",
     },

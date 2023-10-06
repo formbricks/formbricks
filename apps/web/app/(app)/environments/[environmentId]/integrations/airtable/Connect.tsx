@@ -1,11 +1,11 @@
 "use client";
 
-import ConnectIntegrationModal from "./ConnectIntegrationModal";
-import GoogleSheetLogo from "@/images/google-sheets-small.png";
+import AirtableLogo from "@/images/airtable.svg";
 import FormbricksLogo from "@/images/logo.svg";
 import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import { useState } from "react";
+import ConnectIntegrationModal from "./ConnectIntegrationModal";
 
 interface AirTableConnectProps {
   environmentId: string;
@@ -27,7 +27,7 @@ export default function AirTableConnect({ environmentId, setIsConnected }: AirTa
             <Image className="w-1/2" src={FormbricksLogo} alt="Formbricks Logo" />
           </div>
           <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-4 shadow-md">
-            <Image className="w-1/2" src={GoogleSheetLogo} alt="Google Sheet logo" />
+            <Image className="w-1/2" src={AirtableLogo} alt="Airtable Logo" />
           </div>
         </div>
         <p className="my-8">Sync responses directly with Airtable.</p>

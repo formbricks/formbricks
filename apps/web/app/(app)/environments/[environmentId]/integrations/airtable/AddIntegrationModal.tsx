@@ -1,29 +1,29 @@
-import {
-  Button,
-  Label,
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-  Checkbox,
-} from "@/../../packages/ui";
-import Modal from "@/components/shared/Modal";
-import { Controller, useForm } from "react-hook-form";
-import { fetchTables } from "@formbricks/lib/client/airtable";
-import { toast } from "react-hot-toast";
-import GoogleSheetLogo from "@/images/google-sheets-small.png";
+import { TAirtableTables } from "@/../../packages/lib/services/airTable";
 import {
   TAirTableIntegration,
   TAirtable,
   TZAirTableConfigData,
 } from "@/../../packages/types/v1/integrations";
-import { useEffect, useState, useTransition } from "react";
-import { TAirtableTables } from "@/../../packages/lib/services/airTable";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
-import { upsertIntegrationAction } from "./actions";
+import {
+  Button,
+  Checkbox,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/../../packages/ui";
+import Modal from "@/components/shared/Modal";
+import AirtableLogo from "@/images/airtable.svg";
+import { fetchTables } from "@formbricks/lib/client/airtable";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { upsertIntegrationAction } from "./actions";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -172,7 +172,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         <div className="flex w-full items-center justify-between p-6">
           <div className="flex items-center space-x-2">
             <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <Image className="w-12" src={GoogleSheetLogo} alt="Airbase logo" />
+              <Image className="w-12" src={AirtableLogo} alt="Airbase logo" />
             </div>
             <div>
               <div className="text-xl font-medium text-slate-700">Link Airbase Table</div>
@@ -344,8 +344,8 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                 </Button>
               )}
 
-              <Button loading={isPending} type="submit">
-                save
+              <Button variant="darkCTA" loading={isPending} type="submit">
+                Save
               </Button>
             </div>
           </div>
