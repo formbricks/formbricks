@@ -58,9 +58,9 @@ export default function SummaryMetadata({ responses, survey }: SummaryMetadataPr
           />
           <StatCard
             label="Drop Offs"
-            percentage={`${Math.round(((totalDisplays - completedResponses) / totalDisplays) * 100)}%`}
-            value={responses.length === 0 ? <span>-</span> : totalDisplays - completedResponses}
-            tooltipText="People who started but did not complete the survey"
+            percentage={`${Math.round(((totalResponses - completedResponses) / totalResponses) * 100)}%`}
+            value={responses.length === 0 ? <span>-</span> : totalResponses - completedResponses}
+            tooltipText="People who started but not completed the survey."
           />
         </div>
         <div className="flex flex-col justify-between lg:col-span-1">
