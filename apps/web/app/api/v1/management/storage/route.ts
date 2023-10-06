@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/env.mjs";
 import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
 import { getServerSession } from "next-auth";
@@ -12,7 +12,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 // uploading public files requires authentication
 // use this to upload files for a specific resource, e.g. a user profile picture or a survey
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "public"; // public files are accessible by anyone
   const { fileName, contentType, environmentId, fileBuffer, allowedFileExtensions } = await req.json();
 
@@ -48,11 +48,9 @@ export async function POST(req: NextRequest) {
       try {
         await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, true);
 
-        const uploadedFileName = `${environmentId}/${accessType}/${fileName}`;
-
         return responses.successResponse({
           uploaded: true,
-          url: `${WEBAPP_URL}/api/storage?fileName=${uploadedFileName}`,
+          url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
         });
       } catch (err) {
         if (err.name === "FileTooLargeError") {
@@ -66,11 +64,9 @@ export async function POST(req: NextRequest) {
     try {
       await putFileToS3(fileName, contentType, fileBuffer, accessType, environmentId, true);
 
-      const uploadedFileName = `${environmentId}/${accessType}/${fileName}`;
-
       return responses.successResponse({
         uploaded: true,
-        url: `${WEBAPP_URL}/storage?fileName=${uploadedFileName}`,
+        url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
       });
     } catch (err) {
       if (err.name === "FileTooLargeError") {

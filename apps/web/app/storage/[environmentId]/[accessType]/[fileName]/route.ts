@@ -1,47 +1,37 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
-import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/service";
-import path from "path";
 import { env } from "@/env.mjs";
-import { ZFileName } from "@formbricks/types/v1/storage";
 import { responses } from "@/lib/api/response";
+import { transformErrorToDetails } from "@/lib/api/validator";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/service";
+import { ZStorageRetrievalParams } from "@formbricks/types/v1/storage";
+import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
+import { NextRequest } from "next/server";
+import path from "path";
 
-export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
+export async function GET(
+  _: NextRequest,
+  { params }: { params: { environmentId: string; accessType: string; fileName: string } }
+) {
+  const paramValidation = ZStorageRetrievalParams.safeParse(params);
 
-  const fileName = searchParams.get("fileName");
-
-  if (!fileName) {
-    return responses.badRequestResponse("File name is required");
+  if (!paramValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(paramValidation.error),
+      true
+    );
   }
 
-  // parse the fileName to get the environmentId and accessType
-
-  const fileNameParsed = ZFileName.safeParse(fileName);
-
-  if (!fileNameParsed.success) {
-    const error = fileNameParsed.error;
-
-    if (error.issues[0].code === "custom") {
-      return responses.badRequestResponse(error.issues[0].message);
-    }
-
-    return responses.badRequestResponse("Invalid file name, please check the format");
-  }
-
-  const fileNameParts = fileName.split("/");
-  const environmentId = fileNameParts[0];
-  const accessType = fileNameParts[1];
-  const baseFileName = fileNameParts[2];
+  const { environmentId, accessType, fileName } = params;
 
   const getFile = async () => {
     if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
       try {
         const { fileBuffer, metaData } = await getFileFromLocalStorage(
-          path.join(UPLOADS_DIR, environmentId, accessType, baseFileName)
+          path.join(UPLOADS_DIR, environmentId, accessType, fileName)
         );
 
         return new Response(fileBuffer, {
@@ -51,7 +41,7 @@ export async function GET(req: NextRequest) {
           },
         });
       } catch (err) {
-        return responses.notFoundResponse("File not found", fileName);
+        notFound();
       }
     }
 

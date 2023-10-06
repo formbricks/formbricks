@@ -4,9 +4,9 @@ import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
 import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "private"; // private files are only accessible by the user who has access to the environment
   const { fileName, contentType, fileBuffer, surveyId } = await req.json();
 
@@ -62,11 +62,9 @@ export async function POST(req: NextRequest) {
       try {
         await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
 
-        const uploadedFileName = `${environmentId}/${accessType}/${fileName}`;
-
         return responses.successResponse({
           uploaded: true,
-          url: `${WEBAPP_URL}/api/storage?fileName=${uploadedFileName}`,
+          url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
         });
       } catch (err) {
         if (err.name === "FileTooLargeError") {
@@ -80,11 +78,9 @@ export async function POST(req: NextRequest) {
     try {
       await putFileToS3(fileName, contentType, fileBuffer, accessType, environmentId);
 
-      const uploadedFileName = `${environmentId}/${accessType}/${fileName}`;
-
       return responses.successResponse({
         uploaded: true,
-        url: `${WEBAPP_URL}/api/storage?fileName=${uploadedFileName}`,
+        url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
       });
     } catch (err) {
       if (err.name === "FileTooLargeError") {
