@@ -514,3 +514,10 @@ model User {
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
 }
+
+model ShortUrl {
+  id        String   @id // generate nanoId in service
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  url       String   @unique
+}

@@ -14,6 +14,10 @@ export const WEBAPP_URL =
 
 export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" : `${WEBAPP_URL}/s/`;
 
+export const SHORT_SURVEY_BASE_URL = env.SHORT_SURVEY_BASE_URL
+  ? env.SHORT_SURVEY_BASE_URL + "/"
+  : `${WEBAPP_URL}/i/`;
+
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
