@@ -8,7 +8,7 @@ import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   const accessType = "private"; // private files are only accessible by the user who has access to the environment
-  const { fileName, fileType, fileBuffer, surveyId } = await req.json();
+  const { fileName, contentType, fileBuffer, surveyId } = await req.json();
 
   if (!surveyId) {
     return responses.badRequestResponse("surveyId ID is required");
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
     return responses.badRequestResponse("fileName is required");
   }
 
-  if (!fileType) {
-    return responses.badRequestResponse("fileType is required");
+  if (!contentType) {
+    return responses.badRequestResponse("contentType is required");
   }
 
   if (!fileBuffer) {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      await putFileToS3(fileName, fileType, fileBuffer, accessType, environmentId);
+      await putFileToS3(fileName, contentType, fileBuffer, accessType, environmentId);
 
       const uploadedFileName = `${environmentId}/${accessType}/${fileName}`;
 

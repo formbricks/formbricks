@@ -14,14 +14,14 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export async function POST(req: NextRequest) {
   const accessType = "public"; // public files are accessible by anyone
-  const { fileName, fileType, environmentId, fileBuffer, allowedFileExtensions } = await req.json();
+  const { fileName, contentType, environmentId, fileBuffer, allowedFileExtensions } = await req.json();
 
   if (!fileName) {
     return responses.badRequestResponse("fileName is required");
   }
 
-  if (!fileType) {
-    return responses.badRequestResponse("fileType is required");
+  if (!contentType) {
+    return responses.badRequestResponse("contentType is required");
   }
 
   if (!fileBuffer) {
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      await putFileToS3(fileName, fileType, fileBuffer, accessType, environmentId, true);
+      await putFileToS3(fileName, contentType, fileBuffer, accessType, environmentId, true);
 
       const uploadedFileName = `${environmentId}/${accessType}/${fileName}`;
 

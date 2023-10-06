@@ -85,7 +85,7 @@ export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFil
 
 export const putFileToS3 = async (
   fileName: string,
-  fileType: string,
+  contentType: string,
   fileBuffer: Buffer,
   accessType: string,
   environmentId: string,
@@ -112,7 +112,7 @@ export const putFileToS3 = async (
       Bucket: AWS_BUCKET_NAME,
       Key: `${environmentId}/${accessType}/${fileName}`,
       Body: buffer,
-      ContentType: fileType,
+      ContentType: contentType,
     });
 
     await s3Client.send(putObjectCommand);
