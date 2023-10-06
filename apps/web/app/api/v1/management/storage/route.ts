@@ -41,44 +41,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   }
 
-  const uploadPublicFile = async () => {
-    // if s3 is not configured, we'll upload to a local folder named uploads
-
-    if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
-      try {
-        await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, true);
-
-        return responses.successResponse({
-          uploaded: true,
-          url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
-        });
-      } catch (err) {
-        if (err.name === "FileTooLargeError") {
-          return responses.badRequestResponse(err.message);
-        }
-
-        return responses.internalServerErrorResponse("Internal server error");
-      }
-    }
-
-    try {
-      await putFileToS3(fileName, contentType, fileBuffer, accessType, environmentId, true);
-
-      return responses.successResponse({
-        uploaded: true,
-        url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
-      });
-    } catch (err) {
-      if (err.name === "FileTooLargeError") {
-        return responses.badRequestResponse(err.message);
-      }
-
-      return responses.internalServerErrorResponse("Internal server error");
-    }
-  };
-
   // auth and upload private file
-
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
@@ -91,5 +54,51 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return responses.unauthorizedResponse();
   }
 
-  return await uploadPublicFile();
+  return await uploadPublicFile(fileName, fileBuffer, accessType, environmentId, contentType);
 }
+
+const uploadPublicFile = async (
+  fileName: string,
+  fileBuffer: Buffer,
+  accessType: "public" | "private",
+  environmentId,
+  contentType?: string
+) => {
+  // if s3 is not configured, we'll upload to a local folder named uploads
+
+  if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
+    try {
+      await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, true);
+
+      return responses.successResponse({
+        uploaded: true,
+        url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+      });
+    } catch (err) {
+      if (err.name === "FileTooLargeError") {
+        return responses.badRequestResponse(err.message);
+      }
+
+      return responses.internalServerErrorResponse("Internal server error");
+    }
+  }
+
+  try {
+    if (!contentType) {
+      return responses.badRequestResponse("contentType is required");
+    }
+
+    await putFileToS3(fileName, contentType, fileBuffer, accessType, environmentId, true);
+
+    return responses.successResponse({
+      uploaded: true,
+      url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+    });
+  } catch (err) {
+    if (err.name === "FileTooLargeError") {
+      return responses.badRequestResponse(err.message);
+    }
+
+    return responses.internalServerErrorResponse("Internal server error");
+  }
+};
