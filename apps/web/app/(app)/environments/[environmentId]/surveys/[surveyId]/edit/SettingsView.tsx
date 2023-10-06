@@ -3,6 +3,7 @@ import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
+import StylingCard from "./StylingCard";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
@@ -54,6 +55,8 @@ export default function SettingsView({
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
       />
+
+      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
     </div>
   );
 }

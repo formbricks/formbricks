@@ -27,9 +27,9 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
+        "ASSET_PREFIX_URL",
         "CRON_SECRET",
         "DEBUG",
-        "PRISMA_GENERATE_DATAPROXY",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -74,6 +74,7 @@
         "IMPRINT_URL",
         "NEXT_PUBLIC_SENTRY_DSN",
         "SURVEY_BASE_URL",
+        "SHORT_SURVEY_BASE_URL",
         "NODE_ENV",
         "NEXT_PUBLIC_POSTHOG_API_HOST",
         "NEXT_PUBLIC_POSTHOG_API_KEY",
@@ -94,8 +95,7 @@
       "cache": false,
       "dependsOn": [],
       "outputs": [],
-      "inputs": ["./schema.prisma"],
-      "env": ["PRISMA_GENERATE_DATAPROXY"]
+      "inputs": ["./schema.prisma"]
     },
     "db:setup": {
       "cache": false,
