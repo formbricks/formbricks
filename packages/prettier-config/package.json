@@ -7,7 +7,7 @@
     "clean": "rimraf node_modules"
   },
   "devDependencies": {
-    "prettier": "^3.0.3",
+    "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.4.1"
   }
 }
