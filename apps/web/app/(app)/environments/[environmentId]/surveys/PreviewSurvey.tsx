@@ -14,7 +14,7 @@ import {
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
 } from "@heroicons/react/24/solid";
-import { Variants, motion } from "framer-motion";
+import { AnimatePresence, Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 interface PreviewSurveyProps {
@@ -50,31 +50,33 @@ const previewParentContainerVariant: Variants = {
     transition: {
       duration: 0,
     },
+    zIndex: -1,
   },
 };
 
 const previewScreenVariants: Variants = {
   expanded: {
-    position: "fixed",
-    width: "90vw",
-    height: "90vh",
     right: "5%",
-    bottom: "5%",
+    bottom: "2%",
     zIndex: 1050,
     boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
     transition: {
       ease: "easeInOut",
       duration: 0.3,
     },
-    float: "right",
+  },
+  expanded_with_fixed_positioning: {
+    zIndex: 1050,
+    position: "fixed",
+    right: "4.5%",
+    bottom: "4.5%",
+    width: "91%",
+    height: "91%",
   },
   shrink: {
     display: "relative",
     width: ["90%"],
-    height: ["100%"],
-    transition: {
-      duration: 1,
-    },
+    height: ["90%"],
   },
 };
 
@@ -90,6 +92,7 @@ export default function PreviewSurvey({
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [previewMode, setPreviewMode] = useState("desktop");
+  const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -146,9 +149,16 @@ export default function PreviewSurvey({
         animate={isFullScreenPreview ? "expanded" : "shrink"}
       />
       <motion.div
+        layout
         variants={previewScreenVariants}
-        animate={isFullScreenPreview ? "expanded" : "shrink"}
-        className="relative flex w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        animate={
+          isFullScreenPreview
+            ? previewPosition === "relative"
+              ? "expanded"
+              : "expanded_with_fixed_positioning"
+            : "shrink"
+        }
+        className="relative flex h-[90%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <div className="absolute right-0 top-0 m-2">
@@ -206,12 +216,18 @@ export default function PreviewSurvey({
                   {isFullScreenPreview ? (
                     <ArrowsPointingInIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
-                      onClick={() => setIsFullScreenPreview(false)}
+                      onClick={() => {
+                        setIsFullScreenPreview(false);
+                        setPreviewPosition("relative");
+                      }}
                     />
                   ) : (
                     <ArrowsPointingOutIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
-                      onClick={() => setIsFullScreenPreview(true)}
+                      onClick={() => {
+                        setIsFullScreenPreview(true);
+                        setTimeout(() => setPreviewPosition("fixed"), 300);
+                      }}
                     />
                   )}
                   <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
