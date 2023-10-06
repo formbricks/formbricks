@@ -8,7 +8,6 @@ import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 interface ConnectProps {
   enabled: boolean;

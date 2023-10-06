@@ -79,16 +79,17 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/slack`,
-      connectText: `${containsGoogleSheetIntegration ? "Manage Slack" : "Connect"}`,
+      connectText: "Connect",
       connectNewTab: false,
+      // TODO - update docs
       docsHref: "https://formbricks.com/docs/integrations/slack",
       docsText: "Docs",
       docsNewTab: true,
       label: "Slack",
-      description: "Instantly populate your spreadsheets with survey data",
+      description: "Instantly Connect your Slack Workspace with Formbricks",
       icon: <Image src={SlackLogo} alt="Slack Logo" />,
-      connected: containsGoogleSheetIntegration ? true : false,
-      statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
+      connected: false,
+      statusText: "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
