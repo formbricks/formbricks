@@ -1,7 +1,7 @@
 "use server";
 
 import { getAirtableTables } from "@formbricks/lib/services/airTable";
-import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/services/integrations";
+import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { TAirTableIntegration } from "@formbricks/types/v1/integrations";
 
 export async function upsertIntegrationAction(
