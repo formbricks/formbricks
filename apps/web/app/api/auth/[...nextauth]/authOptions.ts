@@ -9,6 +9,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import SlackProvider from "next-auth/providers/slack";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -131,6 +132,12 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
+    SlackProvider({
+      clientId: env.SLACK_CLIENT_ID as string,
+      clientSecret: env.SLACK_CLIENT_SECRET as string,
+      allowDangerousEmailAccountLinking: true,
+      idToken: true,
+    }),
   ],
   callbacks: {
     async jwt({ token }) {
@@ -165,6 +172,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: any) {
+      console.log("userrrrrrrrrr", user, account);
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;

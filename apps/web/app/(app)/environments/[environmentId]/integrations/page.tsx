@@ -2,6 +2,7 @@ import JsLogo from "@/images/jslogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import GoogleSheetsLogo from "@/images/google-sheets-small.png";
+import SlackLogo from "@/images/slacklogo.png";
 import n8nLogo from "@/images/n8n.png";
 import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui";
@@ -73,6 +74,19 @@ export default async function IntegrationsPage({ params }) {
       label: "Google Sheets",
       description: "Instantly populate your spreadsheets with survey data",
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
+      connected: containsGoogleSheetIntegration ? true : false,
+      statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/slack`,
+      connectText: `${containsGoogleSheetIntegration ? "Manage Slack" : "Connect"}`,
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/integrations/slack",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Slack",
+      description: "Instantly populate your spreadsheets with survey data",
+      icon: <Image src={SlackLogo} alt="Slack Logo" />,
       connected: containsGoogleSheetIntegration ? true : false,
       statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
     },
