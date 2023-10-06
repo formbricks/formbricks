@@ -26,12 +26,14 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
   }
 
   for (const event of pageUrlEvents) {
-    const {
-      noCodeConfig: { pageUrl },
-    } = event;
+    const { noCodeConfig } = event;
+
+    const { pageUrl } = noCodeConfig ?? {};
+
     if (!pageUrl) {
       continue;
     }
+
     const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as TActionClassPageUrlRule);
 
     if (match.ok !== true) return err(match.error);
@@ -78,40 +80,25 @@ export function checkUrlMatch(
   pageUrlValue: string,
   pageUrlRule: TActionClassPageUrlRule
 ): Result<boolean, InvalidMatchTypeError> {
-  let result: boolean;
-  let error: Result<never, InvalidMatchTypeError>;
-
   switch (pageUrlRule) {
     case "exactMatch":
-      result = url === pageUrlValue;
-      break;
+      return ok(url === pageUrlValue);
     case "contains":
-      result = url.includes(pageUrlValue);
-      break;
+      return ok(url.includes(pageUrlValue));
     case "startsWith":
-      result = url.startsWith(pageUrlValue);
-      break;
+      return ok(url.startsWith(pageUrlValue));
     case "endsWith":
-      result = url.endsWith(pageUrlValue);
-      break;
+      return ok(url.endsWith(pageUrlValue));
     case "notMatch":
-      result = url !== pageUrlValue;
-      break;
+      return ok(url !== pageUrlValue);
     case "notContains":
-      result = !url.includes(pageUrlValue);
-      break;
+      return ok(!url.includes(pageUrlValue));
     default:
-      error = err({
+      return err({
         code: "invalid_match_type",
         message: "Invalid match type",
       });
   }
-
-  if (error) {
-    return error;
-  }
-
-  return ok(result);
 }
 
 export const checkClickMatch = (event: MouseEvent) => {

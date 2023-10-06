@@ -7,7 +7,6 @@ import {
   NetworkError,
   Result,
   err,
-  match,
   ok,
   okVoid,
 } from "./errors";
@@ -136,7 +135,11 @@ export const setPersonUserId = async (
 
   const state = result.value;
 
-  config.update({ state });
+  config.update({
+    apiHost: config.get().apiHost,
+    environmentId: config.get().environmentId,
+    state,
+  });
 
   return okVoid();
 };
@@ -154,29 +157,25 @@ export const setPersonAttribute = async (
 
   const result = await updatePersonAttribute(key, value.toString());
 
-  let error: NetworkError | MissingPersonError;
+  if (result.ok) {
+    const state = result.value;
 
-  match(
-    result,
-    (state) => {
-      config.update({ state });
-    },
-    (err) => {
-      // pass error to outer scope
-      error = err;
-    }
-  );
+    config.update({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+      state,
+    });
 
-  if (error) {
-    return err(error);
+    return okVoid();
   }
 
-  return okVoid();
+  return err(result.error);
 };
 
 export const logoutPerson = async (): Promise<void> => {
   logger.debug("Resetting state");
-  config.update({ state: undefined });
+
+  config.resetConfig();
   config.disallowSync();
 };
 
@@ -185,10 +184,15 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   await logoutPerson();
   try {
     config.allowSync();
-    await sync();
+    await sync({
+      environmentId: config.get().environmentId,
+      apiHost: config.get().apiHost,
+      personId: config.get().state.person?.id,
+      sessionId: config.get().state.session?.id,
+    });
     return okVoid();
   } catch (e) {
-    return err(e);
+    return err(e as NetworkError);
   }
 };
 

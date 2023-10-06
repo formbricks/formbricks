@@ -1,4 +1,4 @@
-import type { TJsConfigInput } from "@formbricks/types/v1/js";
+import type { TJsConfigInput } from "@formbricks/types/dist/v1/js.d.ts";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";

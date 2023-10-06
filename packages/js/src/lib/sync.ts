@@ -1,4 +1,4 @@
-import { TJsState } from "@formbricks/types/v1/js";
+import { TJsState, TJsSyncParams } from "@formbricks/types/v1/js";
 import { trackAction } from "./actions";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
@@ -10,8 +10,13 @@ const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
 
-const syncWithBackend = async (): Promise<Result<TJsState, NetworkError>> => {
-  const url = `${config.get().apiHost}/api/v1/js/sync`;
+const syncWithBackend = async ({
+  apiHost,
+  environmentId,
+  personId,
+  sessionId,
+}: TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
+  const url = `${apiHost}/api/v1/js/sync`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -19,9 +24,9 @@ const syncWithBackend = async (): Promise<Result<TJsState, NetworkError>> => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      environmentId: config.get().environmentId,
-      personId: config.get().state?.person.id,
-      sessionId: config.get().state?.session.id,
+      environmentId,
+      personId,
+      sessionId,
       jsVersion: packageJson.version,
     }),
   });
@@ -40,9 +45,9 @@ const syncWithBackend = async (): Promise<Result<TJsState, NetworkError>> => {
   return ok((await response.json()).data as TJsState);
 };
 
-export const sync = async (): Promise<void> => {
+export const sync = async (params: TJsSyncParams): Promise<void> => {
   try {
-    const syncResult = await syncWithBackend();
+    const syncResult = await syncWithBackend(params);
     if (syncResult.ok !== true) {
       logger.error(`Sync failed: ${syncResult.error}`);
       return;
@@ -50,7 +55,11 @@ export const sync = async (): Promise<void> => {
 
     const state = syncResult.value;
     const oldState = config.get().state;
-    config.update({ state });
+    config.update({
+      apiHost: params.apiHost,
+      environmentId: params.environmentId,
+      state,
+    });
     const surveyNames = state.surveys.map((s) => s.name);
     logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
 
@@ -75,7 +84,12 @@ export const addSyncEventListener = (debug: boolean = false): void => {
         return;
       }
       logger.debug("Syncing.");
-      await sync();
+      await sync({
+        apiHost: config.get().apiHost,
+        environmentId: config.get().environmentId,
+        personId: config.get().state?.person?.id,
+        sessionId: config.get().state?.session?.id,
+      });
     }, updateInterval);
   }
 };

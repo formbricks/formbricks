@@ -65,19 +65,31 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  logger.debug("Adding styles to DOM");
+  const localConfigResult = config.loadFromLocalStorage();
+
   if (
-    config.get().state &&
-    config.get().environmentId === c.environmentId &&
-    config.get().apiHost === c.apiHost
+    localConfigResult.ok &&
+    localConfigResult.value.state &&
+    localConfigResult.value.environmentId === c.environmentId &&
+    localConfigResult.value.apiHost === c.apiHost
   ) {
+    const { state, apiHost, environmentId } = localConfigResult.value;
+
     logger.debug("Found existing configuration. Checking session.");
-    const existingSession = config.get().state.session;
+    const existingSession = state.session;
+
+    config.update(localConfigResult.value);
+
     if (isExpired(existingSession)) {
       logger.debug("Session expired. Resyncing.");
 
       try {
-        await sync();
+        await sync({
+          apiHost,
+          environmentId,
+          personId: state.person.id,
+          sessionId: existingSession.id,
+        });
       } catch (e) {
         logger.debug("Sync failed. Clearing config and starting from scratch.");
         await resetPerson();
@@ -90,10 +102,12 @@ export const initialize = async (
   } else {
     logger.debug("No valid configuration found. Creating new config.");
     // we need new config
-    config.update({ environmentId: c.environmentId, apiHost: c.apiHost, state: undefined });
 
     logger.debug("Syncing.");
-    await sync();
+    await sync({
+      apiHost: c.apiHost,
+      environmentId: c.environmentId,
+    });
   }
 
   logger.debug("Adding event listeners");
@@ -104,6 +118,7 @@ export const initialize = async (
   logger.debug("Initialized");
 
   // check page url if initialized after page load
+
   checkPageUrl();
   return okVoid();
 };

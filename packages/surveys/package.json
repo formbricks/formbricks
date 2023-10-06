@@ -25,6 +25,7 @@
     "tailwindcss": "^3.3.3",
     "terser": "^5.20.0",
     "typescript": "^5.2.2",
-    "vite": "^4.4.9"
+    "vite": "^4.4.9",
+    "vite-plugin-dts": "^3.6.0"
   }
 }

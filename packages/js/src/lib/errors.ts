@@ -54,7 +54,7 @@ export const wrapThrows =
     } catch (error) {
       return {
         ok: false,
-        error,
+        error: error as Error,
       };
     }
   };

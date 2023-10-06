@@ -4,6 +4,9 @@
   "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "outDir": "./dist",
-    "declaration": true
+    "declaration": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "module": "ESNext"
   }
 }

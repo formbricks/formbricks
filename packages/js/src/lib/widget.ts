@@ -49,7 +49,7 @@ export const renderWidget = (survey: TSurvey) => {
       formbricksSignature: product.formbricksSignature,
       clickOutside: product.clickOutsideClose,
       darkOverlay: product.darkOverlay,
-      highlightBorderColor: product.highlightBorderColor,
+      highlightBorderColor: product.highlightBorderColor ?? null,
       placement: product.placement,
       onDisplay: async () => {
         const { id } = await createDisplay(
@@ -62,8 +62,13 @@ export const renderWidget = (survey: TSurvey) => {
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
-      onResponse: (responseUpdate: TResponseUpdate) => {
-        responseQueue.add(responseUpdate);
+      onResponse: (responseUpdate: Partial<TResponseUpdate>) => {
+        if (responseUpdate.data && responseUpdate.finished) {
+          responseQueue.add({
+            data: responseUpdate.data,
+            finished: responseUpdate.finished,
+          });
+        }
       },
       onClose: closeSurvey,
     });
@@ -76,7 +81,12 @@ export const closeSurvey = async (): Promise<void> => {
   addWidgetContainer();
 
   try {
-    await sync();
+    await sync({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+      personId: config.get().state.person?.id,
+      sessionId: config.get().state.session?.id,
+    });
     surveyRunning = false;
   } catch (e) {
     errorHandler.handle(e);

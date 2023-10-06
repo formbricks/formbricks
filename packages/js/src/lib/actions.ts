@@ -13,7 +13,7 @@ export const trackAction = async (
 ): Promise<Result<void, NetworkError>> => {
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
-    sessionId: config.get().state?.session?.id,
+    sessionId: config.get().state?.session?.id ?? "",
     name,
     properties: properties || {},
   };
@@ -44,7 +44,7 @@ export const trackAction = async (
   // get a list of surveys that are collecting insights
   const activeSurveys = config.get().state?.surveys;
 
-  if (activeSurveys.length > 0) {
+  if (!!activeSurveys && activeSurveys.length > 0) {
     triggerSurvey(name, activeSurveys);
   } else {
     logger.debug("No active surveys to display");
