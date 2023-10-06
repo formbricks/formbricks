@@ -92,7 +92,11 @@ export default function MultipleChoiceSingleQuestion({
                 tabIndex={idx + 1}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
-                    addItem(choice.label);
+                    if (Array.isArray(value) && value.includes(choice.label)) {
+                      removeItem(choice.label);
+                    } else {
+                      addItem(choice.label);
+                    }
                   }
                 }}
                 className={cn(
