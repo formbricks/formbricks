@@ -1,9 +1,11 @@
-import { responses } from "@/lib/api/response";
-import { NextRequest } from "next/server";
 import { env } from "@/env.mjs";
-import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
+import { responses } from "@/lib/api/response";
 import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
-import { prisma } from "@formbricks/database";
+import { getResponse } from "@formbricks/lib/response/service";
+import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   const accessType = "private"; // private files are only accessible by the user who has access to the environment
@@ -25,21 +27,13 @@ export async function POST(req: NextRequest) {
     return responses.badRequestResponse("no file provided, fileBuffer is required");
   }
 
-  const response = await prisma.response.findUnique({
-    where: {
-      id: responseId,
-    },
-  });
+  const response = await getResponse(responseId);
 
   if (!response) {
     return responses.notFoundResponse("Response", responseId);
   }
 
-  const survey = await prisma.survey.findUnique({
-    where: {
-      id: response.surveyId,
-    },
-  });
+  const survey = await getSurvey(response.surveyId);
 
   if (!survey) {
     return responses.notFoundResponse("Survey", response.surveyId);
@@ -47,26 +41,13 @@ export async function POST(req: NextRequest) {
 
   const { environmentId } = survey;
 
-  const environment = await prisma.environment.findUnique({
-    where: { id: environmentId },
-    include: {
-      product: {
-        select: {
-          team: {
-            select: {
-              plan: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const team = await getTeamByEnvironmentId(environmentId);
 
-  if (!environment) {
-    return responses.notFoundResponse("Environment", environmentId);
+  if (!team) {
+    return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
   }
 
-  const { plan } = environment.product.team;
+  const { plan } = team;
 
   const buffer = Buffer.from(fileBuffer);
 

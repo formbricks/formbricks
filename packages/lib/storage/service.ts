@@ -83,21 +83,6 @@ export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFil
   }
 };
 
-// Not used anymore - not removing for now
-// export const getSignedUrlForUpload = async (fileKey: string, fileType: string): Promise<string> => {
-//   const command = new PutObjectCommand({
-//     Bucket: AWS_BUCKET_NAME,
-//     Key: fileKey,
-//     ContentType: fileType,
-//   });
-
-//   const url = await getSignedUrl(s3Client, command, {
-//     expiresIn: 3600,
-//   });
-
-//   return url;
-// };
-
 export const putFileToS3 = async (
   fileName: string,
   fileType: string,
