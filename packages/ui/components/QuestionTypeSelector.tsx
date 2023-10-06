@@ -1,11 +1,11 @@
-import React from "react";
 import {
-  PhoneIcon,
-  LinkIcon,
-  EnvelopeIcon,
   ChatBubbleBottomCenterTextIcon,
+  EnvelopeIcon,
   HashtagIcon,
+  LinkIcon,
+  PhoneIcon,
 } from "@heroicons/react/24/solid";
+import React from "react";
 
 interface QuestionType {
   value: string;
@@ -32,7 +32,7 @@ export function QuestionTypeSelector({
   handleTypeChange,
 }: QuestionTypeSelectorProps): JSX.Element {
   return (
-    <div className="flex w-full items-center justify-between rounded-md border p-2">
+    <div className="flex w-full items-center justify-between rounded-md border p-1">
       {questionTypes.map((type) => (
         <div
           key={type.value}
@@ -43,8 +43,8 @@ export function QuestionTypeSelector({
               : "white"
           } p-2 text-center`}>
           <div className="flex items-center justify-center space-x-2">
-            <span>{type.label}</span>
-            <div className="h-4 w-4">{typeIcons[type.value]}</div>
+            <span className="text-sm text-slate-900">{type.label}</span>
+            <div className="h-4 w-4 text-slate-600 hover:text-slate-800">{typeIcons[type.value]}</div>
           </div>
         </div>
       ))}

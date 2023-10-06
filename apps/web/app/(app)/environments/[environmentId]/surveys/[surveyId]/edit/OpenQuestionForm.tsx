@@ -1,11 +1,11 @@
-import React, { useState } from "react";
 import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
   TSurveyWithAnalytics,
 } from "@formbricks/types/v1/surveys";
 import { Button, Input, Label, QuestionTypeSelector } from "@formbricks/ui";
-import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { useState } from "react";
 
 const questionTypes = [
   { value: "text", label: "Text" },
@@ -102,7 +102,7 @@ export default function OpenQuestionForm({
       {/* Add a dropdown to select the question type */}
       <div className="mt-3">
         <Label htmlFor="questionType">Input Type</Label>
-        <div className="flex items-center">
+        <div className="mt-2 flex items-center">
           <QuestionTypeSelector
             questionTypes={questionTypes}
             currentType={question.inputType}
