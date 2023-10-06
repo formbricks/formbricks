@@ -75,9 +75,6 @@ export default function OpenTextQuestion({
             onInput={(e) => {
               onChange({ [question.id]: e.currentTarget.value });
             }}
-            onKeyDown={(e) => {
-              if (e.key == "Enter") onSubmit({ [question.id]: value });
-            }}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"></textarea>
         )}
       </div>
