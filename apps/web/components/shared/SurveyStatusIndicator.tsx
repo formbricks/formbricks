@@ -8,15 +8,25 @@ interface SurveyStatusIndicatorProps {
   status: string;
   tooltip?: boolean;
   environment: TEnvironment;
+  type: string;
 }
 
-export default function SurveyStatusIndicator({ status, tooltip, environment }: SurveyStatusIndicatorProps) {
+export default function SurveyStatusIndicator({
+  status,
+  tooltip,
+  environment,
+  type,
+}: SurveyStatusIndicatorProps) {
   if (!environment.widgetSetupCompleted) {
-    return (
-      <div>
-        <ExclamationTriangleIcon className="h-4 w-4 text-amber-500" />
-      </div>
-    );
+    if (type === "web") {
+      return (
+        <div>
+          <ExclamationTriangleIcon className="h-4 w-4 text-amber-500" />
+        </div>
+      );
+    } else {
+      return null;
+    }
   }
   if (tooltip) {
     return (

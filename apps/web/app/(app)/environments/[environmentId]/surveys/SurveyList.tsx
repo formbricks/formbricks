@@ -81,7 +81,12 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                       <div className="flex items-center">
                         {survey.status !== "draft" && (
                           <>
-                            <SurveyStatusIndicator status={survey.status} tooltip environment={environment} />
+                            <SurveyStatusIndicator
+                              status={survey.status}
+                              tooltip
+                              environment={environment}
+                              type={survey.type}
+                            />
                           </>
                         )}
                         {survey.status === "draft" && (
