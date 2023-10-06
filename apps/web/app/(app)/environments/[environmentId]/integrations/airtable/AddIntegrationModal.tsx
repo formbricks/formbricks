@@ -12,7 +12,7 @@ import Modal from "@/components/shared/Modal";
 import { Controller, useForm } from "react-hook-form";
 import { fetchTables } from "@formbricks/lib/client/airtable";
 import { toast } from "react-hot-toast";
-
+import GoogleSheetLogo from "@/images/google-sheets-small.png";
 import {
   TAirTableIntegration,
   TAirtable,
@@ -22,6 +22,8 @@ import { useEffect, useState, useTransition } from "react";
 import { TAirtableTables } from "@/../../packages/lib/services/airTable";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
 import { upsertIntegrationAction } from "./actions";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -33,7 +35,7 @@ type AddIntegrationModalProps = {
   environmentId: string;
   airTableArray: TAirtable[];
   surveys: TSurvey[];
-  airtableIntegration: TAirTableIntegration | undefined;
+  airtableIntegration: TAirTableIntegration;
 } & EditModeProps;
 
 export type IntegrationModalInputs = {
@@ -54,6 +56,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
     isEditMode,
     defaultData,
   } = props;
+  const router = useRouter();
   const [tables, setTables] = useState<TAirtableTables["tables"]>([]);
   const [isPending, startTransition] = useTransition();
   const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
@@ -123,8 +126,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
 
       await upsertIntegrationAction(environmentId, airtableIntegrationData);
       toast.success(`Integration ${actionMessage} successfully`);
-      reset();
-      setOpenWithStates(false);
+      handleClose();
     } catch (e) {
       toast.error(e.message);
     }
@@ -144,8 +146,41 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
     });
   };
 
+  const handleClose = () => {
+    reset();
+    setOpenWithStates(false);
+  };
+
+  const handleDelete = async (index: number) => {
+    try {
+      const integrationCopy = { ...airtableIntegration };
+      integrationCopy.config.data.splice(index, 1);
+
+      await upsertIntegrationAction(environmentId, integrationCopy);
+      handleClose();
+      router.refresh();
+
+      toast.success(`Integration deleted successfully`);
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
   return (
     <Modal open={open} setOpen={setOpenWithStates} noPadding>
+      <div className="rounded-t-lg bg-slate-100">
+        <div className="flex w-full items-center justify-between p-6">
+          <div className="flex items-center space-x-2">
+            <div className="mr-1.5 h-6 w-6 text-slate-500">
+              <Image className="w-12" src={GoogleSheetLogo} alt="Airbase logo" />
+            </div>
+            <div>
+              <div className="text-xl font-medium text-slate-700">Link Airbase Table</div>
+              <div className="text-sm text-slate-500">Sync responses with a Airbase table</div>
+            </div>
+          </div>
+        </div>
+      </div>
       <form onSubmit={handleSubmit(submitHandler)}>
         <div className="flex rounded-lg p-6">
           <div className="flex w-full flex-col gap-y-4 pt-5">
@@ -290,7 +325,25 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
               </div>
             )}
 
-            <div className="flex justify-end ">
+            <div className="flex justify-end gap-x-2">
+              {isEditMode ? (
+                <Button
+                  onClick={() => {
+                    startTransition(async () => {
+                      await handleDelete(defaultData.index);
+                    });
+                  }}
+                  loading={isPending}
+                  type="button"
+                  variant="warn">
+                  Delete
+                </Button>
+              ) : (
+                <Button type="button" variant="minimal" onClick={handleClose}>
+                  Cancel
+                </Button>
+              )}
+
               <Button loading={isPending} type="submit">
                 save
               </Button>

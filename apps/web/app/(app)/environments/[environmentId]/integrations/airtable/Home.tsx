@@ -6,13 +6,9 @@ import { Button } from "@/../../packages/ui";
 import AddIntegrationModal, {
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/AddIntegrationModal";
-import {
-  deleteIntegrationAction,
-  upsertIntegrationAction,
-} from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 interface handleModalProps {
@@ -24,11 +20,10 @@ interface handleModalProps {
   airTableArray: TAirtable[];
 }
 
-const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At", "Actions"];
+const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At"];
 
 export default function Home(props: handleModalProps) {
   const { airTableIntegration, environment, environmentId, setIsConnected, surveys, airTableArray } = props;
-  const { refresh } = useRouter();
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<(IntegrationModalInputs & { index: number }) | null>(
@@ -37,20 +32,6 @@ export default function Home(props: handleModalProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const integrationData = airTableIntegration?.config?.data ?? [];
-
-  const handleDelete = async (index: number) => {
-    try {
-      const integrationCopy = { ...airTableIntegration };
-      integrationCopy.config.data.splice(index, 1);
-
-      await upsertIntegrationAction(environmentId, integrationCopy);
-      refresh();
-
-      toast.success(`Integration deleted successfully`);
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
 
   const handleDeleteIntegration = async () => {
     try {
@@ -73,7 +54,7 @@ export default function Home(props: handleModalProps) {
   const isEditMode = defaultValues ? true : false;
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end gap-x-2">
+      <div className="flex w-full justify-end gap-x-6">
         <div className=" flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span
@@ -120,36 +101,31 @@ export default function Home(props: handleModalProps) {
             <tbody className="[&_tr:last-child]:border-0">
               {integrationData &&
                 integrationData.map((data, index) => (
-                  <tr key={index} className=" border-b transition-colors hover:bg-slate-100">
-                    <td className="p-2 align-middle font-medium ">{data.surveyName}</td>
-                    <td className="p-2 align-middle">{data.tableName}</td>
-                    <td className="p-2 align-middle">{data.questions}</td>
-                    <td className="p-2 align-middle">{timeSince(data.createdAt.toString())}</td>
-                    <td className="flex gap-x-2 p-2 align-middle">
-                      <Button
-                        onClick={() => {
-                          setDefaultValues({
-                            base: data.baseId,
-                            questions: data.questionIds,
-                            survey: data.surveyId,
-                            table: data.tableId,
-                            index,
-                          });
-                          setIsModalOpen(true);
-                        }}
-                        size="sm">
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={async () => {
-                          await handleDelete(index);
-                        }}
-                        variant="alert"
-                        size="sm">
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
+                  <>
+                    <p id={`edit-${data.tableName}`} className="sr-only">
+                      edit {data.tableName} integration
+                    </p>
+                    <tr
+                      tabIndex={0}
+                      aria-describedby={`edit-${data.tableName}`}
+                      onClick={() => {
+                        setDefaultValues({
+                          base: data.baseId,
+                          questions: data.questionIds,
+                          survey: data.surveyId,
+                          table: data.tableId,
+                          index,
+                        });
+                        setIsModalOpen(true);
+                      }}
+                      key={index}
+                      className="cursor-pointer border-b transition-colors hover:bg-slate-100">
+                      <td className="p-2 align-middle font-medium ">{data.surveyName}</td>
+                      <td className="p-2 align-middle">{data.tableName}</td>
+                      <td className="p-2 align-middle">{data.questions}</td>
+                      <td className="p-2 align-middle">{timeSince(data.createdAt.toString())}</td>
+                    </tr>
+                  </>
                 ))}
             </tbody>
           </table>
