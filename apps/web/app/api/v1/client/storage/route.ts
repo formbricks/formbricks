@@ -1,7 +1,6 @@
 import { env } from "@/env.mjs";
 import { responses } from "@/lib/api/response";
 import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getResponse } from "@formbricks/lib/response/service";
 import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -9,10 +8,10 @@ import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   const accessType = "private"; // private files are only accessible by the user who has access to the environment
-  const { fileName, fileType, fileBuffer, responseId } = await req.json();
+  const { fileName, fileType, fileBuffer, surveyId } = await req.json();
 
-  if (!responseId) {
-    return responses.badRequestResponse("response ID is required");
+  if (!surveyId) {
+    return responses.badRequestResponse("surveyId ID is required");
   }
 
   if (!fileName) {
@@ -27,16 +26,10 @@ export async function POST(req: NextRequest) {
     return responses.badRequestResponse("no file provided, fileBuffer is required");
   }
 
-  const response = await getResponse(responseId);
-
-  if (!response) {
-    return responses.notFoundResponse("Response", responseId);
-  }
-
-  const survey = await getSurvey(response.surveyId);
+  const survey = await getSurvey(surveyId);
 
   if (!survey) {
-    return responses.notFoundResponse("Survey", response.surveyId);
+    return responses.notFoundResponse("Survey", surveyId);
   }
 
   const { environmentId } = survey;
