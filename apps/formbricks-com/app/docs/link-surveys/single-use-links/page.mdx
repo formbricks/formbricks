@@ -1,3 +1,16 @@
+import Image from "next/image";
+
+import EnvVar from "./env-variable.webp";
+import ShareModal from "./share-modal.webp";
+import Settings from "./single-use-setting.webp";
+import Message from "./used-message.webp";
+import Metadata from "./metadata.webp";
+
+export const meta = {
+  title: "Single Use Links",
+  description: "Make sure that each respondent only replies once with single use links.",
+};
+
 #### Link Surveys
 
 # Single Use Links
@@ -15,28 +28,53 @@ This guide will help you understand how to generate and use single-use links wit
 Using single-use links with Formbricks is quite straight-forward:
 
 1. In the survey settings, toggle "Single Use Link" on:
-   IMAGE
+
+   <Image
+     src={Settings}
+     alt="Single use survey settings"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />
 
 2. When you publish your survey, the following modal will open:
-   IMAGE 2
+   <Image
+     src={ShareModal}
+     alt="Share modal with 7 single use links which can be regenerated"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />
 
 Here, you can copy and generate as many single-use links as you need.
 
 ## URL Encryption
 
-URL encryption is a security measure that ensures the confidentiality and integrity of single-use links. In Formbricks, URL encryption is achieved using the corresponding environment variable. When constructing single-use links, the data, including the unique identifier, is encrypted before being added to the URL. This encryption mechanism helps protect sensitive information from being tampered with or intercepted during transmission.
+You can encrypt single use URLs to assure information to be protected. To enable it, you have to set the correct environment variable:
 
-The environment variable you have to set is called:
+<Image
+  src={EnvVar}
+  alt="Set the right env var to be able to enable encryption."
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
-## Where do I find the suId which was used for a specific response?
+## Check suId of a submission
 
 You can find the suId of each submission in the submission meta data. To view it, simplte hover over the Avatar:
-IMAGE AVATAR
 
-### What happens when a user tries to access a survey without a suId?
+<Image
+  src={Metadata}
+  alt="View suId in the submission meta data."
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
-### What happens when a link was already used?
+### 'Link used' message
 
 You can customize the 'link used' messaging in the Survey Editor settings:
 
-IMAGE 3
+<Image
+  src={Message}
+  alt="Adjust the message shown to people if a link was already used."
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
