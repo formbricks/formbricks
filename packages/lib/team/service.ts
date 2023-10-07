@@ -109,6 +109,15 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
 
 export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
   try {
+    const existingTeam = await prisma.team.findFirst({
+      where: {
+        name: teamInput.name,
+      },
+    });
+
+    if (existingTeam) {
+      throw new Error("A team with the same name already exists.");
+    }
     const team = await prisma.team.create({
       data: teamInput,
       select,

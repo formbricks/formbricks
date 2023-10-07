@@ -191,6 +191,18 @@ export const createProduct = async (
   if (!productInput.name) {
     throw new ValidationError("Product Name is required");
   }
+
+  const existingProduct = await prisma.product.findFirst({
+    where: {
+      name: productInput.name,
+      teamId,
+    },
+  });
+
+  if (existingProduct) {
+    throw new Error("A product with the same name already exists.");
+  }
+
   const { environments, ...data } = productInput;
 
   let product = await prisma.product.create({
