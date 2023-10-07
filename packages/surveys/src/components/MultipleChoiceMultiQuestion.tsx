@@ -180,7 +180,9 @@ export default function MultipleChoiceSingleQuestion({
                     }}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
-                        onSubmit({ [question.id]: value });
+                        setTimeout(() => {
+                          onSubmit({ [question.id]: value });
+                        }, 100);
                       }
                     }}
                     placeholder="Please specify"
