@@ -4,8 +4,8 @@ import { updateEnvironmentAction } from "@/app/(app)/environments/[environmentId
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getActionsByEnvironmentId } from "@formbricks/lib/services/actions";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getActionsByEnvironmentId } from "@formbricks/lib/action/service";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { Metadata } from "next";
 import SurveysList from "./SurveyList";
 

@@ -1,4 +1,4 @@
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
@@ -6,7 +6,7 @@ import SettingsTitle from "../SettingsTitle";
 import EditProductName from "./EditProductName";
 import EditWaitingTime from "./EditWaitingTime";
 import DeleteProduct from "./DeleteProduct";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [, product] = await Promise.all([

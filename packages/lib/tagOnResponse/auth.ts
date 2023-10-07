@@ -1,9 +1,12 @@
+import "server-only";
+
 import { validateInputs } from "../utils/validate";
 import { unstable_cache } from "next/cache";
 import { ZId } from "@formbricks/types/v1/environment";
 import { canUserAccessResponse } from "../response/auth";
 import { canUserAccessTag } from "../tag/auth";
-import { getTagOnResponseCacheTag } from "../services/tagOnResponse";
+import { getTagOnResponseCacheTag } from "./service";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const canUserAccessTagOnResponse = async (
   userId: string,
@@ -20,5 +23,5 @@ export const canUserAccessTagOnResponse = async (
       return isAuthorizedForTag && isAuthorizedForResponse;
     },
     [`users-${userId}-tagOnResponse-${tagId}-${responseId}`],
-    { revalidate: 30 * 60, tags: [getTagOnResponseCacheTag(tagId, responseId)] }
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [getTagOnResponseCacheTag(tagId, responseId)] }
   )();

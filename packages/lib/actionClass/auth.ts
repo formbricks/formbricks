@@ -1,8 +1,11 @@
+import "server-only";
+
 import { ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getActionClass } from "./service";
 import { unstable_cache } from "next/cache";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const canUserAccessActionClass = async (userId: string, actionClassId: string): Promise<boolean> =>
   await unstable_cache(
@@ -20,5 +23,5 @@ export const canUserAccessActionClass = async (userId: string, actionClassId: st
     },
 
     [`users-${userId}-actionClasses-${actionClassId}`],
-    { revalidate: 30 * 60, tags: [`actionClasses-${actionClassId}`] }
-  )(); // 30 minutes
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`actionClasses-${actionClassId}`] }
+  )();

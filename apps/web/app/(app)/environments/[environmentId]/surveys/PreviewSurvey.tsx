@@ -17,14 +17,17 @@ import {
 import { AnimatePresence, Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
+type TPreviewType = "modal" | "fullwidth" | "email";
+
 interface PreviewSurveyProps {
   survey: TSurvey | Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
-  previewType?: "modal" | "fullwidth" | "email";
+  previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
 }
+
 let surveyNameTemp;
 
 const previewParentContainerVariant: Variants = {
@@ -87,9 +90,9 @@ const previewScreenVariants: Variants = {
 };
 
 export default function PreviewSurvey({
-  survey,
   setActiveQuestionId,
   activeQuestionId,
+  survey,
   previewType,
   product,
   environment,
@@ -100,6 +103,18 @@ export default function PreviewSurvey({
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
+
+  const { productOverwrites } = survey || {};
+
+  const {
+    brandColor: surveyBrandColor,
+    highlightBorderColor: surveyHighlightBorderColor,
+    placement: surveyPlacement,
+  } = productOverwrites || {};
+
+  const brandColor = surveyBrandColor || product.brandColor;
+  const placement = surveyPlacement || product.placement;
+  const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
 
   useEffect(() => {
     // close modal if there are no questions left
@@ -119,6 +134,8 @@ export default function PreviewSurvey({
       resetQuestionProgress();
       surveyNameTemp = survey.name;
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
   function resetQuestionProgress() {
@@ -176,12 +193,12 @@ export default function PreviewSurvey({
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
-                  placement={product.placement}
-                  highlightBorderColor={product.highlightBorderColor}
+                  placement={placement}
+                  highlightBorderColor={highlightBorderColor}
                   previewMode="mobile">
                   <SurveyInline
                     survey={survey}
-                    brandColor={product.brandColor}
+                    brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     formbricksSignature={product.formbricksSignature}
                     onActiveQuestionChange={setActiveQuestionId}
@@ -196,7 +213,7 @@ export default function PreviewSurvey({
                     <div className="w-full max-w-md px-4">
                       <SurveyInline
                         survey={survey}
-                        brandColor={product.brandColor}
+                        brandColor={brandColor}
                         activeQuestionId={activeQuestionId || undefined}
                         formbricksSignature={product.formbricksSignature}
                         onActiveQuestionChange={setActiveQuestionId}
@@ -244,12 +261,12 @@ export default function PreviewSurvey({
             {previewType === "modal" ? (
               <Modal
                 isOpen={isModalOpen}
-                placement={product.placement}
-                highlightBorderColor={product.highlightBorderColor}
+                placement={placement}
+                highlightBorderColor={highlightBorderColor}
                 previewMode="desktop">
                 <SurveyInline
                   survey={survey}
-                  brandColor={product.brandColor}
+                  brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
                   formbricksSignature={product.formbricksSignature}
                   onActiveQuestionChange={setActiveQuestionId}
@@ -262,7 +279,7 @@ export default function PreviewSurvey({
                   <div className="w-full max-w-md">
                     <SurveyInline
                       survey={survey}
-                      brandColor={product.brandColor}
+                      brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
                       formbricksSignature={product.formbricksSignature}
                       onActiveQuestionChange={setActiveQuestionId}

@@ -1,4 +1,4 @@
-import { getEnvironments } from "@formbricks/lib/services/environment";
+import { getEnvironments } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { headers } from "next/headers";

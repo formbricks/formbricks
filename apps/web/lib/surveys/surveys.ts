@@ -1,7 +1,7 @@
 import {
   DateRange,
   SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
+} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import {
   OptionsType,
   QuestionOptions,
