@@ -60,7 +60,7 @@ const previewParentContainerVariant: Variants = {
 const previewScreenVariants: Variants = {
   expanded: {
     right: "5%",
-    bottom: "3%",
+    bottom: "2%",
     width: "90%",
     height: "90%",
     zIndex: 1050,
