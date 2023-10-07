@@ -57,7 +57,9 @@ const previewParentContainerVariant: Variants = {
 const previewScreenVariants: Variants = {
   expanded: {
     right: "5%",
-    bottom: "2%",
+    bottom: "3%",
+    width: "90%",
+    height: "90%",
     zIndex: 1050,
     boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
     transition: {
@@ -68,15 +70,19 @@ const previewScreenVariants: Variants = {
   expanded_with_fixed_positioning: {
     zIndex: 1050,
     position: "fixed",
-    right: "4.5%",
-    bottom: "4.5%",
-    width: "91%",
-    height: "91%",
+    right: "5%",
+    bottom: "5%",
+    width: "90%",
+    height: "90%",
+    transition: {
+      ease: "easeOut",
+      duration: 0.2,
+    },
   },
   shrink: {
     display: "relative",
-    width: ["90%"],
-    height: ["90%"],
+    width: ["83.33%"],
+    height: ["95%"],
   },
 };
 
@@ -158,7 +164,7 @@ export default function PreviewSurvey({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[90%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex h-[95] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <div className="absolute right-0 top-0 m-2">
