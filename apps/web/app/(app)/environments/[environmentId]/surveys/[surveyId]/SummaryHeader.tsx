@@ -33,7 +33,6 @@ interface SummaryHeaderProps {
   surveyBaseUrl: string;
   product: TProduct;
   profile: TProfile;
-  singleUseIds?: string[];
 }
 const SummaryHeader = ({
   surveyId,
@@ -42,7 +41,6 @@ const SummaryHeader = ({
   surveyBaseUrl,
   product,
   profile,
-  singleUseIds,
 }: SummaryHeaderProps) => {
   const router = useRouter();
 
@@ -61,7 +59,6 @@ const SummaryHeader = ({
           <LinkSurveyShareButton
             survey={survey}
             surveyBaseUrl={surveyBaseUrl}
-            singleUseIds={singleUseIds}
             product={product}
             profile={profile}
           />
@@ -93,7 +90,6 @@ const SummaryHeader = ({
                   surveyBaseUrl={surveyBaseUrl}
                   product={product}
                   profile={profile}
-                  singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -181,7 +177,6 @@ const SummaryHeader = ({
         surveyBaseUrl={surveyBaseUrl}
         product={product}
         profile={profile}
-        singleUseIds={singleUseIds}
       />
     </div>
   );
