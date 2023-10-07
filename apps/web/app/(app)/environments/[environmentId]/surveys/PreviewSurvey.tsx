@@ -22,8 +22,6 @@ interface PreviewSurveyProps {
   environment: TEnvironment;
 }
 
-let surveyNameTemp;
-
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
@@ -61,15 +59,6 @@ export default function PreviewSurvey({
       }
     }
   }, [activeQuestionId, survey.type, survey, setActiveQuestionId]);
-
-  useEffect(() => {
-    if (survey.name !== surveyNameTemp) {
-      resetQuestionProgress();
-      surveyNameTemp = survey.name;
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [survey]);
 
   function resetQuestionProgress() {
     let storePreviewMode = previewMode;
