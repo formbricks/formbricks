@@ -20,7 +20,7 @@ export default function HiddenFieldCard() {
         <XMarkIcon />
       </div>
       <div className="divider mt-2 w-11/12 bg-slate-200"></div>
-      <div className="flex w-2/6 justify-evenly">
+      <div className="mt-2 flex w-2/6 justify-evenly">
         <div className="flex h-[1.2rem] w-5/12 justify-evenly bg-slate-300">
           <EyeSlashIcon />
           <h6>source</h6>
@@ -32,7 +32,7 @@ export default function HiddenFieldCard() {
           <XMarkIcon />
         </div>
       </div>
-      <div className="flex h-[1.2rem] w-1/6 justify-evenly bg-slate-300">
+      <div className="mt-2 flex h-[1.2rem] w-1/6 justify-evenly bg-slate-300">
         <PlusIcon />
         <h5>Add new field</h5>
       </div>
