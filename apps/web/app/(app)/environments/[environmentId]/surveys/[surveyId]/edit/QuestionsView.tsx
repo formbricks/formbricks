@@ -7,6 +7,7 @@ import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
+import HiddenFieldCard from "./HiddenFieldCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
@@ -222,6 +223,7 @@ export default function QuestionsView({
           activeQuestionId={activeQuestionId}
         />
       </div>
+      <HiddenFieldCard />
     </div>
   );
 }
