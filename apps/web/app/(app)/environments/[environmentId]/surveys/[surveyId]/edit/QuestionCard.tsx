@@ -244,24 +244,9 @@ export default function QuestionCard({
                             <Input
                               id="buttonLabel"
                               name="buttonLabel"
-                              className={cn(
-                                isInValid &&
-                                  question.backButtonLabel?.trim() === "" &&
-                                  "border border-red-600 focus:border-red-600"
-                              )}
                               value={question.buttonLabel}
                               placeholder={lastQuestion ? "Finish" : "Next"}
-                              onChange={(e) => {
-                                const trimmedValue = e.target.value.trim(); // Remove spaces from the start and end
-                                const hasInternalSpaces = /\S\s\S/.test(trimmedValue); // Test if there are spaces between words
-
-                                if (
-                                  !trimmedValue.includes("  ") &&
-                                  (trimmedValue === "" || hasInternalSpaces || !/\s/.test(trimmedValue))
-                                ) {
-                                  updateQuestion(questionIdx, { backButtonLabel: trimmedValue });
-                                }
-                              }}
+                              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
                             />
                           </div>
                         </div>
@@ -269,11 +254,6 @@ export default function QuestionCard({
                           <BackButtonInput
                             value={question.backButtonLabel}
                             onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
-                            className={cn(
-                              isInValid &&
-                                question.backButtonLabel?.trim() === "" &&
-                                "border border-red-600 focus:border-red-600"
-                            )}
                           />
                         )}
                       </div>
@@ -284,11 +264,6 @@ export default function QuestionCard({
                           <BackButtonInput
                             value={question.backButtonLabel}
                             onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
-                            className={cn(
-                              isInValid &&
-                                question.backButtonLabel?.trim() === "" &&
-                                "border border-red-600 focus:border-red-600"
-                            )}
                           />
                         </div>
                       )}

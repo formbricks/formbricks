@@ -105,7 +105,11 @@ const SummaryHeader = ({
                     disabled={isStatusChangeDisabled}
                     style={isStatusChangeDisabled ? { pointerEvents: "none", opacity: 0.5 } : {}}>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environment={environment} />
+                      <SurveyStatusIndicator
+                        status={survey.status}
+                        environment={environment}
+                        type={survey.type}
+                      />
                       <span className="ml-1 text-sm text-slate-700">
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
