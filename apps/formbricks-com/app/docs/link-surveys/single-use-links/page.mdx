@@ -1,0 +1,74 @@
+#### Link Surveys
+
+# Single Use Links
+
+ This guide will help you understand how to generate and use single-use links within our application.
+
+## Purpose
+
+- Single-use links, also known as one-time links or disposable links, are URLs that grant access to a resource or perform an action only once.
+
+-  The primary purpose of single-use links is to enhance security and control over access to sensitive information or functionality.
+
+
+## How it works
+
+Single-use links work based on the following principles:
+
+- Uniqueness: Each generated link is unique and can be used only once.
+- Expiration: Links may have an expiration time after which they become invalid.
+- Tracking: Usage of links can be tracked to monitor access.
+- Security: Single-use links are more secure than static passwords or open-access URLs.
+
+## Generating Single-Use Links
+
+To generate a single-use link, follow these steps:
+
+- Authentication: Ensure that the user or system generating the link is authenticated and authorized to create single-use links.
+
+- Create a Unique Identifier: Generate a unique identifier for the link, often in the form of a token or hash.
+
+- Set Expiration (Optional): If desired, set an expiration time for the link to control its validity.
+
+- Store Data (Optional): If the link is meant to grant access to specific data or functionality, ensure that data is properly associated with the link identifier.
+
+- Generate the Link: Construct the URL with the unique identifier and any necessary parameters.
+
+- Store and Protect: Store the generated link securely and ensure it's not exposed to unauthorized users.
+
+## Using Single-Use Links
+
+To use a single-use link, follow these steps:
+
+- Access the Link: Users or systems with valid single-use links can access the URL.
+
+- Validation: The system validates the link's uniqueness, expiration, and any associated data.
+
+- Perform Action: If the link is valid, it grants access to the intended resource or functionality.
+
+- Logging: The system logs the usage of the link for auditing purposes.
+
+
+## Security Considerations
+
+When implementing single-use links, consider the following security best practices:
+
+- Token Generation: Ensure that tokens or identifiers are truly unique and not guessable.
+
+- Expiration: Set a reasonable expiration time to limit the window of opportunity for misuse.
+
+- Encryption: Transmit and store links securely to prevent interception or exposure.
+
+- Access Controls: Restrict access to link generation and usage to authorized entities.
+
+- Logging and Auditing: Maintain logs of link usage for security audits.
+
+##  URL Encryption
+
+URL encryption is a security measure that ensures the confidentiality and integrity of single-use links. In FormBricks, URL encryption is achieved using the corresponding environment variable. When constructing single-use links, the data, including the unique identifier, is encrypted before being added to the URL. This encryption mechanism helps protect sensitive information from being tampered with or intercepted during transmission.
+
+## Location of "suID" (Single Use ID)
+
+As of the current implementation, the "suID" (Single Use ID) is located next to the completed tag in FormBricks. This means that when a survey is completed using a single-use link, you can find the "suID" in close proximity to the completion status, making it easily identifiable and accessible for reference.
+
+## Examples

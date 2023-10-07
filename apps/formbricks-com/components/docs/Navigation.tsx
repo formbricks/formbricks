@@ -237,6 +237,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
       { title: "User Identification", href: "/docs/link-surveys/user-identification" },
+      { title: "Single Use Links", href: "/docs/link-surveys/single-use-link" },
     ],
   },
   {
