@@ -223,6 +223,9 @@ importers:
 
   apps/storybook:
     dependencies:
+      '@formbricks/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -245,9 +248,6 @@ importers:
       '@storybook/blocks':
         specifier: ^7.4.6
         version: 7.4.6(@types/react-dom@18.2.10)(@types/react@18.2.25)(react-dom@18.2.0)(react@18.2.0)
-      '@storybook/cli':
-        specifier: ^7.4.6
-        version: 7.4.6
       '@storybook/react':
         specifier: ^7.4.6
         version: 7.4.6(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2)
@@ -281,6 +281,9 @@ importers:
       eslint-plugin-react-refresh:
         specifier: ^0.4.3
         version: 0.4.3(eslint@8.50.0)
+      eslint-plugin-storybook:
+        specifier: ^0.6.14
+        version: 0.6.14(eslint@8.50.0)(typescript@5.2.2)
       storybook:
         specifier: ^7.4.6
         version: 7.4.6
@@ -8542,6 +8545,12 @@ packages:
       - supports-color
     dev: true
 
+  /@storybook/csf@0.0.1:
+    resolution: {integrity: sha512-USTLkZze5gkel8MYCujSRBVIrUQ3YPBrLOx7GNk/0wttvVtlzWXAq9eLbQ4p/NicGxP+3T7KPEMVV//g+yubpw==}
+    dependencies:
+      lodash: 4.17.21
+    dev: true
+
   /@storybook/csf@0.1.1:
     resolution: {integrity: sha512-4hE3AlNVxR60Wc5KSC68ASYzUobjPqtSKyhV6G+ge0FIXU55N5nTY7dXGRZHQGDBPq+XqchMkIdlkHPRs8nTHg==}
     dependencies:
@@ -14704,6 +14713,22 @@ packages:
       resolve: 2.0.0-next.4
       semver: 6.3.1
       string.prototype.matchall: 4.0.8
+
+  /eslint-plugin-storybook@0.6.14(eslint@8.50.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-IeYigPur/MvESNDo43Z+Z5UvlcEVnt0dDZmnw1odi9X2Th1R3bpGyOZsHXb9bp1pFecOpRUuoMG5xdID2TwwOg==}
+    engines: {node: 12.x || 14.x || >= 16}
+    peerDependencies:
+      eslint: '>=6'
+    dependencies:
+      '@storybook/csf': 0.0.1
+      '@typescript-eslint/utils': 5.54.0(eslint@8.50.0)(typescript@5.2.2)
+      eslint: 8.50.0
+      requireindex: 1.2.0
+      ts-dedent: 2.2.0
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+    dev: true
 
   /eslint-plugin-turbo@1.10.12(eslint@8.50.0):
     resolution: {integrity: sha512-uNbdj+ohZaYo4tFJ6dStRXu2FZigwulR1b3URPXe0Q8YaE7thuekKNP+54CHtZPH9Zey9dmDx5btAQl9mfzGOw==}
@@ -24312,6 +24337,11 @@ packages:
 
   /require-main-filename@2.0.0:
     resolution: {integrity: sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==}
+
+  /requireindex@1.2.0:
+    resolution: {integrity: sha512-L9jEkOi3ASd9PYit2cwRfyppc9NoABujTP8/5gFcbERmo5jUoAKovIC3fsF17pkTnGsrByysqX+Kxd2OTNI1ww==}
+    engines: {node: '>=0.10.5'}
+    dev: true
 
   /requires-port@1.0.0:
     resolution: {integrity: sha512-KigOCHcocU3XODJxsu8i/j8T9tzT4adHiecwORRQ0ZZFcp7ahwXuRU1m+yuO90C5ZUyGeGfocHDI14M3L3yDAQ==}
