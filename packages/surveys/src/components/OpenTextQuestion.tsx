@@ -4,29 +4,6 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-// import { useState } from "preact/hooks";
-
-// function validateInput(value: string, questionType: string, required: boolean): boolean {
-//   if (!required && (value == undefined || value == "" || value == null || value.length <= 0)) {
-//     return true;
-//   }
-//   switch (questionType) {
-//     case "email":
-//       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-//       return emailPattern.test(value);
-//     case "url":
-//       const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
-//       return urlPattern.test(value);
-//     case "number":
-//       const numberPattern = /^[0-9]*$/;
-//       return numberPattern.test(value);
-//     case "phone":
-//       const phonePattern = /^\+[0-9]+$/;
-//       return phonePattern.test(value);
-//     default:
-//       return true;
-//   }
-// }
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
