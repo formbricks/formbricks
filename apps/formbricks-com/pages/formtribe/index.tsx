@@ -340,10 +340,6 @@ const Leaderboard = [
     points: "100",
   },
   {
-    name: "Rohan Gupta",
-    points: "100",
-  },
-  {
     name: "Nafees Nazik",
     points: "100",
   },
@@ -460,7 +456,7 @@ const Leaderboard = [
   },
   {
     name: "Rohan Gupta",
-    points: "500",
+    points: "600",
     link: "https://github.com/rohan9896",
   },
   {
