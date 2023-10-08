@@ -11,9 +11,6 @@ import {
 import clsx from "clsx";
 import Link from "next/link";
 
-// Importing custom CSS file for BestPracticeNavigation.tsx File.
-import style from "../customeStyles/BestPracticeNavigation.module.css";
-
 export default function BestPracticeNavigation() {
   const BestPractices = [
     {
@@ -87,12 +84,11 @@ export default function BestPracticeNavigation() {
     <div className="mx-auto grid grid-cols-1 gap-6 px-2 sm:grid-cols-3">
       {BestPractices.map((bestPractice) => (
         <Link href={bestPractice.href} key={bestPractice.name}>
-          <div
-            className={`drop-shadow-card duration-120 hover:border-brand-dark relative rounded-lg border border-slate-100 bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 hover:cursor-pointer dark:bg-slate-800 ${style.heroCard}`}>
+          <div className="drop-shadow-card duration-120 hover:border-brand-dark break640:p-4 relative rounded-lg border border-slate-100 bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 hover:cursor-pointer dark:bg-slate-800">
             <div
               className={clsx(
                 // base styles independent what type of button it is
-                `absolute right-10 rounded-full px-3 py-1 ${style.category}`,
+                "break640:text-3xs break640:right-3 absolute right-7 rounded-full px-3 py-1",
                 // different styles depending on type
                 bestPractice.category === "Boost Retention" &&
                   "bg-pink-100 text-pink-500 dark:bg-pink-800 dark:text-pink-200",
