@@ -1,12 +1,23 @@
 import { z } from "zod";
 import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
+import { ZColor, ZSurveyPlacement } from "./common";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: z.optional(z.string()),
   subheader: z.optional(z.string()),
 });
+
+export const ZSurveyProductOverwrites = z.object({
+  brandColor: ZColor.nullish(),
+  highlightBorderColor: ZColor.nullish(),
+  placement: ZSurveyPlacement.nullish(),
+  clickOutside: z.boolean().nullish(),
+  darkOverlay: z.boolean().nullish(),
+});
+
+export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
 export const ZSurveyClosedMessage = z
   .object({
@@ -151,11 +162,15 @@ const ZSurveyQuestionBase = z.object({
   isDraft: z.boolean().optional(),
 });
 
+export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
+export type TSurveyOpenTextQuestionInputType = z.infer<typeof ZSurveyOpenTextQuestionInputType>;
+
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
   longAnswer: z.boolean().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
+  inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
@@ -269,6 +284,7 @@ export const ZSurvey = z.object({
   delay: z.number(),
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
+  productOverwrites: ZSurveyProductOverwrites.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),

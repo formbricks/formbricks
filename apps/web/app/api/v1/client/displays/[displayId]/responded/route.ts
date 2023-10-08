@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { markDisplayResponded, updateDisplay } from "@formbricks/lib/services/displays";
+import { markDisplayResponded, updateDisplay } from "@formbricks/lib/display/service";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {

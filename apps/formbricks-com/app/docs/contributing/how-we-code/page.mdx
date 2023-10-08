@@ -49,7 +49,7 @@ Server actions are used to perform server actions in client components. For exam
 
 ## Use service abstraction instead of direct database calls
 
-We utilize [prisma](https://www.prisma.io/) as our Object-Relational Mapping (ORM) tool to interact with the database. This implies that when you need to fetch or modify data in the database, you will be utilizing prisma. All prisma calls should be written in the services folder `packages/lib/services`, and before creating a new service, please ensure that one does not already exist.
+We utilize [prisma](https://www.prisma.io/) as our Object-Relational Mapping (ORM) tool to interact with the database. This implies that when you need to fetch or modify data in the database, you will be utilizing prisma. All prisma calls should be written in the services folder `packages/lib`, and before creating a new service, please ensure that one does not already exist.
 
 ## Handle authentication and CORS in management APIs
 

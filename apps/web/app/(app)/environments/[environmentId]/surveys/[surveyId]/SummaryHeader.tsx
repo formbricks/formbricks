@@ -24,6 +24,7 @@ import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -31,7 +32,7 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   surveyBaseUrl: string;
   product: TProduct;
-  singleUseIds?: string[];
+  profile: TProfile;
 }
 const SummaryHeader = ({
   surveyId,
@@ -39,7 +40,7 @@ const SummaryHeader = ({
   survey,
   surveyBaseUrl,
   product,
-  singleUseIds,
+  profile,
 }: SummaryHeaderProps) => {
   const router = useRouter();
 
@@ -55,7 +56,12 @@ const SummaryHeader = ({
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && (
-          <LinkSurveyShareButton survey={survey} surveyBaseUrl={surveyBaseUrl} singleUseIds={singleUseIds} />
+          <LinkSurveyShareButton
+            survey={survey}
+            surveyBaseUrl={surveyBaseUrl}
+            product={product}
+            profile={profile}
+          />
         )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
@@ -82,7 +88,8 @@ const SummaryHeader = ({
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   surveyBaseUrl={surveyBaseUrl}
-                  singleUseIds={singleUseIds}
+                  product={product}
+                  profile={profile}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -94,7 +101,11 @@ const SummaryHeader = ({
                     disabled={isStatusChangeDisabled}
                     style={isStatusChangeDisabled ? { pointerEvents: "none", opacity: 0.5 } : {}}>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environment={environment} />
+                      <SurveyStatusIndicator
+                        status={survey.status}
+                        environment={environment}
+                        type={survey.type}
+                      />
                       <span className="ml-1 text-sm text-slate-700">
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
@@ -164,7 +175,8 @@ const SummaryHeader = ({
         environment={environment}
         survey={survey}
         surveyBaseUrl={surveyBaseUrl}
-        singleUseIds={singleUseIds}
+        product={product}
+        profile={profile}
       />
     </div>
   );

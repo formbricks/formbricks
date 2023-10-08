@@ -1,4 +1,5 @@
 import "server-only";
+import path from "path";
 import { env } from "@/env.mjs";
 
 export const RESPONSES_LIMIT_FREE = 100;
@@ -12,6 +13,10 @@ export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
 export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" : `${WEBAPP_URL}/s/`;
+
+export const SHORT_SURVEY_BASE_URL = env.SHORT_SURVEY_BASE_URL
+  ? env.SHORT_SURVEY_BASE_URL + "/"
+  : `${WEBAPP_URL}/i/`;
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
@@ -50,3 +55,6 @@ export const MAIL_FROM = env.MAIL_FROM;
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const PEOPLE_PER_PAGE = 50;
+
+// Storage constants
+export const UPLOADS_DIR = path.resolve("./uploads");

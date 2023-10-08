@@ -5,7 +5,7 @@ import { unstable_cache } from "next/cache";
 import { ZId } from "@formbricks/types/v1/environment";
 import { canUserAccessResponse } from "../response/auth";
 import { canUserAccessTag } from "../tag/auth";
-import { getTagOnResponseCacheTag } from "../services/tagOnResponse";
+import { getTagOnResponseCacheTag } from "./service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const canUserAccessTagOnResponse = async (

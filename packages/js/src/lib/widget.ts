@@ -43,15 +43,22 @@ export const renderWidget = (survey: TSurvey) => {
     surveyState
   );
 
+  const productOverwrites = survey.productOverwrites ?? {};
+  const brandColor = productOverwrites.brandColor ?? product.brandColor;
+  const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
+  const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
+  const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
+  const placement = productOverwrites.placement ?? product.placement;
+
   setTimeout(() => {
     renderSurveyModal({
       survey: survey,
-      brandColor: product.brandColor,
+      brandColor,
       formbricksSignature: product.formbricksSignature,
-      clickOutside: product.clickOutsideClose,
-      darkOverlay: product.darkOverlay,
-      highlightBorderColor: product.highlightBorderColor,
-      placement: product.placement,
+      clickOutside,
+      darkOverlay,
+      highlightBorderColor,
+      placement,
       onDisplay: async () => {
         const { id } = await createDisplay(
           {

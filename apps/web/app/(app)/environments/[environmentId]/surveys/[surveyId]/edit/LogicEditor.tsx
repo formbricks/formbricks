@@ -20,6 +20,7 @@ import {
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";
+import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 interface LogicEditorProps {
@@ -141,6 +142,19 @@ export default function LogicEditor({
   };
 
   const addLogic = () => {
+    if (question.logic && question.logic?.length >= 0) {
+      const hasUndefinedLogic = question.logic.some(
+        (logic) =>
+          logic.condition === undefined && logic.value === undefined && logic.destination === undefined
+      );
+      if (hasUndefinedLogic) {
+        toast("Please fill current logic jumps first.", {
+          icon: "🤓",
+        });
+        return;
+      }
+    }
+
     const newLogic: TSurveyLogic[] = !question.logic ? [] : question.logic;
     newLogic.push({
       condition: undefined,
