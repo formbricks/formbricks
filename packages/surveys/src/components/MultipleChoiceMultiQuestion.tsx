@@ -121,7 +121,9 @@ export default function MultipleChoiceSingleQuestion({
                     }}
                     checked={Array.isArray(value) && value.includes(choice.label)}
                     style={{ borderColor: brandColor, color: brandColor }}
-                    required={question.required && idx === 0}
+                    required={
+                      question.required && Array.isArray(value) && value.length ? false : question.required
+                    }
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
