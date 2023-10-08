@@ -5,7 +5,9 @@
 
 */
 -- AlterTable
-ALTER TABLE "Display" ADD COLUMN     "responseId" TEXT;
+ALTER TABLE "Display" ADD COLUMN     "responseId" TEXT,
+ALTER COLUMN "status" DROP NOT NULL,
+ALTER COLUMN "status" DROP DEFAULT;
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Display_responseId_key" ON "Display"("responseId");
