@@ -33,6 +33,7 @@
     "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
     "lint-staged": "^14.0.1",
+    "react-hook-form": "^7.47.0",
     "rimraf": "^5.0.5",
     "tsx": "^3.13.0",
     "turbo": "latest"

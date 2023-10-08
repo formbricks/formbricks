@@ -2,6 +2,7 @@
 
 import { Button, Input, Label } from "@formbricks/ui";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { updateProfileAction } from "./actions";
 import { TProfile } from "@formbricks/types/v1/profile";
@@ -16,6 +17,16 @@ export function EditName({ profile }: { profile: TProfile }) {
     handleSubmit,
     formState: { isSubmitting, errors },
   } = useForm<FormData>();
+
+  const [isButtonDisabled, setButtonDisabled] = useState(true);
+
+  useEffect(() => {
+    if (profile.name || errors.name) {
+      setButtonDisabled(false);
+    } else {
+      setButtonDisabled(true);
+    }
+  }, [profile.name, errors.name]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
@@ -38,6 +49,13 @@ export function EditName({ profile }: { profile: TProfile }) {
           id="fullname"
           defaultValue={profile.name || ""}
           {...register("name", { required: true })}
+          onChange={(e) => {
+            if (e.target.value.trim() === "") {
+              setButtonDisabled(true);
+            } else {
+              setButtonDisabled(false);
+            }
+          }}
         />
         {errors.name && <p className="text-red-500">Please enter at least one character.</p>}
 
@@ -45,7 +63,12 @@ export function EditName({ profile }: { profile: TProfile }) {
           <Label htmlFor="email">Email</Label>
           <Input type="email" id="fullname" defaultValue={profile.email} disabled />
         </div>
-        <Button type="submit" variant="darkCTA" className="mt-4" loading={isSubmitting}>
+        <Button
+          type="submit"
+          variant="darkCTA"
+          className="mt-4"
+          loading={isSubmitting}
+          disabled={isButtonDisabled || !!errors.name}>
           Update
         </Button>
       </form>
