@@ -29,6 +29,11 @@ export default function OpenTextQuestion({
   brandColor,
   autoFocus = true,
 }: OpenTextQuestionProps) {
+  const handleInputChange = (inputValue: string) => {
+    // const isValidInput = validateInput(inputValue, question.inputType, question.required);
+    // setIsValid(isValidInput);
+    onChange({ [question.id]: inputValue });
+  };
   const openTextRef = useCallback((currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
     if (currentElement && autoFocus) {
       currentElement.focus();
@@ -39,7 +44,9 @@ export default function OpenTextQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        //  if ( validateInput(value as string, question.inputType, question.required)) {
+        onSubmit({ [question.id]: value, inputType: question.inputType });
+        // }
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -53,14 +60,18 @@ export default function OpenTextQuestion({
             id={question.id}
             placeholder={question.placeholder}
             required={question.required}
-            value={value}
-            onInput={(e) => {
-              onChange({ [question.id]: e.currentTarget.value });
-            }}
+            value={value as string}
+            type={question.inputType}
+            onInput={(e) => handleInputChange(e.currentTarget.value)}
+            autoFocus={autoFocus}
             onKeyDown={(e) => {
               if (e.key == "Enter") onSubmit({ [question.id]: value });
             }}
-            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
+            pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
+            title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
+            className={`block w-full rounded-md border
+       border-slate-100
+       bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm`}
           />
         ) : (
           <textarea
@@ -71,13 +82,18 @@ export default function OpenTextQuestion({
             id={question.id}
             placeholder={question.placeholder}
             required={question.required}
-            value={value}
-            onInput={(e) => {
-              onChange({ [question.id]: e.currentTarget.value });
-            }}
-            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"></textarea>
+            value={value as string}
+            type={question.inputType}
+            onInput={(e) => handleInputChange(e.currentTarget.value)}
+            autoFocus={autoFocus}
+            pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
+            title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
+            className={`block w-full rounded-md border
+      border-slate-100
+      bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm`}></textarea>
         )}
       </div>
+
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
