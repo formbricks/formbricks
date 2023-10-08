@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
-import { useMemo, useRef, useState, useEffect } from "preact/hooks";
+import { useMemo, useRef, useState, useEffect, useCallback } from "preact/hooks";
 import { cn, shuffleQuestions } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -28,13 +28,15 @@ export default function MultipleChoiceSingleQuestion({
   isLastQuestion,
   brandColor,
 }: MultipleChoiceSingleProps) {
+  const getChoicesWithoutOtherLabels = useCallback(
+    () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
+    [question]
+  );
+
   const [otherSelected, setOtherSelected] = useState(
     !!value &&
       (value as string[]).some((item) => {
-        const choicesWithoutOther = question.choices
-          .filter((choice) => choice.id !== "other")
-          .map((item) => item.label);
-        return choicesWithoutOther.includes(item) === false;
+        return getChoicesWithoutOtherLabels().includes(item) === false;
       })
   ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
 
@@ -84,12 +86,9 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const choicesWithoutOther = question.choices
-          .filter((choice) => choice.id !== "other")
-          .map((item) => item.label);
         const newValue = (value as string[]).filter((item) => {
-          return choicesWithoutOther.includes(item) || item === otherValue;
-        });
+          return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
+        }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
         onChange({ [question.id]: newValue });
         onSubmit({ [question.id]: newValue });
       }}
