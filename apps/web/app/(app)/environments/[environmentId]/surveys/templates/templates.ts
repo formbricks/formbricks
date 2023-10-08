@@ -2059,5 +2059,9 @@ export const minimalSurvey: TSurvey = {
   delay: 0, // No delay
   autoComplete: null,
   closeOnDate: null,
-  surveyClosedMessage: {},
+  surveyClosedMessage: {
+    enabled: false,
+  },
+  productOverwrites: null,
+  singleUse: null,
 };

@@ -1,26 +1,33 @@
 "use client";
 
-import { useEnvironment } from "@/lib/environments/environments";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
-import { ArchiveBoxIcon, CheckIcon, PauseIcon } from "@heroicons/react/24/solid";
+import { ArchiveBoxIcon, CheckIcon, PauseIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 
 interface SurveyStatusIndicatorProps {
   status: string;
   tooltip?: boolean;
-  environmentId: string;
+  environment: TEnvironment;
+  type: string;
 }
 
 export default function SurveyStatusIndicator({
   status,
   tooltip,
-  environmentId,
+  environment,
+  type,
 }: SurveyStatusIndicatorProps) {
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
-
-  if (isLoadingEnvironment) return <></>;
-  if (isErrorEnvironment) return <></>;
-
-  if (!environment.widgetSetupCompleted) return null;
+  if (!environment.widgetSetupCompleted) {
+    if (type === "web") {
+      return (
+        <div>
+          <ExclamationTriangleIcon className="h-4 w-4 text-amber-500" />
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
   if (tooltip) {
     return (
       <TooltipProvider>

@@ -4,6 +4,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { useCallback } from "react";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -28,6 +29,12 @@ export default function OpenTextQuestion({
   brandColor,
   autoFocus = true,
 }: OpenTextQuestionProps) {
+  const openTextRef = useCallback((currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
+    if (currentElement && autoFocus) {
+      currentElement.focus();
+    }
+  }, []);
+
   return (
     <form
       onSubmit={(e) => {
@@ -35,11 +42,13 @@ export default function OpenTextQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input
+            ref={openTextRef}
+            tabIndex={1}
             name={question.id}
             id={question.id}
             placeholder={question.placeholder}
@@ -48,13 +57,17 @@ export default function OpenTextQuestion({
             onInput={(e) => {
               onChange({ [question.id]: e.currentTarget.value });
             }}
-            autoFocus={autoFocus}
+            onKeyDown={(e) => {
+              if (e.key == "Enter") onSubmit({ [question.id]: value });
+            }}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
           />
         ) : (
           <textarea
+            ref={openTextRef}
             rows={3}
             name={question.id}
+            tabIndex={1}
             id={question.id}
             placeholder={question.placeholder}
             required={question.required}
@@ -62,8 +75,7 @@ export default function OpenTextQuestion({
             onInput={(e) => {
               onChange({ [question.id]: e.currentTarget.value });
             }}
-            autoFocus={autoFocus}
-            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
+            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"></textarea>
         )}
       </div>
       <div className="mt-4 flex w-full justify-between">

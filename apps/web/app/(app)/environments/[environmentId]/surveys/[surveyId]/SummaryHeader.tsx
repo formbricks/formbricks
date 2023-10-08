@@ -1,7 +1,5 @@
 "use client";
 
-import { useEnvironment } from "@/lib/environments/environments";
-import { useProduct } from "@/lib/products/products";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import {
   Button,
@@ -15,40 +13,41 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-  ErrorComponent,
 } from "@formbricks/ui";
 import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SuccessMessage";
-import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkModalButton";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
+import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface SummaryHeaderProps {
   surveyId: string;
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurvey;
+  surveyBaseUrl: string;
+  product: TProduct;
+  profile: TProfile;
 }
-const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) => {
+const SummaryHeader = ({
+  surveyId,
+  environment,
+  survey,
+  surveyBaseUrl,
+  product,
+  profile,
+}: SummaryHeaderProps) => {
   const router = useRouter();
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
-  const { triggerSurveyMutate } = useSurveyMutation(environmentId, surveyId);
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
 
-  if (isLoadingProduct || isLoadingEnvironment) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorProduct || isErrorEnvironment) {
-    return <ErrorComponent />;
-  }
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>
@@ -56,14 +55,21 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && <LinkSurveyShareButton survey={survey} />}
+        {survey.type === "link" && (
+          <LinkSurveyShareButton
+            survey={survey}
+            surveyBaseUrl={surveyBaseUrl}
+            product={product}
+            profile={profile}
+          />
+        )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
-          <SurveyStatusDropdown environmentId={environmentId} surveyId={surveyId} />
+          <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
         <Button
           variant="darkCTA"
           className="h-full w-full px-3 lg:px-6"
-          href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
+          href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
           Edit
           <PencilSquareIcon className="ml-1 h-4" />
         </Button>
@@ -78,7 +84,13 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
               <>
-                <LinkSurveyShareButton className="flex w-full justify-center p-1" survey={survey} />
+                <LinkSurveyShareButton
+                  className="flex w-full justify-center p-1"
+                  survey={survey}
+                  surveyBaseUrl={surveyBaseUrl}
+                  product={product}
+                  profile={profile}
+                />
                 <DropdownMenuSeparator />
               </>
             )}
@@ -89,12 +101,15 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
                     disabled={isStatusChangeDisabled}
                     style={isStatusChangeDisabled ? { pointerEvents: "none", opacity: 0.5 } : {}}>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
+                      <SurveyStatusIndicator
+                        status={survey.status}
+                        environment={environment}
+                        type={survey.type}
+                      />
                       <span className="ml-1 text-sm text-slate-700">
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}
-                        {survey.status === "archived" && "Archived"}
                       </span>
                     </div>
                   </DropdownMenuSubTrigger>
@@ -103,7 +118,8 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
                       <DropdownMenuRadioGroup
                         value={survey.status}
                         onValueChange={(value) => {
-                          triggerSurveyMutate({ status: value })
+                          const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
+                          updateSurveyAction({ ...survey, status: castedValue })
                             .then(() => {
                               toast.success(
                                 value === "inProgress"
@@ -148,14 +164,20 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
               variant="darkCTA"
               size="sm"
               className="flex h-full w-full justify-center px-3 lg:px-6"
-              href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
+              href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
               Edit
               <PencilSquareIcon className="ml-1 h-4" />
             </Button>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage environmentId={environmentId} survey={survey} />
+      <SuccessMessage
+        environment={environment}
+        survey={survey}
+        surveyBaseUrl={surveyBaseUrl}
+        product={product}
+        profile={profile}
+      />
     </div>
   );
 };

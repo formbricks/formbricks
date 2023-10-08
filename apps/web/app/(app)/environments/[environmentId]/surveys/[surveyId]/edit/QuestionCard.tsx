@@ -4,7 +4,6 @@ import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
-import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
@@ -28,9 +27,10 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface QuestionCardProps {
-  localSurvey: Survey;
+  localSurvey: TSurveyWithAnalytics;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -42,7 +42,15 @@ interface QuestionCardProps {
   isInValid: boolean;
 }
 
-export function BackButtonInput({ value, onChange }) {
+export function BackButtonInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string | undefined;
+  onChange: (e: any) => void;
+  className?: string;
+}) {
   return (
     <div className="w-full">
       <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
@@ -53,6 +61,7 @@ export function BackButtonInput({ value, onChange }) {
           value={value}
           placeholder="Back"
           onChange={onChange}
+          className={className}
         />
       </div>
     </div>

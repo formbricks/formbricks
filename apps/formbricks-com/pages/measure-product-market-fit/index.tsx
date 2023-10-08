@@ -15,7 +15,7 @@ import Image from "next/image";
 export default function MeasurePMFPage() {
   return (
     <Layout
-      title="Product-Market Fit Survey"
+      title="Product-Market Fit Survey with Formbricks"
       description="Measure Product-Market Fit to understand how to develop your product further.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">

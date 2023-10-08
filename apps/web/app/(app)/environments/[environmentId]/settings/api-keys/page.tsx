@@ -5,10 +5,13 @@ import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import ApiKeyList from "./ApiKeyList";
 import EnvironmentNotice from "@/components/shared/EnvironmentNotice";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function ProfileSettingsPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
   return (
     <div>
       <SettingsTitle title="API Keys" />

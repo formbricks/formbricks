@@ -1,3 +1,4 @@
+import { PlacementType } from "./js";
 import { Question } from "./questions";
 
 export interface ThankYouCard {
@@ -11,9 +12,23 @@ export interface SurveyClosedMessage {
   subheading?: string;
 }
 
+export interface SurveySingleUse {
+  enabled: boolean;
+  heading?: string;
+  subheading?: string;
+}
+
 export interface VerifyEmail {
   name?: string;
   subheading?: string;
+}
+
+export interface SurveyProductOverwrites {
+  brandColor: string;
+  highlightBorderColor: string | null;
+  placement: PlacementType;
+  clickOutside: boolean;
+  darkOverlay: boolean;
 }
 
 export interface Survey {
@@ -24,7 +39,7 @@ export interface Survey {
   redirectUrl: string | null;
   type: "web" | "email" | "link" | "mobile";
   environmentId: string;
-  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  status: "draft" | "inProgress" | "paused" | "completed";
   recontactDays: number | null;
   questions: Question[];
   thankYouCard: ThankYouCard;
@@ -39,7 +54,9 @@ export interface Survey {
   surveyClosedMessage: SurveyClosedMessage | null;
   verifyEmail: VerifyEmail | null;
   closeOnDate: Date | null;
+  singleUse: SurveySingleUse | null;
   _count: { responses: number | null } | null;
+  productOverwrites: SurveyProductOverwrites | null;
 }
 
 export interface AttributeFilter {
@@ -56,6 +73,6 @@ export interface SurveyNotificationData {
   responseCompletedLength: number;
   latestResponse: any;
   questions: Question[];
-  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  status: "draft" | "inProgress" | "paused" | "completed";
   name: String;
 }

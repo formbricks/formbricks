@@ -1,14 +1,11 @@
+import { createTeamAction } from "@/app/(app)/environments/[environmentId]/actions";
 import Modal from "@/components/shared/Modal";
-import { changeEnvironmentByTeam } from "@/lib/environments/changeEnvironments";
-import { useMemberships } from "@/lib/memberships";
-import { useProfile } from "@/lib/profile";
 import { Button, Input, Label } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createTeam } from "@/app/(app)/environments/[environmentId]/actions";
 
 interface CreateTeamModalProps {
   open: boolean;
@@ -17,18 +14,15 @@ interface CreateTeamModalProps {
 
 export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
   const router = useRouter();
-  const { profile } = useProfile();
-  const { mutateMemberships } = useMemberships();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm();
 
   const submitTeam = async (data) => {
     setLoading(true);
-    const newTeam = await createTeam(data.name, (profile as any).id);
+    const newTeam = await createTeamAction(data.name);
 
-    const newMemberships = await mutateMemberships();
-    changeEnvironmentByTeam(newTeam.id, newMemberships, router);
     toast.success("Team created successfully!");
+    router.push(`/teams/${newTeam.id}`);
     setOpen(false);
     setLoading(false);
   };

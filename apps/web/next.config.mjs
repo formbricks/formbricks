@@ -4,20 +4,13 @@ import { createId } from "@paralleldrive/cuid2";
 
 /** @type {import('next').NextConfig} */
 
-const isCloud = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1";
-
 const nextConfig = {
-  assetPrefix: isCloud ? process.env.NEXT_PUBLIC_WEBAPP_URL : undefined,
+  assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
     serverActions: true,
   },
-  transpilePackages: [
-    "@formbricks/database",
-    "@formbricks/ee",
-    "@formbricks/ui",
-    "@formbricks/lib",
-  ],
+  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {
@@ -29,6 +22,25 @@ const nextConfig = {
         hostname: "lh3.googleusercontent.com",
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/api/v1/responses",
+        destination: "/api/v1/management/responses",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/surveys",
+        destination: "/api/v1/management/surveys",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/me",
+        destination: "/api/v1/management/me",
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     return [

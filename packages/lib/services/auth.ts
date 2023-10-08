@@ -5,6 +5,9 @@ import { prisma } from "@formbricks/database";
 import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
 import { verifyPassword } from "../auth";
 import { totpAuthenticatorCheck } from "../totp";
+import { revalidateTag } from "next/cache";
+import { getProfileCacheTag } from "../profile/service";
+import { FORMBRICKS_ENCRYPTION_KEY } from "../constants";
 
 export const setupTwoFactorAuth = async (
   userId: string,
@@ -51,9 +54,9 @@ export const setupTwoFactorAuth = async (
       id: userId,
     },
     data: {
-      backupCodes: symmetricEncrypt(JSON.stringify(backupCodes), process.env.FORMBRICKS_ENCRYPTION_KEY!),
+      backupCodes: symmetricEncrypt(JSON.stringify(backupCodes), FORMBRICKS_ENCRYPTION_KEY),
       twoFactorEnabled: false,
-      twoFactorSecret: symmetricEncrypt(secret, process.env.FORMBRICKS_ENCRYPTION_KEY!),
+      twoFactorSecret: symmetricEncrypt(secret, FORMBRICKS_ENCRYPTION_KEY),
     },
   });
 
@@ -91,11 +94,11 @@ export const enableTwoFactorAuth = async (userId: string, code: string) => {
     throw new Error("Two factor setup has not been completed");
   }
 
-  if (!process.env.FORMBRICKS_ENCRYPTION_KEY) {
+  if (!FORMBRICKS_ENCRYPTION_KEY) {
     throw new Error("Encryption key not found");
   }
 
-  const secret = symmetricDecrypt(user.twoFactorSecret, process.env.FORMBRICKS_ENCRYPTION_KEY);
+  const secret = symmetricDecrypt(user.twoFactorSecret, FORMBRICKS_ENCRYPTION_KEY);
   if (secret.length !== 32) {
     throw new Error("Invalid secret");
   }
@@ -113,6 +116,8 @@ export const enableTwoFactorAuth = async (userId: string, code: string) => {
       twoFactorEnabled: true,
     },
   });
+
+  revalidateTag(getProfileCacheTag(userId));
 
   return {
     message: "Two factor authentication enabled",
@@ -157,7 +162,7 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
 
   // if user has 2fa and using backup code
   if (user.twoFactorEnabled && backupCode) {
-    if (!process.env.FORMBRICKS_ENCRYPTION_KEY) {
+    if (!FORMBRICKS_ENCRYPTION_KEY) {
       throw new Error("Encryption key not found");
     }
 
@@ -165,7 +170,7 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
       throw new Error("Missing backup codes");
     }
 
-    const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, process.env.FORMBRICKS_ENCRYPTION_KEY));
+    const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, FORMBRICKS_ENCRYPTION_KEY));
 
     // check if user-supplied code matches one
     const index = backupCodes.indexOf(backupCode.replaceAll("-", ""));
@@ -185,11 +190,11 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
       throw new Error("Two factor setup has not been completed");
     }
 
-    if (!process.env.FORMBRICKS_ENCRYPTION_KEY) {
+    if (!FORMBRICKS_ENCRYPTION_KEY) {
       throw new Error("Encryption key not found");
     }
 
-    const secret = symmetricDecrypt(user.twoFactorSecret, process.env.FORMBRICKS_ENCRYPTION_KEY);
+    const secret = symmetricDecrypt(user.twoFactorSecret, FORMBRICKS_ENCRYPTION_KEY);
     if (secret.length !== 32) {
       throw new Error("Invalid secret");
     }
@@ -210,6 +215,8 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
       twoFactorSecret: null,
     },
   });
+
+  revalidateTag(getProfileCacheTag(userId));
 
   return {
     message: "Two factor authentication disabled",

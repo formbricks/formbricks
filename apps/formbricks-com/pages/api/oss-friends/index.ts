@@ -65,6 +65,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.hanko.io",
         },
         {
+          name: "Hook0",
+          description:
+            "Open-Source Webhooks-as-a-service (WaaS) that makes it easy for developers to send webhooks.",
+          href: "https://www.hook0.com/",
+        },
+        {
           name: "HTMX",
           description:
             "HTMX is a dependency-free JavaScript library that allows you to access AJAX, CSS Transitions, WebSockets, and Server Sent Events directly in HTML.",
@@ -92,6 +98,23 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Democratizing investment research through an open source financial ecosystem. The OpenBB Terminal allows everyone to perform investment research, from everywhere.",
           href: "https://openbb.co",
+        },
+        {
+          name: "OpenStatus",
+          description: "Open-source monitoring platform with beautiful status pages",
+          href: "https://www.openstatus.dev",
+        },
+        {
+          name: "Papermark",
+          description:
+            "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
+          href: "https://www.papermark.io/",
+        },
+        {
+          name: "Requestly",
+          description:
+            "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
+          href: "https://requestly.io",
         },
         {
           name: "Rivet",

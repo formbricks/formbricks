@@ -1,9 +1,15 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
-import { verifyToken } from "@formbricks/lib/jwt";
 import { prisma } from "@formbricks/database";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  FORMBRICKS_ENCRYPTION_KEY,
+  INTERNAL_SECRET,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
+import { verifyToken } from "@formbricks/lib/jwt";
+import { getProfileByEmail } from "@formbricks/lib/profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -61,16 +67,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (user.twoFactorEnabled && credentials.backupCode) {
-          if (!process.env.FORMBRICKS_ENCRYPTION_KEY) {
+          if (!FORMBRICKS_ENCRYPTION_KEY) {
             console.error("Missing encryption key; cannot proceed with backup code login.");
             throw new Error("Internal Server Error");
           }
 
           if (!user.backupCodes) throw new Error("No backup codes found");
 
-          const backupCodes = JSON.parse(
-            symmetricDecrypt(user.backupCodes, process.env.FORMBRICKS_ENCRYPTION_KEY)
-          );
+          const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, FORMBRICKS_ENCRYPTION_KEY));
 
           // check if user-supplied code matches one
           const index = backupCodes.indexOf(credentials.backupCode.replaceAll("-", ""));
@@ -83,10 +87,7 @@ export const authOptions: NextAuthOptions = {
               id: user.id,
             },
             data: {
-              backupCodes: symmetricEncrypt(
-                JSON.stringify(backupCodes),
-                process.env.FORMBRICKS_ENCRYPTION_KEY
-              ),
+              backupCodes: symmetricEncrypt(JSON.stringify(backupCodes), FORMBRICKS_ENCRYPTION_KEY),
             },
           });
         } else if (user.twoFactorEnabled) {
@@ -98,11 +99,11 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Internal Server Error");
           }
 
-          if (!process.env.FORMBRICKS_ENCRYPTION_KEY) {
+          if (!FORMBRICKS_ENCRYPTION_KEY) {
             throw new Error("Internal Server Error");
           }
 
-          const secret = symmetricDecrypt(user.twoFactorSecret, process.env.FORMBRICKS_ENCRYPTION_KEY);
+          const secret = symmetricDecrypt(user.twoFactorSecret, FORMBRICKS_ENCRYPTION_KEY);
           if (secret.length !== 32) {
             throw new Error("Internal Server Error");
           }
@@ -142,6 +143,9 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials, _req) {
         let user;
         try {
+          if (!credentials?.token) {
+            throw new Error("Token not found");
+          }
           const { id } = await verifyToken(credentials?.token);
           user = await prisma.user.findUnique({
             where: {
@@ -189,42 +193,16 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token }) {
-      const existingUser = await prisma.user.findFirst({
-        where: { email: token.email! },
-        select: {
-          id: true,
-          createdAt: true,
-          onboardingCompleted: true,
-          memberships: {
-            select: {
-              teamId: true,
-              role: true,
-              team: {
-                select: {
-                  plan: true,
-                },
-              },
-            },
-          },
-          name: true,
-        },
-      });
+      const existingUser = await getProfileByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
       }
 
-      const teams = existingUser.memberships.map((membership) => ({
-        id: membership.teamId,
-        role: membership.role,
-        plan: membership.team.plan,
-      }));
-
       const additionalAttributs = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
-        teams,
         name: existingUser.name,
       };
 
@@ -241,14 +219,13 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
-      session.user.teams = token?.teams;
       session.user.name = token.name || "";
 
       return session;
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
-        if (!user.emailVerified && env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+        if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
         }
         return true;
