@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   test:
-    name: Unit tests
+    name: Tests
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
@@ -25,13 +25,13 @@ jobs:
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
-  build-production:
-    name: Production build (without database)
-    uses: ./.github/workflows/build-production.yml
+  build:
+    name: Production build
+    uses: ./.github/workflows/build.yml
     secrets: inherit
 
   required:
-    needs: [lint, test, build-production]
+    needs: [lint, test, build]
     if: always()
     runs-on: ubuntu-latest
     steps:
