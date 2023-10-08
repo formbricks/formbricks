@@ -276,24 +276,24 @@ export default function Header() {
             Concierge
           </Link>
         </Popover.Group>
-        <div className="hidden flex-1 items-center justify-end md:flex">
+        <div className="hidden flex-1 items-center justify-end gap-1 md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
           <Button
             variant="secondary"
-            className="group px-2"
+            className="group flex min-w-[20px] items-center justify-center px-1 md:w-[25px] lg:h-[32px] lg:w-[32px]"
             href="https://formbricks.com/github"
             target="_blank">
             <Image
               src={GitHubMarkDark}
               alt="GitHub Sponsors Formbricks badge"
               width={24}
-              className="block dark:hidden"
+              className="block dark:hidden "
             />
             <Image
               src={GitHubMarkWhite}
               alt="GitHub Sponsors Formbricks badge"
               width={24}
-              className="hidden dark:block"
+              className="hidden dark:block lg:object-contain "
             />
           </Button>
           {/*           <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
@@ -303,7 +303,7 @@ export default function Header() {
 
           <Button
             variant="highlight"
-            className="ml-2"
+            className="min-w-[100px] text-[0.6em] md:ml-1 lg:text-sm "
             onClick={() => {
               router.push("https://app.formbricks.com");
               plausible("NavBar_CTA_Login");
