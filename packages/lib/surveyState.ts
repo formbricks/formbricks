@@ -4,7 +4,7 @@ export class SurveyState {
   responseId: string | null = null;
   displayId: string | null = null;
   surveyId: string;
-  responseAcc: TResponseUpdate = { finished: false, data: {} };
+  responseAcc: TResponseUpdate = { finished: false, data: {}, displayId: "" };
   singleUseId: string | null;
 
   constructor(surveyId: string, singleUseId?: string, responseId?: string) {
@@ -59,6 +59,7 @@ export class SurveyState {
     this.responseAcc = {
       finished: responseUpdate.finished,
       data: { ...this.responseAcc.data, ...responseUpdate.data },
+      displayId: responseUpdate.displayId,
     };
   }
 
@@ -74,7 +75,7 @@ export class SurveyState {
    */
   clear() {
     this.responseId = null;
-    this.responseAcc = { finished: false, data: {} };
+    this.responseAcc = { finished: false, data: {}, displayId: "" };
   }
 }
 
