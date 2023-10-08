@@ -114,7 +114,7 @@ export default function Header() {
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </Popover.Button>
         </div>
-        <Popover.Group as="nav" className="hidden space-x-10 md:flex">
+        <Popover.Group as="nav" className="hidden space-x-6 md:flex lg:space-x-10">
           <Popover className="relative">
             {({ open }) => (
               <>
@@ -125,7 +125,7 @@ export default function Header() {
                       : "text-slate-400  hover:text-slate-900  dark:hover:text-slate-100",
                     "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
                   )}>
-                  <span>Best Practices</span>
+                  <span className="text-sm lg:text-base">Best Practices</span>
                   <ChevronDownIcon
                     className={clsx(
                       open ? "text-slate-600" : "text-slate-400",
@@ -251,17 +251,17 @@ export default function Header() {
  */}
           <Link
             href="/pricing"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Pricing
           </Link>
           <Link
             href="/docs"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Docs
           </Link>
           <Link
             href="/blog"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
           {/*           <Link
@@ -272,15 +272,15 @@ export default function Header() {
 
           <Link
             href="/concierge"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Concierge
           </Link>
         </Popover.Group>
-        <div className="hidden flex-1 items-center justify-end gap-1 md:flex">
-          <ThemeSelector className="relative z-10 mr-5" />
+        <div className="hidden flex-1 items-center justify-end md:flex">
+          <ThemeSelector className="relative z-10 mr-2 lg:mr-5" />
           <Button
             variant="secondary"
-            className="group flex min-w-[20px] items-center justify-center px-1 md:w-[25px] lg:h-[32px] lg:w-[32px]"
+            className="group hidden px-2 lg:block"
             href="https://formbricks.com/github"
             target="_blank">
             <Image
@@ -303,7 +303,7 @@ export default function Header() {
 
           <Button
             variant="highlight"
-            className="min-w-[100px] text-[0.6em] md:ml-1 lg:text-sm "
+            className="ml-2"
             onClick={() => {
               router.push("https://app.formbricks.com");
               plausible("NavBar_CTA_Login");

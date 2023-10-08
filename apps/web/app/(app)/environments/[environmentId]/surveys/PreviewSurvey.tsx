@@ -129,12 +129,12 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, survey.type, survey, setActiveQuestionId]);
 
+  // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
-    if (survey.name !== surveyNameTemp) {
+    if (survey.name !== surveyNameTemp && survey.id === "someUniqueId1") {
       resetQuestionProgress();
       surveyNameTemp = survey.name;
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
