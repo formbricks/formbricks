@@ -53,7 +53,9 @@ export default function Home(props: handleModalProps) {
     setIsModalOpen(val);
   };
 
-  const isEditMode = defaultValues ? true : false;
+  const data = defaultValues
+    ? { isEditMode: true as const, defaultData: defaultValues }
+    : { isEditMode: false as const };
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
       <div className="flex w-full justify-end gap-x-6">
@@ -138,16 +140,17 @@ export default function Home(props: handleModalProps) {
         isDeleting={isDeleting}
       />
 
-      <AddIntegrationModal
-        key={String(isEditMode)}
-        airTableArray={airTableArray}
-        open={isModalOpen}
-        setOpenWithStates={handleModal}
-        environmentId={environmentId}
-        surveys={surveys}
-        airtableIntegration={airTableIntegration}
-        {...(defaultValues ? { isEditMode: true, defaultData: defaultValues } : { isEditMode: false })}
-      />
+      {isModalOpen && (
+        <AddIntegrationModal
+          airTableArray={airTableArray}
+          open={isModalOpen}
+          setOpenWithStates={handleModal}
+          environmentId={environmentId}
+          surveys={surveys}
+          airtableIntegration={airTableIntegration}
+          {...data}
+        />
+      )}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { TAirtableTables } from "@/../../packages/lib/services/airTable";
 import {
   TAirTableIntegration,
@@ -23,8 +25,8 @@ import AirtableLogo from "@/images/airtable.svg";
 import { fetchTables } from "@formbricks/lib/client/airtable";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { Control, Controller, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { upsertIntegrationAction } from "./actions";
 
@@ -60,11 +62,20 @@ function NoBaseFoundError() {
 interface BaseSelectProps {
   control: Control<IntegrationModalInputs, any>;
   isLoading: boolean;
-  fetchTable: (val: string) => void;
+  fetchTable: (val: string) => Promise<void>;
   airTableArray: TAirtable[];
+  setValue: UseFormSetValue<IntegrationModalInputs>;
+  defaultValue: string | undefined;
 }
 
-function BaseSelect({ airTableArray, control, fetchTable, isLoading }: BaseSelectProps) {
+function BaseSelect({
+  airTableArray,
+  control,
+  fetchTable,
+  isLoading,
+  setValue,
+  defaultValue,
+}: BaseSelectProps) {
   return (
     <div className="flex w-full flex-col">
       <Label htmlFor="base">Airtable base</Label>
@@ -78,9 +89,10 @@ function BaseSelect({ airTableArray, control, fetchTable, isLoading }: BaseSelec
               disabled={isLoading}
               onValueChange={async (val) => {
                 field.onChange(val);
-                fetchTable(val);
+                await fetchTable(val);
+                setValue("table", "");
               }}
-              defaultValue={field.value}>
+              defaultValue={defaultValue}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -112,7 +124,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
   } = props;
   const router = useRouter();
   const [tables, setTables] = useState<TAirtableTables["tables"]>([]);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
   const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
 
   useEffect(() => {
@@ -130,11 +142,11 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
   const selectedSurvey = surveys.find((item) => item.id === survey);
   const submitHandler = async (data: IntegrationModalInputs) => {
     try {
-      if (!data.base) {
+      if (!data.base || data.base === "") {
         throw new Error("Please select a base");
       }
 
-      if (!data.table) {
+      if (!data.table || data.table === "") {
         throw new Error("Please select a table");
       }
 
@@ -194,10 +206,10 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
     }
   };
 
-  const fetchTable = (val: string) => {
-    startTransition(async () => {
-      await handleTable(val);
-    });
+  const fetchTable = async (val: string) => {
+    setIsLoading(true);
+    await handleTable(val);
+    setIsLoading(false);
   };
 
   const handleClose = () => {
@@ -221,7 +233,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
   };
 
   return (
-    <Modal open={open} setOpen={setOpenWithStates} noPadding>
+    <Modal open={open} setOpen={handleClose} noPadding>
       <div className="rounded-t-lg bg-slate-100">
         <div className="flex w-full items-center justify-between p-6">
           <div className="flex items-center space-x-2">
@@ -238,36 +250,37 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       <form onSubmit={handleSubmit(submitHandler)}>
         <div className="flex rounded-lg p-6">
           <div className="flex w-full flex-col gap-y-4 pt-5">
-            {isEditMode && isPending ? null : airTableArray.length ? (
+            {airTableArray.length ? (
               <BaseSelect
                 control={control}
-                isLoading={isPending}
+                isLoading={isLoading}
                 fetchTable={fetchTable}
                 airTableArray={airTableArray}
+                setValue={setValue}
+                defaultValue={defaultData?.base}
               />
             ) : (
               <NoBaseFoundError />
             )}
 
-            {tables.length ? (
-              <div className="flex w-full flex-col">
-                <Label htmlFor="table">Table</Label>
-                <div className="mt-1 flex">
-                  <Controller
-                    control={control}
-                    name="table"
-                    render={({ field }) => (
-                      <Select
-                        required
-                        disabled={isPending}
-                        onValueChange={(val) => {
-                          field.onChange(val);
-                          setValue("questions", []);
-                        }}
-                        defaultValue={field.value}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+            <div className="flex w-full flex-col">
+              <Label htmlFor="table">Table</Label>
+              <div className="mt-1 flex">
+                <Controller
+                  control={control}
+                  name="table"
+                  render={({ field }) => (
+                    <Select
+                      required
+                      disabled={!tables.length}
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                      }}
+                      defaultValue={defaultData?.table}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      {tables.length ? (
                         <SelectContent>
                           {tables.map((item) => (
                             <SelectItem key={item.id} value={item.id}>
@@ -275,14 +288,14 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                             </SelectItem>
                           ))}
                         </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
+                      ) : null}
+                    </Select>
+                  )}
+                />
               </div>
-            ) : null}
+            </div>
 
-            {tables.length && surveys.length ? (
+            {surveys.length ? (
               <div className="flex w-full flex-col">
                 <Label htmlFor="survey">Select Survey</Label>
                 <div className="mt-1 flex">
@@ -292,12 +305,11 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                     render={({ field }) => (
                       <Select
                         required
-                        disabled={isPending}
                         onValueChange={(val) => {
                           field.onChange(val);
                           setValue("questions", []);
                         }}
-                        defaultValue={field.value}>
+                        defaultValue={defaultData?.survey}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -315,13 +327,13 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
               </div>
             ) : null}
 
-            {tables.length && !surveys.length ? (
+            {!surveys.length ? (
               <p className="m-1 text-xs text-slate-500">
                 You have to create a survey to be able to setup this integration
               </p>
             ) : null}
 
-            {survey && selectedSurvey && !isPending && (
+            {survey && selectedSurvey && (
               <div>
                 <Label htmlFor="Surveys">Questions</Label>
                 <div className="mt-1 rounded-lg border border-slate-200">
@@ -360,23 +372,21 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
             <div className="flex justify-end gap-x-2">
               {isEditMode ? (
                 <Button
-                  onClick={() => {
-                    startTransition(async () => {
-                      await handleDelete(defaultData.index);
-                    });
+                  onClick={async () => {
+                    await handleDelete(defaultData.index);
                   }}
-                  loading={isPending}
                   type="button"
+                  loading={isLoading}
                   variant="warn">
                   Delete
                 </Button>
               ) : (
-                <Button type="button" variant="minimal" onClick={handleClose}>
+                <Button type="button" loading={isLoading} variant="minimal" onClick={handleClose}>
                   Cancel
                 </Button>
               )}
 
-              <Button variant="darkCTA" loading={isPending} type="submit">
+              <Button variant="darkCTA" type="submit">
                 Save
               </Button>
             </div>
