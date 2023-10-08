@@ -1,3 +1,5 @@
+"use client";
+
 import { timeSince } from "@/../../packages/lib/time";
 import { TEnvironment } from "@/../../packages/types/v1/environment";
 import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integrations";
@@ -75,16 +77,7 @@ export default function Home(props: handleModalProps) {
         </Button>
       </div>
 
-      {!integrationData.length ? (
-        <div className="mt-4 w-full">
-          <EmptySpaceFiller
-            type="table"
-            environment={environment}
-            noWidgetRequired={true}
-            emptyMessage="Your airtable integrations will appear here as soon as you add them. ⏲️"
-          />
-        </div>
-      ) : (
+      {integrationData.length ? (
         <div className="relative w-full overflow-auto pt-10">
           <table className="w-full border border-slate-200 text-sm">
             <thead className="rounded-lg  [&_tr]:border-b">
@@ -98,37 +91,41 @@ export default function Home(props: handleModalProps) {
                 ))}
               </tr>
             </thead>
+
             <tbody className="[&_tr:last-child]:border-0">
-              {integrationData &&
-                integrationData.map((data, index) => (
-                  <>
-                    <p id={`edit-${data.tableName}`} className="sr-only">
-                      edit {data.tableName} integration
-                    </p>
-                    <tr
-                      tabIndex={0}
-                      aria-describedby={`edit-${data.tableName}`}
-                      onClick={() => {
-                        setDefaultValues({
-                          base: data.baseId,
-                          questions: data.questionIds,
-                          survey: data.surveyId,
-                          table: data.tableId,
-                          index,
-                        });
-                        setIsModalOpen(true);
-                      }}
-                      key={index}
-                      className="cursor-pointer border-b transition-colors hover:bg-slate-100">
-                      <td className="p-2 align-middle font-medium ">{data.surveyName}</td>
-                      <td className="p-2 align-middle">{data.tableName}</td>
-                      <td className="p-2 align-middle">{data.questions}</td>
-                      <td className="p-2 align-middle">{timeSince(data.createdAt.toString())}</td>
-                    </tr>
-                  </>
-                ))}
+              {integrationData.map((data, index) => (
+                <tr
+                  tabIndex={0}
+                  aria-label={`edit ${data.tableName} integration`}
+                  onClick={() => {
+                    setDefaultValues({
+                      base: data.baseId,
+                      questions: data.questionIds,
+                      survey: data.surveyId,
+                      table: data.tableId,
+                      index,
+                    });
+                    setIsModalOpen(true);
+                  }}
+                  key={index}
+                  className="cursor-pointer border-b transition-colors hover:bg-slate-100">
+                  <td className="p-2 align-middle font-medium ">{data.surveyName}</td>
+                  <td className="p-2 align-middle">{data.tableName}</td>
+                  <td className="p-2 align-middle">{data.questions}</td>
+                  <td className="p-2 align-middle">{timeSince(data.createdAt.toString())}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
+        </div>
+      ) : (
+        <div className="mt-4 w-full">
+          <EmptySpaceFiller
+            type="table"
+            environment={environment}
+            noWidgetRequired={true}
+            emptyMessage="Your airtable integrations will appear here as soon as you add them. ⏲️"
+          />
         </div>
       )}
 
