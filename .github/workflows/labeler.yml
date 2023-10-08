@@ -6,6 +6,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   labeler:
+    name: Pull Request Labeler
     permissions:
       contents: read
       pull-requests: write
