@@ -3,7 +3,7 @@ on:
   workflow_call:
 jobs:
   build:
-    name: Build, lint, and test on Node ${{ matrix.node }} and ${{ matrix.os }}
+    name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
