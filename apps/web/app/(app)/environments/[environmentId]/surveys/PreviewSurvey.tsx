@@ -13,6 +13,8 @@ import { useEffect, useRef, useState } from "react";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
+let surveyQuestionLengthTemp;
+
 interface PreviewSurveyProps {
   survey: TSurvey | Survey;
   setActiveQuestionId: (id: string | null) => void;
@@ -59,6 +61,14 @@ export default function PreviewSurvey({
       }
     }
   }, [activeQuestionId, survey.type, survey, setActiveQuestionId]);
+
+  useEffect(() => {
+    if (survey.questions.length !== surveyQuestionLengthTemp) {
+      resetQuestionProgress();
+      surveyQuestionLengthTemp = survey.questions.length;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [survey.questions.length]);
 
   function resetQuestionProgress() {
     let storePreviewMode = previewMode;
