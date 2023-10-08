@@ -21,7 +21,6 @@ export default async function Page({ params }) {
     getAnalysisData(params.surveyId, params.environmentId),
     getEnvironment(params.environmentId),
   ]);
-
   if (!environment) {
     throw new Error("Environment not found");
   }
