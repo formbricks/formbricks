@@ -29,8 +29,15 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [otherSelected, setOtherSelected] = useState(
-    !!value && !question.choices.find((c) => c.label === value)
-  ); // initially set to true if value is not in choices
+    !!value &&
+      (value as string[]).some((item) => {
+        const choicesWithoutOther = question.choices
+          .filter((choice) => choice.id !== "other")
+          .map((item) => item.label);
+        return choicesWithoutOther.includes(item) === false;
+      })
+  ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
+
   const [otherValue, setOtherValue] = useState(
     (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
   ); // initially set to the first value that is not in choices
