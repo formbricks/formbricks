@@ -69,7 +69,6 @@ export default {
       },
       screens: {
         xs: "430px",
-        break640: { min: "640px", max: "950px" },
       },
       opacity: {
         1: "0.01",
