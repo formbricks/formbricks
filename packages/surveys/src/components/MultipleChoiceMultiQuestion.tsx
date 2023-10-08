@@ -84,7 +84,14 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        const choicesWithoutOther = question.choices
+          .filter((choice) => choice.id !== "other")
+          .map((item) => item.label);
+        const newValue = (value as string[]).filter((item) => {
+          return choicesWithoutOther.includes(item) || item === otherValue;
+        });
+        onChange({ [question.id]: newValue });
+        onSubmit({ [question.id]: newValue });
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -165,7 +172,6 @@ export default function MultipleChoiceSingleQuestion({
                     value={otherValue}
                     onChange={(e) => {
                       setOtherValue(e.currentTarget.value);
-                      removeItem(otherValue);
                       addItem(e.currentTarget.value);
                     }}
                     placeholder="Please specify"
