@@ -49,6 +49,10 @@ export const setupTwoFactorAuth = async (
     throw new Error("Incorrect password");
   }
 
+  if (!FORMBRICKS_ENCRYPTION_KEY) {
+    throw new Error("Encryption key not found");
+  }
+
   await prisma.user.update({
     where: {
       id: userId,
