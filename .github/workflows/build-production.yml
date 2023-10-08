@@ -29,5 +29,5 @@ jobs:
       - name: create .env
         run: cp .env.example .env
 
-      - name: Build formbricks-js dependencies
+      - name: Build Formbricks-web
         run: pnpm build --filter=web...
