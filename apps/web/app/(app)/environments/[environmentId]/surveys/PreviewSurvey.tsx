@@ -56,42 +56,6 @@ const previewParentContainerVariant: Variants = {
     zIndex: -1,
   },
 };
-
-const previewScreenVariants: Variants = {
-  expanded: {
-    right: "5%",
-    bottom: "10%",
-    top: "10%",
-    width: "40%",
-    position: "fixed",
-    height: "80%",
-    zIndex: 1050,
-    boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
-    transition: {
-      ease: "easeInOut",
-      duration: 0,
-    },
-  },
-  expanded_with_fixed_positioning: {
-    zIndex: 1050,
-    position: "fixed",
-    top: "5%",
-    right: "5%",
-    bottom: "10%",
-    width: "90%",
-    height: "90%",
-    transition: {
-      ease: "easeOut",
-      duration: 0.4,
-    },
-  },
-  shrink: {
-    display: "relative",
-    width: ["83.33%"],
-    height: ["95%"],
-  },
-};
-
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
@@ -106,8 +70,44 @@ export default function PreviewSurvey({
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
+  const [shrink, setshrink] = useState(false);
 
   const { productOverwrites } = survey || {};
+
+  const previewScreenVariants: Variants = {
+    expanded: {
+      right: "5%",
+      bottom: "10%",
+      top: "12%",
+      width: "40%",
+      position: "fixed",
+      height: "80%",
+      zIndex: 1050,
+      boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
+      transition: {
+        ease: "easeInOut",
+        duration: shrink ? 0.3 : 0,
+      },
+    },
+    expanded_with_fixed_positioning: {
+      zIndex: 1050,
+      position: "fixed",
+      top: "5%",
+      right: "5%",
+      bottom: "10%",
+      width: "90%",
+      height: "90%",
+      transition: {
+        ease: "easeOut",
+        duration: 0.4,
+      },
+    },
+    shrink: {
+      display: "relative",
+      width: ["83.33%"],
+      height: ["95%"],
+    },
+  };
 
   const {
     brandColor: surveyBrandColor,
@@ -243,16 +243,18 @@ export default function PreviewSurvey({
                     <ArrowsPointingInIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setIsFullScreenPreview(true);
+                        setshrink(true);
                         setPreviewPosition("relative");
+                        setTimeout(() => setIsFullScreenPreview(false), 300);
                       }}
                     />
                   ) : (
                     <ArrowsPointingOutIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
+                        setshrink(false);
                         setIsFullScreenPreview(true);
-                        setTimeout(() => setPreviewPosition("fixed"), 200);
+                        setTimeout(() => setPreviewPosition("fixed"), 300);
                       }}
                     />
                   )}
