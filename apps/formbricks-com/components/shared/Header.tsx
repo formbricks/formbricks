@@ -287,13 +287,13 @@ export default function Header() {
               src={GitHubMarkDark}
               alt="GitHub Sponsors Formbricks badge"
               width={24}
-              className="block dark:hidden "
+              className="block dark:hidden"
             />
             <Image
               src={GitHubMarkWhite}
               alt="GitHub Sponsors Formbricks badge"
               width={24}
-              className="hidden dark:block lg:object-contain "
+              className="hidden dark:block"
             />
           </Button>
           {/*           <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
