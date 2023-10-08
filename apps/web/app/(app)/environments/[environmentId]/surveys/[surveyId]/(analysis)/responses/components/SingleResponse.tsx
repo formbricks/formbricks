@@ -1,5 +1,6 @@
 "use client";
 
+import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
@@ -15,7 +16,6 @@ import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import ResponseNote from "./ResponseNote";
 import ResponseTagsWrapper from "./ResponseTagsWrapper";
-import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 import { TTag } from "@formbricks/types/v1/tags";
 
@@ -49,7 +49,7 @@ function TooltipRenderer(props: TooltipRendererProps) {
   const { children, shouldRender, tooltipContent } = props;
   if (shouldRender) {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={50}>
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
           <TooltipContent>{tooltipContent}</TooltipContent>

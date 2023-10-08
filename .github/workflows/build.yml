@@ -1,9 +1,9 @@
-name: Tests
+name: Build
 on:
   workflow_call:
 jobs:
   build:
-    name: Build, lint, and test on Node ${{ matrix.node }} and ${{ matrix.os }}
+    name: Build Formbricks-web
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -29,5 +29,5 @@ jobs:
       - name: create .env
         run: cp .env.example .env
 
-      - name: Build formbricks-js dependencies
+      - name: Build Formbricks-web
         run: pnpm build --filter=web...
