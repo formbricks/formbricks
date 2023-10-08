@@ -16,17 +16,17 @@ concurrency:
 
 jobs:
   test:
-    name: Tests
+    name: Run Tests
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
   lint:
-    name: Linters
+    name: Run Linters
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
   build:
-    name: Production build
+    name: Build Production
     uses: ./.github/workflows/build.yml
     secrets: inherit
 
