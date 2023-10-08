@@ -6,6 +6,9 @@ import {
 } from "@/../../packages/types/v1/integrations";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
   Button,
   Checkbox,
   Label,
@@ -21,7 +24,7 @@ import { fetchTables } from "@formbricks/lib/client/airtable";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Control, Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { upsertIntegrationAction } from "./actions";
 
@@ -44,6 +47,57 @@ export type IntegrationModalInputs = {
   survey: string;
   questions: string[];
 };
+
+function NoBaseFoundError() {
+  return (
+    <Alert>
+      <AlertTitle>No Airbase bases found</AlertTitle>
+      <AlertDescription>create a Airbase base</AlertDescription>
+    </Alert>
+  );
+}
+
+interface BaseSelectProps {
+  control: Control<IntegrationModalInputs, any>;
+  isLoading: boolean;
+  fetchTable: (val: string) => void;
+  airTableArray: TAirtable[];
+}
+
+function BaseSelect({ airTableArray, control, fetchTable, isLoading }: BaseSelectProps) {
+  return (
+    <div className="flex w-full flex-col">
+      <Label htmlFor="base">Airtable base</Label>
+      <div className="mt-1 flex">
+        <Controller
+          control={control}
+          name="base"
+          render={({ field }) => (
+            <Select
+              required
+              disabled={isLoading}
+              onValueChange={async (val) => {
+                field.onChange(val);
+                fetchTable(val);
+              }}
+              defaultValue={field.value}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {airTableArray.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function AddIntegrationModal(props: AddIntegrationModalProps) {
   const {
@@ -184,37 +238,15 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       <form onSubmit={handleSubmit(submitHandler)}>
         <div className="flex rounded-lg p-6">
           <div className="flex w-full flex-col gap-y-4 pt-5">
-            {isEditMode && isPending ? null : (
-              <div className="flex w-full flex-col">
-                <Label htmlFor="base">Airtable base</Label>
-                <div className="mt-1 flex">
-                  <Controller
-                    control={control}
-                    name="base"
-                    render={({ field }) => (
-                      <Select
-                        required
-                        disabled={isPending}
-                        onValueChange={async (val) => {
-                          field.onChange(val);
-                          fetchTable(val);
-                        }}
-                        defaultValue={field.value}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {airTableArray.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-              </div>
+            {isEditMode && isPending ? null : airTableArray.length ? (
+              <BaseSelect
+                control={control}
+                isLoading={isPending}
+                fetchTable={fetchTable}
+                airTableArray={airTableArray}
+              />
+            ) : (
+              <NoBaseFoundError />
             )}
 
             {tables.length ? (
