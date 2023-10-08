@@ -303,7 +303,7 @@ export default function Header() {
 
           <Button
             variant="highlight"
-            className="ml-2"
+            className="ml-2 text-xs lg:text-sm"
             onClick={() => {
               router.push("https://app.formbricks.com");
               plausible("NavBar_CTA_Login");
