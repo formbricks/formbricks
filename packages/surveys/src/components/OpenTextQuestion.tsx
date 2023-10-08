@@ -4,6 +4,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { useCallback } from "react";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -33,6 +34,11 @@ export default function OpenTextQuestion({
     // setIsValid(isValidInput);
     onChange({ [question.id]: inputValue });
   };
+  const openTextRef = useCallback((currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
+    if (currentElement && autoFocus) {
+      currentElement.focus();
+    }
+  }, []);
 
   return (
     <form
@@ -48,6 +54,8 @@ export default function OpenTextQuestion({
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input
+            ref={openTextRef}
+            tabIndex={1}
             name={question.id}
             id={question.id}
             placeholder={question.placeholder}
@@ -56,6 +64,9 @@ export default function OpenTextQuestion({
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
+            onKeyDown={(e) => {
+              if (e.key == "Enter") onSubmit({ [question.id]: value });
+            }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
             className={`block w-full rounded-md border
@@ -64,8 +75,10 @@ export default function OpenTextQuestion({
           />
         ) : (
           <textarea
+            ref={openTextRef}
             rows={3}
             name={question.id}
+            tabIndex={1}
             id={question.id}
             placeholder={question.placeholder}
             required={question.required}

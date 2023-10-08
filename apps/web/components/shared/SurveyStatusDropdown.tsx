@@ -35,7 +35,7 @@ export default function SurveyStatusDropdown({
     <>
       {survey.status === "draft" ? (
         <div className="flex items-center">
-          <SurveyStatusIndicator status={survey.status} environment={environment} />
+          <SurveyStatusIndicator status={survey.status} environment={environment} type={survey.type} />
           {survey.status === "draft" && <p className="text-sm italic text-slate-600">Draft</p>}
         </div>
       ) : (
@@ -69,7 +69,11 @@ export default function SurveyStatusDropdown({
                 <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environment={environment} />
+                      <SurveyStatusIndicator
+                        status={survey.status}
+                        environment={environment}
+                        type={survey.type}
+                      />
                       <span className="ml-2 text-sm text-slate-700">
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}

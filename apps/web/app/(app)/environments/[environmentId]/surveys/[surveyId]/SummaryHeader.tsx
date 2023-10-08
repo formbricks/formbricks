@@ -33,7 +33,6 @@ interface SummaryHeaderProps {
   surveyBaseUrl: string;
   product: TProduct;
   profile: TProfile;
-  singleUseIds?: string[];
 }
 const SummaryHeader = ({
   surveyId,
@@ -42,7 +41,6 @@ const SummaryHeader = ({
   surveyBaseUrl,
   product,
   profile,
-  singleUseIds,
 }: SummaryHeaderProps) => {
   const router = useRouter();
 
@@ -61,7 +59,6 @@ const SummaryHeader = ({
           <LinkSurveyShareButton
             survey={survey}
             surveyBaseUrl={surveyBaseUrl}
-            singleUseIds={singleUseIds}
             product={product}
             profile={profile}
           />
@@ -93,7 +90,6 @@ const SummaryHeader = ({
                   surveyBaseUrl={surveyBaseUrl}
                   product={product}
                   profile={profile}
-                  singleUseIds={singleUseIds}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -105,7 +101,11 @@ const SummaryHeader = ({
                     disabled={isStatusChangeDisabled}
                     style={isStatusChangeDisabled ? { pointerEvents: "none", opacity: 0.5 } : {}}>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} environment={environment} />
+                      <SurveyStatusIndicator
+                        status={survey.status}
+                        environment={environment}
+                        type={survey.type}
+                      />
                       <span className="ml-1 text-sm text-slate-700">
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
@@ -177,7 +177,6 @@ const SummaryHeader = ({
         surveyBaseUrl={surveyBaseUrl}
         product={product}
         profile={profile}
-        singleUseIds={singleUseIds}
       />
     </div>
   );

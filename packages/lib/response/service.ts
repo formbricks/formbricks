@@ -11,7 +11,6 @@ import {
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { cache } from "react";
 import { getPerson, transformPrismaPerson } from "../person/service";
@@ -19,6 +18,7 @@ import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { revalidateTag } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 const responseSelection = {
   id: true,
