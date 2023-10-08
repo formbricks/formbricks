@@ -280,7 +280,7 @@ const Leaderboard = [
   },
   {
     name: "Pratik",
-    points: "250",
+    points: "350",
   },
   {
     name: "Karuppiah",
@@ -300,7 +300,8 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "200",
+    points: "1300",
+    link: "https://github.com/KapadiaNaitik",
   },
   {
     name: "Yashhhh",
@@ -355,17 +356,17 @@ const Leaderboard = [
     points: "100",
   },
   {
-    name: "Ardash Malviya",
-    points: "100",
+    name: "Adarsh Malviya",
+    points: "150",
   },
   {
     name: "Aditya Deshlahre",
-    points: "820",
+    points: "870",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "805",
+    points: "855",
   },
   {
     name: "Sagnik Sahoo",
@@ -373,7 +374,7 @@ const Leaderboard = [
   },
   {
     name: "Prasoon Mahawar",
-    points: "500",
+    points: "950",
   },
   {
     name: "Dushmanta",
@@ -409,7 +410,7 @@ const Leaderboard = [
   },
   {
     name: "Rajarshi Misra",
-    points: "300",
+    points: "500",
   },
   {
     name: "Anjaneya Gupta",
@@ -429,7 +430,72 @@ const Leaderboard = [
   },
   {
     name: "maciek",
-    points: "300",
+    points: "350",
+  },
+  {
+    name: "yatharth",
+    points: "600",
+  },
+  {
+    name: "Ratish Jain",
+    points: "150",
+    link: "https://github.com/ratishjain12",
+  },
+  {
+    name: "yatharth",
+    points: "600",
+  },
+  {
+    name: "Subham Raj",
+    points: "500",
+  },
+  {
+    name: "Abhinav Arya",
+    points: "150",
+    link: "github.com/itzabhinavarya",
+  },
+  {
+    name: "Yash Nirmal",
+    points: "100",
+  },
+  {
+    name: "Rohan Gupta",
+    points: "500",
+    link: "https://github.com/rohan9896",
+  },
+  {
+    name: "Eder Silva",
+    points: "100",
+    link: "https://github.com/edersilva78",
+  },
+  {
+    name: "Eduardo Noronha",
+    points: "100",
+  },
+  {
+    name: "Joyal",
+    points: "550",
+    link: "https://github.com/joyal007",
+  },
+  {
+    name: "zaCKoZAck0",
+    points: "200",
+  },
+  {
+    name: "Viswa Prasath (iamvp7)",
+    points: "100",
+  },
+  {
+    name: "aman4444",
+    points: "100",
+  },
+  {
+    name: "mohit.d404",
+    points: "100",
+  },
+  {
+    name: "0xCgn",
+    points: "100",
   },
 ];
 
