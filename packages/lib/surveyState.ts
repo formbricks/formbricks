@@ -4,10 +4,13 @@ export class SurveyState {
   responseId: string | null = null;
   displayId: string | null = null;
   surveyId: string;
-  responseAcc: TResponseUpdate = { finished: false, data: {} };
+  responseAcc: TResponseUpdate = { finished: false, data: {}, displayId: "" };
+  singleUseId: string | null;
 
-  constructor(surveyId: string) {
+  constructor(surveyId: string, singleUseId?: string, responseId?: string) {
     this.surveyId = surveyId;
+    this.singleUseId = singleUseId ?? null;
+    this.responseId = responseId ?? null;
   }
 
   /**
@@ -22,7 +25,11 @@ export class SurveyState {
    * Get a copy of the current state
    */
   copy() {
-    const copyInstance = new SurveyState(this.surveyId);
+    const copyInstance = new SurveyState(
+      this.surveyId,
+      this.singleUseId ?? undefined,
+      this.responseId ?? undefined
+    );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
     return copyInstance;
@@ -52,6 +59,7 @@ export class SurveyState {
     this.responseAcc = {
       finished: responseUpdate.finished,
       data: { ...this.responseAcc.data, ...responseUpdate.data },
+      displayId: responseUpdate.displayId,
     };
   }
 
@@ -67,7 +75,7 @@ export class SurveyState {
    */
   clear() {
     this.responseId = null;
-    this.responseAcc = { finished: false, data: {} };
+    this.responseAcc = { finished: false, data: {}, displayId: "" };
   }
 }
 

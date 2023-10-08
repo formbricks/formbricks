@@ -3,9 +3,9 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 
 import { capitalizeFirstLetter } from "@/lib/utils";
-import { getPerson } from "@formbricks/lib/services/person";
-import { getResponsesByPersonId } from "@formbricks/lib/services/response";
-import { getSessionCount } from "@formbricks/lib/services/session";
+import { getPerson } from "@formbricks/lib/person/service";
+import { getResponsesByPersonId } from "@formbricks/lib/response/service";
+import { getSessionCount } from "@formbricks/lib/session/service";
 
 export default async function AttributesSection({ personId }: { personId: string }) {
   const person = await getPerson(personId);

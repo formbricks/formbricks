@@ -10,7 +10,9 @@ export {
   ZSurveyQuestions,
   ZSurveyThankYouCard,
   ZSurveyClosedMessage,
+  ZSurveyProductOverwrites,
   ZSurveyVerifyEmail,
+  ZSurveySingleUse,
 } from "@formbricks/types/v1/surveys";
 
 export { ZUserNotificationSettings } from "@formbricks/types/v1/users";

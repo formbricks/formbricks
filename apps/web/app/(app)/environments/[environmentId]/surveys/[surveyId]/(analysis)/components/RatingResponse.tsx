@@ -28,9 +28,9 @@ export const RatingResponse: React.FC<RatingResponseProps> = ({ scale, range, an
     const stars: any = [];
     for (let i = 0; i < range; i++) {
       if (i < parseInt(answer)) {
-        stars.push(<StarIcon className="h-7 text-yellow-400" />);
+        stars.push(<StarIcon key={i} className="h-7 text-yellow-400" />);
       } else {
-        stars.push(<StarIcon className="h-7 text-gray-300" />);
+        stars.push(<StarIcon key={i} className="h-7 text-gray-300" />);
       }
     }
     return <div className="flex">{stars}</div>;

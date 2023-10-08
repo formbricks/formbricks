@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import SettingsNavbar from "./SettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
 export const metadata: Metadata = {
   title: "Settings",

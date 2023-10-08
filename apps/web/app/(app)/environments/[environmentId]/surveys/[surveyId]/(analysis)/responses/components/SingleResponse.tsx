@@ -1,5 +1,6 @@
 "use client";
 
+import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
@@ -15,7 +16,6 @@ import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import ResponseNote from "./ResponseNote";
 import ResponseTagsWrapper from "./ResponseTagsWrapper";
-import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
 import { deleteResponseAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
 import { TTag } from "@formbricks/types/v1/tags";
 
@@ -49,7 +49,7 @@ function TooltipRenderer(props: TooltipRendererProps) {
   const { children, shouldRender, tooltipContent } = props;
   if (shouldRender) {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={50}>
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
           <TooltipContent>{tooltipContent}</TooltipContent>
@@ -147,6 +147,11 @@ export default function SingleResponse({
             )}
 
             <div className="flex space-x-4 text-sm">
+              {data.singleUseId && (
+                <span className="flex items-center rounded-full bg-slate-100 px-3 text-slate-600">
+                  {data.singleUseId}
+                </span>
+              )}
               {data.finished && (
                 <span className="flex items-center rounded-full bg-slate-100 px-3 text-slate-600">
                   Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />

@@ -117,11 +117,17 @@ We are very happy if you are interested in contributing to Formbricks 🤗
 
 Here are a few options:
 
-- Star this repo
-- Create issues every time you feel something is missing or goes wrong
-- Upvote issues with 👍 reaction so we know what's the demand for particular issue to prioritize it within roadmap
+- Star this repo.
+- Create issues every time you feel something is missing or goes wrong.
+- Upvote issues with 👍 reaction so we know what's the demand for a particular issue to prioritize it within the roadmap.
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
+
+## All Thanks To Our Contributors
+
+<a href="https://github.com/formbricks/formbricks/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=formbricks/formbricks" />
+</a>
 
 ## 📆 Contact us
 
