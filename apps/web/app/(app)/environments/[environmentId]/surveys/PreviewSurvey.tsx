@@ -8,7 +8,13 @@ import type { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
-import { ComputerDesktopIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
+import {
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+} from "@heroicons/react/24/solid";
+import { AnimatePresence, Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -24,6 +30,65 @@ interface PreviewSurveyProps {
 
 let surveyNameTemp;
 
+const previewParentContainerVariant: Variants = {
+  expanded: {
+    position: "fixed",
+    height: "100%",
+    width: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backdropFilter: "blur(15px)",
+    left: 0,
+    top: 0,
+    zIndex: 1040,
+    transition: {
+      ease: "easeIn",
+      duration: 0.001,
+    },
+  },
+  shrink: {
+    display: "none",
+    position: "fixed",
+    backgroundColor: "rgba(0, 0, 0, 0.0)",
+    backdropFilter: "blur(0px)",
+    transition: {
+      duration: 0,
+    },
+    zIndex: -1,
+  },
+};
+
+const previewScreenVariants: Variants = {
+  expanded: {
+    right: "5%",
+    bottom: "2%",
+    width: "90%",
+    height: "90%",
+    zIndex: 1050,
+    boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
+    transition: {
+      ease: "easeInOut",
+      duration: 0.3,
+    },
+  },
+  expanded_with_fixed_positioning: {
+    zIndex: 1050,
+    position: "fixed",
+    right: "5%",
+    bottom: "5%",
+    width: "90%",
+    height: "90%",
+    transition: {
+      ease: "easeOut",
+      duration: 0.2,
+    },
+  },
+  shrink: {
+    display: "relative",
+    width: ["83.33%"],
+    height: ["95%"],
+  },
+};
+
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
@@ -33,8 +98,10 @@ export default function PreviewSurvey({
   environment,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [previewMode, setPreviewMode] = useState("desktop");
+  const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
 
   const { productOverwrites } = survey || {};
@@ -99,7 +166,22 @@ export default function PreviewSurvey({
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
-      <div className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+      <motion.div
+        variants={previewParentContainerVariant}
+        className="fixed hidden h-[95%] w-5/6"
+        animate={isFullScreenPreview ? "expanded" : "shrink"}
+      />
+      <motion.div
+        layout
+        variants={previewScreenVariants}
+        animate={
+          isFullScreenPreview
+            ? previewPosition === "relative"
+              ? "expanded"
+              : "expanded_with_fixed_positioning"
+            : "shrink"
+        }
+        className="relative flex h-[95] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <div className="absolute right-0 top-0 m-2">
@@ -153,7 +235,26 @@ export default function PreviewSurvey({
               </div>
               <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 {previewType === "modal" ? "Your web app" : "Preview"}
-                <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                <div className="flex items-center">
+                  {isFullScreenPreview ? (
+                    <ArrowsPointingInIcon
+                      className="mr-2 h-4 w-4 cursor-pointer"
+                      onClick={() => {
+                        setIsFullScreenPreview(false);
+                        setPreviewPosition("relative");
+                      }}
+                    />
+                  ) : (
+                    <ArrowsPointingOutIcon
+                      className="mr-2 h-4 w-4 cursor-pointer"
+                      onClick={() => {
+                        setIsFullScreenPreview(true);
+                        setTimeout(() => setPreviewPosition("fixed"), 300);
+                      }}
+                    />
+                  )}
+                  <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
+                </div>
               </p>
             </div>
 
@@ -173,7 +274,7 @@ export default function PreviewSurvey({
                 />
               </Modal>
             ) : (
-              <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
+              <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
                 <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
                   <div className="w-full max-w-md">
                     <SurveyInline
@@ -190,7 +291,8 @@ export default function PreviewSurvey({
             )}
           </div>
         )}
-      </div>
+      </motion.div>
+
       {/* for toggling between mobile and desktop mode  */}
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
