@@ -52,6 +52,8 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
+    AIR_TABLE_CLIENT_ID: z.string().optional(),
+    AIR_TABLE_REDIRECT_URL: z.string().optional(),
   },
 
   /*
@@ -119,5 +121,7 @@ export const env = createEnv({
     SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
     SHORT_SURVEY_BASE_URL: process.env.SHORT_SURVEY_BASE_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    AIR_TABLE_REDIRECT_URL: process.env.AIR_TABLE_REDIRECT_URL,
   },
 });

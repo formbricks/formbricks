@@ -2,12 +2,13 @@ import GoBackButton from "@/components/shared/GoBackButton";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TAirTableIntegration, TAirtable } from "@formbricks/types/v1/integrations";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL, AIR_TABLE_CLIENT_ID, AIR_TABLE_REDIRECT_URL } from "@formbricks/lib/constants";
 import AirTableWrapper from "./AirTableWrapper";
 import { getAirtableTables } from "@/../../packages/lib/services/airTable";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function AirTable({ params }) {
+  const enabled = !!(AIR_TABLE_CLIENT_ID && AIR_TABLE_REDIRECT_URL);
   const [surveys, integrations, environment] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
@@ -31,11 +32,13 @@ export default async function AirTable({ params }) {
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
       <div className="h-[75vh] w-full">
         <AirTableWrapper
+          enabled={enabled}
           airtableIntegration={airtableIntegration}
           airTableArray={airTableArray}
           environmentId={environment.id}
           surveys={surveys}
           environment={environment}
+          webAppUrl={WEBAPP_URL}
         />
       </div>
     </>

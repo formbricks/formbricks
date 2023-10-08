@@ -12,6 +12,8 @@ interface AirTableWrapperProps {
   airtableIntegration: TAirTableIntegration | undefined;
   surveys: TSurvey[];
   environment: TEnvironment;
+  enabled: boolean;
+  webAppUrl: string;
 }
 
 export default function AirTableWrapper({
@@ -20,9 +22,11 @@ export default function AirTableWrapper({
   airtableIntegration,
   surveys,
   environment,
+  enabled,
+  webAppUrl,
 }: AirTableWrapperProps) {
-  const [isConnected, setIsConnected_] = useState(() =>
-    typeof airtableIntegration?.config.key !== undefined ? true : false
+  const [isConnected, setIsConnected_] = useState(
+    airtableIntegration ? airtableIntegration.config?.key : false
   );
 
   const setIsConnected = (data: boolean) => {
@@ -39,6 +43,6 @@ export default function AirTableWrapper({
       surveys={surveys}
     />
   ) : (
-    <Connect environmentId={environmentId} setIsConnected={setIsConnected} />
+    <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
   );
 }

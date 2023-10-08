@@ -5,18 +5,24 @@ import FormbricksLogo from "@/images/logo.svg";
 import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import { useState } from "react";
-import ConnectIntegrationModal from "./ConnectIntegrationModal";
+
+import { authorize } from "@/../../packages/lib/client/airtable";
 
 interface AirTableConnectProps {
+  enabled: boolean;
   environmentId: string;
-  setIsConnected: (data: boolean) => void;
+  webAppUrl: string;
 }
 
-export default function AirTableConnect({ environmentId, setIsConnected }: AirTableConnectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const setOpenWithStates = (isOpen: boolean) => {
-    setIsOpen(isOpen);
+export default function AirTableConnect({ environmentId, enabled, webAppUrl }: AirTableConnectProps) {
+  const [isConnecting, setIsConnecting] = useState(false);
+  const handleGoogleLogin = async () => {
+    setIsConnecting(true);
+    authorize(environmentId, webAppUrl).then((url: string) => {
+      if (url) {
+        window.location.replace(url);
+      }
+    });
   };
 
   return (
@@ -32,16 +38,10 @@ export default function AirTableConnect({ environmentId, setIsConnected }: AirTa
         </div>
         <p className="my-8">Sync responses directly with Airtable.</p>
 
-        <Button variant="darkCTA" onClick={() => setIsOpen(true)}>
+        <Button variant="darkCTA" loading={isConnecting} onClick={handleGoogleLogin} disabled={!enabled}>
           Connect with Airtable
         </Button>
       </div>
-      <ConnectIntegrationModal
-        environmentId={environmentId}
-        open={isOpen}
-        setOpenWithStates={setOpenWithStates}
-        setIsConnected={setIsConnected}
-      />
     </div>
   );
 }

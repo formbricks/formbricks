@@ -88,7 +88,9 @@
         "STRIPE_WEBHOOK_SECRET",
         "TELEMETRY_DISABLED",
         "VERCEL_URL",
-        "WEBAPP_URL"
+        "WEBAPP_URL",
+        "AIR_TABLE_CLIENT_ID",
+        "AIR_TABLE_REDIRECT_URL"
       ]
     },
     "post-install": {
