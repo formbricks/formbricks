@@ -42,7 +42,6 @@ export default function LinkSurvey({
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
-  const [displayId, setDisplayId] = useState<string>();
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
@@ -118,14 +117,12 @@ export default function LinkSurvey({
           onDisplay={async () => {
             if (!isPreview) {
               const { id } = await createDisplay({ surveyId: survey.id }, webAppUrl);
-              setDisplayId(id);
               const newSurveyState = surveyState.copy();
               newSurveyState.updateDisplayId(id);
               setSurveyState(newSurveyState);
             }
           }}
           onResponse={(responseUpdate: TResponseUpdate) => {
-            responseUpdate.displayId = displayId!;
             !isPreview && responseQueue.add(responseUpdate);
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}

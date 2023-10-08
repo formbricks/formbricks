@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { markDisplayResponded, updateDisplay } from "@formbricks/lib/display/service";
+import { markDisplayResponded } from "@formbricks/lib/display/service";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -23,24 +23,6 @@ export async function POST(_: Request, { params }: { params: { displayId: string
       },
       true
     );
-  } catch (error) {
-    return responses.internalServerErrorResponse(error.message);
-  }
-}
-export async function PUT(
-  request: Request,
-  { params }: { params: { displayId: string } }
-): Promise<NextResponse> {
-  const { displayId } = params;
-
-  if (!displayId) {
-    return responses.badRequestResponse("Missing displayId");
-  }
-  const displayUpdate = await request.json();
-
-  try {
-    const display = await updateDisplay(displayId, displayUpdate);
-    return responses.successResponse(display);
   } catch (error) {
     return responses.internalServerErrorResponse(error.message);
   }

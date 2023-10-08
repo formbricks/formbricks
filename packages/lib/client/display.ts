@@ -18,7 +18,7 @@ export const createDisplay = async (
 };
 
 export const updateDisplay = async (displayId: string, displayInput: any, apiHost: string): Promise<void> => {
-  const res = await fetch(`${apiHost}/api/v1/client/displays/${displayId}/responded`, {
+  const res = await fetch(`${apiHost}/api/v1/client/displays/${displayId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(displayInput),

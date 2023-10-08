@@ -2,7 +2,6 @@ import { TResponseUpdate } from "@formbricks/types/v1/responses";
 import { createResponse, updateResponse } from "./client/response";
 import { updateDisplay } from "./client/display";
 import SurveyState from "./surveyState";
-import { markDisplayResponded } from "./client/display";
 
 interface QueueConfig {
   apiHost: string;
@@ -81,11 +80,8 @@ export class ResponseQueue {
           },
           this.config.apiHost
         );
-        if (responseUpdate.displayId) {
-          await updateDisplay(responseUpdate.displayId, { responseId: response.id }, this.config.apiHost);
-        }
         if (this.surveyState.displayId) {
-          markDisplayResponded(this.surveyState.displayId, this.config.apiHost);
+          await updateDisplay(this.surveyState.displayId, { responseId: response.id }, this.config.apiHost);
         }
         this.surveyState.updateResponseId(response.id);
         if (this.config.setSurveyState) {

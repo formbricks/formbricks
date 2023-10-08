@@ -76,6 +76,7 @@ export const selectSurveyWithAnalytics = {
   displays: {
     select: {
       status: true,
+      responseId: true,
       id: true,
     },
   },
@@ -116,7 +117,9 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
       let { _count, displays, ...surveyPrismaFields } = surveyPrisma;
 
       const numDisplays = displays.length;
-      const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
+      const numDisplaysResponded = displays.filter((item) => {
+        return item.status === "responded" || item.responseId;
+      }).length;
       const numResponses = _count.responses;
       // responseRate, rounded to 2 decimal places
       const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
@@ -390,7 +393,9 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
         const surveys: TSurveyWithAnalytics[] = [];
         for (const { _count, displays, ...surveyPrisma } of surveysPrisma) {
           const numDisplays = displays.length;
-          const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
+          const numDisplaysResponded = displays.filter((item) => {
+            return item.status === "responded" || item.responseId;
+          }).length;
           const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
 
           const transformedSurvey = {

@@ -39,7 +39,6 @@ const selectDisplay = {
       },
     },
   },
-  status: true,
 };
 
 export const updateDisplay = async (
@@ -82,7 +81,6 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
             id: displayInput.surveyId,
           },
         },
-        status: "seen",
 
         ...(displayInput.personId && {
           person: {
@@ -187,7 +185,6 @@ export const getDisplaysOfPerson = cache(
           createdAt: displayPrisma.createdAt,
           updatedAt: displayPrisma.updatedAt,
           person: null,
-          status: displayPrisma.status,
           surveyId: displayPrisma.surveyId,
           surveyName: displayPrisma.survey.name,
           responseId: displayPrisma.responseId,

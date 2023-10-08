@@ -166,15 +166,15 @@ enum DisplayStatus {
 }
 
 model Display {
-  id         String        @id @default(cuid())
-  createdAt  DateTime      @default(now()) @map(name: "created_at")
-  updatedAt  DateTime      @updatedAt @map(name: "updated_at")
-  survey     Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  id         String         @id @default(cuid())
+  createdAt  DateTime       @default(now()) @map(name: "created_at")
+  updatedAt  DateTime       @updatedAt @map(name: "updated_at")
+  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId   String
-  person     Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId   String?
-  responseId String?       @unique
-  status     DisplayStatus @default(seen)
+  responseId String?        @unique
+  status     DisplayStatus?
 }
 
 model SurveyTrigger {

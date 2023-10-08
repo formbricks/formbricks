@@ -13,7 +13,6 @@ const containerId = "formbricks-web-container";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
-let displayId: string | null = null;
 let surveyRunning = false;
 
 export const renderWidget = (survey: TSurvey) => {
@@ -67,12 +66,10 @@ export const renderWidget = (survey: TSurvey) => {
           },
           config.get().apiHost
         );
-        displayId = id;
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        responseUpdate.displayId = displayId!;
         responseQueue.add(responseUpdate);
       },
       onClose: closeSurvey,

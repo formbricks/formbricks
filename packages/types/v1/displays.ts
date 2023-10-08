@@ -8,14 +8,15 @@ export const ZDisplay = z.object({
   surveyId: z.string().cuid2(),
   person: ZPerson.nullable(),
   responseId: z.string().cuid2().nullable(),
-  status: z.enum(["seen", "responded"]),
+  status: z.enum(["seen", "responded"]).optional(),
 });
 
 export type TDisplay = z.infer<typeof ZDisplay>;
 
 export const ZDisplayInput = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.string().cuid2().optional(),
   personId: z.string().cuid2().optional(),
+  responseId: z.string().cuid2().optional(),
 });
 
 export type TDisplayInput = z.infer<typeof ZDisplayInput>;
