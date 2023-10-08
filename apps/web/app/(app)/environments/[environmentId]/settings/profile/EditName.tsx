@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label } from "@formbricks/ui";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm, SubmitHandler } from "node_modules/react-hook-form";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { updateProfileAction } from "./actions";

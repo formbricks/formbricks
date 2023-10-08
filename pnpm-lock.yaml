@@ -20,9 +20,6 @@ importers:
       lint-staged:
         specifier: ^14.0.1
         version: 14.0.1
-      react-hook-form:
-        specifier: ^7.47.0
-        version: 7.47.0(react@18.2.0)
       rimraf:
         specifier: ^5.0.5
         version: 5.0.5
@@ -21286,6 +21283,7 @@ packages:
       react: ^16.8.0 || ^17 || ^18
     dependencies:
       react: 18.2.0
+    dev: false
 
   /react-hot-toast@2.4.1(csstype@3.1.1)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-j8z+cQbWIM5LY37pR6uZR6D4LfseplqnuAO4co4u8917hBUvXlEqyP1ZzqVLcqoyUesZZv/ImreoCeHVDpE5pQ==}
