@@ -9,12 +9,12 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
+  ArrowsPointingInIcon,
+  ArrowsPointingOutIcon,
   ComputerDesktopIcon,
   DevicePhoneMobileIcon,
-  ArrowsPointingOutIcon,
-  ArrowsPointingInIcon,
 } from "@heroicons/react/24/solid";
-import { AnimatePresence, Variants, motion } from "framer-motion";
+import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
