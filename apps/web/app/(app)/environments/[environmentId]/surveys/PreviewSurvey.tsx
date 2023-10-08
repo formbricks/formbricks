@@ -60,26 +60,29 @@ const previewParentContainerVariant: Variants = {
 const previewScreenVariants: Variants = {
   expanded: {
     right: "5%",
-    bottom: "2%",
-    width: "90%",
-    height: "90%",
+    bottom: "10%",
+    top: "10%",
+    width: "40%",
+    position: "fixed",
+    height: "80%",
     zIndex: 1050,
     boxShadow: "0px 4px 5px 4px rgba(169, 169, 169, 0.25)",
     transition: {
       ease: "easeInOut",
-      duration: 0.3,
+      duration: 0,
     },
   },
   expanded_with_fixed_positioning: {
     zIndex: 1050,
     position: "fixed",
+    top: "5%",
     right: "5%",
-    bottom: "5%",
+    bottom: "10%",
     width: "90%",
     height: "90%",
     transition: {
       ease: "easeOut",
-      duration: 0.2,
+      duration: 0.4,
     },
   },
   shrink: {
@@ -240,7 +243,7 @@ export default function PreviewSurvey({
                     <ArrowsPointingInIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setIsFullScreenPreview(false);
+                        setIsFullScreenPreview(true);
                         setPreviewPosition("relative");
                       }}
                     />
@@ -249,7 +252,7 @@ export default function PreviewSurvey({
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
                         setIsFullScreenPreview(true);
-                        setTimeout(() => setPreviewPosition("fixed"), 300);
+                        setTimeout(() => setPreviewPosition("fixed"), 200);
                       }}
                     />
                   )}
