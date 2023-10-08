@@ -43,13 +43,13 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ### Features
 
-- 📲 Create **in-product surveys** with our no code editor with multiple question types
-- 📚 Choose from a variety of best-practice **templates**
-- 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code
-- 🔗 Create shareable **link surveys**
-- 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys
-- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier, n8n and more**
-- 🔒 All **open source**, transparent and self-hostable
+- 📲 Create **in-product surveys** with our no code editor with multiple question types.
+- 📚 Choose from a variety of best-practice **templates**.
+- 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code.
+- 🔗 Create shareable **link surveys**.
+- 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys.
+- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier, n8n and more**.
+- 🔒 All **open source**, transparent and self-hostable.
 
 ### Built on Open Source
 
@@ -63,7 +63,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ## 🚀 Getting started
 
-We've got several options depending on your need to help you quickly get started with Formbricks
+We've got several options depending on your need to help you quickly get started with Formbricks.
 
 ### ☁️ Cloud Version
 
@@ -93,7 +93,7 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 #### Prerequisites
 
-Here is what you need to be able to run Formbricks
+Here is what you need to be able to run Formbricks:
 
 - Node.js (Version: >=18.x)
 - [Pnpm](https://pnpm.io/)
