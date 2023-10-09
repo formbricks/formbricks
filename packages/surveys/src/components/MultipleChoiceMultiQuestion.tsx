@@ -77,7 +77,15 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        if (otherSelected) {
+          if (Array.isArray(value)) {
+            onSubmit({ [question.id]: [...value, otherValue] });
+          } else {
+            onSubmit({ [question.id]: [otherValue] });
+          }
+        } else {
+          onSubmit({ [question.id]: value });
+        }
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -177,13 +185,19 @@ export default function MultipleChoiceSingleQuestion({
                     value={otherValue}
                     onChange={(e) => {
                       setOtherValue(e.currentTarget.value);
-                      removeItem(otherValue);
-                      addItem(e.currentTarget.value);
                     }}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value });
+                          if (otherSelected) {
+                            if (Array.isArray(value)) {
+                              onSubmit({ [question.id]: [...value, otherValue] });
+                            } else {
+                              onSubmit({ [question.id]: [otherValue] });
+                            }
+                          } else {
+                            onSubmit({ [question.id]: value });
+                          }
                         }, 100);
                       }
                     }}
