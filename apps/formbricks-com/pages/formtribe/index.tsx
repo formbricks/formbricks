@@ -267,12 +267,12 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "550",
+    points: "1250",
     link: "https://github.com/gupta-piyush19",
   },
   {
     name: "Suman",
-    points: "200",
+    points: "600",
   },
   {
     name: "Subhdeep",
@@ -280,7 +280,7 @@ const Leaderboard = [
   },
   {
     name: "Pratik",
-    points: "250",
+    points: "350",
   },
   {
     name: "Karuppiah",
@@ -300,7 +300,8 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "200",
+    points: "1300",
+    link: "https://github.com/KapadiaNaitik",
   },
   {
     name: "Yashhhh",
@@ -355,25 +356,25 @@ const Leaderboard = [
     points: "100",
   },
   {
-    name: "Ardash Malviya",
-    points: "100",
+    name: "Adarsh Malviya",
+    points: "150",
   },
   {
     name: "Aditya Deshlahre",
-    points: "550",
+    points: "870",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "350",
+    points: "855",
   },
   {
     name: "Sagnik Sahoo",
-    points: "100",
+    points: "250",
   },
   {
     name: "Prasoon Mahawar",
-    points: "100",
+    points: "950",
   },
   {
     name: "Dushmanta",
@@ -409,6 +410,91 @@ const Leaderboard = [
   },
   {
     name: "Rajarshi Misra",
+    points: "500",
+  },
+  {
+    name: "Anjaneya Gupta",
+    points: "300",
+  },
+  {
+    name: "Sachin Kuber",
+    points: "100",
+  },
+  {
+    name: "Manpreet Singh",
+    points: "100",
+  },
+  {
+    name: "Vaibhav Gupta",
+    points: "100",
+  },
+  {
+    name: "maciek",
+    points: "350",
+  },
+  {
+    name: "yatharth",
+    points: "600",
+  },
+  {
+    name: "Ratish Jain",
+    points: "150",
+    link: "https://github.com/ratishjain12",
+  },
+  {
+    name: "yatharth",
+    points: "600",
+  },
+  {
+    name: "Subham Raj",
+    points: "500",
+  },
+  {
+    name: "Abhinav Arya",
+    points: "150",
+    link: "github.com/itzabhinavarya",
+  },
+  {
+    name: "Yash Nirmal",
+    points: "100",
+  },
+  {
+    name: "Rohan Gupta",
+    points: "500",
+    link: "https://github.com/rohan9896",
+  },
+  {
+    name: "Eder Silva",
+    points: "100",
+    link: "https://github.com/edersilva78",
+  },
+  {
+    name: "Eduardo Noronha",
+    points: "100",
+  },
+  {
+    name: "Joyal",
+    points: "550",
+    link: "https://github.com/joyal007",
+  },
+  {
+    name: "zaCKoZAck0",
+    points: "200",
+  },
+  {
+    name: "Viswa Prasath (iamvp7)",
+    points: "100",
+  },
+  {
+    name: "aman4444",
+    points: "100",
+  },
+  {
+    name: "mohit.d404",
+    points: "100",
+  },
+  {
+    name: "0xCgn",
     points: "100",
   },
 ];

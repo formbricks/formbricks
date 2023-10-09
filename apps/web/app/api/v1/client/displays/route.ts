@@ -25,7 +25,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const displayInput = inputValidation.data;
-
   // find environmentId from surveyId
   let survey;
 

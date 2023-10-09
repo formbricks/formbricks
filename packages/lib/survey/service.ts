@@ -76,6 +76,7 @@ export const selectSurveyWithAnalytics = {
   displays: {
     select: {
       status: true,
+      responseId: true,
       id: true,
     },
   },
@@ -99,6 +100,9 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
           select: selectSurveyWithAnalytics,
         });
       } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError("Database operation failed");
         }
@@ -113,7 +117,9 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
       let { _count, displays, ...surveyPrismaFields } = surveyPrisma;
 
       const numDisplays = displays.length;
-      const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
+      const numDisplaysResponded = displays.filter((item) => {
+        return item.status === "responded" || item.responseId;
+      }).length;
       const numResponses = _count.responses;
       // responseRate, rounded to 2 decimal places
       const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
@@ -132,7 +138,9 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
         const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
         return survey;
       } catch (error) {
-        console.error(error);
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
         }
@@ -172,6 +180,9 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
           select: selectSurvey,
         });
       } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError("Database operation failed");
         }
@@ -192,6 +203,9 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         const survey = ZSurvey.parse(transformedSurvey);
         return survey;
       } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
         }
@@ -243,6 +257,9 @@ export const getSurveysByAttributeClassId = async (attributeClassId: string): Pr
     }
     return surveys;
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
     if (error instanceof z.ZodError) {
       console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
     }
@@ -277,6 +294,9 @@ export const getSurveysByActionClassId = async (actionClassId: string): Promise<
     }
     return surveys;
   } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
     if (error instanceof z.ZodError) {
       console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
     }
@@ -297,6 +317,9 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
           select: selectSurvey,
         });
       } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError("Database operation failed");
         }
@@ -317,6 +340,9 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
         }
         return surveys;
       } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
         }
@@ -353,6 +379,9 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
           select: selectSurveyWithAnalytics,
         });
       } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError("Database operation failed");
         }
@@ -364,7 +393,9 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
         const surveys: TSurveyWithAnalytics[] = [];
         for (const { _count, displays, ...surveyPrisma } of surveysPrisma) {
           const numDisplays = displays.length;
-          const numDisplaysResponded = displays.filter((item) => item.status === "responded").length;
+          const numDisplaysResponded = displays.filter((item) => {
+            return item.status === "responded" || item.responseId;
+          }).length;
           const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
 
           const transformedSurvey = {
@@ -381,6 +412,9 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
         }
         return surveys;
       } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
         }
@@ -578,7 +612,9 @@ export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSu
 
     return modifiedSurvey;
   } catch (error) {
-    console.error(error);
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

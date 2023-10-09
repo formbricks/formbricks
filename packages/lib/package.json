@@ -17,7 +17,7 @@
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
     "date-fns": "^2.30.0",
-    "next-auth": "^4.22.3",
+    "next-auth": "^4.23.2",
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^13.0.2",
     "nanoid": "^5.0.1",
