@@ -25,6 +25,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const displayInput = inputValidation.data;
+  if (!displayInput.surveyId) {
+    return responses.badRequestResponse("Missing surveyId");
+  }
 
   // find environmentId from surveyId
   let survey;
