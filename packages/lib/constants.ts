@@ -1,5 +1,5 @@
-"server-only";
-
+import "server-only";
+import path from "path";
 import { env } from "@/env.mjs";
 
 export const RESPONSES_LIMIT_FREE = 100;
@@ -58,3 +58,6 @@ export const MAIL_FROM = env.MAIL_FROM;
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const PEOPLE_PER_PAGE = 50;
+
+// Storage constants
+export const UPLOADS_DIR = path.resolve("./uploads");

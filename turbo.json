@@ -90,7 +90,11 @@
         "VERCEL_URL",
         "WEBAPP_URL",
         "AIR_TABLE_CLIENT_ID",
-        "AIR_TABLE_REDIRECT_URL"
+        "AIR_TABLE_REDIRECT_URL",
+        "AWS_ACCESS_KEY",
+        "AWS_SECRET_KEY",
+        "S3_REGION",
+        "S3_BUCKET_NAME"
       ]
     },
     "post-install": {

@@ -234,7 +234,7 @@ export default function Navigation({
   return (
     <>
       {product && (
-        <nav className="top-0 z-10 w-full border-b border-slate-200 bg-white">
+        <nav className="top-0 w-full border-b border-slate-200 bg-white">
           {environment?.type === "development" && (
             <div className="h-6 w-full bg-[#A33700] p-0.5 text-center text-sm text-white">
               You&apos;re in development mode. Use it to test surveys, actions and attributes.
@@ -329,7 +329,7 @@ export default function Navigation({
                     <DropdownMenuLabel className="cursor-default break-all">
                       <span className="ph-no-capture font-normal">Signed in as </span>
                       {session?.user?.name.length > 30 ? (
-                        <TooltipProvider>
+                        <TooltipProvider delayDuration={50}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <span>{truncate(session?.user?.name, 30)}</span>
