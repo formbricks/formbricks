@@ -46,7 +46,7 @@ export async function GET(
     }
 
     try {
-      const { fileBuffer, metaData } = await getFileFromS3(fileName);
+      const { fileBuffer, metaData } = await getFileFromS3(`${environmentId}/${accessType}/${fileName}`);
 
       return new Response(fileBuffer, {
         headers: {
