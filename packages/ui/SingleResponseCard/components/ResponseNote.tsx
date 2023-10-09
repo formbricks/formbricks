@@ -17,19 +17,11 @@ interface ResponseNotesProps {
   profile: TProfile;
   responseId: string;
   notes: TResponseNote[];
-  surveyId: string;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function ResponseNotes({
-  profile,
-  responseId,
-  notes,
-  surveyId,
-  isOpen,
-  setIsOpen,
-}: ResponseNotesProps) {
+export default function ResponseNotes({ profile, responseId, notes, isOpen, setIsOpen }: ResponseNotesProps) {
   const router = useRouter();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
@@ -42,7 +34,7 @@ export default function ResponseNotes({
     e.preventDefault();
     setIsCreatingNote(true);
     try {
-      await createResponseNoteAction(surveyId, responseId, noteText);
+      await createResponseNoteAction(responseId, profile.id, noteText);
       router.refresh();
       setIsCreatingNote(false);
       setNoteText("");

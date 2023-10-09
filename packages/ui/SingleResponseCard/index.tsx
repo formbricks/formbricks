@@ -335,7 +335,6 @@ export default function SingleResponseCard({
           profile={profile}
           responseId={response.id}
           notes={response.notes}
-          surveyId={survey.id}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
         />
