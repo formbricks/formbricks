@@ -180,82 +180,7 @@ const getProducts = async (): Promise<ProductData[]> => {
                   },
                 },
                 select: {
-                  status: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      team: {
-        select: {
-          memberships: {
-            select: {
-              user: {
-                select: {
-                  email: true,
-                  notificationSettings: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-};
-
-/* const getProducts = async (): Promise<ProductData[]> => {
-  // gets all products together with team members, surveys, responses, and displays for the last 7 days
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  return await prisma.product.findMany({
-    select: {
-      id: true,
-      name: true,
-      environments: {
-        where: {
-          type: "production",
-        },
-        select: {
-          id: true,
-          surveys: {
-            where: {
-              status: {
-                not: "draft",
-              },
-            },
-            select: {
-              id: true,
-              name: true,
-              questions: true,
-              status: true,
-              responses: {
-                where: {
-                  createdAt: {
-                    gte: sevenDaysAgo,
-                  },
-                },
-                select: {
                   id: true,
-                  createdAt: true,
-                  updatedAt: true,
-                  finished: true,
-                  data: true,
-                },
-                orderBy: {
-                  createdAt: "desc",
-                },
-              },
-              displays: {
-                where: {
-                  createdAt: {
-                    gte: sevenDaysAgo,
-                  },
-                },
-                select: {
-                  status: true,
                 },
               },
             },
@@ -279,4 +204,3 @@ const getProducts = async (): Promise<ProductData[]> => {
     },
   });
 };
- */
