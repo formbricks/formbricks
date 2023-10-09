@@ -43,7 +43,7 @@ type ResponseData = {
 };
 
 type DisplayData = {
-  id: string;
+  responseId: string | null;
 };
 
 type SurveyData = {

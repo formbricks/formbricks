@@ -180,7 +180,7 @@ const getProducts = async (): Promise<ProductData[]> => {
                   },
                 },
                 select: {
-                  id: true,
+                  responseId: true,
                 },
               },
             },
