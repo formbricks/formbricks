@@ -48,7 +48,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={SwitchToDev}
   alt="switch to dev environment"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="rounded-lg max-w-full    "
 />
 
 3. Then, create a survey using the template “Docs Feedback”:
@@ -57,7 +57,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={DocsTemplate}
   alt="select docs template"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="rounded-lg max-w-full    "
 />
 
 4. Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
@@ -66,7 +66,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={ChangeId}
   alt="switch to dev environment"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="rounded-lg max-w-full    "
 />
 
 5. In the same way, you can change the Internal Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
@@ -83,7 +83,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={WhenToAsk}
   alt="set up when to ask card"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="rounded-lg max-w-full    "
 />
 
 7. Our goal is to create an event that never fires. This is a bit nonsensical because it is a workaround. Stick with me 😃 Fill the action out like on the screenshot:
@@ -92,7 +92,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={AddAction}
   alt="add action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="rounded-lg max-w-full    "
   className="rounded"
 />
 
@@ -102,7 +102,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={SelectNonevent}
   alt="select nonevent"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="rounded-lg max-w-full    "
 />
 
 **You’re all setup in Formbricks Cloud for now 👍**
@@ -132,7 +132,7 @@ This allows us to capture and analyze partial feedback where the user is not wil
   src={DocsNavi}
   alt="doc navigation"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="rounded-lg max-w-full    "
   className="rounded"
 />
 
@@ -411,7 +411,7 @@ Before you roll it out in production, you want to test it. To do so, you need tw
 
 When you are on the survey detail page, you’ll find both of them in the URL:
 
-<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded-lg max-w-full    " />
 
 Now, you have to replace the IDs and the API host accordingly in your `handleFeedbackSubmit`:
 
