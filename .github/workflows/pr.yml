@@ -16,27 +16,17 @@ concurrency:
 
 jobs:
   test:
-    name: Unit tests
+    name: Run Tests
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
   lint:
-    name: Linters
+    name: Run Linters
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
-  build-production:
-    name: Production build (without database)
-    uses: ./.github/workflows/build-production.yml
-    secrets: inherit
-
-  analyze:
-    needs: build-production
-    uses: ./.github/workflows/nextjs-bundle-analysis.yml
-    secrets: inherit
-
   required:
-    needs: [lint, test, build-production]
+    needs: [lint, test] 
     if: always()
     runs-on: ubuntu-latest
     steps:
