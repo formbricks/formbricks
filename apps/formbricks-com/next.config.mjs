@@ -130,6 +130,11 @@ const nextConfig = {
         destination: "/blog/experience-management-open-source",
         permanent: true,
       },
+      {
+        source: "/launch",
+        destination: "https://www.producthunt.com/products/formbricks",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
