@@ -71,10 +71,9 @@ export default function ResponseTimeline({
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && responses.length === 0 && (
-        <EmptyInAppSurveys environmentId={environment.id} />
-      )}
-      {survey.type !== "web" && responses.length === 0 ? (
+      {survey.type === "web" && !environment.widgetSetupCompleted ? (
+        <EmptyInAppSurveys environment={environment} />
+      ) : responses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
