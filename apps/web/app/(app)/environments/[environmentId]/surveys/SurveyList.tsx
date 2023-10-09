@@ -1,7 +1,7 @@
 import { UsageAttributesUpdater } from "@/app/(app)/FormbricksClient";
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/SurveyStarter";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { SurveyStatusIndicator } from "@formbricks/ui";
 import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -81,12 +81,9 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                       <div className="flex items-center">
                         {survey.status !== "draft" && (
                           <>
-                            <SurveyStatusIndicator
-                              status={survey.status}
-                              tooltip
-                              environment={environment}
-                              type={survey.type}
-                            />
+                            {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                              <SurveyStatusIndicator status={survey.status} />
+                            )}
                           </>
                         )}
                         {survey.status === "draft" && (

@@ -1,6 +1,7 @@
 import { cn } from "@formbricks/lib/cn";
 import { PresentationChartLineIcon, InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import revalidateSurveyIdPath from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 
 interface SurveyResultsTabProps {
   activeId: string;
@@ -31,6 +32,9 @@ export default function SurveyResultsTab({ activeId, environmentId, surveyId }: 
           {tabs.map((tab) => (
             <Link
               key={tab.id}
+              onClick={() => {
+                revalidateSurveyIdPath(environmentId, surveyId);
+              }}
               href={tab.href}
               className={cn(
                 tab.id === activeId
