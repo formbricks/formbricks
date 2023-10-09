@@ -1,11 +1,5 @@
 {
   "extends": "@formbricks/tsconfig/react-library.json",
   "include": ["."],
-  "exclude": ["dist", "build", "node_modules"],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["../../apps/web/*"]
-    }
-  }
+  "exclude": ["build", "node_modules"]
 }

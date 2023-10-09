@@ -7,14 +7,17 @@ import { TEnvironment } from "@formbricks/types/v1/environment";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { TTag } from "@formbricks/types/v1/tags";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 export default function ResponseTimeline({
   surveys,
+  profile,
   environment,
   responses,
   environmentTags,
 }: {
   surveys: TSurvey[];
+  profile: TProfile;
   responses: TResponse[];
   environment: TEnvironment;
   environmentTags: TTag[];
@@ -45,6 +48,7 @@ export default function ResponseTimeline({
         responses={sortedResponses}
         environment={environment}
         surveys={surveys}
+        profile={profile}
         environmentTags={environmentTags}
       />
     </div>

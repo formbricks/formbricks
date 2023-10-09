@@ -1,38 +1,36 @@
 "use client";
 
-import { resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
-import { useProfile } from "@/lib/profile";
-import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
+import { TProfile } from "@formbricks/types/v1/profile";
 import { TResponseNote } from "@formbricks/types/v1/responses";
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../";
 import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../..";
+import { resolveResponseNoteAction, updateResponseNoteAction, createResponseNoteAction } from "../actions";
 
 interface ResponseNotesProps {
+  profile: TProfile;
   responseId: string;
   notes: TResponseNote[];
-  environmentId: string;
   surveyId: string;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
 export default function ResponseNotes({
+  profile,
   responseId,
   notes,
-  environmentId,
   surveyId,
   isOpen,
   setIsOpen,
 }: ResponseNotesProps) {
   const router = useRouter();
-  const { profile } = useProfile();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
@@ -44,7 +42,7 @@ export default function ResponseNotes({
     e.preventDefault();
     setIsCreatingNote(true);
     try {
-      await addResponseNote(environmentId, surveyId, responseId, noteText);
+      await createResponseNoteAction(surveyId, responseId, noteText);
       router.refresh();
       setIsCreatingNote(false);
       setNoteText("");

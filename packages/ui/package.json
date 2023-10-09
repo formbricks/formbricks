@@ -2,14 +2,8 @@
   "name": "@formbricks/ui",
   "private": true,
   "sideEffects": false,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "main": "./index.tsx",
-  "exports": {
-    ".": "./index.tsx",
-    "./*": "./*/index.tsx",
-    "./components/icon": "./components/icon/index.ts"
-  },
-  "types": "./index.tsx",
   "scripts": {
     "clean": "rimraf .turbo node_modules dist"
   },
@@ -51,6 +45,7 @@
     "react-confetti": "^6.1.0",
     "react-day-picker": "^8.8.2",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
     "react-radio-group": "^3.0.3",
     "react-use": "^17.4.0"
   }

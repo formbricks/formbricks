@@ -11,7 +11,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../";
+import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "..";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
@@ -22,10 +22,12 @@ import toast from "react-hot-toast";
 import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import { TTag } from "@formbricks/types/v1/tags";
 import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
+  profile: TProfile;
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
@@ -56,6 +58,7 @@ function TooltipRenderer(props: TooltipRendererProps) {
 export default function SingleResponseCard({
   survey,
   response,
+  profile,
   pageType,
   environmentTags,
   environment,
@@ -329,9 +332,9 @@ export default function SingleResponseCard({
       </div>
       {pageType === "response" && (
         <ResponseNotes
+          profile={profile}
           responseId={response.id}
           notes={response.notes}
-          environmentId={environmentId}
           surveyId={survey.id}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
