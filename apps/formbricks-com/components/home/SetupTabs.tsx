@@ -44,7 +44,7 @@ export const SetupInstructions: React.FC = ({}) => {
   return (
     <div>
       <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} />
-      <div className="h-80 max-w-xs px-4  sm:max-w-lg">
+      <div className="h-80 max-w-lg px-4 sm:max-w-lg md:max-w-lg">
         {activeTab === "npm" ? (
           <>
             <CodeBlock>npm install @formbricks/js</CodeBlock>

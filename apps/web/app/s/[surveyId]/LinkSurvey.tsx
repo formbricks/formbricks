@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import VerifyEmail from "@/app/s/[surveyId]/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/prefilling";
-import { TResponse, TResponseData } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
 import SurveyLinkUsed from "@/app/s/[surveyId]/SurveyLinkUsed";
 
 interface LinkSurveyProps {
@@ -122,7 +122,7 @@ export default function LinkSurvey({
               setSurveyState(newSurveyState);
             }
           }}
-          onResponse={(responseUpdate) => {
+          onResponse={(responseUpdate: TResponseUpdate) => {
             !isPreview && responseQueue.add(responseUpdate);
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}

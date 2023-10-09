@@ -329,7 +329,7 @@ export default function Navigation({
                     <DropdownMenuLabel className="cursor-default break-all">
                       <span className="ph-no-capture font-normal">Signed in as </span>
                       {session?.user?.name.length > 30 ? (
-                        <TooltipProvider>
+                        <TooltipProvider delayDuration={50}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <span>{truncate(session?.user?.name, 30)}</span>
