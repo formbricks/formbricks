@@ -12,6 +12,8 @@ import {
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
 import { ZString } from "@formbricks/types/v1/common";
+import { getTeamsByUserIdCacheTag } from "../team/service";
+import { revalidateTag } from "next/cache";
 
 export const getMembersByTeamId = async (teamId: string): Promise<TMember[]> => {
   validateInputs([teamId, ZString]);
@@ -90,6 +92,7 @@ export const createMembership = async (
         role: data.role as TMembership["role"],
       },
     });
+    revalidateTag(getTeamsByUserIdCacheTag(userId));
 
     return membership;
   } catch (error) {
