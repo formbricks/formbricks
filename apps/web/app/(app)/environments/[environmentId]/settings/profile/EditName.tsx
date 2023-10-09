@@ -1,8 +1,8 @@
 "use client";
 
 import { Button, Input, Label } from "@formbricks/ui";
-import { useForm, SubmitHandler } from "node_modules/react-hook-form";
-import { useEffect, useState } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { updateProfileAction } from "./actions";
 import { TProfile } from "@formbricks/types/v1/profile";
@@ -15,18 +15,17 @@ export function EditName({ profile }: { profile: TProfile }) {
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = useForm<FormData>();
 
   const [isButtonDisabled, setButtonDisabled] = useState(true);
+  const [nameValue, setNameValue] = useState(profile.name || "");
 
-  useEffect(() => {
-    if (profile.name || errors.name) {
-      setButtonDisabled(false);
-    } else {
-      setButtonDisabled(true);
-    }
-  }, [profile.name, errors.name]);
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newNameValue = e.target.value.trim();
+    setNameValue(newNameValue);
+    setButtonDisabled(newNameValue === "");
+  };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
@@ -47,17 +46,10 @@ export function EditName({ profile }: { profile: TProfile }) {
         <Input
           type="text"
           id="fullname"
-          defaultValue={profile.name || ""}
+          value={nameValue}
           {...register("name", { required: true })}
-          onChange={(e) => {
-            if (e.target.value.trim() === "") {
-              setButtonDisabled(true);
-            } else {
-              setButtonDisabled(false);
-            }
-          }}
+          onChange={handleNameChange}
         />
-        {errors.name && <p className="text-red-500">Please enter at least one character.</p>}
 
         <div className="mt-4">
           <Label htmlFor="email">Email</Label>
@@ -68,7 +60,7 @@ export function EditName({ profile }: { profile: TProfile }) {
           variant="darkCTA"
           className="mt-4"
           loading={isSubmitting}
-          disabled={isButtonDisabled || !!errors.name}>
+          disabled={isButtonDisabled}>
           Update
         </Button>
       </form>
