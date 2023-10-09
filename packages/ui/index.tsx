@@ -78,6 +78,7 @@ export { RatingResponse } from "./SingleResponseCard/components/RatingResponse";
 export { DeleteDialog } from "./DeleteDialog";
 export { Modal } from "./Modal";
 export { SurveyStatusIndicator } from "./SurveyStatusIndicator";
+export { QuestionTypeSelector } from "./components/QuestionTypeSelector";
 
 /* Icons */
 export { AngryBirdRage2Icon } from "./components/icons/AngryBirdRage2Icon";
