@@ -4,7 +4,7 @@ import { base } from "../../packages/tailwind-config/tailwind.config";
 // eslint-disable-next-line no-undef
 module.exports = {
   ...base,
-  content: [...base.content],
+  content: [...base.content, "./src/**/*.{js,jsx,ts,tsx}"],
   safelist: [{ pattern: /max-w-./, variants: "sm" }],
   darkMode: "class", // Set dark mode to use the 'class' strategy
 };
