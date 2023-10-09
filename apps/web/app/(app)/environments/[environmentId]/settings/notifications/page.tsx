@@ -1,4 +1,4 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/SettingsCard";
 import { prisma } from "@formbricks/database";
 import { NotificationSettings } from "@formbricks/types/users";

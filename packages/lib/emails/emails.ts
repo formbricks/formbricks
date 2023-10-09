@@ -90,9 +90,9 @@ export const sendPasswordResetNotifyEmail = async (user: TEmailUser) => {
 
 export const sendInviteMemberEmail = async (
   inviteId: string,
-  inviterName: string,
-  inviteeName: string,
-  email: string
+  email: string,
+  inviterName: string | null,
+  inviteeName: string | null
 ) => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",

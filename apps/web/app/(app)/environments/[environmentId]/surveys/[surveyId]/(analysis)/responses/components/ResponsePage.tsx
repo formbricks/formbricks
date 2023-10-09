@@ -72,6 +72,7 @@ const ResponsePage = ({
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
+        profile={profile}
         environmentTags={environmentTags}
       />
     </ContentWrapper>
