@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "storybook dev -p 6006",
-    "build": "tsc && vite build",
+    "build": "tsup",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
@@ -31,6 +31,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.16",
+    "esbuild": "^0.19.4",
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
@@ -38,6 +39,7 @@
     "postcss": "^8.4.31",
     "storybook": "^7.5.0-alpha.5",
     "tailwindcss": "^3.3.3",
+    "tsup": "^7.2.0",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   }
