@@ -33,6 +33,7 @@ export const renderWidget = (survey: TSurvey) => {
   const responseQueue = new ResponseQueue(
     {
       apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: (response) => {
         alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
@@ -64,7 +65,8 @@ export const renderWidget = (survey: TSurvey) => {
             surveyId: survey.id,
             personId: config.get().state.person.id,
           },
-          config.get().apiHost
+          config.get().apiHost,
+          config.get().environmentId
         );
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);

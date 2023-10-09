@@ -53,6 +53,7 @@ export default function LinkSurvey({
       new ResponseQueue(
         {
           apiHost: webAppUrl,
+          environmentId: survey.environmentId,
           retryAttempts: 2,
           onResponseSendingFailed: (response) => {
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
@@ -116,7 +117,7 @@ export default function LinkSurvey({
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
             if (!isPreview) {
-              const { id } = await createDisplay({ surveyId: survey.id }, webAppUrl);
+              const { id } = await createDisplay({ surveyId: survey.id }, webAppUrl, survey.environmentId);
               const newSurveyState = surveyState.copy();
               newSurveyState.updateDisplayId(id);
               setSurveyState(newSurveyState);

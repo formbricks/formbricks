@@ -5,6 +5,7 @@ import SurveyState from "./surveyState";
 
 interface QueueConfig {
   apiHost: string;
+  environmentId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
   setSurveyState?: (state: SurveyState) => void;
@@ -69,8 +70,12 @@ export class ResponseQueue {
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
     try {
       if (this.surveyState.responseId !== null) {
-        await updateResponse(responseUpdate, this.surveyState.responseId, this.config.apiHost);
-      } else {
+        await updateResponse(
+          responseUpdate,
+          this.surveyState.responseId,
+          this.config.apiHost,
+          this.config.environmentId
+        );
         const response = await createResponse(
           {
             ...responseUpdate,
@@ -78,7 +83,8 @@ export class ResponseQueue {
             personId: this.config.personId || null,
             singleUseId: this.surveyState.singleUseId || null,
           },
-          this.config.apiHost
+          this.config.apiHost,
+          this.config.environmentId
         );
         if (this.surveyState.displayId) {
           await updateDisplay(this.surveyState.displayId, { responseId: response.id }, this.config.apiHost);

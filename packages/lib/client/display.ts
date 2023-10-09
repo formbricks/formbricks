@@ -3,11 +3,12 @@ import { FormbricksAPI } from "@formbricks/api";
 
 export const createDisplay = async (
   displayCreateRequest: TDisplayInput,
-  apiHost: string
+  apiHost: string,
+  environmentId: string
 ): Promise<TDisplay> => {
   const api = new FormbricksAPI({
     apiHost,
-    environmentId: "",
+    environmentId,
   });
   const res = await api.client.display.markDisplayedForPerson(displayCreateRequest);
   if (!res.ok) {
@@ -29,10 +30,14 @@ export const updateDisplay = async (displayId: string, displayInput: any, apiHos
   return;
 };
 
-export const markDisplayResponded = async (displayId: string, apiHost: string): Promise<void> => {
+export const markDisplayResponded = async (
+  displayId: string,
+  apiHost: string,
+  environmentId: string
+): Promise<void> => {
   const api = new FormbricksAPI({
     apiHost,
-    environmentId: "",
+    environmentId,
   });
   const res = await api.client.display.markResponded({ displayId });
   if (!res.ok) {

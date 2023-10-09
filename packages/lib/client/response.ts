@@ -1,10 +1,14 @@
 import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { FormbricksAPI } from "@formbricks/api";
 
-export const createResponse = async (responseInput: TResponseInput, apiHost: string): Promise<TResponse> => {
+export const createResponse = async (
+  responseInput: TResponseInput,
+  apiHost: string,
+  environmentId: string
+): Promise<TResponse> => {
   const api = new FormbricksAPI({
     apiHost,
-    environmentId: "",
+    environmentId,
   });
   const res = await api.client.response.create(responseInput);
   if (!res.ok) {
@@ -17,11 +21,12 @@ export const createResponse = async (responseInput: TResponseInput, apiHost: str
 export const updateResponse = async (
   responseInput: TResponseUpdateInput,
   responseId: string,
-  apiHost: string
+  apiHost: string,
+  environmentId: string
 ): Promise<TResponse> => {
   const api = new FormbricksAPI({
     apiHost,
-    environmentId: "",
+    environmentId,
   });
   const res = await api.client.response.update({ ...responseInput, responseId });
   if (!res.ok) {
