@@ -17,14 +17,14 @@ export type TInvite = z.infer<typeof ZInvite>;
 
 export const ZInvitee = z.object({
   email: z.string(),
-  name: z.string(),
+  name: z.string().nullable(),
   role: ZMembershipRole,
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
 
 export const ZCurrentUser = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.string().nullable(),
 });
 export type TCurrentUser = z.infer<typeof ZCurrentUser>;
 
