@@ -80,45 +80,35 @@ export default function Home(props: handleModalProps) {
       </div>
 
       {integrationData.length ? (
-        <div className="relative w-full overflow-auto pt-10">
-          <table className="w-full border border-slate-200 text-sm">
-            <thead className="rounded-lg  [&_tr]:border-b">
-              <tr className="border-b bg-slate-100  transition-colors ">
-                {tableHeaders.map((item) => (
-                  <th
-                    key={item}
-                    className="h-10 w-[100px] px-2 text-left align-middle font-medium text-slate-900 ">
-                    {item}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+        <div className="mt-6 w-full rounded-lg border border-slate-200">
+          <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+            {tableHeaders.map((header, idx) => (
+              <div key={idx} className={`col-span-2 hidden text-center sm:block`}>
+                {header}
+              </div>
+            ))}
+          </div>
 
-            <tbody className="[&_tr:last-child]:border-0">
-              {integrationData.map((data, index) => (
-                <tr
-                  tabIndex={0}
-                  aria-label={`edit ${data.tableName} integration`}
-                  onClick={() => {
-                    setDefaultValues({
-                      base: data.baseId,
-                      questions: data.questionIds,
-                      survey: data.surveyId,
-                      table: data.tableId,
-                      index,
-                    });
-                    setIsModalOpen(true);
-                  }}
-                  key={index}
-                  className="cursor-pointer border-b transition-colors hover:bg-slate-100">
-                  <td className="p-2 align-middle font-medium ">{data.surveyName}</td>
-                  <td className="p-2 align-middle">{data.tableName}</td>
-                  <td className="p-2 align-middle">{data.questions}</td>
-                  <td className="p-2 align-middle">{timeSince(data.createdAt.toString())}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {integrationData.map((data, index) => (
+            <div
+              key={index}
+              className="m-2 grid h-16 grid-cols-8 content-center rounded-lg hover:bg-slate-100"
+              onClick={() => {
+                setDefaultValues({
+                  base: data.baseId,
+                  questions: data.questionIds,
+                  survey: data.surveyId,
+                  table: data.tableId,
+                  index,
+                });
+                setIsModalOpen(true);
+              }}>
+              <div className="col-span-2 text-center">{data.surveyName}</div>
+              <div className="col-span-2 text-center">{data.tableName}</div>
+              <div className="col-span-2 text-center">{data.questions}</div>
+              <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="mt-4 w-full">
