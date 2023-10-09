@@ -5,6 +5,8 @@ import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/
 import { TMember, TMembership, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
+import { getTeamsByUserIdCacheTag } from "../team/service";
+import { revalidateTag } from "next/cache";
 
 export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[]> => {
   const membersData = await prisma.membership.findMany({
@@ -76,6 +78,7 @@ export const createMembership = async (
         role: data.role as TMembership["role"],
       },
     });
+    revalidateTag(getTeamsByUserIdCacheTag(userId));
 
     return membership;
   } catch (error) {
