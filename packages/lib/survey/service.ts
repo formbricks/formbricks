@@ -9,7 +9,7 @@ import {
   TSurveyWithAnalytics,
   ZSurvey,
   ZSurveyWithAnalytics,
-  TSurveyInputWithoutIds,
+  TSurveyInput,
 } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
@@ -640,7 +640,7 @@ export async function deleteSurvey(surveyId: string) {
   return deletedSurvey;
 }
 
-export async function createSurvey(environmentId: string, surveyBody: TSurveyInputWithoutIds) {
+export async function createSurvey(environmentId: string, surveyBody: TSurveyInput) {
   validateInputs([environmentId, ZId]);
   const survey = await prisma.survey.create({
     data: {

@@ -6,7 +6,6 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
 import { ZId } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import {
   ZGoogleCredential,
   TGoogleCredential,
@@ -37,30 +36,29 @@ async function fetchSpreadsheets(auth: any) {
   }
 }
 
-export const getGoogleSheetIntegration = (
+export const getGoogleSheetIntegration = async (
   environmentId: string
-): Promise<TIntegration | TGoogleSheetIntegration | null> =>
-  cache(async () => {
-    validateInputs([environmentId, ZId]);
+): Promise<TIntegration | TGoogleSheetIntegration | null> => {
+  validateInputs([environmentId, ZId]);
 
-    try {
-      const result = await prisma.integration.findUnique({
-        where: {
-          type_environmentId: {
-            environmentId,
-            type: "googleSheets",
-          },
+  try {
+    const result = await prisma.integration.findUnique({
+      where: {
+        type_environmentId: {
+          environmentId,
+          type: "googleSheets",
         },
-      });
+      },
+    });
 
-      return result;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-      throw error;
+    return result;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
     }
-  })();
+    throw error;
+  }
+};
 
 export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpreadsheet[]> => {
   validateInputs([environmentId, ZId]);

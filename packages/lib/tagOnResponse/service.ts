@@ -2,7 +2,6 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { TTagsCount } from "@formbricks/types/v1/tags";
-import { cache } from "react";
 
 export const getTagOnResponseCacheTag = (tagId: string, responseId: string) =>
   `tagsOnResponse-${tagId}-${responseId}`;
@@ -37,7 +36,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string) => 
   }
 };
 
-export const getTagsOnResponsesCount = cache(async (): Promise<TTagsCount> => {
+export const getTagsOnResponsesCount = async (): Promise<TTagsCount> => {
   try {
     const tagsCount = await prisma.tagsOnResponses.groupBy({
       by: ["tagId"],
@@ -50,4 +49,4 @@ export const getTagsOnResponsesCount = cache(async (): Promise<TTagsCount> => {
   } catch (error) {
     throw error;
   }
-});
+};

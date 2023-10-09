@@ -293,7 +293,6 @@ export const ZSurvey = z.object({
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),
-  environmentId: z.string(),
   status: ZSurveyStatus.optional(),
   displayOption: ZSurveyDisplayOption.optional(),
   autoClose: z.number().optional(),
@@ -313,7 +312,6 @@ export const ZSurveyInput = z.object({
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
-export type TSurveyInputWithoutIds = Omit<Omit<TSurveyInput, "id">, "environmentId">;
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({

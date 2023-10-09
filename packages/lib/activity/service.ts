@@ -4,10 +4,9 @@ import { prisma } from "@formbricks/database";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
 
-export const getActivityTimeline = cache(async (personId: string): Promise<TActivityFeedItem[]> => {
+export const getActivityTimeline = async (personId: string): Promise<TActivityFeedItem[]> => {
   validateInputs([personId, ZId]);
   const person = await prisma.person.findUnique({
     where: {
@@ -83,4 +82,4 @@ export const getActivityTimeline = cache(async (personId: string): Promise<TActi
   const unifiedList: TActivityFeedItem[] = [...unifiedAttributes, ...unifiedDisplays, ...unifiedEvents];
 
   return unifiedList;
-});
+};

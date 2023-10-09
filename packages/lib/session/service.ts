@@ -7,7 +7,6 @@ import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TSession, TSessionWithActions } from "@formbricks/types/v1/sessions";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 
 const halfHourInSeconds = 60 * 30;
@@ -93,7 +92,7 @@ export const getSessionWithActionsOfPerson = async (
   }
 };
 
-export const getSessionCount = cache(async (personId: string): Promise<number> => {
+export const getSessionCount = async (personId: string): Promise<number> => {
   validateInputs([personId, ZId]);
   try {
     const sessionCount = await prisma.session.count({
@@ -108,7 +107,7 @@ export const getSessionCount = cache(async (personId: string): Promise<number> =
     }
     throw error;
   }
-});
+};
 
 export const createSession = async (personId: string): Promise<TSession> => {
   validateInputs([personId, ZId]);

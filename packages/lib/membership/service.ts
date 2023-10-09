@@ -10,11 +10,10 @@ import {
   ZMembershipUpdateInput,
 } from "@formbricks/types/v1/memberships";
 import { Prisma } from "@prisma/client";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZString } from "@formbricks/types/v1/common";
 
-export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[]> => {
+export const getMembersByTeamId = async (teamId: string): Promise<TMember[]> => {
   validateInputs([teamId, ZString]);
 
   const membersData = await prisma.membership.findMany({
@@ -43,28 +42,29 @@ export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[
   });
 
   return members;
-});
+};
 
-export const getMembershipByUserIdTeamId = cache(
-  async (userId: string, teamId: string): Promise<TMembership | null> => {
-    validateInputs([userId, ZString], [teamId, ZString]);
+export const getMembershipByUserIdTeamId = async (
+  userId: string,
+  teamId: string
+): Promise<TMembership | null> => {
+  validateInputs([userId, ZString], [teamId, ZString]);
 
-    const membership = await prisma.membership.findUnique({
-      where: {
-        userId_teamId: {
-          userId,
-          teamId,
-        },
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_teamId: {
+        userId,
+        teamId,
       },
-    });
+    },
+  });
 
-    if (!membership) return null;
+  if (!membership) return null;
 
-    return membership;
-  }
-);
+  return membership;
+};
 
-export const getMembershipsByUserId = cache(async (userId: string): Promise<TMembership[]> => {
+export const getMembershipsByUserId = async (userId: string): Promise<TMembership[]> => {
   validateInputs([userId, ZString]);
   const memberships = await prisma.membership.findMany({
     where: {
@@ -73,7 +73,7 @@ export const getMembershipsByUserId = cache(async (userId: string): Promise<TMem
   });
 
   return memberships;
-});
+};
 
 export const createMembership = async (
   teamId: string,
@@ -147,7 +147,7 @@ export const transferOwnership = async (
   validateInputs([currentOwnerId, ZString], [newOwnerId, ZString], [teamId, ZString]);
 
   try {
-    const owners = await prisma.$transaction([
+    const memberships = await prisma.$transaction([
       prisma.membership.update({
         where: {
           userId_teamId: {
@@ -172,7 +172,7 @@ export const transferOwnership = async (
       }),
     ]);
 
-    return owners;
+    return memberships;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

@@ -2,12 +2,9 @@
 
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
-import { TGoogleSheetIntegrationUpsert } from "@formbricks/types/v1/integrations";
+import { TIntegrationInput } from "@formbricks/types/v1/integrations";
 
-export async function upsertIntegrationAction(
-  environmentId: string,
-  integrationData: TGoogleSheetIntegrationUpsert
-) {
+export async function upsertIntegrationAction(environmentId: string, integrationData: TIntegrationInput) {
   return await createOrUpdateIntegration(environmentId, integrationData);
 }
 

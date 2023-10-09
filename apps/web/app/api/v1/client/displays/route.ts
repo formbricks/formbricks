@@ -42,6 +42,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   // find teamId & teamOwnerId from environmentId
   const teamDetails = await getTeamDetails(survey.environmentId);
 
+  console.log("teamDetails", teamDetails);
+
   // create display
   let display: TDisplay;
   try {

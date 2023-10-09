@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSurveyAction } from "./actions";
 import { customSurvey, templates } from "./templates";
-import { TSurveyInputWithoutIds } from "@formbricks/types/v1/surveys";
+import { TSurveyInput } from "@formbricks/types/v1/surveys";
 
 type TemplateList = {
   environmentId: string;
@@ -78,7 +78,7 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-    } as TSurveyInputWithoutIds;
+    } as TSurveyInput;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };

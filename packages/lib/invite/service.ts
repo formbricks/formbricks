@@ -11,7 +11,6 @@ import {
   ZCurrentUser,
   TCurrentUser,
 } from "@formbricks/types/v1/invites";
-import { cache } from "react";
 import { ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { ZString } from "@formbricks/types/v1/common";
 import { sendInviteMemberEmail } from "../emails/emails";
@@ -30,7 +29,7 @@ const inviteSelect = {
   role: true,
 };
 
-export const getInvitesByTeamId = cache(async (teamId: string): Promise<TInvite[] | null> => {
+export const getInvitesByTeamId = async (teamId: string): Promise<TInvite[] | null> => {
   validateInputs([teamId, ZString]);
 
   const invites = await prisma.invite.findMany({
@@ -39,7 +38,7 @@ export const getInvitesByTeamId = cache(async (teamId: string): Promise<TInvite[
   });
 
   return invites;
-});
+};
 
 export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
   validateInputs([inviteId, ZString], [data, ZInviteUpdateInput]);
@@ -73,29 +72,27 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite | null> =>
   return deletedInvite;
 };
 
-export const getInviteToken = cache(
-  async (inviteId: string): Promise<{ inviteId: string; email: string }> => {
-    validateInputs([inviteId, ZString]);
+export const getInvite = async (inviteId: string): Promise<{ inviteId: string; email: string }> => {
+  validateInputs([inviteId, ZString]);
 
-    const invite = await prisma.invite.findUnique({
-      where: {
-        id: inviteId,
-      },
-      select: {
-        email: true,
-      },
-    });
+  const invite = await prisma.invite.findUnique({
+    where: {
+      id: inviteId,
+    },
+    select: {
+      email: true,
+    },
+  });
 
-    if (!invite) {
-      throw new ResourceNotFoundError("Invite", inviteId);
-    }
-
-    return {
-      inviteId,
-      email: invite.email,
-    };
+  if (!invite) {
+    throw new ResourceNotFoundError("Invite", inviteId);
   }
-);
+
+  return {
+    inviteId,
+    email: invite.email,
+  };
+};
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
   validateInputs([inviteId, ZString]);

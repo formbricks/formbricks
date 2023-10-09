@@ -7,7 +7,6 @@ import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { cache } from "react";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -61,33 +60,32 @@ export const getProducts = async (teamId: string): Promise<TProduct[]> =>
     }
   )();
 
-export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> =>
-  cache(async () => {
-    if (!environmentId) {
-      throw new ValidationError("EnvironmentId is required");
-    }
-    let productPrisma;
+export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> => {
+  if (!environmentId) {
+    throw new ValidationError("EnvironmentId is required");
+  }
+  let productPrisma;
 
-    try {
-      productPrisma = await prisma.product.findFirst({
-        where: {
-          environments: {
-            some: {
-              id: environmentId,
-            },
+  try {
+    productPrisma = await prisma.product.findFirst({
+      where: {
+        environments: {
+          some: {
+            id: environmentId,
           },
         },
-        select: selectProduct,
-      });
+      },
+      select: selectProduct,
+    });
 
-      return productPrisma;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-      throw error;
+    return productPrisma;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
     }
-  })();
+    throw error;
+  }
+};
 
 export const getProductByEnvironmentIdCached = (environmentId: string): Promise<TProduct | null> =>
   unstable_cache(
@@ -145,27 +143,26 @@ export const updateProduct = async (
   }
 };
 
-export const getProduct = (productId: string): Promise<TProduct | null> =>
-  cache(async () => {
-    let productPrisma;
-    try {
-      productPrisma = await prisma.product.findUnique({
-        where: {
-          id: productId,
-        },
-        select: selectProduct,
-      });
+export const getProduct = async (productId: string): Promise<TProduct | null> => {
+  let productPrisma;
+  try {
+    productPrisma = await prisma.product.findUnique({
+      where: {
+        id: productId,
+      },
+      select: selectProduct,
+    });
 
-      return productPrisma;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-      throw error;
+    return productPrisma;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
     }
-  })();
+    throw error;
+  }
+};
 
-export const deleteProduct = cache(async (productId: string): Promise<TProduct> => {
+export const deleteProduct = async (productId: string): Promise<TProduct> => {
   const product = await prisma.product.delete({
     where: {
       id: productId,
@@ -184,7 +181,7 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   }
 
   return product;
-});
+};
 
 export const createProduct = async (
   teamId: string,

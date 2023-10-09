@@ -6,7 +6,6 @@ import { Prisma } from "@prisma/client";
 import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { ZString } from "@formbricks/types/v1/common";
@@ -38,7 +37,7 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
   }
 };
 
-export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[]> => {
+export const getApiKeys = async (environmentId: string): Promise<TApiKey[]> => {
   validateInputs([environmentId, ZId]);
   try {
     const apiKeys = await prisma.apiKey.findMany({
@@ -54,7 +53,7 @@ export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[]
     }
     throw error;
   }
-});
+};
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 

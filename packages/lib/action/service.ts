@@ -6,56 +6,56 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/error
 import { TAction } from "@formbricks/types/v1/actions";
 import { ZId } from "@formbricks/types/v1/environment";
 import { Prisma } from "@prisma/client";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
-import { TJsActionInput, ZJsActionInput } from "@formbricks/types/v1/js";
+import { TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
 import { revalidateTag } from "next/cache";
 import { EventType } from "@prisma/client";
 import { getActionClassCacheTag, getActionClassCached } from "../actionClass/service";
 import { getSessionCached } from "../session/service";
 
-export const getActionsByEnvironmentId = cache(
-  async (environmentId: string, limit?: number): Promise<TAction[]> => {
-    validateInputs([environmentId, ZId], [limit, z.number().optional()]);
-    try {
-      const actionsPrisma = await prisma.event.findMany({
-        where: {
-          eventClass: {
-            environmentId: environmentId,
-          },
+export const getActionsByEnvironmentId = async (
+  environmentId: string,
+  limit?: number
+): Promise<TAction[]> => {
+  validateInputs([environmentId, ZId], [limit, z.number().optional()]);
+  try {
+    const actionsPrisma = await prisma.event.findMany({
+      where: {
+        eventClass: {
+          environmentId: environmentId,
         },
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: limit ? limit : 20,
-        include: {
-          eventClass: true,
-        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: limit ? limit : 20,
+      include: {
+        eventClass: true,
+      },
+    });
+    const actions: TAction[] = [];
+    // transforming response to type TAction[]
+    actionsPrisma.forEach((action) => {
+      actions.push({
+        id: action.id,
+        createdAt: action.createdAt,
+        sessionId: action.sessionId,
+        properties: action.properties,
+        actionClass: action.eventClass,
       });
-      const actions: TAction[] = [];
-      // transforming response to type TAction[]
-      actionsPrisma.forEach((action) => {
-        actions.push({
-          id: action.id,
-          createdAt: action.createdAt,
-          sessionId: action.sessionId,
-          properties: action.properties,
-          actionClass: action.eventClass,
-        });
-      });
-      return actions;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-
-      throw error;
+    });
+    return actions;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
     }
-  }
-);
 
-export const createAction = async (data: TJsActionInput): Promise<Omit<TAction, "actionClass">> => {
-  validateInputs([data, ZJsActionInput]);
+    throw error;
+  }
+};
+
+export const createAction = async (data: TActionInput): Promise<Omit<TAction, "actionClass">> => {
+  validateInputs([data, ZActionInput]);
   const { environmentId, name, properties, sessionId } = data;
 
   let eventType: EventType = EventType.code;
@@ -84,54 +84,44 @@ export const createAction = async (data: TJsActionInput): Promise<Omit<TAction, 
   }
 
   // if action class does not exist, create it and then create the action
-  const [, actionRes] = await prisma.$transaction([
-    prisma.eventClass.create({
-      data: {
-        name,
-        type: eventType,
-        environmentId,
-      },
-    }),
-
-    prisma.event.create({
-      data: {
-        properties,
-        session: {
-          connect: {
-            id: sessionId,
-          },
+  const action = prisma.event.create({
+    data: {
+      properties,
+      session: {
+        connect: {
+          id: sessionId,
         },
-        eventClass: {
-          connectOrCreate: {
-            where: {
-              name_environmentId: {
-                name,
-                environmentId,
-              },
-            },
-            create: {
+      },
+      eventClass: {
+        connectOrCreate: {
+          where: {
+            name_environmentId: {
               name,
-              type: eventType,
-              environment: {
-                connect: {
-                  id: environmentId,
-                },
+              environmentId,
+            },
+          },
+          create: {
+            name,
+            type: eventType,
+            environment: {
+              connect: {
+                id: environmentId,
               },
             },
           },
         },
       },
-    }),
-  ]);
+    },
+  });
 
   // revalidate cache
   revalidateTag(sessionId);
   revalidateTag(getActionClassCacheTag(name, environmentId));
 
-  return actionRes;
+  return action;
 };
 
-export const getActionCountInLastHour = cache(async (actionClassId: string): Promise<number> => {
+export const getActionCountInLastHour = async (actionClassId: string): Promise<number> => {
   validateInputs([actionClassId, ZId]);
   try {
     const numEventsLastHour = await prisma.event.count({
@@ -146,9 +136,9 @@ export const getActionCountInLastHour = cache(async (actionClassId: string): Pro
   } catch (error) {
     throw error;
   }
-});
+};
 
-export const getActionCountInLast24Hours = cache(async (actionClassId: string): Promise<number> => {
+export const getActionCountInLast24Hours = async (actionClassId: string): Promise<number> => {
   validateInputs([actionClassId, ZId]);
   try {
     const numEventsLast24Hours = await prisma.event.count({
@@ -163,9 +153,9 @@ export const getActionCountInLast24Hours = cache(async (actionClassId: string): 
   } catch (error) {
     throw error;
   }
-});
+};
 
-export const getActionCountInLast7Days = cache(async (actionClassId: string): Promise<number> => {
+export const getActionCountInLast7Days = async (actionClassId: string): Promise<number> => {
   validateInputs([actionClassId, ZId]);
   try {
     const numEventsLast7Days = await prisma.event.count({
@@ -180,4 +170,4 @@ export const getActionCountInLast7Days = cache(async (actionClassId: string): Pr
   } catch (error) {
     throw error;
   }
-});
+};
