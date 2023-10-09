@@ -11,7 +11,7 @@ import {
   ZCurrentUser,
   TCurrentUser,
 } from "@formbricks/types/v1/invites";
-import { ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
+import { ResourceNotFoundError, ValidationError, DatabaseError } from "@formbricks/types/v1/errors";
 import { ZString } from "@formbricks/types/v1/common";
 import { sendInviteMemberEmail } from "../emails/emails";
 import { validateInputs } from "../utils/validate";
@@ -60,16 +60,28 @@ export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): 
   }
 };
 
-export const deleteInvite = async (inviteId: string): Promise<TInvite | null> => {
+export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   validateInputs([inviteId, ZString]);
 
-  const deletedInvite = await prisma.invite.delete({
-    where: {
-      id: inviteId,
-    },
-  });
+  try {
+    const invite = await prisma.invite.delete({
+      where: {
+        id: inviteId,
+      },
+    });
 
-  return deletedInvite;
+    if (invite === null) {
+      throw new ResourceNotFoundError("Invite", inviteId);
+    }
+
+    return invite;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
 };
 
 export const getInvite = async (inviteId: string): Promise<{ inviteId: string; email: string }> => {
