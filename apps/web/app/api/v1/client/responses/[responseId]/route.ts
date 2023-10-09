@@ -81,6 +81,5 @@ export async function PUT(
       response: response,
     });
   }
-
   return responses.successResponse(response, true);
 }
