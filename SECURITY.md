@@ -59,7 +59,7 @@ In the interest of responsibly managing vulnerabilities, please adhere to the fo
      - Known possible mitigations.
      - Your Discord username or preferred contact method.
 2. **Acknowledgement of Receipt**:
-   - Our security team will acknowledge receipt and provide an initial response within 3-5 days.
+   - Our security team will acknowledge receipt and provide an initial response within 48 hours.
    - Following verification of the vulnerability and the fix, a release plan will be formulated, with the fix deployed between 7 to 28 days, depending on the severity and complexity.
 3. **Ongoing Communication**:
    - A project maintainer may engage with you for additional details or clarification.
