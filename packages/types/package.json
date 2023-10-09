@@ -4,12 +4,7 @@
   "private": true,
   "main": "index.ts",
   "sideEffects": false,
-  "exports": {
-    "./js": "./js.ts",
-    "./v1/*": "./dist/v1/*.js"
-  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
     "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
