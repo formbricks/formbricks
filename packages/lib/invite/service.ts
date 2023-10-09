@@ -172,7 +172,7 @@ export const inviteUser = async ({
     },
   });
 
-  await sendInviteMemberEmail(invite.id, currentUserName, name, email);
+  await sendInviteMemberEmail(invite.id, email, currentUserName, name);
 
   return invite;
 };

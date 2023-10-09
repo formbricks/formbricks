@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import Modal from "@/components/shared/Modal";
+import { Modal } from "@formbricks/ui";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";

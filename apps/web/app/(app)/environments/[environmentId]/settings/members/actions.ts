@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/v1/errors";
 import {

@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createSurvey } from "@formbricks/lib/survey/service";
