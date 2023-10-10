@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>calculator</title>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" type="text/css" href="style1.css"/>
+        <script src="calculatorjs.js"></script>
+    </head>
+    <body>
+        <div>
+        <fieldset >
+        <tr>
+            <td><input type="text" id="text" readonly></td>
+            <!--td><input type="button" id="del" value="Del"  onclick="text.del=+''"></td-->
+        </tr>
+        <br><br>
+        <tr>
+            <td><input type="button" value="1" onclick="text.value+=1 " ></td>
+            <td><input type="button" value="2" onclick="text.value+=2"></td>
+            <td><input type="button" value="3" onclick="text.value+=3"></td>
+            <td><input type="button" value="+" onclick="text.value+='+'"></td>
+        </tr>
+        <br><br>
+        <tr>
+            <td><input type="button" value="4" onclick="text.value+=4"></button></td>
+            <td><input type="button" value="5" onclick="text.value+=5"></td>
+            <td><input type="button" value="6" onclick="text.value+=6"></td>
+            <td><input type="button" value="-" onclick="text.value+='-'"></td>
+        </tr>
+        <br><br>
+        <tr>
+            <td><input type="button" value="7" onclick="text.value+=7"></td>
+            <td><input type="button" value="8" onclick="text.value+=8"></td>
+            <td><input type="button" value="9" onclick="text.value+=9"></td>
+            <td><input type="button" value="*" id="mul" onclick="text.value+='*'"></td>
+        </tr>
+        <br><br>
+        <tr>
+            <td><input type="button" value="/" id="div" onclick="text.value+='/'"></td>
+            <td><input type="button" value="AC" id="AC" onclick="myEmpty()"></td>
+            <td><input type="button" value="0" onclick="text.value+=0"></td>
+            <td><input type="button" value="=" id="eql" onclick="myAddition()"></td>
+        </tr>
+        </fieldset>
+        </div>
+    </body>
+</html>
