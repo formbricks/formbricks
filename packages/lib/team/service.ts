@@ -28,7 +28,7 @@ import {
 } from "../utils/createDemoProductHelpers";
 import { validateInputs } from "../utils/validate";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getEnvironmentCacheTag } from "environment/service";
+import { getEnvironmentCacheTag } from "../environment/service";
 
 export const select = {
   id: true,
