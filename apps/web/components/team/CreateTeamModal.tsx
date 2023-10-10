@@ -1,5 +1,5 @@
 import { createTeamAction } from "@/app/(app)/environments/[environmentId]/actions";
-import Modal from "@/components/shared/Modal";
+import { Modal } from "@formbricks/ui";
 import { Button, Input, Label } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";

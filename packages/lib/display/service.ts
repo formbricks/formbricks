@@ -20,6 +20,7 @@ const selectDisplay = {
   createdAt: true,
   updatedAt: true,
   surveyId: true,
+  responseId: true,
   person: {
     select: {
       id: true,
@@ -38,9 +39,36 @@ const selectDisplay = {
       },
     },
   },
-  status: true,
 };
 
+export const updateDisplay = async (
+  displayId: string,
+  displayInput: Partial<TDisplayInput>
+): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayInput.partial()]);
+  try {
+    const displayPrisma = await prisma.display.update({
+      where: {
+        id: displayId,
+      },
+      data: displayInput,
+      select: selectDisplay,
+    });
+    const display: TDisplay = {
+      ...displayPrisma,
+      person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
+    };
+
+    return display;
+  } catch (error) {
+    console.error(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
 export const getDisplaysCacheTag = (surveyId: string) => `surveys-${surveyId}-displays`;
 
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
@@ -53,7 +81,6 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
             id: displayInput.surveyId,
           },
         },
-        status: "seen",
 
         ...(displayInput.personId && {
           person: {
@@ -136,6 +163,7 @@ export const getDisplaysOfPerson = cache(
           createdAt: true,
           updatedAt: true,
           surveyId: true,
+          responseId: true,
           survey: {
             select: {
               name: true,
@@ -157,9 +185,9 @@ export const getDisplaysOfPerson = cache(
           createdAt: displayPrisma.createdAt,
           updatedAt: displayPrisma.updatedAt,
           person: null,
-          status: displayPrisma.status,
           surveyId: displayPrisma.surveyId,
           surveyName: displayPrisma.survey.name,
+          responseId: displayPrisma.responseId,
         };
         displays.push(display);
       });
@@ -174,3 +202,20 @@ export const getDisplaysOfPerson = cache(
     }
   }
 );
+
+export const deleteDisplayByResponseId = async (responseId: string, surveyId: string): Promise<void> => {
+  validateInputs([responseId, ZId]);
+  try {
+    await prisma.display.delete({
+      where: {
+        responseId,
+      },
+    });
+    revalidateTag(getDisplaysCacheTag(surveyId));
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+};

@@ -1,8 +1,8 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { updateProfile, deleteProfile } from "@formbricks/lib/profile/service";
 import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
 import { AuthorizationError } from "@formbricks/types/v1/errors";

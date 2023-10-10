@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
 import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
 import { getServerSession } from "next-auth";

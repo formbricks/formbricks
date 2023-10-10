@@ -53,6 +53,22 @@ export const getIntegrations = cache(async (environmentId: string): Promise<TInt
   }
 });
 
+export const getIntegration = cache(async (integrationId: string): Promise<TIntegration | null> => {
+  try {
+    const result = await prisma.integration.findUnique({
+      where: {
+        id: integrationId,
+      },
+    });
+    return result;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+});
+
 export const deleteIntegration = async (integrationId: string): Promise<void> => {
   try {
     await prisma.integration.delete({

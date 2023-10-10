@@ -1,8 +1,7 @@
 "use client";
 
 import { disableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
-import Modal from "@/components/shared/Modal";
-import { Button, Input, OTPInput, PasswordInput } from "@formbricks/ui";
+import { Button, Input, Modal, OTPInput, PasswordInput } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
