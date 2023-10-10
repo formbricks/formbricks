@@ -18,19 +18,19 @@ export function EditName({ profile }: { profile: TProfile }) {
     formState: { isSubmitting },
   } = useForm<FormData>();
 
-  const [isButtonDisabled, setButtonDisabled] = useState(true);
+  const [isButtonDisabled, setButtonDisabled] = useState(false);
   const [nameValue, setNameValue] = useState(profile.name || "");
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newNameValue = e.target.value.trim();
+    const newNameValue = e.target.value;
     setNameValue(newNameValue);
     setButtonDisabled(newNameValue === "");
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
-      if (data.name.trim() === "") {
-        throw new Error("Please enter at least one character.");
+      if (nameValue === "") {
+        toast.error("Please enter at least one character.");
       }
       await updateProfileAction(data);
       toast.success("Your name was updated successfully.");
