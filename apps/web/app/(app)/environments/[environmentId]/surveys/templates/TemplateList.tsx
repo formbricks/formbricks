@@ -78,7 +78,7 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-    } as Partial<TSurveyInput>;
+    } as TSurveyInput;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };

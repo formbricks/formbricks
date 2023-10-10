@@ -4,7 +4,7 @@ import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { QuestionType } from "@formbricks/types/questions";
 import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
-import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
+import { RatingResponse } from "@formbricks/ui";
 import { questionTypes } from "@/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 

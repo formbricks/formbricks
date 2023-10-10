@@ -6,7 +6,7 @@ import {
 } from "@formbricks/lib/constants";
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 
 const scopes = [

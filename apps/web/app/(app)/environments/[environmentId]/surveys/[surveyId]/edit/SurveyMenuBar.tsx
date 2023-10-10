@@ -1,7 +1,7 @@
 "use client";
 
 import AlertDialog from "@/components/shared/AlertDialog";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
@@ -308,7 +308,7 @@ export default function SurveyMenuBar({
               disabled={
                 localSurvey.type === "web" &&
                 localSurvey.triggers &&
-                (localSurvey.triggers[0]?.id === "" || localSurvey.triggers.length === 0)
+                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
               }
               variant="darkCTA"
               loading={isMutatingSurvey}

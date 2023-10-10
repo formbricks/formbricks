@@ -498,6 +498,9 @@ model User {
   name                      String?
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
+  twoFactorSecret           String?
+  twoFactorEnabled          Boolean          @default(false)
+  backupCodes               String?
   password                  String?
   onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)

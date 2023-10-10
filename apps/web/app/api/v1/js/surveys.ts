@@ -165,7 +165,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
     .map((survey) => ({
       ...survey,
       singleUse: survey.singleUse ? JSON.parse(JSON.stringify(survey.singleUse)) : null,
-      triggers: survey.triggers.map((trigger) => trigger.eventClass),
+      triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
       attributeFilters: survey.attributeFilters.map((af) => ({
         ...af,
         attributeClassId: af.attributeClass.id,
