@@ -19,6 +19,11 @@ jobs:
           SECRET=$(openssl rand -hex 16)
           echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
 
+      - name: Generate Random NEXTAUTH_SECRET
+        run: |
+          SECRET=$(openssl rand -base64 24)
+          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+
       - name: Checkout Repo
         uses: actions/checkout@v2
 
