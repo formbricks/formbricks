@@ -6,12 +6,12 @@ import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { EventType, Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import z from "zod";
 import { getActionClassCacheTag } from "../actionClass/service";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { getSessionCached } from "../session/service";
 import { validateInputs } from "../utils/validate";
 import { TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 
 export const getActionsCacheTag = (environmentId: string): string => `environments-${environmentId}-actions`;
 
@@ -22,7 +22,7 @@ export const getActionsByEnvironmentId = async (
 ): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [limit, z.number().optional()]);
+      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [page, ZOptionalNumber]);
 
       try {
         const actionsPrisma = await prisma.event.findMany({

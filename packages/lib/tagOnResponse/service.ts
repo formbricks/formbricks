@@ -1,12 +1,12 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TTagsCount } from "@formbricks/types/v1/tags";
+import { TTagsCount, TTagsOnResponses } from "@formbricks/types/v1/tags";
 
 export const getTagOnResponseCacheTag = (tagId: string, responseId: string) =>
   `tagsOnResponse-${tagId}-${responseId}`;
 
-export const addTagToRespone = async (responseId: string, tagId: string) => {
+export const addTagToRespone = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
   try {
     const tagOnResponse = await prisma.tagsOnResponses.create({
       data: {
@@ -20,7 +20,7 @@ export const addTagToRespone = async (responseId: string, tagId: string) => {
   }
 };
 
-export const deleteTagOnResponse = async (responseId: string, tagId: string) => {
+export const deleteTagOnResponse = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
   try {
     const deletedTag = await prisma.tagsOnResponses.delete({
       where: {

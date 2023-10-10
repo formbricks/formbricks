@@ -18,6 +18,8 @@ import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { getDisplaysCacheTag } from "../display/service";
 import { getResponsesCacheTag } from "../response/service";
+import { ZString } from "@formbricks/types/v1/common";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
@@ -89,6 +91,8 @@ export const selectSurveyWithAnalytics = {
 };
 
 export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
+  validateInputs([surveyId, ZString]);
+
   const survey = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
@@ -151,7 +155,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
     [`surveyWithAnalytics-${surveyId}`],
     {
       tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), getResponsesCacheTag(surveyId)],
-      revalidate: 60 * 30,
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -216,7 +220,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     [`surveys-${surveyId}`],
     {
       tags: [getSurveyCacheTag(surveyId)],
-      revalidate: 60 * 30,
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
@@ -353,7 +357,7 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
     [`environments-${environmentId}-surveys`],
     {
       tags: [getSurveysCacheTag(environmentId)],
-      revalidate: 60 * 30,
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
