@@ -9,6 +9,8 @@ export const env = createEnv({
   server: {
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
+    ENCRYPTION_KEY: z.string().length(32),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)),
     NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
@@ -74,7 +76,6 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)).optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -85,6 +86,8 @@ export const env = createEnv({
   runtimeEnv: {
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+    FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     MAIL_FROM: process.env.MAIL_FROM,
