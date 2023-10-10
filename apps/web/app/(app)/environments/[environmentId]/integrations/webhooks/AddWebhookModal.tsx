@@ -2,7 +2,7 @@ import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integr
 import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/TriggerCheckboxGroup";
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/HardcodedTriggers";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/testEndpoint";
-import Modal from "@/components/shared/Modal";
+import { Modal } from "@formbricks/ui";
 import { createWebhookAction } from "./actions";
 import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 import { TSurvey } from "@formbricks/types/v1/surveys";

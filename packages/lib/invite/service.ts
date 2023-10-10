@@ -118,8 +118,8 @@ export const inviteUser = async ({
   teamId,
 }: {
   teamId: string;
-  invitee: { name: string; email: string; role: TMembershipRole };
-  currentUser: { id: string; name: string };
+  invitee: { name: string | null; email: string; role: TMembershipRole };
+  currentUser: { id: string; name: string | null };
 }) => {
   const { name, email, role } = invitee;
   const { id: currentUserId, name: currentUserName } = currentUser;
@@ -157,7 +157,7 @@ export const inviteUser = async ({
     },
   });
 
-  await sendInviteMemberEmail(invite.id, currentUserName, name, email);
+  await sendInviteMemberEmail(invite.id, email, currentUserName, name);
 
   return invite;
 };
