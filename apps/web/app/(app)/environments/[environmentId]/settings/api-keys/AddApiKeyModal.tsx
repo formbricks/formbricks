@@ -1,6 +1,6 @@
 "use client";
 
-import Modal from "@/components/shared/Modal";
+import { Modal } from "@formbricks/ui";
 import { Button, Input, Label } from "@formbricks/ui";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useForm } from "react-hook-form";

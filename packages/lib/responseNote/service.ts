@@ -21,6 +21,30 @@ const select = {
   },
 };
 
+export const createResponseNote = async (
+  responseId: string,
+  userId: string,
+  text: string
+): Promise<TResponseNote> => {
+  try {
+    const responseNote = await prisma.responseNote.create({
+      data: {
+        responseId: responseId,
+        userId: userId,
+        text: text,
+      },
+      select,
+    });
+    return responseNote;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
 export const updateResponseNote = async (responseNoteId: string, text: string): Promise<TResponseNote> => {
   try {
     const updatedResponseNote = await prisma.responseNote.update({

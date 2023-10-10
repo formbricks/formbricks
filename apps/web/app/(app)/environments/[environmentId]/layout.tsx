@@ -2,7 +2,7 @@ import EnvironmentsNavbar from "@/app/(app)/environments/[environmentId]/compone
 import ToasterClient from "@/components/ToasterClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import FormbricksClient from "../../FormbricksClient";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";

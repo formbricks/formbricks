@@ -101,6 +101,11 @@ export default function Header() {
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
+      <a href="https://www.producthunt.com/products/formbricks" target="_blank">
+        <div className="bg-[#ff6154] text-center text-sm text-white">
+          We&apos;re launching soon on Product Hunt - get notified 🚀
+        </div>
+      </a>
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
         <div className="flex w-0 flex-1 justify-start">
           <Link href="/">
