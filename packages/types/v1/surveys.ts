@@ -229,8 +229,6 @@ export const ZSurveyWelcomeQuestion = ZSurveyQuestionBase.extend({
   html: z.string().optional(),
   companyLogo: z.string().optional(),
   buttonUrl: z.string().optional(),
-  buttonExternal: z.boolean(),
-  dismissButtonLabel: z.string().optional(),
   timeToFinish: z.boolean().default(false),
   logic: z.array(ZSurveyCTALogic).optional(),
 });

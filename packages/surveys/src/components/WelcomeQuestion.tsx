@@ -25,7 +25,7 @@ export default function WelcomeQuestion({
         <img
           src={question.companyLogo}
           className="mb-4"
-          style={{ maxWidth: "250px", maxHeight: "250px" }}
+          style={{ maxWidth: "75px", maxHeight: "75px" }}
           alt="Company Logo"
         />
       )}
@@ -35,26 +35,12 @@ export default function WelcomeQuestion({
 
       <div className="mt-4 flex w-full justify-between">
         <div className="flex w-full justify-start gap-4">
-          {!question.required && (
-            <button
-              tabIndex={0}
-              type="button"
-              onClick={() => {
-                onSubmit({ [question.id]: "dismissed" });
-              }}
-              className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:text-slate-400">
-              {question.dismissButtonLabel || "Skip"}
-            </button>
-          )}
           <SubmitButton
             question={question}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             focus={true}
             onClick={() => {
-              if (question.buttonExternal && question.buttonUrl) {
-                window?.open(question.buttonUrl, "_blank")?.focus();
-              }
               onSubmit({ [question.id]: "clicked" });
             }}
             type="button"
