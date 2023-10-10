@@ -12,9 +12,10 @@ import {
   TCurrentUser,
 } from "@formbricks/types/v1/invites";
 import { ResourceNotFoundError, ValidationError, DatabaseError } from "@formbricks/types/v1/errors";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { sendInviteMemberEmail } from "../emails/emails";
 import { validateInputs } from "../utils/validate";
+import { ITEMS_PER_PAGE } from "../constants";
 
 const inviteSelect = {
   id: true,
@@ -29,12 +30,14 @@ const inviteSelect = {
   role: true,
 };
 
-export const getInvitesByTeamId = async (teamId: string): Promise<TInvite[] | null> => {
-  validateInputs([teamId, ZString]);
+export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[] | null> => {
+  validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
   const invites = await prisma.invite.findMany({
     where: { teamId },
     select: inviteSelect,
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   return invites;

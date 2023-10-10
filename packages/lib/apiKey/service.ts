@@ -8,7 +8,8 @@ import { createHash, randomBytes } from "crypto";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ITEMS_PER_PAGE } from "../constants";
 
 export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
   validateInputs([apiKeyId, ZString]);
@@ -37,13 +38,16 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
   }
 };
 
-export const getApiKeys = async (environmentId: string): Promise<TApiKey[]> => {
-  validateInputs([environmentId, ZId]);
+export const getApiKeys = async (environmentId: string, page?: number): Promise<TApiKey[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
   try {
     const apiKeys = await prisma.apiKey.findMany({
       where: {
         environmentId,
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
     return apiKeys;

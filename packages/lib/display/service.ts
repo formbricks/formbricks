@@ -13,6 +13,8 @@ import { Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 import { validateInputs } from "../utils/validate";
 import { transformPrismaPerson } from "../person/service";
+import { ITEMS_PER_PAGE } from "../constants";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 
 const selectDisplay = {
   id: true,
@@ -149,8 +151,11 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
   }
 };
 
-export const getDisplaysOfPerson = async (personId: string): Promise<TDisplaysWithSurveyName[] | null> => {
-  validateInputs([personId, ZId]);
+export const getDisplaysOfPerson = async (
+  personId: string,
+  page?: number
+): Promise<TDisplaysWithSurveyName[] | null> => {
+  validateInputs([personId, ZId], [page, ZOptionalNumber]);
   try {
     const displaysPrisma = await prisma.display.findMany({
       where: {
@@ -169,6 +174,8 @@ export const getDisplaysOfPerson = async (personId: string): Promise<TDisplaysWi
         },
         status: true,
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
     if (!displaysPrisma) {

@@ -437,8 +437,9 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
   }));
 };
 
-export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSurvey> {
-  validateInputs([updatedSurvey, ZSurvey.partial()]);
+export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+  validateInputs([updatedSurvey, ZSurvey]);
+
   const surveyId = updatedSurvey.id;
   let data: any = {};
   let survey: any = { ...updatedSurvey };

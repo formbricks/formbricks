@@ -2,7 +2,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { ZId } from "@formbricks/types/v1/environment";
 import { ZString } from "@formbricks/types/v1/common";
@@ -27,16 +27,18 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = (environmentId: string): Promise<TActionClass[]> =>
+export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
   unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
       try {
-        let actionClasses = await prisma.eventClass.findMany({
+        const actionClasses = await prisma.eventClass.findMany({
           where: {
             environmentId: environmentId,
           },
           select,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
             createdAt: "asc",
           },

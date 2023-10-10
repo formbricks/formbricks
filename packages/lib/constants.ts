@@ -54,7 +54,7 @@ export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
-export const PEOPLE_PER_PAGE = 50;
+export const ITEMS_PER_PAGE = 50;
 
 // Storage constants
 export const UPLOADS_DIR = path.resolve("./uploads");

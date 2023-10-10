@@ -11,12 +11,13 @@ import {
 } from "@formbricks/types/v1/memberships";
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { getTeamsByUserIdCacheTag } from "../team/service";
 import { revalidateTag } from "next/cache";
+import { ITEMS_PER_PAGE } from "../constants";
 
-export const getMembersByTeamId = async (teamId: string): Promise<TMember[]> => {
-  validateInputs([teamId, ZString]);
+export const getMembersByTeamId = async (teamId: string, page?: number): Promise<TMember[]> => {
+  validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
   const membersData = await prisma.membership.findMany({
     where: { teamId },
@@ -31,6 +32,8 @@ export const getMembersByTeamId = async (teamId: string): Promise<TMember[]> => 
       accepted: true,
       role: true,
     },
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   const members = membersData.map((member) => {

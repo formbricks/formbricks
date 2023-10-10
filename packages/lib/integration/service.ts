@@ -6,7 +6,8 @@ import { DatabaseError } from "@formbricks/types/v1/errors";
 import { ZId } from "@formbricks/types/v1/environment";
 import { TIntegration, TIntegrationInput } from "@formbricks/types/v1/integrations";
 import { validateInputs } from "../utils/validate";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ITEMS_PER_PAGE } from "../constants";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
@@ -41,14 +42,16 @@ export async function createOrUpdateIntegration(
   }
 }
 
-export const getIntegrations = async (environmentId: string): Promise<TIntegration[]> => {
-  validateInputs([environmentId, ZId]);
+export const getIntegrations = async (environmentId: string, page?: number): Promise<TIntegration[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
   try {
     const result = await prisma.integration.findMany({
       where: {
         environmentId,
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
     return result;
   } catch (error) {

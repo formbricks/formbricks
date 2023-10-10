@@ -8,7 +8,7 @@ import { EventType, Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import z from "zod";
 import { getActionClassCacheTag } from "../actionClass/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { getSessionCached } from "../session/service";
 import { validateInputs } from "../utils/validate";
 import { TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
@@ -17,11 +17,13 @@ export const getActionsCacheTag = (environmentId: string): string => `environmen
 
 export const getActionsByEnvironmentId = async (
   environmentId: string,
-  limit?: number
+  limit?: number,
+  page?: number
 ): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [limit, z.number().optional()]);
+
       try {
         const actionsPrisma = await prisma.event.findMany({
           where: {
@@ -32,7 +34,8 @@ export const getActionsByEnvironmentId = async (
           orderBy: {
             createdAt: "desc",
           },
-          take: limit ? limit : 20,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           include: {
             eventClass: true,
           },

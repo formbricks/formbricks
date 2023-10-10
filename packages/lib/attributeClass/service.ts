@@ -12,7 +12,8 @@ import { ZId } from "@formbricks/types/v1/environment";
 import { validateInputs } from "../utils/validate";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 
 const attributeClassesCacheTag = (environmentId: string): string =>
   `environments-${environmentId}-attributeClasses`;
@@ -35,8 +36,12 @@ export const getAttributeClass = async (attributeClassId: string): Promise<TAttr
   }
 };
 
-export const getAttributeClasses = async (environmentId: string): Promise<TAttributeClass[]> => {
-  validateInputs([environmentId, ZId]);
+export const getAttributeClasses = async (
+  environmentId: string,
+  page?: number
+): Promise<TAttributeClass[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
   try {
     const attributeClasses = await prisma.attributeClass.findMany({
       where: {
@@ -45,6 +50,8 @@ export const getAttributeClasses = async (environmentId: string): Promise<TAttri
       orderBy: {
         createdAt: "asc",
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
     return attributeClasses;

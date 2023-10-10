@@ -18,7 +18,8 @@ import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { revalidateTag } from "next/cache";
 import { deleteDisplayByResponseId } from "../display/service";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ITEMS_PER_PAGE } from "../constants";
 
 const responseSelection = {
   id: true,
@@ -83,14 +84,20 @@ export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-r
 
 export const getResponseCacheTag = (responseId: string) => `responses-${responseId}`;
 
-export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
-  validateInputs([personId, ZId]);
+export const getResponsesByPersonId = async (
+  personId: string,
+  page?: number
+): Promise<Array<TResponse> | null> => {
+  validateInputs([personId, ZId], [page, ZOptionalNumber]);
+
   try {
     const responsePrisma = await prisma.response.findMany({
       where: {
         personId,
       },
       select: responseSelection,
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
     if (!responsePrisma) {
@@ -122,6 +129,7 @@ export const getResponseBySingleUseId = async (
   singleUseId?: string
 ): Promise<TResponse | null> => {
   validateInputs([surveyId, ZId], [singleUseId, ZString]);
+
   try {
     if (!singleUseId) {
       return null;
@@ -156,6 +164,7 @@ export const getResponseBySingleUseId = async (
 export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput.partial()]);
   captureTelemetry("response created");
+
   try {
     let person: TPerson | null = null;
 
@@ -208,6 +217,7 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
 
 export const getResponse = async (responseId: string): Promise<TResponse | null> => {
   validateInputs([responseId, ZId]);
+
   try {
     const responsePrisma = await prisma.response.findUnique({
       where: {
@@ -236,10 +246,11 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   }
 };
 
-export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]> => {
-  validateInputs([surveyId, ZId]);
+export const getSurveyResponses = async (surveyId: string, page?: number): Promise<TResponse[]> => {
+  validateInputs([surveyId, ZId], [page, ZOptionalNumber]);
+
   try {
-    const responsesPrisma = await prisma.response.findMany({
+    const responses = await prisma.response.findMany({
       where: {
         surveyId,
       },
@@ -249,15 +260,17 @@ export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]>
           createdAt: "desc",
         },
       ],
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
-    const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
+    const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
       ...responsePrisma,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
 
-    return responses;
+    return transformedResponses;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -267,10 +280,11 @@ export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]>
   }
 };
 
-export const getEnvironmentResponses = async (environmentId: string): Promise<TResponse[]> => {
-  validateInputs([environmentId, ZId]);
+export const getEnvironmentResponses = async (environmentId: string, page?: number): Promise<TResponse[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
   try {
-    const responsesPrisma = await prisma.response.findMany({
+    const responses = await prisma.response.findMany({
       where: {
         survey: {
           environmentId,
@@ -282,15 +296,17 @@ export const getEnvironmentResponses = async (environmentId: string): Promise<TR
           createdAt: "desc",
         },
       ],
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
-    const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
+    const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
       ...responsePrisma,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
 
-    return responses;
+    return transformedResponses;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

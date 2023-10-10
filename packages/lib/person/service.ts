@@ -6,11 +6,10 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/error
 import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { PEOPLE_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClassByName } from "../attributeClass/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { ZNumber, ZString } from "@formbricks/types/v1/common";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 
 export const selectPerson = {
   id: true,
@@ -106,18 +105,17 @@ export const getPersonCached = async (personId: string) =>
     }
   )();
 
-export const getPeople = async (environmentId: string, page: number = 1): Promise<TPerson[]> => {
-  validateInputs([environmentId, ZId], [page, ZNumber]);
+export const getPeople = async (environmentId: string, page?: number): Promise<TPerson[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
   try {
-    const itemsPerPage = PEOPLE_PER_PAGE;
     const people = await prisma.person.findMany({
       where: {
         environmentId: environmentId,
       },
       select: selectPerson,
-      take: itemsPerPage,
-      skip: itemsPerPage * (page - 1),
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
     if (!people || people.length === 0) {
