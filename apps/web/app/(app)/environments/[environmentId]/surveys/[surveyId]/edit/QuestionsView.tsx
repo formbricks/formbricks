@@ -223,7 +223,9 @@ export default function QuestionsView({
           activeQuestionId={activeQuestionId}
         />
       </div>
-      <HiddenFieldCard />
+      {localSurvey?.type == "link" && (
+        <HiddenFieldCard setActiveQuestionId={setActiveQuestionId} activeQuestionId={activeQuestionId} />
+      )}
     </div>
   );
 }
