@@ -28,4 +28,6 @@ const SearchBox = React.forwardRef<HTMLInputElement, InputProps>(({ className, .
   );
 });
 
+SearchBox.displayName = "SearchBox";
+
 export { SearchBox };
