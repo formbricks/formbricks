@@ -24,6 +24,8 @@ const responseSelection = {
   createdAt: true,
   updatedAt: true,
   onboardingCompleted: true,
+  twoFactorEnabled: true,
+  identityProvider: true,
 };
 
 export const getProfileCacheTag = (userId: string): string => `profiles-${userId}`;
