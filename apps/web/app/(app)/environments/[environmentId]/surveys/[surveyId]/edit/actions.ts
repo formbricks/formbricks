@@ -3,7 +3,7 @@
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { deleteSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
 
