@@ -195,15 +195,7 @@ export default function MultipleChoiceSingleQuestion({
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
                         setTimeout(() => {
-                          if (otherSelected) {
-                            if (Array.isArray(value)) {
-                              onSubmit({ [question.id]: [...value, otherValue] });
-                            } else {
-                              onSubmit({ [question.id]: [otherValue] });
-                            }
-                          } else {
-                            onSubmit({ [question.id]: value });
-                          }
+                          onSubmit({ [question.id]: value });
                         }, 100);
                       }
                     }}
