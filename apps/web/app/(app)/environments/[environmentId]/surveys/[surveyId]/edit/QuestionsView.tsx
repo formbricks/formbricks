@@ -133,23 +133,27 @@ export default function QuestionsView({
 
   const duplicateQuestion = (questionIdx: number) => {
     const questionToDuplicate = JSON.parse(JSON.stringify(localSurvey.questions[questionIdx]));
-    const newQuestionId = createId();
+    if (questionToDuplicate.type === "welcome") {
+      toast.error("Welcome Question Can't Be Duplicated");
+    } else {
+      const newQuestionId = createId();
 
-    // create a copy of the question with a new id
-    const duplicatedQuestion = {
-      ...questionToDuplicate,
-      id: newQuestionId,
-    };
+      // create a copy of the question with a new id
+      const duplicatedQuestion = {
+        ...questionToDuplicate,
+        id: newQuestionId,
+      };
 
-    // insert the new question right after the original one
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
-    updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
+      // insert the new question right after the original one
+      const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+      updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
 
-    setLocalSurvey(updatedSurvey);
-    setActiveQuestionId(newQuestionId);
-    internalQuestionIdMap[newQuestionId] = createId();
+      setLocalSurvey(updatedSurvey);
+      setActiveQuestionId(newQuestionId);
+      internalQuestionIdMap[newQuestionId] = createId();
 
-    toast.success("Question duplicated.");
+      toast.success("Question duplicated.");
+    }
   };
 
   const addQuestion = (question: any) => {
@@ -160,8 +164,14 @@ export default function QuestionsView({
       question.backButtonLabel = backButtonLabel;
     }
 
+    const isWelcomeQuestionExists = updatedSurvey.questions.some((q) => q.type === "welcome");
+
     if (question.type === "welcome") {
-      updatedSurvey.questions.unshift({ ...question, isDraft: true });
+      if (isWelcomeQuestionExists) {
+        toast.error("Welcome Type already exists.");
+      } else {
+        updatedSurvey.questions.unshift({ ...question, isDraft: true });
+      }
     } else {
       updatedSurvey.questions.push({ ...question, isDraft: true });
     }
@@ -178,16 +188,25 @@ export default function QuestionsView({
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
     newQuestions.splice(result.destination.index, 0, reorderedQuestion);
+    const welcomeQuestionIndex = newQuestions.findIndex((question) => question.type === "welcome");
+    if (welcomeQuestionIndex !== -1 && welcomeQuestionIndex > 0) {
+      const [welcomeQuestion] = newQuestions.splice(welcomeQuestionIndex, 1);
+      newQuestions.splice(0, 0, welcomeQuestion);
+    }
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
 
   const moveQuestion = (questionIndex: number, up: boolean) => {
-    // move the question up or down in the localSurvey questions array
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
     const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
+    const welcomeQuestionIndex = newQuestions.findIndex((question) => question.type === "welcome");
+    if (welcomeQuestionIndex !== -1 && welcomeQuestionIndex > 0) {
+      const [welcomeQuestion] = newQuestions.splice(welcomeQuestionIndex, 1);
+      newQuestions.splice(0, 0, welcomeQuestion);
+    }
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
