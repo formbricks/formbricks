@@ -1,7 +1,5 @@
-import { getPlan, hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
-import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -73,16 +71,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    if (IS_FORMBRICKS_CLOUD) {
-      const plan = await getPlan(req, res);
-      if (plan === "free" && responses.length > RESPONSES_LIMIT_FREE) {
-        return res.json({
-          count: responses.length,
-          responses: responses.slice(responses.length - RESPONSES_LIMIT_FREE, responses.length), // get last 30 from array
-          reachedLimit: true,
-        });
-      }
-    }
     return res.json({ count: responses.length, responses, reachedLimit: false });
   }
 
