@@ -27,7 +27,7 @@ export default function WelcomeQuestion({
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-between">
-        <div className="flex w-full justify-end">
+        <div className="flex w-full justify-start">
           {!question.required && (
             <button
               tabIndex={0}

@@ -97,16 +97,16 @@ export default function WelcomeQuestionForm({
       </div>
 
       {/* Add Time to Finish Toggle */}
-      <div className="mt-3">
-        <Label htmlFor="timeToFinish">Set Time to Finish</Label>
-        <div className="mt-2">
+      <div className="mt-3 flex items-center">
+        <div className="mr-2">
           <Switch
             id="timeToFinish"
             name="timeToFinish"
             checked={question.timeToFinish}
-            onChange={() => updateQuestion(questionIdx, { timeToFinish: !question.timeToFinish })}
+            onCheckedChange={() => updateQuestion(questionIdx, { timeToFinish: !question.timeToFinish })}
           />
         </div>
+        <Label htmlFor="timeToFinish">Time to Finish</Label>
       </div>
     </form>
   );
