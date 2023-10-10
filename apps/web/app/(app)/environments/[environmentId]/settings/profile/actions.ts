@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { updateProfile, deleteProfile } from "@formbricks/lib/profile/service";
 import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
 import { getServerSession } from "next-auth";
