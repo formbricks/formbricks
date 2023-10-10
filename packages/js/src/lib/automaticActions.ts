@@ -14,7 +14,7 @@ let exitIntentListenerWrapper = async function (e: MouseEvent) {
 
 export const addExitIntentListener = (): void => {
   if (typeof document !== "undefined" && !exitIntentListenerAdded) {
-    document.addEventListener("mouseleave", exitIntentListenerWrapper);
+    document.querySelector("body")!.addEventListener("mouseleave", exitIntentListenerWrapper);
     exitIntentListenerAdded = true;
   }
 };
