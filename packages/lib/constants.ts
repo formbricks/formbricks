@@ -18,9 +18,12 @@ export const SHORT_SURVEY_BASE_URL = env.SHORT_SURVEY_BASE_URL
   ? env.SHORT_SURVEY_BASE_URL + "/"
   : `${WEBAPP_URL}/i/`;
 
+// encryption keys
+export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
+export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
+
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
-export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
 

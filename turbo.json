@@ -29,6 +29,7 @@
       "env": [
         "ASSET_PREFIX_URL",
         "CRON_SECRET",
+        "ENCRYPTION_KEY",
         "FORMBRICKS_ENCRYPTION_KEY",
         "DEBUG",
         "GITHUB_ID",

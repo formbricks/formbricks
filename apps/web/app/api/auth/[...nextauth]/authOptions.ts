@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import {
   EMAIL_VERIFICATION_DISABLED,
-  FORMBRICKS_ENCRYPTION_KEY,
+  ENCRYPTION_KEY,
   INTERNAL_SECRET,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
@@ -67,14 +67,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (user.twoFactorEnabled && credentials.backupCode) {
-          if (!FORMBRICKS_ENCRYPTION_KEY) {
+          if (!ENCRYPTION_KEY) {
             console.error("Missing encryption key; cannot proceed with backup code login.");
             throw new Error("Internal Server Error");
           }
 
           if (!user.backupCodes) throw new Error("No backup codes found");
 
-          const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, FORMBRICKS_ENCRYPTION_KEY));
+          const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, ENCRYPTION_KEY));
 
           // check if user-supplied code matches one
           const index = backupCodes.indexOf(credentials.backupCode.replaceAll("-", ""));
@@ -87,7 +87,7 @@ export const authOptions: NextAuthOptions = {
               id: user.id,
             },
             data: {
-              backupCodes: symmetricEncrypt(JSON.stringify(backupCodes), FORMBRICKS_ENCRYPTION_KEY),
+              backupCodes: symmetricEncrypt(JSON.stringify(backupCodes), ENCRYPTION_KEY),
             },
           });
         } else if (user.twoFactorEnabled) {
@@ -99,11 +99,11 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Internal Server Error");
           }
 
-          if (!FORMBRICKS_ENCRYPTION_KEY) {
+          if (!ENCRYPTION_KEY) {
             throw new Error("Internal Server Error");
           }
 
-          const secret = symmetricDecrypt(user.twoFactorSecret, FORMBRICKS_ENCRYPTION_KEY);
+          const secret = symmetricDecrypt(user.twoFactorSecret, ENCRYPTION_KEY);
           if (secret.length !== 32) {
             throw new Error("Internal Server Error");
           }
