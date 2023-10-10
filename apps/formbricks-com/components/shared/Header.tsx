@@ -100,7 +100,7 @@ export default function Header() {
   const plausible = usePlausible();
   const router = useRouter();
   return (
-    <Popover className="relative" as="header">
+    <Popover className="relative sticky top-0 shadow-md z-50" as="header">
       <a href="https://www.producthunt.com/products/formbricks" target="_blank">
         <div className="bg-[#ff6154] text-center text-sm text-white">
           We&apos;re launching soon on Product Hunt - get notified 🚀

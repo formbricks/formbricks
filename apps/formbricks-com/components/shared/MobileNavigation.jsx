@@ -43,7 +43,7 @@ export function MobileNavigation({ navigation }) {
   }, [router, isOpen]);
 
   return (
-    <>
+    <div className="sticky top-0 shadow-md z-50">
       <button type="button" onClick={() => setIsOpen(true)} className="relative" aria-label="Open navigation">
         <MenuIcon className="h-6 w-6 stroke-slate-500" />
       </button>
@@ -64,6 +64,6 @@ export function MobileNavigation({ navigation }) {
           <Navigation navigation={navigation} className="mt-5 px-1" />
         </Dialog.Panel>
       </Dialog>
-    </>
+    </div>
   );
 }

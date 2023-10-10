@@ -19,7 +19,7 @@ export function Navigation({ navigation, className, preserveScroll, linkRef }: N
   let router = useRouter();
 
   return (
-    <nav className={clsx("text-base lg:text-sm", className)}>
+    <nav className={clsx("text-base lg:text-sm sticky top-0 shadow-md z-50", className)}>
       <ul role="list" className="space-y-9">
         {navigation.map((section) => (
           <li key={section.title}>

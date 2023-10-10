@@ -29,7 +29,7 @@ export default async function SecondNavbar({
   }
 
   return (
-    <div {...props}>
+    <div {...props} className="sticky top-0 shadow-md z-50">
       <div className="grid h-14 w-full grid-cols-3 items-center justify-items-stretch border-b bg-white px-4">
         <div className="justify-self-start">
           {survey && environmentId && (
