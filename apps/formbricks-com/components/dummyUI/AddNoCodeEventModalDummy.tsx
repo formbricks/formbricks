@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@formbricks/ui";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
-import Modal from "../shared/Modal";
+import { Modal } from "@formbricks/ui";
 
 interface EventDetailModalProps {
   open: boolean;

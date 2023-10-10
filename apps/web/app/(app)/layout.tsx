@@ -1,6 +1,6 @@
 import FormbricksClient from "@/app/(app)/FormbricksClient";
 import { PHProvider, PostHogPageview } from "@/app/PostHogClient";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

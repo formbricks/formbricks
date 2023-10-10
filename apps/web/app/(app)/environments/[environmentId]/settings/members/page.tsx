@@ -1,5 +1,5 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { Skeleton } from "@formbricks/ui";

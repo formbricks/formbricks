@@ -3,13 +3,18 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TIntegration } from "@formbricks/types/v1/integrations";
-import { cache } from "react";
+import { ZId } from "@formbricks/types/v1/environment";
+import { TIntegration, TIntegrationInput } from "@formbricks/types/v1/integrations";
+import { validateInputs } from "../utils/validate";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ITEMS_PER_PAGE } from "../constants";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
-  integrationData: any
+  integrationData: TIntegrationInput
 ): Promise<TIntegration> {
+  validateInputs([environmentId, ZId]);
+
   try {
     const integration = await prisma.integration.upsert({
       where: {
@@ -37,11 +42,31 @@ export async function createOrUpdateIntegration(
   }
 }
 
-export const getIntegrations = cache(async (environmentId: string): Promise<TIntegration[]> => {
+export const getIntegrations = async (environmentId: string, page?: number): Promise<TIntegration[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
   try {
     const result = await prisma.integration.findMany({
       where: {
         environmentId,
+      },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+    });
+    return result;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+};
+
+export const getIntegration = async (integrationId: string): Promise<TIntegration | null> => {
+  try {
+    const result = await prisma.integration.findUnique({
+      where: {
+        id: integrationId,
       },
     });
     return result;
@@ -51,15 +76,19 @@ export const getIntegrations = cache(async (environmentId: string): Promise<TInt
     }
     throw error;
   }
-});
+};
 
-export const deleteIntegration = async (integrationId: string): Promise<void> => {
+export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
+  validateInputs([integrationId, ZString]);
+
   try {
-    await prisma.integration.delete({
+    const integrationData = await prisma.integration.delete({
       where: {
         id: integrationId,
       },
     });
+
+    return integrationData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

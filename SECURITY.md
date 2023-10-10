@@ -1,39 +1,75 @@
-# Security
+# Security Policy of Formbricks
 
-Contact: security@formbricks.com
+This is Formbrick's security policy. Please reach out to us
+on our Discord or, if privately, via <security@formbricks.com>
 
-Based on [https://supabase.com/.well-known/security.txt](https://supabase.com/.well-known/security.txt)
+## Introduction
 
-At Formbricks, we consider the security of our systems a top priority. But no matter how much effort we put into system security, there can still be vulnerabilities present.
+Formbricks is dedicated to maintaining the integrity and security of our systems and our clients' data. In our pursuit to keep our technology environment safe, we welcome the collaborative efforts of our user community and security researchers to enhance security protocols and continuously secure our platform. This security policy outlines our approach towards handling data, ensuring secure practices, and managing the disclosure of vulnerabilities.
 
-If you discover a vulnerability, we would like to know about it so we can take steps to address it as quickly as possible. We would like to ask you to help us better protect our clients and our systems.
+## I. Third-Party Data Usage Policy
 
-## Out of scope vulnerabilities:
+We affirm our commitment towards meticulous validation of data usage and collection scope by any third-party library or integration utilized in our operations. We adhere to the following protocols:
 
-- Clickjacking on pages with no sensitive actions.
-- Unauthenticated/logout/login CSRF.
-- Attacks requiring MITM or physical access to a user's device.
-- Any activity that could lead to the disruption of our service (DoS).
-- Content spoofing and text injection issues without showing an attack vector/without being able to modify HTML/CSS.
-- Email spoofing
-- Missing DNSSEC, CAA, CSP headers
-- Lack of Secure or HTTP only flag on non-sensitive cookies
-- Deadlinks
+- Rigorous vetting of third-party services to confirm adherence to our data usage and privacy standards.
+- Continuous monitoring and assessment of third-party practices to ensure ongoing compliance.
+- Immediate action to mitigate risks if a third-party deviates from agreed-upon data practices.
 
-## Please do the following:
+## II. Annual Penetration Testing (Pentest)
 
-- E-mail your findings to [security@formbricks.com](mailto:security@formbricks.com).
-- Do not run automated scanners on our infrastructure or dashboard. If you wish to do this, contact us and we will set up a sandbox for you.
-- Do not take advantage of the vulnerability or problem you have discovered, for example by downloading more data than necessary to demonstrate the vulnerability or deleting or modifying other people's data,
-- Do not reveal the problem to others until it has been resolved,
-- Do not use attacks on physical security, social engineering, distributed denial of service, spam or applications of third parties,
-- Do provide sufficient information to reproduce the problem, so we will be able to resolve it as quickly as possible. Usually, the IP address or the URL of the affected system and a description of the vulnerability will be sufficient, but complex vulnerabilities may require further explanation.
+To understand and bolster our security stature, Formbricks undertakes:
 
-## What we promise:
+- Annual penetration testing executed by an independent, skilled third party.
+- Prioritization of any identified issues, with immediate action on critical vulnerabilities.
+- Transparent communication and learnings shared with relevant stakeholders.
 
-- We will respond to your report within 3 business days with our evaluation of the report and an expected resolution date,
-- If you have followed the instructions above, we will not take any legal action against you in regard to the report,
-- We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission,
-- We will keep you informed of the progress towards resolving the problem,
-- In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise), and
-- We strive to resolve all problems as quickly as possible, and we would like to play an active role in the ultimate publication on the problem after it is resolved.
+## III. Vulnerability Reporting and Management
+
+Please do not use attacks on physical security, social engineering, distributed denial of service, spam or applications of third parties.
+
+### **A. When to Report a Vulnerability**
+
+We invite you to report if:
+
+- A potential security vulnerability in Formbricks is identified.
+- There is uncertainty about how a vulnerability affects our platform.
+- A vulnerability is detected in a dependent project of Formbricks.
+- An action was executed which, in your belief, should be restricted.
+
+### **B. When Reporting is Unnecessary**
+
+Avoid reporting if:
+
+- Assistance is needed to optimize Formbricks for security – please engage on our Discord for this.
+- Help is required for applying security-related updates.
+- The concern is not related to security.
+
+### **C. Vulnerability Reporting Procedure**
+
+In the interest of responsibly managing vulnerabilities, please adhere to the following procedure:
+
+> Do not reveal the problem to others until it has been resolved.
+
+1. **Send a Detailed Report**:
+   - Address emails to [security@formbricks.com](mailto:security@formbricks.com).
+   - Include:
+     - Problem description.
+     - Detailed, reproducible steps, with screenshots where possible.
+     - Affected version(s).
+     - Known possible mitigations.
+     - Your Discord username or preferred contact method.
+2. **Acknowledgement of Receipt**:
+   - Our security team will acknowledge receipt and provide an initial response within 48 hours.
+   - Following verification of the vulnerability and the fix, a release plan will be formulated, with the fix deployed between 7 to 28 days, depending on the severity and complexity.
+3. **Ongoing Communication**:
+   - A project maintainer may engage with you for additional details or clarification.
+   - We appreciate your patience as we explore the reported item, verify its authenticity, and ascertain the existence of a vulnerability.
+
+---
+
+### Please Read the below carefully
+
+If you have followed the instructions above, we will **not** take any legal action against you in regard to the report,
+We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission, We will keep you informed of the progress towards resolving the problem, In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise).
+
+We, at Formbricks, wish to express our gratitude towards all individuals who assist us in fortifying our security posture. Your responsible disclosure and cooperation enable us to elevate our security protocols, safeguarding our platform and data therein.

@@ -34,7 +34,6 @@ export default function EditWeeklySummary({ memberships, user, environmentId }: 
                   <div className="col-span-1 flex items-center justify-center">
                     <NotificationSwitch
                       surveyOrProductId={product.id}
-                      userId={user.id}
                       notificationSettings={user.notificationSettings}
                       notificationType={"weeklySummary"}
                     />
