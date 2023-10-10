@@ -1,14 +1,29 @@
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { TAirTableIntegration, TAirtable, TZAirTableConfigData } from "@formbricks/types/v1/integrations";
-import { cache } from "react";
+import {
+  TAirTableIntegration,
+  TAirtable,
+  TAirtableCredential,
+  TAirtableIntegrationInput,
+  TZAirTableConfigData,
+  ZAirtableCredential,
+  ZAirtableTokenSchema,
+} from "@formbricks/types/v1/integrations";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import * as z from "zod";
+import { AIR_TABLE_CLIENT_ID } from "../constants";
+import { createOrUpdateIntegration } from "../integration/service";
 
-export const connectAirtable = async (environmentId: string, key: string, email: string) => {
-  const type: TAirTableIntegration["type"] = "airtable";
+interface ConnectAirtableOptions {
+  environmentId: string;
+  key: TAirtableCredential;
+  email: string;
+}
 
-  const baseData: Pick<TAirTableIntegration, "type" | "config"> = {
+export const connectAirtable = async ({ email, environmentId, key }: ConnectAirtableOptions) => {
+  const type: TAirtableIntegrationInput["type"] = "airtable";
+
+  const baseData: TAirtableIntegrationInput = {
     type,
     config: { data: [], key, email },
   };
@@ -61,8 +76,6 @@ export const findAirtableIntegration = async (
     throw error;
   }
 };
-
-export const getAirtableIntegration = cache(findAirtableIntegration);
 
 const ZBases = z.object({
   bases: z.array(z.object({ id: z.string(), name: z.string() })),
@@ -119,14 +132,74 @@ export const getTables = async (key: string, baseId: string) => {
   return ZTables.parse(res);
 };
 
+export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
+  const formBody = Object.keys(formData)
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(formData[key])}`)
+    .join("&");
+
+  const tokenReq = await fetch("https://airtable.com/oauth2/v1/token", {
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formBody,
+    method: "POST",
+  });
+
+  const tokenRes = await tokenReq.json();
+
+  const { access_token, expires_in, refresh_token } = ZAirtableTokenSchema.parse(tokenRes);
+
+  const expiry_date = new Date();
+  expiry_date.setSeconds(expiry_date.getSeconds() + expires_in);
+
+  return {
+    access_token,
+    expiry_date: expiry_date.toISOString(),
+    refresh_token,
+  };
+};
+
+export const getAirtableToken = async (environmentId: string) => {
+  const airTableIntegration = await findAirtableIntegration(environmentId);
+
+  const { access_token, expiry_date, refresh_token } = ZAirtableCredential.parse(
+    airTableIntegration?.config.key
+  );
+
+  const expiryDate = new Date(expiry_date);
+  const currentDate = new Date();
+
+  if (currentDate >= expiryDate) {
+    const client_id = AIR_TABLE_CLIENT_ID;
+
+    const newToken = await fetchAirtableAuthToken({
+      grant_type: "refresh_token",
+      refresh_token,
+      client_id,
+    });
+
+    await createOrUpdateIntegration(environmentId, {
+      type: "airtable",
+      config: {
+        data: airTableIntegration?.config?.data ?? [],
+        email: airTableIntegration?.config?.email ?? "",
+        key: newToken,
+      },
+    });
+
+    return newToken.access_token;
+  }
+
+  return access_token;
+};
+
 export const getAirtableTables = async (environmentId: string) => {
   let tables: TAirtable[] = [];
   try {
-    const airTableIntegration = await getAirtableIntegration(environmentId);
+    const token = await getAirtableToken(environmentId);
 
-    if (airTableIntegration && airTableIntegration.config?.key) {
-      tables = (await getBases(airTableIntegration.config.key)).bases;
-    }
+    tables = (await getBases(token)).bases;
+
     return tables;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

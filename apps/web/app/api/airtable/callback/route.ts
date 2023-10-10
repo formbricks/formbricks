@@ -1,21 +1,15 @@
 import { hasUserEnvironmentAccess } from "@/../../packages/lib/environment/auth";
-import { connectAirtable } from "@/../../packages/lib/services/airTable";
+import { connectAirtable, fetchAirtableAuthToken } from "@/../../packages/lib/services/airTable";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { WEBAPP_URL, AIR_TABLE_CLIENT_ID, AIR_TABLE_REDIRECT_URL } from "@formbricks/lib/constants";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 
-const TokenSchema = z.object({
-  access_token: z.string(),
-  refresh_token: z.string(),
-  expires_in: z.coerce.number(),
-});
-
-async function getEmail(token: { access_token: string }) {
+async function getEmail(token: string) {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
     headers: {
-      Authorization: `Bearer ${token.access_token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -62,28 +56,18 @@ export async function GET(req: NextRequest) {
     code_verifier,
   };
 
-  const formBody = Object.keys(formData)
-    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(formData[key])}`)
-    .join("&");
-
-  const tokenReq = await fetch("https://airtable.com/oauth2/v1/token", {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: formBody,
-    method: "POST",
-  });
-
-  const tokenRes = await tokenReq.json();
-
   try {
-    const token = TokenSchema.parse(tokenRes);
+    const key = await fetchAirtableAuthToken(formData);
 
-    const email = await getEmail(token);
+    const email = await getEmail(key.access_token);
 
-    await connectAirtable(environmentId, token.access_token, email);
+    await connectAirtable({
+      environmentId,
+      email,
+      key,
+    });
     return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
   } catch (error) {}
 
-  NextResponse.json({ Error: tokenRes?.error?.message ?? "unknown error occurred" }, { status: 400 });
+  NextResponse.json({ Error: "unknown error occurred" }, { status: 400 });
 }

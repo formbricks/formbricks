@@ -21,6 +21,7 @@ export const ZGoogleCredential = z.object({
   access_token: z.string(),
   refresh_token: z.string(),
 });
+
 export type TGoogleCredential = z.infer<typeof ZGoogleCredential>;
 
 export const ZGoogleSpreadsheet = z.object({
@@ -65,6 +66,14 @@ export const ZAirTable = z.object({
 
 export type TAirtable = z.infer<typeof ZAirTable>;
 
+export const ZAirtableCredential = z.object({
+  expiry_date: z.string(),
+  access_token: z.string(),
+  refresh_token: z.string(),
+});
+
+export type TAirtableCredential = z.infer<typeof ZAirtableCredential>;
+
 export const ZAirTableConfigData = z
   .object({
     tableId: z.string(),
@@ -76,7 +85,7 @@ export const ZAirTableConfigData = z
 export type TZAirTableConfigData = z.infer<typeof ZAirTableConfigData>;
 
 const ZAirTableConfig = z.object({
-  key: z.string(),
+  key: ZAirtableCredential,
   data: z.array(ZAirTableConfigData),
   email: z.string(),
 });
@@ -89,6 +98,12 @@ export const ZAirTableIntegration = z.object({
 });
 
 export type TAirTableIntegration = z.infer<typeof ZAirTableIntegration>;
+
+export const ZAirtableTokenSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_in: z.coerce.number(),
+});
 
 export type TAirtableIntegrationInput = Pick<TAirTableIntegration, "type" | "config">;
 

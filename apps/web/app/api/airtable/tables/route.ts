@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ Error: "integration not found" }, { status: 401 });
   }
 
-  const tables = await getTables(integration.config.key, baseId.data);
+  const tables = await getTables(integration.config.key.access_token, baseId.data);
 
   return NextResponse.json(tables, { status: 200 });
 }
