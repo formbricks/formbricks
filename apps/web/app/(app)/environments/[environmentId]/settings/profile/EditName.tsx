@@ -2,7 +2,6 @@
 
 import { Button, Input, Label } from "@formbricks/ui";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { updateProfileAction } from "./actions";
 import { TProfile } from "@formbricks/types/v1/profile";
@@ -16,21 +15,17 @@ export function EditName({ profile }: { profile: TProfile }) {
     register,
     handleSubmit,
     formState: { isSubmitting },
+    watch,
   } = useForm<FormData>();
 
-  const [isButtonDisabled, setButtonDisabled] = useState(false);
-  const [nameValue, setNameValue] = useState(profile.name || "");
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newNameValue = e.target.value;
-    setNameValue(newNameValue);
-    setButtonDisabled(newNameValue === "");
-  };
+  const nameValue = watch("name", profile.name || "");
+  const isNotEmptySpaces = (value: string) => value.trim() !== "";
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
-      if (nameValue === "") {
+      if (!isNotEmptySpaces(data.name)) {
         toast.error("Please enter at least one character.");
+        return;
       }
       await updateProfileAction(data);
       toast.success("Your name was updated successfully.");
@@ -46,9 +41,8 @@ export function EditName({ profile }: { profile: TProfile }) {
         <Input
           type="text"
           id="fullname"
-          value={nameValue}
+          defaultValue={profile.name || ""}
           {...register("name", { required: true })}
-          onChange={handleNameChange}
         />
 
         <div className="mt-4">
@@ -60,7 +54,7 @@ export function EditName({ profile }: { profile: TProfile }) {
           variant="darkCTA"
           className="mt-4"
           loading={isSubmitting}
-          disabled={isButtonDisabled}>
+          disabled={nameValue === "" || isSubmitting}>
           Update
         </Button>
       </form>
