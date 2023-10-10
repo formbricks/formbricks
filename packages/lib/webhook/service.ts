@@ -5,10 +5,9 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { cache } from "react";
 import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/types/v1/errors";
 
-export const getWebhooks = cache(async (environmentId: string): Promise<TWebhook[]> => {
+export const getWebhooks = async (environmentId: string): Promise<TWebhook[]> => {
   validateInputs([environmentId, ZId]);
   try {
     const webhooks = await prisma.webhook.findMany({
@@ -20,7 +19,7 @@ export const getWebhooks = cache(async (environmentId: string): Promise<TWebhook
   } catch (error) {
     throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
   }
-});
+};
 
 export const getCountOfWebhooksBasedOnSource = async (
   environmentId: string,
