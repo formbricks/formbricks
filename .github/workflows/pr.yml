@@ -4,9 +4,6 @@ on:
   pull_request_target:
     branches:
       - main
-    paths-ignore:
-      - "**.md"
-      - ".github/CODEOWNERS"
   merge_group:
   workflow_dispatch:
 
