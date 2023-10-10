@@ -74,6 +74,20 @@ export const updateInviteAction = async (inviteId: string, teamId: string, data:
   return await updateInvite(inviteId, data);
 };
 
+export const updateTeamSupportEmailAction = async (teamId: string, supportEmail: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
+  if (!isUserAuthorized) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  return await updateTeam(teamId, { supportEmail: supportEmail });
+};
+
 export const deleteInviteAction = async (inviteId: string, teamId: string) => {
   const session = await getServerSession(authOptions);
 

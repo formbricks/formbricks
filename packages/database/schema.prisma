@@ -390,6 +390,7 @@ model Team {
   plan             Plan         @default(free)
   stripeCustomerId String?
   invites          Invite[]
+  supportEmail     String?
 }
 
 enum MembershipRole {

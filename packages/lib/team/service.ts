@@ -37,6 +37,7 @@ export const select = {
   name: true,
   plan: true,
   stripeCustomerId: true,
+  supportEmail: true,
 };
 
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
@@ -90,7 +91,7 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
               },
             },
           },
-          select: { ...select, memberships: true }, // include memberships
+          select: { ...select, memberships: true }, // include memberships and support email
         });
 
         return team;

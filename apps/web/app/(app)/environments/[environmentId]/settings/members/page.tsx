@@ -11,6 +11,7 @@ import DeleteTeam from "./DeleteTeam";
 import { EditMemberships } from "./EditMemberships";
 import EditTeamName from "./EditTeamName";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import EditTeamSupportEmail from "@/app/(app)/environments/[environmentId]/settings/members/EditTeamSupportEmail";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">
@@ -83,6 +84,11 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
       </SettingsCard>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">
         <EditTeamName team={team} environmentId={params.environmentId} />
+      </SettingsCard>
+      <SettingsCard
+        title="Support Email"
+        description="Add an email we share with respondents who couldn't submit feeback.">
+        <EditTeamSupportEmail team={team} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
         title="Delete Team"
