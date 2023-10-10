@@ -8,6 +8,8 @@ import * as z from "zod";
 
 const TokenSchema = z.object({
   access_token: z.string(),
+  refresh_token: z.string(),
+  expires_in: z.coerce.number(),
 });
 
 async function getEmail(token: { access_token: string }) {
