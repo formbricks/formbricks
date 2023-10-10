@@ -19,15 +19,22 @@ export default function WelcomeQuestion({
   isLastQuestion,
   brandColor,
 }: WelcomeQuestionProps) {
-  console.log("Toasted Motherboard");
   return (
     <div>
-      <img src={question.companyLogo}></img>
+      {question.companyLogo && (
+        <img
+          src={question.companyLogo}
+          className="mb-4"
+          style={{ maxWidth: "250px", maxHeight: "250px" }}
+          alt="Company Logo"
+        />
+      )}
+
       <Headline headline={question.headline} questionId={question.id} />
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-between">
-        <div className="flex w-full justify-start">
+        <div className="flex w-full justify-start gap-4">
           {!question.required && (
             <button
               tabIndex={0}
@@ -52,6 +59,7 @@ export default function WelcomeQuestion({
             }}
             type="button"
           />
+          <div className="flex items-center text-slate-600">Press Enter ↩</div>
         </div>
       </div>
     </div>
