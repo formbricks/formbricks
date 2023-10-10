@@ -30,7 +30,7 @@ import { Input } from "../../Input";
 import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
-import type { TextEditorProps } from "../Editor";
+import type { TextEditorProps } from "./Editor";
 import { AddVariablesDropdown } from "./AddVariablesDropdown";
 
 const LowPriority = 1;
