@@ -163,9 +163,9 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       const airtableIntegrationData: TAirtableIntegrationInput = {
         type: "airtable",
         config: {
-          key: airtableIntegration?.config.key ?? "",
-          data: airtableIntegration?.config.data ?? [],
-          email: airtableIntegration?.config.email ?? "",
+          key: airtableIntegration?.config?.key,
+          data: airtableIntegration.config.data ?? [],
+          email: airtableIntegration?.config?.email,
         },
       };
 
