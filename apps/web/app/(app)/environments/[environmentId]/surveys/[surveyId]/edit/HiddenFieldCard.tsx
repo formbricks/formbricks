@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { Input } from "@formbricks/ui";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import { EyeIcon, EyeSlashIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 interface HiddenFieldCardProps {
   activeQuestionId: string | null;
@@ -10,6 +12,10 @@ interface HiddenFieldCardProps {
 }
 
 export default function HiddenFieldCard({ activeQuestionId, setActiveQuestionId }: HiddenFieldCardProps) {
+  const [display, setDisplay] = useState("flex");
+  const [hiddenFields, setHiddenFields] = useState([]);
+  const [showHiddenInput, setShowHiddenInput] = useState(false);
+  const [inputID, setInputID] = useState("Type to add a hidden field");
   const open = activeQuestionId === "end";
   const setOpen = (e) => {
     e ? setActiveQuestionId("end") : setActiveQuestionId(null);
@@ -19,8 +25,11 @@ export default function HiddenFieldCard({ activeQuestionId, setActiveQuestionId 
     <div
       className={cn(
         open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "flex flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
-      )}>
+        "flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
+      )}
+      style={{
+        display: display,
+      }}>
       <div
         className={cn(
           open ? "bg-slate-700" : "bg-slate-400",
@@ -41,10 +50,39 @@ export default function HiddenFieldCard({ activeQuestionId, setActiveQuestionId 
               <EyeSlashIcon />
               <p className="text-sm font-semibold">Hidden fields</p>
             </div>
-            <div>{/*Icons go here */}</div>
+            <TrashIcon
+              className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
+              onChange={(e) => {
+                e.preventDefault();
+                setDisplay("none");
+              }}
+            />
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent></Collapsible.CollapsibleContent>
+        <Collapsible.CollapsibleContent className="relative flex justify-evenly px-4 pb-6">
+          <div className="flex w-4/6 justify-evenly">
+            {hiddenFields ? hiddenFields : <p className="text-sm text-slate-400">No hidden fields yet</p>}
+          </div>
+          <button
+            className="rounded-md bg-gradient-to-br from-slate-900 to-slate-800 px-4 py-2
+              text-sm font-medium leading-4"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowHiddenInput(!showHiddenInput);
+            }}>
+            Add field
+          </button>
+          {showHiddenInput && (
+            <Input
+              id="hiddenInput"
+              name="hiddenInput"
+              defaultValue={inputID}
+              onChange={(e) => {
+                setInputID(e.target.value);
+              }}
+            />
+          )}
+        </Collapsible.CollapsibleContent>
       </Collapsible.Root>
     </div>
   );
