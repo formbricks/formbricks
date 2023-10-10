@@ -304,7 +304,8 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <div className="flex cursor-pointer flex-row items-center space-x-5">
-                      {session.user.image ? (
+                      <ProfileAvatar userId={session.user.id} />
+                      {/* {session.user.image ? (
                         <Image
                           src={session.user.image}
                           width="100"
@@ -314,7 +315,7 @@ export default function Navigation({
                         />
                       ) : (
                         <ProfileAvatar userId={session.user.id} />
-                      )}
+                      )} */}
 
                       <div>
                         <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
@@ -328,7 +329,7 @@ export default function Navigation({
                   <DropdownMenuContent className="w-56">
                     <DropdownMenuLabel className="cursor-default break-all">
                       <span className="ph-no-capture font-normal">Signed in as </span>
-                      {session?.user?.name.length > 30 ? (
+                      {session?.user?.name && session?.user?.name.length > 30 ? (
                         <TooltipProvider delayDuration={50}>
                           <Tooltip>
                             <TooltipTrigger asChild>
