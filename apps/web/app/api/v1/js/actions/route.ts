@@ -1,7 +1,7 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { createAction } from "@formbricks/lib/action/service";
-import { ZJsActionInput } from "@formbricks/types/v1/js";
+import { ZActionInput } from "@formbricks/types/v1/actions";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -13,7 +13,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const jsonInput = await req.json();
 
     // validate using zod
-    const inputValidation = ZJsActionInput.safeParse(jsonInput);
+    const inputValidation = ZActionInput.safeParse(jsonInput);
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
