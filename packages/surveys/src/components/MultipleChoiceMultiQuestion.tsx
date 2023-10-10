@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
-import { useMemo, useRef, useState, useEffect } from "preact/hooks";
+import { useMemo, useRef, useState, useEffect, useCallback } from "preact/hooks";
 import { cn, shuffleQuestions } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -28,9 +28,18 @@ export default function MultipleChoiceSingleQuestion({
   isLastQuestion,
   brandColor,
 }: MultipleChoiceSingleProps) {
+  const getChoicesWithoutOtherLabels = useCallback(
+    () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
+    [question]
+  );
+
   const [otherSelected, setOtherSelected] = useState(
-    !!value && !question.choices.find((c) => c.label === value)
-  ); // initially set to true if value is not in choices
+    !!value &&
+      (value as string[]).some((item) => {
+        return getChoicesWithoutOtherLabels().includes(item) === false;
+      })
+  ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
+
   const [otherValue, setOtherValue] = useState(
     (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
   ); // initially set to the first value that is not in choices
@@ -77,15 +86,11 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (otherSelected) {
-          if (Array.isArray(value)) {
-            onSubmit({ [question.id]: [...value, otherValue] });
-          } else {
-            onSubmit({ [question.id]: [otherValue] });
-          }
-        } else {
-          onSubmit({ [question.id]: value });
-        }
+        const newValue = (value as string[]).filter((item) => {
+          return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
+        }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
+        onChange({ [question.id]: newValue });
+        onSubmit({ [question.id]: newValue });
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -185,6 +190,7 @@ export default function MultipleChoiceSingleQuestion({
                     value={otherValue}
                     onChange={(e) => {
                       setOtherValue(e.currentTarget.value);
+                      addItem(e.currentTarget.value);
                     }}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
