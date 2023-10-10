@@ -15,7 +15,7 @@ export default async function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="API Keys" />
-      <EnvironmentNotice environment={environment} />
+      <EnvironmentNotice environmentId={environment.id} />
       {environment.type === "development" ? (
         <SettingsCard
           title="Development Env Keys"

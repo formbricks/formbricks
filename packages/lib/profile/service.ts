@@ -24,6 +24,8 @@ const responseSelection = {
   createdAt: true,
   updatedAt: true,
   onboardingCompleted: true,
+  twoFactorEnabled: true,
+  identityProvider: true,
 };
 
 export const getProfileCacheTag = (userId: string): string => `profiles-${userId}`;
@@ -168,7 +170,7 @@ export const createProfile = async (data: TProfileCreateInput): Promise<TProfile
 };
 
 // function to delete a user's profile including teams
-export const deleteProfile = async (userId: string): Promise<void> => {
+export const deleteProfile = async (userId: string): Promise<TProfile> => {
   validateInputs([userId, ZId]);
   try {
     const currentUserMemberships = await prisma.membership.findMany({
@@ -207,7 +209,10 @@ export const deleteProfile = async (userId: string): Promise<void> => {
     }
 
     revalidateTag(getProfileCacheTag(userId));
-    await deleteUser(userId);
+
+    const deletedProfile = await deleteUser(userId);
+
+    return deletedProfile;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

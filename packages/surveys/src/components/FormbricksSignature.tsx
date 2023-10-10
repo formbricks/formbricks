@@ -3,6 +3,7 @@ export default function FormbricksSignature() {
     <a
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
+      tabIndex={-1}
       className="mb-5 mt-2 flex justify-center">
       <p className="text-xs text-slate-400">
         Powered by{" "}

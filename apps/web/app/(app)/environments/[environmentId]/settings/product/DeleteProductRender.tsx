@@ -1,7 +1,7 @@
 "use client";
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/settings/product/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import { truncate } from "@/lib/utils";
 import { TProduct } from "@formbricks/types/v1/product";
 import { Button } from "@formbricks/ui";
