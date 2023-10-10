@@ -4,6 +4,7 @@ import { TAirtableTables } from "@/../../packages/lib/services/airTable";
 import {
   TAirTableIntegration,
   TAirtable,
+  TAirtableIntegrationInput,
   TZAirTableConfigData,
 } from "@/../../packages/types/v1/integrations";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
@@ -14,13 +15,14 @@ import {
   Button,
   Checkbox,
   Label,
+  Modal,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/../../packages/ui";
-import Modal from "@/components/shared/Modal";
+
 import AirtableLogo from "@/images/airtable.svg";
 import { fetchTables } from "@formbricks/lib/client/airtable";
 import Image from "next/image";
@@ -158,7 +160,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         throw new Error("Please select at least one question");
       }
 
-      const airtableIntegrationData: Partial<TAirTableIntegration> = {
+      const airtableIntegrationData: TAirtableIntegrationInput = {
         type: "airtable",
         config: {
           key: airtableIntegration?.config.key ?? "",

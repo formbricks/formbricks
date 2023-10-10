@@ -4,14 +4,14 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import { ZId } from "@formbricks/types/v1/environment";
-import { TIntegration } from "@formbricks/types/v1/integrations";
+import { TIntegration, TIntegrationInput } from "@formbricks/types/v1/integrations";
 import { validateInputs } from "../utils/validate";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ITEMS_PER_PAGE } from "../constants";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
-  integrationData: Pick<TIntegration, "type" | "config">
+  integrationData: TIntegrationInput
 ): Promise<TIntegration> {
   validateInputs([environmentId, ZId]);
 

@@ -55,6 +55,8 @@ export const ZGoogleSheetIntegration = z.object({
 
 export type TGoogleSheetIntegration = z.infer<typeof ZGoogleSheetIntegration>;
 
+export type TGoogleSheetIntegrationInput = Pick<TGoogleSheetIntegration, "type" | "config">;
+
 /* AIRTABLE CONFIGURATIONS */
 export const ZAirTable = z.object({
   name: z.string(),
@@ -88,6 +90,8 @@ export const ZAirTableIntegration = z.object({
 
 export type TAirTableIntegration = z.infer<typeof ZAirTableIntegration>;
 
+export type TAirtableIntegrationInput = Pick<TAirTableIntegration, "type" | "config">;
+
 /* COMMON CONFIGURATIONS */
 export const ZIntegrationConfig = z.union([ZGoogleSheetsConfig, ZAirTableConfig]);
 export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
@@ -99,3 +103,5 @@ export const ZIntegration = z.object({
   config: ZIntegrationConfig,
 });
 export type TIntegration = z.infer<typeof ZIntegration>;
+
+export type TIntegrationInput = Pick<TIntegration, "type" | "config">;
