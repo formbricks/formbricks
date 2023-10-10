@@ -1,15 +1,15 @@
-import { getEnvironments } from "@formbricks/lib/environment/service";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { headers } from "next/headers";
 
 interface EnvironmentNoticeProps {
-  environment: TEnvironment;
+  environmentId: string;
 }
 
-export default async function EnvironmentNotice({ environment }: EnvironmentNoticeProps) {
+export default async function EnvironmentNotice({ environmentId }: EnvironmentNoticeProps) {
   const headersList = headers();
   const currentUrl = headersList.get("x-invoke-path") || "";
+  const environment = await getEnvironment(environmentId);
   const environments = await getEnvironments(environment.productId);
   const otherEnvironmentId = environments.find((e) => e.id !== environment.id)?.id || "";
 

@@ -792,6 +792,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
+      react-hot-toast:
+        specifier: ^2.4.1
+        version: 2.4.1(csstype@3.1.1)(react-dom@18.2.0)(react@18.2.0)
       react-radio-group:
         specifier: ^3.0.3
         version: 3.0.3(react-dom@18.2.0)(react@18.2.0)
@@ -802,6 +805,9 @@ importers:
       '@formbricks/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
