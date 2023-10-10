@@ -98,7 +98,7 @@ export const getAttributeClassByNameCached = async (environmentId: string, name:
     async () => {
       return await getAttributeClassByName(environmentId, name);
     },
-    getAttributeClassesCacheKey(environmentId),
+    [`environments-${environmentId}-attributeClass-${name}`],
     {
       tags: getAttributeClassesCacheKey(environmentId),
       revalidate: SERVICES_REVALIDATION_INTERVAL,
