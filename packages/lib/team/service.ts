@@ -28,6 +28,7 @@ import {
 } from "../utils/createDemoProductHelpers";
 import { validateInputs } from "../utils/validate";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getEnvironmentCacheTag } from "environment/service";
 
 export const select = {
   id: true,
@@ -178,6 +179,7 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
     deletedTeam?.products.forEach((product) => {
       product.environments.forEach((environment) => {
         revalidateTag(getTeamByEnvironmentIdCacheTag(environment.id));
+        revalidateTag(getEnvironmentCacheTag(environment.id));
       });
     });
 
