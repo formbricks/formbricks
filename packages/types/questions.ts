@@ -4,6 +4,7 @@ export interface Choice {
 }
 
 export enum QuestionType {
+  Welcome = "welcome",
   OpenText = "openText",
   MultipleChoiceSingle = "multipleChoiceSingle",
   MultipleChoiceMulti = "multipleChoiceMulti",
@@ -14,6 +15,7 @@ export enum QuestionType {
 }
 
 export type Question =
+  | WelcomeQuestion
   | OpenTextQuestion
   | MultipleChoiceSingleQuestion
   | MultipleChoiceMultiQuestion
@@ -32,6 +34,14 @@ export interface IQuestion<T extends Logic> {
   backButtonLabel?: string;
   logic?: T[];
   isDraft?: boolean;
+}
+
+export interface WelcomeQuestion extends IQuestion<WelcomeLogic> {
+  type: QuestionType.Welcome;
+  html?: string;
+  buttonUrl?: string;
+  buttonExternal: boolean;
+  dismissButtonLabel?: string;
 }
 
 export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
@@ -101,6 +111,11 @@ export interface LogicBase {
   destination: string | "end" | undefined;
 }
 
+export interface WelcomeLogic extends LogicBase {
+  condition: "clicked" | "skipped" | undefined;
+  value?: undefined;
+}
+
 export interface OpenTextLogic extends LogicBase {
   condition: "submitted" | "skipped" | undefined;
   value?: undefined;
@@ -130,6 +145,7 @@ export interface CTALogic extends LogicBase {
   condition: "clicked" | "skipped" | undefined;
   value?: undefined;
 }
+
 export interface RatingLogic extends LogicBase {
   condition:
     | "submitted"
@@ -150,6 +166,7 @@ export interface ConsentLogic extends LogicBase {
 }
 
 export type Logic =
+  | WelcomeLogic
   | OpenTextLogic
   | MultipleChoiceSingleLogic
   | MultipleChoiceMultiLogic

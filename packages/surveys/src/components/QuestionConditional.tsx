@@ -2,6 +2,7 @@ import { TResponseData } from "@formbricks/types/v1/responses";
 import { QuestionType } from "../../../types/questions";
 import { TSurveyQuestion } from "../../../types/v1/surveys";
 import CTAQuestion from "./CTAQuestion";
+import WelcomeQuestion from "./WelcomeQuestion";
 import ConsentQuestion from "./ConsentQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
@@ -32,7 +33,16 @@ export default function QuestionConditional({
   brandColor,
   autoFocus = true,
 }: QuestionConditionalProps) {
-  return question.type === QuestionType.OpenText ? (
+  return question.type === QuestionType.Welcome ? (
+    <WelcomeQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      isLastQuestion={isLastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
       value={value}

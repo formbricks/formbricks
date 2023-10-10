@@ -48,7 +48,7 @@ export function Survey({
       onSubmit(prefillResponseData);
     }
   }, []);
-
+  console.log(survey);
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
     const responseValue = data[questionId];

@@ -1,4 +1,5 @@
 import {
+  HandRaisedIcon,
   CursorArrowRippleIcon,
   ChatBubbleBottomCenterTextIcon,
   ListBulletIcon,
@@ -20,6 +21,18 @@ export type QuestionType = {
 };
 
 export const questionTypes: QuestionType[] = [
+  {
+    id: QuestionId.Welcome,
+    label: "Welcome Screen",
+    description: "Ask your users to perform an action",
+    icon: HandRaisedIcon,
+    preset: {
+      headline: "You are one of our power users!",
+      buttonLabel: "Book interview",
+      buttonExternal: false,
+      dismissButtonLabel: "Skip",
+    },
+  },
   {
     id: QuestionId.OpenText,
     label: "Free text",

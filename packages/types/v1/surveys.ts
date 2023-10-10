@@ -224,6 +224,19 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
 
+export const ZSurveyWelcomeQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(QuestionType.Welcome),
+  html: z.string().optional(),
+  companyLogo: z.string().optional(),
+  buttonUrl: z.string().optional(),
+  buttonExternal: z.boolean(),
+  dismissButtonLabel: z.string().optional(),
+  timeToFinish: z.boolean(),
+  logic: z.array(ZSurveyCTALogic).optional(),
+});
+
+export type TSurveyWelcomeQuestion = z.infer<typeof ZSurveyWelcomeQuestion>;
+
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Rating),
   scale: z.enum(["number", "smiley", "star"]),
@@ -236,6 +249,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyQuestion = z.union([
+  ZSurveyWelcomeQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
   ZSurveyMultipleChoiceSingleQuestion,

@@ -153,11 +153,19 @@ export default function QuestionsView({
   };
 
   const addQuestion = (question: any) => {
+    console.log(question);
+
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }
-    updatedSurvey.questions.push({ ...question, isDraft: true });
+
+    if (question.type === "welcome") {
+      updatedSurvey.questions.unshift({ ...question, isDraft: true });
+    } else {
+      updatedSurvey.questions.push({ ...question, isDraft: true });
+    }
+
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
     internalQuestionIdMap[question.id] = createId();
