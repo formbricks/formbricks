@@ -35,7 +35,7 @@
 
 To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
 
-**Join lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formbricks.com)**
+**Join lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
 
 ## ✨ About Formbricks
 
