@@ -36,7 +36,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "dyrector.io",
-          description: "dyrector.io is an open-source continuous delivery & deployment platform with version management.",
+          description:
+            "dyrector.io is an open-source continuous delivery & deployment platform with version management.",
           href: "https://dyrector.io",
         },
         {
