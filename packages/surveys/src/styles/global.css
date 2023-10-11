@@ -3,23 +3,23 @@
 @tailwind utilities;
 
 /* Firefox */
-* {
+#fbjs * {
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0;
 }
 
 /* Chrome, Edge, and Safari */
-*::-webkit-scrollbar {
+#fbjs *::-webkit-scrollbar {
   width: 8px;
   border-radius: 99px;
 }
 
-*::-webkit-scrollbar-track {
+#fbjs *::-webkit-scrollbar-track {
   background: #e2e8f0;
   border-radius: 99px;
 }
 
-*::-webkit-scrollbar-thumb {
+#fbjs *::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border: 3px solid #cbd5e1;
   border-radius: 99px;
