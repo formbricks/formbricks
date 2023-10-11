@@ -9,6 +9,7 @@ import Matti from "@/images/formtribe/matti.jpeg";
 import OSSLoop from "@/images/formtribe/oss-loop.png";
 import Mac from "@/images/formtribe/package.jpeg";
 import Pandey from "@/images/formtribe/pandeyman.jpeg";
+import PHLogo from "@/images/formtribe/ph-logo.png";
 import Shubham from "@/images/formtribe/shubham.jpeg";
 import Timeline from "@/images/formtribe/timeline.png";
 import { useEffect } from "react";
@@ -280,7 +281,7 @@ const Leaderboard = [
   },
   {
     name: "Pratik",
-    points: "250",
+    points: "350",
   },
   {
     name: "Karuppiah",
@@ -300,7 +301,8 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "200",
+    points: "1300",
+    link: "https://github.com/KapadiaNaitik",
   },
   {
     name: "Yashhhh",
@@ -339,10 +341,6 @@ const Leaderboard = [
     points: "100",
   },
   {
-    name: "Rohan Gupta",
-    points: "100",
-  },
-  {
     name: "Nafees Nazik",
     points: "100",
   },
@@ -355,17 +353,17 @@ const Leaderboard = [
     points: "100",
   },
   {
-    name: "Ardash Malviya",
-    points: "100",
+    name: "Adarsh Malviya",
+    points: "150",
   },
   {
     name: "Aditya Deshlahre",
-    points: "820",
+    points: "870",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "805",
+    points: "855",
   },
   {
     name: "Sagnik Sahoo",
@@ -373,7 +371,7 @@ const Leaderboard = [
   },
   {
     name: "Prasoon Mahawar",
-    points: "500",
+    points: "950",
   },
   {
     name: "Dushmanta",
@@ -409,7 +407,7 @@ const Leaderboard = [
   },
   {
     name: "Rajarshi Misra",
-    points: "300",
+    points: "500",
   },
   {
     name: "Anjaneya Gupta",
@@ -429,7 +427,72 @@ const Leaderboard = [
   },
   {
     name: "maciek",
-    points: "300",
+    points: "350",
+  },
+  {
+    name: "yatharth",
+    points: "600",
+  },
+  {
+    name: "Ratish Jain",
+    points: "150",
+    link: "https://github.com/ratishjain12",
+  },
+  {
+    name: "yatharth",
+    points: "600",
+  },
+  {
+    name: "Subham Raj",
+    points: "500",
+  },
+  {
+    name: "Abhinav Arya",
+    points: "150",
+    link: "github.com/itzabhinavarya",
+  },
+  {
+    name: "Yash Nirmal",
+    points: "100",
+  },
+  {
+    name: "Rohan Gupta",
+    points: "600",
+    link: "https://github.com/rohan9896",
+  },
+  {
+    name: "Eder Silva",
+    points: "100",
+    link: "https://github.com/edersilva78",
+  },
+  {
+    name: "Eduardo Noronha",
+    points: "100",
+  },
+  {
+    name: "Joyal",
+    points: "550",
+    link: "https://github.com/joyal007",
+  },
+  {
+    name: "zaCKoZAck0",
+    points: "200",
+  },
+  {
+    name: "Viswa Prasath (iamvp7)",
+    points: "100",
+  },
+  {
+    name: "aman4444",
+    points: "100",
+  },
+  {
+    name: "mohit.d404",
+    points: "100",
+  },
+  {
+    name: "0xCgn",
+    points: "100",
   },
 ];
 
@@ -451,15 +514,18 @@ export default function FormTribeHackathon() {
       {/* Header */}
 
       <div className="px-4 pb-16 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
-        <a href="#how" className=" rounded-full border bg-slate-100 px-4 py-1.5 text-sm text-slate-500">
-          Write code, win a Macbook 🔥
+        <a
+          href="https://www.producthunt.com/products/formbricks"
+          target="_blank"
+          className=" rounded-full border bg-slate-100 px-4 py-1.5 text-sm text-slate-500 hover:scale-105">
+          Don&apos;t miss the launch! Get notified 🚀
         </a>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
-          <span className="xl:inline">Let&apos;s ship Open Source Typeform during Hacktoberfest</span>
+          <span className="xl:inline">Write code, win a MacBook Air M2</span>
         </h1>
 
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-6 md:text-xl">
-          Can we build an open source Typeform alternative in 30 days?
+          Can our community build an open source Typeform alternative during Hacktoberfest?
         </p>
       </div>
 
@@ -869,40 +935,55 @@ const SectionHeading = ({ title, subTitle, description, id }) => {
 
 const Breaker = ({ icon, title }) => {
   return (
-    <div
-      id="join"
-      className="rounded-lg-12 mt-12 rounded-lg bg-slate-200 px-4 py-12 shadow-inner sm:mt-20 sm:grid sm:grid-cols-6">
-      <div className="col-span-2 mr-8 flex items-center justify-center sm:justify-end">
-        <div className="h-24 w-24 rounded-full bg-white"></div>
-        <div className="absolute -mt-4 animate-bounce text-[6rem]">{icon}</div>
-      </div>
-      <div className="col-span-4">
-        <h3 className="mt-8 text-xl font-bold sm:mt-0">{title}</h3>
-        <p className="mb-4 mt-1 text-slate-500">Get notified on launch plus a weekly update:</p>
-        <form method="post" action="https://listmonk.formbricks.com/subscription/form">
-          <div className="hidden">
-            <input type="hidden" name="nonce" />
-            <input id="5d65b" type="checkbox" name="l" checked value="5d65bc6e-e685-4694-8c8e-9b20d7be6c40" />
-          </div>
-          <div className="mt-2 sm:flex">
-            <div className="">
+    <div id="join">
+      <div className="rounded-lg-12 mt-12 rounded-lg bg-slate-200 px-4 py-12 shadow-inner sm:mt-20 sm:grid sm:grid-cols-6">
+        <div className="col-span-2 mr-8 flex items-center justify-center sm:justify-end">
+          <div className="h-24 w-24 rounded-full bg-white"></div>
+          <div className="absolute -mt-4 animate-bounce text-[6rem]">{icon}</div>
+        </div>
+        <div className="col-span-4">
+          <h3 className="mt-8 text-xl font-bold sm:mt-0">{title}</h3>
+          <p className="mb-4 mt-1 text-slate-500">Get notified on launch plus a weekly update:</p>
+          <form method="post" action="https://listmonk.formbricks.com/subscription/form">
+            <div className="hidden">
+              <input type="hidden" name="nonce" />
               <input
-                type="email"
-                name="email"
-                placeholder="Your email"
-                aria-placeholder="your-email"
-                required
-                className="block h-12 w-full rounded-lg border-0 px-3 py-2 text-sm text-slate-900 sm:mr-4 sm:h-full sm:w-64"
+                id="5d65b"
+                type="checkbox"
+                name="l"
+                checked
+                value="5d65bc6e-e685-4694-8c8e-9b20d7be6c40"
               />
             </div>
-            <Button
-              variant="highlight"
-              type="submit"
-              className="mt-2 inline w-full justify-center bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] text-white sm:ml-2 sm:mt-0 sm:w-40 ">
-              Join the Tribe
-            </Button>
-          </div>
-        </form>
+            <div className="mt-2 sm:flex">
+              <div className="">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Your email"
+                  aria-placeholder="your-email"
+                  required
+                  className="block h-12 w-full rounded-lg border-0 px-3 py-2 text-sm text-slate-900 sm:mr-4 sm:h-full sm:w-64"
+                />
+              </div>
+              <Button
+                variant="highlight"
+                type="submit"
+                className="mt-2 inline w-full justify-center bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] text-white sm:ml-2 sm:mt-0 sm:w-40 ">
+                Join the Tribe
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div className="mt-4 flex items-center justify-center">
+        <Image src={PHLogo} alt="ph-logo" className="mr-2 h-8 w-8" />
+        <a
+          href="https://www.producthunt.com/products/formbricks"
+          target="_blank"
+          className="text-sm font-semibold text-[#ff6154]">
+          Get notified on Product Hunt.
+        </a>
       </div>
     </div>
   );

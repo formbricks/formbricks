@@ -1,6 +1,6 @@
 import { sendInviteAcceptedEmail } from "@/lib/email";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import {

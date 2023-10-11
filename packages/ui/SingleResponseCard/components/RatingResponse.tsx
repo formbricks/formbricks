@@ -9,14 +9,14 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "@/components/Smileys";
+} from "./Smileys";
 
 import { StarIcon } from "@heroicons/react/24/solid";
 
 interface RatingResponseProps {
   scale?: "number" | "star" | "smiley";
   range?: number;
-  answer: string;
+  answer: string | number | string[];
 }
 
 export const RatingResponse: React.FC<RatingResponseProps> = ({ scale, range, answer }) => {
@@ -27,10 +27,10 @@ export const RatingResponse: React.FC<RatingResponseProps> = ({ scale, range, an
     // show number of stars according to answer value
     const stars: any = [];
     for (let i = 0; i < range; i++) {
-      if (i < parseInt(answer)) {
-        stars.push(<StarIcon className="h-7 text-yellow-400" />);
+      if (i < parseInt(answer.toString())) {
+        stars.push(<StarIcon key={i} className="h-7 text-yellow-400" />);
       } else {
-        stars.push(<StarIcon className="h-7 text-gray-300" />);
+        stars.push(<StarIcon key={i} className="h-7 text-gray-300" />);
       }
     }
     return <div className="flex">{stars}</div>;

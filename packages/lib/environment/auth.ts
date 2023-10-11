@@ -6,7 +6,7 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const hasUserEnvironmentAccess = async (userId: string, environmentId: string) => {
   return await unstable_cache(
-    async () => {
+    async (): Promise<boolean> => {
       validateInputs([userId, ZId], [environmentId, ZId]);
       const environment = await prisma.environment.findUnique({
         where: {

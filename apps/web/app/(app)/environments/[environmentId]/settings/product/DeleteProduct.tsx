@@ -3,7 +3,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TProduct } from "@formbricks/types/v1/product";
 import DeleteProductRender from "@/app/(app)/environments/[environmentId]/settings/product/DeleteProductRender";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 
 type DeleteProductProps = {

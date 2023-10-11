@@ -37,6 +37,11 @@ export default function Loading() {
       skeletonLines: [{ classes: "h-10 w-10" }, { classes: "h-8 w-24" }],
     },
     {
+      title: "Security",
+      description: "Manage your password and other security settings.",
+      skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
+    },
+    {
       title: "Delete account",
       description: "Delete your account with all of your personal information and data.",
       skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],

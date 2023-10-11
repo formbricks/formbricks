@@ -3,20 +3,18 @@
 import { Switch } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { updateNotificationSettings } from "./actions";
+import { updateNotificationSettingsAction } from "./actions";
 import { NotificationSettings } from "@formbricks/types/users";
 import { useState } from "react";
 
 interface NotificationSwitchProps {
   surveyOrProductId: string;
-  userId: string;
   notificationSettings: NotificationSettings;
   notificationType: "alert" | "weeklySummary";
 }
 
 export function NotificationSwitch({
   surveyOrProductId,
-  userId,
   notificationSettings,
   notificationType,
 }: NotificationSwitchProps) {
@@ -35,7 +33,7 @@ export function NotificationSwitch({
         const updatedNotificationSettings = { ...notificationSettings };
         updatedNotificationSettings[notificationType][surveyOrProductId] =
           !updatedNotificationSettings[notificationType][surveyOrProductId];
-        await updateNotificationSettings(userId, notificationSettings);
+        await updateNotificationSettingsAction(notificationSettings);
         setIsLoading(false);
         toast.success(`Notification settings updated`, { id: "notification-switch" });
         router.refresh();
