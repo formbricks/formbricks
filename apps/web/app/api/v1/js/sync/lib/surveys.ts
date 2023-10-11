@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { selectSurvey } from "@formbricks/lib/survey/service";
+import { TSurveysWithTriggers } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import { unstable_cache } from "next/cache";
 
 const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
@@ -26,7 +26,7 @@ export const getSurveysCached = (environmentId: string, person: TPerson) =>
     }
   )();
 
-export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurveysWithTriggers[]> => {
   // get recontactDays from product
   const product = await prisma.product.findFirst({
     where: {
@@ -133,7 +133,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
   });
 
   // filter surveys that meet the recontactDays criteria
-  const surveys: TSurvey[] = potentialSurveysWithAttributes
+  const surveys: TSurveysWithTriggers[] = potentialSurveysWithAttributes
     .filter((survey) => {
       if (!lastDisplayPerson) {
         // no display yet - always display
@@ -165,7 +165,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
     .map((survey) => ({
       ...survey,
       singleUse: survey.singleUse ? JSON.parse(JSON.stringify(survey.singleUse)) : null,
-      triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
+      triggers: survey.triggers.map((trigger) => trigger.eventClass),
       attributeFilters: survey.attributeFilters.map((af) => ({
         ...af,
         attributeClassId: af.attributeClass.id,
