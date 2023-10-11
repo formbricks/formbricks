@@ -1,8 +1,9 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { Button } from "@formbricks/ui/Button";
 
 interface SummaryMetadataProps {
   responses: TResponse[];

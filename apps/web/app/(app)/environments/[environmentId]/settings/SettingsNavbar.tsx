@@ -3,7 +3,7 @@
 import { truncate } from "@/lib/utils";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TTeam } from "@formbricks/types/v1/teams";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import {
   AdjustmentsVerticalIcon,

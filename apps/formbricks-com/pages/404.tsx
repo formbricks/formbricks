@@ -1,5 +1,5 @@
 // 404.js
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 
 export default function FourOhFour() {
   return (

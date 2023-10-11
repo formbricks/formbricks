@@ -2,7 +2,9 @@
 
 import { md } from "@formbricks/lib/markdownIt";
 import { TSurveyConsentQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Editor, Input, Label } from "@formbricks/ui";
+import { Editor } from "@formbricks/ui/Editor";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 
 interface ConsentQuestionFormProps {

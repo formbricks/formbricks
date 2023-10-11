@@ -1,5 +1,5 @@
 import GoBackButton from "@/components/shared/GoBackButton";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 
 export default function Loading() {
   return (
