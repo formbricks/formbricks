@@ -4,14 +4,15 @@ import "./index.css";
 
 declare global {
   interface Window {
-    initDatePicker: () => void;
+    initDatePicker: (element: HTMLElement) => void;
   }
 }
 
-const init = () => {
+const init = (element: HTMLElement) => {
+  console.log({ element });
   const container = document.createElement("div");
   container.id = "datePickerContainer";
-  document.body.appendChild(container);
+  element.appendChild(container);
   render(<App />, container);
 };
 
