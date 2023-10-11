@@ -25,9 +25,10 @@ interface LinkSurveyPageProps {
   };
 }
 
+export let metadata;
+
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
-  console.log("||||||||||||||||||||", survey);
 
   const suId = searchParams.suId;
   const isSingleUseSurvey = survey?.singleUse?.enabled;
@@ -93,24 +94,75 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     throw new Error("Product not found");
   }
 
-  console.log("------------------", product);
-
   const userId = searchParams.userId;
   let person;
   if (userId) {
     person = await getOrCreatePersonByUserId(userId, survey.environmentId);
   }
 
+  function getNameForURL(string) {
+    return string.replace(/ /g, "%20");
+  }
+
+  function getBrandColorForURL(string) {
+    return string.replace(/#/g, "%23");
+  }
+
+  metadata = {
+    openGraph: {
+      title: "Formbricks",
+      description: "Open-Source In-Product Survey Platform",
+      url: `${SURVEY_BASE_URL}/${survey.id}`,
+      siteName: "",
+      images: [
+        `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
+          survey.id
+        }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`,
+      ],
+      locale: "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Formbricks",
+      description: "Open-Source In-Product Survey Platform",
+      images: [
+        `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
+          survey.id
+        }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`,
+      ],
+    },
+  };
+
   return (
     <>
       <Head>
-        <meta property="og:title" content={survey.name} />
-        <meta property="og:description" content="Complete in 4 Minutes" />
-        <meta property="og:image" content="URL_to_your_featured_image" />
-        <meta property="og:url" content={`${SURVEY_BASE_URL}/${params.surveyId}`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:creator" content="@formbricks" />
+        <meta name="twitter:title" content="Formbricks" />
+        <meta name="twitter:description" content="Open-Source In-Product Survey Platform" />
+        <meta
+          name="twitter:image"
+          content={`${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
+            survey.id
+          }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`}
+        />
+
+        <meta property="og:title" content="Formbricks" />
+        <meta property="og:description" content="Open-Source In-Product Survey Platform" />
+        <meta property="og:url" content={`${SURVEY_BASE_URL}/${survey.id}`} />
+        <meta property="og:site_name" content="Next.js" />
+        <meta property="og:locale" content="en_US" />
+        <meta
+          property="og:image:url"
+          content={`${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
+            survey.id
+          }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`}
+        />
+        <meta property="og:image:alt" content="Survey" />
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Formbricks" />
       </Head>
+
       <LinkSurvey
         survey={survey}
         product={product}
