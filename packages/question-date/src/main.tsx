@@ -2,7 +2,11 @@ import { render } from "preact";
 import { App } from "./app.tsx";
 import "./index.css";
 
-// render(<App />, document.getElementById('app')!)
+declare global {
+  interface Window {
+    initDatePicker: () => void;
+  }
+}
 
 const init = () => {
   const container = document.createElement("div");
@@ -11,8 +15,4 @@ const init = () => {
   render(<App />, container);
 };
 
-// init();
-
-// Export the initialization function
-// @ts-ignore
 window.initDatePicker = init;

@@ -30,6 +30,7 @@ export function Survey({
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
 
+  const [dpOpen, setDpOpen] = useState(false);
   useEffect(() => {
     setQuestionId(activeQuestionId || survey.questions[0].id);
   }, [activeQuestionId, survey.questions]);
@@ -48,6 +49,37 @@ export function Survey({
       onSubmit(prefillResponseData);
     }
   }, []);
+
+  useEffect(() => {
+    // Check if the DatePicker has already been loaded
+
+    if (!dpOpen) return;
+
+    // @ts-ignore
+    if (!window.initDatePicker) {
+      const script = document.createElement("script");
+      script.src = "script_src";
+      script.async = true;
+
+      document.body.appendChild(script);
+
+      script.onload = () => {
+        // Initialize the DatePicker once the script is loaded
+        // @ts-ignore
+        window.initDatePicker();
+      };
+
+      return () => {
+        document.body.removeChild(script);
+      };
+    } else {
+      // If already loaded, just initialize
+      // @ts-ignore
+      window.initDatePicker();
+    }
+
+    return () => {};
+  }, [dpOpen]);
 
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
@@ -108,6 +140,15 @@ export function Survey({
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
         <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-5">
+          <div>
+            <button
+              className="border border-gray-500 px-3 py-1"
+              onClick={() => {
+                setDpOpen(!dpOpen);
+              }}>
+              Open DP
+            </button>
+          </div>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {questionId === "end" && survey.thankYouCard.enabled ? (
               <ThankYouCard
