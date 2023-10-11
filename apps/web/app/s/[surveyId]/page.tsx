@@ -108,17 +108,17 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     return string.replace(/#/g, "%23");
   }
 
+  const ogImgURL = `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
+    survey.id
+  }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`;
+
   metadata = {
     openGraph: {
       title: "Formbricks",
       description: "Open-Source In-Product Survey Platform",
       url: `${SURVEY_BASE_URL}/${survey.id}`,
       siteName: "",
-      images: [
-        `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
-          survey.id
-        }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`,
-      ],
+      images: [ogImgURL],
       locale: "en_US",
       type: "website",
     },
@@ -126,11 +126,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       card: "summary_large_image",
       title: "Formbricks",
       description: "Open-Source In-Product Survey Platform",
-      images: [
-        `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
-          survey.id
-        }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`,
-      ],
+      images: [ogImgURL],
     },
   };
 
@@ -141,24 +137,14 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         <meta name="twitter:creator" content="@formbricks" />
         <meta name="twitter:title" content="Formbricks" />
         <meta name="twitter:description" content="Open-Source In-Product Survey Platform" />
-        <meta
-          name="twitter:image"
-          content={`${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
-            survey.id
-          }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`}
-        />
+        <meta name="twitter:image" content={ogImgURL} />
 
         <meta property="og:title" content="Formbricks" />
         <meta property="og:description" content="Open-Source In-Product Survey Platform" />
         <meta property="og:url" content={`${SURVEY_BASE_URL}/${survey.id}`} />
         <meta property="og:site_name" content="Next.js" />
         <meta property="og:locale" content="en_US" />
-        <meta
-          property="og:image:url"
-          content={`${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
-            survey.id
-          }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`}
-        />
+        <meta property="og:image:url" content={ogImgURL} />
         <meta property="og:image:alt" content="Survey" />
         <meta property="og:type" content="website" />
       </Head>
