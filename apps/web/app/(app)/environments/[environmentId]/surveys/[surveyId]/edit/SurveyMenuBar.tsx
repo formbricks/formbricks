@@ -308,7 +308,7 @@ export default function SurveyMenuBar({
               disabled={
                 localSurvey.type === "web" &&
                 localSurvey.triggers &&
-                (localSurvey.triggers[0]?.id === "" || localSurvey.triggers.length === 0)
+                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
               }
               variant="darkCTA"
               loading={isMutatingSurvey}
