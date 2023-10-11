@@ -33,7 +33,7 @@ export default function SummaryList({ environment, survey, responses, summaryDat
   return (
     <>
       <div className="mt-10 space-y-8">
-        {survey.type === "web" && !environment.widgetSetupCompleted ? (
+        {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
           <EmptyInAppSurveys environment={environment} />
         ) : responses.length === 0 ? (
           <EmptySpaceFiller

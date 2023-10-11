@@ -29,7 +29,7 @@ export default function SurveyStarter({
       ...template.preset,
       type: surveyType,
       autoComplete,
-    } as Partial<TSurveyInput>;
+    } as TSurveyInput;
     try {
       const survey = await createSurveyAction(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);

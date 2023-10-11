@@ -1,5 +1,4 @@
 import z from "zod";
-import { Prisma } from "@prisma/client";
 
 export const ZMembershipRole = z.enum(["owner", "admin", "editor", "developer", "viewer"]);
 
@@ -24,4 +23,7 @@ export const ZMember = z.object({
 
 export type TMember = z.infer<typeof ZMember>;
 
-export type TMembershipUpdateInput = Prisma.MembershipUpdateInput;
+export const ZMembershipUpdateInput = z.object({
+  role: ZMembershipRole,
+});
+export type TMembershipUpdateInput = z.infer<typeof ZMembershipUpdateInput>;
