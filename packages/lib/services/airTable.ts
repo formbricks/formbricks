@@ -12,7 +12,7 @@ import {
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import * as z from "zod";
 import { AIR_TABLE_CLIENT_ID } from "../constants";
-import { createOrUpdateIntegration } from "../integration/service";
+import { createOrUpdateIntegration, deleteIntegration } from "../integration/service";
 
 interface ConnectAirtableOptions {
   environmentId: string;
@@ -160,37 +160,43 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
 };
 
 export const getAirtableToken = async (environmentId: string) => {
-  const airTableIntegration = await findAirtableIntegration(environmentId);
+  try {
+    const airTableIntegration = await findAirtableIntegration(environmentId);
 
-  const { access_token, expiry_date, refresh_token } = ZAirtableCredential.parse(
-    airTableIntegration?.config.key
-  );
+    const { access_token, expiry_date, refresh_token } = ZAirtableCredential.parse(
+      airTableIntegration?.config.key
+    );
 
-  const expiryDate = new Date(expiry_date);
-  const currentDate = new Date();
+    const expiryDate = new Date(expiry_date);
+    const currentDate = new Date();
 
-  if (currentDate >= expiryDate) {
-    const client_id = AIR_TABLE_CLIENT_ID;
+    if (currentDate >= expiryDate) {
+      const client_id = AIR_TABLE_CLIENT_ID;
 
-    const newToken = await fetchAirtableAuthToken({
-      grant_type: "refresh_token",
-      refresh_token,
-      client_id,
-    });
+      const newToken = await fetchAirtableAuthToken({
+        grant_type: "refresh_token",
+        refresh_token,
+        client_id,
+      });
 
-    await createOrUpdateIntegration(environmentId, {
-      type: "airtable",
-      config: {
-        data: airTableIntegration?.config?.data ?? [],
-        email: airTableIntegration?.config?.email ?? "",
-        key: newToken,
-      },
-    });
+      await createOrUpdateIntegration(environmentId, {
+        type: "airtable",
+        config: {
+          data: airTableIntegration?.config?.data ?? [],
+          email: airTableIntegration?.config?.email ?? "",
+          key: newToken,
+        },
+      });
 
-    return newToken.access_token;
+      return newToken.access_token;
+    }
+
+    return access_token;
+  } catch (error) {
+    await deleteIntegration(environmentId);
+
+    throw new Error("invalid token");
   }
-
-  return access_token;
 };
 
 export const getAirtableTables = async (environmentId: string) => {
@@ -277,7 +283,7 @@ export const writeData = async (key: string, configData: TZAirTableConfigData, v
       }
     }
     await addRecords(key, configData.baseId, configData.tableId, data);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error?.message);
   }
 };
