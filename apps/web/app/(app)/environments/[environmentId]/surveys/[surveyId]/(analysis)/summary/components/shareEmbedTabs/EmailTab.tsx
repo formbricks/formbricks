@@ -21,6 +21,7 @@ import {
 } from "@react-email/components";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { isLight } from "@/lib/utils";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -175,7 +176,10 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             )}
             <EmailButton
               href={`${urlWithPrefilling}${firstQuestion.id}=accepted`}
-              className="bg-brand-color ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
+              className={cn(
+                "bg-brand-color ml-2 inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}>
               Accept
             </EmailButton>
           </Container>
@@ -215,12 +219,15 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
               </Section>
             </Container>
             {/* {!firstQuestion.required && (
-                <EmailButton
-                  href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                  className="mt-4 cursor-pointer appearance-none rounded-md bg-brand-color px-6 py-3 text-sm font-medium text-white">
-                  {firstQuestion.buttonLabel || "Skip"}
-                </EmailButton>
-              )} */}
+              <EmailButton
+                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
+                className={cn(
+                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                  isLight(brandColor) ? "text-black" : "text-white"
+                )}>
+                {firstQuestion.buttonLabel || "Skip"}
+              </EmailButton>
+            )} */}
 
             <EmailFooter />
           </Section>
@@ -246,7 +253,10 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             )}
             <EmailButton
               href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}
-              className="bg-brand-color inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-white">
+              className={cn(
+                "bg-brand-color inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}>
               {firstQuestion.buttonLabel}
             </EmailButton>
           </Container>
@@ -296,12 +306,15 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
               </Section>
             </Container>
             {/* {!firstQuestion.required && (
-                <EmailButton
-                  href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                  className="mt-4 cursor-pointer appearance-none rounded-md bg-brand-color px-6 py-3 text-sm font-medium text-white">
-                  {firstQuestion.buttonLabel || "Skip"}
-                </EmailButton>
-              )} */}
+              <EmailButton
+                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
+                className={cn(
+                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                  isLight(brandColor) ? "text-black" : "text-white"
+                )}>
+                {firstQuestion.buttonLabel || "Skip"}
+              </EmailButton>
+            )} */}
             <EmailFooter />
           </Section>
         </EmailTemplateWrapper>
