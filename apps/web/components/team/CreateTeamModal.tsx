@@ -26,7 +26,8 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
       router.push(`/teams/${newTeam.id}`);
       setOpen(false);
     } catch (error) {
-      toast.error(`Error: ${error.message}`);
+      console.error(error);
+      toast.error(`Unable to create team`);
     } finally {
       setLoading(false);
     }

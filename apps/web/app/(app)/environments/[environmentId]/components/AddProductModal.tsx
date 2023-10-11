@@ -29,6 +29,7 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
       router.push(`/environments/${newEnv.id}/`);
       setOpen(false);
     } catch (error) {
+      console.error(error);
       toast.error(`Error: Unable to save product information`);
     } finally {
       setLoading(false);
