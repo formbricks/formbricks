@@ -12,12 +12,10 @@ export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 5000 : 1000000;
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
-export const SURVEY_BASE_URL = env.SURVEY_URL.SURVEY_BASE_URL
-  ? env.SURVEY_URL.SURVEY_BASE_URL + "/"
-  : `${WEBAPP_URL}/s/`;
+export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" : `${WEBAPP_URL}/s/`;
 
-export const SHORT_SURVEY_BASE_URL = env.SURVEY_URL.SHORT_SURVEY_BASE_URL
-  ? env.SURVEY_URL.SHORT_SURVEY_BASE_URL + "/"
+export const SHORT_SURVEY_BASE_URL = env.SHORT_SURVEY_BASE_URL
+  ? env.SHORT_SURVEY_BASE_URL + "/"
   : `${WEBAPP_URL}/i/`;
 
 // Other
