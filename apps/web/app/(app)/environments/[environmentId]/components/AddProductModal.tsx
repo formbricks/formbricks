@@ -9,6 +9,7 @@ import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 interface AddProductModalProps {
   environmentId: string;
@@ -22,11 +23,19 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
   const { register, handleSubmit } = useForm();
 
   const submitProduct = async (data: { name: string }) => {
-    setLoading(true);
-    const newEnv = await createProductAction(environmentId, data.name);
-    router.push(`/environments/${newEnv.id}/`);
-    setOpen(false);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const newEnv = await createProductAction(environmentId, data.name);
+
+      toast.success("Product created successfully!");
+      router.push(`/environments/${newEnv.id}/`);
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(`Error: Unable to save product information`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
