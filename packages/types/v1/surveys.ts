@@ -309,6 +309,11 @@ export const ZSurveyInput = z.object({
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
+export type TSurveyDates = {
+  createdAt: TSurvey["createdAt"];
+  updatedAt: TSurvey["updatedAt"];
+  closeOnDate: TSurvey["closeOnDate"];
+};
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({

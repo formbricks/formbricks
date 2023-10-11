@@ -9,7 +9,7 @@ import PreviewSurvey from "../PreviewSurvey";
 import TemplateList from "./TemplateList";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import { SearchBox } from "@formbricks/ui";
+import { SearchBox } from "@formbricks/ui/SearchBox";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;

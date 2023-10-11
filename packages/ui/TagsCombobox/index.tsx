@@ -1,15 +1,8 @@
 "use client";
 
-import {
-  Button,
-  Command,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@formbricks/ui";
+import { Command, CommandGroup, CommandInput, CommandItem } from "../Command";
+import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
+import { Button } from "../Button";
 import { useEffect, useMemo } from "react";
 
 interface ITagsComboboxProps {

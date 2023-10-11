@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
-import { Button, Input } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 import { Toaster, toast } from "react-hot-toast";
 import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
 import { TSurvey } from "@formbricks/types/v1/surveys";

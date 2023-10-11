@@ -1,6 +1,6 @@
 import Layout from "@/components/shared/Layout";
 import HeroTitle from "@/components/shared/HeroTitle";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 
 type OSSFriend = {
   href: string;

@@ -9,14 +9,14 @@ import {
 import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "@/lib/utils";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 import {
-  Badge,
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui";
+} from "@formbricks/ui/DropdownMenu";
+import { Button } from "@formbricks/ui/Button";
+import { Badge } from "@formbricks/ui/Badge";
 import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

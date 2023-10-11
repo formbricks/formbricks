@@ -9,7 +9,7 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "./Smileys";
+} from "../SingleResponseCard/components/Smileys";
 
 import { StarIcon } from "@heroicons/react/24/solid";
 

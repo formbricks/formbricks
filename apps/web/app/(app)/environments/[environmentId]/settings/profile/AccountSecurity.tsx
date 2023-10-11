@@ -3,7 +3,7 @@
 import DisableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/profile/DisableTwoFactorModal";
 import EnableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/profile/EnableTwoFactorModal";
 import { TProfile } from "@formbricks/types/v1/profile";
-import { Switch } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui/Switch";
 import React, { useState } from "react";
 
 const AccountSecurity = ({ profile }: { profile: TProfile }) => {
