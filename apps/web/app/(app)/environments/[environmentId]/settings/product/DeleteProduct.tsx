@@ -1,9 +1,10 @@
-import { getProducts } from "@formbricks/lib/services/product";
-import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
+import { getProducts } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TProduct } from "@formbricks/types/v1/product";
 import DeleteProductRender from "@/app/(app)/environments/[environmentId]/settings/product/DeleteProductRender";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 
 type DeleteProductProps = {
   environmentId: string;
@@ -12,10 +13,20 @@ type DeleteProductProps = {
 
 export default async function DeleteProduct({ environmentId, product }: DeleteProductProps) {
   const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error("Session not found");
+  }
   const team = await getTeamByEnvironmentId(environmentId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
   const availableProducts = team ? await getProducts(team.id) : null;
 
-  const role = team ? session?.user.teams.find((foundTeam) => foundTeam.id === team.id)?.role : null;
+  const membership = await getMembershipByUserIdTeamId(session.user.id, team.id);
+  if (!membership) {
+    throw new Error("Membership not found");
+  }
+  const role = membership.role;
   const availableProductsLength = availableProducts ? availableProducts.length : 0;
   const isUserAdminOrOwner = role === "admin" || role === "owner";
   const isDeleteDisabled = availableProductsLength <= 1 || !isUserAdminOrOwner;

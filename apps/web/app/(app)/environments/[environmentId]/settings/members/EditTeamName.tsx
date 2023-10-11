@@ -1,6 +1,6 @@
 "use client";
 
-import { updateTeamAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
+import { updateTeamNameAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { Button, Input, Label } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
@@ -43,7 +43,7 @@ export default function EditTeamName({ team }: TEditTeamNameProps) {
   const handleUpdateTeamName: SubmitHandler<TEditTeamNameForm> = async (data) => {
     try {
       setIsUpdatingTeam(true);
-      await updateTeamAction(team.id, data);
+      await updateTeamNameAction(team.id, data.name);
 
       setIsUpdatingTeam(false);
       toast.success("Team name updated successfully.");

@@ -20,6 +20,7 @@ interface SurveyEditorProps {
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  isEncryptionKeySet: boolean;
 }
 
 export default function SurveyEditor({
@@ -28,6 +29,7 @@ export default function SurveyEditor({
   environment,
   actionClasses,
   attributeClasses,
+  isEncryptionKeySet,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -46,9 +48,11 @@ export default function SurveyEditor({
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
-    if (localSurvey && localSurvey.questions?.length > 0) {
+    if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
       setActiveQuestionId(localSurvey.questions[0].id);
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
   if (!localSurvey) {
@@ -77,7 +81,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 activeQuestionId={activeQuestionId}
                 setActiveQuestionId={setActiveQuestionId}
-                environmentId={environment.id}
+                product={product}
                 invalidQuestions={invalidQuestions}
                 setInvalidQuestions={setInvalidQuestions}
               />
@@ -88,6 +92,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
+                isEncryptionKeySet={isEncryptionKeySet}
               />
             )}
           </main>

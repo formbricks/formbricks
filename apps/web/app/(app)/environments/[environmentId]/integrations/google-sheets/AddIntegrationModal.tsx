@@ -3,6 +3,7 @@ import {
   TGoogleSheetIntegration,
   TGoogleSheetsConfigData,
   TGoogleSpreadsheet,
+  TIntegrationInput,
 } from "@formbricks/types/v1/integrations";
 import { Button, Checkbox, Label } from "@formbricks/ui";
 import GoogleSheetLogo from "@/images/google-sheets-small.png";
@@ -10,7 +11,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import Modal from "@/components/shared/Modal";
+import { Modal } from "@formbricks/ui";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
@@ -52,7 +53,7 @@ export default function AddIntegrationModal({
   const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState<any>(null);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
-  const googleSheetIntegrationData: Partial<TGoogleSheetIntegration> = {
+  const googleSheetIntegrationData: TIntegrationInput = {
     type: "googleSheets",
     config: {
       key: googleSheetIntegration?.config?.key,
@@ -68,7 +69,7 @@ export default function AddIntegrationModal({
         setSelectedQuestions(questionIds);
       }
     }
-  }, [selectedSurvey]);
+  }, [selectedIntegration, selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
@@ -85,7 +86,7 @@ export default function AddIntegrationModal({
       return;
     }
     resetForm();
-  }, [selectedIntegration]);
+  }, [selectedIntegration, surveys]);
 
   const linkSheet = async () => {
     try {

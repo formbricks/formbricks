@@ -9,7 +9,8 @@ export const env = createEnv({
   server: {
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
-    PRISMA_GENERATE_DATAPROXY: z.enum(["true", ""]).optional(),
+    ENCRYPTION_KEY: z.string().length(32),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)),
     NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
@@ -25,38 +26,46 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CRON_SECRET: z.string().optional(),
+    EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
+    PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
+    SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
+    PRIVACY_URL: z
+      .string()
+      .url()
+      .optional()
+      .or(z.string().refine((str) => str === "")),
+    TERMS_URL: z
+      .string()
+      .url()
+      .optional()
+      .or(z.string().refine((str) => str === "")),
+    IMPRINT_URL: z
+      .string()
+      .url()
+      .optional()
+      .or(z.string().refine((str) => str === "")),
+    GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+    GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+    INVITE_DISABLED: z.enum(["1", "0"]).optional(),
+    IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
+    VERCEL_URL: z.string().optional(),
+    SURVEY_BASE_URL: z.string().url().optional(),
+    SHORT_SURVEY_BASE_URL: z.string().url().optional().or(z.string().length(0)),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
+    AWS_ACCESS_KEY: z.string().optional(),
+    AWS_SECRET_KEY: z.string().optional(),
+    S3_REGION: z.string().optional(),
+    S3_BUCKET_NAME: z.string().optional(),
   },
+
   /*
    * Environment variables available on the client (and server).
    *
    * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
    */
   client: {
-    NEXT_PUBLIC_WEBAPP_URL: z.string().url().optional(),
-    NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_INVITE_DISABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_PRIVACY_URL: z
-      .string()
-      .url()
-      .optional()
-      .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_TERMS_URL: z
-      .string()
-      .url()
-      .optional()
-      .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_IMPRINT_URL: z
-      .string()
-      .url()
-      .optional()
-      .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
-    NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_FORMBRICKS_API_HOST: z
       .string()
       .url()
@@ -64,11 +73,9 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
-    NEXT_PUBLIC_IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-    NEXT_PUBLIC_SURVEY_BASE_URL: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -79,7 +86,8 @@ export const env = createEnv({
   runtimeEnv: {
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
-    PRISMA_GENERATE_DATAPROXY: process.env.PRISMA_GENERATE_DATAPROXY,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+    FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     MAIL_FROM: process.env.MAIL_FROM,
@@ -95,24 +103,32 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
+    EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
+    PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
+    SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
+    INVITE_DISABLED: process.env.INVITE_DISABLED,
+    PRIVACY_URL: process.env.PRIVACY_URL,
+    TERMS_URL: process.env.TERMS_URL,
+    IMPRINT_URL: process.env.IMPRINT_URL,
+    GITHUB_AUTH_ENABLED: process.env.GITHUB_AUTH_ENABLED,
+    GOOGLE_AUTH_ENABLED: process.env.GOOGLE_AUTH_ENABLED,
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
-    NEXT_PUBLIC_WEBAPP_URL: process.env.NEXT_PUBLIC_WEBAPP_URL,
-    NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED: process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED,
-    NEXT_PUBLIC_PASSWORD_RESET_DISABLED: process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED,
-    NEXT_PUBLIC_SIGNUP_DISABLED: process.env.NEXT_PUBLIC_SIGNUP_DISABLED,
-    NEXT_PUBLIC_INVITE_DISABLED: process.env.NEXT_PUBLIC_INVITE_DISABLED,
-    NEXT_PUBLIC_PRIVACY_URL: process.env.NEXT_PUBLIC_PRIVACY_URL,
-    NEXT_PUBLIC_TERMS_URL: process.env.NEXT_PUBLIC_TERMS_URL,
-    NEXT_PUBLIC_IMPRINT_URL: process.env.NEXT_PUBLIC_IMPRINT_URL,
-    NEXT_PUBLIC_GITHUB_AUTH_ENABLED: process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED,
-    NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED,
+    AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+    AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
+    S3_REGION: process.env.S3_REGION,
+    S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
-    NEXT_PUBLIC_IS_FORMBRICKS_CLOUD: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD,
+    IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
+    VERCEL_URL: process.env.VERCEL_URL,
+    SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
+    SHORT_SURVEY_BASE_URL: process.env.SHORT_SURVEY_BASE_URL,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
 });

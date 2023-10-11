@@ -1,17 +1,17 @@
 import { prisma } from "@formbricks/database";
-import { selectSurvey } from "@formbricks/lib/services/survey";
+import { selectSurvey } from "@formbricks/lib/survey/service";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { unstable_cache } from "next/cache";
 
 const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
-  `env-${environmentId}-surveys`,
-  `env-${environmentId}-product`,
+  `environments-${environmentId}-surveys`,
+  `environments-${environmentId}-product`,
   personId,
 ];
 
 const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
-  `env-${environmentId}-person-${personId}-syncSurveys`,
+  `environments-${environmentId}-person-${personId}-syncSurveys`,
 ];
 
 export const getSurveysCached = (environmentId: string, person: TPerson) =>
@@ -164,7 +164,8 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
     })
     .map((survey) => ({
       ...survey,
-      triggers: survey.triggers.map((trigger) => trigger.eventClass),
+      singleUse: survey.singleUse ? JSON.parse(JSON.stringify(survey.singleUse)) : null,
+      triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
       attributeFilters: survey.attributeFilters.map((af) => ({
         ...af,
         attributeClassId: af.attributeClass.id,

@@ -22,6 +22,14 @@ class ValidationError extends Error {
   }
 }
 
+class UnknownError extends Error {
+  statusCode = 500;
+  constructor(message: string) {
+    super(message);
+    this.name = "DatabaseError";
+  }
+}
+
 class DatabaseError extends Error {
   statusCode = 500;
   constructor(message: string) {
@@ -70,14 +78,23 @@ class AuthorizationError extends Error {
   }
 }
 
+type NetworkError = {
+  code: "network_error";
+  message: string;
+  status: number;
+  url: URL;
+};
+
 export {
   ResourceNotFoundError,
   InvalidInputError,
   ValidationError,
   DatabaseError,
   UniqueConstraintError,
+  UnknownError,
   ForeignKeyConstraintError,
   OperationNotAllowedError,
   AuthenticationError,
   AuthorizationError,
 };
+export type { NetworkError };

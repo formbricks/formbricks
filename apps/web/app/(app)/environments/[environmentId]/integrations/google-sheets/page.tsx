@@ -1,24 +1,32 @@
 import GoogleSheetWrapper from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/GoogleSheetWrapper";
 import GoBackButton from "@/components/shared/GoBackButton";
-import { env } from "@/env.mjs";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getSpreadSheets } from "@formbricks/lib/services/googleSheet";
-import { getIntegrations } from "@formbricks/lib/services/integrations";
-import { getSurveys } from "@formbricks/lib/services/survey";
+import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
+import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getSurveys } from "@formbricks/lib/survey/service";
 import { TGoogleSheetIntegration, TGoogleSpreadsheet } from "@formbricks/types/v1/integrations";
+import {
+  GOOGLE_SHEETS_CLIENT_ID,
+  WEBAPP_URL,
+  GOOGLE_SHEETS_CLIENT_SECRET,
+  GOOGLE_SHEETS_REDIRECT_URL,
+} from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function GoogleSheet({ params }) {
-  const enabled = !!(
-    env.GOOGLE_SHEETS_CLIENT_ID &&
-    env.GOOGLE_SHEETS_CLIENT_SECRET &&
-    env.GOOGLE_SHEETS_REDIRECT_URL
-  );
-  const surveys = await getSurveys(params.environmentId);
-  let spreadSheetArray: TGoogleSpreadsheet[] = [];
-  const integrations = await getIntegrations(params.environmentId);
+  const enabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
+  const [surveys, integrations, environment] = await Promise.all([
+    getSurveys(params.environmentId),
+    getIntegrations(params.environmentId),
+    getEnvironment(params.environmentId),
+  ]);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+
   const googleSheetIntegration: TGoogleSheetIntegration | undefined = integrations?.find(
     (integration): integration is TGoogleSheetIntegration => integration.type === "googleSheets"
   );
+  let spreadSheetArray: TGoogleSpreadsheet[] = [];
   if (googleSheetIntegration && googleSheetIntegration.config.key) {
     spreadSheetArray = await getSpreadSheets(params.environmentId);
   }
@@ -28,10 +36,11 @@ export default async function GoogleSheet({ params }) {
       <div className="h-[75vh] w-full">
         <GoogleSheetWrapper
           enabled={enabled}
-          environmentId={params.environmentId}
+          environment={environment}
           surveys={surveys}
           spreadSheetArray={spreadSheetArray}
           googleSheetIntegration={googleSheetIntegration}
+          webAppUrl={WEBAPP_URL}
         />
       </div>
     </>

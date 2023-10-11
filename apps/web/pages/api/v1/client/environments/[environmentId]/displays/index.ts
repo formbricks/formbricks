@@ -59,7 +59,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: true,
       },
       data: {
-        status: "seen",
         survey: {
           connect: {
             id: surveyId,

@@ -1,10 +1,13 @@
 "use client";
 
-import React from "react";
 import AlertDialog from "@/components/shared/AlertDialog";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
@@ -12,10 +15,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
-import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { deleteSurveyAction, surveyMutateAction } from "./actions";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { deleteSurveyAction, updateSurveyAction } from "./actions";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurveyWithAnalytics;
@@ -98,6 +98,13 @@ export default function SurveyMenuBar({
   };
 
   const validateSurvey = (survey) => {
+    const existingQuestionIds = new Set();
+
+    if (survey.questions.length === 0) {
+      toast.error("Please add at least one question");
+      return;
+    }
+
     faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
@@ -110,7 +117,69 @@ export default function SurveyMenuBar({
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
-      toast.error("Please fill required fields");
+      toast.error("Please fill all required fields.");
+      return false;
+    }
+
+    for (const question of survey.questions) {
+      const existingLogicConditions = new Set();
+
+      if (existingQuestionIds.has(question.id)) {
+        toast.error("There are 2 identical question IDs. Please update one.");
+        return false;
+      }
+      existingQuestionIds.add(question.id);
+
+      if (
+        question.type === QuestionType.MultipleChoiceSingle ||
+        question.type === QuestionType.MultipleChoiceMulti
+      ) {
+        const haveSameChoices =
+          question.choices.some((element) => element.label.trim() === "") ||
+          question.choices.some((element, index) =>
+            question.choices
+              .slice(index + 1)
+              .some((nextElement) => nextElement.label.trim() === element.label.trim())
+          );
+
+        if (haveSameChoices) {
+          toast.error("You have two identical choices.");
+          return false;
+        }
+      }
+
+      for (const logic of question.logic || []) {
+        const validFields = ["condition", "destination", "value"].filter(
+          (field) => logic[field] !== undefined
+        ).length;
+
+        if (validFields < 2) {
+          setInvalidQuestions([question.id]);
+          toast.error("Incomplete logic jumps detected: Please fill or delete them.");
+          return false;
+        }
+
+        if (question.required && logic.condition === "skipped") {
+          toast.error("You have a missing logic condition. Please update or delete it.");
+          return false;
+        }
+
+        const thisLogic = `${logic.condition}-${logic.value}`;
+        if (existingLogicConditions.has(thisLogic)) {
+          setInvalidQuestions([question.id]);
+          toast.error("You have 2 competing logic conditons. Please update or delete one.");
+          return false;
+        }
+        existingLogicConditions.add(thisLogic);
+      }
+    }
+
+    if (
+      survey.redirectUrl &&
+      !survey.redirectUrl.includes("https://") &&
+      !survey.redirectUrl.includes("http://")
+    ) {
+      toast.error("Please enter a valid URL for redirecting respondents.");
       return false;
     }
 
@@ -129,6 +198,10 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = async (shouldNavigateBack = false) => {
+    if (localSurvey.questions.length === 0) {
+      toast.error("Please add at least one question.");
+      return;
+    }
     setIsMutatingSurvey(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
@@ -140,11 +213,12 @@ export default function SurveyMenuBar({
     };
 
     if (!validateSurvey(localSurvey)) {
+      setIsMutatingSurvey(false);
       return;
     }
 
     try {
-      await surveyMutateAction({ ...strippedSurvey });
+      await updateSurveyAction({ ...strippedSurvey });
       router.refresh();
       setIsMutatingSurvey(false);
       toast.success("Changes saved.");
@@ -156,6 +230,7 @@ export default function SurveyMenuBar({
         } else {
           router.push(`/environments/${environment.id}/surveys`);
         }
+        router.refresh();
       }
     } catch (e) {
       console.error(e);
@@ -197,16 +272,16 @@ export default function SurveyMenuBar({
         {!!localSurvey.analytics.responseRate && (
           <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
             <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
-            <p className="max-w-[90%] pl-1 text-xs lg:text-sm">
-              This survey received responses. To keep the data consistent, make changes with caution.
+            <p className=" pl-1 text-xs lg:text-sm">
+              This survey received responses, make changes with caution.
             </p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
           <div className="mr-4 flex items-center">
             <SurveyStatusDropdown
-              surveyId={localSurvey.id}
-              environmentId={environment.id}
+              survey={survey}
+              environment={environment}
               updateLocalSurveyStatus={updateLocalSurveyStatus}
             />
           </div>
@@ -233,16 +308,17 @@ export default function SurveyMenuBar({
               disabled={
                 localSurvey.type === "web" &&
                 localSurvey.triggers &&
-                (localSurvey.triggers[0]?.id === "" || localSurvey.triggers.length === 0)
+                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
               }
               variant="darkCTA"
               loading={isMutatingSurvey}
               onClick={async () => {
                 setIsMutatingSurvey(true);
                 if (!validateSurvey(localSurvey)) {
+                  setIsMutatingSurvey(false);
                   return;
                 }
-                await surveyMutateAction({ ...localSurvey, status: "inProgress" });
+                await updateSurveyAction({ ...localSurvey, status: "inProgress" });
                 router.refresh();
                 setIsMutatingSurvey(false);
                 router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);

@@ -1,0 +1,128 @@
+import Image from "next/image";
+import CorsHandling from "./cors-handling-in-api.webp";
+
+export const meta = {
+  title: "Formbricks Code Contribution Guide: Best Practices and Standards",
+  description:
+    "Effortlessly Navigate Your Contribution Journey with Formbricks' Coding Guidelines and PR Review Process",
+};
+
+#### Contributing
+
+# How we Code at Formbricks
+
+Thank you for choosing to contribute to Formbricks. Before you start, please familiarize yourself with our coding standards and best practices, as these are key criteria for pull request reviews. Your contributions are greatly valued, and if you have any questions about these guidelines, please don't hesitate to ask.
+
+**Table of content**
+
+- Use Typescript types throughout the application
+- Always prioritise Server components
+- Fetch data only in server components
+- Use Server-Action for mutations
+- Use service abstraction instead of direct database calls
+- Handle authentication and CORS in management APIs
+- Always Document API changes
+- Constants should be in the packages folder
+- Types should be in the packages folder
+- How we handle Pull Requests
+- Read environment variables from `.env.mjs`
+
+---
+
+## Use Typescript types throughout the application
+
+The entire codebase is written in TypeScript, and it is crucial that every new piece of code is thoroughly and accurately typed. Instead of resorting to using the `any` type for variables, please ensure that you explicitly specify the appropriate type.
+
+## Always prioritise Server components
+
+When it comes to prioritizing the development of our components, our main focus is on building them as server components. This ensures that they are optimized for server-side rendering and can handle any necessary interactivity seamlessly. However, in cases where a component requires client-side interactivity, we are able to adapt it into a client component. If you would like to learn more about the advantages and benefits of server components, we highly recommend reading the comprehensive documentation provided by Next.js, which can be accessed [here](https://nextjs.org/docs/app/building-your-application/rendering/server-components).
+
+## Fetch data only in server components
+
+In order to ensure that both data fetching and rendering take place on the server, it is expected that actions to fetch data from the server will be performed within server components. This approach is prioritized as discussed in the previous point, which provides further details on the benefits and importance of server components.
+
+**Note**: Data fetching is done in the `page.tsx` of the route or the corresponding server component that needs this data.
+
+## Use Server-Action for mutations
+
+Server actions are used to perform server actions in client components. For example, a button click (client-side) that should change something in the database. Server actions should be placed in an `actions.ts` file within the specific route to maintain code organization and facilitate efficient development.
+
+## Use service abstraction instead of direct database calls
+
+We utilize [prisma](https://www.prisma.io/) as our Object-Relational Mapping (ORM) tool to interact with the database. This implies that when you need to fetch or modify data in the database, you will be utilizing prisma. All prisma calls should be written in the services folder `packages/lib`, and before creating a new service, please ensure that one does not already exist.
+
+## Handle authentication and CORS in management APIs
+
+We have two APIs: Management API and Client API.
+
+The public endpoints of the Client API are used by the link survey and `formbricks-js` to send responses and displays to formbricks. Client APIs can be found in `apps/web/app/api/v1/client`
+
+The Management API offers the same functionality as the management frontend and can be used to create surveys, view responses or change account settings. The endpoints require an api key that the user can obtain in the management frontend. Management APIs can be found in `apps/web/app/api/v1/management`.
+
+Please keep the following in mind:
+
+- When dealing with Management APIs always make sure to require authentication via API keys and a sufficient authorization check.
+- Make sure to handle CORS requests in any new Client API endpoint you create as these are called from the browser in link surveys or `formbricks-js`. Example below:
+
+<Image
+  src={CorsHandling}
+  alt="Cors handling within an API"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+## Always Document API changes
+
+It is imperative that any and all modifications or updates made to the client API are thoroughly and comprehensively documented. This documentation should provide clear and detailed information about the nature of the changes, their impact on existing functionality, and any new features or improvements introduced. This practice not only ensures transparency and accountability but also aids developers, both internal and external, in understanding and effectively utilizing the API, ultimately fostering a more robust and user-friendly development ecosystem.
+
+## Constants should be in the packages folder
+
+You should store constants in `packages/lib/constants`
+
+## Types should be in the packages folder
+
+You should store type in `packages/types/v1`
+
+## Read environment variables from `.env.mjs`
+
+Environment variables (`process.env`) shouldn’t be accessed directly but be added in the `.env.mjs` and should be accessed from here. This practice helps us ensure that the variables are typesafe.
+
+## How we handle Pull Requests
+
+We have a number of requirements for PRs to ensure they are as easy to review as possible and to ensure that they are up to standard with the code.
+
+### Code change
+
+When submitting a pull request, it is important to avoid combining multiple changes or issues into a single PR. By keeping each PR focused on a specific change or issue, it becomes easier and faster to review. Additionally, separating changes into individual PRs makes it easier to test each change independently. This allows for more efficient and thorough testing, ensuring that each change is properly validated before merging.
+
+### Title & Content
+
+We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/). You should provide a short and concise title. Don’t put something generic (e.g. bug fixes), and instead mention more specifically what your PR achieves, for instance “fix: dropdown not expanding on survey page”.
+
+For the PR description, you should go into much greater detail about what your PR adds or fixes. Firstly, the description should include a link to any relevant issues or discussions surrounding the feature or bug that your PR addresses.
+
+### Feature PRs
+
+Give a functional overview of how your feature works, including how the user can use the feature. Then, share any technical details in an overview of how the PR works (e.g. “Once the user enters their password, the password is hashed using BCrypt and stored in the Users database field”).
+
+### Bug Fix PRs
+
+Give an overview of how your PR fixes the bug both as a high-level overview and a technical explanation of what caused the issue and how your PR resolves this.
+
+Add a short video or screenshots of what your PR achieves. Loom is a great way of sharing short videos however you can upload your videos directly to the PR description.
+
+### Code Quality & Styling
+
+All submitted code must match our **[code styling](https://www.notion.so/Code-Styling-65ddc5dd2deb4b28a9876f1f7cc89ca9?pvs=21)** standards. We will reject pull requests that differ significantly from our standardised code styles.
+
+All code is automatically checked by Github actions, and will notify you if there are any issues with the code that you submit. We require that code passes these quality checks before merging.
+
+### PR review process
+
+At the moment Matti is responsible for approving and merging pull requests, so please make sure to request his review when opening the PR and make the changes he requests in order to merge the PR.
+
+### Making a Pull Request
+
+- Be sure to **[check the "Allow edits from maintainers" option](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork)** while creating your PR.
+- If your PR refers to or fixes an issue, be sure to add **`refs #XXX`** or **`fixes #XXX`** to the PR description. Replacing **`XXX`** with the respective issue number. See more about **[Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)** .
+- Be sure to fill the PR Template accordingly.

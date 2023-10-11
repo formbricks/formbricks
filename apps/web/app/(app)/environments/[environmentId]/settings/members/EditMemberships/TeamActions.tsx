@@ -7,7 +7,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import CustomDialog from "@/components/shared/CustomDialog";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
-import { env } from "@/env.mjs";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { Button } from "@formbricks/ui";
@@ -20,9 +19,16 @@ type TeamActionsProps = {
   isAdminOrOwner: boolean;
   isLeaveTeamDisabled: boolean;
   team: TTeam;
+  isInviteDisabled: boolean;
 };
 
-export default function TeamActions({ isAdminOrOwner, role, team, isLeaveTeamDisabled }: TeamActionsProps) {
+export default function TeamActions({
+  isAdminOrOwner,
+  role,
+  team,
+  isLeaveTeamDisabled,
+  isInviteDisabled,
+}: TeamActionsProps) {
   const router = useRouter();
   const [isLeaveTeamModalOpen, setLeaveTeamModalOpen] = useState(false);
   const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
@@ -69,7 +75,7 @@ export default function TeamActions({ isAdminOrOwner, role, team, isLeaveTeamDis
           }}>
           Create New Team
         </Button>
-        {env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
+        {!isInviteDisabled && isAdminOrOwner && (
           <Button
             variant="darkCTA"
             onClick={() => {

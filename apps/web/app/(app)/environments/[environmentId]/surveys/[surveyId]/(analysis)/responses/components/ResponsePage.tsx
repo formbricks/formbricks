@@ -4,22 +4,38 @@ import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[sur
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getFilterResponses } from "@/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TTag } from "@formbricks/types/v1/tags";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface ResponsePageProps {
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
+  product: TProduct;
+  profile: TProfile;
+  environmentTags: TTag[];
 }
 
-const ResponsePage = ({ environmentId, survey, surveyId, responses, surveyBaseUrl }: ResponsePageProps) => {
+const ResponsePage = ({
+  environment,
+  survey,
+  surveyId,
+  responses,
+  surveyBaseUrl,
+  product,
+  profile,
+  environmentTags,
+}: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const searchParams = useSearchParams();
@@ -37,23 +53,27 @@ const ResponsePage = ({ environmentId, survey, surveyId, responses, surveyBaseUr
   return (
     <ContentWrapper>
       <SummaryHeader
-        environmentId={environmentId}
+        environment={environment}
         survey={survey}
         surveyId={surveyId}
         surveyBaseUrl={surveyBaseUrl}
+        product={product}
+        profile={profile}
       />
       <CustomFilter
-        environmentId={environmentId}
+        environmentTags={environmentTags}
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
       />
-      <SurveyResultsTabs activeId="responses" environmentId={environmentId} surveyId={surveyId} />
+      <SurveyResultsTabs activeId="responses" environmentId={environment.id} surveyId={surveyId} />
       <ResponseTimeline
-        environmentId={environmentId}
+        environment={environment}
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
+        profile={profile}
+        environmentTags={environmentTags}
       />
     </ContentWrapper>
   );

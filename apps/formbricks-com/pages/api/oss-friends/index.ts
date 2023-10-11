@@ -35,6 +35,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://documenso.com",
         },
         {
+          name: "dyrector.io",
+          description:
+            "dyrector.io is an open-source continuous delivery & deployment platform with version management.",
+          href: "https://dyrector.io",
+        },
+        {
           name: "Erxes",
           description:
             "The Open-Source HubSpot Alternative. A single XOS enables to create unique and life-changing experiences that work for all types of business.",
@@ -63,6 +69,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Open-source authentication and user management for the passkey era. Integrated in minutes, for web and mobile apps.",
           href: "https://www.hanko.io",
+        },
+        {
+          name: "Hook0",
+          description:
+            "Open-Source Webhooks-as-a-service (WaaS) that makes it easy for developers to send webhooks.",
+          href: "https://www.hook0.com/",
         },
         {
           name: "HTMX",

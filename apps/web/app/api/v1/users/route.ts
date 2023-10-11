@@ -1,15 +1,17 @@
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/lib/email";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
+import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
+import { deleteInvite } from "@formbricks/lib/invite/service";
+import { createMembership } from "@formbricks/lib/membership/service";
+import { createProduct } from "@formbricks/lib/product/service";
+import { createProfile } from "@formbricks/lib/profile/service";
+import { createTeam } from "@formbricks/lib/team/service";
 import { NextResponse } from "next/server";
-import { env } from "@/env.mjs";
-import { Prisma } from "@prisma/client";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
-  if (inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.NEXT_PUBLIC_SIGNUP_DISABLED === "1") {
+  if (inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
   user = { ...user, ...{ email: user.email.toLowerCase() } };
@@ -17,7 +19,6 @@ export async function POST(request: Request) {
   let inviteId;
 
   try {
-    let data: Prisma.UserCreateArgs;
     let invite;
 
     if (inviteToken) {
@@ -35,92 +36,35 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid invite ID" }, { status: 400 });
       }
 
-      data = {
-        data: {
-          ...user,
-          memberships: {
-            create: {
-              accepted: true,
-              role: invite.role,
-              team: {
-                connect: {
-                  id: invite.teamId,
-                },
-              },
-            },
-          },
-        },
-      };
-    } else {
-      data = {
-        data: {
-          ...user,
-          memberships: {
-            create: [
-              {
-                accepted: true,
-                role: "owner",
-                team: {
-                  create: {
-                    name: `${user.name}'s Team`,
-                    products: {
-                      create: [
-                        {
-                          name: "My Product",
-                          environments: {
-                            create: [
-                              {
-                                type: "production",
-                                ...populateEnvironment,
-                              },
-                              {
-                                type: "development",
-                                ...populateEnvironment,
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
-      };
-    }
+      // create a user and assign him to the team
 
-    type UserWithMemberships = Prisma.UserGetPayload<{ include: { memberships: true } }>;
-
-    const userData = (await prisma.user.create({
-      ...data,
-      include: {
-        memberships: true,
-      },
-      // TODO: This is a hack to get the correct types (casting), we should find a better way to do this
-    })) as UserWithMemberships;
-
-    const teamId = userData.memberships[0].teamId;
-
-    if (teamId) {
-      fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
-        method: "POST",
-        headers: {
-          "x-api-key": INTERNAL_SECRET,
-        },
+      const profile = await createProfile(user);
+      await createMembership(invite.teamId, profile.id, {
+        accepted: true,
+        role: invite.role,
       });
-    }
 
-    if (inviteId) {
-      sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
-      await prisma.invite.delete({ where: { id: inviteId } });
-    }
+      if (!EMAIL_VERIFICATION_DISABLED) {
+        await sendVerificationEmail(profile);
+      }
 
-    if (env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
-      await sendVerificationEmail(userData);
+      await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
+      await deleteInvite(inviteId);
+
+      return NextResponse.json(profile);
+    } else {
+      const team = await createTeam({
+        name: `${user.name}'s Team`,
+      });
+      await createProduct(team.id, { name: "My Product" });
+      const profile = await createProfile(user);
+      await createMembership(team.id, profile.id, { role: "owner", accepted: true });
+
+      if (!EMAIL_VERIFICATION_DISABLED) {
+        await sendVerificationEmail(profile);
+      }
+      return NextResponse.json(profile);
     }
-    return NextResponse.json(userData);
   } catch (e) {
     if (e.code === "P2002") {
       return NextResponse.json(

@@ -1,5 +1,5 @@
-import { writeData } from "@formbricks/lib/services/googleSheet";
-import { getSurvey } from "@formbricks/lib/services/survey";
+import { writeData } from "@formbricks/lib/googleSheet/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { TGoogleSheetIntegration, TIntegration } from "@formbricks/types/v1/integrations";
 import { TPipelineInput } from "@formbricks/types/v1/pipelines";
 

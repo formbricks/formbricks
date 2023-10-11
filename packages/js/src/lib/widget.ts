@@ -42,23 +42,32 @@ export const renderWidget = (survey: TSurvey) => {
     surveyState
   );
 
+  const productOverwrites = survey.productOverwrites ?? {};
+  const brandColor = productOverwrites.brandColor ?? product.brandColor;
+  const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
+  const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
+  const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
+  const placement = productOverwrites.placement ?? product.placement;
+
   setTimeout(() => {
     renderSurveyModal({
       survey: survey,
-      brandColor: product.brandColor,
+      brandColor,
       formbricksSignature: product.formbricksSignature,
-      clickOutside: product.clickOutsideClose,
-      darkOverlay: product.darkOverlay,
-      highlightBorderColor: product.highlightBorderColor,
-      placement: product.placement,
-      onDisplay: () => {
-        createDisplay(
+      clickOutside,
+      darkOverlay,
+      highlightBorderColor,
+      placement,
+      onDisplay: async () => {
+        const { id } = await createDisplay(
           {
             surveyId: survey.id,
             personId: config.get().state.person.id,
           },
           config.get().apiHost
         );
+        surveyState.updateDisplayId(id);
+        responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
         responseQueue.add(responseUpdate);
@@ -70,7 +79,7 @@ export const renderWidget = (survey: TSurvey) => {
 
 export const closeSurvey = async (): Promise<void> => {
   // remove container element from DOM
-  document.getElementById(containerId).remove();
+  document.getElementById(containerId)?.remove();
   addWidgetContainer();
 
   try {

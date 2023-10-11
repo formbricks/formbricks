@@ -4,11 +4,13 @@ import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
-import { truncate } from "@/lib/utils";
+import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
 } from "@formbricks/types/v1/surveys";
+import { questionTypes } from "@/lib/questions";
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: QuestionSummary<TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion>;
@@ -38,6 +40,8 @@ export default function MultipleChoiceSummary({
 }: MultipleChoiceSummaryProps) {
   const isSingleChoice = questionSummary.question.type === QuestionType.MultipleChoiceSingle;
 
+  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];
 
@@ -53,20 +57,15 @@ export default function MultipleChoiceSummary({
       };
     }
 
-    function findEmail(person) {
-      return person.attributes?.email || null;
-    }
-
     const addOtherChoice = (response, value) => {
       for (const key in resultsDict) {
         if (resultsDict[key].id === "other" && value !== "") {
-          const email = response.person && findEmail(response.person);
-          const displayIdentifier = email || truncate(response.personId, 16);
+          const displayIdentifier = getPersonIdentifier(response.person);
           resultsDict[key].otherValues?.push({
             value,
             person: {
               id: response.personId,
-              email: displayIdentifier,
+              email: typeof displayIdentifier === "string" ? displayIdentifier : undefined,
             },
           });
           resultsDict[key].count += 1;
@@ -125,16 +124,12 @@ export default function MultipleChoiceSummary({
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <div>
-          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
-            {questionSummary.question.headline}
-          </h3>
-        </div>
+        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="rounded-lg bg-slate-100 p-2">
-            {isSingleChoice
-              ? "Multiple-Choice Single Select Question"
-              : "Multiple-Choice Multi Select Question"}
+          <div className="flex items-center rounded-lg bg-slate-100 p-2">
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            Multiple-Choice {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
@@ -196,7 +191,7 @@ export default function MultipleChoiceSummary({
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                             {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{otherValue.person.email}</span>
+                            <span>{getPersonIdentifier(otherValue.person)}</span>
                           </div>
                         </Link>
                       )}

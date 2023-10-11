@@ -2,16 +2,33 @@ export const revalidate = REVALIDATION_INTERVAL;
 
 import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getOrCreatePersonByUserId } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurvey } from "@formbricks/lib/services/survey";
+import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { getEmailVerificationStatus } from "./helpers";
 import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 import { notFound } from "next/navigation";
+import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { validateSurveySingleUseId } from "@/lib/singleUseSurveys";
 
-export default async function LinkSurveyPage({ params, searchParams }) {
+interface LinkSurveyPageProps {
+  params: {
+    surveyId: string;
+  };
+  searchParams: {
+    suId?: string;
+    userId?: string;
+    verify?: string;
+  };
+}
+
+export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
+  const suId = searchParams.suId;
+  const isSingleUseSurvey = survey?.singleUse?.enabled;
+  const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -30,14 +47,41 @@ export default async function LinkSurveyPage({ params, searchParams }) {
     );
   }
 
+  let singleUseId: string | undefined = undefined;
+  if (isSingleUseSurvey) {
+    // check if the single use id is present for single use surveys
+    if (!suId) {
+      return <SurveyInactive status="link invalid" />;
+    }
+
+    // if encryption is enabled, validate the single use id
+    let validatedSingleUseId: string | undefined = undefined;
+    if (isSingleUseSurveyEncrypted) {
+      validatedSingleUseId = validateSurveySingleUseId(suId);
+      if (!validatedSingleUseId) {
+        return <SurveyInactive status="link invalid" />;
+      }
+    }
+    // if encryption is disabled, use the suId as is
+    singleUseId = validatedSingleUseId ?? suId;
+  }
+
+  let singleUseResponse: TResponse | undefined = undefined;
+  if (isSingleUseSurvey) {
+    singleUseResponse = (await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined;
+  }
+
   // verify email: Check if the survey requires email verification
-  let emailVerificationStatus;
+  let emailVerificationStatus: string | undefined = undefined;
   if (survey.verifyEmail) {
     const token =
       searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("verify")
         ? searchParams.verify
         : undefined;
-    emailVerificationStatus = await getEmailVerificationStatus(survey.id, token);
+
+    if (token) {
+      emailVerificationStatus = await getEmailVerificationStatus(survey.id, token);
+    }
   }
 
   // get product and person
@@ -59,6 +103,9 @@ export default async function LinkSurveyPage({ params, searchParams }) {
       personId={person?.id}
       emailVerificationStatus={emailVerificationStatus}
       prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      webAppUrl={WEBAPP_URL}
     />
   );
 }

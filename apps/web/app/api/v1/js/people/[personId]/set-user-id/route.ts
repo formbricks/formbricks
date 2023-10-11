@@ -2,7 +2,7 @@ import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
-import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/services/person";
+import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/person/service";
 import { ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
@@ -31,7 +31,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     let returnedPerson;
     // check if person with this userId exists
-    const existingPerson = await prisma.person.findFirst({
+    const person = await prisma.person.findFirst({
       where: {
         environmentId,
         attributes: {
@@ -46,7 +46,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       select: selectPerson,
     });
     // if person exists, reconnect session and delete old user
-    if (existingPerson) {
+    if (person) {
       // reconnect session to new person
       await prisma.session.update({
         where: {
@@ -55,7 +55,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
         data: {
           person: {
             connect: {
-              id: existingPerson.id,
+              id: person.id,
             },
           },
         },
@@ -64,7 +64,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       // delete old person
       await deletePerson(personId);
 
-      returnedPerson = existingPerson;
+      returnedPerson = person;
     } else {
       // update person with userId
       returnedPerson = await prisma.person.update({
@@ -90,14 +90,14 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       });
     }
 
-    const person = transformPrismaPerson(returnedPerson);
+    const transformedPerson = transformPrismaPerson(returnedPerson);
 
-    if (person) {
+    if (transformedPerson) {
       // revalidate person
-      revalidateTag(person.id);
+      revalidateTag(transformedPerson.id);
     }
 
-    const state = await getUpdatedState(environmentId, person.id, sessionId);
+    const state = await getUpdatedState(environmentId, transformedPerson.id, sessionId);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

@@ -1,5 +1,6 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { prisma } from "@formbricks/database";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createHash } from "crypto";
 import { NextApiRequest, NextApiResponse } from "next";
 import type { Session } from "next-auth";
@@ -22,70 +23,12 @@ export const hasEnvironmentAccess = async (
     if (!user) {
       return false;
     }
-    const ownership = await hasUserEnvironmentAccess(user, environmentId);
+    const ownership = await hasUserEnvironmentAccess(user.id, environmentId);
     if (!ownership) {
       return false;
     }
   }
   return true;
-};
-
-export const hasUserEnvironmentAccess = async (user, environmentId) => {
-  const environment = await prisma.environment.findUnique({
-    where: {
-      id: environmentId,
-    },
-    select: {
-      product: {
-        select: {
-          team: {
-            select: {
-              memberships: {
-                select: {
-                  userId: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-  const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
-  if (environmentUsers.includes(user.id)) {
-    return true;
-  }
-  return false;
-};
-
-export const getPlan = async (req, res) => {
-  if (req.headers["x-api-key"]) {
-    const apiKey = req.headers["x-api-key"].toString();
-    const apiKeyData = await prisma.apiKey.findUnique({
-      where: {
-        hashedKey: hashApiKey(apiKey),
-      },
-      select: {
-        environment: {
-          select: {
-            product: {
-              select: {
-                team: {
-                  select: {
-                    plan: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    return apiKeyData?.environment.product.team.plan || "free";
-  } else {
-    const user = await getSessionUser(req, res);
-    return user && user.teams?.length > 0 ? user.teams[0].plan : "free";
-  }
 };
 
 export const hasApiEnvironmentAccess = async (apiKey, environmentId) => {

@@ -1,0 +1,78 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Formbricks People API: Fetch or Create Person Overview",
+  description:
+    "Dive into Formbricks' People API within the Public Client API suite, designed to work without authentication requirements. Seamlessly fetch or create a person by their userId and environmentId, optimizing client-side interactions while maintaining data privacy.",
+};
+
+#### Management API
+
+# Me API
+
+This API can be used to get your own current environment details.
+
+<Note>You will need an API Key to interact with these APIs.</Note>
+
+---
+
+## Get Environment {{ tag: 'GET', label: '/api/v1/management/me' }}
+
+<Row>
+  <Col>
+
+    Get your current environment details.
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/api/v1/management/me">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location \
+    'https://app.formbricks.com/api/v1/management/me' \
+    --header \
+    'x-api-key: <your-api-key>'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+        "id": "cln8k0t47000fz87njmmu2bck",
+        "createdAt": "2023-10-02T07:13:19.207Z",
+        "updatedAt": "2023-10-02T07:14:14.162Z",
+        "type": "production",
+        "product": {
+            "id": "cln8k0t47000ez87n57aqywvz",
+            "name": "Demo Product"
+        },
+        "widgetSetupCompleted": true
+    }
+    ```
+
+    ```json {{ title: '401 Unauthorized' }}
+    {
+        "code": "not_authenticated",
+        "message": "Not authenticated",
+        "details": {
+            "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---

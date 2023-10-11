@@ -26,16 +26,17 @@ export default function CTAQuestion({
 }: CTAQuestionProps) {
   return (
     <div>
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
         )}
-        <div className="flex justify-end">
+        <div className="flex w-full justify-end">
           {!question.required && (
             <button
+              tabIndex={0}
               type="button"
               onClick={() => {
                 onSubmit({ [question.id]: "dismissed" });
@@ -48,6 +49,7 @@ export default function CTAQuestion({
             question={question}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
+            focus={true}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();
