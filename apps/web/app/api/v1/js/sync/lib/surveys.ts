@@ -1,8 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { selectSurvey } from "@formbricks/lib/survey/service";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TSurveysWithTriggers } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import { unstable_cache } from "next/cache";
 
 const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
@@ -26,8 +25,6 @@ export const getSurveysCached = (environmentId: string, person: TPerson) =>
       revalidate: 30 * 60,
     }
   )();
-
-type TSurveysWithTriggers = Omit<TSurvey, "triggers"> & { triggers: TActionClass[] };
 
 export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurveysWithTriggers[]> => {
   // get recontactDays from product
