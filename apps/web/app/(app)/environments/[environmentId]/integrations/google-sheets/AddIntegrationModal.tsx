@@ -3,6 +3,7 @@ import {
   TGoogleSheetIntegration,
   TGoogleSheetsConfigData,
   TGoogleSpreadsheet,
+  TIntegrationInput,
 } from "@formbricks/types/v1/integrations";
 import { Button, Checkbox, Label } from "@formbricks/ui";
 import GoogleSheetLogo from "@/images/google-sheets-small.png";
@@ -52,7 +53,7 @@ export default function AddIntegrationModal({
   const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState<any>(null);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
-  const googleSheetIntegrationData: Partial<TGoogleSheetIntegration> = {
+  const googleSheetIntegrationData: TIntegrationInput = {
     type: "googleSheets",
     config: {
       key: googleSheetIntegration?.config?.key,

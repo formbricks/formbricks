@@ -14,6 +14,13 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const isAuthorized = await canUserAccessSurvey(session.user.id, survey.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
+  if (typeof survey.createdAt === "string") {
+    survey.createdAt = new Date(survey.createdAt);
+  }
+  if (typeof survey.updatedAt === "string") {
+    survey.updatedAt = new Date(survey.updatedAt);
+  }
+
   return await updateSurvey(survey);
 }
 

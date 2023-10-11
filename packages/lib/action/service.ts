@@ -4,25 +4,26 @@ import { prisma } from "@formbricks/database";
 import { TAction } from "@formbricks/types/v1/actions";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TJsActionInput } from "@formbricks/types/v1/js";
 import { EventType, Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { cache } from "react";
-import z from "zod";
 import { getActionClassCacheTag } from "../actionClass/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { getSessionCached } from "../session/service";
 import { validateInputs } from "../utils/validate";
+import { TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 
 export const getActionsCacheTag = (environmentId: string): string => `environments-${environmentId}-actions`;
 
 export const getActionsByEnvironmentId = async (
   environmentId: string,
-  limit?: number
+  limit?: number,
+  page?: number
 ): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [limit, z.number().optional()]);
+      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [page, ZOptionalNumber]);
+
       try {
         const actionsPrisma = await prisma.event.findMany({
           where: {
@@ -33,7 +34,8 @@ export const getActionsByEnvironmentId = async (
           orderBy: {
             createdAt: "desc",
           },
-          take: limit ? limit : 20,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           include: {
             eventClass: true,
           },
@@ -72,7 +74,8 @@ export const getActionsByEnvironmentId = async (
   }));
 };
 
-export const createAction = async (data: TJsActionInput): Promise<TAction> => {
+export const createAction = async (data: TActionInput): Promise<TAction> => {
+  validateInputs([data, ZActionInput]);
   const { environmentId, name, properties, sessionId } = data;
 
   let eventType: EventType = EventType.code;
@@ -133,7 +136,8 @@ export const createAction = async (data: TJsActionInput): Promise<TAction> => {
   };
 };
 
-export const getActionCountInLastHour = cache(async (actionClassId: string) => {
+export const getActionCountInLastHour = async (actionClassId: string): Promise<number> => {
+  validateInputs([actionClassId, ZId]);
   try {
     const numEventsLastHour = await prisma.event.count({
       where: {
@@ -147,9 +151,10 @@ export const getActionCountInLastHour = cache(async (actionClassId: string) => {
   } catch (error) {
     throw error;
   }
-});
+};
 
-export const getActionCountInLast24Hours = cache(async (actionClassId: string) => {
+export const getActionCountInLast24Hours = async (actionClassId: string): Promise<number> => {
+  validateInputs([actionClassId, ZId]);
   try {
     const numEventsLast24Hours = await prisma.event.count({
       where: {
@@ -163,9 +168,10 @@ export const getActionCountInLast24Hours = cache(async (actionClassId: string) =
   } catch (error) {
     throw error;
   }
-});
+};
 
-export const getActionCountInLast7Days = cache(async (actionClassId: string) => {
+export const getActionCountInLast7Days = async (actionClassId: string): Promise<number> => {
+  validateInputs([actionClassId, ZId]);
   try {
     const numEventsLast7Days = await prisma.event.count({
       where: {
@@ -179,4 +185,4 @@ export const getActionCountInLast7Days = cache(async (actionClassId: string) => 
   } catch (error) {
     throw error;
   }
-});
+};
