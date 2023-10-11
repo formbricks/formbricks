@@ -1,6 +1,6 @@
 "use client";
 
-import { Switch } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui/Switch";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { updateNotificationSettingsAction } from "./actions";

@@ -1,18 +1,14 @@
 "use client";
 
-import TagsCombobox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TagsCombobox";
+import TagsCombobox from "../../TagsCombobox";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Tag } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Tag";
+import { Tag } from "../../Tag";
 import { ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { Button } from "../..";
+import { Button } from "../../Button";
 import { TTag } from "@formbricks/types/v1/tags";
-import {
-  createTagToResponeAction,
-  createTagAction,
-  deleteTagOnResponseAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/actions";
+import { createTagToResponeAction, createTagAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {
   tags: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Switch } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui/Switch";
 import { useState } from "react";
 import AttributeDetailModal from "./AttributeDetailModal";
 import UploadAttributesModal from "./UploadAttributesModal";

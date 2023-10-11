@@ -15,11 +15,11 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 
-import ExampleTheme from "./ExampleTheme";
-import AutoLinkPlugin from "./plugins/AutoLinkPlugin";
-import ToolbarPlugin from "./plugins/ToolbarPlugin";
-import "./stylesEditor.css";
-import "./stylesEditorFrontend.css";
+import ExampleTheme from "../lib/ExampleTheme";
+import AutoLinkPlugin from "../components/AutoLinkPlugin";
+import ToolbarPlugin from "../components/ToolbarPlugin";
+import "../stylesEditor.css";
+import "../stylesEditorFrontend.css";
 
 /*
  Detault toolbar items:
