@@ -5,13 +5,15 @@ import {
   TGoogleSpreadsheet,
   TIntegrationInput,
 } from "@formbricks/types/v1/integrations";
-import { Button, Checkbox, Label } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Checkbox } from "@formbricks/ui/Checkbox";
 import GoogleSheetLogo from "@/images/google-sheets-small.png";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import { Modal } from "@formbricks/ui";
+import { Modal } from "@formbricks/ui/Modal";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";

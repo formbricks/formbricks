@@ -1,4 +1,4 @@
-import { Modal } from "@formbricks/ui";
+import { Modal } from "@formbricks/ui/Modal";
 import { useEffect, useState } from "react";
 
 interface ModalWithTabsProps {

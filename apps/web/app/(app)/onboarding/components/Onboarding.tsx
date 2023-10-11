@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import { ProgressBar } from "@formbricks/ui";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";

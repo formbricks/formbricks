@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Input } from "./Input";
+import { Input } from "../Input";
 import { cn } from "@formbricks/lib/cn";
 
 export type OTPInputProps = {
@@ -12,7 +12,7 @@ export type OTPInputProps = {
 
 const RE_DIGIT = /^\d+$/;
 
-export default function OTPInput({
+export function OTPInput({
   value,
   valueLength,
   onChange,

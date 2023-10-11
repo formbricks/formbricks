@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@formbricks/ui";
+import { Input } from "@formbricks/ui/Input";
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
