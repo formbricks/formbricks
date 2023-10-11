@@ -5,6 +5,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@/*": ["../../apps/web/*"],
       "@prisma/client/*": ["@formbricks/database/client/*"]
     }
   }

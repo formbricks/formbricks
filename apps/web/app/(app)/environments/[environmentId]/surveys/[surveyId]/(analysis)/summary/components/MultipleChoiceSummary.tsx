@@ -1,10 +1,11 @@
 import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { PersonAvatar, ProgressBar } from "@formbricks/ui";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
-import { truncate } from "@/lib/utils";
+import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
@@ -57,20 +58,15 @@ export default function MultipleChoiceSummary({
       };
     }
 
-    function findEmail(person) {
-      return person.attributes?.email || null;
-    }
-
     const addOtherChoice = (response, value) => {
       for (const key in resultsDict) {
         if (resultsDict[key].id === "other" && value !== "") {
-          const email = response.person && findEmail(response.person);
-          const displayIdentifier = email || truncate(response.personId, 16);
+          const displayIdentifier = getPersonIdentifier(response.person);
           resultsDict[key].otherValues?.push({
             value,
             person: {
               id: response.personId,
-              email: displayIdentifier,
+              email: typeof displayIdentifier === "string" ? displayIdentifier : undefined,
             },
           });
           resultsDict[key].count += 1;
@@ -196,7 +192,7 @@ export default function MultipleChoiceSummary({
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                             {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{otherValue.person.email}</span>
+                            <span>{getPersonIdentifier(otherValue.person)}</span>
                           </div>
                         </Link>
                       )}

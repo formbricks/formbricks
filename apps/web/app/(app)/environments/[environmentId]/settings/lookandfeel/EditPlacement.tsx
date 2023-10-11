@@ -1,7 +1,9 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Button, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";

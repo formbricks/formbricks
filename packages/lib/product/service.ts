@@ -7,11 +7,11 @@ import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { cache } from "react";
 import { z } from "zod";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "../environment/service";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 export const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
@@ -33,16 +33,19 @@ const selectProduct = {
   environments: true,
 };
 
-export const getProducts = async (teamId: string): Promise<TProduct[]> =>
+export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> =>
   unstable_cache(
     async () => {
-      validateInputs([teamId, ZId]);
+      validateInputs([teamId, ZId], [page, ZOptionalNumber]);
+
       try {
         const products = await prisma.product.findMany({
           where: {
             teamId,
           },
           select: selectProduct,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
         return products;
@@ -61,7 +64,7 @@ export const getProducts = async (teamId: string): Promise<TProduct[]> =>
     }
   )();
 
-export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct | null> => {
+export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> => {
   if (!environmentId) {
     throw new ValidationError("EnvironmentId is required");
   }
@@ -86,9 +89,9 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
     }
     throw error;
   }
-});
+};
 
-export const getProductByEnvironmentIdCached = (environmentId: string) =>
+export const getProductByEnvironmentIdCached = (environmentId: string): Promise<TProduct | null> =>
   unstable_cache(
     async () => {
       return await getProductByEnvironmentId(environmentId);
@@ -144,7 +147,7 @@ export const updateProduct = async (
   }
 };
 
-export const getProduct = cache(async (productId: string): Promise<TProduct | null> => {
+export const getProduct = async (productId: string): Promise<TProduct | null> => {
   let productPrisma;
   try {
     productPrisma = await prisma.product.findUnique({
@@ -161,9 +164,9 @@ export const getProduct = cache(async (productId: string): Promise<TProduct | nu
     }
     throw error;
   }
-});
+};
 
-export const deleteProduct = cache(async (productId: string): Promise<TProduct> => {
+export const deleteProduct = async (productId: string): Promise<TProduct> => {
   const product = await prisma.product.delete({
     where: {
       id: productId,
@@ -182,7 +185,7 @@ export const deleteProduct = cache(async (productId: string): Promise<TProduct> 
   }
 
   return product;
-});
+};
 
 export const createProduct = async (
   teamId: string,
@@ -191,6 +194,7 @@ export const createProduct = async (
   if (!productInput.name) {
     throw new ValidationError("Product Name is required");
   }
+
   const { environments, ...data } = productInput;
 
   let product = await prisma.product.create({

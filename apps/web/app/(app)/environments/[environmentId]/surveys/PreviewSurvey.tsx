@@ -6,7 +6,7 @@ import { Survey } from "@formbricks/types/surveys";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
   ArrowsPointingInIcon,

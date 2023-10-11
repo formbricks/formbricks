@@ -2,7 +2,6 @@
 
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuPortal,
@@ -13,9 +12,10 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@formbricks/ui";
+} from "@formbricks/ui/DropdownMenu";
+import { Button } from "@formbricks/ui/Button";
 import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
@@ -101,11 +101,9 @@ const SummaryHeader = ({
                     disabled={isStatusChangeDisabled}
                     style={isStatusChangeDisabled ? { pointerEvents: "none", opacity: 0.5 } : {}}>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator
-                        status={survey.status}
-                        environment={environment}
-                        type={survey.type}
-                      />
+                      {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                        <SurveyStatusIndicator status={survey.status} />
+                      )}
                       <span className="ml-1 text-sm text-slate-700">
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}

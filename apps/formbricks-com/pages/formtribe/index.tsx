@@ -1,5 +1,6 @@
 import LayoutLight from "@/pages/formtribe/LayoutLight";
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { Button } from "@formbricks/ui/Button";
 import Head from "next/head";
 import Image from "next/image";
 
@@ -341,10 +342,6 @@ const Leaderboard = [
     points: "100",
   },
   {
-    name: "Rohan Gupta",
-    points: "100",
-  },
-  {
     name: "Nafees Nazik",
     points: "100",
   },
@@ -461,7 +458,7 @@ const Leaderboard = [
   },
   {
     name: "Rohan Gupta",
-    points: "500",
+    points: "600",
     link: "https://github.com/rohan9896",
   },
   {

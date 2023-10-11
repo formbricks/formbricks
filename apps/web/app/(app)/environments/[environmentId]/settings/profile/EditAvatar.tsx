@@ -1,14 +1,13 @@
 "use client";
 
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
-import { Button, ProfileAvatar } from "@formbricks/ui";
-import Image from "next/image";
+import { Button } from "@formbricks/ui/Button";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Session } from "next-auth";
 
 export function EditAvatar({ session }: { session: Session | null }) {
   return (
     <div>
-      {session?.user?.image ? (
+      {/* {session?.user?.image ? (
         <Image
           src={AvatarPlaceholder}
           width="100"
@@ -18,7 +17,8 @@ export function EditAvatar({ session }: { session: Session | null }) {
         />
       ) : (
         <ProfileAvatar userId={session!.user.id} />
-      )}
+      )} */}
+      <ProfileAvatar userId={session!.user.id} />
 
       <Button className="mt-4" variant="darkCTA" disabled={true}>
         Upload Image

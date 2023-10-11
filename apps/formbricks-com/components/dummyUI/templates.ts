@@ -20,7 +20,7 @@ import {
   TaskListSearchIcon,
   UserSearchGlasIcon,
   VideoTabletAdjustIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
 
 import { createId } from "@paralleldrive/cuid2";
 import type { Template } from "@formbricks/types/templates";
