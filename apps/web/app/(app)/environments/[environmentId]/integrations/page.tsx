@@ -64,7 +64,7 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
       connected: userWebhooks > 0,
       statusText:
-        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} zaps`,
+        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,

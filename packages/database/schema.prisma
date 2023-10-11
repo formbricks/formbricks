@@ -374,6 +374,8 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+
+  @@unique([teamId, name])
 }
 
 enum Plan {
