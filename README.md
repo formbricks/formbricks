@@ -103,7 +103,7 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 #### Prerequisites
 
-Here is what you need to be able to run Formbricks:
+Here is what you need to be able to run Formbricks:-
 
 - Node.js (Version: >=18.x)
 - [Pnpm](https://pnpm.io/)
