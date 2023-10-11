@@ -7,10 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -28,6 +24,11 @@ jobs:
 
       - name: create .env
         run: cp .env.example .env
+
+      - name: Generate Random NEXTAUTH_SECRET
+        run: |
+          SECRET=$(openssl rand -base64 24)
+          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
 
       - name: Lint
         run: pnpm lint

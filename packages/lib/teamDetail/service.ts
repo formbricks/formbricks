@@ -6,7 +6,9 @@ import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 
-export const getTeamDetails = async (environmentId: string) => {
+export const getTeamDetails = async (
+  environmentId: string
+): Promise<{ teamId: string; teamOwnerId: string | undefined }> => {
   validateInputs([environmentId, ZId]);
   try {
     const environment = await prisma.environment.findUnique({
