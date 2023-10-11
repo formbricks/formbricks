@@ -47,7 +47,7 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={ZapierLogo} alt="Zapier Logo" />,
       connected: zapierWebhooks > 0,
       statusText:
-        zapierWebhooks === 1 ? "1 zap" : zapierWebhooks === 0 ? "Not Connected" : `${zapierWebhooks} Zaps`,
+        zapierWebhooks === 1 ? "1 zap" : zapierWebhooks === 0 ? "Not Connected" : `${zapierWebhooks} zaps`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
@@ -61,7 +61,7 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
       connected: userWebhooks > 0,
       statusText:
-        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} Webhooks`,
+        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
