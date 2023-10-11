@@ -1,6 +1,6 @@
 export const revalidate = REVALIDATION_INTERVAL;
 import React from "react";
-import { FORMBRICKS_ENCRYPTION_KEY, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { REVALIDATION_INTERVAL, ENCRYPTION_KEY } from "@formbricks/lib/constants";
 import SurveyEditor from "./SurveyEditor";
 import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -17,7 +17,8 @@ export default async function SurveysEditPage({ params }) {
     getActionClasses(params.environmentId),
     getAttributeClasses(params.environmentId),
   ]);
-  const isEncryptionKeySet = !!FORMBRICKS_ENCRYPTION_KEY;
+
+  const isEncryptionKeySet = !!ENCRYPTION_KEY;
   if (!survey || !environment || !actionClasses || !attributeClasses || !product) {
     return <ErrorComponent />;
   }
