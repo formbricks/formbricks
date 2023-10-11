@@ -2,18 +2,18 @@
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/AddNoCodeActionModal";
 import { cn } from "@formbricks/lib/cn";
+import { Badge } from "@formbricks/ui/Badge";
+import { Button } from "@formbricks/ui/Button";
 import {
-  AdvancedOptionToggle,
-  Badge,
-  Button,
-  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui";
+} from "@formbricks/ui/Select";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
+import { Input } from "@formbricks/ui/Input";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useCallback, useEffect, useMemo, useState } from "react";

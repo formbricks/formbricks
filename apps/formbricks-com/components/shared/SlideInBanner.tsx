@@ -1,5 +1,5 @@
 import LFGLuigi from "@/images/blog/lfg-luigi-200px.webp";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 

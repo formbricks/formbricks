@@ -8,7 +8,8 @@ import { useMemo, useState } from "react";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { cn } from "@formbricks/lib/cn";
-import { DialogContent, Button, Dialog } from "@formbricks/ui";
+import { DialogContent, Dialog } from "@formbricks/ui/Dialog";
+import { Button } from "@formbricks/ui/Button";
 import { LinkIcon, EnvelopeIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
 import { TProfile } from "@formbricks/types/v1/profile";
 

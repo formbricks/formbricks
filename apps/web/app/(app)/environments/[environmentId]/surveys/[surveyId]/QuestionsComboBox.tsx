@@ -1,14 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandInput,
-  CommandEmpty,
-  NetPromoterScoreIcon,
-} from "@formbricks/ui";
+import { Command, CommandGroup, CommandItem, CommandInput, CommandEmpty } from "@formbricks/ui/Command";
+import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { QuestionType } from "@formbricks/types/questions";

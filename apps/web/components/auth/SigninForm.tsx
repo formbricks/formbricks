@@ -1,7 +1,8 @@
 "use client";
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
-import { Button, PasswordInput } from "@formbricks/ui";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { Button } from "@formbricks/ui/Button";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";

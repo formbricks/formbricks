@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Button, Input } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 import { QuestionType } from "@formbricks/types/questions";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { AuthenticationError } from "@formbricks/types/v1/errors";

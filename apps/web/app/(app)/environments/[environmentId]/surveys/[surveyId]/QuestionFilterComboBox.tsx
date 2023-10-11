@@ -2,15 +2,12 @@
 
 import * as React from "react";
 import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandEmpty,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuItem,
   DropdownMenuContent,
-} from "@formbricks/ui";
+} from "@formbricks/ui/DropdownMenu";
+import { Command, CommandGroup, CommandItem, CommandEmpty } from "@formbricks/ui/Command";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { QuestionType } from "@formbricks/types/questions";

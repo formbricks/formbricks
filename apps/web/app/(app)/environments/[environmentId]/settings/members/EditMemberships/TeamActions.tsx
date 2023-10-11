@@ -9,7 +9,7 @@ import CustomDialog from "@/components/shared/CustomDialog";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
