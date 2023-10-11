@@ -25,7 +25,7 @@ export const getEnvironmentsCacheTag = (productId: string) => `products-${produc
 
 export const getEnvironment = (environmentId: string) =>
   unstable_cache(
-    async () => {
+    async (): Promise<TEnvironment> => {
       validateInputs([environmentId, ZId]);
       let environmentPrisma;
 
@@ -62,7 +62,7 @@ export const getEnvironment = (environmentId: string) =>
 
 export const getEnvironments = async (productId: string): Promise<TEnvironment[]> =>
   unstable_cache(
-    async () => {
+    async (): Promise<TEnvironment[]> => {
       validateInputs([productId, ZId]);
       let productPrisma;
       try {

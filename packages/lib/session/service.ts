@@ -7,10 +7,9 @@ import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TSession, TSessionWithActions } from "@formbricks/types/v1/sessions";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
-
-const halfHourInSeconds = 60 * 30;
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 const getSessionCacheKey = (sessionId: string): string[] => [sessionId];
 
@@ -52,14 +51,15 @@ export const getSessionCached = (sessionId: string) =>
     getSessionCacheKey(sessionId),
     {
       tags: getSessionCacheKey(sessionId),
-      revalidate: halfHourInSeconds, // 30 minutes
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
 export const getSessionWithActionsOfPerson = async (
-  personId: string
+  personId: string,
+  page?: number
 ): Promise<TSessionWithActions[] | null> => {
-  validateInputs([personId, ZId]);
+  validateInputs([personId, ZId], [page, ZOptionalNumber]);
   try {
     const sessionsWithActionsForPerson = await prisma.session.findMany({
       where: {
@@ -81,6 +81,8 @@ export const getSessionWithActionsOfPerson = async (
           },
         },
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
     if (!sessionsWithActionsForPerson) return null;
 
@@ -93,7 +95,7 @@ export const getSessionWithActionsOfPerson = async (
   }
 };
 
-export const getSessionCount = cache(async (personId: string): Promise<number> => {
+export const getSessionCount = async (personId: string): Promise<number> => {
   validateInputs([personId, ZId]);
   try {
     const sessionCount = await prisma.session.count({
@@ -108,7 +110,7 @@ export const getSessionCount = cache(async (personId: string): Promise<number> =
     }
     throw error;
   }
-});
+};
 
 export const createSession = async (personId: string): Promise<TSession> => {
   validateInputs([personId, ZId]);

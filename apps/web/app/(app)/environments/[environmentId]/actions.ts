@@ -14,6 +14,7 @@ import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { getServerSession } from "next-auth";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
 
 export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
@@ -62,6 +63,8 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
+  const actionClasses = await getActionClasses(environmentId);
+
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
     data: {
@@ -74,7 +77,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
         create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: trigger.id,
+          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
         })),
       },
       attributeFilters: {
