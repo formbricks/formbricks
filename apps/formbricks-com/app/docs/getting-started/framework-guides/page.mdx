@@ -38,7 +38,7 @@ Before getting started, make sure you have:
 ## HTML
 
 All you need to do is copy a `<script>` tag to your HTML head, and that’s about it!
-
+<Col>
 <CodeGroup title="HTML">
 ```html {{ title: 'index.html' }}
 <!-- START Formbricks Surveys -->
@@ -48,7 +48,7 @@ All you need to do is copy a `<script>` tag to your HTML head, and that’s abou
 <!-- END Formbricks Surveys -->
 ```
 </CodeGroup>
-
+</Col>
 ### Required Customizations to be Made
 
 <Properties>
@@ -69,7 +69,7 @@ Refer our [Example HTML project](https://github.com/formbricks/examples/tree/mai
 ## ReactJS
 
 Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`.
-
+<Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
 npm install --save @formbricks/js
@@ -80,11 +80,11 @@ pnpm add @formbricks/js
 ```shell {{ title: 'yarn' }}
 yarn add @formbricks/js
 ```
-
 </CodeGroup>
- 
+</Col>
 Now, update your App.js/ts file to initialise Formbricks.
 
+<Col>
 <CodeGroup title="src/App.js">
 
 ```js
@@ -107,7 +107,7 @@ export default App;
 ```
 
 </CodeGroup>
-
+</Col>
 ### Required Customizations to be Made
 
 <Properties>
@@ -146,7 +146,7 @@ guidelines for each convention below:
 - Pages directory: You will have to visit your `_app.tsx` and just initialise Formbricks there.
 
 Code snippets for the integration for both conventions are provided to further assist you.
-
+<Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
 npm install --save @formbricks/js
@@ -159,9 +159,9 @@ yarn add @formbricks/js
 ```
 
 </CodeGroup>
-
+</Col>
 ### App Directory
-
+<Col>
 <CodeGroup title="app/formbricks.tsx">
 ```tsx {{title: 'Typescript'}}
 "use client";
@@ -190,7 +190,8 @@ export default function FormbricksProvider() {
 
 ````
 </CodeGroup>
-
+</Col>
+<Col>
 <CodeGroup title="app/layout.tsx">
 ```tsx {{title: 'Typescript'}}
 // other imports
@@ -207,11 +208,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ````
 
 </CodeGroup>
-
+</Col>
 Refer our [Example NextJS App Directory project](https://github.com/formbricks/examples/tree/main/nextjs-app) for more help!
 
 ### Pages Directory
-
+<Col>
 <CodeGroup title="src/pages/_app.tsx">
 
 ```tsx {{ title: 'Typescript' }}
@@ -245,7 +246,7 @@ export default function App({ Component, pageProps }: AppProps) {
 ```
 
 </CodeGroup>
-
+</Col>
 Refer our [Example NextJS Pages Directory project](https://github.com/formbricks/examples/tree/main/nextjs-pages) for more help!
 
 ### Required Customizations to be Made
@@ -282,7 +283,7 @@ Now visit the [Validate your Setup](#validate-your-setup) section to verify your
 
 Integrating the Formbricks SDK with Vue.js is a straightforward process.
 We will make sure the SDK is only loaded and used on the client side, as it's not intended for server-side usage.
-
+<Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
 npm install --save @formbricks/js
@@ -297,7 +298,8 @@ yarn add @formbricks/js
 ```
 
 </CodeGroup>
-
+</Col>
+<Col>
 <CodeGroup title="src/formbricks.js">
 
 ```js
@@ -314,7 +316,8 @@ export default formbricks;
 ```
 
 </CodeGroup>
-
+</Col>
+<Col>
 <CodeGroup title="src/main.js">
 
 ```js
@@ -335,7 +338,7 @@ router.afterEach((to, from) => {
 ```
 
 </CodeGroup>
-
+</Col>
 ### Required Customizations to be Made
 
 <Properties>
