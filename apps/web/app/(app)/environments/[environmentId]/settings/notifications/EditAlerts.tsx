@@ -56,7 +56,6 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
                             <div className="col-span-1 text-center">
                               <NotificationSwitch
                                 surveyOrProductId={survey.id}
-                                userId={user.id}
                                 notificationSettings={user.notificationSettings}
                                 notificationType={"alert"}
                               />

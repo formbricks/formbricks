@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal } from "../Modal";
-import Button from "../Button";
+import { Button } from "../Button";
 
 interface DeleteDialogProps {
   open: boolean;

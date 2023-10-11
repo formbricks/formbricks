@@ -10,7 +10,7 @@ import {
   OnboardingIcon,
   PMFIcon,
 } from "@formbricks/ui/icons";
-import Button from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/Button";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
