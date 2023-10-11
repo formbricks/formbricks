@@ -2,7 +2,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
-import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { REVALIDATION_INTERVAL, WEBAPP_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import Head from "next/head";
 
 interface LinkSurveyPageProps {
   params: {
@@ -26,6 +27,8 @@ interface LinkSurveyPageProps {
 
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
+  console.log("||||||||||||||||||||", survey);
+
   const suId = searchParams.suId;
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
@@ -90,6 +93,8 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     throw new Error("Product not found");
   }
 
+  console.log("------------------", product);
+
   const userId = searchParams.userId;
   let person;
   if (userId) {
@@ -97,15 +102,25 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   return (
-    <LinkSurvey
-      survey={survey}
-      product={product}
-      personId={person?.id}
-      emailVerificationStatus={emailVerificationStatus}
-      prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
-      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-      webAppUrl={WEBAPP_URL}
-    />
+    <>
+      <Head>
+        <meta property="og:title" content={survey.name} />
+        <meta property="og:description" content="Complete in 4 Minutes" />
+        <meta property="og:image" content="URL_to_your_featured_image" />
+        <meta property="og:url" content={`${SURVEY_BASE_URL}/${params.surveyId}`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Formbricks" />
+      </Head>
+      <LinkSurvey
+        survey={survey}
+        product={product}
+        personId={person?.id}
+        emailVerificationStatus={emailVerificationStatus}
+        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+        singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+        singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+        webAppUrl={WEBAPP_URL}
+      />
+    </>
   );
 }
