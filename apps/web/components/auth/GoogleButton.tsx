@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { signIn } from "next-auth/react";
 import { FaGoogle } from "react-icons/fa";
 

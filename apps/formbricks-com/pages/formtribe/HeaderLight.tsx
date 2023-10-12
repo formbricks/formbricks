@@ -1,5 +1,6 @@
 import Logo from "@/images/formtribe/formtribe-logo.png";
-import { Button, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+import { Button } from "@formbricks/ui/Button";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";

@@ -1,17 +1,12 @@
 "use client";
 
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import {
-  AdvancedOptionToggle,
-  DatePicker,
-  Input,
-  Label,
-  Switch,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { Switch } from "@formbricks/ui/Switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
+import { DatePicker } from "@formbricks/ui/DatePicker";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";

@@ -1,5 +1,5 @@
-import { Label } from "./Label";
-import { Switch } from "./Switch";
+import { Label } from "../Label";
+import { Switch } from "../Switch";
 
 interface AdvancedOptionToggleProps {
   isChecked: boolean;

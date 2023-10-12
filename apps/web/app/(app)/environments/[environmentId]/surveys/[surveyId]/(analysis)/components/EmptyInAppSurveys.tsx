@@ -1,5 +1,5 @@
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { Unplug } from "lucide-react";
 import Link from "next/link";
 

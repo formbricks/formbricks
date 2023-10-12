@@ -1,17 +1,17 @@
 "use client";
 
-import { Modal } from "@formbricks/ui";
+import { Modal } from "@formbricks/ui/Modal";
 import {
-  Button,
-  Input,
-  Label,
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui";
+} from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { useForm, Controller } from "react-hook-form";
 
 enum MembershipRole {

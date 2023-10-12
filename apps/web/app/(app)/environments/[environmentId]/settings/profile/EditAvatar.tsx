@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, ProfileAvatar } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Session } from "next-auth";
 
 export function EditAvatar({ session }: { session: Session | null }) {

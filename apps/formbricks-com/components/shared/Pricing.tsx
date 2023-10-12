@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import clsx from "clsx";
 import HeadingCentered from "./HeadingCentered";
 import { CheckIcon } from "@heroicons/react/24/outline";

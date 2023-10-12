@@ -1,22 +1,15 @@
 import { LogicCondition, QuestionType } from "@formbricks/types/questions";
 import { TSurveyLogic, TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {
-  Button,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+} from "@formbricks/ui/DropdownMenu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";

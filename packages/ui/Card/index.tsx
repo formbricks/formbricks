@@ -1,4 +1,4 @@
-import { Button } from "./Button";
+import { Button } from "../Button";
 
 interface CardProps {
   connectText?: string;

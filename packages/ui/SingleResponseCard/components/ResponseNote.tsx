@@ -10,7 +10,8 @@ import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../..";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { Button } from "../../Button";
 import { resolveResponseNoteAction, updateResponseNoteAction, createResponseNoteAction } from "../actions";
 
 interface ResponseNotesProps {
