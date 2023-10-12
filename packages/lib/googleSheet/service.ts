@@ -2,7 +2,6 @@ import "server-only";
 
 import { z } from "zod";
 import { validateInputs } from "../utils/validate";
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
 import { ZId } from "@formbricks/types/v1/environment";
@@ -10,7 +9,6 @@ import {
   ZGoogleCredential,
   TGoogleCredential,
   TGoogleSpreadsheet,
-  TIntegration,
   TGoogleSheetIntegration,
 } from "@formbricks/types/v1/integrations";
 import {
@@ -19,6 +17,7 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
 import { ZString } from "@formbricks/types/v1/common";
+import { getGoogleSheetIntegration } from "integration/service";
 
 const { google } = require("googleapis");
 
@@ -35,30 +34,6 @@ async function fetchSpreadsheets(auth: any) {
     throw err;
   }
 }
-
-export const getGoogleSheetIntegration = async (
-  environmentId: string
-): Promise<TIntegration | TGoogleSheetIntegration | null> => {
-  validateInputs([environmentId, ZId]);
-
-  try {
-    const result = await prisma.integration.findUnique({
-      where: {
-        type_environmentId: {
-          environmentId,
-          type: "googleSheets",
-        },
-      },
-    });
-
-    return result;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-    throw error;
-  }
-};
 
 export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpreadsheet[]> => {
   validateInputs([environmentId, ZId]);

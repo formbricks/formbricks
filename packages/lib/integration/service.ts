@@ -8,6 +8,7 @@ import { TIntegration, TIntegrationInput } from "@formbricks/types/v1/integratio
 import { validateInputs } from "../utils/validate";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ITEMS_PER_PAGE } from "../constants";
+import { TGoogleSheetIntegration } from "@formbricks/types/v1/integrations";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
@@ -69,6 +70,30 @@ export const getIntegration = async (integrationId: string): Promise<TIntegratio
         id: integrationId,
       },
     });
+    return result;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+};
+
+export const getGoogleSheetIntegration = async (
+  environmentId: string
+): Promise<TIntegration | TGoogleSheetIntegration | null> => {
+  validateInputs([environmentId, ZId]);
+
+  try {
+    const result = await prisma.integration.findUnique({
+      where: {
+        type_environmentId: {
+          environmentId,
+          type: "googleSheets",
+        },
+      },
+    });
+
     return result;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

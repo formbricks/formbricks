@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Home from "./Home";
-import Connect from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/Connect";
-import AddIntegrationModal from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/AddIntegrationModal";
+import Connect from "./Connect";
+import AddIntegrationModal from "./AddIntegrationModal";
 import {
   TGoogleSheetIntegration,
   TGoogleSheetsConfigData,
