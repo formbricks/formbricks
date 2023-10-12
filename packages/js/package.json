@@ -8,6 +8,7 @@
     "surveys",
     "experience management"
   ],
+  "type": "module",
   "sideEffects": false,
   "source": "src/index.ts",
   "main": "dist/index.js",
@@ -17,7 +18,7 @@
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.umd.js"
     }
   },
   "scripts": {

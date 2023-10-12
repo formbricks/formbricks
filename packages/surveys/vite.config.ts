@@ -11,7 +11,8 @@ export default defineConfig({
     lib: {
       // Could also be a dictionary or array of multiple entry points
       entry: resolve(__dirname, "src/index.ts"),
-      name: "MyLib",
+      name: "formbricks-surveys",
+      formats: ["cjs", "es", "umd"],
       // the proper extensions will be added
       fileName: "index",
     },
