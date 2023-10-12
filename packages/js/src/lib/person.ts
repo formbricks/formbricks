@@ -181,15 +181,14 @@ export const logoutPerson = async (): Promise<void> => {
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
+  const syncParams = {
+    environmentId: config.get().environmentId,
+    apiHost: config.get().apiHost,
+  };
   await logoutPerson();
   try {
     config.allowSync();
-    await sync({
-      environmentId: config.get().environmentId,
-      apiHost: config.get().apiHost,
-      personId: config.get().state.person?.id,
-      sessionId: config.get().state.session?.id,
-    });
+    await sync(syncParams);
     return okVoid();
   } catch (e) {
     return err(e as NetworkError);

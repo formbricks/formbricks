@@ -54,7 +54,10 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
     }
 
     const state = syncResult.value;
-    const oldState = config.get().state;
+    let oldState: TJsState | undefined;
+    try {
+      oldState = config.get().state;
+    } catch (e) {}
     config.update({
       apiHost: params.apiHost,
       environmentId: params.environmentId,
