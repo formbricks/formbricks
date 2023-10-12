@@ -2,7 +2,10 @@
 
 import { md } from "@formbricks/lib/markdownIt";
 import { TSurveyWelcomeQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Editor, Input, Label, Switch } from "@formbricks/ui";
+import { Editor } from "@formbricks/ui/Editor";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
@@ -46,7 +49,6 @@ export default function WelcomeQuestionForm({
 
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
-  console.log(path?.split("/environments/")[1]?.split("/")[0]);
   const uploadFile = async (file) => {
     try {
       if (!(file instanceof Blob) || !(file instanceof File)) {
@@ -127,8 +129,7 @@ export default function WelcomeQuestionForm({
               <img
                 src={question.companyLogo}
                 alt="Company Logo"
-                className="h-full w-full rounded-lg object-contain"
-                style={{ maxHeight: "100%", maxWidth: "100%" }}
+                className="max-h-full max-w-full rounded-lg object-contain"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 transition-opacity duration-300 hover:bg-opacity-60">
                 <label htmlFor="companyLogo" className="cursor-pointer text-sm font-semibold text-white">
@@ -180,7 +181,6 @@ export default function WelcomeQuestionForm({
           </div>
         </div>
       </div>
-      {/* Add Time to Finish Toggle */}
       <div className="mt-3 flex items-center">
         <div className="mr-2">
           <Switch
