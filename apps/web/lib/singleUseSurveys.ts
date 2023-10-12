@@ -9,20 +9,12 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
     return cuid;
   }
 
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not defined");
-  }
-
   const encryptedCuid = symmetricEncrypt(cuid, ENCRYPTION_KEY);
   return encryptedCuid;
 };
 
 // validate the survey single use id
 export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not defined");
-  }
-
   try {
     let decryptedCuid: string | null = null;
 
