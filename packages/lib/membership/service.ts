@@ -179,6 +179,7 @@ export const transferOwnership = async (
         },
       }),
     ]);
+    revalidateTag(getTeamsByUserIdCacheTag(teamId));
 
     return memberships;
   } catch (error) {

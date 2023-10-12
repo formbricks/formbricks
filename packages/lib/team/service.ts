@@ -56,6 +56,7 @@ export const getTeamsByUserId = async (userId: string): Promise<TTeam[]> =>
           },
           select,
         });
+        revalidateTag(getTeamsByUserIdCacheTag(userId));
 
         return teams;
       } catch (error) {
@@ -92,6 +93,7 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
           },
           select: { ...select, memberships: true }, // include memberships
         });
+        revalidateTag(getTeamByEnvironmentIdCacheTag(environmentId));
 
         return team;
       } catch (error) {
