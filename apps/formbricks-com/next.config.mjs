@@ -135,6 +135,11 @@ const nextConfig = {
         destination: "https://www.producthunt.com/products/formbricks",
         permanent: true,
       },
+      {
+        source: "/docs/self-hosting/migrating-to-1.1",
+        destination: "/docs/self-hosting/migration-guide",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

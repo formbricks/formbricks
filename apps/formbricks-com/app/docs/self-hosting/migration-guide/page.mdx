@@ -6,11 +6,25 @@ export const meta = {
 
 #### Self-Hosting
 
-# Migrating to v1.1
+# Migration Guide
+
+## v1.1 -> v1.2
+
+Formbricks v1.2 ships a lot of features targeting our Link Surveys. We have also improved our security posture to be as robust as ever. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.2 without any hassles or build errors.
+
+### New Environment Variables
+
+| Environment Variable      | Required | Recommended Generation                                        | Comments                                                    |
+| ------------------------- | -------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| ENCRYPTION_KEY            | true     | `openssl rand -base64 24 \| tr -dc 'a-zA-Z0-9' \| head -c 24` | Needed for 2 Factor Authentication                          |
+| FORMBRICKS_ENCRYPTION_KEY | false    | `openssl rand -base64 16 \| tr -dc 'a-zA-Z0-9' \| head -c 16` | Needed if you want to use Single Use Surveys                |
+| SHORT_SURVEY_BASE_URL     | false    | `<your-short-base-url>`                                       | Needed if you want to enable shorter links for Link Surveys |
+| ASSET_PREFIX_URL          | false    | `<your-asset-hosted-base-url>`                                | Needed if you have a separate URL for hosted assets         |
+
+
+## v1.0 -> v1.1
 
 Formbricks v1.1 includes a lot of new features and improvements. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.1 without losing any data.
-
-## Changes in .env
 
 ### Renamed Environment Variables
 This was introduced because we got a lot of requests from our users for the ability to define some common environment variables at runtime itself i.e. without having to rebuild the image for the changes to take effect.
@@ -44,7 +58,7 @@ Please note that their values and the logic remains exactly the same. Only the p
 - **NEXT_PUBLIC_WEBAPP_URL**: Was used for the same purpose as WEBAPP_URL, but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **PRISMA_GENERATE_DATAPROXY**: Was used to tell Prisma that it should generate the runtime for Dataproxy usage. But its officially deprecated now.
 
-## Helper Shell Script
+### Helper Shell Script
 For a seamless migration, below is a shell script for your self-hosted instance that will automatically update your environment variables to be compliant with the new naming conventions.
 
 ### Building From Source
