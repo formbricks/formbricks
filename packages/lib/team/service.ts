@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import { TTeam, TTeamUpdateInput, ZTeam, ZTeamUpdateInput } from "@formbricks/types/v1/teams";
+import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { TProductUpdateInput } from "@formbricks/types/v1/product";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
