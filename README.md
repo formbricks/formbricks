@@ -35,7 +35,7 @@
 
 To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
 
-**Join lottery with a [single tweet!](https://formbtribe.com). All info on [formtribe.com](https://formbricks.com)**
+**Join lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
 
 ## ✨ About Formbricks
 
@@ -103,7 +103,7 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 Here is what you need to be able to run Formbricks:
 
-- Node.js (Version: >=18.x)
+- [Node.js](https://nodejs.org/en) (Version: >=18.x)
 - [Pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
 
