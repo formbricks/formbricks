@@ -35,7 +35,7 @@ export function SurveyModal({
         clickOutside={clickOutside}
         darkOverlay={darkOverlay}
         highlightBorderColor={highlightBorderColor}
-        isOpen={isOpen}
+        isOpen={isOpen || true}
         onClose={close}>
         <Survey
           survey={survey}
@@ -55,6 +55,8 @@ export function SurveyModal({
             }, 4000); // close modal automatically after 4 seconds
           }}
           isRedirectDisabled={isRedirectDisabled}
+          hasFailedResponses={false}
+          responseAccumulator={{ finished: false, data: {} }}
         />
       </Modal>
     </div>

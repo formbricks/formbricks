@@ -1,4 +1,4 @@
-import { TResponse, TResponseData } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 
 export interface SurveyBaseProps {
@@ -14,6 +14,8 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
+  hasFailedResponses: boolean;
+  responseAccumulator: TResponseUpdate;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

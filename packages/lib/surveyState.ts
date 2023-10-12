@@ -5,6 +5,7 @@ export class SurveyState {
   displayId: string | null = null;
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {} };
+  failedResponses: Record<string, boolean> = {};
   singleUseId: string | null;
 
   constructor(surveyId: string, singleUseId?: string, responseId?: string) {
@@ -32,6 +33,7 @@ export class SurveyState {
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
+    copyInstance.failedResponses = this.failedResponses;
     return copyInstance;
   }
 
@@ -67,6 +69,26 @@ export class SurveyState {
    */
   isResponseFinished() {
     return this.responseAcc.finished;
+  }
+
+  /**
+   * Adds questionId to the list of failed responses ids
+   */
+  acculateFailedResponse(questionId: string) {
+    this.failedResponses[questionId] = true;
+  }
+  /**
+   * Remove a questionId from the list of failed responses ids
+   */
+  removeFailedResponse(questionId: string) {
+    delete this.failedResponses[questionId];
+  }
+
+  /**
+   * Check if there are any failed responses
+   */
+  hasFailedResponses() {
+    return Object.keys(this.failedResponses).length > 0;
   }
 
   /**

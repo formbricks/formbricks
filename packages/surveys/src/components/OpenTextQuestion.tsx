@@ -45,7 +45,7 @@ export default function OpenTextQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         //  if ( validateInput(value as string, question.inputType, question.required)) {
-        onSubmit({ [question.id]: value, inputType: question.inputType });
+        onSubmit({ [question.id]: value });
         // }
       }}
       className="w-full">

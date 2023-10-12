@@ -19,6 +19,8 @@ interface SurveyProps {
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
+  hasFailedResponses: boolean;
+  responseAccumulator: TResponseUpdate;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -40,6 +42,8 @@ export const SurveyInline = ({
   autoFocus,
   prefillResponseData,
   isRedirectDisabled,
+  hasFailedResponses,
+  responseAccumulator,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -56,6 +60,7 @@ export const SurveyInline = ({
       autoFocus,
       prefillResponseData,
       isRedirectDisabled,
+      hasFailedResponses,
     });
   }, [
     activeQuestionId,
@@ -70,6 +75,8 @@ export const SurveyInline = ({
     autoFocus,
     prefillResponseData,
     isRedirectDisabled,
+    hasFailedResponses,
+    responseAccumulator,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -89,6 +96,8 @@ export const SurveyModal = ({
   onClose = () => {},
   autoFocus,
   isRedirectDisabled,
+  hasFailedResponses,
+  responseAccumulator,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -106,6 +115,8 @@ export const SurveyModal = ({
       onActiveQuestionChange,
       autoFocus,
       isRedirectDisabled,
+      hasFailedResponses,
+      responseAccumulator,
     });
   }, [
     activeQuestionId,
@@ -122,6 +133,8 @@ export const SurveyModal = ({
     survey,
     autoFocus,
     isRedirectDisabled,
+    hasFailedResponses,
+    responseAccumulator,
   ]);
   return <div id="formbricks-survey"></div>;
 };

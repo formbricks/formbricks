@@ -54,9 +54,6 @@ export default function LinkSurvey({
         {
           apiHost: webAppUrl,
           retryAttempts: 2,
-          onResponseSendingFailed: (response) => {
-            alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
-          },
           setSurveyState: setSurveyState,
           personId,
         },
@@ -129,6 +126,8 @@ export default function LinkSurvey({
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
+          hasFailedResponses={surveyState.hasFailedResponses()}
+          responseAccumulator={surveyState.responseAcc}
         />
       </ContentWrapper>
     </>

@@ -21,6 +21,8 @@ export function Survey({
   onFinished = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  hasFailedResponses,
+  responseAccumulator,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0]?.id);
   const [loadingElement, setLoadingElement] = useState(false);
@@ -29,6 +31,7 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const [showResponseErrorComponent, setShowResponseErrorComponent] = useState(false);
 
   useEffect(() => {
     setQuestionId(activeQuestionId || survey.questions[0].id);
@@ -48,6 +51,16 @@ export function Survey({
       onSubmit(prefillResponseData);
     }
   }, []);
+
+  useEffect(() => {
+    if (questionId !== "end" && !hasFailedResponses) {
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setShowResponseErrorComponent(true);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [questionId, hasFailedResponses]);
 
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
@@ -103,6 +116,14 @@ export function Survey({
     setQuestionId(prevQuestionId);
     onActiveQuestionChange(prevQuestionId);
   };
+
+  if (showResponseErrorComponent) {
+    return (
+      <div>
+        <span>{JSON.stringify(responseAccumulator)}</span>
+      </div>
+    );
+  }
 
   return (
     <>
