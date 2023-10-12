@@ -1,14 +1,15 @@
 "use client";
 
 import AlertDialog from "@/components/shared/AlertDialog";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Button, Input } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
@@ -308,7 +309,7 @@ export default function SurveyMenuBar({
               disabled={
                 localSurvey.type === "web" &&
                 localSurvey.triggers &&
-                (localSurvey.triggers[0]?.id === "" || localSurvey.triggers.length === 0)
+                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
               }
               variant="darkCTA"
               loading={isMutatingSurvey}

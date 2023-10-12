@@ -1,4 +1,4 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasTeamAccess } from "@/lib/api/apiHelper";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProducts } from "@formbricks/lib/product/service";

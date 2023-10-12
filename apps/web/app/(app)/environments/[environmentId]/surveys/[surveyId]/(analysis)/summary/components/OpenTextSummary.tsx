@@ -1,9 +1,9 @@
+import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
-import { PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { questionTypes } from "@/lib/questions";
@@ -11,10 +11,6 @@ import { questionTypes } from "@/lib/questions";
 interface OpenTextSummaryProps {
   questionSummary: QuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
-}
-
-function findEmail(person) {
-  return person.attributes?.email || null;
 }
 
 export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
@@ -43,8 +39,7 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
           <div className="px-4 md:px-6">Time</div>
         </div>
         {questionSummary.responses.map((response) => {
-          const email = response.person && findEmail(response.person);
-          const displayIdentifier = email || (response.person && truncate(response.person.id, 16)) || null;
+          const displayIdentifier = getPersonIdentifier(response.person!);
           return (
             <div
               key={response.id}

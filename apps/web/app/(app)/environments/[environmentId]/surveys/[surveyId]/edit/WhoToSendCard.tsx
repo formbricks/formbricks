@@ -1,16 +1,10 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import {
-  Badge,
-  Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Input } from "@formbricks/ui/Input";
+import { Button } from "@formbricks/ui/Button";
+import { Badge } from "@formbricks/ui/Badge";
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */

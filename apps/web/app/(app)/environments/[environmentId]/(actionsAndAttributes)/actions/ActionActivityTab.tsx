@@ -1,8 +1,8 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Label } from "@formbricks/ui/Label";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";

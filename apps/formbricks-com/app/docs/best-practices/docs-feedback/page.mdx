@@ -11,8 +11,10 @@ import WhenToAsk from "./when-to-ask.webp";
 import CopyIds from "./copy-ids.webp";
 
 export const meta = {
-  title: "Integrate Docs Feedback in Your Website: A Step-by-Step Guide on getting feedback on your Documentation with Formbricks",
-  description: "Learn the step-by-step process to effectively measure the clarity of your documentation using Formbricks Cloud. Dive into best practices, setting up cloud environments, integrating feedback widgets on your frontend, and connecting to the Formbricks API for a seamless user experience.",
+  title:
+    "Integrate Docs Feedback in Your Website: A Step-by-Step Guide on getting feedback on your Documentation with Formbricks",
+  description:
+    "Learn the step-by-step process to effectively measure the clarity of your documentation using Formbricks Cloud. Dive into best practices, setting up cloud environments, integrating feedback widgets on your frontend, and connecting to the Formbricks API for a seamless user experience.",
 };
 
 #### Best Practices
@@ -48,7 +50,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={SwitchToDev}
   alt="switch to dev environment"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 3. Then, create a survey using the template “Docs Feedback”:
@@ -57,7 +59,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={DocsTemplate}
   alt="select docs template"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 4. Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
@@ -66,15 +68,14 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={ChangeId}
   alt="switch to dev environment"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 5. In the same way, you can change the Internal Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
 
 <Note>
-  ## Answers need to be identical 
-  If you want different answers than “Yes 👍” and “No 👎” you need update the choices accordingly. They have to
-  be identical to the frontend we're building in the next step.
+  ## Answers need to be identical If you want different answers than “Yes 👍” and “No 👎” you need update the
+  choices accordingly. They have to be identical to the frontend we're building in the next step.
 </Note>
 
 6. Click on “Continue to Settings or select the audience tab manually. Scroll down to “When to ask” and create a new Action:
@@ -83,7 +84,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={WhenToAsk}
   alt="set up when to ask card"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 7. Our goal is to create an event that never fires. This is a bit nonsensical because it is a workaround. Stick with me 😃 Fill the action out like on the screenshot:
@@ -92,7 +93,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={AddAction}
   alt="add action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
   className="rounded"
 />
 
@@ -102,7 +103,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   src={SelectNonevent}
   alt="select nonevent"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 **You’re all setup in Formbricks Cloud for now 👍**
@@ -110,9 +111,8 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 ### 2. Build the frontend
 
 <Note>
-  ## Your frontend might work differently 
-  Your frontend likely looks and works differently. This is an example specific to our tech stack. We want to illustrate
-  what you should consider building yours 😊
+  ## Your frontend might work differently Your frontend likely looks and works differently. This is an example
+  specific to our tech stack. We want to illustrate what you should consider building yours 😊
 </Note>
 
 Before we start, lets talk about the widget. It works like this:
@@ -132,7 +132,7 @@ This allows us to capture and analyze partial feedback where the user is not wil
   src={DocsNavi}
   alt="doc navigation"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
   className="rounded"
 />
 
@@ -145,7 +145,8 @@ Locate that file. We are using the [Tailwind Template “Syntax”](https://tail
 ```tsx
 import { useState } from "react";
 import { handleFeedbackSubmit, updateFeedback } from "../../lib/handleFeedbackSubmit";
-import { Popover, PopoverTrigger, PopoverContent, Button } from "@formbricks/ui";
+import { Popover, PopoverTrigger, PopoverContent } from "@formbricks/ui/Popover";
+import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/router";
 
 export default function DocsFeedback() {
@@ -411,7 +412,7 @@ Before you roll it out in production, you want to test it. To do so, you need tw
 
 When you are on the survey detail page, you’ll find both of them in the URL:
 
-<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={CopyIds} alt="copy IDs" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 Now, you have to replace the IDs and the API host accordingly in your `handleFeedbackSubmit`:
 

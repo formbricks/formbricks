@@ -1,6 +1,7 @@
 "use client";
 
-import { Input, Label } from "@formbricks/ui";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -22,8 +23,10 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
       setIsInputInvalid(true);
       toast.error("IDs have to be unique per survey.");
     } else if (currentValue.trim() === "" || currentValue.includes(" ")) {
-      setIsInputInvalid(true);
+      setCurrentValue(prevValue);
+      updateQuestion(questionIdx, { id: prevValue });
       toast.error("ID should not be empty.");
+      return;
     } else {
       setIsInputInvalid(false);
       toast.success("Question ID updated.");

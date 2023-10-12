@@ -5,7 +5,8 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { ErrorComponent, Label } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Label } from "@formbricks/ui/Label";
 import { TagIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 

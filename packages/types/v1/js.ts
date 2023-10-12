@@ -5,10 +5,16 @@ import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
 import { ZProduct } from "./product";
 
+const ZSurveysWithTriggers = ZSurvey.augment({
+  triggers: z.array(ZActionClass),
+});
+
+export type TSurveysWithTriggers = z.infer<typeof ZSurveysWithTriggers>;
+
 export const ZJsState = z.object({
   person: ZPerson,
   session: ZSession,
-  surveys: z.array(ZSurvey),
+  surveys: z.array(ZSurveysWithTriggers),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
@@ -48,12 +54,3 @@ export const ZJsPeopleAttributeInput = z.object({
 });
 
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
-
-export const ZJsActionInput = z.object({
-  environmentId: z.string().cuid2(),
-  sessionId: z.string().cuid2(),
-  name: z.string(),
-  properties: z.record(z.string()),
-});
-
-export type TJsActionInput = z.infer<typeof ZJsActionInput>;

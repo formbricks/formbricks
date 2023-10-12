@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
 import { ZColor, ZSurveyPlacement } from "./common";
 
@@ -162,11 +161,15 @@ const ZSurveyQuestionBase = z.object({
   isDraft: z.boolean().optional(),
 });
 
+export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
+export type TSurveyOpenTextQuestionInputType = z.infer<typeof ZSurveyOpenTextQuestionInputType>;
+
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
   longAnswer: z.boolean().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
+  inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
@@ -272,7 +275,7 @@ export const ZSurvey = z.object({
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
-  triggers: z.array(ZActionClass),
+  triggers: z.array(z.string()),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
@@ -289,7 +292,6 @@ export const ZSurvey = z.object({
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),
-  environmentId: z.string(),
   status: ZSurveyStatus.optional(),
   displayOption: ZSurveyDisplayOption.optional(),
   autoClose: z.number().optional(),
@@ -302,12 +304,16 @@ export const ZSurveyInput = z.object({
   closeOnDate: z.date().optional(),
   surveyClosedMessage: ZSurveyClosedMessage.optional(),
   verifyEmail: ZSurveyVerifyEmail.optional(),
-  // TODO: Update survey create endpoint to accept attributeFilters and triggers like the survey update endpoint
-  // attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
-  //triggers: z.array(ZActionClass).optional(),
+  attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
+  triggers: z.array(z.string()).optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
+export type TSurveyDates = {
+  createdAt: TSurvey["createdAt"];
+  updatedAt: TSurvey["updatedAt"];
+  closeOnDate: TSurvey["closeOnDate"];
+};
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({

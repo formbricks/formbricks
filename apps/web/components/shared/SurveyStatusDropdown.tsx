@@ -1,20 +1,11 @@
 "use client";
 
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
 
@@ -35,7 +26,9 @@ export default function SurveyStatusDropdown({
     <>
       {survey.status === "draft" ? (
         <div className="flex items-center">
-          <SurveyStatusIndicator status={survey.status} environment={environment} type={survey.type} />
+          {(survey.type === "link" || environment.widgetSetupCompleted) && (
+            <SurveyStatusIndicator status={survey.status} />
+          )}
           {survey.status === "draft" && <p className="text-sm italic text-slate-600">Draft</p>}
         </div>
       ) : (
@@ -69,11 +62,9 @@ export default function SurveyStatusDropdown({
                 <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
-                      <SurveyStatusIndicator
-                        status={survey.status}
-                        environment={environment}
-                        type={survey.type}
-                      />
+                      {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                        <SurveyStatusIndicator status={survey.status} />
+                      )}
                       <span className="ml-2 text-sm text-slate-700">
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}

@@ -1,7 +1,22 @@
-import { TSurveyOpenTextQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Button, Input, Label } from "@formbricks/ui";
-import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
+import {
+  TSurveyOpenTextQuestion,
+  TSurveyOpenTextQuestionInputType,
+  TSurveyWithAnalytics,
+} from "@formbricks/types/v1/surveys";
+import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+
+const questionTypes = [
+  { value: "text", label: "Text" },
+  { value: "email", label: "Email" },
+  { value: "url", label: "URL" },
+  { value: "number", label: "Number" },
+  { value: "phone", label: "Phone" },
+];
 
 interface OpenQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
@@ -19,6 +34,16 @@ export default function OpenQuestionForm({
   isInValid,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
+
+  const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
+    const updatedAttributes = {
+      inputType: inputType,
+      placeholder: getPlaceholderByInputType(inputType),
+      longAnswer: inputType === "text" ? question.longAnswer : false,
+    };
+    updateQuestion(questionIdx, updatedAttributes);
+  };
 
   return (
     <form>
@@ -71,11 +96,38 @@ export default function OpenQuestionForm({
           <Input
             id="placeholder"
             name="placeholder"
-            value={question.placeholder}
+            value={question.placeholder ?? defaultPlaceholder}
             onChange={(e) => updateQuestion(questionIdx, { placeholder: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* Add a dropdown to select the question type */}
+      <div className="mt-3">
+        <Label htmlFor="questionType">Input Type</Label>
+        <div className="mt-2 flex items-center">
+          <QuestionTypeSelector
+            questionTypes={questionTypes}
+            currentType={question.inputType}
+            handleTypeChange={handleInputChange} // Use the merged function
           />
         </div>
       </div>
     </form>
   );
+}
+
+function getPlaceholderByInputType(inputType: TSurveyOpenTextQuestionInputType) {
+  switch (inputType) {
+    case "email":
+      return "example@email.com";
+    case "url":
+      return "http://...";
+    case "number":
+      return "42";
+    case "phone":
+      return "+1 123 456 789";
+    default:
+      return "Type your answer here...";
+  }
 }

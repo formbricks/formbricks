@@ -166,14 +166,15 @@ enum DisplayStatus {
 }
 
 model Display {
-  id        String        @id @default(cuid())
-  createdAt DateTime      @default(now()) @map(name: "created_at")
-  updatedAt DateTime      @updatedAt @map(name: "updated_at")
-  survey    Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId  String
-  person    Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId  String?
-  status    DisplayStatus @default(seen)
+  id         String         @id @default(cuid())
+  createdAt  DateTime       @default(now()) @map(name: "created_at")
+  updatedAt  DateTime       @updatedAt @map(name: "updated_at")
+  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId   String
+  person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId   String?
+  responseId String?        @unique
+  status     DisplayStatus?
 }
 
 model SurveyTrigger {
@@ -372,6 +373,8 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+
+  @@unique([teamId, name])
 }
 
 enum Plan {
@@ -496,6 +499,9 @@ model User {
   name                      String?
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
+  twoFactorSecret           String?
+  twoFactorEnabled          Boolean          @default(false)
+  backupCodes               String?
   password                  String?
   onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)

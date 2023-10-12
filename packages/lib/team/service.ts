@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { TTeam, TTeamUpdateInput } from "@formbricks/types/v1/teams";
+import { TProductUpdateInput } from "@formbricks/types/v1/product";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
@@ -27,6 +28,7 @@ import {
 } from "../utils/createDemoProductHelpers";
 import { validateInputs } from "../utils/validate";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getEnvironmentCacheTag } from "../environment/service";
 
 export const select = {
   id: true,
@@ -158,7 +160,7 @@ export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>
   }
 };
 
-export const deleteTeam = async (teamId: string) => {
+export const deleteTeam = async (teamId: string): Promise<TTeam> => {
   validateInputs([teamId, ZId]);
   try {
     const deletedTeam = await prisma.team.delete({
@@ -177,6 +179,7 @@ export const deleteTeam = async (teamId: string) => {
     deletedTeam?.products.forEach((product) => {
       product.environments.forEach((environment) => {
         revalidateTag(getTeamByEnvironmentIdCacheTag(environment.id));
+        revalidateTag(getEnvironmentCacheTag(environment.id));
       });
     });
 
@@ -196,7 +199,7 @@ export const deleteTeam = async (teamId: string) => {
   }
 };
 
-export const createDemoProduct = async (teamId: string) => {
+export const createDemoProduct = async (teamId: string): Promise<TProductUpdateInput> => {
   validateInputs([teamId, ZId]);
 
   const demoProduct = await prisma.product.create({
@@ -332,7 +335,7 @@ export const createDemoProduct = async (teamId: string) => {
         })),
       }),
     ]);
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }

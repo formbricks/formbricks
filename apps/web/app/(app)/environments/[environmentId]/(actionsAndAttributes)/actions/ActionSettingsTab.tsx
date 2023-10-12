@@ -1,8 +1,10 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import type { NoCodeConfig } from "@formbricks/types/events";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
