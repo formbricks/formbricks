@@ -1,12 +1,15 @@
 "use client";
 
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { Modal } from "@formbricks/ui";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 interface AddProductModalProps {
   environmentId: string;
@@ -20,11 +23,19 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
   const { register, handleSubmit } = useForm();
 
   const submitProduct = async (data: { name: string }) => {
-    setLoading(true);
-    const newEnv = await createProductAction(environmentId, data.name);
-    router.push(`/environments/${newEnv.id}/`);
-    setOpen(false);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const newEnv = await createProductAction(environmentId, data.name);
+
+      toast.success("Product created successfully!");
+      router.push(`/environments/${newEnv.id}/`);
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(`Error: Unable to save product information`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

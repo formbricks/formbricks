@@ -1,5 +1,5 @@
-import { ResponsiveVideo } from "@formbricks/ui";
-import { Modal } from "@formbricks/ui";
+import { ResponsiveVideo } from "@formbricks/ui/ResponsiveVideo";
+import { Modal } from "@formbricks/ui/Modal";
 
 interface VideoWalkThroughProps {
   open: boolean;

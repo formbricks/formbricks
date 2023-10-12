@@ -12,7 +12,7 @@ import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 interface SurveyEditorProps {
   survey: TSurveyWithAnalytics;

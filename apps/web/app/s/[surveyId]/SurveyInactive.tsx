@@ -1,5 +1,5 @@
 import { TSurveyClosedMessage } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { CheckCircleIcon, PauseCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";

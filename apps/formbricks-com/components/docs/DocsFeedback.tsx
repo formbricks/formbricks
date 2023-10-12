@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { useState } from "react";
 
 export const DocsFeedback: React.FC = () => {

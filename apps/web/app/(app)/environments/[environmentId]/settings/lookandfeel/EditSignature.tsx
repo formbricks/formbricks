@@ -2,7 +2,8 @@
 
 import { updateProductAction } from "./actions";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
-import { Label, Switch } from "@formbricks/ui";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import { useState } from "react";
 import toast from "react-hot-toast";
 

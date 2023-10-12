@@ -194,6 +194,7 @@ export const createProduct = async (
   if (!productInput.name) {
     throw new ValidationError("Product Name is required");
   }
+
   const { environments, ...data } = productInput;
 
   let product = await prisma.product.create({
