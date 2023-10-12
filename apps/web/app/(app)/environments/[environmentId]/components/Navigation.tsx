@@ -25,21 +25,10 @@ import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TTeam } from "@formbricks/types/v1/teams";
-import {
-  CustomersIcon,
-  DashboardIcon,
-  FilterIcon,
-  FormIcon,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  ProfileAvatar,
-  SettingsIcon,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,

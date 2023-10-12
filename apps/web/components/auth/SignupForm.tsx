@@ -3,7 +3,8 @@
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import IsPasswordValid from "@/components/auth/IsPasswordValid";
 import { createUser } from "@/lib/users/users";
-import { Button, PasswordInput } from "@formbricks/ui";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { Button } from "@formbricks/ui/Button";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";

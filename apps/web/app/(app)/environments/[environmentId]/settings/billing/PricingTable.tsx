@@ -1,7 +1,8 @@
 "use client";
 
 import { TTeam } from "@formbricks/types/v1/teams";
-import { Badge, Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Badge } from "@formbricks/ui/Badge";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

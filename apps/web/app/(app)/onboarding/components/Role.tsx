@@ -5,7 +5,7 @@ import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/lib/formbricks";
 import { TProfile } from "@formbricks/types/v1/profile";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 

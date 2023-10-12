@@ -4,7 +4,10 @@ import {
   enableTwoFactorAuthAction,
   setupTwoFactorAuthAction,
 } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
-import { PasswordInput, Button, OTPInput, Modal } from "@formbricks/ui";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { Button } from "@formbricks/ui/Button";
+import { OTPInput } from "@formbricks/ui/OTPInput";
+import { Modal } from "@formbricks/ui/Modal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";

@@ -1,4 +1,4 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../..";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
 import { ChevronDoubleDownIcon, XCircleIcon } from "@heroicons/react/20/solid";
 import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 

@@ -1,6 +1,7 @@
 "use client"; // Error components must be Client components
 
-import { Button, ErrorComponent } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   if (process.env.NODE_ENV === "development") {

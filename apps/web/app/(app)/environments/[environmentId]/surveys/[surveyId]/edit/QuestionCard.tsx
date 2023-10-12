@@ -4,7 +4,9 @@ import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
-import { Input, Label, Switch } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui/Switch";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
 import {
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
