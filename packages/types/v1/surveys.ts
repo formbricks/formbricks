@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { QuestionType } from "../questions";
 import { ZColor, ZSurveyPlacement } from "./common";
+import { ZActionClass } from "./actionClasses";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
@@ -275,7 +276,7 @@ export const ZSurvey = z.object({
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
-  triggers: z.array(z.string()),
+  triggers: z.array(z.union([z.string(), ZActionClass])),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
