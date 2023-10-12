@@ -16,6 +16,9 @@ RUN touch /app/apps/web/.env
 RUN pnpm install
 
 # Build the project
+ENV DOCKER_BUILD 1
+ENV NEXT_TELEMETRY_DISABLED 1
+
 RUN pnpm post-install --filter=web...
 RUN pnpm turbo run build --filter=web...
 
@@ -45,8 +48,8 @@ EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 
 CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
-        pnpm dlx prisma migrate deploy && node apps/web/server.js; \
+    pnpm dlx prisma migrate deploy && node apps/web/server.js; \
     else \
-        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
-        exit 1; \
+    echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
+    exit 1; \
     fi

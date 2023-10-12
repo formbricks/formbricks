@@ -6,7 +6,7 @@ import { createId } from "@paralleldrive/cuid2";
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
-  output: "standalone",
+  output: process.env.DOCKER_BUILD ? "standalone" : undefined,
   experimental: {
     serverActions: true,
   },

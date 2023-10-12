@@ -94,7 +94,8 @@
         "AWS_ACCESS_KEY",
         "AWS_SECRET_KEY",
         "S3_REGION",
-        "S3_BUCKET_NAME"
+        "S3_BUCKET_NAME",
+        "DOCKER_BUILD"
       ]
     },
     "post-install": {
