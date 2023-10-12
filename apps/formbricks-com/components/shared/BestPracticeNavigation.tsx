@@ -7,7 +7,7 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
 import clsx from "clsx";
 import Link from "next/link";
 

@@ -1,4 +1,4 @@
-import { Label } from "@formbricks/ui";
+import { Label } from "@formbricks/ui/Label";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
 import { TSurvey } from "@formbricks/types/v1/surveys";

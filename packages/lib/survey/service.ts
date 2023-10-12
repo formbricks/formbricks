@@ -21,6 +21,7 @@ import { getResponsesCacheTag } from "../response/service";
 import { ZString } from "@formbricks/types/v1/common";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getActionClasses } from "../actionClass/service";
+import { formatSurveyDateFields } from "./util";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
@@ -141,7 +142,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
       };
 
       try {
-        const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
+        const survey: TSurveyWithAnalytics = ZSurveyWithAnalytics.parse(transformedSurvey);
         return survey;
       } catch (error) {
         if (error instanceof Error) {
@@ -168,8 +169,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
   // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   };
 };
 
@@ -233,8 +233,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   };
 };
 
@@ -366,8 +365,7 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
   // https://github.com/vercel/next.js/issues/51613
   return surveys.map((survey) => ({
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   }));
 };
 
@@ -437,8 +435,7 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
   // https://github.com/vercel/next.js/issues/51613
   return surveysWithAnalytics.map((survey) => ({
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   }));
 };
 

@@ -1,7 +1,9 @@
 "use client";
 
-import { DeleteDialog } from "@formbricks/ui";
-import { Button, Input, Label } from "@formbricks/ui";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";

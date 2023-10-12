@@ -1,7 +1,7 @@
 "use client";
 
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Confetti } from "@formbricks/ui";
+import { Confetti } from "@formbricks/ui/Confetti";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";

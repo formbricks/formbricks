@@ -1,7 +1,7 @@
 "use client";
 
-import { Modal } from "@formbricks/ui";
-import { Button } from "@formbricks/ui";
+import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/Button";
 
 interface AlertDialogProps {
   open: boolean;
