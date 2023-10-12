@@ -6,7 +6,8 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
-import { getResponse, getResponseCacheTag } from "./service";
+import { getResponse } from "./service";
+import { getResponseCacheTag } from "./cache";
 
 export const canUserAccessResponse = async (userId: string, responseId: string): Promise<boolean> =>
   await unstable_cache(
