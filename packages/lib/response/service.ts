@@ -16,13 +16,11 @@ import { getPerson, transformPrismaPerson } from "../person/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { deleteDisplayByResponseId } from "../display/service";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { responseCacheTag } from "./cache";
-import { getSurveyCacheTag } from "../survey/service";
-import { getDisplaysCacheTag } from "../display/service";
+import { responseCache } from "./cache";
 
 const responseSelection = {
   id: true,
@@ -83,9 +81,6 @@ const responseSelection = {
   },
 };
 
-const getResponseBySingleUseIdCacheTags = (surveyId: string, singleUseId: string): string =>
-  `survey-${surveyId}-singleuse-${singleUseId}-responses`;
-
 export const getResponsesByPersonId = async (
   personId: string,
   page?: number
@@ -127,9 +122,9 @@ export const getResponsesByPersonId = async (
         throw error;
       }
     },
-    [`getResponses-${personId}`],
+    [`getResponsesByPersonId-${personId}-${page}`],
     {
-      tags: [responseCacheTag.byPersonId(personId)],
+      tags: [responseCache.byPersonId(personId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -169,9 +164,9 @@ export const getResponseBySingleUseId = async (
         throw error;
       }
     },
-    [`survey-${surveyId}-singleuse-${singleUseId}`],
+    [`getResponseBySingleUseId-${surveyId}-singleuse-${singleUseId}`],
     {
-      tags: [getResponseBySingleUseIdCacheTags(surveyId, singleUseId)],
+      tags: [responseCache.bySingleUseId(surveyId, singleUseId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -215,15 +210,12 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
-    revalidateTag(responseCacheTag.single(response.id));
 
-    if (response.person?.id) {
-      revalidateTag(responseCacheTag.byPersonId(response.person.id));
-    }
-
-    if (response.surveyId) {
-      revalidateTag(responseCacheTag.bySurveyId(response.surveyId));
-    }
+    responseCache.revalidate({
+      personId: response.person?.id,
+      responseId: response.id,
+      surveyId: response.surveyId,
+    });
 
     return response;
   } catch (error) {
@@ -268,10 +260,10 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       }
     },
     [`getResponse-${responseId}`],
-    { tags: [responseCacheTag.single(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    { tags: [responseCache.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
-export const getSurveyResponses = async (surveyId: string, page?: number): Promise<TResponse[]> =>
+export const getResponses = async (surveyId: string, page?: number): Promise<TResponse[]> =>
   unstable_cache(
     async () => {
       validateInputs([surveyId, ZId], [page, ZOptionalNumber]);
@@ -306,18 +298,17 @@ export const getSurveyResponses = async (surveyId: string, page?: number): Promi
         throw error;
       }
     },
-    [`getSurveyResponses-${surveyId}`],
+    [`getResponses-${surveyId}`],
     {
-      tags: [
-        getSurveyCacheTag(surveyId),
-        getDisplaysCacheTag(surveyId),
-        responseCacheTag.bySurveyId(surveyId),
-      ],
+      tags: [responseCache.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getEnvironmentResponses = async (environmentId: string, page?: number): Promise<TResponse[]> =>
+export const getResponsesByEnvironmentId = async (
+  environmentId: string,
+  page?: number
+): Promise<TResponse[]> =>
   unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
@@ -354,9 +345,9 @@ export const getEnvironmentResponses = async (environmentId: string, page?: numb
         throw error;
       }
     },
-    [`getEnvironmentResponses-${environmentId}`],
+    [`getResponsesByEnvironmentId-${environmentId}`],
     {
-      tags: [responseCacheTag.byEnvironmentId(environmentId)],
+      tags: [responseCache.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -396,13 +387,11 @@ export const updateResponse = async (
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    revalidateTag(responseCacheTag.single(response.id));
-    if (response.person?.id) {
-      revalidateTag(responseCacheTag.byPersonId(response.person.id));
-    }
-    if (response.surveyId) {
-      revalidateTag(responseCacheTag.bySurveyId(response.surveyId));
-    }
+    responseCache.revalidate({
+      personId: response.person?.id,
+      responseId: response.id,
+      surveyId: response.surveyId,
+    });
 
     return response;
   } catch (error) {
@@ -431,13 +420,11 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     };
     deleteDisplayByResponseId(responseId, response.surveyId);
 
-    revalidateTag(responseCacheTag.single(response.id));
-    if (response.person?.id) {
-      revalidateTag(responseCacheTag.byPersonId(response.person.id));
-    }
-    if (response.surveyId) {
-      revalidateTag(responseCacheTag.bySurveyId(response.surveyId));
-    }
+    responseCache.revalidate({
+      personId: response.person?.id,
+      responseId: response.id,
+      surveyId: response.surveyId,
+    });
 
     return response;
   } catch (error) {

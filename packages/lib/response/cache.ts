@@ -1,35 +1,48 @@
-export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-responses`;
+import { revalidateTag } from "next/cache";
 
-export const getResponseCacheTag = (responseId: string) => `responses-${responseId}`;
+interface RevalidateResponses {
+  environmentId?: string;
+  personId?: string;
+  responseId?: string;
+  singleUseId?: string;
+  surveyId?: string;
+}
 
-export const getEnvironmentResponsesCacheTag = (environmentId: string): string =>
-  `environments-${environmentId}-responses`;
-
-export const getResponsesByPersonIdCacheTags = (personId: string): string => `person-${personId}-responses`;
-
-/*
-ISSUES
-1. Pagination - how do we deal with findMany that are cached where page can be undefined
-2. How do we make sure tags are not duplicated in multiple functions
-
-3. How do we avoid writing long function names.
-The below proposal addresses this:
-
-serviceName + CacheTag
-
-Then every object within it begins with `by` and the dependency
-*/
-export const responseCacheTag = {
-  single(responseId: string) {
-    return `responses-${responseId}`;
+export const responseCache = {
+  byEnvironmentId(environmentId: string) {
+    return `environments-${environmentId}-responses`;
   },
-  bySurveyId(surveyId: string) {
-    return `surveys-${surveyId}-responses`;
+  byResponseId(responseId: string) {
+    return `responses-${responseId}`;
   },
   byPersonId(personId: string) {
     return `person-${personId}-responses`;
   },
-  byEnvironmentId(environmentId: string) {
-    return `environments-${environmentId}-responses`;
+  bySingleUseId(surveyId: string, singleUseId: string) {
+    return `survey-${surveyId}-singleuse-${singleUseId}-responses`;
+  },
+  bySurveyId(surveyId: string) {
+    return `surveys-${surveyId}-responses`;
+  },
+  revalidate({ environmentId, personId, responseId, singleUseId, surveyId }: RevalidateResponses): void {
+    if (responseId) {
+      revalidateTag(this.byResponseId(responseId));
+    }
+
+    if (personId) {
+      revalidateTag(this.byPersonId(personId));
+    }
+
+    if (surveyId) {
+      revalidateTag(this.bySurveyId(surveyId));
+    }
+
+    if (environmentId) {
+      revalidateTag(this.byEnvironmentId(environmentId));
+    }
+
+    if (surveyId && singleUseId) {
+      revalidateTag(this.bySingleUseId(surveyId, singleUseId));
+    }
   },
 };

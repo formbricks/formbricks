@@ -17,7 +17,7 @@ import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { getDisplaysCacheTag } from "../display/service";
-import { getResponsesCacheTag } from "../response/cache";
+import { responseCache } from "../response/cache";
 import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getActionClasses } from "../actionClass/service";
@@ -158,7 +158,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
     },
     [`surveyWithAnalytics-${surveyId}`],
     {
-      tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), getResponsesCacheTag(surveyId)],
+      tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), responseCache.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
