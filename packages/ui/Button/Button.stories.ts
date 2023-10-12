@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Button } from "@formbricks/ui";
+import { Button } from "./index";
 
 const meta = {
   title: "Button",
@@ -21,7 +21,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
   args: {
-    className: "text-slate-400",
+    className: "",
     children: "Button",
+    variant: "secondary",
   },
 };

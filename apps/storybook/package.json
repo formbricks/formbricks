@@ -25,8 +25,6 @@
     "@storybook/react": "^7.5.0-alpha.5",
     "@storybook/react-vite": "^7.5.0-alpha.5",
     "@storybook/testing-library": "^0.2.2",
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.0.3",
@@ -36,11 +34,14 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "eslint-plugin-storybook": "^0.6.15",
-    "postcss": "^8.4.31",
     "storybook": "^7.5.0-alpha.5",
+    "typescript": "^5.0.2",
     "tailwindcss": "^3.3.3",
     "tsup": "^7.2.0",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "postcss": "^8.4.31",
+    "vite": "^4.4.5",
+    "prettier": "^2.8.8",
+    "prettier-plugin-tailwindcss": "^0.4.1",
+    "@formbricks/tsconfig": "workspace:*"
   }
 }
