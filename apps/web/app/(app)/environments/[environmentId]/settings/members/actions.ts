@@ -1,32 +1,41 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/v1/errors";
 import {
   deleteInvite,
-  getInviteToken,
+  getInvite,
   inviteUser,
   resendInvite,
   updateInvite,
-} from "@formbricks/lib/services/invite";
+} from "@formbricks/lib/invite/service";
 import {
   deleteMembership,
   getMembershipsByUserId,
   getMembershipByUserIdTeamId,
   transferOwnership,
   updateMembership,
-} from "@formbricks/lib/services/membership";
-import { deleteTeam, updateTeam } from "@formbricks/lib/services/team";
+} from "@formbricks/lib/membership/service";
+import { deleteTeam, updateTeam } from "@formbricks/lib/team/service";
 import { TInviteUpdateInput } from "@formbricks/types/v1/invites";
 import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
-import { TTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { getServerSession } from "next-auth";
 import { hasTeamAccess, hasTeamAuthority, hasTeamOwnership, isOwner } from "@formbricks/lib/auth";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 
-export const updateTeamAction = async (teamId: string, data: TTeamUpdateInput) => {
-  return await updateTeam(teamId, data);
+export const updateTeamNameAction = async (teamId: string, teamName: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
+  if (!isUserAuthorized) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  return await updateTeam(teamId, { name: teamName });
 };
 
 export const updateMembershipAction = async (
@@ -127,7 +136,7 @@ export const leaveTeamAction = async (teamId: string) => {
 };
 
 export const createInviteTokenAction = async (inviteId: string) => {
-  const { email } = await getInviteToken(inviteId);
+  const { email } = await getInvite(inviteId);
 
   const inviteToken = createInviteToken(inviteId, email, {
     expiresIn: "7d",

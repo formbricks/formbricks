@@ -1,10 +1,10 @@
 import { responses } from "@/lib/api/response";
 import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/services/response";
+import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/response/service";
 import { TResponse, ZResponseUpdateInput } from "@formbricks/types/v1/responses";
-import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
-import { getSurvey } from "@formbricks/lib/services/survey";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 
@@ -21,7 +21,7 @@ const canUserAccessResponse = async (authentication: any, response: TResponse): 
   if (!survey) return false;
 
   if (authentication.type === "session") {
-    return await hasUserEnvironmentAccess(authentication.session.user, survey.environmentId);
+    return await hasUserEnvironmentAccess(authentication.session.user.id, survey.environmentId);
   } else if (authentication.type === "apiKey") {
     return survey.environmentId === authentication.environmentId;
   } else {

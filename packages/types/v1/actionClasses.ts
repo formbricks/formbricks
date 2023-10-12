@@ -48,4 +48,12 @@ export const ZActionClassInput = z.object({
   type: z.enum(["code", "noCode"]),
 });
 
+export const ZActionClassAutomaticInput = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  type: z.enum(["automatic"]),
+});
+
+export type TActionClassAutomaticInput = z.infer<typeof ZActionClassAutomaticInput>;
+
 export type TActionClassInput = z.infer<typeof ZActionClassInput>;

@@ -1,8 +1,8 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/services/membership";
-import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
-import { Skeleton } from "@formbricks/ui";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { Skeleton } from "@formbricks/ui/Skeleton";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 import SettingsCard from "../SettingsCard";

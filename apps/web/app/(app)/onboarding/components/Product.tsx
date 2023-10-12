@@ -3,7 +3,11 @@
 import { updateProductAction } from "@/app/(app)/onboarding/actions";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { TProduct } from "@formbricks/types/v1/product";
-import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 

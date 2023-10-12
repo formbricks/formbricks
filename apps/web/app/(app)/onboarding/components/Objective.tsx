@@ -6,7 +6,7 @@ import { formbricksEnabled, updateResponse } from "@/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
 import { Objective } from "@formbricks/types/templates";
 import { TProfile } from "@formbricks/types/v1/profile";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -41,8 +41,12 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
       if (selectedObjective) {
         try {
           setIsProfileUpdating(true);
-          const updatedProfile = { ...profile, objective: selectedObjective.id };
-          await updateProfileAction(profile.id, updatedProfile);
+          const updatedProfile = {
+            ...profile,
+            objective: selectedObjective.id,
+            name: profile.name ?? undefined,
+          };
+          await updateProfileAction(updatedProfile);
           setIsProfileUpdating(false);
         } catch (e) {
           setIsProfileUpdating(false);

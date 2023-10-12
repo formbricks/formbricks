@@ -5,7 +5,7 @@ import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import ApiKeyList from "./ApiKeyList";
 import EnvironmentNotice from "@/components/shared/EnvironmentNotice";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function ProfileSettingsPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
@@ -15,7 +15,7 @@ export default async function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="API Keys" />
-      <EnvironmentNotice environment={environment} />
+      <EnvironmentNotice environmentId={environment.id} />
       {environment.type === "development" ? (
         <SettingsCard
           title="Development Env Keys"

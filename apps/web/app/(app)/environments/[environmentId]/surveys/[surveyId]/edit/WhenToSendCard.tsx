@@ -2,24 +2,23 @@
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/AddNoCodeActionModal";
 import { cn } from "@formbricks/lib/cn";
+import { Badge } from "@formbricks/ui/Badge";
+import { Button } from "@formbricks/ui/Button";
 import {
-  AdvancedOptionToggle,
-  Badge,
-  Button,
-  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui";
+} from "@formbricks/ui/Select";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
+import { Input } from "@formbricks/ui/Input";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
-
 interface WhenToSendCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
@@ -40,32 +39,22 @@ export default function WhenToSendCard({
 
   const autoClose = localSurvey.autoClose !== null;
 
-  let newTrigger = useMemo(
-    () => ({
-      id: "", // Set the appropriate value for the id
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      name: "",
-      type: "code" as const, // Set the appropriate value for the type
-      environmentId: "",
-      description: null,
-      noCodeConfig: null,
-    }),
-    []
-  );
-
   const addTriggerEvent = useCallback(() => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = [...localSurvey.triggers, newTrigger];
+    updatedSurvey.triggers = [...localSurvey.triggers, ""];
     setLocalSurvey(updatedSurvey);
-  }, [newTrigger, localSurvey, setLocalSurvey]);
+  }, [localSurvey, setLocalSurvey]);
 
   const setTriggerEvent = useCallback(
-    (idx: number, actionClassId: string) => {
+    (idx: number, actionClassName: string) => {
       const updatedSurvey = { ...localSurvey };
-      updatedSurvey.triggers[idx] = actionClassArray!.find((actionClass) => {
-        return actionClass.id === actionClassId;
-      })!;
+      const newActionClass = actionClassArray!.find((actionClass) => {
+        return actionClass.name === actionClassName;
+      });
+      if (!newActionClass) {
+        throw new Error("Action class not found");
+      }
+      updatedSurvey.triggers[idx] = newActionClass.name;
       setLocalSurvey(updatedSurvey);
     },
     [actionClassArray, localSurvey, setLocalSurvey]
@@ -104,7 +93,14 @@ export default function WhenToSendCard({
 
   useEffect(() => {
     if (activeIndex !== null) {
-      setTriggerEvent(activeIndex, actionClassArray[actionClassArray.length - 1].id);
+      const newActionClass = actionClassArray[actionClassArray.length - 1].name;
+      const currentActionClass = localSurvey.triggers[activeIndex];
+
+      if (newActionClass !== currentActionClass) {
+        setTriggerEvent(activeIndex, newActionClass);
+      }
+
+      setActiveIndex(null);
     }
   }, [actionClassArray, activeIndex, setTriggerEvent]);
 
@@ -141,7 +137,7 @@ export default function WhenToSendCard({
           )}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0]?.id ? (
+              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"
@@ -173,45 +169,46 @@ export default function WhenToSendCard({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
-          {localSurvey.triggers?.map((triggerEventClass, idx) => (
-            <div className="mt-2" key={idx}>
-              <div className="inline-flex items-center">
-                <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-                <Select
-                  value={triggerEventClass.id}
-                  onValueChange={(actionClassId) => setTriggerEvent(idx, actionClassId)}>
-                  <SelectTrigger className="w-[240px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <button
-                      className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
-                      value="none"
-                      onClick={() => {
-                        setAddEventModalOpen(true);
-                        setActiveIndex(idx);
-                      }}>
-                      <PlusIcon className="mr-1 h-5 w-5" />
-                      Add Action
-                    </button>
-                    <SelectSeparator />
-                    {actionClassArray.map((actionClass) => (
-                      <SelectItem
-                        value={actionClass.id}
-                        key={actionClass.id}
-                        title={actionClass.description ? actionClass.description : ""}>
-                        {actionClass.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="mx-2 text-sm">action is performed</p>
-                <button onClick={() => removeTriggerEvent(idx)}>
-                  <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-                </button>
+          {!isAddEventModalOpen &&
+            localSurvey.triggers?.map((triggerEventClass, idx) => (
+              <div className="mt-2" key={idx}>
+                <div className="inline-flex items-center">
+                  <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
+                  <Select
+                    value={triggerEventClass}
+                    onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <button
+                        className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
+                        value="none"
+                        onClick={() => {
+                          setAddEventModalOpen(true);
+                          setActiveIndex(idx);
+                        }}>
+                        <PlusIcon className="mr-1 h-5 w-5" />
+                        Add Action
+                      </button>
+                      <SelectSeparator />
+                      {actionClassArray.map((actionClass) => (
+                        <SelectItem
+                          value={actionClass.name}
+                          key={actionClass.name}
+                          title={actionClass.description ? actionClass.description : ""}>
+                          {actionClass.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mx-2 text-sm">action is performed</p>
+                  <button onClick={() => removeTriggerEvent(idx)}>
+                    <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           <div className="px-6 py-4">
             <Button
               variant="secondary"

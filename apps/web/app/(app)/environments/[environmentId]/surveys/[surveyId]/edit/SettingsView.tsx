@@ -3,6 +3,7 @@ import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
+import StylingCard from "./StylingCard";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
@@ -14,6 +15,7 @@ interface SettingsViewProps {
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  isEncryptionKeySet: boolean;
 }
 
 export default function SettingsView({
@@ -22,6 +24,7 @@ export default function SettingsView({
   setLocalSurvey,
   actionClasses,
   attributeClasses,
+  isEncryptionKeySet,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -41,13 +44,19 @@ export default function SettingsView({
         actionClasses={actionClasses}
       />
 
-      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <ResponseOptionsCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        isEncryptionKeySet={isEncryptionKeySet}
+      />
 
       <RecontactOptionsCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
       />
+
+      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
     </div>
   );
 }

@@ -1,9 +1,11 @@
 import "server-only";
+import path from "path";
 import { env } from "@/env.mjs";
 
 export const RESPONSES_LIMIT_FREE = 100;
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
+export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 5000 : 1000000;
 
 // URLs
@@ -11,6 +13,14 @@ export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
 export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" : `${WEBAPP_URL}/s/`;
+
+export const SHORT_SURVEY_BASE_URL = env.SHORT_SURVEY_BASE_URL
+  ? env.SHORT_SURVEY_BASE_URL + "/"
+  : `${WEBAPP_URL}/i/`;
+
+// encryption keys
+export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
+export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
@@ -47,4 +57,7 @@ export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
-export const PEOPLE_PER_PAGE = 50;
+export const ITEMS_PER_PAGE = 50;
+
+// Storage constants
+export const UPLOADS_DIR = path.resolve("./uploads");

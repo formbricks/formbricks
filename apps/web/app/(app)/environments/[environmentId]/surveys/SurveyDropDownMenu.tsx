@@ -5,7 +5,7 @@ import {
   deleteSurveyAction,
   duplicateSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +36,7 @@ interface SurveyDropDownMenuProps {
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
   surveyBaseUrl: string;
+  singleUseId?: string;
 }
 
 export default function SurveyDropDownMenu({
@@ -44,6 +45,7 @@ export default function SurveyDropDownMenu({
   environment,
   otherEnvironment,
   surveyBaseUrl,
+  singleUseId,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -155,7 +157,11 @@ export default function SurveyDropDownMenu({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`/s/${survey.id}?preview=true`}
+                    href={
+                      singleUseId
+                        ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
+                        : `/s/${survey.id}?preview=true`
+                    }
                     target="_blank">
                     <EyeIcon className="mr-2 h-4 w-4" />
                     Preview Survey
@@ -165,8 +171,11 @@ export default function SurveyDropDownMenu({
                   <button
                     className="flex w-full items-center"
                     onClick={() => {
-                      navigator.clipboard.writeText(surveyUrl);
+                      navigator.clipboard.writeText(
+                        singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
+                      );
                       toast.success("Copied link to clipboard");
+                      router.refresh();
                     }}>
                     <LinkIcon className="mr-2 h-4 w-4" />
                     Copy Link

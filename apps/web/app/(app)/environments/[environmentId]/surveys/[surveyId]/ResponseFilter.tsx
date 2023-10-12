@@ -1,9 +1,11 @@
 "use client";
 
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionFilterComboBox";
 import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import { Button, Checkbox, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+import { Button } from "@formbricks/ui/Button";
+import { Checkbox } from "@formbricks/ui/Checkbox";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";

@@ -1,5 +1,5 @@
 import CustomDialog from "@/components/shared/CustomDialog";
-import { Input } from "@formbricks/ui";
+import { Input } from "@formbricks/ui/Input";
 import { Dispatch, SetStateAction, useState } from "react";
 
 interface TransferOwnershipModalProps {

@@ -4,7 +4,9 @@ import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
-import { Input, Label, Switch } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui/Switch";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
 import {
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
@@ -42,7 +44,15 @@ interface QuestionCardProps {
   isInValid: boolean;
 }
 
-export function BackButtonInput({ value, onChange }) {
+export function BackButtonInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string | undefined;
+  onChange: (e: any) => void;
+  className?: string;
+}) {
   return (
     <div className="w-full">
       <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
@@ -53,6 +63,7 @@ export function BackButtonInput({ value, onChange }) {
           value={value}
           placeholder="Back"
           onChange={onChange}
+          className={className}
         />
       </div>
     </div>

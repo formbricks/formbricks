@@ -6,13 +6,16 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx}",
     "./lib/**/*.{js,ts,jsx,tsx}",
     // include packages if not transpiling
-    "../../packages/ui/components/**/*.{js,ts,jsx,tsx}",
+    "../../packages/ui/**/*.{js,ts,jsx,tsx}",
+    "!../../packages/ui/node_modules/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       animation: {
         "ping-slow": "ping 2s cubic-bezier(0, 0, 0.2, 1) infinite",
         shake: "shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -48,6 +51,14 @@ module.exports = {
           "40%, 60%": {
             transform: "translate3d(4px, 0, 0)",
           },
+        },
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
         },
       },
       maxWidth: {

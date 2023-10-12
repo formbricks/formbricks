@@ -1,7 +1,7 @@
 import { responses } from "@/lib/api/response";
 import { NextResponse } from "next/server";
-import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/services/survey";
-import { TSurvey, ZSurveyInput } from "@formbricks/types/v1/surveys";
+import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/survey/service";
+import { TSurvey, ZSurvey } from "@formbricks/types/v1/surveys";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
@@ -64,7 +64,7 @@ export async function PUT(
       return responses.notFoundResponse("Survey", params.surveyId);
     }
     const surveyUpdate = await request.json();
-    const inputValidation = ZSurveyInput.safeParse(surveyUpdate);
+    const inputValidation = ZSurvey.safeParse(surveyUpdate);
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",

@@ -1,6 +1,6 @@
 import ClientLogout from "@/app/ClientLogout";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getEnvironmentByUser } from "@formbricks/lib/services/environment";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -18,7 +18,10 @@ export default async function Home() {
 
   let environment;
   try {
-    environment = await getEnvironmentByUser(session?.user);
+    environment = await getFirstEnvironmentByUserId(session?.user.id);
+    if (!environment) {
+      throw new Error("No environment found");
+    }
   } catch (error) {
     console.error("error getting environment", error);
   }

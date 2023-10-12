@@ -1,10 +1,10 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TApiKey } from "@formbricks/types/v1/apiKeys";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -34,19 +34,29 @@ export default function EditAPIKeys({
   };
 
   const handleDeleteKey = async () => {
-    await deleteApiKeyAction(activeKey.id);
-    const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
-    setApiKeysLocal(updatedApiKeys);
-    setOpenDeleteKeyModal(false);
-    toast.success("API Key deleted");
+    try {
+      await deleteApiKeyAction(activeKey.id);
+      const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
+      setApiKeysLocal(updatedApiKeys);
+      toast.success("API Key deleted");
+    } catch (e) {
+      toast.error("Unable to delete API Key");
+    } finally {
+      setOpenDeleteKeyModal(false);
+    }
   };
 
   const handleAddAPIKey = async (data) => {
-    const apiKey = await createApiKeyAction(environmentTypeId, { label: data.label });
-    const updatedApiKeys = [...apiKeysLocal!, apiKey];
-    setApiKeysLocal(updatedApiKeys);
-    setOpenAddAPIKeyModal(false);
-    toast.success("API key created");
+    try {
+      const apiKey = await createApiKeyAction(environmentTypeId, { label: data.label });
+      const updatedApiKeys = [...apiKeysLocal!, apiKey];
+      setApiKeysLocal(updatedApiKeys);
+      toast.success("API key created");
+    } catch (e) {
+      toast.error("Unable to create API Key");
+    } finally {
+      setOpenAddAPIKeyModal(false);
+    }
   };
 
   return (

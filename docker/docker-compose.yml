@@ -7,12 +7,6 @@ x-environment: &environment
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
-    # Uncomment to enable a dedicated connection pool for Prisma using Prisma Data Proxy
-    # Cold boots will be faster and you'll be able to scale your DB independently of your app.
-    # @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
-    # PRISMA_GENERATE_DATAPROXY=true
-    PRISMA_GENERATE_DATAPROXY:
-
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: `openssl rand -base64 32` to generate one
@@ -21,6 +15,10 @@ x-environment: &environment
     # Set this to your public-facing URL, e.g., https://example.com
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: http://localhost:3000
+
+    # Formbricks Encryption Key is used to generate encrypted single use URLs for Link Surveys
+    # You can use: $(openssl rand -base64 16) to generate one
+    # FORMBRICKS_ENCRYPTION_KEY:
 
     # PostgreSQL password
     POSTGRES_PASSWORD: postgres
@@ -32,6 +30,12 @@ x-environment: &environment
     SMTP_SECURE_ENABLED:
     SMTP_USER:
     SMTP_PASSWORD:
+
+    # Set the below value if you want to have another base URL apart from your Domain Name
+    # SURVEY_BASE_URL:
+
+    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
+    # SHORT_SURVEY_BASE_URL:
 
     # Uncomment the below and set it to 1 to disable Email Verification for new signups
     # EMAIL_VERIFICATION_DISABLED:
@@ -56,13 +60,16 @@ x-environment: &environment
 
     # Uncomment the below and set to 1 if you want to enable GitHub OAuth
     # GITHUB_AUTH_ENABLED:
-    # GITHUB_ID: 
+    # GITHUB_ID:
     # GITHUB_SECRET:
 
     # Uncomment the below and set to 1 if you want to enable Google OAuth
     # GOOGLE_AUTH_ENABLED:
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
+
+    # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+    # ASSET_PREFIX_URL: *asset_prefix_url
 
 services:
   postgres:
@@ -79,8 +86,11 @@ services:
       - postgres
     ports:
       - 3000:3000
+    volumes:
+      - uploads:./apps/web/uploads/
     <<: *environment
 
 volumes:
   postgres:
     driver: local
+  uploads:

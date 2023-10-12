@@ -4,7 +4,7 @@ import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[sur
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getFilterResponses } from "@/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
@@ -13,6 +13,7 @@ import { useEffect, useMemo } from "react";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TTag } from "@formbricks/types/v1/tags";
+import { TProfile } from "@formbricks/types/v1/profile";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -21,6 +22,7 @@ interface ResponsePageProps {
   responses: TResponse[];
   surveyBaseUrl: string;
   product: TProduct;
+  profile: TProfile;
   environmentTags: TTag[];
 }
 
@@ -31,6 +33,7 @@ const ResponsePage = ({
   responses,
   surveyBaseUrl,
   product,
+  profile,
   environmentTags,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
@@ -55,6 +58,7 @@ const ResponsePage = ({
         surveyId={surveyId}
         surveyBaseUrl={surveyBaseUrl}
         product={product}
+        profile={profile}
       />
       <CustomFilter
         environmentTags={environmentTags}
@@ -68,6 +72,7 @@ const ResponsePage = ({
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
+        profile={profile}
         environmentTags={environmentTags}
       />
     </ContentWrapper>

@@ -1,6 +1,7 @@
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
-import { Label, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+import { Label } from "@formbricks/ui/Label";
 import {
   CodeBracketIcon,
   CursorArrowRaysIcon,

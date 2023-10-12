@@ -28,7 +28,7 @@ export default function ConsentQuestion({
 }: ConsentQuestionProps) {
   return (
     <div>
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
       <form
@@ -36,7 +36,14 @@ export default function ConsentQuestion({
           e.preventDefault();
           onSubmit({ [question.id]: value });
         }}>
-        <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm text-slate-800 focus:outline-none">
+        <label
+          tabIndex={1}
+          onKeyDown={(e) => {
+            if (e.key == "Enter") {
+              onChange({ [question.id]: "accepted" });
+            }
+          }}
+          className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 p-4 text-sm text-slate-800 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
           <input
             type="checkbox"
             id={question.id}
@@ -62,10 +69,11 @@ export default function ConsentQuestion({
 
         <div className="mt-4 flex w-full justify-between">
           {!isFirstQuestion && (
-            <BackButton backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
+            <BackButton tabIndex={3} backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
           )}
           <div />
           <SubmitButton
+            tabIndex={2}
             brandColor={brandColor}
             question={question}
             isLastQuestion={isLastQuestion}

@@ -1,13 +1,14 @@
 "use client";
 
-import Modal from "@/components/shared/Modal";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
-import { createActionClass } from "@formbricks/lib/services/actionClass";
 import {
   TActionClassInput,
   TActionClassNoCodeConfig,
@@ -16,6 +17,7 @@ import {
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/CssSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/(selectors)/InnerHtmlSelector";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface AddNoCodeActionModalProps {
   environmentId: string;
@@ -84,7 +86,7 @@ export default function AddNoCodeActionModal({
         type: "noCode",
       } as TActionClassInput;
 
-      const newActionClass: TActionClass = await createActionClass(environmentId, updatedData);
+      const newActionClass: TActionClass = await createActionClassAction(updatedData);
       if (setActionClassArray) {
         setActionClassArray((prevActionClassArray: TActionClass[]) => [
           ...prevActionClassArray,
