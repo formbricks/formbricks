@@ -8,6 +8,7 @@ import FormbricksSignature from "./FormbricksSignature";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 
 export function Survey({
   survey,
@@ -104,6 +105,46 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
 
+  const parseRecallInformation = (question: TSurveyQuestion) => {
+    let ques = { ...question };
+    let inputString = ques.headline;
+    console.log(survey, ques);
+    console.log(responseData);
+
+    let regex1 = /\{recall:(.*?)\/fallback:(.*?)\}/;
+    let regex2 = /\{recall:(.*?)}/;
+
+    let match1 = regex1.exec(inputString);
+    let match2 = regex2.exec(inputString);
+    let finalMatch = null;
+    let finalRegex = null;
+
+    if (match1) {
+      finalMatch = match1;
+      finalRegex = regex1;
+    } else if (match2) {
+      finalMatch = match2;
+      finalRegex = regex2;
+    }
+
+    if (finalMatch && finalRegex) {
+      let recallValue = finalMatch[1];
+      let fallbackValue = finalMatch[2];
+      if (recallValue && fallbackValue) {
+        ques.headline = ques.headline.replace(
+          finalRegex,
+          (responseData[recallValue] as string) ?? fallbackValue
+        );
+      } else if (recallValue) {
+        ques.headline = ques.headline.replace(finalRegex, (responseData[recallValue] as string) ?? "");
+      } else {
+        ques.headline = ques.headline.replace(finalRegex, "");
+      }
+    }
+
+    return ques;
+  };
+
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
@@ -122,7 +163,7 @@ export function Survey({
                 (question, idx) =>
                   questionId === question.id && (
                     <QuestionConditional
-                      question={question}
+                      question={parseRecallInformation(question)}
                       value={responseData[question.id]}
                       onChange={onChange}
                       onSubmit={onSubmit}
