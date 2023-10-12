@@ -113,12 +113,7 @@ export default function Header() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
-  const slideNavAnimation = {
-    transition: "ease 1s",
-  };
-  const stickyNavClass = stickyNav
-    ? `bg-white shadow-md backdrop-blur-lg fixed top-0 z-30 w-full ${JSON.stringify(slideNavAnimation)}`
-    : "relative";
+  const stickyNavClass = stickyNav ? `bg-transparent backdrop-blur-xl fixed top-0 z-30 w-full` : "relative";
 
   return (
     <Popover className={`${stickyNavClass}`} as="header">
