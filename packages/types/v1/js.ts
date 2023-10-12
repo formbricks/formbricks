@@ -5,16 +5,16 @@ import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
 import { ZProduct } from "./product";
 
-const ZSurveysWithTriggers = ZSurvey.augment({
+const ZSurveyWithTriggers = ZSurvey.augment({
   triggers: z.array(ZActionClass),
 });
 
-export type TSurveysWithTriggers = z.infer<typeof ZSurveysWithTriggers>;
+export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
 export const ZJsState = z.object({
   person: ZPerson,
   session: ZSession,
-  surveys: z.array(ZSurveysWithTriggers),
+  surveys: z.array(ZSurveyWithTriggers),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
