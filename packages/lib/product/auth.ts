@@ -3,6 +3,7 @@ import { validateInputs } from "../utils/validate";
 import { getProduct, getProductCacheTag } from "./service";
 import { unstable_cache } from "next/cache";
 import { getTeamsByUserId } from "../team/service";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const canUserAccessProduct = async (userId: string, productId: string): Promise<boolean> =>
   await unstable_cache(
@@ -18,5 +19,5 @@ export const canUserAccessProduct = async (userId: string, productId: string): P
       return teamIds.includes(product.teamId);
     },
     [`users-${userId}-products-${productId}`],
-    { revalidate: 30 * 60, tags: [getProductCacheTag(productId)] }
-  )(); // 30 minutes
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [getProductCacheTag(productId)] }
+  )();

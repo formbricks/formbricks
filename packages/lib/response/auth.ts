@@ -28,5 +28,5 @@ export const canUserAccessResponse = async (userId: string, responseId: string):
       return true;
     },
     [`users-${userId}-responses-${responseId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [responseCache.byResponseId(responseId)] }
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [responseCache.tag.byResponseId(responseId)] }
   )();

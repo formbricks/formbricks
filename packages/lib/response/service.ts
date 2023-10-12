@@ -124,7 +124,7 @@ export const getResponsesByPersonId = async (
     },
     [`getResponsesByPersonId-${personId}-${page}`],
     {
-      tags: [responseCache.byPersonId(personId)],
+      tags: [responseCache.tag.byPersonId(personId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -166,7 +166,7 @@ export const getResponseBySingleUseId = async (
     },
     [`getResponseBySingleUseId-${surveyId}-singleuse-${singleUseId}`],
     {
-      tags: [responseCache.bySingleUseId(surveyId, singleUseId)],
+      tags: [responseCache.tag.bySingleUseId(surveyId, singleUseId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -260,7 +260,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       }
     },
     [`getResponse-${responseId}`],
-    { tags: [responseCache.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    { tags: [responseCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
 export const getResponses = async (surveyId: string, page?: number): Promise<TResponse[]> =>
@@ -300,7 +300,7 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
     },
     [`getResponses-${surveyId}`],
     {
-      tags: [responseCache.bySurveyId(surveyId)],
+      tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -347,7 +347,7 @@ export const getResponsesByEnvironmentId = async (
     },
     [`getResponsesByEnvironmentId-${environmentId}`],
     {
-      tags: [responseCache.byEnvironmentId(environmentId)],
+      tags: [responseCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

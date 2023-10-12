@@ -158,7 +158,11 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
     },
     [`surveyWithAnalytics-${surveyId}`],
     {
-      tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), responseCache.bySurveyId(surveyId)],
+      tags: [
+        getSurveyCacheTag(surveyId),
+        getDisplaysCacheTag(surveyId),
+        responseCache.tag.bySurveyId(surveyId),
+      ],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -656,6 +660,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
 export async function deleteSurvey(surveyId: string) {
   validateInputs([surveyId, ZId]);
+
   const deletedSurvey = await prisma.survey.delete({
     where: {
       id: surveyId,
@@ -665,6 +670,11 @@ export async function deleteSurvey(surveyId: string) {
 
   revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
   revalidateTag(getSurveyCacheTag(surveyId));
+
+  responseCache.revalidate({
+    surveyId,
+    environmentId: deletedSurvey.environmentId,
+  });
 
   return deletedSurvey;
 }
