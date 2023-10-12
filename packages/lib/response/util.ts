@@ -10,5 +10,17 @@ export const formatResponseDateFields = (response: TResponseDates): TResponseDat
     response.updatedAt = new Date(response.updatedAt);
   }
 
+  response.notes = response.notes.map((note) => {
+    if (typeof note.createdAt === "string") {
+      note.createdAt = new Date(note.createdAt);
+    }
+
+    if (typeof note.updatedAt === "string") {
+      note.updatedAt = new Date(note.updatedAt);
+    }
+
+    return note;
+  });
+
   return response;
 };

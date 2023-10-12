@@ -61,6 +61,7 @@ export type TResponse = z.infer<typeof ZResponse>;
 export type TResponseDates = {
   createdAt: TResponse["createdAt"];
   updatedAt: TResponse["updatedAt"];
+  notes: TResponse["notes"];
 };
 
 export const ZResponseInput = z.object({
