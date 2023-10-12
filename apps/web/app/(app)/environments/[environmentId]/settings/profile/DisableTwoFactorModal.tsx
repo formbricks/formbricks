@@ -1,8 +1,12 @@
 "use client";
 
 import { disableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
-import { Button, Input, Modal, OTPInput, PasswordInput } from "@formbricks/ui";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { OTPInput } from "@formbricks/ui/OTPInput";
 import { useRouter } from "next/navigation";
+import { Modal } from "@formbricks/ui/Modal";
 import React, { useEffect, useState } from "react";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import toast from "react-hot-toast";

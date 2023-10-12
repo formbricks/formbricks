@@ -2,7 +2,7 @@ import TeamActions from "@/app/(app)/environments/[environmentId]/settings/membe
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { Skeleton } from "@formbricks/ui";
+import { Skeleton } from "@formbricks/ui/Skeleton";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 import SettingsCard from "../SettingsCard";

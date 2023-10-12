@@ -5,8 +5,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  Calendar,
-} from "@formbricks/ui";
+} from "@formbricks/ui/DropdownMenu";
+import { Calendar } from "@formbricks/ui/Calendar";
 import { format, subDays, differenceInDays } from "date-fns";
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";

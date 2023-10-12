@@ -1,6 +1,8 @@
 "use client";
 import { cn } from "@formbricks/lib/cn";
-import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Badge } from "@formbricks/ui/Badge";
+import { Label } from "@formbricks/ui/Label";
 import {
   CheckCircleIcon,
   ComputerDesktopIcon,

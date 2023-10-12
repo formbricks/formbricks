@@ -3,7 +3,9 @@
 import Placement from "./Placement";
 import { PlacementType } from "@formbricks/types/js";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { ColorPicker, Label, Switch } from "@formbricks/ui";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";

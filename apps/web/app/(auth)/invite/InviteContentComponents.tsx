@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 
 const ContentLayout = ({ headline, description, children }) => {
   return (

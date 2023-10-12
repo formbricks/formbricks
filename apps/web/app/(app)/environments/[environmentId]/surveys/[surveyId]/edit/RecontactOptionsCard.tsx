@@ -2,7 +2,11 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { AdvancedOptionToggle, Badge, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
+import { Badge } from "@formbricks/ui/Badge";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";

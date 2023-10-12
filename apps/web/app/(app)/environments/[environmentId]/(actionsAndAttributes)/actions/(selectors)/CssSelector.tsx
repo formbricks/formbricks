@@ -1,4 +1,5 @@
-import { AdvancedOptionToggle, Input } from "@formbricks/ui";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
+import { Input } from "@formbricks/ui/Input";
 import { UseFormRegister } from "react-hook-form";
 
 interface CssSelectorProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";
 import { TWebhook } from "@formbricks/types/v1/webhooks";
 import AddWebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/AddWebhookModal";

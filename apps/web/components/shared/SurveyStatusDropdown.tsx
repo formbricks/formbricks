@@ -1,20 +1,11 @@
 "use client";
 
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { SurveyStatusIndicator } from "@formbricks/ui";
+import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
 

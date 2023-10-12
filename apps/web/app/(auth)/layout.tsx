@@ -1,6 +1,6 @@
 import { PHProvider, PostHogPageview } from "../PostHogClient";
 import { Suspense } from "react";
-import { NoMobileOverlay } from "@formbricks/ui";
+import { NoMobileOverlay } from "@formbricks/ui/NoMobileOverlay";
 
 export default function AppLayout({ children }) {
   return (

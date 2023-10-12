@@ -152,5 +152,3 @@ export const Button: React.ForwardRefExoticComponent<
     element
   );
 });
-
-export default Button;

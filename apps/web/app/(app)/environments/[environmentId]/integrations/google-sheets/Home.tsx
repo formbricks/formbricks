@@ -1,12 +1,12 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
-import { DeleteDialog } from "@formbricks/ui";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TGoogleSheetIntegration, TGoogleSheetsConfigData } from "@formbricks/types/v1/integrations";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";
 import toast from "react-hot-toast";
 

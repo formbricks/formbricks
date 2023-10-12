@@ -2,7 +2,10 @@
 
 import { md } from "@formbricks/lib/markdownIt";
 import { TSurveyCTAQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Editor, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Editor } from "@formbricks/ui/Editor";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import { BackButtonInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/QuestionCard";
 
