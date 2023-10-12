@@ -1,4 +1,4 @@
-import { TJsActionInput } from "@formbricks/types/v1/js";
+import { TActionInput } from "@formbricks/types/v1/actions";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
@@ -9,9 +9,9 @@ const config = Config.getInstance();
 
 export const trackAction = async (
   name: string,
-  properties: TJsActionInput["properties"] = {}
+  properties: TActionInput["properties"] = {}
 ): Promise<Result<void, NetworkError>> => {
-  const input: TJsActionInput = {
+  const input: TActionInput = {
     environmentId: config.get().environmentId,
     sessionId: config.get().state?.session?.id,
     name,
@@ -56,7 +56,7 @@ export const trackAction = async (
 export const triggerSurvey = (actionName: string, activeSurveys: TSurvey[]): void => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
-      if (trigger.name === actionName) {
+      if (trigger && typeof trigger !== "string" && trigger.name === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
         renderWidget(survey);
         return;

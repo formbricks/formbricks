@@ -1,6 +1,4 @@
 import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/v1/js";
-import type { Person } from "../../../types/js";
-import type { Session, Settings } from "../../../types/js";
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
@@ -156,7 +154,7 @@ export const setPersonAttribute = async (
 
   const result = await updatePersonAttribute(key, value.toString());
 
-  let error: NetworkError | MissingPersonError;
+  let error: NetworkError | MissingPersonError | null = null;
 
   match(
     result,
@@ -182,7 +180,7 @@ export const logoutPerson = async (): Promise<void> => {
   config.disallowSync();
 };
 
-export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
+export const resetPerson = async () => {
   logger.debug("Resetting state & getting new state from backend");
   await logoutPerson();
   try {

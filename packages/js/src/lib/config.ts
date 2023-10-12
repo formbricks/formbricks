@@ -51,7 +51,7 @@ export class Config {
     return {
       apiHost: null,
       environmentId: null,
-    };
+    } as unknown as TJsConfig;
   }
 
   private saveToLocalStorage(): Result<void, Error> {

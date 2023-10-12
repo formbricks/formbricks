@@ -1,10 +1,11 @@
 import type { TJsConfig } from "../../../types/v1/js";
 import type { TResponse, TResponseInput } from "../../../types/v1/responses";
+
 import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (
   responseInput: TResponseInput,
-  config
+  config: TJsConfig
 ): Promise<Result<TResponse, NetworkError>> => {
   const url = `${config.apiHost}/api/v1/client/responses`;
 

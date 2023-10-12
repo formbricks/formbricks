@@ -1,7 +1,17 @@
 import type { TActionClass } from "../../../types/v1/actionClasses";
 import type { MatchType } from "../../../types/js";
 import { Config } from "./config";
-import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
+import {
+  ErrorHandler,
+  InvalidMatchTypeError,
+  NetworkError,
+  Result,
+  ResultError,
+  err,
+  match,
+  ok,
+  okVoid,
+} from "./errors";
 import { trackAction } from "./actions";
 import { Logger } from "./logger";
 
@@ -26,13 +36,15 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
   }
 
   for (const event of pageUrlEvents) {
+    if (!event.noCodeConfig?.pageUrl) {
+      continue;
+    }
+
     const {
       noCodeConfig: { pageUrl },
     } = event;
-    if (!pageUrl) {
-      continue;
-    }
-    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as MatchType);
+
+    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
 
     if (match.ok !== true) return err(match.error);
 
@@ -78,8 +90,8 @@ export function checkUrlMatch(
   pageUrlValue: string,
   pageUrlRule: MatchType
 ): Result<boolean, InvalidMatchTypeError> {
-  let result: boolean;
-  let error: Result<never, InvalidMatchTypeError>;
+  let result: boolean = false;
+  let error: ResultError<InvalidMatchTypeError> | null = null;
 
   switch (pageUrlRule) {
     case "exactMatch":
@@ -124,6 +136,7 @@ export const checkClickMatch = (event: MouseEvent) => {
     const innerHtml = action.noCodeConfig?.innerHtml?.value;
     const cssSelectors = action.noCodeConfig?.cssSelector?.value;
     const pageUrl = action.noCodeConfig?.pageUrl?.value;
+    const pageUrlRule = action.noCodeConfig?.pageUrl?.rule;
 
     if (!innerHtml && !cssSelectors && !pageUrl) {
       return;
@@ -142,8 +155,8 @@ export const checkClickMatch = (event: MouseEvent) => {
         }
       }
     }
-    if (pageUrl) {
-      const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule);
+    if (pageUrl && pageUrlRule) {
+      const urlMatch = checkUrlMatch(window.location.href, pageUrl, pageUrlRule);
       if (!urlMatch.ok || !urlMatch.value) {
         return;
       }

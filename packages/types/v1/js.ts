@@ -5,7 +5,7 @@ import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
 import { ZProduct } from "./product";
 
-const ZSurveysWithTriggers = ZSurvey.augment({
+const ZSurveysWithTriggers = ZSurvey.extend({
   triggers: z.array(ZActionClass),
 });
 
