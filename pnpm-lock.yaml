@@ -650,9 +650,6 @@ importers:
       terser:
         specifier: ^5.21.0
         version: 5.21.0
-      typescript:
-        specifier: ^5.0.4
-        version: 5.2.2
       vite:
         specifier: ^4.4.11
         version: 4.4.11(terser@5.21.0)
