@@ -21,6 +21,7 @@ import { deleteDisplayByResponseId } from "../display/service";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "./cache";
+import { formatResponseDateFields } from "response/util";
 
 const responseSelection = {
   id: true,
@@ -108,6 +109,7 @@ export const getResponsesByPersonId = async (
         responsePrisma.forEach((response) => {
           responses.push({
             ...response,
+            ...formatResponseDateFields(response),
             person: response.person ? transformPrismaPerson(response.person) : null,
             tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           });
@@ -151,6 +153,7 @@ export const getResponseBySingleUseId = async (
 
         const response: TResponse = {
           ...responsePrisma,
+          ...formatResponseDateFields(responsePrisma),
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -207,6 +210,7 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
 
     const response: TResponse = {
       ...responsePrisma,
+      ...formatResponseDateFields(responsePrisma),
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
@@ -246,6 +250,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 
         const response: TResponse = {
           ...responsePrisma,
+          ...formatResponseDateFields(responsePrisma),
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -285,6 +290,7 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
 
         const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
           ...responsePrisma,
+          ...formatResponseDateFields(responsePrisma),
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         }));
@@ -332,6 +338,7 @@ export const getResponsesByEnvironmentId = async (
 
         const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
           ...responsePrisma,
+          ...formatResponseDateFields(responsePrisma),
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         }));
@@ -383,6 +390,7 @@ export const updateResponse = async (
 
     const response: TResponse = {
       ...responsePrisma,
+      ...formatResponseDateFields(responsePrisma),
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };

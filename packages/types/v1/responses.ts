@@ -58,6 +58,11 @@ export const ZResponse = z.object({
 
 export type TResponse = z.infer<typeof ZResponse>;
 
+export type TResponseDates = {
+  createdAt: TResponse["createdAt"];
+  updatedAt: TResponse["updatedAt"];
+};
+
 export const ZResponseInput = z.object({
   surveyId: z.string().cuid2(),
   personId: z.string().cuid2().nullable(),
