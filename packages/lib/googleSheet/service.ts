@@ -17,7 +17,7 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
 import { ZString } from "@formbricks/types/v1/common";
-import { getGoogleSheetIntegration } from "integration/service";
+import { getGoogleSheetIntegration } from "../integration/service";
 
 const { google } = require("googleapis");
 

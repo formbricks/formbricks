@@ -2,7 +2,7 @@
 
 import GoogleSheetLogo from "@/images/google-sheets-small.png";
 import FormbricksLogo from "@/images/logo.svg";
-import { authorize } from "@formbricks/lib/client/google";
+import { authorize } from "../lib/google";
 import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import Link from "next/link";
