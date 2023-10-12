@@ -1,13 +1,7 @@
-import {
-  Button,
-  Input,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";

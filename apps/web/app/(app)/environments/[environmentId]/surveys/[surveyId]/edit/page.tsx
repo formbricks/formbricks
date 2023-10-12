@@ -7,7 +7,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function SurveysEditPage({ params }) {
   const [survey, product, environment, actionClasses, attributeClasses] = await Promise.all([

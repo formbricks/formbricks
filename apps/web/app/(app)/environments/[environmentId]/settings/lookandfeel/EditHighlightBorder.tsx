@@ -2,7 +2,10 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/v1/product";
-import { Button, ColorPicker, Label, Switch } from "@formbricks/ui";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Button } from "@formbricks/ui/Button";
+import { Switch } from "@formbricks/ui/Switch";
+import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { updateProductAction } from "./actions";

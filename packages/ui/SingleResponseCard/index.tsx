@@ -1,6 +1,6 @@
 "use client";
 
-import { RatingResponse } from "./components/RatingResponse";
+import { RatingResponse } from "../RatingResponse";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 import { deleteResponseAction } from "./actions";
@@ -11,7 +11,8 @@ import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "..";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
+import { PersonAvatar } from "../Avatars";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";

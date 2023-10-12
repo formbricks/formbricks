@@ -6,7 +6,9 @@ import { ITEMS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/v1/people";
-import { Pagination, PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { Pagination } from "@formbricks/ui/Pagination";
+
 import Link from "next/link";
 
 const getAttributeValue = (person: TPerson, attributeName: string) =>

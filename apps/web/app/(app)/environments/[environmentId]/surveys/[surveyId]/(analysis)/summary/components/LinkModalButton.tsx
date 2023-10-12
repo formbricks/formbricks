@@ -1,7 +1,7 @@
 "use client";
 
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";

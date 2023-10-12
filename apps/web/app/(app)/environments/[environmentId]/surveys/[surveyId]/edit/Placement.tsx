@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
 const placements = [

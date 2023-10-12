@@ -1,6 +1,7 @@
 "use client";
 
-import { Input, Label } from "@formbricks/ui";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
