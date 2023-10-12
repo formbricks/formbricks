@@ -10,9 +10,9 @@ import {
   err,
   okVoid,
 } from "./errors";
-import { addCleanupEventListeners, addEventListeners } from "./eventListeners";
+import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
-import { checkPageUrl } from "./noCodeEvents";
+import { checkPageUrl } from "./noCodeActions";
 import { resetPerson } from "./person";
 import { isExpired } from "./session";
 import { sync } from "./sync";
@@ -43,7 +43,6 @@ export const initialize = async (
   ErrorHandler.getInstance().printStatus();
 
   logger.debug("Start initialize");
-  config.allowSync();
 
   if (!c.environmentId) {
     logger.debug("No environmentId provided");
@@ -101,7 +100,6 @@ export const initialize = async (
     }
   } else {
     logger.debug("No valid configuration found. Creating new config.");
-    // we need new config
 
     logger.debug("Syncing.");
     await sync({
@@ -125,12 +123,7 @@ export const initialize = async (
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {
   logger.debug("Check if initialized");
-  if (
-    !config.get().apiHost ||
-    !config.get().environmentId ||
-    !config.get().state ||
-    !ErrorHandler.initialized
-  ) {
+  if (!isInitialized || !ErrorHandler.initialized) {
     return err({
       code: "not_initialized",
       message: "Formbricks not initialized. Call initialize() first.",
@@ -138,4 +131,11 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
   }
 
   return okVoid();
+};
+
+export const deinitalize = (): void => {
+  logger.debug("Deinitializing");
+  removeAllEventListeners();
+  config.resetConfig();
+  isInitialized = false;
 };

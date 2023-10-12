@@ -3,9 +3,9 @@ import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
 import { trackAction } from "./lib/actions";
-import { initialize } from "./lib/init";
+import { initialize } from "./lib/initialize";
 import { Logger } from "./lib/logger";
-import { checkPageUrl } from "./lib/noCodeEvents";
+import { checkPageUrl } from "./lib/noCodeActions";
 import { resetPerson, setPersonAttribute, setPersonUserId, getPerson, logoutPerson } from "./lib/person";
 
 const logger = Logger.getInstance();

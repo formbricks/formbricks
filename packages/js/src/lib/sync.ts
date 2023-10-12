@@ -48,7 +48,7 @@ const syncWithBackend = async ({
 export const sync = async (params: TJsSyncParams): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params);
-    if (syncResult.ok !== true) {
+    if (syncResult?.ok !== true) {
       logger.error(`Sync failed: ${syncResult.error}`);
       return;
     }
@@ -57,7 +57,9 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
     let oldState: TJsState | undefined;
     try {
       oldState = config.get().state;
-    } catch (e) {}
+    } catch (e) {
+      // ignore error
+    }
     config.update({
       apiHost: params.apiHost,
       environmentId: params.environmentId,
@@ -83,10 +85,6 @@ export const addSyncEventListener = (debug: boolean = false): void => {
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {
     syncIntervalId = window.setInterval(async () => {
-      if (!config.isSyncAllowed) {
-        return;
-      }
-      logger.debug("Syncing.");
       await sync({
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,

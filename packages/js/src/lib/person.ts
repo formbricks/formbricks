@@ -10,8 +10,8 @@ import {
   ok,
   okVoid,
 } from "./errors";
+import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-import { sync } from "./sync";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -173,10 +173,7 @@ export const setPersonAttribute = async (
 };
 
 export const logoutPerson = async (): Promise<void> => {
-  logger.debug("Resetting state");
-
-  config.resetConfig();
-  config.disallowSync();
+  deinitalize();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
@@ -187,8 +184,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   };
   await logoutPerson();
   try {
-    config.allowSync();
-    await sync(syncParams);
+    await initialize(syncParams);
     return okVoid();
   } catch (e) {
     return err(e as NetworkError);

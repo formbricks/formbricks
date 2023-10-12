@@ -1,5 +1,5 @@
 import { ErrorHandler, Result } from "./errors";
-import { checkInitialized } from "./init";
+import { checkInitialized } from "./initialize";
 
 export class CommandQueue {
   private queue: {
