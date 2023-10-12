@@ -2,7 +2,6 @@ import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
 import {
   BaseballIcon,
-  Button,
   CancelSubscriptionIcon,
   CodeBookIcon,
   DogChaserIcon,
@@ -10,7 +9,8 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
+import { Button } from "@formbricks/ui/Button";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";

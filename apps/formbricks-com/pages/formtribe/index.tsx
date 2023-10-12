@@ -1,5 +1,6 @@
 import LayoutLight from "@/pages/formtribe/LayoutLight";
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { Button } from "@formbricks/ui/Button";
 import Head from "next/head";
 import Image from "next/image";
 

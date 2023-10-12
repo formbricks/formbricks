@@ -2,9 +2,10 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { ZId } from "@formbricks/types/v1/environment";
+import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
@@ -26,16 +27,18 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = (environmentId: string): Promise<TActionClass[]> =>
+export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
   unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
       try {
-        let actionClasses = await prisma.eventClass.findMany({
+        const actionClasses = await prisma.eventClass.findMany({
           where: {
             environmentId: environmentId,
           },
           select,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
             createdAt: "asc",
           },
@@ -156,7 +159,8 @@ export const updateActionClass = async (
 
 export const getActionClassCached = async (name: string, environmentId: string) =>
   unstable_cache(
-    async () => {
+    async (): Promise<TActionClass | null> => {
+      validateInputs([name, ZString], [environmentId, ZId]);
       return await prisma.eventClass.findFirst({
         where: {
           name,

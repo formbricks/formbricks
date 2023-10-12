@@ -1,6 +1,8 @@
 import { createTeamAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { Modal } from "@formbricks/ui";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,13 +20,19 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
   const { register, handleSubmit } = useForm();
 
   const submitTeam = async (data) => {
-    setLoading(true);
-    const newTeam = await createTeamAction(data.name);
+    try {
+      setLoading(true);
+      const newTeam = await createTeamAction(data.name);
 
-    toast.success("Team created successfully!");
-    router.push(`/teams/${newTeam.id}`);
-    setOpen(false);
-    setLoading(false);
+      toast.success("Team created successfully!");
+      router.push(`/teams/${newTeam.id}`);
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(`Unable to create team`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

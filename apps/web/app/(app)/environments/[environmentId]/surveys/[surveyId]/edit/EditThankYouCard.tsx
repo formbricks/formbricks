@@ -1,7 +1,9 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Input, Label, Switch } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui/Switch";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 

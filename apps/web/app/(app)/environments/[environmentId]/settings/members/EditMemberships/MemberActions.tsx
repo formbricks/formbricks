@@ -7,11 +7,11 @@ import {
   deleteMembershipAction,
   resendInviteAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { DeleteDialog } from "@formbricks/ui";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { TInvite } from "@formbricks/types/v1/invites";
 import { TMember } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";

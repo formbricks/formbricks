@@ -3,7 +3,10 @@ import {
   TSurveyOpenTextQuestionInputType,
   TSurveyWithAnalytics,
 } from "@formbricks/types/v1/surveys";
-import { Button, Input, Label, QuestionTypeSelector } from "@formbricks/ui";
+import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 

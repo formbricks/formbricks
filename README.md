@@ -29,15 +29,13 @@
 <a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f#gh-light-mode-only" height="20px"></a><a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/72809645/9d9711dc-75e5-4084-b7fa-bbaf621064a8#gh-dark-mode-only" height="20px">
 </p>
 
-
-
 <img width="1527" alt="formtribe hackathon" src="https://github.com/formbricks/formbricks/assets/72809645/addc3a5b-421c-4c8d-8be2-eedf087100ed">
 
 ## 🔥 The FormTribe Hackathon is on!
 
 To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
 
-**Join lottery with a [single tweet!](https://formbtribe.com). All info on [formtribe.com](https://formbricks.com)**
+**Join lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
 
 ## ✨ About Formbricks
 
@@ -77,7 +75,7 @@ We've got several options depending on your need to help you quickly get started
 
 ### ☁️ Cloud Version
 
-Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com)
+Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com).
 
 ### 🐳 Self-hosted version
 
@@ -105,7 +103,7 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 Here is what you need to be able to run Formbricks:
 
-- Node.js (Version: >=18.x)
+- [Node.js](https://nodejs.org/en) (Version: >=18.x)
 - [Pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
 

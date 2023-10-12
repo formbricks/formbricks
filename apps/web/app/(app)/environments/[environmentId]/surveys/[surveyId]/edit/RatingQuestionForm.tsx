@@ -1,4 +1,6 @@
-import { Button, Input, Label } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 import Dropdown from "./RatingTypeDropdown";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";

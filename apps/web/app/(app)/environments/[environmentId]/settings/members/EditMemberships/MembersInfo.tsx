@@ -4,7 +4,8 @@ import { isInviteExpired } from "@/lib/utils";
 import { TInvite } from "@formbricks/types/v1/invites";
 import { TMember, TMembershipRole } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";
-import { Badge, ProfileAvatar } from "@formbricks/ui";
+import { Badge } from "@formbricks/ui/Badge";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import React from "react";
 
 type MembersInfoProps = {

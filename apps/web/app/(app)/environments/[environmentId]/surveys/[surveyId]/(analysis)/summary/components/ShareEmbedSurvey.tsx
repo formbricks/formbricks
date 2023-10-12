@@ -8,7 +8,8 @@ import { useMemo, useState } from "react";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { cn } from "@formbricks/lib/cn";
-import { DialogContent, Button, Dialog } from "@formbricks/ui";
+import { DialogContent, Dialog } from "@formbricks/ui/Dialog";
+import { Button } from "@formbricks/ui/Button";
 import { LinkIcon, EnvelopeIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
 import { TProfile } from "@formbricks/types/v1/profile";
 
@@ -32,6 +33,7 @@ export default function ShareEmbedSurvey({
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
   const { email } = profile;
   const { brandColor } = product;
+  const surveyBrandColor = survey.productOverwrites?.brandColor || brandColor;
 
   const tabs = [
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
@@ -45,9 +47,9 @@ export default function ShareEmbedSurvey({
     link: isSingleUseLinkSurvey ? (
       <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={surveyBaseUrl} />
     ) : (
-      <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={brandColor} />
+      <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={surveyBrandColor} />
     ),
-    email: <EmailTab survey={survey} surveyUrl={surveyUrl} email={email} brandColor={brandColor} />,
+    email: <EmailTab survey={survey} surveyUrl={surveyUrl} email={email} brandColor={surveyBrandColor} />,
     webpage: <WebpageTab surveyUrl={surveyUrl} />,
   };
 

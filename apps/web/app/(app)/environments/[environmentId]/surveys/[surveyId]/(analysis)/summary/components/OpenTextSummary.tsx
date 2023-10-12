@@ -3,7 +3,7 @@ import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId
 import { timeSince } from "@formbricks/lib/time";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
-import { PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { questionTypes } from "@/lib/questions";

@@ -1,5 +1,5 @@
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { ProgressBar } from "@formbricks/ui";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";

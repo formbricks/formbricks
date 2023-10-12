@@ -6,6 +6,7 @@ import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 
 export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const session = await getServerSession(authOptions);
@@ -14,7 +15,12 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const isAuthorized = await canUserAccessSurvey(session.user.id, survey.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  return await updateSurvey(survey);
+  const _survey = {
+    ...survey,
+    ...formatSurveyDateFields(survey),
+  };
+
+  return await updateSurvey(_survey);
 }
 
 export const deleteSurveyAction = async (surveyId: string) => {

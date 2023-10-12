@@ -1,7 +1,7 @@
 import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import Cal, { getCalApi } from "@calcom/embed-react";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useEffect } from "react";
 
 const XMOffer = [
