@@ -55,7 +55,7 @@ export const trackAction = async (
 export const triggerSurvey = (actionName: string, activeSurveys: TSurveyWithTriggers[]): void => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
-      if (trigger.name === actionName) {
+      if (typeof trigger === "string" ? trigger === actionName : trigger.name === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
         renderWidget(survey);
         return;

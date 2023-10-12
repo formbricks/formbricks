@@ -5,7 +5,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "lib": ["ESNext", "DOM"],
     "module": "esnext",
     "target": "ES2021",

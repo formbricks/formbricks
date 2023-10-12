@@ -1,9 +1,10 @@
 {
   "name": "@formbricks/surveys",
   "private": true,
+  "license": "MIT",
   "version": "0.0.0",
-  "sideEffects": false,
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": "./dist/index.js"
   },
@@ -16,6 +17,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "^2.5.0",
     "autoprefixer": "^10.4.16",
@@ -24,7 +26,6 @@
     "preact": "^10.18.1",
     "tailwindcss": "^3.3.3",
     "terser": "^5.21.0",
-    "typescript": "^5.2.2",
     "vite": "^4.4.11",
     "vite-plugin-dts": "^3.6.0"
   }
