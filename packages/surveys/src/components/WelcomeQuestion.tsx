@@ -3,7 +3,6 @@ import type { TSurveyWelcomeQuestion } from "@formbricks/types/v1/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
-import { CornerDownLeft } from "lucide-react";
 
 interface WelcomeQuestionProps {
   question: TSurveyWelcomeQuestion;
@@ -46,9 +45,7 @@ export default function WelcomeQuestion({
             }}
             type="button"
           />
-          <div className="flex items-center text-slate-600">
-            Press Enter <CornerDownLeft />
-          </div>
+          <div className="flex items-center text-slate-600">Press Enter ↵</div>
         </div>
       </div>
     </div>

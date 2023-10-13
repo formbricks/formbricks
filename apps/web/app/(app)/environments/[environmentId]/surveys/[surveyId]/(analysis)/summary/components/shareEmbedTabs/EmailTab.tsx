@@ -23,6 +23,7 @@ import {
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isLight } from "@/lib/utils";
+import { CornerDownLeft } from "lucide-react";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -361,6 +362,42 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
                   {choice.label}
                 </Link>
               ))}
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case QuestionType.Welcome:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          {firstQuestion.companyLogo && (
+            <img
+              src={firstQuestion.companyLogo}
+              className="mb-4"
+              style={{ maxWidth: "75px", maxHeight: "75px" }}
+              alt="Company Logo"
+            />
+          )}
+
+          <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
+            {firstQuestion.headline}
+          </Text>
+          <Container className="mt-2 text-sm font-normal leading-6 text-slate-500">
+            <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
+          </Container>
+
+          <Container className=" mx-0 mt-4 max-w-none">
+            <EmailButton
+              href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}
+              className={cn(
+                "bg-brand-color inline-flex cursor-pointer appearance-none gap-4 rounded-md px-6 py-3 text-sm font-medium",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}>
+              {firstQuestion.buttonLabel}
+            </EmailButton>
+            <Text className="ml-4 inline-flex items-center text-slate-600">
+              Press Enter
+              <CornerDownLeft className="h-3" />
+            </Text>
           </Container>
           <EmailFooter />
         </EmailTemplateWrapper>
