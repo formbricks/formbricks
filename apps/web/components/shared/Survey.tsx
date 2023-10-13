@@ -1,5 +1,4 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
-import { Survey } from "@formbricks/types/surveys";
 import { TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useEffect, useMemo } from "react";
@@ -7,7 +6,7 @@ import { useEffect, useMemo } from "react";
 const createContainerId = () => `formbricks-survey-container`;
 
 interface SurveyProps {
-  survey: TSurvey | Survey;
+  survey: TSurvey;
   brandColor: string;
   formbricksSignature: boolean;
   activeQuestionId?: string;
