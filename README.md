@@ -97,6 +97,12 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
 
+##### Elestio
+
+You can deploy Formbricks on [Elestio](https://elest.io) as a fully managed deployment option
+
+[![Deploy](https://pub-da36157c854648669813f3f76c526c2b.r2.dev/deploy-on-elestio-black.png)](https://elest.io/open-source/formbricks)
+
 ### 👨‍💻 Development
 
 #### Prerequisites
