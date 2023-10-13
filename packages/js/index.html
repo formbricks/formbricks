@@ -2,13 +2,14 @@
   <script type="text/javascript">
     !(function () {
       var t = document.createElement("script");
-      (t.type = "text/javascript"), (t.async = !0), (t.src = "./dist/index.js");
+      (t.type = "text/javascript"),
+        (t.async = !0),
+        (t.src = "https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js");
       var e = document.getElementsByTagName("script")[0];
       e.parentNode.insertBefore(t, e),
         setTimeout(function () {
-          window.formbricks = window.js;
           window.formbricks.init({
-            environmentId: "cln6b26l2000bqh89055qtyge",
+            environmentId: "clnojpqde0008qh46cge60d89",
             apiHost: "http://localhost:3000",
             debug: true,
           });
