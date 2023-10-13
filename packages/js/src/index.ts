@@ -67,4 +67,5 @@ const formbricks = {
   getPerson,
 };
 
-export { formbricks as default };
+export type FormbricksType = typeof formbricks;
+export default formbricks as FormbricksType;

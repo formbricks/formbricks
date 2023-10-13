@@ -11,7 +11,7 @@
   "main": "./dist/index.js",
   "scripts": {
     "dev": "tsc && vite build",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "go": "vite build --watch",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview"

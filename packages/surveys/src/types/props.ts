@@ -1,5 +1,5 @@
-import { TResponse, TResponseData } from "@formbricks/types/v1/responses";
 import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
+import { TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
 
 export interface SurveyBaseProps {
   survey: TSurveyWithTriggers;
@@ -7,7 +7,7 @@ export interface SurveyBaseProps {
   formbricksSignature: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;
-  onResponse?: (response: Partial<TResponse>) => void;
+  onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
   onClose?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
