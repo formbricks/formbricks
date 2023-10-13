@@ -3,6 +3,9 @@
   "display": "Node 16",
   "extends": "./base.json",
   "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": true,
+    "moduleResolution": "bundler",
     "lib": ["ESNext", "DOM"],
     "module": "esnext",
     "target": "ES2021",

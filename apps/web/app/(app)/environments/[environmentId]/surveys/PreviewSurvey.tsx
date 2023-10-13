@@ -2,7 +2,6 @@
 import Modal from "@/components/preview/Modal";
 import TabOption from "@/components/preview/TabOption";
 import { SurveyInline } from "@/components/shared/Survey";
-import { Survey } from "@formbricks/types/surveys";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
@@ -20,7 +19,7 @@ import { useEffect, useRef, useState } from "react";
 type TPreviewType = "modal" | "fullwidth" | "email";
 
 interface PreviewSurveyProps {
-  survey: TSurvey | Survey;
+  survey: TSurvey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   previewType?: TPreviewType;
