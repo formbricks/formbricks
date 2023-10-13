@@ -1,6 +1,6 @@
-import { SigninForm } from "@/components/auth/SigninForm";
-import Testimonial from "@/components/auth/Testimonial";
-import FormWrapper from "@/components/auth/FormWrapper";
+import { SigninForm } from "@/app/components/auth/SigninForm";
+import Testimonial from "@/app/components/auth/Testimonial";
+import FormWrapper from "@/app/components/auth/FormWrapper";
 import { Metadata } from "next";
 import {
   GITHUB_OAUTH_ENABLED,

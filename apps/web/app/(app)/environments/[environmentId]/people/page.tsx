@@ -1,7 +1,7 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { truncateMiddle } from "@/lib/utils";
+import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
+import { truncateMiddle } from "@/app/lib/utils";
 import { ITEMS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";

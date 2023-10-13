@@ -1,6 +1,6 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { NextResponse } from "next/server";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/response/service";
 import { TResponse, ZResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";

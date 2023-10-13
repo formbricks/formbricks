@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import SettingsNavbar from "./SettingsNavbar";
+import SettingsNavbar from "./components/SettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";

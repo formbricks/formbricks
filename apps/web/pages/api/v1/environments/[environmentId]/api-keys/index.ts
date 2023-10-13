@@ -1,4 +1,4 @@
-import { hasEnvironmentAccess, hashApiKey } from "@/lib/api/apiHelper";
+import { hasEnvironmentAccess, hashApiKey } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { randomBytes } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
