@@ -8,7 +8,6 @@ import { TIntegration, TIntegrationInput } from "@formbricks/types/v1/integratio
 import { validateInputs } from "../utils/validate";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ITEMS_PER_PAGE } from "../constants";
-import { TGoogleSheetIntegration } from "@formbricks/types/v1/integrations";
 
 export async function createOrUpdateIntegration(
   environmentId: string,
@@ -63,7 +62,7 @@ export const getIntegrations = async (environmentId: string, page?: number): Pro
   }
 };
 
-export const getIntegration = async (integrationId: string): Promise<TIntegration | null> => {
+export const getIntegrationById = async (integrationId: string): Promise<TIntegration | null> => {
   try {
     const result = await prisma.integration.findUnique({
       where: {
@@ -79,9 +78,10 @@ export const getIntegration = async (integrationId: string): Promise<TIntegratio
   }
 };
 
-export const getGoogleSheetIntegration = async (
-  environmentId: string
-): Promise<TIntegration | TGoogleSheetIntegration | null> => {
+export const getIntegration = async (
+  environmentId: string,
+  type: TIntegrationInput["type"]
+): Promise<TIntegration | null> => {
   validateInputs([environmentId, ZId]);
 
   try {
@@ -89,7 +89,7 @@ export const getGoogleSheetIntegration = async (
       where: {
         type_environmentId: {
           environmentId,
-          type: "googleSheets",
+          type,
         },
       },
     });
