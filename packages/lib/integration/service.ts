@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import { ZId } from "@formbricks/types/v1/environment";
-import { TIntegration, TIntegrationInput } from "@formbricks/types/v1/integrations";
+import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/v1/integrations";
 import { validateInputs } from "../utils/validate";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -82,7 +82,7 @@ export const getIntegration = async (
   environmentId: string,
   type: TIntegrationInput["type"]
 ): Promise<TIntegration | null> => {
-  validateInputs([environmentId, ZId]);
+  validateInputs([environmentId, ZId], [type, ZIntegrationType]);
 
   try {
     const result = await prisma.integration.findUnique({
