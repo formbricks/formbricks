@@ -21,17 +21,19 @@ export function Survey({
   onFinished = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
-  hasFailedResponses,
-  responseAccumulator,
+  showErrorComponent,
+  errorComponent = <></>,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0]?.id);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
+
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const [showResponseErrorComponent, setShowResponseErrorComponent] = useState(false);
+
+  const ErrorComponent = () => errorComponent;
 
   useEffect(() => {
     setQuestionId(activeQuestionId || survey.questions[0].id);
@@ -51,16 +53,6 @@ export function Survey({
       onSubmit(prefillResponseData);
     }
   }, []);
-
-  useEffect(() => {
-    if (questionId !== "end" && !hasFailedResponses) {
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setShowResponseErrorComponent(true);
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [questionId, hasFailedResponses]);
 
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
@@ -117,20 +109,14 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
 
-  if (showResponseErrorComponent) {
-    return (
-      <div>
-        <span>{JSON.stringify(responseAccumulator)}</span>
-      </div>
-    );
-  }
-
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
         <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
-            {questionId === "end" && survey.thankYouCard.enabled ? (
+            {showErrorComponent ? (
+              <ErrorComponent />
+            ) : questionId === "end" && survey.thankYouCard.enabled ? (
               <ThankYouCard
                 headline={survey.thankYouCard.headline}
                 subheader={survey.thankYouCard.subheader}

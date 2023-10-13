@@ -74,7 +74,7 @@ export class SurveyState {
   /**
    * Adds questionId to the list of failed responses ids
    */
-  acculateFailedResponse(questionId: string) {
+  accumulateFailedResponses(questionId: string) {
     this.failedResponses[questionId] = true;
   }
   /**
@@ -92,11 +92,19 @@ export class SurveyState {
   }
 
   /**
+   * Get the Response Accumulator
+   */
+  getResponseAccumulator() {
+    return this.responseAcc;
+  }
+
+  /**
    * Clear the current state
    */
   clear() {
     this.responseId = null;
     this.responseAcc = { finished: false, data: {} };
+    this.failedResponses = {};
   }
 }
 

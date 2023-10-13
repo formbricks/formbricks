@@ -2,6 +2,7 @@ import { useState } from "preact/hooks";
 import { SurveyModalProps } from "../types/props";
 import Modal from "./Modal";
 import { Survey } from "./Survey";
+import { ResponseErrorComponent } from "./ResponseErrorComponent";
 
 export function SurveyModal({
   survey,
@@ -18,13 +19,32 @@ export function SurveyModal({
   onClose = () => {},
   onFinished = () => {},
   isRedirectDisabled = false,
+  getHasFailedResponses = () => false,
+  getResponseAccumulator,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [showResponseErrorComponent, setShowResponseErrorComponent] = useState(false);
+
+  const responseAccumulator = getResponseAccumulator?.();
+
+  const ErrorComponent = responseAccumulator ? (
+    <ResponseErrorComponent
+      responses={responseAccumulator.data}
+      questions={survey.questions}
+      brandColor={brandColor}
+    />
+  ) : undefined;
 
   const close = () => {
     setIsOpen(false);
     setTimeout(() => {
-      onClose();
+      const hasFailedResponses = getHasFailedResponses();
+      if (hasFailedResponses && !showResponseErrorComponent) {
+        setShowResponseErrorComponent(true);
+        setIsOpen(true);
+      } else {
+        onClose();
+      }
     }, 1000); // wait for animation to finish}
   };
 
@@ -35,7 +55,7 @@ export function SurveyModal({
         clickOutside={clickOutside}
         darkOverlay={darkOverlay}
         highlightBorderColor={highlightBorderColor}
-        isOpen={isOpen || true}
+        isOpen={isOpen}
         onClose={close}>
         <Survey
           survey={survey}
@@ -52,11 +72,11 @@ export function SurveyModal({
               if (!survey.redirectUrl) {
                 close();
               }
-            }, 4000); // close modal automatically after 4 seconds
+            }, 3000); // close modal automatically after 3 seconds
           }}
           isRedirectDisabled={isRedirectDisabled}
-          hasFailedResponses={false}
-          responseAccumulator={{ finished: false, data: {} }}
+          showErrorComponent={showResponseErrorComponent}
+          errorComponent={ErrorComponent}
         />
       </Modal>
     </div>

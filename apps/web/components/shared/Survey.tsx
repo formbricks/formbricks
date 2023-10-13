@@ -19,8 +19,8 @@ interface SurveyProps {
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
-  hasFailedResponses: boolean;
-  responseAccumulator: TResponseUpdate;
+  getHasFailedResponses?: () => boolean;
+  getResponseAccumulator?: () => TResponseUpdate;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -42,8 +42,8 @@ export const SurveyInline = ({
   autoFocus,
   prefillResponseData,
   isRedirectDisabled,
-  hasFailedResponses,
-  responseAccumulator,
+  getHasFailedResponses,
+  getResponseAccumulator,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -60,7 +60,8 @@ export const SurveyInline = ({
       autoFocus,
       prefillResponseData,
       isRedirectDisabled,
-      hasFailedResponses,
+      getHasFailedResponses,
+      getResponseAccumulator,
     });
   }, [
     activeQuestionId,
@@ -75,8 +76,8 @@ export const SurveyInline = ({
     autoFocus,
     prefillResponseData,
     isRedirectDisabled,
-    hasFailedResponses,
-    responseAccumulator,
+    getHasFailedResponses,
+    getResponseAccumulator,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -96,8 +97,8 @@ export const SurveyModal = ({
   onClose = () => {},
   autoFocus,
   isRedirectDisabled,
-  hasFailedResponses,
-  responseAccumulator,
+  getHasFailedResponses,
+  getResponseAccumulator,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -115,8 +116,8 @@ export const SurveyModal = ({
       onActiveQuestionChange,
       autoFocus,
       isRedirectDisabled,
-      hasFailedResponses,
-      responseAccumulator,
+      getHasFailedResponses,
+      getResponseAccumulator,
     });
   }, [
     activeQuestionId,
@@ -133,8 +134,8 @@ export const SurveyModal = ({
     survey,
     autoFocus,
     isRedirectDisabled,
-    hasFailedResponses,
-    responseAccumulator,
+    getHasFailedResponses,
+    getResponseAccumulator,
   ]);
   return <div id="formbricks-survey"></div>;
 };

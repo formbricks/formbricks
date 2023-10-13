@@ -6,12 +6,12 @@ import { SurveyInline } from "./components/SurveyInline";
 
 export const renderSurveyInline = (props: SurveyInlineProps) => {
   addStylesToDom();
-  const { containerId, ...surveyProps } = props;
-  const element = document.getElementById(containerId);
+
+  const element = document.getElementById(props.containerId);
   if (!element) {
-    throw new Error(`renderSurvey: Element with id ${containerId} not found.`);
+    throw new Error(`renderSurvey: Element with id ${props.containerId} not found.`);
   }
-  render(h(SurveyInline, surveyProps), element);
+  render(h(SurveyInline, props), element);
 };
 
 export const renderSurveyModal = (props: SurveyModalProps) => {

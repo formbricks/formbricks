@@ -34,9 +34,6 @@ export const renderWidget = (survey: TSurvey) => {
     {
       apiHost: config.get().apiHost,
       retryAttempts: 2,
-      onResponseSendingFailed: (response) => {
-        alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
-      },
       personId: config.get().state.person.id,
     },
     surveyState
@@ -48,6 +45,9 @@ export const renderWidget = (survey: TSurvey) => {
   const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
+
+  const hasFailedResponses = () => surveyState.hasFailedResponses();
+  const getResponseAccumulator = () => surveyState.getResponseAccumulator();
 
   setTimeout(() => {
     renderSurveyModal({
@@ -73,6 +73,8 @@ export const renderWidget = (survey: TSurvey) => {
         responseQueue.add(responseUpdate);
       },
       onClose: closeSurvey,
+      getHasFailedResponses: hasFailedResponses,
+      getResponseAccumulator: getResponseAccumulator,
     });
   }, survey.delay * 1000);
 };

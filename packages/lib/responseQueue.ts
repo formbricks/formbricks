@@ -6,7 +6,6 @@ import SurveyState from "./surveyState";
 interface QueueConfig {
   apiHost: string;
   retryAttempts: number;
-  onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
   setSurveyState?: (state: SurveyState) => void;
   personId?: string;
 }
@@ -61,12 +60,7 @@ export class ResponseQueue {
       console.error("Failed to send response after 2 attempts.");
 
       // Add the failed response to the failed response list
-      this.surveyState.acculateFailedResponse(responseQuestionId);
-
-      // If the response is finished and thus fails finally, inform the user
-      if (this.surveyState.responseAcc.finished && this.config.onResponseSendingFailed) {
-        this.config.onResponseSendingFailed(this.surveyState.responseAcc);
-      }
+      this.surveyState.accumulateFailedResponses(responseQuestionId);
 
       this.queue.shift(); // remove the failed response from the queue
     }

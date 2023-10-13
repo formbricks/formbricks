@@ -70,6 +70,9 @@ export default function LinkSurvey({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const hasFailedResponses = () => surveyState.hasFailedResponses();
+  const getResponseAccumulator = () => surveyState.getResponseAccumulator();
+
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
     if (window.self === window.top) {
@@ -126,8 +129,8 @@ export default function LinkSurvey({
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
-          hasFailedResponses={surveyState.hasFailedResponses()}
-          responseAccumulator={surveyState.responseAcc}
+          getHasFailedResponses={hasFailedResponses}
+          getResponseAccumulator={getResponseAccumulator}
         />
       </ContentWrapper>
     </>

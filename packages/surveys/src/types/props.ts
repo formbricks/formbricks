@@ -14,12 +14,14 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
-  hasFailedResponses: boolean;
-  responseAccumulator: TResponseUpdate;
+  showErrorComponent?: boolean;
+  errorComponent?: JSX.Element;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {
   containerId: string;
+  getHasFailedResponses?: () => boolean;
+  getResponseAccumulator?: () => TResponseUpdate;
 }
 
 export interface SurveyModalProps extends SurveyBaseProps {
@@ -27,4 +29,6 @@ export interface SurveyModalProps extends SurveyBaseProps {
   darkOverlay: boolean;
   highlightBorderColor: string | null;
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+  getHasFailedResponses?: () => boolean;
+  getResponseAccumulator?: () => TResponseUpdate;
 }
