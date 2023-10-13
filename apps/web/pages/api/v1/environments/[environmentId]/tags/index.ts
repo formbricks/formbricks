@@ -1,4 +1,4 @@
-import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { getSessionUser, hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";

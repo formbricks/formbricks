@@ -2,12 +2,12 @@ export const revalidate = REVALIDATION_INTERVAL;
 
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import { EditFormbricksSignature } from "./EditSignature";
-import { EditBrandColor } from "./EditBrandColor";
-import { EditPlacement } from "./EditPlacement";
-import { EditHighlightBorder } from "./EditHighlightBorder";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import { EditFormbricksSignature } from "./components/EditSignature";
+import { EditBrandColor } from "./components/EditBrandColor";
+import { EditPlacement } from "./components/EditPlacement";
+import { EditHighlightBorder } from "./components/EditHighlightBorder";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {

@@ -1,5 +1,5 @@
-import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
-import { responses } from "@/lib/api/response";
+import { getSessionUser, hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
+import { responses } from "@/app/lib/api/response";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
