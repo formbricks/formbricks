@@ -1,5 +1,5 @@
-import type { TActionClass } from "../../../types/v1/actionClasses";
-import type { MatchType } from "../../../types/js";
+import type { TActionClass } from "@formbricks/types/v1/actionClasses";
+import type { TActionClassPageUrlRule } from "@formbricks/types/v1/actionClasses";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { trackAction } from "./actions";
@@ -26,13 +26,15 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
   }
 
   for (const event of pageUrlEvents) {
-    const {
-      noCodeConfig: { pageUrl },
-    } = event;
+    const { noCodeConfig } = event;
+
+    const { pageUrl } = noCodeConfig ?? {};
+
     if (!pageUrl) {
       continue;
     }
-    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as MatchType);
+
+    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as TActionClassPageUrlRule);
 
     if (match.ok !== true) return err(match.error);
 
@@ -76,42 +78,27 @@ export const removePageUrlEventListeners = (): void => {
 export function checkUrlMatch(
   url: string,
   pageUrlValue: string,
-  pageUrlRule: MatchType
+  pageUrlRule: TActionClassPageUrlRule
 ): Result<boolean, InvalidMatchTypeError> {
-  let result: boolean;
-  let error: Result<never, InvalidMatchTypeError>;
-
   switch (pageUrlRule) {
     case "exactMatch":
-      result = url === pageUrlValue;
-      break;
+      return ok(url === pageUrlValue);
     case "contains":
-      result = url.includes(pageUrlValue);
-      break;
+      return ok(url.includes(pageUrlValue));
     case "startsWith":
-      result = url.startsWith(pageUrlValue);
-      break;
+      return ok(url.startsWith(pageUrlValue));
     case "endsWith":
-      result = url.endsWith(pageUrlValue);
-      break;
+      return ok(url.endsWith(pageUrlValue));
     case "notMatch":
-      result = url !== pageUrlValue;
-      break;
+      return ok(url !== pageUrlValue);
     case "notContains":
-      result = !url.includes(pageUrlValue);
-      break;
+      return ok(!url.includes(pageUrlValue));
     default:
-      error = err({
+      return err({
         code: "invalid_match_type",
         message: "Invalid match type",
       });
   }
-
-  if (error) {
-    return error;
-  }
-
-  return ok(result);
 }
 
 export const checkClickMatch = (event: MouseEvent) => {
@@ -143,7 +130,7 @@ export const checkClickMatch = (event: MouseEvent) => {
       }
     }
     if (pageUrl) {
-      const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule);
+      const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule!);
       if (!urlMatch.ok || !urlMatch.value) {
         return;
       }

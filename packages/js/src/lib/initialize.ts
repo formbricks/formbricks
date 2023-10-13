@@ -1,4 +1,4 @@
-import type { InitConfig } from "../../../types/js";
+import type { TJsConfigInput } from "@formbricks/types/v1/js";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -10,9 +10,9 @@ import {
   err,
   okVoid,
 } from "./errors";
-import { addCleanupEventListeners, addEventListeners } from "./eventListeners";
+import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
-import { checkPageUrl } from "./noCodeEvents";
+import { checkPageUrl } from "./noCodeActions";
 import { resetPerson } from "./person";
 import { isExpired } from "./session";
 import { sync } from "./sync";
@@ -23,7 +23,7 @@ const logger = Logger.getInstance();
 
 let isInitialized = false;
 
-const setDebugLevel = (c: InitConfig): void => {
+const setDebugLevel = (c: TJsConfigInput): void => {
   if (c.debug) {
     logger.debug(`Setting log level to debug`);
     logger.configure({ logLevel: "debug" });
@@ -31,7 +31,7 @@ const setDebugLevel = (c: InitConfig): void => {
 };
 
 export const initialize = async (
-  c: InitConfig
+  c: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
@@ -43,7 +43,6 @@ export const initialize = async (
   ErrorHandler.getInstance().printStatus();
 
   logger.debug("Start initialize");
-  config.allowSync();
 
   if (!c.environmentId) {
     logger.debug("No environmentId provided");
@@ -65,19 +64,31 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  logger.debug("Adding styles to DOM");
+  const localConfigResult = config.loadFromLocalStorage();
+
   if (
-    config.get().state &&
-    config.get().environmentId === c.environmentId &&
-    config.get().apiHost === c.apiHost
+    localConfigResult.ok &&
+    localConfigResult.value.state &&
+    localConfigResult.value.environmentId === c.environmentId &&
+    localConfigResult.value.apiHost === c.apiHost
   ) {
+    const { state, apiHost, environmentId } = localConfigResult.value;
+
     logger.debug("Found existing configuration. Checking session.");
-    const existingSession = config.get().state.session;
+    const existingSession = state.session;
+
+    config.update(localConfigResult.value);
+
     if (isExpired(existingSession)) {
       logger.debug("Session expired. Resyncing.");
 
       try {
-        await sync();
+        await sync({
+          apiHost,
+          environmentId,
+          personId: state.person.id,
+          sessionId: existingSession.id,
+        });
       } catch (e) {
         logger.debug("Sync failed. Clearing config and starting from scratch.");
         await resetPerson();
@@ -89,11 +100,12 @@ export const initialize = async (
     }
   } else {
     logger.debug("No valid configuration found. Creating new config.");
-    // we need new config
-    config.update({ environmentId: c.environmentId, apiHost: c.apiHost, state: undefined });
 
     logger.debug("Syncing.");
-    await sync();
+    await sync({
+      apiHost: c.apiHost,
+      environmentId: c.environmentId,
+    });
   }
 
   logger.debug("Adding event listeners");
@@ -104,18 +116,14 @@ export const initialize = async (
   logger.debug("Initialized");
 
   // check page url if initialized after page load
+
   checkPageUrl();
   return okVoid();
 };
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {
   logger.debug("Check if initialized");
-  if (
-    !config.get().apiHost ||
-    !config.get().environmentId ||
-    !config.get().state ||
-    !ErrorHandler.initialized
-  ) {
+  if (!isInitialized || !ErrorHandler.initialized) {
     return err({
       code: "not_initialized",
       message: "Formbricks not initialized. Call initialize() first.",
@@ -123,4 +131,11 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
   }
 
   return okVoid();
+};
+
+export const deinitalize = (): void => {
+  logger.debug("Deinitializing");
+  removeAllEventListeners();
+  config.resetConfig();
+  isInitialized = false;
 };
