@@ -9,7 +9,7 @@ import { NotificationSettings } from "@formbricks/types/users";
 import { ZPipelineInput } from "@formbricks/types/v1/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { handleIntegrations } from "../integration/integrations";
+import { handleIntegrations } from "./lib/handleIntegrations";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable
