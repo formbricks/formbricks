@@ -14,7 +14,7 @@ export const ZTeamUpdateInput = z.object({
   name: z.string(),
   plan: z.enum(["free", "pro"]).optional(),
   stripeCustomerId: z.string().nullish(),
-  supportEmail: z.string().nullable(),
+  supportEmail: z.string().nullish(),
 });
 
 export type TTeamUpdateInput = z.infer<typeof ZTeamUpdateInput>;

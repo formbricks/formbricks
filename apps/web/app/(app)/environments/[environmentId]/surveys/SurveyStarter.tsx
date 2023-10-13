@@ -5,6 +5,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { TSurveyInput } from "@formbricks/types/v1/surveys";
+import { TTeam } from "@formbricks/types/v1/teams";
 import { TTemplate } from "@formbricks/types/v1/templates";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,10 +15,12 @@ export default function SurveyStarter({
   environmentId,
   environment,
   product,
+  team,
 }: {
   environmentId: string;
   environment: TEnvironment;
   product: TProduct;
+  team: TTeam;
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
@@ -56,6 +59,7 @@ export default function SurveyStarter({
             }}
             environment={environment}
             product={product}
+            team={team}
           />
         </>
       )}

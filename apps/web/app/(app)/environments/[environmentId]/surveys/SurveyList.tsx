@@ -11,6 +11,7 @@ import { Badge } from "@formbricks/ui/Badge";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { generateSurveySingleUseId } from "@/lib/singleUseSurveys";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
@@ -22,13 +23,21 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   if (!environment) {
     throw new Error("Environment not found");
   }
+
+  const team = await getTeamByEnvironmentId(environmentId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
   const surveys = await getSurveys(environmentId);
 
   const environments: TEnvironment[] = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   if (surveys.length === 0) {
-    return <SurveyStarter environmentId={environmentId} environment={environment} product={product} />;
+    return (
+      <SurveyStarter environmentId={environmentId} environment={environment} product={product} team={team} />
+    );
   }
 
   return (
