@@ -10,17 +10,20 @@ import TemplateList from "./TemplateList";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { SearchBox } from "@formbricks/ui/SearchBox";
+import { TTeam } from "@formbricks/types/v1/teams";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
   product: TProduct;
   environment: TEnvironment;
+  team: TTeam;
 };
 
 export default function TemplateContainerWithPreview({
   environmentId,
   product,
   environment,
+  team,
 }: TemplateContainerWithPreviewProps) {
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -56,6 +59,7 @@ export default function TemplateContainerWithPreview({
             environmentId={environmentId}
             environment={environment}
             product={product}
+            team={team}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
               setActiveQuestionId(template.preset.questions[0].id);

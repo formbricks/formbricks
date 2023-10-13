@@ -50,6 +50,7 @@ export const selectSurvey = {
   productOverwrites: true,
   surveyClosedMessage: true,
   singleUse: true,
+  supportEmail: true,
   triggers: {
     select: {
       eventClass: {

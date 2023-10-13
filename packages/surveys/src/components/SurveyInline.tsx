@@ -20,12 +20,12 @@ export function SurveyInline({
   const [showResponseErrorComponent, setShowResponseErrorComponent] = useState(false);
 
   const responseAccumulator = getResponseAccumulator?.();
-
   const ErrorComponent = responseAccumulator ? (
     <ResponseErrorComponent
       responses={responseAccumulator.data}
       questions={survey.questions}
       brandColor={brandColor}
+      supportEmail={survey.supportEmail}
     />
   ) : undefined;
 

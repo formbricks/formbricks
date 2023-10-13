@@ -32,6 +32,7 @@ export function SurveyModal({
       responses={responseAccumulator.data}
       questions={survey.questions}
       brandColor={brandColor}
+      supportEmail={survey.supportEmail}
     />
   ) : undefined;
 

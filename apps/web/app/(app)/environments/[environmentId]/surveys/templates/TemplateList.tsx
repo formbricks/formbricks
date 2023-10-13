@@ -18,12 +18,14 @@ import { useEffect, useState } from "react";
 import { createSurveyAction } from "./actions";
 import { customSurvey, templates } from "./templates";
 import { TSurveyInput } from "@formbricks/types/v1/surveys";
+import { TTeam } from "@formbricks/types/v1/teams";
 
 type TemplateList = {
   environmentId: string;
   onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
+  team: TTeam;
   templateSearch?: string;
 };
 
@@ -34,6 +36,7 @@ export default function TemplateList({
   onTemplateClick,
   product,
   environment,
+  team,
   templateSearch,
 }: TemplateList) {
   const router = useRouter();
@@ -73,6 +76,7 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
+      supportEmail: team.supportEmail,
     } as TSurveyInput;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
