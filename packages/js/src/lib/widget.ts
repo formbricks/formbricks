@@ -69,13 +69,11 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
-      onResponse: (responseUpdate: Partial<TResponseUpdate>) => {
-        if (responseUpdate.data && responseUpdate.finished) {
-          responseQueue.add({
-            data: responseUpdate.data,
-            finished: responseUpdate.finished,
-          });
-        }
+      onResponse: (responseUpdate: TResponseUpdate) => {
+        responseQueue.add({
+          data: responseUpdate.data,
+          finished: responseUpdate.finished,
+        });
       },
       onClose: closeSurvey,
     });
