@@ -62,7 +62,7 @@ export const getIntegrations = async (environmentId: string, page?: number): Pro
   }
 };
 
-export const getIntegrationById = async (integrationId: string): Promise<TIntegration | null> => {
+export const getIntegration = async (integrationId: string): Promise<TIntegration | null> => {
   try {
     const result = await prisma.integration.findUnique({
       where: {
@@ -78,7 +78,7 @@ export const getIntegrationById = async (integrationId: string): Promise<TIntegr
   }
 };
 
-export const getIntegration = async (
+export const getIntegrationByType = async (
   environmentId: string,
   type: TIntegrationInput["type"]
 ): Promise<TIntegration | null> => {

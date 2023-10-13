@@ -17,7 +17,7 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
 import { ZString } from "@formbricks/types/v1/common";
-import { getIntegration } from "../integration/service";
+import { getIntegrationByType } from "../integration/service";
 
 const { google } = require("googleapis");
 
@@ -40,7 +40,7 @@ export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpr
 
   let spreadsheets: TGoogleSpreadsheet[] = [];
   try {
-    const googleIntegration = (await getIntegration(
+    const googleIntegration = (await getIntegrationByType(
       environmentId,
       "googleSheets"
     )) as TGoogleSheetIntegration;
