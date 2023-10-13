@@ -1,5 +1,5 @@
 import { env } from "@/env.mjs";
-import { verifyPassword } from "@/lib/auth";
+import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import {

@@ -1,5 +1,5 @@
 import { env } from "@/env.mjs";
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
 import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
