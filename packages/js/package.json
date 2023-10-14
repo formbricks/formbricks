@@ -28,7 +28,7 @@
     "build": "vite build",
     "go": "vite build --watch",
     "lint": "eslint ./src --fix",
-    "clean": "rimraf .turbo node_modules dist",
+    "clean": "rimraf .turbo node_modules dist coverage",
     "test": "jest"
   },
   "author": "Formbricks <hola@formbricks.com>",
