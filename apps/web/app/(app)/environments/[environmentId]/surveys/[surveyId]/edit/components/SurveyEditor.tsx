@@ -38,6 +38,8 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      console.log("survey", survey);
+
       setLocalSurvey(survey);
 
       if (survey.questions.length > 0) {

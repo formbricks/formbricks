@@ -1,8 +1,9 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
 import { TIntegrationConfig } from "@formbricks/types/v1/integrations";
-import { TResponsePersonAttributes, TResponseData, TResponseMeta } from "@formbricks/types/v1/responses";
+import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/v1/responses";
 import {
   TSurveyClosedMessage,
+  TSurveyHiddenQuestionCard,
   TSurveyProductOverwrites,
   TSurveyQuestions,
   TSurveySingleUse,
@@ -21,6 +22,7 @@ declare global {
     export type ResponsePersonAttributes = TResponsePersonAttributes;
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyThankYouCard = TSurveyThankYouCard;
+    export type SurveyHiddenQuestionCard = TSurveyHiddenQuestionCard;
     export type SurveyProductOverwrites = TSurveyProductOverwrites;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;

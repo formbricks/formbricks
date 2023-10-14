@@ -39,6 +39,7 @@ export const selectSurvey = {
   status: true,
   questions: true,
   thankYouCard: true,
+  hiddenQuestionCard: true,
   displayOption: true,
   recontactDays: true,
   autoClose: true,
@@ -610,6 +611,8 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       where: { id: surveyId },
       data,
     });
+
+    console.log("updated survey", prismaSurvey.hiddenQuestionCard);
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
