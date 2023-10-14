@@ -3,7 +3,6 @@ import type { TSurveyWelcomeQuestion } from "@formbricks/types/v1/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
-import Image from "next/image";
 interface WelcomeQuestionProps {
   question: TSurveyWelcomeQuestion;
   value: string | number | string[];
@@ -23,7 +22,12 @@ export default function WelcomeQuestion({
   return (
     <div>
       {question.selectedFile && (
-        <Image src={question.selectedFile} className="mb-4" width={75} height={75} alt="Company Logo" />
+        <img
+          src={question.selectedFile}
+          className="mb-4"
+          style={{ maxWidth: "75px", maxHeight: "75px" }}
+          alt="Company Logo"
+        />
       )}
 
       <Headline headline={question.headline} questionId={question.id} />
