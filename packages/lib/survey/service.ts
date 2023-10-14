@@ -9,7 +9,6 @@ import {
   TSurveyWithAnalytics,
   ZSurvey,
   ZSurveyWithAnalytics,
-  TSurveyInput,
 } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
@@ -18,10 +17,6 @@ import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { getDisplaysCacheTag } from "../display/service";
 import { getResponsesCacheTag } from "../response/service";
-import { ZString } from "@formbricks/types/v1/common";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getActionClasses } from "../actionClass/service";
-import { formatSurveyDateFields } from "./util";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
@@ -50,6 +45,7 @@ export const selectSurvey = {
   productOverwrites: true,
   surveyClosedMessage: true,
   singleUse: true,
+  pin: true,
   triggers: {
     select: {
       eventClass: {
@@ -93,8 +89,6 @@ export const selectSurveyWithAnalytics = {
 };
 
 export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
-  validateInputs([surveyId, ZString]);
-
   const survey = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
@@ -133,7 +127,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
 
       const transformedSurvey = {
         ...surveyPrismaFields,
-        triggers: surveyPrismaFields.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: surveyPrismaFields.triggers.map((trigger) => trigger.eventClass),
         analytics: {
           numDisplays,
           responseRate,
@@ -142,7 +136,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
       };
 
       try {
-        const survey: TSurveyWithAnalytics = ZSurveyWithAnalytics.parse(transformedSurvey);
+        const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
         return survey;
       } catch (error) {
         if (error instanceof Error) {
@@ -157,7 +151,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
     [`surveyWithAnalytics-${surveyId}`],
     {
       tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), getResponsesCacheTag(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      revalidate: 60 * 30,
     }
   )();
 
@@ -169,7 +163,8 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
   // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
-    ...formatSurveyDateFields(survey),
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
   };
 };
 
@@ -202,7 +197,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       const transformedSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
       };
 
       try {
@@ -221,7 +216,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     [`surveys-${surveyId}`],
     {
       tags: [getSurveyCacheTag(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      revalidate: 60 * 30,
     }
   )();
 
@@ -233,7 +228,8 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
-    ...formatSurveyDateFields(survey),
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
   };
 };
 
@@ -255,7 +251,7 @@ export const getSurveysByAttributeClassId = async (attributeClassId: string): Pr
     for (const surveyPrisma of surveysPrisma) {
       const transformedSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
       };
       const survey = ZSurvey.parse(transformedSurvey);
       surveys.push(survey);
@@ -292,7 +288,7 @@ export const getSurveysByActionClassId = async (actionClassId: string): Promise<
     for (const surveyPrisma of surveysPrisma) {
       const transformedSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
       };
       const survey = ZSurvey.parse(transformedSurvey);
       surveys.push(survey);
@@ -338,7 +334,7 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
         for (const surveyPrisma of surveysPrisma) {
           const transformedSurvey = {
             ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
           };
           const survey = ZSurvey.parse(transformedSurvey);
           surveys.push(survey);
@@ -357,7 +353,7 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
     [`environments-${environmentId}-surveys`],
     {
       tags: [getSurveysCacheTag(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      revalidate: 60 * 30,
     }
   )();
 
@@ -365,7 +361,8 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
   // https://github.com/vercel/next.js/issues/51613
   return surveys.map((survey) => ({
     ...survey,
-    ...formatSurveyDateFields(survey),
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
   }));
 };
 
@@ -404,7 +401,7 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
 
           const transformedSurvey = {
             ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
             analytics: {
               numDisplays,
               responseRate,
@@ -435,21 +432,20 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
   // https://github.com/vercel/next.js/issues/51613
   return surveysWithAnalytics.map((survey) => ({
     ...survey,
-    ...formatSurveyDateFields(survey),
+    createdAt: new Date(survey.createdAt),
+    updatedAt: new Date(survey.updatedAt),
   }));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
-  validateInputs([updatedSurvey, ZSurvey]);
-
+export async function updateSurvey(updatedSurvey: Partial<TSurvey>): Promise<TSurvey> {
   const surveyId = updatedSurvey.id;
   let data: any = {};
   let survey: any = { ...updatedSurvey };
 
   if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
     const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {
-      if (typeof trigger === "object" && trigger) {
-        return trigger;
+      if (typeof trigger === "object" && trigger.id) {
+        return trigger.id;
       } else if (typeof trigger === "string" && trigger !== undefined) {
         return trigger;
       }
@@ -458,14 +454,9 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     survey = { ...updatedSurvey, triggers: modifiedTriggers };
   }
 
-  const actionClasses = await getActionClasses(updatedSurvey.environmentId);
-
   const currentTriggers = await prisma.surveyTrigger.findMany({
     where: {
       surveyId,
-    },
-    include: {
-      eventClass: true,
     },
   });
   const currentAttributeFilters = await prisma.surveyAttributeFilter.findMany({
@@ -491,30 +482,30 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
     // find added triggers
-    for (const eventClassName of survey.triggers) {
-      if (!eventClassName) {
+    for (const eventClassId of survey.triggers) {
+      if (!eventClassId) {
         continue;
       }
-      if (currentTriggers.find((t) => t.eventClass.name === eventClassName)) {
+      if (currentTriggers.find((t) => t.eventClassId === eventClassId)) {
         continue;
       } else {
-        newTriggers.push(eventClassName);
+        newTriggers.push(eventClassId);
       }
     }
     // find removed triggers
     for (const trigger of currentTriggers) {
-      if (survey.triggers.find((t: any) => t === trigger.eventClass.name)) {
+      if (survey.triggers.find((t: any) => t === trigger.eventClassId)) {
         continue;
       } else {
-        removedTriggers.push(trigger.eventClass.name);
+        removedTriggers.push(trigger.eventClassId);
       }
     }
     // create new triggers
     if (newTriggers.length > 0) {
       data.triggers = {
         ...(data.triggers || []),
-        create: newTriggers.map((eventClassName) => ({
-          eventClassId: actionClasses.find((actionClass) => actionClass.name === eventClassName)!.id,
+        create: newTriggers.map((eventClassId) => ({
+          eventClassId,
         })),
       };
     }
@@ -648,37 +639,22 @@ export async function deleteSurvey(surveyId: string) {
   return deletedSurvey;
 }
 
-export async function createSurvey(environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> {
+export async function createSurvey(environmentId: string, surveyBody: any) {
   validateInputs([environmentId, ZId]);
-
-  // TODO: Create with triggers & attributeFilters
-  delete surveyBody.triggers;
-  delete surveyBody.attributeFilters;
-  const data: Omit<TSurveyInput, "triggers" | "attributeFilters"> = {
-    ...surveyBody,
-  };
-
   const survey = await prisma.survey.create({
     data: {
-      ...data,
+      ...surveyBody,
       environment: {
         connect: {
           id: environmentId,
         },
       },
     },
-    select: selectSurvey,
   });
-
-  const transformedSurvey = {
-    ...survey,
-    triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
-  };
-
   captureTelemetry("survey created");
 
   revalidateTag(getSurveysCacheTag(environmentId));
   revalidateTag(getSurveyCacheTag(survey.id));
 
-  return transformedSurvey;
+  return survey;
 }

@@ -1,15 +1,20 @@
 "use client";
 
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Switch } from "@formbricks/ui/Switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { DatePicker } from "@formbricks/ui/DatePicker";
-import { Label } from "@formbricks/ui/Label";
-import { Input } from "@formbricks/ui/Input";
+import {
+  AdvancedOptionToggle,
+  DatePicker,
+  Input,
+  Label,
+  Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react";
+import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
@@ -31,6 +36,9 @@ export default function ResponseOptionsCard({
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
+  const [verifyProtectWithPinToggle, setVerifyProtectWithPinToggle] = useState(false);
+
+  const [verifyProtectWithPinError, setverifyProtectWithPinError] = useState<string | null>(null);
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: "Survey Completed",
@@ -92,6 +100,12 @@ export default function ResponseOptionsCard({
     if (verifyEmailToggle && localSurvey.verifyEmail) {
       setLocalSurvey({ ...localSurvey, verifyEmail: null });
     }
+  };
+
+  const handleProtectSurveyWithPinToggle = () => {
+    const currentValue = verifyProtectWithPinToggle;
+    if (currentValue === false) setLocalSurvey({ ...localSurvey, pin: null });
+    setVerifyProtectWithPinToggle(!currentValue);
   };
 
   const handleCloseOnDateChange = (date: Date) => {
@@ -167,6 +181,8 @@ export default function ResponseOptionsCard({
     }
   };
 
+  console.log("localSurvey", localSurvey);
+
   const handleVerifyEmailSurveyDetailsChange = ({
     name,
     subheading,
@@ -183,6 +199,28 @@ export default function ResponseOptionsCard({
     setLocalSurvey({ ...localSurvey, verifyEmail: message });
   };
 
+  const handleProtectSurveryPinChange = (pin: string) => {
+    const pinAsNumber = Number(pin);
+
+    if (isNaN(pinAsNumber)) return toast.error("PIN can only contain numbers");
+    setLocalSurvey({ ...localSurvey, pin: pinAsNumber });
+  };
+
+  const handleProtectSurveyPinBlurEvent = () => {
+    if (!localSurvey.pin) return setverifyProtectWithPinError(null);
+
+    const regexPattern = /^\d{4}$/;
+    const isValidPin = regexPattern.test(`${localSurvey.pin}`);
+
+    if (!isValidPin) return setverifyProtectWithPinError("PIN must be a four digit number.");
+    setverifyProtectWithPinError(null);
+  };
+
+  const handleSurveyPinInputKeyDown: KeyboardEventHandler<HTMLInputElement> = (e) => {
+    const exceptThisSymbols = ["e", "E", "+", "-", "."];
+    if (exceptThisSymbols.includes(e.key)) e.preventDefault();
+  };
+
   useEffect(() => {
     if (localSurvey.redirectUrl) {
       setRedirectUrl(localSurvey.redirectUrl);
@@ -195,6 +233,10 @@ export default function ResponseOptionsCard({
         subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
       });
       setSurveyClosedMessageToggle(true);
+    }
+
+    if (!!localSurvey.pin) {
+      setVerifyProtectWithPinToggle(true);
     }
 
     if (localSurvey.singleUse?.enabled) {
@@ -481,6 +523,36 @@ export default function ResponseOptionsCard({
                       defaultValue={verifyEmailSurveyDetails.subheading}
                       onChange={(e) => handleVerifyEmailSurveyDetailsChange({ subheading: e.target.value })}
                     />
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+
+              <AdvancedOptionToggle
+                htmlId="protectSurveryWithPin"
+                isChecked={verifyProtectWithPinToggle}
+                onToggle={handleProtectSurveyWithPinToggle}
+                title="Protect Survery with a PIN"
+                description="Only users who have the PIN can access the survey."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <Label htmlFor="headline">Add PIN</Label>
+                    <Input
+                      autoFocus
+                      type="number"
+                      id="heading"
+                      isInvalid={Boolean(verifyProtectWithPinError)}
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      placeholder="1234"
+                      onBlur={handleProtectSurveyPinBlurEvent}
+                      defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
+                      onKeyDown={handleSurveyPinInputKeyDown}
+                      onChange={(e) => handleProtectSurveryPinChange(e.target.value)}
+                    />
+                    {verifyProtectWithPinError && (
+                      <p className="text-sm text-red-700">{verifyProtectWithPinError}</p>
+                    )}
                   </div>
                 </div>
               </AdvancedOptionToggle>

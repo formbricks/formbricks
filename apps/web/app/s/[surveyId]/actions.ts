@@ -9,7 +9,15 @@ interface LinkSurveyEmailData {
   } | null;
 }
 
-import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
+interface ISurveryPinValidationResponse {
+  error?: ISurveryPinValidationResponseError;
+  survey?: TSurvey;
+}
+
+import { getSurvey } from "@/../../packages/lib/survey/service";
+import { TSurvey } from "@/../../packages/types/v1/surveys";
+import { ISurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { sendLinkSurveyToVerifiedEmail } from "@/lib/email";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 
 export async function sendLinkSurveyEmailAction(data: LinkSurveyEmailData) {
@@ -20,4 +28,24 @@ export async function sendLinkSurveyEmailAction(data: LinkSurveyEmailData) {
 }
 export async function verifyTokenAction(token: string, surveyId: string): Promise<boolean> {
   return await verifyTokenForLinkSurvey(token, surveyId);
+}
+
+export async function validateSurveyPin(
+  surveyId: string,
+  pin: number
+): Promise<ISurveryPinValidationResponse> {
+  try {
+    const survey = await getSurvey(surveyId);
+    if (!survey) return { error: ISurveryPinValidationResponseError.NOT_FOUND };
+
+    const originalPin = survey.pin;
+
+    if (!originalPin) return { survey };
+
+    if (originalPin !== pin) return { error: ISurveryPinValidationResponseError.INCORRECT_PIN };
+
+    return { survey };
+  } catch (error) {
+    return { error: ISurveryPinValidationResponseError.INTERNAL_SERVER_ERROR };
+  }
 }

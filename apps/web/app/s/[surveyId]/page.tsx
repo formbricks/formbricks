@@ -1,17 +1,18 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
+import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
+import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
 import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getEmailVerificationStatus } from "./lib/helpers";
-import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
+import { getEmailVerificationStatus } from "./helpers";
+import { checkValidity } from "@/app/s/[surveyId]/prefilling";
 import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/v1/responses";
-import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import { validateSurveySingleUseId } from "@/lib/singleUseSurveys";
+import LinkSurveyPinScreen from "@/app/s/[surveyId]/LinkSurveyPinScreen";
 
 interface LinkSurveyPageProps {
   params: {
@@ -94,6 +95,23 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   let person;
   if (userId) {
     person = await getOrCreatePersonByUserId(userId, survey.environmentId);
+  }
+
+  const isSurveyPinProtected = Boolean(!!survey && survey.pin);
+
+  if (isSurveyPinProtected) {
+    return (
+      <LinkSurveyPinScreen
+        surveyId={survey.id}
+        product={product}
+        personId={person?.id}
+        emailVerificationStatus={emailVerificationStatus}
+        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+        singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+        singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+        webAppUrl={WEBAPP_URL}
+      />
+    );
   }
 
   return (
