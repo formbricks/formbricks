@@ -949,11 +949,12 @@ export default function FormTribeHackathon() {
 const SectionHeading = ({ title, subTitle, description, id }) => {
   return (
     <div id={id} className="lg:pt-18 mt-32 px-4 pb-12 text-center sm:px-6 lg:px-8 ">
-      <p className=" text-[3rem] text-slate-500">{subTitle}</p>
-      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-6xl text-transparent">
+      <p className="text-xl text-slate-500">{subTitle}</p>
+      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-4xl text-transparent">
         {title}
       </h1>
-      <p className="mx-auto mt-4 text-slate-700 sm:w-3/4">{description}</p>
+      <p className="mx-auto mt-4 text-base text-slate-700 sm:w-3/4">{description}</p>{" "}
+      {/* Reduced text size for description */}
     </div>
   );
 };
