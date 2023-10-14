@@ -7,8 +7,8 @@ import OtpInput from "react-otp-input";
 import { useCallback, useEffect, useState } from "react";
 import { validateSurveyPin } from "@/app/s/[surveyId]/actions";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
-import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
 import { ISurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 
 interface LinkSurveyPinScreenProps {
   surveyId: string;
