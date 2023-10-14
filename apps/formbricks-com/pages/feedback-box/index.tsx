@@ -16,7 +16,7 @@ export default function FeedbackBoxPage() {
             Why is it useful?
           </h3>
           <p className="text-slate-600 dark:text-slate-400">
-            Offering a direct channel for feedback helps you build a better product. Users feel heared and
+            Offering a direct channel for feedback helps you build a better product. Users feel heard and
             with Formbricks automations, you&apos;ll be able to react to feedback rapidly. Lastly, critical
             feedback can be acted upon quickly so that it doesn&apos;t end up on social media.
           </p>
