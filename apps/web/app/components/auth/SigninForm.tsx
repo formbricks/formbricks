@@ -13,6 +13,7 @@ import { Controller, SubmitHandler, useForm, FormProvider } from "react-hook-for
 import TwoFactor from "@/app/components/auth/TwoFactor";
 import { cn } from "@formbricks/lib/cn";
 import TwoFactorBackup from "@/app/components/auth/TwoFactorBackup";
+import { AzureButton } from "./AzureButton";
 
 type TSigninFormState = {
   email: string;
@@ -26,11 +27,15 @@ export const SigninForm = ({
   passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
+  azureOAuthEnabled,
+  azureDirectRedirect,
 }: {
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
+  azureDirectRedirect: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -191,6 +196,12 @@ export const SigninForm = ({
           {githubOAuthEnabled && !totpLogin && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
+            </>
+          )}
+
+          {azureOAuthEnabled && !totpLogin && (
+            <>
+              <AzureButton inviteUrl={callbackUrl} directRedirect={azureDirectRedirect} />
             </>
           )}
         </div>

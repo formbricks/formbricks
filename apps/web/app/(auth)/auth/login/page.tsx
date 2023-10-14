@@ -7,6 +7,8 @@ import {
   GOOGLE_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
+  AZURE_OAUTH_ENABLED,
+  DIRECT_AZURE_REDIRECT,
 } from "@formbricks/lib/constants";
 
 export const metadata: Metadata = {
@@ -27,6 +29,8 @@ export default function SignInPage() {
             passwordResetEnabled={!PASSWORD_RESET_DISABLED}
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
             githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+            azureOAuthEnabled={AZURE_OAUTH_ENABLED}
+            azureDirectRedirect={DIRECT_AZURE_REDIRECT}
           />
         </FormWrapper>
       </div>

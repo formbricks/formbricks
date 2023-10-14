@@ -46,6 +46,7 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+    AZURE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().optional(),
@@ -58,6 +59,10 @@ export const env = createEnv({
     AWS_SECRET_KEY: z.string().optional(),
     S3_REGION: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
+    AZURE_CLIENT_SECRET: z.string().optional(),
+    AZURE_TENANT_ID: z.string().optional(),
+    AZURE_CLIENT_ID: z.string().optional(),
+    DIRECT_AZURE_REDIRECT: z.string().optional(),
   },
 
   /*
@@ -130,5 +135,10 @@ export const env = createEnv({
     SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
     SHORT_SURVEY_BASE_URL: process.env.SHORT_SURVEY_BASE_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    AZURE_AUTH_ENABLED: process.env.AZURE_AUTH_ENABLED,
+    AZURE_CLIENT_ID: process.env.AZURE_CLIENT_ID,
+    AZURE_CLIENT_SECRET: process.env.AZURE_CLIENT_SECRET,
+    AZURE_TENANT_ID: process.env.AZURE_TENANT_ID,
+    DIRECT_AZURE_REDIRECT: process.env.DIRECT_AZURE_REDIRECT,
   },
 });

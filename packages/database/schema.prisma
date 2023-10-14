@@ -448,6 +448,7 @@ enum IdentityProvider {
   email
   github
   google
+  azuread
 }
 
 model Account {
@@ -462,6 +463,7 @@ model Account {
   access_token      String?  @db.Text
   refresh_token     String?  @db.Text
   expires_at        Int?
+  ext_expires_in    Int?
   token_type        String?
   scope             String?
   id_token          String?  @db.Text

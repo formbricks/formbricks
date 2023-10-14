@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
+import { AzureButton } from "./AzureButton";
 
 export const SignupForm = ({
   webAppUrl,
@@ -19,6 +20,8 @@ export const SignupForm = ({
   emailVerificationDisabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
+  azureOAuthEnabled,
+  azureDirectRedirect,
 }: {
   webAppUrl: string;
   privacyUrl: string | undefined;
@@ -27,6 +30,8 @@ export const SignupForm = ({
   emailVerificationDisabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
+  azureDirectRedirect: boolean;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -197,6 +202,11 @@ export const SignupForm = ({
           {githubOAuthEnabled && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
+            </>
+          )}
+          {azureOAuthEnabled && (
+            <>
+              <AzureButton inviteUrl={callbackUrl} directRedirect={azureDirectRedirect} />
             </>
           )}
         </div>
