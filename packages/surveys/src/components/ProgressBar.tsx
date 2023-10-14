@@ -1,9 +1,9 @@
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
 import { useEffect, useState } from "preact/hooks";
 import Progress from "./Progress";
 
 interface ProgressBarProps {
-  survey: TSurvey;
+  survey: TSurveyWithTriggers;
   questionId: string;
   brandColor: string;
 }
@@ -18,7 +18,7 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
     // calculate progress
     setProgress(calculateProgress(questionId, survey, progress));
 
-    function calculateProgress(questionId: string, survey: TSurvey, progress: number) {
+    function calculateProgress(questionId: string, survey: TSurveyWithTriggers, progress: number) {
       if (survey.questions.length === 0) return 0;
       if (questionId === "end") return 1;
 

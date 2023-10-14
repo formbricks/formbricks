@@ -7,7 +7,8 @@ import ReactApp from "./react-in-app-survey-app-popup-form.webp";
 
 export const metadata = {
   title: "Integrate Formbricks: Comprehensive Framework Guide & Integration Tutorial",
-  description: "Master the integration of Formbricks into your application with our detailed guides. From HTML to ReactJS, NextJS, and VueJS, get step-by-step instructions and ensure seamless setup.",
+  description:
+    "Master the integration of Formbricks into your application with our detailed guides. From HTML to ReactJS, NextJS, and VueJS, get step-by-step instructions and ensure seamless setup.",
 };
 
 # Framework Guides
@@ -30,7 +31,7 @@ Before getting started, make sure you have:
   src={SetupChecklist}
   alt="Step 2 - Setup Checklist"
   quality="100"
-  className="rounded-lg max-w-full     "
+  className="rounded-lg max-w-full"
 />
 
 ---
@@ -39,16 +40,17 @@ Before getting started, make sure you have:
 
 All you need to do is copy a `<script>` tag to your HTML head, and that’s about it!
 
+<Col>
 <CodeGroup title="HTML">
 ```html {{ title: 'index.html' }}
 <!-- START Formbricks Surveys -->
 <script type="text/javascript">
-    !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.0.0/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks=window.js;window.formbricks.init({environmentId: "<your-environment-id>", apiHost: "<api-host>"})},500)}();
+    !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "<your-environment-id>", apiHost: "<api-host>"})},500)}();
     </script>
 <!-- END Formbricks Surveys -->
 ```
 </CodeGroup>
-
+</Col>
 ### Required Customizations to be Made
 
 <Properties>
@@ -70,6 +72,7 @@ Refer our [Example HTML project](https://github.com/formbricks/examples/tree/mai
 
 Install the Formbricks SDK using one of the package managers ie `npm`,`pnpm`,`yarn`.
 
+<Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
 npm install --save @formbricks/js
@@ -82,9 +85,9 @@ yarn add @formbricks/js
 ```
 
 </CodeGroup>
- 
+</Col>
 Now, update your App.js/ts file to initialise Formbricks.
-
+<Col>
 <CodeGroup title="src/App.js">
 
 ```js
@@ -107,7 +110,7 @@ export default App;
 ```
 
 </CodeGroup>
-
+</Col>
 ### Required Customizations to be Made
 
 <Properties>
@@ -129,7 +132,7 @@ The app initializes 'formbricks' when it's loaded in a browser environment (due 
   src={ReactApp}
   alt="In app survey in React app for micro surveys"
   quality="100"
-  className="rounded-lg max-w-full     "
+  className="rounded-lg max-w-full"
 />
 
 Refer our [Example ReactJs project](https://github.com/formbricks/examples/tree/main/reactjs) for more help! Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
@@ -147,6 +150,7 @@ guidelines for each convention below:
 
 Code snippets for the integration for both conventions are provided to further assist you.
 
+<Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
 npm install --save @formbricks/js
@@ -159,9 +163,9 @@ yarn add @formbricks/js
 ```
 
 </CodeGroup>
-
+</Col>
 ### App Directory
-
+<Col>
 <CodeGroup title="app/formbricks.tsx">
 ```tsx {{title: 'Typescript'}}
 "use client";
@@ -173,19 +177,19 @@ export default function FormbricksProvider() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    formbricks.init({
-      environmentId: "<environment-id>",
-      apiHost: "<api-host>",
-      debug: true, // remove when in production
-    });
-  }, []);
+useEffect(() => {
+formbricks.init({
+environmentId: "<environment-id>",
+apiHost: "<api-host>",
+debug: true, // remove when in production
+});
+}, []);
 
-  useEffect(() => {
-    formbricks?.registerRouteChange();
-  }, [pathname, searchParams]);
+useEffect(() => {
+formbricks?.registerRouteChange();
+}, [pathname, searchParams]);
 
-  return null;
+return null;
 }
 
 ````
@@ -207,11 +211,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ````
 
 </CodeGroup>
+</Col>
 
 Refer our [Example NextJS App Directory project](https://github.com/formbricks/examples/tree/main/nextjs-app) for more help!
 
 ### Pages Directory
 
+<Col>
 <CodeGroup title="src/pages/_app.tsx">
 
 ```tsx {{ title: 'Typescript' }}
@@ -245,7 +251,7 @@ export default function App({ Component, pageProps }: AppProps) {
 ```
 
 </CodeGroup>
-
+</Col>
 Refer our [Example NextJS Pages Directory project](https://github.com/formbricks/examples/tree/main/nextjs-pages) for more help!
 
 ### Required Customizations to be Made
@@ -283,6 +289,7 @@ Now visit the [Validate your Setup](#validate-your-setup) section to verify your
 Integrating the Formbricks SDK with Vue.js is a straightforward process.
 We will make sure the SDK is only loaded and used on the client side, as it's not intended for server-side usage.
 
+<Col>
 <CodeGroup title="Install Formbricks JS library">
 ```shell {{ title: 'npm' }}
 npm install --save @formbricks/js
@@ -335,7 +342,7 @@ router.afterEach((to, from) => {
 ```
 
 </CodeGroup>
-
+</Col>
 ### Required Customizations to be Made
 
 <Properties>
@@ -367,7 +374,7 @@ Once you have completed the steps above, you can validate your setup by checking
   src={WidgetNotConnected}
   alt="Widget isnt connected"
   quality="100"
-  className="rounded-lg max-w-full     "
+  className="rounded-lg max-w-full"
 />
 
 To this:
@@ -376,7 +383,7 @@ To this:
   src={WidgetConnected}
   alt="Widget is connected"
   quality="100"
-  className="rounded-lg max-w-full     "
+  className="rounded-lg max-w-full"
 />
 
 **Can’t figure it out? [Join our Discord!](https://formbricks.com/discord)**

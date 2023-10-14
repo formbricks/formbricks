@@ -103,7 +103,7 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 Here is what you need to be able to run Formbricks:
 
-- Node.js (Version: >=18.x)
+- [Node.js](https://nodejs.org/en) (Version: >=18.x)
 - [Pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
 
