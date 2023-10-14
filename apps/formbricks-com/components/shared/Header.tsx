@@ -100,6 +100,7 @@ export default function Header() {
   const plausible = usePlausible();
   const router = useRouter();
   const [stickyNav, setStickyNav] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 250) {
