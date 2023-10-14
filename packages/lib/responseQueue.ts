@@ -15,7 +15,6 @@ export class ResponseQueue {
   private config: QueueConfig;
   private surveyState: SurveyState;
   private isRequestInProgress = false;
-  private i = 0;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
@@ -44,8 +43,7 @@ export class ResponseQueue {
     let attempts = 0;
 
     while (attempts < this.config.retryAttempts) {
-      // const success = this.i === 1 ? false : await this.sendResponse(responseUpdate);
-      const success = false;
+      const success = await this.sendResponse(responseUpdate);
       if (success) {
         this.surveyState.removeFailedResponse(responseQuestionId); // remove the response from the failed response list
         this.queue.shift(); // remove the successfully sent response from the queue
@@ -65,7 +63,6 @@ export class ResponseQueue {
       this.queue.shift(); // remove the failed response from the queue
     }
 
-    this.i++;
     this.isRequestInProgress = false;
     this.processQueue(); // process the next item in the queue if any
   }

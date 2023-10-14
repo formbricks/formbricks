@@ -23,18 +23,21 @@ export const ResponseErrorComponent = ({
       <p className={"max-w-md text-sm font-normal leading-6 text-slate-600"}>
         Our servers are not responding.
         <br />
-        Please forward your feedback via email &#128591;.
+        Please forward your feedback via email &#128591;
       </p>
       <div className={"mt-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-5"}>
         <div className={"flex max-h-36 flex-1 flex-col space-y-1 overflow-y-scroll"}>
-          {questions.map((question, index) => (
-            <div className={"flex flex-col"}>
-              <span className={"text-sm leading-6 text-slate-900"}>{`Question ${index + 1}`}</span>
-              <span className={"-mt-1 text-sm font-semibold leading-6 text-slate-900"}>
-                {responses[question.id]}
-              </span>
-            </div>
-          ))}
+          {questions.map((question, index) => {
+            const response = responses[question.id];
+            return (
+              <div className={"flex flex-col"}>
+                <span className={"text-sm leading-6 text-slate-900"}>{`Question ${index + 1}`}</span>
+                <span className={"-mt-1 text-sm font-semibold leading-6 text-slate-900"}>
+                  {typeof response === "object" ? response.join(", ") : response}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className={"mt-4 flex flex-1 flex-row items-center justify-end space-x-2"}>
