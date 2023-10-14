@@ -78,7 +78,9 @@ export default function FAQ() {
         {FAQ_DATA.map((faq, index) => (
           <AccordionItem key={`item-${index}`} value={`item-${index + 1}`}>
             <AccordionTrigger>{faq.question}</AccordionTrigger>
-            <AccordionContent>{faq.answer()}</AccordionContent>
+            <AccordionContent className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+              {faq.answer()}
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

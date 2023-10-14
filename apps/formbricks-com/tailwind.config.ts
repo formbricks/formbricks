@@ -37,6 +37,32 @@ export default {
     },
     typography: typographyStyles,
     extend: {
+      keyframes: {
+        "accordion-up": {
+          "0%": {
+            height: "100%",
+            opacity: "1",
+          },
+          "100%": {
+            height: "0",
+            opacity: "0",
+          },
+        },
+        "accordion-down": {
+          "0%": {
+            height: "0",
+            opacity: "0",
+          },
+          "100%": {
+            height: "100%",
+            opacity: "1",
+          },
+        },
+      },
+      animation: {
+        "accordion-up": "accordion-up 0.5s ease-in-out",
+        "accordion-down": "accordion-down 0.5s ease-in-out",
+      },
       boxShadow: {
         glow: "0 0 4px rgb(0 0 0 / 0.1)",
       },
