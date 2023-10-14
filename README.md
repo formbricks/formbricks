@@ -47,7 +47,7 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 
 ## 💪 Mission: Make customer-centric decisions based on data.
 
-Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
+Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product and leverage a significantly higher conversion rate. Gather all insights you can including partial submissions and build conviction for the next product decision. Better data, better business.
 
 ### Features
 
@@ -145,7 +145,7 @@ Let's have a chat about your survey needs and get you started.
 
 ## ⚖️ License
 
-Distributed under the AGPLv3 License. See `LICENSE` for more information.
+Distributed under the AGPLv3 license. See `LICENSE` for more information.
 
 ## 🔒 Security
 
