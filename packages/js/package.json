@@ -1,26 +1,25 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "keywords": [
     "Formbricks",
     "surveys",
     "experience management"
   ],
-  "type": "module",
   "sideEffects": false,
   "files": [
     "dist"
   ],
   "source": "src/index.ts",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "unpkg": "./dist/index.umd.js",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.umd.js"
     }
   },
@@ -29,7 +28,7 @@
     "build": "vite build",
     "go": "vite build --watch",
     "lint": "eslint ./src --fix",
-    "clean": "rimraf .turbo node_modules dist",
+    "clean": "rimraf .turbo node_modules dist coverage",
     "test": "jest"
   },
   "author": "Formbricks <hola@formbricks.com>",

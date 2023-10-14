@@ -17,5 +17,5 @@ export default defineConfig({
       fileName: "index",
     },
   },
-  plugins: [preact(), dts({ rollupTypes: true })],
+  plugins: [preact(), dts()],
 });

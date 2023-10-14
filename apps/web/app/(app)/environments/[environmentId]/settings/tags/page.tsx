@@ -1,5 +1,5 @@
-import EditTagsWrapper from "./EditTagsWrapper";
-import SettingsTitle from "../SettingsTitle";
+import EditTagsWrapper from "./components/EditTagsWrapper";
+import SettingsTitle from "../components/SettingsTitle";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
