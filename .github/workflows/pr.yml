@@ -4,9 +4,6 @@ on:
   pull_request_target:
     branches:
       - main
-    paths-ignore:
-      - "**.md"
-      - ".github/CODEOWNERS"
   merge_group:
   workflow_dispatch:
 
@@ -26,7 +23,7 @@ jobs:
     secrets: inherit
 
   build:
-    name: Build Production
+    name: Build Formbricks-web
     uses: ./.github/workflows/build.yml
     secrets: inherit
 

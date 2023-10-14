@@ -7,7 +7,7 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
 import clsx from "clsx";
 import Link from "next/link";
 
@@ -18,7 +18,7 @@ export default function BestPracticeNavigation() {
       href: "/interview-prompt",
       status: true,
       icon: InterviewPromptIcon,
-      description: "Ask only power users users to book a time in your calendar. Get those juicy details.",
+      description: "Ask only power users to book a time in your calendar. Get those juicy details.",
       category: "Understand Users",
     },
     {

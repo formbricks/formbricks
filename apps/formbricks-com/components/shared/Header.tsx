@@ -2,7 +2,6 @@ import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
 import {
   BaseballIcon,
-  Button,
   CancelSubscriptionIcon,
   CodeBookIcon,
   DogChaserIcon,
@@ -10,7 +9,8 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
+import { Button } from "@formbricks/ui/Button";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -101,6 +101,11 @@ export default function Header() {
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
+      <a href="https://www.producthunt.com/products/formbricks" target="_blank">
+        <div className="bg-[#ff6154] text-center text-sm text-white">
+          We&apos;re launching soon on Product Hunt - get notified 🚀
+        </div>
+      </a>
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
         <div className="flex w-0 flex-1 justify-start">
           <Link href="/">

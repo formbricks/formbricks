@@ -1,15 +1,15 @@
-import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/EditMemberships/TeamActions";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/TeamActions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { Skeleton } from "@formbricks/ui";
+import { Skeleton } from "@formbricks/ui/Skeleton";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import DeleteTeam from "./DeleteTeam";
-import { EditMemberships } from "./EditMemberships";
-import EditTeamName from "./EditTeamName";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import DeleteTeam from "./components/DeleteTeam";
+import { EditMemberships } from "./components/EditMemberships";
+import EditTeamName from "./components/EditTeamName";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 
 const MembersLoading = () => (

@@ -3,13 +3,13 @@
 import { useState } from "react";
 import type { TTemplate } from "@formbricks/types/v1/templates";
 import { useEffect } from "react";
-import { replacePresetPlaceholders } from "@/lib/templates";
+import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { minimalSurvey, templates } from "./templates";
-import PreviewSurvey from "../PreviewSurvey";
+import PreviewSurvey from "../components/PreviewSurvey";
 import TemplateList from "./TemplateList";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import { SearchBox } from "@formbricks/ui";
+import { SearchBox } from "@formbricks/ui/SearchBox";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;

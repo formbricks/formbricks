@@ -35,6 +35,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://documenso.com",
         },
         {
+          name: "dyrector.io",
+          description:
+            "dyrector.io is an open-source continuous delivery & deployment platform with version management.",
+          href: "https://dyrector.io",
+        },
+        {
           name: "Erxes",
           description:
             "The Open-Source HubSpot Alternative. A single XOS enables to create unique and life-changing experiences that work for all types of business.",
@@ -120,6 +126,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Rivet",
           description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",
+        },
+        {
+          name: "Shelf.nu",
+          description:
+            "Open Source Asset and Equipment tracking software that lets you create QR asset labels, manage and overview your assets across locations.",
+          href: "https://www.shelf.nu/",
         },
         {
           name: "Sniffnet",

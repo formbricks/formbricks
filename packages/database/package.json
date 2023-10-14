@@ -25,7 +25,7 @@
     "predev": "pnpm generate"
   },
   "dependencies": {
-    "@prisma/client": "^5.4.1",
+    "@prisma/client": "^5.4.2",
     "@prisma/extension-accelerate": "^0.6.2",
     "dotenv-cli": "^7.3.0"
   },
@@ -33,9 +33,9 @@
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^5.4.1",
+    "prisma": "^5.4.2",
     "prisma-dbml-generator": "^0.10.0",
-    "prisma-json-types-generator": "^3.0.1",
+    "prisma-json-types-generator": "^3.0.2",
     "zod": "^3.22.4",
     "zod-prisma": "^0.5.4"
   }

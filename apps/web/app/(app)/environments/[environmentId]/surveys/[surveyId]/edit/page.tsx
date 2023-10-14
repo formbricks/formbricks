@@ -1,13 +1,13 @@
 export const revalidate = REVALIDATION_INTERVAL;
 import React from "react";
 import { FORMBRICKS_ENCRYPTION_KEY, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import SurveyEditor from "./SurveyEditor";
+import SurveyEditor from "./components/SurveyEditor";
 import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function SurveysEditPage({ params }) {
   const [survey, product, environment, actionClasses, attributeClasses] = await Promise.all([
