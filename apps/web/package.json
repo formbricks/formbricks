@@ -41,7 +41,6 @@
     "mime": "^3.0.0",
     "lucide-react": "^0.284.0",
     "next": "13.5.4",
-    "next-auth": "^4.23.2",
     "nodemailer": "^6.9.5",
     "posthog-js": "^1.82.1",
     "prismjs": "^1.29.0",

@@ -1,11 +1,11 @@
 import { authOptions } from "@formbricks/lib/authOptions";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/SettingsCard";
+import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { prisma } from "@formbricks/database";
 import { NotificationSettings } from "@formbricks/types/users";
 import { getServerSession } from "next-auth";
-import SettingsTitle from "../SettingsTitle";
-import EditAlerts from "./EditAlerts";
-import EditWeeklySummary from "./EditWeeklySummary";
+import SettingsTitle from "../components/SettingsTitle";
+import EditAlerts from "./components/EditAlerts";
+import EditWeeklySummary from "./components/EditWeeklySummary";
 import type { Membership, User } from "./types";
 
 async function getUser(userId: string | undefined): Promise<User> {

@@ -1,5 +1,5 @@
-import { sendEmail } from "@/lib/email";
-import { withEmailTemplate } from "@/lib/email-template";
+import { sendEmail } from "@/app/lib/email";
+import { withEmailTemplate } from "@/app/lib/email-template";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Insights, NotificationResponse, Survey, SurveyResponse } from "./types";
 
@@ -103,8 +103,8 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
       return `
         <div style="display: block; margin-top:3em;">
           <a href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-            survey.id
-          }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
+        survey.id
+      }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
             <h2 style="text-decoration: underline; display:inline;">${survey.name}</h2>
           </a>
           <span style="display: inline; margin-left: 10px; background-color: ${

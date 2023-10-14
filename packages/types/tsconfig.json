@@ -3,6 +3,8 @@
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
-    "composite": true
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./"
   }
 }

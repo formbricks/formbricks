@@ -1,8 +1,8 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { NextResponse } from "next/server";
 import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey, ZSurvey } from "@formbricks/types/v1/surveys";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 

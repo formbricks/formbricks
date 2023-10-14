@@ -3,12 +3,12 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import { DeleteAccount } from "./DeleteAccount";
-import { EditName } from "./EditName";
-import { EditAvatar } from "./EditAvatar";
-import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/AccountSecurity";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import { DeleteAccount } from "./components/DeleteAccount";
+import { EditName } from "./components/EditName";
+import { EditAvatar } from "./components/EditAvatar";
+import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/components/AccountSecurity";
 import { getProfile } from "@formbricks/lib/profile/service";
 
 export default async function ProfileSettingsPage() {

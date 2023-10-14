@@ -1,8 +1,8 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { updateDisplay } from "@formbricks/lib/display/service";
 import { TDisplayInput, ZDisplayUpdate } from "@formbricks/types/v1/displays";
 import { NextResponse } from "next/server";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
