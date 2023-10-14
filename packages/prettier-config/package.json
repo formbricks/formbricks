@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "clean": "rimraf node_modules"
+    "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
     "prettier": "^3.0.3",
