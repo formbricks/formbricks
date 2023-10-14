@@ -1,4 +1,4 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { NextResponse } from "next/server";
 import {
@@ -7,7 +7,7 @@ import {
   updatetAttributeClass,
 } from "@formbricks/lib/attributeClass/service";
 import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/v1/attributeClasses";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
 

@@ -1,6 +1,6 @@
 "use client";
 
-/* import { persistForm, useForm } from "@/lib/forms"; */
+/* import { persistForm, useForm } from "@/app/lib/forms"; */
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { useCallback, useRef, useState } from "react";
 import { HexColorInput, HexColorPicker } from "react-colorful";

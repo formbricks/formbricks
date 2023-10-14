@@ -1,4 +1,4 @@
-import { sendInviteAcceptedEmail } from "@/lib/email";
+import { sendInviteAcceptedEmail } from "@/app/lib/email";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
@@ -9,7 +9,7 @@ import {
   ExpiredContent,
   UsedContent,
   RightAccountContent,
-} from "./InviteContentComponents";
+} from "./components/InviteContentComponents";
 import { env } from "@/env.mjs";
 
 export default async function JoinTeam({ searchParams }) {

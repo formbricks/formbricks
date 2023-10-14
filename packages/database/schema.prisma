@@ -8,8 +8,11 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  //provider = "prisma-dbml-generator"
 }
+
+// generator dbml {
+//  provider = "prisma-dbml-generator"
+// }
 
 generator zod {
   provider      = "zod-prisma"

@@ -1,0 +1,22 @@
+<head>
+  <script type="text/javascript">
+    !(function () {
+      var t = document.createElement("script");
+      (t.type = "text/javascript"),
+        (t.async = !0),
+        (t.src = "https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js");
+      var e = document.getElementsByTagName("script")[0];
+      e.parentNode.insertBefore(t, e),
+        setTimeout(function () {
+          window.formbricks.init({
+            environmentId: "clnojpqde0008qh46cge60d89",
+            apiHost: "http://localhost:3000",
+            debug: true,
+          });
+        }, 500);
+    })();
+  </script>
+</head>
+<body style="background-color: #fff">
+  <p>This is my sample page using the Formbricks JS javascript widget</p>
+</body>
