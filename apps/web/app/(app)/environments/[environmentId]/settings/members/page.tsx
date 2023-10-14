@@ -87,7 +87,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
       </SettingsCard>
       <SettingsCard
         title="Support Email"
-        description="Add an email we share with respondents who couldn't submit feeback.">
+        description="Add an email we share with respondents who couldn't submit feedback.">
         <EditTeamSupportEmail team={team} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard

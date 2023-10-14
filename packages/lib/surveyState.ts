@@ -72,13 +72,13 @@ export class SurveyState {
   }
 
   /**
-   * Adds questionId to the list of failed responses ids
+   * Adds questionId to the failed response accumulator object
    */
   accumulateFailedResponses(questionId: string) {
     this.failedResponses[questionId] = true;
   }
   /**
-   * Remove a questionId from the list of failed responses ids
+   * Remove a questionId from the failed response accumulator object
    */
   removeFailedResponse(questionId: string) {
     delete this.failedResponses[questionId];
