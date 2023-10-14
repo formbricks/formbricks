@@ -18,7 +18,6 @@ export default function WelcomeQuestion({
   isLastQuestion,
   brandColor,
 }: WelcomeQuestionProps) {
-  console.log(question);
   return (
     <div>
       {question.selectedFile && (
