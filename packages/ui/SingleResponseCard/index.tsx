@@ -310,6 +310,20 @@ export default function SingleResponseCard({
               </div>
             );
           })}
+          {survey.hiddenQuestionCard?.enabled && survey.hiddenQuestionCard?.questions?.length && (
+            <div className="mt-6 flex flex-col gap-6">
+              {survey.hiddenQuestionCard.questions.map((question) => {
+                return (
+                  <div key={question}>
+                    <p className="text-sm text-slate-500">Hidden Field: {question}</p>
+                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                      {response.data[question]}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {response.finished && (
             <div className="flex">
               <CheckCircleIcon className="h-6 w-6 text-slate-400" />

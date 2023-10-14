@@ -2,12 +2,13 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Tag } from "@formbricks/ui/Tag";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FC, useState } from "react";
-import { Label } from "@formbricks/ui/Label";
-import { Input } from "@formbricks/ui/Input";
-import { Button } from "@formbricks/ui/Button";
+import toast from "react-hot-toast";
 
 interface HiddenQuestionViewProps {
   localSurvey: TSurveyWithAnalytics;
@@ -66,7 +67,7 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Hidden Fields Card</p>
+                <p className="text-sm font-semibold">Hidden Fields</p>
               </div>
             </div>
 
@@ -84,22 +85,53 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
-          <div className="flex gap-2">
-            {localSurvey.hiddenQuestionCard?.questions?.map((question, questionIdx) => {
+          <div className="flex gap-2 bg-gray-100 px-2 py-4">
+            {localSurvey.hiddenQuestionCard?.questions?.map((question) => {
               return (
-                <div key={question} className="rounded-full bg-black p-2 text-white">
-                  <p>{question}</p>
-                </div>
+                <Tag
+                  key={question}
+                  onDelete={() => {
+                    updateSurvey({
+                      questions: localSurvey.hiddenQuestionCard?.questions?.filter((q) => q !== question),
+                    });
+                  }}
+                  tagId={question}
+                  tagName={question}
+                  tags={[]}
+                  setTagsState={(tags) => {}}
+                />
               );
             })}
           </div>
           <form
+            className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
+              if (hiddenQuestion.trim() === "") {
+                return toast.error("Please enter a question");
+              }
+              // validation
+              // no duplicate questions
+              if (
+                localSurvey.hiddenQuestionCard?.questions?.findIndex(
+                  (q) => q.toLowerCase() === hiddenQuestion.toLowerCase()
+                ) !== -1
+              ) {
+                return toast.error("Question already exists");
+              }
+              // no key words -- userId & suid & existing question ids
+              if (
+                ["userId", "suid"].includes(hiddenQuestion) ||
+                localSurvey.questions.findIndex((q) => q.id === hiddenQuestion) !== -1
+              ) {
+                return toast.error("Question not allowed");
+              }
+
               updateSurvey({
                 questions: [...(localSurvey.hiddenQuestionCard?.questions || []), hiddenQuestion],
                 enabled: true,
               });
+              setHiddenQuestion("");
             }}>
             <Label htmlFor="headline">Hidden Question</Label>
             <div className="mt-2">
@@ -108,11 +140,10 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
                 id="headline"
                 name="headline"
                 value={hiddenQuestion}
-                onChange={(e) => setHiddenQuestion(e.target.value)}
-                isInvalid={hiddenQuestion.trim() === ""}
+                onChange={(e) => setHiddenQuestion(e.target.value.trim())}
+                placeholder="hidden"
               />
             </div>
-            <Button>Add</Button>
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
