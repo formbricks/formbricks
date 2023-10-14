@@ -1,5 +1,5 @@
 import { authOptions } from "@formbricks/lib/authOptions";
-import { hasTeamAccess } from "@/lib/api/apiHelper";
+import { hasTeamAccess } from "@/app/lib/api/apiHelper";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProduct } from "@formbricks/lib/product/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/v1/errors";

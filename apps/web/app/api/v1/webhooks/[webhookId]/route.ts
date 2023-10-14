@@ -1,4 +1,4 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { deleteWebhook, getWebhook } from "@formbricks/lib/webhook/service";
 import { headers } from "next/headers";

@@ -1,5 +1,5 @@
 import { authOptions } from "@formbricks/lib/authOptions";
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import * as xlsx from "xlsx";

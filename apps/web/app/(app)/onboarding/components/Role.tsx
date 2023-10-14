@@ -3,7 +3,7 @@
 import { cn } from "@formbricks/lib/cn";
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
-import { createResponse, formbricksEnabled } from "@/lib/formbricks";
+import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
 import { TProfile } from "@formbricks/types/v1/profile";
 import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";

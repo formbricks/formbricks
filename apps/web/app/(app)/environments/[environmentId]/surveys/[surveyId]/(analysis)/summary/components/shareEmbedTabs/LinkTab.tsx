@@ -1,7 +1,7 @@
 "use client";
 
 import toast from "react-hot-toast";
-import { SurveyInline } from "@/components/shared/Survey";
+import { SurveyInline } from "@/app/components/shared/Survey";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
