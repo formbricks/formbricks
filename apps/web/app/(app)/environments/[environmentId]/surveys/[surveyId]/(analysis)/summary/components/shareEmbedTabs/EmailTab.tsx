@@ -370,14 +370,8 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
     case QuestionType.Welcome:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
-          {firstQuestion.selectedFile && (
-            <Image
-              src={firstQuestion.selectedFile}
-              className="mb-4"
-              width={75}
-              height={75}
-              alt="Company Logo"
-            />
+          {firstQuestion.fileUrl && (
+            <Image src={firstQuestion.fileUrl} className="mb-4" width={75} height={75} alt="Company Logo" />
           )}
 
           <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">

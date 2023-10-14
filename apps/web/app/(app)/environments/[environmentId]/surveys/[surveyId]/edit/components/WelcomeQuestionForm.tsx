@@ -10,8 +10,6 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import FileInput from "@formbricks/ui/FileInput";
 
-// import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
-
 interface WelcomeQuestionFormProps {
   localSurvey: TSurveyWithAnalytics;
   question: TSurveyWelcomeQuestion;
@@ -68,11 +66,11 @@ export default function WelcomeQuestionForm({
       </div>
       <div className="mt-3 flex w-full items-center justify-center">
         <FileInput
-          question={question}
-          questionIdx={questionIdx}
-          updateQuestion={updateQuestion}
           allowedFileExtensions={["png", "jpeg", "jpg"]}
           environmentId={environmentId}
+          onFileUpload={(url: string) => {
+            updateQuestion(questionIdx, { fileUrl: url });
+          }}
         />
       </div>
       <div className="mt-3 flex justify-between gap-8">
