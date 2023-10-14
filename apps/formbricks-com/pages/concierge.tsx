@@ -83,12 +83,13 @@ const ConciergePage = () => {
           </div> */}
           <div className="px-6">
             <Button
-              variant="darkCTA"
-              className="w-full justify-center"
-              href="https://cal.com/johannes/kick-off"
-              target="_blank">
-              Schedule free Kick-Off call
-            </Button>
+            variant="highlight"
+            className="w-full justify-center"
+            onClick={() => {
+              router.push("https://cal.com/johannes/kick-off")
+            }}>
+            Schedule a free Kick-off call
+          </Button>
           </div>
         </div>
         <div className="!mt-0 rounded-xl">
