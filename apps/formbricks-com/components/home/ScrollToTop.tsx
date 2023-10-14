@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { HiOutlineArrowUp } from "react-icons/hi2";
-import throttle from "lodash/throttle";
 import { Button } from "@formbricks/ui/Button";
+import { ArrowUpIcon } from "@heroicons/react/24/solid";
+import throttle from "lodash/throttle";
+import { useCallback, useEffect, useState } from "react";
 
 const ScrollToTopButton = () => {
   const [visible, setVisible] = useState(false);
@@ -33,9 +33,9 @@ const ScrollToTopButton = () => {
   return (
     <div className="fixed bottom-20 right-10 z-50" style={{ display: visible ? "inline" : "none" }}>
       <Button
-        className={"flex w-12 items-center justify-center px-1 py-2 opacity-50 hover:opacity-100"}
+        className="flex w-12 items-center justify-center bg-slate-900/10 px-1 py-2 hover:bg-slate-900/20 hover:opacity-100 dark:bg-slate-50/5 dark:hover:bg-slate-50/30"
         onClick={scrollToTop}>
-        <HiOutlineArrowUp size={25} />
+        <ArrowUpIcon className="h-6 w-6 text-slate-900 dark:text-slate-50" />
       </Button>
     </div>
   );
