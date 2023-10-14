@@ -772,8 +772,8 @@ importers:
         specifier: 18.2.13
         version: 18.2.13
       typescript:
-        specifier: ^5.0.2
-        version: 5.0.4
+        specifier: ^5.2.2
+        version: 5.2.2
 
   packages/types:
     dependencies:
