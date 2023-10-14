@@ -108,9 +108,6 @@ importers:
       '@tailwindcss/typography':
         specifier: ^0.5.10
         version: 0.5.10(tailwindcss@3.3.3)
-      '@types/node':
-        specifier: 20.6.0
-        version: 20.6.0
       '@types/react-highlight-words':
         specifier: ^0.16.5
         version: 0.16.5
@@ -754,7 +751,7 @@ importers:
         specifier: 18.2.13
         version: 18.2.13
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.1.6
         version: 5.2.2
 
   packages/types:
@@ -8861,10 +8858,6 @@ packages:
 
   /@types/node@16.18.58:
     resolution: {integrity: sha512-YGncyA25/MaVtQkjWW9r0EFBukZ+JulsLcVZBlGUfIb96OBMjkoRWwQo5IEWJ8Fj06Go3GHw+bjYDitv6BaGsA==}
-
-  /@types/node@20.6.0:
-    resolution: {integrity: sha512-najjVq5KN2vsH2U/xyh2opaSEz6cZMR2SetLIlxlj08nOcmPOemJmUK2o4kUzfLqfrWE0PIrNeE16XhYDd3nqg==}
-    dev: false
 
   /@types/node@20.7.0:
     resolution: {integrity: sha512-zI22/pJW2wUZOVyguFaUL1HABdmSVxpXrzIqkjsHmyUjNhPoWM1CKfvVuXfetHhIok4RY573cqS0mZ1SJEnoTg==}
