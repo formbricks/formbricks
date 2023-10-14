@@ -1,5 +1,5 @@
-import { getSessionUser, isAdminOrOwner } from "@/lib/api/apiHelper";
-import { sendInviteMemberEmail } from "@/lib/email";
+import { getSessionUser, isAdminOrOwner } from "@/app/lib/api/apiHelper";
+import { sendInviteMemberEmail } from "@/app/lib/email";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";

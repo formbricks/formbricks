@@ -2,7 +2,7 @@ import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { createDemoProduct } from "@formbricks/lib/team/service";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 
 export async function POST(_: Request, { params }: { params: { teamId: string } }) {
   // Check Authentication
