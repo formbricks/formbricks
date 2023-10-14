@@ -24,6 +24,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isLight } from "@/app/lib/utils";
 import { CornerDownLeft } from "lucide-react";
+import Image from "next/image";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -369,11 +370,12 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
     case QuestionType.Welcome:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
-          {firstQuestion.companyLogo && (
-            <img
-              src={firstQuestion.companyLogo}
+          {firstQuestion.selectedFile && (
+            <Image
+              src={firstQuestion.selectedFile}
               className="mb-4"
-              style={{ maxWidth: "75px", maxHeight: "75px" }}
+              width={75}
+              height={75}
               alt="Company Logo"
             />
           )}

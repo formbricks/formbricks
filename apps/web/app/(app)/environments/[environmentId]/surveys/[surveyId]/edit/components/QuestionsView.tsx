@@ -157,8 +157,6 @@ export default function QuestionsView({
   };
 
   const addQuestion = (question: any) => {
-    console.log(question);
-
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;

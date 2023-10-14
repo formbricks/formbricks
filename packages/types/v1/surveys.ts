@@ -226,7 +226,7 @@ export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
 export const ZSurveyWelcomeQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Welcome),
   html: z.string().optional(),
-  companyLogo: z.string().optional(),
+  selectedFile: z.string().optional(),
   buttonUrl: z.string().optional(),
   timeToFinish: z.boolean().default(false),
   logic: z.array(ZSurveyCTALogic).optional(),
