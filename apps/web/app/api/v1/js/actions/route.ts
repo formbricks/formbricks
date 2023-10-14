@@ -1,5 +1,5 @@
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { createAction } from "@formbricks/lib/action/service";
 import { ZActionInput } from "@formbricks/types/v1/actions";
 import { NextResponse } from "next/server";

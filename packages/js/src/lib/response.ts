@@ -4,7 +4,7 @@ import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (
   responseInput: TResponseInput,
-  config
+  config: TJsConfig
 ): Promise<Result<TResponse, NetworkError>> => {
   const url = `${config.apiHost}/api/v1/client/responses`;
 

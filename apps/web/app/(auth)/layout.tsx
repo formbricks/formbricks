@@ -1,4 +1,4 @@
-import { PHProvider, PostHogPageview } from "../PostHogClient";
+import { PHProvider, PostHogPageview } from "../components/PostHogClient";
 import { Suspense } from "react";
 import { NoMobileOverlay } from "@formbricks/ui/NoMobileOverlay";
 

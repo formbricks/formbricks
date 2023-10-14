@@ -1,4 +1,4 @@
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationEmail } from "@/app/lib/email";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 

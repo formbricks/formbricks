@@ -1,5 +1,10 @@
 {
   "extends": "@formbricks/tsconfig/js-library.json",
-  "include": ["**/*.ts", "tsup.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "package.json"],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
+  }
 }
