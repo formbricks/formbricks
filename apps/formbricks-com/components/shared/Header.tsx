@@ -126,15 +126,15 @@ export default function Header() {
                 <Popover.Button
                   className={clsx(
                     open
-                      ? "text-slate-600 dark:text-slate-400 "
-                      : "text-slate-400  hover:text-slate-900  dark:hover:text-slate-100",
-                    "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
+                      ? "text-slate-600 dark:text-slate-100"
+                      : "text-slate-400 hover:text-slate-900 dark:hover:text-slate-100",
+                    "group inline-flex items-center rounded-md text-base font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
                   )}>
                   <span className="text-sm lg:text-base">Best Practices</span>
                   <ChevronDownIcon
                     className={clsx(
-                      open ? "text-slate-600" : "text-slate-400",
-                      "ml-2 h-5 w-5 group-hover:text-slate-500"
+                      open ? "text-slate-600 dark:text-slate-100" : "text-slate-400",
+                      "ml-2 h-5 w-5 group-hover:text-slate-900 dark:group-hover:text-slate-100"
                     )}
                     aria-hidden="true"
                   />
@@ -256,17 +256,17 @@ export default function Header() {
  */}
           <Link
             href="/pricing"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-900 dark:hover:text-slate-100  lg:text-base">
             Pricing
           </Link>
           <Link
             href="/docs"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-900 dark:hover:text-slate-100  lg:text-base">
             Docs
           </Link>
           <Link
             href="/blog"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-900 dark:hover:text-slate-100  lg:text-base">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
           {/*           <Link
@@ -277,7 +277,7 @@ export default function Header() {
 
           <Link
             href="/concierge"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-900 dark:hover:text-slate-100  lg:text-base">
             Concierge
           </Link>
         </Popover.Group>
