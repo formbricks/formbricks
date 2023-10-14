@@ -314,12 +314,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@aws-sdk/client-s3':
-        specifier: ^3.418.0
-        version: 3.418.0
-      '@aws-sdk/s3-request-presigner':
-        specifier: ^3.418.0
-        version: 3.418.0
       '@formbricks/api':
         specifier: workspace:*
         version: link:../../packages/api
@@ -629,6 +623,12 @@ importers:
 
   packages/lib:
     dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.418.0
+        version: 3.418.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.418.0
+        version: 3.418.0
       '@formbricks/database':
         specifier: '*'
         version: link:../database
