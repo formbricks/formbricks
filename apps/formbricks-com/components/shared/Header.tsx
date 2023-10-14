@@ -374,7 +374,7 @@ export default function Header() {
                   </div>
                 )}
                 <Link href="/concierge">Concierge</Link>
-                <Link href="#pricing">Pricing</Link>
+                <Link href="/pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
                 {/*   <Link href="/careers">Careers</Link> */}
