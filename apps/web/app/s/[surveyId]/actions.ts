@@ -15,7 +15,7 @@ interface ISurveryPinValidationResponse {
 }
 
 import { ISurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import { sendLinkSurveyToVerifiedEmail } from "@/lib/email";
+import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey } from "@formbricks/types/v1/surveys";
