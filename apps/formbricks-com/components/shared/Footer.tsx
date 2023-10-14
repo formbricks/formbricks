@@ -36,6 +36,8 @@ const navigation = {
 };
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer
       className="mt-32 bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-800"
@@ -51,7 +53,7 @@ export default function Footer() {
         <p className="text-base text-slate-500 dark:text-slate-400">Privacy-first Experience Management</p>
         <div className="border-slate-500">
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            Formbricks GmbH &copy; 2022. All rights reserved.
+            Formbricks GmbH &copy; {currentYear}. All rights reserved.
             <br />
             <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link> |{" "}
             <Link href="/terms">Terms</Link> | <Link href="/oss-friends">OSS Friends</Link>

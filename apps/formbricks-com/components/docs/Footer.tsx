@@ -113,10 +113,12 @@ function SocialLink({
 }
 
 function SmallPrint() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="flex flex-col items-center justify-between gap-5 border-t border-slate-900/5 pt-8 dark:border-white/5 sm:flex-row">
       <p className="text-xs text-slate-600 dark:text-slate-400">
-        Formbricks GmbH &copy; 2023. All rights reserved.
+        Formbricks GmbH &copy; {currentYear}. All rights reserved.
       </p>
       <div className="flex gap-4">
         <SocialLink href="https://twitter.com/formbricks" icon={TwitterIcon}>
