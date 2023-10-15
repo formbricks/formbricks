@@ -8,7 +8,6 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import {
   AdjustmentsVerticalIcon,
   BellAlertIcon,
-  ChatBubbleLeftEllipsisIcon,
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
@@ -23,6 +22,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
+import { FaDiscord } from "react-icons/fa";
 
 export default function SettingsNavbar({
   environmentId,
@@ -145,7 +145,7 @@ export default function SettingsNavbar({
           {
             name: "Join Discord",
             href: "https://formbricks.com/discord",
-            icon: ChatBubbleLeftEllipsisIcon,
+            icon: FaDiscord,
             target: "_blank",
             hidden: false,
           },
