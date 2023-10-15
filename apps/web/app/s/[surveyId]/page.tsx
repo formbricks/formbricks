@@ -95,6 +95,21 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   if (userId) {
     person = await getOrCreatePersonByUserId(userId, survey.environmentId);
   }
+const isSurveyPinProtected =Boolean(!!survey && survey.pin)  
+
+if(isSurveyPinProtected){
+  return <LinkSurveyPinScreen
+  survey.ID={survey.id}
+  product={product}
+  personId={person?.id}
+  emailVerificationStatus={emailVerificationStatus}
+  prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+  singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+  singleUseResponse ={singleUseResponse ? singleUseResponse : undefined}
+  webAppUrl={WEBAPP_URL} />
+  
+}
+
 
   return (
     <LinkSurvey
