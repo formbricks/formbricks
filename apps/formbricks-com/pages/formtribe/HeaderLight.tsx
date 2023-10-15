@@ -48,7 +48,7 @@ export default function HeaderLight() {
       </div>
 
       {/* Mobile Menu */}
-      <div className="flex items-center md:hidden">
+      <div className="flex items-center pr-4 md:hidden">
         <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
           <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
             <span>
