@@ -58,6 +58,10 @@ export const env = createEnv({
     AWS_SECRET_KEY: z.string().optional(),
     S3_REGION: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
+    NOTION_OAUTH_CLIENT_ID: z.string().optional(),
+    NOTION_OAUTH_CLIENT_SECRET: z.string().optional(),
+    NOTION_AUTH_URL: z.string().optional(),
+    NOTION_REDIRECT_URI: z.string().optional(),
   },
 
   /*
@@ -119,6 +123,10 @@ export const env = createEnv({
     AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
     S3_REGION: process.env.S3_REGION,
     S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
+    NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
+    NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
+    NOTION_AUTH_URL: process.env.NOTION_AUTH_URL,
+    NOTION_REDIRECT_URI: process.env.NOTION_REDIRECT_URI,
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,

@@ -318,6 +318,7 @@ enum EnvironmentType {
 
 enum IntegrationType {
   googleSheets
+  notion
 }
 
 model Integration {

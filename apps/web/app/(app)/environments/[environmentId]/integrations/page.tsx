@@ -4,8 +4,9 @@ import ZapierLogo from "@/images/zapier-small.png";
 import GoogleSheetsLogo from "@/images/google-sheets-small.png";
 import n8nLogo from "@/images/n8n.png";
 import MakeLogo from "@/images/make-small.png";
-import { Card } from "@formbricks/ui/Card";
+import notionLogo from "@/images/notion.png";
 import Image from "next/image";
+import { Card } from "@formbricks/ui/Card";
 import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -20,9 +21,12 @@ export default async function IntegrationsPage({ params }) {
     getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
   ]);
 
-  const containsGoogleSheetIntegration = integrations.some(
-    (integration) => integration.type === "googleSheets"
-  );
+  const isIntegrationConnected = (type: "googleSheets" | "notion") =>
+    integrations.some((integration) => integration.type === type);
+
+  const containsGoogleSheetIntegration = isIntegrationConnected("googleSheets");
+
+  const containsNotionIntegration = isIntegrationConnected("notion");
 
   const integrationCards = [
     {
@@ -97,6 +101,19 @@ export default async function IntegrationsPage({ params }) {
       label: "Make.com",
       description: "Integrate Formbricks with 1000+ apps via Make",
       icon: <Image src={MakeLogo} alt="Make Logo" />,
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/notion`,
+      connectText: `${containsNotionIntegration ? "Manage" : "Connect"}`,
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/integrations/notion",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Notion",
+      description: "Send data to your Notion database",
+      icon: <Image src={notionLogo} alt="Notion Logo" />,
+      connected: containsNotionIntegration ? true : false,
+      statusText: containsNotionIntegration ? "Connected" : "Not Connected",
     },
   ];
 

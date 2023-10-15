@@ -1,6 +1,7 @@
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import {
   TGoogleSheetIntegration,
+  TGoogleSheetsConfig,
   TGoogleSheetsConfigData,
   TGoogleSpreadsheet,
   TIntegrationInput,
@@ -118,7 +119,7 @@ export default function AddIntegrationModal({
         googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        googleSheetIntegrationData.config!.data.push(integrationData);
+        (googleSheetIntegrationData.config!.data as TGoogleSheetsConfig["data"]).push(integrationData);
       }
       await upsertIntegrationAction(environmentId, googleSheetIntegrationData);
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
