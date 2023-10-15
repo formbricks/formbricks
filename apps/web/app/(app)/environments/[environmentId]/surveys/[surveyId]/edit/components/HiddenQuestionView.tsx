@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestions, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Tag } from "@formbricks/ui/Tag";
@@ -85,47 +85,44 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
-          <div className="flex gap-2 bg-gray-100 px-2 py-4">
-            {localSurvey.hiddenQuestionCard?.questions?.map((question) => {
-              return (
-                <Tag
-                  key={question}
-                  onDelete={() => {
-                    updateSurvey({
-                      questions: localSurvey.hiddenQuestionCard?.questions?.filter((q) => q !== question),
-                    });
-                  }}
-                  tagId={question}
-                  tagName={question}
-                  tags={[]}
-                  setTagsState={(tags) => {}}
-                />
-              );
-            })}
+          <div className="flex gap-2">
+            {localSurvey.hiddenQuestionCard?.questions &&
+            localSurvey.hiddenQuestionCard?.questions?.length > 0 ? (
+              localSurvey.hiddenQuestionCard?.questions?.map((question) => {
+                return (
+                  <Tag
+                    key={question}
+                    onDelete={() => {
+                      updateSurvey({
+                        questions: localSurvey.hiddenQuestionCard?.questions?.filter((q) => q !== question),
+                      });
+                    }}
+                    tagId={question}
+                    tagName={question}
+                    tags={[]}
+                    setTagsState={(tags) => {}}
+                  />
+                );
+              })
+            ) : (
+              <p className="text-sm italic text-gray-500">No hidden fields yet. Add the first one below.</p>
+            )}
           </div>
           <form
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
-              if (hiddenQuestion.trim() === "") {
-                return toast.error("Please enter a question");
-              }
-              // validation
-              // no duplicate questions
-              if (
-                localSurvey.hiddenQuestionCard?.questions?.findIndex(
-                  (q) => q.toLowerCase() === hiddenQuestion.toLowerCase()
-                ) !== -1
-              ) {
-                return toast.error("Question already exists");
-              }
-              // no key words -- userId & suid & existing question ids
-              if (
-                ["userId", "suid"].includes(hiddenQuestion) ||
-                localSurvey.questions.findIndex((q) => q.id === hiddenQuestion) !== -1
-              ) {
-                return toast.error("Question not allowed");
-              }
+
+              const errorMessage = validateHiddenField(
+                // current field
+                hiddenQuestion,
+                // existing fields
+                localSurvey.hiddenQuestionCard?.questions || [],
+                // existing questions
+                localSurvey.questions
+              );
+
+              if (errorMessage !== "") return toast.error(errorMessage);
 
               updateSurvey({
                 questions: [...(localSurvey.hiddenQuestionCard?.questions || []), hiddenQuestion],
@@ -141,7 +138,7 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
                 name="headline"
                 value={hiddenQuestion}
                 onChange={(e) => setHiddenQuestion(e.target.value.trim())}
-                placeholder="hidden"
+                placeholder="Type field id..."
               />
             </div>
           </form>
@@ -152,3 +149,31 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
 };
 
 export default HiddenQuestionView;
+
+const validateHiddenField = (
+  field: string,
+  existingFields: string[],
+  existingQuestions: TSurveyQuestions
+): string => {
+  if (field.trim() === "") {
+    return "Please enter a question";
+  }
+  // no duplicate questions
+  if (existingFields.findIndex((q) => q.toLowerCase() === field.toLowerCase()) !== -1) {
+    return "Question already exists";
+  }
+  // no key words -- userId & suid & existing question ids
+  if (["userId", "suid"].includes(field) || existingQuestions.findIndex((q) => q.id === field) !== -1) {
+    return "Question not allowed";
+  }
+  // no spaced words --> should be valid query param on url
+  if (field.includes(" ")) {
+    return "Question not allowed, avoid using spaces";
+  }
+  // Check if the parameter contains only alphanumeric characters
+  if (!/^[a-zA-Z0-9]+$/.test(field)) {
+    return "Question not allowed, avoid using special characters";
+  }
+
+  return "";
+};
