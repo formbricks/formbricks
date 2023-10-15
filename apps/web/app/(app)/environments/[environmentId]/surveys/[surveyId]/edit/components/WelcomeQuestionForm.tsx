@@ -71,6 +71,7 @@ export default function WelcomeQuestionForm({
           onFileUpload={(url: string) => {
             updateQuestion(questionIdx, { fileUrl: url });
           }}
+          fileUrl={question.fileUrl}
         />
       </div>
       <div className="mt-3 flex justify-between gap-8">
