@@ -1,19 +1,19 @@
 import { ImageResponse } from "next/server";
-import type { NextApiRequest } from "next";
+import { NextRequest } from "next/server";
+
+export const dynamic = "auto";
+export const dynamicParams = true;
+export const revalidate = false;
+export const fetchCache = false;
+
 // App router includes @vercel/og.
 // No need to install it.
 
 export const runtime = "edge";
 
-export default async function GET(req: NextApiRequest) {
-  const url = req.url;
-  let name;
-  let brandColor;
-  if (url) {
-    const searchParams = new URLSearchParams(new URL(url).search);
-    name = searchParams.get("name");
-    brandColor = searchParams.get("brandColor");
-  }
+export default async function GET(req: NextRequest) {
+  let name = req.nextUrl.searchParams.get("surveyId");
+  let brandColor = req.nextUrl.searchParams.get("brandColor");
 
   return new ImageResponse(
     (

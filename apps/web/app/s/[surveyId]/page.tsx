@@ -12,7 +12,6 @@ import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import Head from "next/head";
 
 interface LinkSurveyPageProps {
   params: {
@@ -109,11 +108,9 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   const brandColor = getBrandColorForURL(product.brandColor);
-  const surveyName = getNameForURL((survey.name));
+  const surveyName = getNameForURL(survey.name);
 
-  const ogImgURL = `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
-    survey.id
-  }/og?brandColor=${brandColor}&name=${surveyName}`;
+  const ogImgURL = `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${survey.id}/og?brandColor=${brandColor}&name=${surveyName}`;
 
   metadata = {
     openGraph: {
@@ -135,23 +132,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   return (
     <>
-      <Head>
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:creator" content="@formbricks" />
-        <meta name="twitter:title" content="Formbricks" />
-        <meta name="twitter:description" content="Open-Source In-Product Survey Platform" />
-        <meta name="twitter:image" content={ogImgURL} />
-
-        <meta property="og:title" content="Formbricks" />
-        <meta property="og:description" content="Open-Source In-Product Survey Platform" />
-        <meta property="og:url" content={`${SURVEY_BASE_URL}/${survey.id}`} />
-        <meta property="og:site_name" content="Next.js" />
-        <meta property="og:locale" content="en_US" />
-        <meta property="og:image:url" content={ogImgURL} />
-        <meta property="og:image:alt" content="Survey" />
-        <meta property="og:type" content="website" />
-      </Head>
-
       <LinkSurvey
         survey={survey}
         product={product}
