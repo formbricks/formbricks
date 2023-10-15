@@ -1,6 +1,6 @@
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/notion/actions";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TNotionConfigData, TNotionIntegration } from "@formbricks/types/v1/integrations";

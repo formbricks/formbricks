@@ -1,30 +1,36 @@
 {
   "name": "@formbricks/surveys",
   "private": true,
+  "license": "MIT",
   "version": "0.0.0",
-  "sideEffects": false,
   "type": "module",
+  "sideEffects": false,
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
+    }
   },
   "main": "./dist/index.js",
   "scripts": {
     "dev": "tsc && vite build",
     "build": "tsc && vite build",
-    "go": "tsc && vite build",
+    "go": "vite build --watch",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rimraf .turbo node_modules dist"
   },
   "devDependencies": {
+    "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@preact/preset-vite": "^2.5.0",
+    "@preact/preset-vite": "^2.6.0",
     "autoprefixer": "^10.4.16",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.31",
     "preact": "^10.18.1",
     "tailwindcss": "^3.3.3",
     "terser": "^5.21.0",
-    "typescript": "^5.2.2",
-    "vite": "^4.4.11"
+    "vite": "^4.4.11",
+    "vite-plugin-dts": "^3.6.0"
   }
 }

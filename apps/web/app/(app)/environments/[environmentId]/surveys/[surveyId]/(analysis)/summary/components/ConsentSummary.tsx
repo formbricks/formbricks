@@ -3,7 +3,7 @@ import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
-import { questionTypes } from "@/lib/questions";
+import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface ConsentSummaryProps {

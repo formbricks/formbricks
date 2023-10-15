@@ -125,16 +125,19 @@ export type TNotionDatabase = z.infer<typeof ZNotionDatabase>;
 export const ZIntegrationConfig = z.union([ZGoogleSheetsConfig, ZNotionConfig]);
 export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
 
+export const ZIntegrationType = z.enum(["googleSheets", "notion"]);
+export type TIntegrationType = z.infer<typeof ZIntegrationType>;
+
 export const ZIntegration = z.object({
   id: z.string(),
-  type: z.enum(["googleSheets", "notion"]),
+  type: ZIntegrationType,
   environmentId: z.string(),
   config: ZIntegrationConfig,
 });
 export type TIntegration = z.infer<typeof ZIntegration>;
 
 export const ZIntegrationInput = z.object({
-  type: z.enum(["googleSheets", "notion"]),
+  type: ZIntegrationType,
   config: ZIntegrationConfig,
 });
 

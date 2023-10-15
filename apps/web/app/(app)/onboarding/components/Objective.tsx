@@ -2,7 +2,7 @@
 
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
-import { formbricksEnabled, updateResponse } from "@/lib/formbricks";
+import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
 import { Objective } from "@formbricks/types/templates";
 import { TProfile } from "@formbricks/types/v1/profile";

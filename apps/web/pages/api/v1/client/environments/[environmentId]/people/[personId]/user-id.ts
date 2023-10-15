@@ -1,4 +1,4 @@
-import { getSettings } from "@/lib/api/clientSettings";
+import { getSettings } from "@/app/lib/api/clientSettings";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
