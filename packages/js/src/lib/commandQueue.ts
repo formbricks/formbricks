@@ -1,5 +1,5 @@
 import { ErrorHandler, Result } from "./errors";
-import { checkInitialized } from "./init";
+import { checkInitialized } from "./initialize";
 
 export class CommandQueue {
   private queue: {
@@ -37,6 +37,8 @@ export class CommandQueue {
     while (this.queue.length > 0) {
       const errorHandler = ErrorHandler.getInstance();
       const currentItem = this.queue.shift();
+
+      if (!currentItem) continue;
 
       // make sure formbricks is initialized
       if (currentItem && currentItem.checkInitialized) {

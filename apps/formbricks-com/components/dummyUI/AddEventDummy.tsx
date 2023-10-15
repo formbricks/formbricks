@@ -30,21 +30,21 @@ const DummyUI: React.FC = () => {
     <>
       {triggers.map((triggerEventClassId, idx) => (
         <div className="mt-2" key={idx}>
-          <div className="inline-flex items-center">
+          <div className="flex items-center gap-2">
             <p className="mr-2 w-14 text-right text-sm text-slate-800 dark:text-slate-300">
               {idx === 0 ? "When" : "or"}
             </p>
             <Select
               value={triggerEventClassId}
               onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
-              <SelectTrigger className="w-[180px] text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
-                <SelectValue className="" />
+              <SelectTrigger className="xs:w-[180px] xs:text-base w-full p-1.5 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {eventClasses.map((eventClass) => (
                   <SelectItem
                     key={eventClass.id}
-                    className="px-0.5 py-1 text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                    className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
                     value={eventClass.id}>
                     {eventClass.name}
                   </SelectItem>
@@ -57,10 +57,10 @@ const DummyUI: React.FC = () => {
           </div>
         </div>
       ))}
-      <div className="p-3">
+      <div className="w-fit p-3">
         <Button
           variant="secondary"
-          className="dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+          className="xs:text-base w-fit text-xs dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
           onClick={() => {
             addTriggerEvent();
           }}>

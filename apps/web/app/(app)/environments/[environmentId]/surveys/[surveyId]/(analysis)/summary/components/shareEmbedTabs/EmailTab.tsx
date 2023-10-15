@@ -7,7 +7,7 @@ import { QuestionType } from "@formbricks/types/questions";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { AuthenticationError } from "@formbricks/types/v1/errors";
 import { sendEmailAction } from "../../actions";
-import CodeBlock from "@/components/shared/CodeBlock";
+import CodeBlock from "@/app/components/shared/CodeBlock";
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import {
   Column,
@@ -22,7 +22,7 @@ import {
 } from "@react-email/components";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { isLight } from "@/lib/utils";
+import { isLight } from "@/app/lib/utils";
 
 interface EmailTabProps {
   survey: TSurvey;

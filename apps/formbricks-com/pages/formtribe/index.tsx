@@ -1,6 +1,6 @@
 import LayoutLight from "@/pages/formtribe/LayoutLight";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { Button } from "@formbricks/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import Head from "next/head";
 import Image from "next/image";
 
@@ -269,12 +269,12 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "1250",
+    points: "1600",
     link: "https://github.com/gupta-piyush19",
   },
   {
     name: "Suman",
-    points: "600",
+    points: "700",
   },
   {
     name: "Subhdeep",
@@ -302,7 +302,7 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "1300",
+    points: "1400",
     link: "https://github.com/KapadiaNaitik",
   },
   {
@@ -335,7 +335,7 @@ const Leaderboard = [
   },
   {
     name: "Eldemarkki",
-    points: "500",
+    points: "600",
   },
   {
     name: "Suyash",
@@ -355,16 +355,16 @@ const Leaderboard = [
   },
   {
     name: "Adarsh Malviya",
-    points: "150",
+    points: "450",
   },
   {
     name: "Aditya Deshlahre",
-    points: "870",
+    points: "1120",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "855",
+    points: "955",
   },
   {
     name: "Sagnik Sahoo",
@@ -372,7 +372,7 @@ const Leaderboard = [
   },
   {
     name: "Prasoon Mahawar",
-    points: "950",
+    points: "1600",
   },
   {
     name: "Dushmanta",
@@ -388,11 +388,11 @@ const Leaderboard = [
   },
   {
     name: "Rohit Mondal",
-    points: "100",
+    points: "155",
   },
   {
     name: "noobcoder",
-    points: "100",
+    points: "250",
   },
   {
     name: "Rayyan Alam (Rayy)",
@@ -412,7 +412,7 @@ const Leaderboard = [
   },
   {
     name: "Anjaneya Gupta",
-    points: "300",
+    points: "650",
   },
   {
     name: "Sachin Kuber",
@@ -428,7 +428,7 @@ const Leaderboard = [
   },
   {
     name: "maciek",
-    points: "350",
+    points: "650",
   },
   {
     name: "yatharth",
@@ -449,7 +449,7 @@ const Leaderboard = [
   },
   {
     name: "Abhinav Arya",
-    points: "150",
+    points: "300",
     link: "github.com/itzabhinavarya",
   },
   {
@@ -458,7 +458,7 @@ const Leaderboard = [
   },
   {
     name: "Rohan Gupta",
-    points: "600",
+    points: "1150",
     link: "https://github.com/rohan9896",
   },
   {
@@ -472,7 +472,7 @@ const Leaderboard = [
   },
   {
     name: "Joyal",
-    points: "550",
+    points: "650",
     link: "https://github.com/joyal007",
   },
   {
@@ -494,6 +494,30 @@ const Leaderboard = [
   {
     name: "0xCgn",
     points: "100",
+  },
+  {
+    name: "bitnagar",
+    points: "100",
+  },
+  {
+    name: "bitnagar",
+    points: "400",
+  },
+  {
+    name: "United1l",
+    points: "250",
+  },
+  {
+    name: "Arya Bhosale",
+    points: "200",
+  },
+  {
+    name: "Bhavya",
+    points: "100",
+  },
+  {
+    name: "Bilal Mirza",
+    points: "150",
   },
 ];
 

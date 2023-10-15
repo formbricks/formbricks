@@ -1,9 +1,9 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivitySection";
-import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/(attributeSection)/AttributesSection";
-import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponseSection";
-import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/HeadingSection";
+import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivitySection";
+import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/AttributesSection";
+import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponseSection";
+import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/HeadingSection";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";

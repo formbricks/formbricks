@@ -1,19 +1,18 @@
-import { TActionInput } from "@formbricks/types/v1/actions";
+import { TJsActionInput, TSurveyWithTriggers } from "@formbricks/types/v1/js";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
 export const trackAction = async (
   name: string,
-  properties: TActionInput["properties"] = {}
+  properties: TJsActionInput["properties"] = {}
 ): Promise<Result<void, NetworkError>> => {
-  const input: TActionInput = {
+  const input: TJsActionInput = {
     environmentId: config.get().environmentId,
-    sessionId: config.get().state?.session?.id,
+    sessionId: config.get().state?.session?.id ?? "",
     name,
     properties: properties || {},
   };
@@ -44,7 +43,7 @@ export const trackAction = async (
   // get a list of surveys that are collecting insights
   const activeSurveys = config.get().state?.surveys;
 
-  if (activeSurveys.length > 0) {
+  if (!!activeSurveys && activeSurveys.length > 0) {
     triggerSurvey(name, activeSurveys);
   } else {
     logger.debug("No active surveys to display");
@@ -53,10 +52,10 @@ export const trackAction = async (
   return okVoid();
 };
 
-export const triggerSurvey = (actionName: string, activeSurveys: TSurvey[]): void => {
+export const triggerSurvey = (actionName: string, activeSurveys: TSurveyWithTriggers[]): void => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
-      if (trigger && typeof trigger !== "string" && trigger.name === actionName) {
+      if (typeof trigger === "string" ? trigger === actionName : trigger.name === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
         renderWidget(survey);
         return;

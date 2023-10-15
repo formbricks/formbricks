@@ -47,16 +47,19 @@ export type TGoogleSheetIntegration = z.infer<typeof ZGoogleSheetIntegration>;
 export const ZIntegrationConfig = ZGoogleSheetsConfig;
 export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
 
+export const ZIntegrationType = z.enum(["googleSheets"]);
+export type TIntegrationType = z.infer<typeof ZIntegrationType>;
+
 export const ZIntegration = z.object({
   id: z.string(),
-  type: z.enum(["googleSheets"]),
+  type: ZIntegrationType,
   environmentId: z.string(),
   config: ZIntegrationConfig,
 });
 export type TIntegration = z.infer<typeof ZIntegration>;
 
 export const ZIntegrationInput = z.object({
-  type: z.enum(["googleSheets"]),
+  type: ZIntegrationType,
   config: ZIntegrationConfig,
 });
 export type TIntegrationInput = z.infer<typeof ZIntegrationInput>;
