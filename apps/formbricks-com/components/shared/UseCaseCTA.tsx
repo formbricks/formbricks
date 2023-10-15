@@ -20,9 +20,8 @@ export default function UseCaseHeader({ href }: UseCaseCTAProps) {
             router.push("https://app.formbricks.com/auth/signup");
             /* plausible("BestPractice_SubPage_CTA_TryItNow"); */
           }}>
-          Try it now
+          Try it now, it&apos;s free
         </Button>
-        <p className="text-xs text-slate-400">It&apos;s free</p>
       </div>
     </div>
   );
