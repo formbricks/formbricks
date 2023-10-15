@@ -9,6 +9,7 @@ export { ZResponseData, ZResponsePersonAttributes, ZResponseMeta } from "@formbr
 export {
   ZSurveyQuestions,
   ZSurveyThankYouCard,
+  ZSurveyHiddenFields,
   ZSurveyClosedMessage,
   ZSurveyProductOverwrites,
   ZSurveyVerifyEmail,

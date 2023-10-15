@@ -310,6 +310,18 @@ export default function SingleResponseCard({
               </div>
             );
           })}
+          {survey.hiddenFields?.enabled && survey.hiddenFields?.fieldIds?.length && (
+            <div className="mt-6 flex flex-col gap-6">
+              {survey.hiddenFields.fieldIds.map((field) => {
+                return (
+                  <div key={field}>
+                    <p className="text-sm text-slate-500">Hidden Field: {field}</p>
+                    <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.data[field]}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {response.finished && (
             <div className="flex">
               <CheckCircleIcon className="h-6 w-6 text-slate-400" />
