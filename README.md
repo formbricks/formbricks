@@ -45,9 +45,9 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 
 **Try it out in the cloud at [formbricks.com](https://formbricks.com)**
 
-## 💪 Mission: Make customer-centric decisions based on data.
+## 💪 Mission: Use data to make customer-centric decisions.
 
-Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
+Making smarter business decisions is made easier with the aid of Formbricks when you employ best practices from data-driven work and experience management. Ask users their opinions while they use your product to increase conversion rates considerably. Build conviction for the next product decision by gathering all the information you can, including partial submissions. Improved data will improve business.
 
 ### Features
 
