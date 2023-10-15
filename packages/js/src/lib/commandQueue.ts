@@ -41,7 +41,7 @@ export class CommandQueue {
       if (!currentItem) continue;
 
       // make sure formbricks is initialized
-      if (currentItem && currentItem.checkInitialized) {
+      if (currentItem.checkInitialized) {
         const initResult = checkInitialized();
 
         if (initResult && initResult.ok !== true) errorHandler.handle(initResult.error);
