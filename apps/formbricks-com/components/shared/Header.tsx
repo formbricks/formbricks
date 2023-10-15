@@ -128,7 +128,7 @@ export default function Header() {
                     open
                       ? "text-slate-600 dark:text-slate-400 "
                       : "text-slate-400  hover:text-slate-900  dark:hover:text-slate-100",
-                    "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
+                    "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-300 focus:outline-none dark:hover:text-slate-50"
                   )}>
                   <span className="text-sm lg:text-base">Best Practices</span>
                   <ChevronDownIcon
