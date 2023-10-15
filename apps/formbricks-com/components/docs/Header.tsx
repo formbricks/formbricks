@@ -1,15 +1,15 @@
 "use client";
 
-import { forwardRef } from "react";
-import Link from "next/link";
 import clsx from "clsx";
 import { motion, useScroll, useTransform } from "framer-motion";
+import Link from "next/link";
+import { forwardRef } from "react";
 
+import { FooterLogo } from "@/components/shared/Logo";
 import { Button } from "./Button";
+import { MobileNavigation, useIsInsideMobileNavigation, useMobileNavigationStore } from "./MobileNavigation";
 import { MobileSearch, Search } from "./Search";
 import { ThemeToggle } from "./ThemeToggle";
-import { FooterLogo } from "@/components/shared/Logo";
-import { useMobileNavigationStore, useIsInsideMobileNavigation, MobileNavigation } from "./MobileNavigation";
 
 function TopLevelNavItem({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -65,9 +65,9 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
         </Link>
       </div>
       <div className="flex items-center gap-6">
-        <nav className="hidden md:block">
+        <nav className="hidden lg:block">
           <ul role="list" className="flex items-center gap-8">
-            <TopLevelNavItem href="/docs/introduction/what-is-formbricks">Documentation</TopLevelNavItem>
+          
             <TopLevelNavItem href="https://github.com/formbricks/formbricks">
               Star us on GitHub
             </TopLevelNavItem>
