@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZSurveyHiddenFieldsCard, ZSurveyQuestions, ZSurveyThankYouCard } from "./surveys";
+import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard } from "./surveys";
 
 const ZTemplateObjective = z.enum([
   "increase_user_adoption",
@@ -22,7 +22,7 @@ export const ZTemplate = z.object({
     name: z.string(),
     questions: ZSurveyQuestions,
     thankYouCard: ZSurveyThankYouCard,
-    hiddenFieldsCard: ZSurveyHiddenFieldsCard,
+    hiddenFields: ZSurveyHiddenFields,
   }),
 });
 

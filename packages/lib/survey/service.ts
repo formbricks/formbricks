@@ -39,7 +39,7 @@ export const selectSurvey = {
   status: true,
   questions: true,
   thankYouCard: true,
-  hiddenFieldsCard: true,
+  hiddenFields: true,
   displayOption: true,
   recontactDays: true,
   autoClose: true,

@@ -120,8 +120,8 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
               }
               return null;
             })}
-            {survey.hiddenFieldsCard?.enabled &&
-              survey.hiddenFieldsCard.fieldIds?.map((question) => {
+            {survey.hiddenFields?.enabled &&
+              survey.hiddenFields.fieldIds?.map((question) => {
                 return (
                   <HiddenFieldsSummary
                     environment={environment}

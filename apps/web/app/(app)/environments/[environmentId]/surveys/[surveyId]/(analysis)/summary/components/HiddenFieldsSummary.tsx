@@ -19,7 +19,7 @@ interface HiddenFieldsSummaryProps {
 const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, responses, survey, question }) => {
   const hiddenFieldResponses = useMemo(
     () =>
-      survey.hiddenFieldsCard?.fieldIds?.map((question) => {
+      survey.hiddenFields?.fieldIds?.map((question) => {
         const questionResponses = responses
           .filter((response) => question in response.data)
           .map((r) => ({
@@ -33,7 +33,7 @@ const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, respon
           responses: questionResponses,
         };
       }),
-    [responses, survey.hiddenFieldsCard?.fieldIds]
+    [responses, survey.hiddenFields?.fieldIds]
   );
 
   return (

@@ -8,7 +8,7 @@ export const ZSurveyThankYouCard = z.object({
   subheader: z.optional(z.string()),
 });
 
-export const ZSurveyHiddenFieldsCard = z.object({
+export const ZSurveyHiddenFields = z.object({
   enabled: z.boolean(),
   fieldIds: z.optional(z.array(z.string())),
 });
@@ -54,7 +54,7 @@ export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
-export type TSurveyHiddenFieldsCard = z.infer<typeof ZSurveyHiddenFieldsCard>;
+export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 
 export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
@@ -287,7 +287,7 @@ export const ZSurvey = z.object({
   recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
-  hiddenFieldsCard: ZSurveyHiddenFieldsCard,
+  hiddenFields: ZSurveyHiddenFields,
   delay: z.number(),
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
@@ -307,7 +307,7 @@ export const ZSurveyInput = z.object({
   recontactDays: z.number().optional(),
   questions: ZSurveyQuestions.optional(),
   thankYouCard: ZSurveyThankYouCard.optional(),
-  hiddenFieldsCard: ZSurveyHiddenFieldsCard,
+  hiddenFields: ZSurveyHiddenFields,
   delay: z.number().optional(),
   autoComplete: z.number().optional(),
   closeOnDate: z.date().optional(),

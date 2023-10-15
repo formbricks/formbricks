@@ -222,7 +222,7 @@ export default function QuestionsView({
         />
 
         {localSurvey.type === "link" ? (
-          !localSurvey.hiddenFieldsCard || localSurvey.hiddenFieldsCard?.enabled ? (
+          !localSurvey.hiddenFields || localSurvey.hiddenFields?.enabled ? (
             <HiddenFieldsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}

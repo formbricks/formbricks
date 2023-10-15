@@ -1,11 +1,7 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import {
-  TSurveyHiddenFieldsCard,
-  TSurveyQuestions,
-  TSurveyWithAnalytics,
-} from "@formbricks/types/v1/surveys";
+import { TSurveyHiddenFields, TSurveyQuestions, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Tag } from "@formbricks/ui/Tag";
@@ -38,11 +34,11 @@ const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
     }
   };
 
-  const updateSurvey = (data: TSurveyHiddenFieldsCard) => {
+  const updateSurvey = (data: TSurveyHiddenFields) => {
     setLocalSurvey({
       ...localSurvey,
-      hiddenFieldsCard: {
-        ...localSurvey.hiddenFieldsCard,
+      hiddenFields: {
+        ...localSurvey.hiddenFields,
         ...data,
       },
     });
@@ -90,15 +86,15 @@ const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="flex gap-2">
-            {localSurvey.hiddenFieldsCard?.fieldIds && localSurvey.hiddenFieldsCard?.fieldIds?.length > 0 ? (
-              localSurvey.hiddenFieldsCard?.fieldIds?.map((question) => {
+            {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
+              localSurvey.hiddenFields?.fieldIds?.map((question) => {
                 return (
                   <Tag
                     key={question}
                     onDelete={() => {
                       updateSurvey({
                         enabled: true,
-                        fieldIds: localSurvey.hiddenFieldsCard?.fieldIds?.filter((q) => q !== question),
+                        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== question),
                       });
                     }}
                     tagId={question}
@@ -119,7 +115,7 @@ const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
                 // current field
                 hiddenField,
                 // existing fields
-                localSurvey.hiddenFieldsCard?.fieldIds || [],
+                localSurvey.hiddenFields?.fieldIds || [],
                 // existing questions
                 localSurvey.questions
               );
@@ -127,7 +123,7 @@ const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
               if (errorMessage !== "") return toast.error(errorMessage);
 
               updateSurvey({
-                fieldIds: [...(localSurvey.hiddenFieldsCard?.fieldIds || []), hiddenField],
+                fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
                 enabled: true,
               });
               setHiddenField("");
