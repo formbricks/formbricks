@@ -176,7 +176,7 @@ export const logoutPerson = async (): Promise<void> => {
   deinitalize();
 };
 
-export const resetPerson = async () => {
+export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
   const syncParams = {
     environmentId: config.get().environmentId,
