@@ -4,20 +4,21 @@ import { cn } from "@formbricks/lib/cn";
 import { TSurveyHiddenFields, TSurveyQuestions, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import { Tag } from "@formbricks/ui/Tag";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FC, useState } from "react";
 import toast from "react-hot-toast";
 
-interface HiddenFieldsViewProps {
+interface HiddenFieldsCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
 }
 
-const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
+const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
   activeQuestionId,
   localSurvey,
   setActiveQuestionId,
@@ -72,13 +73,14 @@ const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <TrashIcon
-                className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
+              <Label htmlFor="hidden-fields-toggle">Enabled</Label>
+
+              <Switch
+                id="hidden-fields-toggle"
+                checked={localSurvey?.hiddenFields?.enabled}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateSurvey({
-                    enabled: false,
-                  });
+                  updateSurvey({ enabled: !localSurvey.hiddenFields?.enabled });
                 }}
               />
             </div>
@@ -146,7 +148,7 @@ const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
   );
 };
 
-export default HiddenFieldsView;
+export default HiddenFieldsCard;
 
 const validateHiddenField = (
   field: string,
