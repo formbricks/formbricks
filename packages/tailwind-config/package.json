@@ -4,7 +4,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "clean": "rimraf node_modules"
+    "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.6",

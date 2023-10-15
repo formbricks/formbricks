@@ -4,15 +4,13 @@
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
-    "dev": "next dev",
-    "go": "next dev",
+    "dev": "next dev -p 3000",
+    "go": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.418.0",
-    "@aws-sdk/s3-request-presigner": "^3.418.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
@@ -32,7 +30,6 @@
     "@t3-oss/env-nextjs": "^0.7.0",
     "bcryptjs": "^2.4.3",
     "encoding": "^0.1.13",
-    "eslint-config-next": "^13.5.3",
     "framer-motion": "10.16.4",
     "googleapis": "^126.0.1",
     "jsonwebtoken": "^9.0.2",

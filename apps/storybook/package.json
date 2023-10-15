@@ -9,14 +9,17 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "clean": "rimraf .turbo node_modules dist"
   },
   "dependencies": {
     "@formbricks/ui": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "storybook": "^7.4.6"
   },
   "devDependencies": {
+    "@formbricks/tsconfig": "workspace:*",
     "@storybook/addon-essentials": "^7.5.0-alpha.5",
     "@storybook/addon-interactions": "^7.5.0-alpha.5",
     "@storybook/addon-links": "^7.5.0-alpha.5",
@@ -25,23 +28,11 @@
     "@storybook/react": "^7.5.0-alpha.5",
     "@storybook/react-vite": "^7.5.0-alpha.5",
     "@storybook/testing-library": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "@vitejs/plugin-react": "^4.0.3",
-    "autoprefixer": "^10.4.16",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "@vitejs/plugin-react": "^4.1.0",
     "esbuild": "^0.19.4",
-    "eslint": "^8.45.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.3",
-    "eslint-plugin-storybook": "^0.6.15",
-    "storybook": "^7.5.0-alpha.5",
-    "typescript": "^5.0.2",
-    "tailwindcss": "^3.3.3",
     "tsup": "^7.2.0",
-    "postcss": "^8.4.31",
-    "vite": "^4.4.5",
-    "prettier": "^2.8.8",
-    "prettier-plugin-tailwindcss": "^0.4.1",
-    "@formbricks/tsconfig": "workspace:*"
+    "vite": "^4.4.11"
   }
 }
