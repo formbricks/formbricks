@@ -310,9 +310,9 @@ export default function SingleResponseCard({
               </div>
             );
           })}
-          {survey.hiddenQuestionCard?.enabled && survey.hiddenQuestionCard?.fieldIds?.length && (
+          {survey.hiddenFieldsCard?.enabled && survey.hiddenFieldsCard?.fieldIds?.length && (
             <div className="mt-6 flex flex-col gap-6">
-              {survey.hiddenQuestionCard.fieldIds.map((field) => {
+              {survey.hiddenFieldsCard.fieldIds.map((field) => {
                 return (
                   <div key={field}>
                     <p className="text-sm text-slate-500">Hidden Field: {field}</p>

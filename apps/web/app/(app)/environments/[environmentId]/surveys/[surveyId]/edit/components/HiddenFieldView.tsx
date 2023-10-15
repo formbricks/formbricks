@@ -2,7 +2,7 @@
 
 import { cn } from "@formbricks/lib/cn";
 import {
-  TSurveyHiddenQuestionCard,
+  TSurveyHiddenFieldsCard,
   TSurveyQuestions,
   TSurveyWithAnalytics,
 } from "@formbricks/types/v1/surveys";
@@ -14,21 +14,21 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { FC, useState } from "react";
 import toast from "react-hot-toast";
 
-interface HiddenQuestionViewProps {
+interface HiddenFieldsViewProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
 }
 
-const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
+const HiddenFieldsView: FC<HiddenFieldsViewProps> = ({
   activeQuestionId,
   localSurvey,
   setActiveQuestionId,
   setLocalSurvey,
 }) => {
   const open = activeQuestionId == "hidden";
-  const [hiddenQuestion, setHiddenQuestion] = useState<string>("");
+  const [hiddenField, setHiddenField] = useState<string>("");
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -38,11 +38,11 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
     }
   };
 
-  const updateSurvey = (data: TSurveyHiddenQuestionCard) => {
+  const updateSurvey = (data: TSurveyHiddenFieldsCard) => {
     setLocalSurvey({
       ...localSurvey,
-      hiddenQuestionCard: {
-        ...localSurvey.hiddenQuestionCard,
+      hiddenFieldsCard: {
+        ...localSurvey.hiddenFieldsCard,
         ...data,
       },
     });
@@ -90,16 +90,15 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="flex gap-2">
-            {localSurvey.hiddenQuestionCard?.fieldIds &&
-            localSurvey.hiddenQuestionCard?.fieldIds?.length > 0 ? (
-              localSurvey.hiddenQuestionCard?.fieldIds?.map((question) => {
+            {localSurvey.hiddenFieldsCard?.fieldIds && localSurvey.hiddenFieldsCard?.fieldIds?.length > 0 ? (
+              localSurvey.hiddenFieldsCard?.fieldIds?.map((question) => {
                 return (
                   <Tag
                     key={question}
                     onDelete={() => {
                       updateSurvey({
                         enabled: true,
-                        fieldIds: localSurvey.hiddenQuestionCard?.fieldIds?.filter((q) => q !== question),
+                        fieldIds: localSurvey.hiddenFieldsCard?.fieldIds?.filter((q) => q !== question),
                       });
                     }}
                     tagId={question}
@@ -118,9 +117,9 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
 
               const errorMessage = validateHiddenField(
                 // current field
-                hiddenQuestion,
+                hiddenField,
                 // existing fields
-                localSurvey.hiddenQuestionCard?.fieldIds || [],
+                localSurvey.hiddenFieldsCard?.fieldIds || [],
                 // existing questions
                 localSurvey.questions
               );
@@ -128,19 +127,19 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
               if (errorMessage !== "") return toast.error(errorMessage);
 
               updateSurvey({
-                fieldIds: [...(localSurvey.hiddenQuestionCard?.fieldIds || []), hiddenQuestion],
+                fieldIds: [...(localSurvey.hiddenFieldsCard?.fieldIds || []), hiddenField],
                 enabled: true,
               });
-              setHiddenQuestion("");
+              setHiddenField("");
             }}>
-            <Label htmlFor="headline">Hidden Question</Label>
+            <Label htmlFor="headline">Hidden Field</Label>
             <div className="mt-2">
               <Input
                 autoFocus
                 id="headline"
                 name="headline"
-                value={hiddenQuestion}
-                onChange={(e) => setHiddenQuestion(e.target.value.trim())}
+                value={hiddenField}
+                onChange={(e) => setHiddenField(e.target.value.trim())}
                 placeholder="Type field id..."
               />
             </div>
@@ -151,7 +150,7 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
   );
 };
 
-export default HiddenQuestionView;
+export default HiddenFieldsView;
 
 const validateHiddenField = (
   field: string,

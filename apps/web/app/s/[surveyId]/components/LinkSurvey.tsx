@@ -83,7 +83,7 @@ export default function LinkSurvey({
   const [hiddenFieldsRecord, setHiddenFieldsRecord] = useState<Record<string, string | number | string[]>>();
 
   useEffect(() => {
-    survey.hiddenQuestionCard?.fieldIds?.forEach((field) => {
+    survey.hiddenFieldsCard?.fieldIds?.forEach((field) => {
       // set the question and answer to the survey state
       const answer = searchParams?.get(field);
       if (answer) {
@@ -95,7 +95,7 @@ export default function LinkSurvey({
         });
       }
     });
-  }, [searchParams, survey.hiddenQuestionCard?.fieldIds]);
+  }, [searchParams, survey.hiddenFieldsCard?.fieldIds]);
 
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);

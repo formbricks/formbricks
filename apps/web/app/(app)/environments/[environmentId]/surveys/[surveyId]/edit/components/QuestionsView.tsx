@@ -1,6 +1,6 @@
 "use client";
 
-import HiddenQuestionView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenQuestionView";
+import HiddenFieldsView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldView";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
@@ -222,8 +222,8 @@ export default function QuestionsView({
         />
 
         {localSurvey.type === "link" ? (
-          !localSurvey.hiddenQuestionCard || localSurvey.hiddenQuestionCard?.enabled ? (
-            <HiddenQuestionView
+          !localSurvey.hiddenFieldsCard || localSurvey.hiddenFieldsCard?.enabled ? (
+            <HiddenFieldsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               setActiveQuestionId={setActiveQuestionId}

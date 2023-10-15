@@ -9,22 +9,17 @@ import { ChatBubbleBottomCenterTextIcon, InboxStackIcon } from "@heroicons/react
 import { Link } from "lucide-react";
 import { FC, useMemo } from "react";
 
-interface HiddenQuestionsSummaryProps {
+interface HiddenFieldsSummaryProps {
   question: string;
   survey: TSurvey;
   responses: TResponse[];
   environment: TEnvironment;
 }
 
-const HiddenQuestionsSummary: FC<HiddenQuestionsSummaryProps> = ({
-  environment,
-  responses,
-  survey,
-  question,
-}) => {
-  const hiddenQuestionResponses = useMemo(
+const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, responses, survey, question }) => {
+  const hiddenFieldResponses = useMemo(
     () =>
-      survey.hiddenQuestionCard?.fieldIds?.map((question) => {
+      survey.hiddenFieldsCard?.fieldIds?.map((question) => {
         const questionResponses = responses
           .filter((response) => question in response.data)
           .map((r) => ({
@@ -38,7 +33,7 @@ const HiddenQuestionsSummary: FC<HiddenQuestionsSummaryProps> = ({
           responses: questionResponses,
         };
       }),
-    [responses, survey.hiddenQuestionCard?.fieldIds]
+    [responses, survey.hiddenFieldsCard?.fieldIds]
   );
 
   return (
@@ -53,7 +48,7 @@ const HiddenQuestionsSummary: FC<HiddenQuestionsSummaryProps> = ({
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
             <InboxStackIcon className="mr-2 h-4 w-4" />
-            {hiddenQuestionResponses?.find((q) => q.question === question)?.responses?.length} Responses
+            {hiddenFieldResponses?.find((q) => q.question === question)?.responses?.length} Responses
           </div>
         </div>
       </div>
@@ -63,7 +58,7 @@ const HiddenQuestionsSummary: FC<HiddenQuestionsSummaryProps> = ({
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {hiddenQuestionResponses
+        {hiddenFieldResponses
           ?.find((q) => q.question === question)
           ?.responses.map((response) => {
             const displayIdentifier = getPersonIdentifier(response.person!);
@@ -106,4 +101,4 @@ const HiddenQuestionsSummary: FC<HiddenQuestionsSummaryProps> = ({
   );
 };
 
-export default HiddenQuestionsSummary;
+export default HiddenFieldsSummary;

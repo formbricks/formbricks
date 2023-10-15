@@ -1,6 +1,6 @@
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
-import HiddenQuestionsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenQuestionsSummary";
+import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
 import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
@@ -120,10 +120,10 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
               }
               return null;
             })}
-            {survey.hiddenQuestionCard?.enabled &&
-              survey.hiddenQuestionCard.fieldIds?.map((question) => {
+            {survey.hiddenFieldsCard?.enabled &&
+              survey.hiddenFieldsCard.fieldIds?.map((question) => {
                 return (
-                  <HiddenQuestionsSummary
+                  <HiddenFieldsSummary
                     environment={environment}
                     question={question}
                     responses={responses}

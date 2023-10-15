@@ -1,26 +1,26 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZString } from "@formbricks/types/v1/common";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import {
   TSurvey,
   TSurveyAttributeFilter,
+  TSurveyInput,
   TSurveyWithAnalytics,
   ZSurvey,
   ZSurveyWithAnalytics,
-  TSurveyInput,
 } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
-import { captureTelemetry } from "../telemetry";
-import { validateInputs } from "../utils/validate";
+import { getActionClasses } from "../actionClass/service";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getDisplaysCacheTag } from "../display/service";
 import { getResponsesCacheTag } from "../response/service";
-import { ZString } from "@formbricks/types/v1/common";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getActionClasses } from "../actionClass/service";
+import { captureTelemetry } from "../telemetry";
+import { validateInputs } from "../utils/validate";
 import { formatSurveyDateFields } from "./util";
 
 // surveys cache key and tags
@@ -39,7 +39,7 @@ export const selectSurvey = {
   status: true,
   questions: true,
   thankYouCard: true,
-  hiddenQuestionCard: true,
+  hiddenFieldsCard: true,
   displayOption: true,
   recontactDays: true,
   autoClose: true,
