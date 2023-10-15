@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { useState } from "react";
 import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 import CodeBlock from "../shared/CodeBlock";
+import CopyButton from "@/components/shared/CopyButton";
 
 interface SecondNavbarProps {
   tabs: { id: string; label: string; icon?: React.ReactNode }[];
@@ -44,12 +45,15 @@ export const SetupInstructions: React.FC = ({}) => {
   return (
     <div>
       <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} />
-      <div className="h-80 max-w-lg px-4 sm:max-w-lg md:max-w-lg">
+      <div className="h-[20.5rem] max-w-lg  pl-4 pr-2 sm:max-w-lg md:max-w-lg lg:h-[22.5rem]">
         {activeTab === "npm" ? (
           <>
-            <CodeBlock>npm install @formbricks/js</CodeBlock>
-
-            <CodeBlock>{`import formbricks from "@formbricks/js";
+            <div className="flex items-center gap-2">
+              <CodeBlock>npm install @formbricks/js</CodeBlock>
+              <CopyButton text="npm install @formbricks/js" />
+            </div>
+            <div className="flex items-center gap-2">
+              <CodeBlock>{`import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -57,11 +61,29 @@ if (typeof window !== "undefined") {
     apiHost: "https://app.formbricks.com",
   });
 }`}</CodeBlock>
+              <CopyButton
+                text={`import formbricks from "@formbricks/js";
+
+              if (typeof window !== "undefined") {
+                formbricks.init({
+                  environmentId: "claV2as2kKAqF28fJ8",
+                  apiHost: "https://app.formbricks.com",
+                });
+}`}
+              />
+            </div>
           </>
         ) : activeTab === "html" ? (
-          <CodeBlock>{`<script type="text/javascript">
+          <div className="flex flex-col ">
+            <CodeBlock>{`<script type="text/javascript">
 !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("claDadXk29dak92dK9","https://app.formbricks.com")},500)}();
 </script>`}</CodeBlock>
+            <CopyButton
+              text={`<script type="text/javascript">
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("claDadXk29dak92dK9","https://app.formbricks.com")},500)}();
+</script>`}
+            />
+          </div>
         ) : null}
       </div>
     </div>
