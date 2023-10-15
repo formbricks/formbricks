@@ -6,7 +6,6 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tag } from "@formbricks/ui/Tag";
-import { TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FC, useState } from "react";
 import toast from "react-hot-toast";
