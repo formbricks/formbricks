@@ -108,9 +108,12 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     return string.replace(/#/g, "%23");
   }
 
+  const brandColor = getBrandColorForURL(product.brandColor);
+  const surveyName = getNameForURL((survey.name));
+
   const ogImgURL = `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${
     survey.id
-  }/og?brandColor=${getBrandColorForURL(product.brandColor)}&name=${getNameForURL(survey.name)}`;
+  }/og?brandColor=${brandColor}&name=${surveyName}`;
 
   metadata = {
     openGraph: {
