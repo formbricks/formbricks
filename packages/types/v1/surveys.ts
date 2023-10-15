@@ -10,7 +10,7 @@ export const ZSurveyThankYouCard = z.object({
 
 export const ZSurveyHiddenQuestionCard = z.object({
   enabled: z.boolean(),
-  questions: z.optional(z.array(z.string())),
+  fieldIds: z.optional(z.array(z.string())),
 });
 
 export const ZSurveyProductOverwrites = z.object({
@@ -287,7 +287,7 @@ export const ZSurvey = z.object({
   recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
-  hiddenQuestionCard: ZSurveyHiddenQuestionCard.optional(),
+  hiddenQuestionCard: ZSurveyHiddenQuestionCard,
   delay: z.number(),
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
@@ -307,7 +307,7 @@ export const ZSurveyInput = z.object({
   recontactDays: z.number().optional(),
   questions: ZSurveyQuestions.optional(),
   thankYouCard: ZSurveyThankYouCard.optional(),
-  hiddenQuestionCard: ZSurveyHiddenQuestionCard.optional(),
+  hiddenQuestionCard: ZSurveyHiddenQuestionCard,
   delay: z.number().optional(),
   autoComplete: z.number().optional(),
   closeOnDate: z.date().optional(),

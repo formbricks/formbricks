@@ -22,7 +22,7 @@ export const ZTemplate = z.object({
     name: z.string(),
     questions: ZSurveyQuestions,
     thankYouCard: ZSurveyThankYouCard,
-    hiddenQuestionCard: ZSurveyHiddenQuestionCard.optional(),
+    hiddenQuestionCard: ZSurveyHiddenQuestionCard,
   }),
 });
 

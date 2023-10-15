@@ -59,8 +59,8 @@ export default function UpdateQuestionId({
           value={currentValue}
           onChange={(e) => {
             setCurrentValue(e.target.value);
-            localSurvey.hiddenQuestionCard?.questions?.forEach((q) => {
-              if (q === e.target.value) {
+            localSurvey.hiddenQuestionCard?.fieldIds?.forEach((field) => {
+              if (field === e.target.value) {
                 setIsInputInvalid(true);
                 toast.error("QuestionID can't be equal to hidden fields");
               }

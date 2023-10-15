@@ -1,7 +1,11 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurveyQuestions, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import {
+  TSurveyHiddenQuestionCard,
+  TSurveyQuestions,
+  TSurveyWithAnalytics,
+} from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Tag } from "@formbricks/ui/Tag";
@@ -26,15 +30,15 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
   const open = activeQuestionId == "hidden";
   const [hiddenQuestion, setHiddenQuestion] = useState<string>("");
 
-  const setOpen = (e) => {
-    if (e) {
+  const setOpen = (open: boolean) => {
+    if (open) {
       setActiveQuestionId("hidden");
     } else {
       setActiveQuestionId(null);
     }
   };
 
-  const updateSurvey = (data) => {
+  const updateSurvey = (data: TSurveyHiddenQuestionCard) => {
     setLocalSurvey({
       ...localSurvey,
       hiddenQuestionCard: {
@@ -86,21 +90,20 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="flex gap-2">
-            {localSurvey.hiddenQuestionCard?.questions &&
-            localSurvey.hiddenQuestionCard?.questions?.length > 0 ? (
-              localSurvey.hiddenQuestionCard?.questions?.map((question) => {
+            {localSurvey.hiddenQuestionCard?.fieldIds &&
+            localSurvey.hiddenQuestionCard?.fieldIds?.length > 0 ? (
+              localSurvey.hiddenQuestionCard?.fieldIds?.map((question) => {
                 return (
                   <Tag
                     key={question}
                     onDelete={() => {
                       updateSurvey({
-                        questions: localSurvey.hiddenQuestionCard?.questions?.filter((q) => q !== question),
+                        enabled: true,
+                        fieldIds: localSurvey.hiddenQuestionCard?.fieldIds?.filter((q) => q !== question),
                       });
                     }}
                     tagId={question}
                     tagName={question}
-                    tags={[]}
-                    setTagsState={(tags) => {}}
                   />
                 );
               })
@@ -117,7 +120,7 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
                 // current field
                 hiddenQuestion,
                 // existing fields
-                localSurvey.hiddenQuestionCard?.questions || [],
+                localSurvey.hiddenQuestionCard?.fieldIds || [],
                 // existing questions
                 localSurvey.questions
               );
@@ -125,7 +128,7 @@ const HiddenQuestionView: FC<HiddenQuestionViewProps> = ({
               if (errorMessage !== "") return toast.error(errorMessage);
 
               updateSurvey({
-                questions: [...(localSurvey.hiddenQuestionCard?.questions || []), hiddenQuestion],
+                fieldIds: [...(localSurvey.hiddenQuestionCard?.fieldIds || []), hiddenQuestion],
                 enabled: true,
               });
               setHiddenQuestion("");

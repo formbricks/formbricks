@@ -1,5 +1,5 @@
 import { QuestionType } from "@formbricks/types/questions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyHiddenQuestionCard } from "@formbricks/types/v1/surveys";
 import { TTemplate } from "@formbricks/types/v1/templates";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -9,9 +9,9 @@ const thankYouCardDefault = {
   subheader: "We appreciate your feedback.",
 };
 
-const hiddenQuestionCardDefault = {
+const hiddenQuestionCardDefault: TSurveyHiddenQuestionCard = {
   enabled: true,
-  questions: [],
+  fieldIds: [],
 };
 
 export const templates: TTemplate[] = [

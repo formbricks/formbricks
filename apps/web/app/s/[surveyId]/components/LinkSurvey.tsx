@@ -83,20 +83,19 @@ export default function LinkSurvey({
   const [hiddenFieldsRecord, setHiddenFieldsRecord] = useState<Record<string, string | number | string[]>>();
 
   useEffect(() => {
-    survey.hiddenQuestionCard?.questions?.forEach((question) => {
+    survey.hiddenQuestionCard?.fieldIds?.forEach((field) => {
       // set the question and answer to the survey state
-      const questionId = question;
-      const answer = searchParams?.get(questionId);
+      const answer = searchParams?.get(field);
       if (answer) {
         setHiddenFieldsRecord((prev) => {
           return {
             ...prev,
-            [questionId]: answer,
+            [field]: answer,
           };
         });
       }
     });
-  }, [searchParams, survey.hiddenQuestionCard?.questions]);
+  }, [searchParams, survey.hiddenQuestionCard?.fieldIds]);
 
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);

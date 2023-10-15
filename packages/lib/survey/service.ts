@@ -601,8 +601,6 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data,
     });
 
-    console.log("updated survey", prismaSurvey.hiddenQuestionCard);
-
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
