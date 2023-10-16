@@ -2,7 +2,6 @@
   "name": "storybook",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "storybook dev -p 6006",
     "build": "tsup",
