@@ -3,12 +3,13 @@
 import type { NextPage } from "next";
 import { TProduct } from "@/../../packages/types/v1/product";
 import { TResponse } from "@/../../packages/types/v1/responses";
-import OtpInput from "react-otp-input";
+import { OTPInput} from "@formbricks/ui/OTPInput";
 import { useCallback, useEffect, useState } from "react";
 import { validateSurveyPin } from "@/app/s/[surveyId]/actions";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
 import { ISurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import { cn } from "@formbricks/lib/cn";
 
 interface LinkSurveyPinScreenProps {
   surveyId: string;
@@ -88,32 +89,15 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
           <div className="my-4 font-semibold">
             <h4>This survey is protected. Enter the PIN below</h4>
           </div>
-          <OtpInput
-            isDisabled={loading}
-            hasErrored={Boolean(!!error)}
+          <OTPInput
+            disabled={Boolean(error) || loading}
             value={localPinEntry}
-            onChange={(value) => setLocalPinEntry(value)}
-            numInputs={4}
-            separator={<span style={{ width: "8px" }}></span>}
-            isInputNum={true}
-            shouldAutoFocus={true}
-            inputStyle={{
-              border: "1px solid #CFD3DB",
-              borderRadius: "8px",
-              width: "64px",
-              height: "84px",
-              fontSize: "24px",
-              color: "#000",
-              fontWeight: "400",
-              caretColor: "blue",
-            }}
-            errorStyle={{
-              border: "1px solid red",
-            }}
-            focusStyle={{
-              border: "1px solid #CFD3DB",
-              outline: "none",
-            }}
+            onChange={value => setLocalPinEntry(value)}
+            valueLength={4}
+            inputBoxClassName={cn(
+            
+              {'border-red-400': Boolean(error) }
+            )}
           />
         </div>
       </div>

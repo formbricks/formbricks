@@ -49,7 +49,6 @@
     "react-hook-form": "^7.47.0",
     "react-hot-toast": "^2.4.1",
     "react-icons": "^4.11.0",
-    "react-otp-input": "2.3.0",
     "swr": "^2.2.4",
     "ua-parser-js": "^1.0.36",
     "xlsx": "^0.18.5"
