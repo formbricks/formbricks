@@ -27,7 +27,6 @@ export const GitHubSponsorship: React.FC = () => {
           src={HackIconGold}
           alt="Hacktober Icon Gold"
           width={100}
-          height={100}
           className="mr-12 md:mr-4"
         />
       </div>
