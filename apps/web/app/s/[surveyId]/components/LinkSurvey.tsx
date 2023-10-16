@@ -22,7 +22,6 @@ interface LinkSurveyProps {
   emailVerificationStatus?: string;
   prefillAnswer?: string;
   singleUseId?: string;
-
   singleUseResponse?: TResponse;
   webAppUrl: string;
 }
