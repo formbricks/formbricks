@@ -1,6 +1,7 @@
 import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { PersonAvatar, ProgressBar } from "@formbricks/ui";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
@@ -9,7 +10,7 @@ import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
 } from "@formbricks/types/v1/surveys";
-import { questionTypes } from "@/lib/questions";
+import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface MultipleChoiceSummaryProps {

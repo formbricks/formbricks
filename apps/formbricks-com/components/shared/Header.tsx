@@ -2,7 +2,6 @@ import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
 import {
   BaseballIcon,
-  Button,
   CancelSubscriptionIcon,
   CodeBookIcon,
   DogChaserIcon,
@@ -10,7 +9,8 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
+import { Button } from "@formbricks/ui/Button";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -126,9 +126,9 @@ export default function Header() {
                 <Popover.Button
                   className={clsx(
                     open
-                      ? "text-slate-600 dark:text-slate-400 "
-                      : "text-slate-400  hover:text-slate-900  dark:hover:text-slate-100",
-                    "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
+                      ? "text-slate-600 focus:px-2 dark:text-slate-400"
+                      : "px-2  text-slate-400  hover:text-slate-900 dark:hover:text-slate-100",
+                    "group inline-flex items-center rounded-md px-2 text-base font-medium hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
                   )}>
                   <span className="text-sm lg:text-base">Best Practices</span>
                   <ChevronDownIcon
@@ -374,7 +374,7 @@ export default function Header() {
                   </div>
                 )}
                 <Link href="/concierge">Concierge</Link>
-                <Link href="#pricing">Pricing</Link>
+                <Link href="/pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
                 {/*   <Link href="/careers">Careers</Link> */}

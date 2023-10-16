@@ -1,6 +1,6 @@
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
-import { sendResponseFinishedEmail } from "@/lib/email";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { sendResponseFinishedEmail } from "@/app/lib/email";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { convertDatesInObject } from "@formbricks/lib/time";
@@ -9,7 +9,7 @@ import { NotificationSettings } from "@formbricks/types/users";
 import { ZPipelineInput } from "@formbricks/types/v1/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { handleIntegrations } from "../integration/integrations";
+import { handleIntegrations } from "./lib/handleIntegrations";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable

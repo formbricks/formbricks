@@ -1,5 +1,5 @@
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/v1/errors";
 import { createWebhook, getWebhooks } from "@formbricks/lib/webhook/service";

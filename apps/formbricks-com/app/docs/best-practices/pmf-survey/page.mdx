@@ -96,8 +96,8 @@ This way you make sure that you separate potentially misleading opinions from va
 ### 4. Set up a trigger for the Product-Market Fit survey:
 
 You need a trigger to display the survey but in this case, the filtering does all the work. It’s up to you to decide to display the survey after the user viewed a specific subpage (pageURL) or after clicking an element. Have a look at the [Actions manual](/docs/actions/why) if you are not sure how to set them up:
-
-<div className="grid grid-cols-2 space-x-2">
+<Col>
+<div>
   <Image src={ActionCSS} alt="Add CSS action" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
   <Image
     src={ActionPageurl}
@@ -106,16 +106,16 @@ You need a trigger to display the survey but in this case, the filtering does al
     className="rounded-lg max-w-full sm:max-w-3xl"
   />
 </div>
-
+</Col>
 ### 5. Select Action in the “When to ask” card
-
+<Col>
 <Image
   src={SelectAction}
   alt="Select PMF trigger button action"
   quality="100"
   className="rounded-lg max-w-full sm:max-w-3xl"
 />
-
+</Col>
 ### 6. Last step: Set Recontact Options correctly
 
 Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure your data remains of high quality. You want to make sure that this survey is only responded to once per user. It is up to you to decide if you want to display it several times until the user responds:

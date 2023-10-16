@@ -3,9 +3,9 @@
 import {
   QuestionOption,
   QuestionOptions,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionsComboBox";
-import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/ResponseFilter";
-import { getTodayDate } from "@/lib/surveys/surveys";
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
+import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
+import { getTodayDate } from "@/app/lib/surveys/surveys";
 import { createContext, useContext, useState } from "react";
 
 interface FilterValue {

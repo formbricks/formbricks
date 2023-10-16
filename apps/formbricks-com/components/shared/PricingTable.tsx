@@ -1,4 +1,4 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export const PricingTable = ({ leadRow, pricing, endRow }) => {

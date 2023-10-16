@@ -1,7 +1,7 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryMetadataProps {
   responses: TResponse[];

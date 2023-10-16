@@ -1,26 +1,27 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZString } from "@formbricks/types/v1/common";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import {
   TSurvey,
   TSurveyAttributeFilter,
+  TSurveyInput,
   TSurveyWithAnalytics,
   ZSurvey,
   ZSurveyWithAnalytics,
-  TSurveyInput,
 } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
-import { captureTelemetry } from "../telemetry";
-import { validateInputs } from "../utils/validate";
+import { getActionClasses } from "../actionClass/service";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getDisplaysCacheTag } from "../display/service";
 import { getResponsesCacheTag } from "../response/service";
-import { ZString } from "@formbricks/types/v1/common";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getActionClasses } from "../actionClass/service";
+import { captureTelemetry } from "../telemetry";
+import { validateInputs } from "../utils/validate";
+import { formatSurveyDateFields } from "./util";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
@@ -38,6 +39,7 @@ export const selectSurvey = {
   status: true,
   questions: true,
   thankYouCard: true,
+  hiddenFields: true,
   displayOption: true,
   recontactDays: true,
   autoClose: true,
@@ -106,10 +108,8 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
           select: selectSurveyWithAnalytics,
         });
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error.message);
           throw new DatabaseError("Database operation failed");
         }
 
@@ -141,7 +141,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
       };
 
       try {
-        const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
+        const survey: TSurveyWithAnalytics = ZSurveyWithAnalytics.parse(transformedSurvey);
         return survey;
       } catch (error) {
         if (error instanceof Error) {
@@ -168,8 +168,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
   // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   };
 };
 
@@ -186,10 +185,8 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
           select: selectSurvey,
         });
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error.message);
           throw new DatabaseError("Database operation failed");
         }
 
@@ -233,8 +230,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   // https://github.com/vercel/next.js/issues/51613
   return {
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   };
 };
 
@@ -323,10 +319,8 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
           select: selectSurvey,
         });
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error.message);
           throw new DatabaseError("Database operation failed");
         }
 
@@ -346,9 +340,6 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
         }
         return surveys;
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        }
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
         }
@@ -366,8 +357,7 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
   // https://github.com/vercel/next.js/issues/51613
   return surveys.map((survey) => ({
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   }));
 };
 
@@ -385,10 +375,8 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
           select: selectSurveyWithAnalytics,
         });
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        }
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error.message);
           throw new DatabaseError("Database operation failed");
         }
 
@@ -437,8 +425,7 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
   // https://github.com/vercel/next.js/issues/51613
   return surveysWithAnalytics.map((survey) => ({
     ...survey,
-    createdAt: new Date(survey.createdAt),
-    updatedAt: new Date(survey.updatedAt),
+    ...formatSurveyDateFields(survey),
   }));
 };
 
@@ -625,10 +612,8 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     return modifiedSurvey;
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error.message);
       throw new DatabaseError("Database operation failed");
     }
 

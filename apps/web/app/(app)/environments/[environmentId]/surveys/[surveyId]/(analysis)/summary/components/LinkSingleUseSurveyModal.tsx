@@ -1,10 +1,10 @@
 "use client";
 
-import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/actions";
-import { truncateMiddle } from "@/lib/utils";
+import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
+import { truncateMiddle } from "@/app/lib/utils";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";

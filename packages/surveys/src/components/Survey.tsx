@@ -140,16 +140,7 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
-        <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-5">
-          <div id="date-pick">
-            <button
-              className="border border-gray-500 px-3 py-1"
-              onClick={() => {
-                setDpOpen(!dpOpen);
-              }}>
-              Open DP
-            </button>
-          </div>
+        <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {questionId === "end" && survey.thankYouCard.enabled ? (
               <ThankYouCard

@@ -1,8 +1,8 @@
 "use client";
 
 import toast from "react-hot-toast";
-import CodeBlock from "@/components/shared/CodeBlock";
-import { Button } from "@formbricks/ui";
+import CodeBlock from "@/app/components/shared/CodeBlock";
+import { Button } from "@formbricks/ui/Button";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 
 export default function WebpageTab({ surveyUrl }) {

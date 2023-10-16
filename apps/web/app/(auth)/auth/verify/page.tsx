@@ -1,8 +1,8 @@
 "use client";
 
-import { SignIn } from "@/components/auth/SignIn";
+import { SignIn } from "@/app/components/auth/SignIn";
 import { useSearchParams } from "next/navigation";
-import FormWrapper from "@/components/auth/FormWrapper";
+import FormWrapper from "@/app/components/auth/FormWrapper";
 
 export default function Verify() {
   const searchParams = useSearchParams();

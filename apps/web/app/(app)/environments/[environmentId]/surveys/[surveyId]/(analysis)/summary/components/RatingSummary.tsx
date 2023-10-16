@@ -1,11 +1,11 @@
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { ProgressBar } from "@formbricks/ui";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { QuestionType } from "@formbricks/types/questions";
 import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
-import { RatingResponse } from "@formbricks/ui";
-import { questionTypes } from "@/lib/questions";
+import { RatingResponse } from "@formbricks/ui/RatingResponse";
+import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface RatingSummaryProps {
