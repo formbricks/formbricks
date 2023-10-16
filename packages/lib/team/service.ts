@@ -9,6 +9,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { getEnvironmentCacheTag } from "../environment/service";
 import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
+import { validateInputs } from "../utils/validate";
 
 export const select = {
   id: true,

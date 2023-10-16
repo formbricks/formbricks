@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import {
@@ -22,6 +22,7 @@ import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { formatSurveyDateFields } from "./util";
 import { ITEMS_PER_PAGE } from "../constants";
+import { responseCache } from "../response/cache";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
