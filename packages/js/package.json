@@ -24,8 +24,8 @@
     }
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
     "go": "vite build --watch",
     "lint": "eslint ./src --fix",
     "clean": "rimraf .turbo node_modules dist coverage",
