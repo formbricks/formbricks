@@ -39,6 +39,25 @@ export default function LinkSurvey({
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
+
+  const source = searchParams?.get("source");
+
+  // Update metadata with "source" if it exists
+  const [metadata, setMetadata] = useState({
+    other_metadata_key: "other_metadata_value",
+    ...(source && { source }),
+  });
+
+  useEffect(() => {
+    // Update the metadata whenever the source changes
+    if (source) {
+      setMetadata((prevMetadata) => ({
+        ...prevMetadata,
+        source,
+      }));
+    }
+  }, [source]);
+
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
@@ -153,6 +172,7 @@ export default function LinkSurvey({
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
+          metadata={metadata}
         />
       </ContentWrapper>
     </>

@@ -8,10 +8,10 @@ import {
   SMTP_USER,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
-import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { Question } from "@formbricks/types/questions";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { withEmailTemplate } from "./email-template";
+import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 
 const nodemailer = require("nodemailer");
 
@@ -181,7 +181,7 @@ export const sendResponseFinishedEmail = async (
     <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
     ${
       personEmail
-        ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
+        ? "<p>Hit 'Reply' or reach out manually: ${personEmail}</p>"
         : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
     }
     </div>

@@ -12,7 +12,6 @@ import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 
 interface LinkSurveyPageProps {
   params: {
@@ -95,23 +94,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   let person;
   if (userId) {
     person = await getOrCreatePersonByUserId(userId, survey.environmentId);
-  }
-
-  const isSurveyPinProtected = Boolean(!!survey && survey.pin);
-
-  if (isSurveyPinProtected) {
-    return (
-      <PinScreen
-        surveyId={survey.id}
-        product={product}
-        personId={person?.id}
-        emailVerificationStatus={emailVerificationStatus}
-        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
-        singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-        singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-        webAppUrl={WEBAPP_URL}
-      />
-    );
   }
 
   return (
