@@ -269,7 +269,7 @@ model Survey {
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
 
-  // PIN Protected Surverys
+  // PIN Protected Surveys
   pin Int?
 }
 

@@ -131,11 +131,11 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
     .join("");
 };
 
-const createSurveyFields = (surveryResponses: SurveyResponse[]) => {
+const createSurveyFields = (surveyResponses: SurveyResponse[]) => {
   let surveyFields = "";
-  const responseCount = surveryResponses.length;
+  const responseCount = surveyResponses.length;
 
-  surveryResponses.forEach((response, index) => {
+  surveyResponses.forEach((response, index) => {
     if (!response) {
       return;
     }
