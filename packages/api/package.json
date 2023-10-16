@@ -13,11 +13,10 @@
   "files": [
     "dist"
   ],
-  "source": "src/index.ts",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "unpkg": "./dist/index.umd.js",
+  "source": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -25,8 +24,8 @@
     }
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
     "go": "vite build --watch",
     "lint": "eslint ./src --fix",
     "clean": "rimraf .turbo node_modules dist"
