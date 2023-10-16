@@ -93,7 +93,7 @@ export const SignupForm = ({
               <XCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-teal-800">An error occurred when logging you in</h3>
+              <h3 className="text-sm font-medium text-teal-800">An error occurred when signing you up</h3>
               <div className="mt-2 text-sm text-teal-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>
