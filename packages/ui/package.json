@@ -44,7 +44,6 @@
     "react-colorful": "^5.6.1",
     "react-confetti": "^6.1.0",
     "react-day-picker": "^8.9.0",
-    "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-radio-group": "^3.0.3",
     "react-use": "^17.4.0"
