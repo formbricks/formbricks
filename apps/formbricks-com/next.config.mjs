@@ -135,6 +135,11 @@ const nextConfig = {
         destination: "https://www.producthunt.com/products/formbricks",
         permanent: true,
       },
+      {
+        source: "/join-oss-friends",
+        destination: "https://formbricks.com/clhys1p9r001cpr0hu65rwh17",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
