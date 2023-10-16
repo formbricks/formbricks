@@ -12,7 +12,7 @@ export const fetchCache = false;
 export const runtime = "edge";
 
 export default async function GET(req: NextRequest) {
-  let name = req.nextUrl.searchParams.get("surveyId");
+  let name = req.nextUrl.searchParams.get("name");
   let brandColor = req.nextUrl.searchParams.get("brandColor");
 
   return new ImageResponse(

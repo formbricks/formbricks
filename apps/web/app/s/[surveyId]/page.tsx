@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import type { Metadata } from "next";
 
 interface LinkSurveyPageProps {
   params: {
@@ -24,7 +25,50 @@ interface LinkSurveyPageProps {
   };
 }
 
-export let metadata;
+export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
+  const survey = await getSurvey(params.surveyId);
+
+  if (!survey || survey.type !== "link" || survey.status === "draft") {
+    notFound();
+  }
+
+  const product = await getProductByEnvironmentId(survey.environmentId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  function getNameForURL(string) {
+    return string.replace(/ /g, "%20");
+  }
+
+  function getBrandColorForURL(string) {
+    return string.replace(/#/g, "%23");
+  }
+
+  const brandColor = getBrandColorForURL(product.brandColor);
+  const surveyName = getNameForURL(survey.name);
+
+  const ogImgURL = `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${survey.id}/og?brandColor=${brandColor}&name=${surveyName}`;
+
+  return {
+    openGraph: {
+      title: "Formbricks",
+      description: "Open-Source In-Product Survey Platform",
+      url: `${SURVEY_BASE_URL}/${survey.id}`,
+      siteName: "",
+      images: [ogImgURL],
+      locale: "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Formbricks",
+      description: "Open-Source In-Product Survey Platform",
+      images: [ogImgURL],
+    },
+  };
+}
 
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
@@ -99,49 +143,16 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     person = await getOrCreatePersonByUserId(userId, survey.environmentId);
   }
 
-  function getNameForURL(string) {
-    return string.replace(/ /g, "%20");
-  }
-
-  function getBrandColorForURL(string) {
-    return string.replace(/#/g, "%23");
-  }
-
-  const brandColor = getBrandColorForURL(product.brandColor);
-  const surveyName = getNameForURL(survey.name);
-
-  const ogImgURL = `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${survey.id}/og?brandColor=${brandColor}&name=${surveyName}`;
-
-  metadata = {
-    openGraph: {
-      title: "Formbricks",
-      description: "Open-Source In-Product Survey Platform",
-      url: `${SURVEY_BASE_URL}/${survey.id}`,
-      siteName: "",
-      images: [ogImgURL],
-      locale: "en_US",
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Formbricks",
-      description: "Open-Source In-Product Survey Platform",
-      images: [ogImgURL],
-    },
-  };
-
   return (
-    <>
-      <LinkSurvey
-        survey={survey}
-        product={product}
-        personId={person?.id}
-        emailVerificationStatus={emailVerificationStatus}
-        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
-        singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-        singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-        webAppUrl={WEBAPP_URL}
-      />
-    </>
+    <LinkSurvey
+      survey={survey}
+      product={product}
+      personId={person?.id}
+      emailVerificationStatus={emailVerificationStatus}
+      prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      webAppUrl={WEBAPP_URL}
+    />
   );
 }
