@@ -290,9 +290,15 @@ export type TSurveyAttributeFilter = z.infer<typeof ZSurveyAttributeFilter>;
 
 const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
 
+export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
+
 const ZSurveyType = z.enum(["web", "email", "link", "mobile"]);
 
+export type TSurveyType = z.infer<typeof ZSurveyType>;
+
 const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
+
+export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
