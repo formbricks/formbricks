@@ -5,10 +5,10 @@ import { TProduct } from "@formbricks/types/v1/product";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { BsDiscord } from "react-icons/bs";
 import {
   AdjustmentsVerticalIcon,
   BellAlertIcon,
-  ChatBubbleLeftEllipsisIcon,
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
@@ -145,7 +145,7 @@ export default function SettingsNavbar({
           {
             name: "Join Discord",
             href: "https://formbricks.com/discord",
-            icon: ChatBubbleLeftEllipsisIcon,
+            icon: BsDiscord,
             target: "_blank",
             hidden: false,
           },
