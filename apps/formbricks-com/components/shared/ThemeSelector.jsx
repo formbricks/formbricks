@@ -45,7 +45,7 @@ function SystemIcon(props) {
 }
 
 export function ThemeSelector(props) {
-  let [selectedTheme, setSelectedTheme] = useState();
+  const [selectedTheme, setSelectedTheme] = useState(null);
 
   useEffect(() => {
     if (selectedTheme) {
