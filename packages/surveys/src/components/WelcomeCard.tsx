@@ -21,9 +21,6 @@ export default function WelcomeCard({
   brandColor,
   onSubmit,
 }: WelcomeCardProps) {
-  console.log(buttonLabel);
-  console.log(timeToFinish);
-  console.log(brandColor);
   return (
     <div>
       {fileUrl && (
@@ -48,6 +45,7 @@ export default function WelcomeCard({
           <div className="flex items-center text-xs text-slate-600">Press Enter ↵</div>
         </div>
       </div>
+      {timeToFinish && <></>}
     </div>
   );
 }
