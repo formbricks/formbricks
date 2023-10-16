@@ -1,20 +1,33 @@
 {
   "name": "@formbricks/api",
-  "version": "0.1.0",
-  "description": "A Typescript API-wrapper for managing the Formbricks Client API.",
   "license": "MIT",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "version": "1.0.0",
+  "description": "Formbricks-api is an api wrapper for the Formbricks client API",
+  "keywords": [
+    "Formbricks",
+    "surveys",
+    "experience management",
+    "api"
+  ],
   "sideEffects": false,
   "files": [
-    "dist/**"
+    "dist"
   ],
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "unpkg": "./dist/index.umd.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.umd.js"
+    }
+  },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "go": "tsup --watch",
+    "dev": "vite",
+    "build": "vite build",
+    "go": "vite build --watch",
     "lint": "eslint ./src --fix",
     "clean": "rimraf .turbo node_modules dist"
   },
@@ -22,7 +35,9 @@
     "@formbricks/types": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
-    "tsup": "^7.2.0",
-    "eslint-config-formbricks": "workspace:*"
+    "eslint-config-formbricks": "workspace:*",
+    "terser": "^5.21.0",
+    "vite": "^4.4.11",
+    "vite-plugin-dts": "^3.6.0"
   }
 }
