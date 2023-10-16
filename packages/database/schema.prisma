@@ -234,6 +234,9 @@ model Survey {
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
   status              SurveyStatus            @default(draft)
+  /// @zod.custom(imports.ZSurveyWelcomeCard)
+  /// [SurveyWelcomeCard]
+  welcomeCard         Json                    @default("{\"enabled\": false}")
   /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions           Json                    @default("[]")

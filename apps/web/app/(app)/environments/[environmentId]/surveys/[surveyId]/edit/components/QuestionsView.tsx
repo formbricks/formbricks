@@ -9,6 +9,7 @@ import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
+import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { validateQuestion } from "./Validation";
@@ -132,27 +133,24 @@ export default function QuestionsView({
 
   const duplicateQuestion = (questionIdx: number) => {
     const questionToDuplicate = JSON.parse(JSON.stringify(localSurvey.questions[questionIdx]));
-    if (questionToDuplicate.type === "welcome") {
-      toast.error("Welcome Question Can't Be Duplicated");
-    } else {
-      const newQuestionId = createId();
 
-      // create a copy of the question with a new id
-      const duplicatedQuestion = {
-        ...questionToDuplicate,
-        id: newQuestionId,
-      };
+    const newQuestionId = createId();
 
-      // insert the new question right after the original one
-      const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
-      updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
+    // create a copy of the question with a new id
+    const duplicatedQuestion = {
+      ...questionToDuplicate,
+      id: newQuestionId,
+    };
 
-      setLocalSurvey(updatedSurvey);
-      setActiveQuestionId(newQuestionId);
-      internalQuestionIdMap[newQuestionId] = createId();
+    // insert the new question right after the original one
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
 
-      toast.success("Question duplicated.");
-    }
+    setLocalSurvey(updatedSurvey);
+    setActiveQuestionId(newQuestionId);
+    internalQuestionIdMap[newQuestionId] = createId();
+
+    toast.success("Question duplicated.");
   };
 
   const addQuestion = (question: any) => {
@@ -161,17 +159,7 @@ export default function QuestionsView({
       question.backButtonLabel = backButtonLabel;
     }
 
-    const isWelcomeQuestionExists = updatedSurvey.questions.some((q) => q.type === "welcome");
-
-    if (question.type === "welcome") {
-      if (isWelcomeQuestionExists) {
-        toast.error("Welcome Type already exists.");
-      } else {
-        updatedSurvey.questions.unshift({ ...question, isDraft: true });
-      }
-    } else {
-      updatedSurvey.questions.push({ ...question, isDraft: true });
-    }
+    updatedSurvey.questions.push({ ...question, isDraft: true });
 
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
@@ -185,11 +173,6 @@ export default function QuestionsView({
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
     newQuestions.splice(result.destination.index, 0, reorderedQuestion);
-    const welcomeQuestionIndex = newQuestions.findIndex((question) => question.type === "welcome");
-    if (welcomeQuestionIndex !== -1 && welcomeQuestionIndex > 0) {
-      const [welcomeQuestion] = newQuestions.splice(welcomeQuestionIndex, 1);
-      newQuestions.splice(0, 0, welcomeQuestion);
-    }
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
@@ -199,17 +182,20 @@ export default function QuestionsView({
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
     const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
-    const welcomeQuestionIndex = newQuestions.findIndex((question) => question.type === "welcome");
-    if (welcomeQuestionIndex !== -1 && welcomeQuestionIndex > 0) {
-      const [welcomeQuestion] = newQuestions.splice(welcomeQuestionIndex, 1);
-      newQuestions.splice(0, 0, welcomeQuestion);
-    }
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
 
   return (
     <div className="mt-12 px-5 py-4">
+      <div className="mb-5 flex flex-col gap-5">
+        <EditWelcomeCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+        />
+      </div>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="mb-5 grid grid-cols-1 gap-5 ">
           <StrictModeDroppable droppableId="questionsList">

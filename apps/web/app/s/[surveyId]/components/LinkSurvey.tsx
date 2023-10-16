@@ -122,7 +122,9 @@ export default function LinkSurvey({
             Survey Preview 👀
             <button
               className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
-              onClick={() => setActiveQuestionId(survey.questions[0].id)}>
+              onClick={() =>
+                setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
+              }>
               Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
             </button>
           </div>

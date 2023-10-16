@@ -13,7 +13,6 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CursorArrowRippleIcon,
-  HandRaisedIcon,
   ListBulletIcon,
   PresentationChartBarIcon,
   QueueListIcon,
@@ -23,7 +22,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import CTAQuestionForm from "./CTAQuestionForm";
-import WelcomeQuestionForm from "./WelcomeQuestionForm";
 import ConsentQuestionForm from "./ConsentQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
@@ -123,9 +121,7 @@ export default function QuestionCard({
               <div>
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
-                    {question.type === QuestionType.Welcome ? (
-                      <HandRaisedIcon />
-                    ) : question.type === QuestionType.OpenText ? (
+                    {question.type === QuestionType.OpenText ? (
                       <ChatBubbleBottomCenterTextIcon />
                     ) : question.type === QuestionType.MultipleChoiceSingle ? (
                       <QueueListIcon />
@@ -165,16 +161,7 @@ export default function QuestionCard({
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
-              {question.type === QuestionType.Welcome ? (
-                <WelcomeQuestionForm
-                  localSurvey={localSurvey}
-                  question={question}
-                  questionIdx={questionIdx}
-                  updateQuestion={updateQuestion}
-                  lastQuestion={lastQuestion}
-                  isInValid={isInValid}
-                />
-              ) : question.type === QuestionType.OpenText ? (
+              {question.type === QuestionType.OpenText ? (
                 <OpenQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -251,8 +238,7 @@ export default function QuestionCard({
                   <Collapsible.CollapsibleContent className="space-y-4">
                     {question.type !== QuestionType.NPS &&
                     question.type !== QuestionType.Rating &&
-                    question.type !== QuestionType.CTA &&
-                    question.type !== QuestionType.Welcome ? (
+                    question.type !== QuestionType.CTA ? (
                       <div className="mt-4 flex space-x-2">
                         <div className="w-full">
                           <Label htmlFor="buttonLabel">Button Label</Label>
@@ -313,7 +299,7 @@ export default function QuestionCard({
                     />
                   </div>
                 )}
-                {question.type != QuestionType.Welcome && (
+                {
                   <div className="my-4 flex items-center justify-end space-x-2">
                     <Label htmlFor="required-toggle">Required</Label>
                     <Switch
@@ -325,7 +311,7 @@ export default function QuestionCard({
                       }}
                     />
                   </div>
-                )}
+                }
               </div>
             )}
           </Collapsible.Root>
