@@ -171,7 +171,7 @@ export const getResponseBySingleUseId = async (
         throw error;
       }
     },
-    [`getResponseBySingleUseId-${surveyId}-singleuse-${singleUseId}`],
+    [`getResponseBySingleUseId-${surveyId}-${singleUseId}`],
     {
       tags: [responseCache.tag.bySingleUseId(surveyId, singleUseId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -188,8 +188,8 @@ export const getResponseBySingleUseId = async (
   };
 };
 
-export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput.partial()]);
+export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
   try {

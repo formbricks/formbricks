@@ -17,10 +17,10 @@ export const responseCache = {
       return `responses-${responseId}`;
     },
     byPersonId(personId: string) {
-      return `person-${personId}-responses`;
+      return `people-${personId}-responses`;
     },
     bySingleUseId(surveyId: string, singleUseId: string) {
-      return `survey-${surveyId}-singleuse-${singleUseId}-responses`;
+      return `surveys-${surveyId}-singleUse-${singleUseId}-responses`;
     },
     bySurveyId(surveyId: string) {
       return `surveys-${surveyId}-responses`;
