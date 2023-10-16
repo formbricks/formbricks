@@ -74,6 +74,8 @@ export const selectSurvey = {
       value: true,
     },
   },
+  cumulativeTimeToCompletion: true,
+  latestTimeToCompletionSample: true,
 };
 
 export const selectSurveyWithAnalytics = {

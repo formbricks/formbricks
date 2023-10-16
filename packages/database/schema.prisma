@@ -258,13 +258,15 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
-  productOverwrites Json?
+  productOverwrites            Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse         Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
+  singleUse                    Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail       Json?
+  verifyEmail                  Json?
+  cumulativeTimeToCompletion   Int?
+  latestTimeToCompletionSample Int?
 }
 
 model Event {

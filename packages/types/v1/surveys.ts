@@ -287,6 +287,8 @@ export const ZSurvey = z.object({
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
+  cumulativeTimeToCompletion: z.number().nullable(),
+  latestTimeToCompletionSample: z.number().nullable(),
 });
 
 export const ZSurveyInput = z.object({
@@ -306,6 +308,8 @@ export const ZSurveyInput = z.object({
   verifyEmail: ZSurveyVerifyEmail.optional(),
   attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
   triggers: z.array(z.string()).optional(),
+  cumulativeTimeToCompletion: z.number().optional(),
+  latestTimeToCompletionSample: z.number().optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

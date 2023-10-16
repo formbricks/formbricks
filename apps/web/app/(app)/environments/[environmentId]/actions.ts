@@ -252,6 +252,8 @@ export async function copyToOtherEnvironmentAction(
       singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
       productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
+      //cumulativeTimeToCompletion: existingSurvey.cumulativeTimeToCompletion ?? prismaClient.JsonNull,
+      //latestTimeToCompletionSample: existingSurvey.latestTimeToCompletionSample ?? prismaClient.JsonNull,
     },
   });
   return newSurvey;

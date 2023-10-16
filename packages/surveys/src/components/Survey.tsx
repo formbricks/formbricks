@@ -49,6 +49,43 @@ export function Survey({
     }
   }, []);
 
+  // Implement a timer logic
+  const [timeElapsed, setTimeElapsed] = useState(0);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    function startTimer() {
+      timer = setInterval(() => {
+        setTimeElapsed((prevTime) => prevTime + 1);
+        console.log(`Time elapsed: ${timeElapsed} seconds`);
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timer);
+    }
+
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        stopTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Start the timer when the page loads.
+    startTimer();
+
+    // Cleanup function to stop the timer when the component unmounts
+    return () => {
+      stopTimer();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []); // Empty dependency array means this effect runs once on mount and cleanup on unmount
+
   function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
@@ -79,6 +116,16 @@ export function Survey({
     onResponse({ data: responseData, finished });
     if (finished) {
       onFinished();
+      //survey.latestTimeToCompletionSample = timeElapsed;
+      //survey.cumulativeTimeToCompletion = (survey.cumulativeTimeToCompletion ?? 0) + timeElapsed;
+      if (typeof survey.latestTimeToCompletionSample !== "number") {
+        survey.latestTimeToCompletionSample = 0;
+      }
+      if (typeof survey.cumulativeTimeToCompletion !== "number") {
+        survey.cumulativeTimeToCompletion = 0;
+      }
+      survey.latestTimeToCompletionSample = timeElapsed;
+      survey.cumulativeTimeToCompletion += timeElapsed;
     }
     setQuestionId(nextQuestionId);
     // add to history
