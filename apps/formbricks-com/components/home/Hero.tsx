@@ -99,7 +99,7 @@ export const Hero: React.FC = ({}) => {
             Create survey
           </Button>
           <Button
-            variant="secondary"
+            variant="highlight"
             className="px-6"
             onClick={() => {
               router.push("/demo");
