@@ -8,6 +8,11 @@ export const ZSurveyThankYouCard = z.object({
   subheader: z.optional(z.string()),
 });
 
+export const ZSurveyHiddenFields = z.object({
+  enabled: z.boolean(),
+  fieldIds: z.optional(z.array(z.string())),
+});
+
 export const ZSurveyProductOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
@@ -48,6 +53,8 @@ export const ZSurveyVerifyEmail = z
 export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
+
+export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 
 export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
@@ -260,9 +267,15 @@ export type TSurveyAttributeFilter = z.infer<typeof ZSurveyAttributeFilter>;
 
 const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
 
+export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
+
 const ZSurveyType = z.enum(["web", "email", "link", "mobile"]);
 
+export type TSurveyType = z.infer<typeof ZSurveyType>;
+
 const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
+
+export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
@@ -280,6 +293,7 @@ export const ZSurvey = z.object({
   recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
+  hiddenFields: ZSurveyHiddenFields,
   delay: z.number(),
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
@@ -287,6 +301,7 @@ export const ZSurvey = z.object({
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
+  pin: z.number().nullable().optional(),
 });
 
 export const ZSurveyInput = z.object({
@@ -299,6 +314,7 @@ export const ZSurveyInput = z.object({
   recontactDays: z.number().optional(),
   questions: ZSurveyQuestions.optional(),
   thankYouCard: ZSurveyThankYouCard.optional(),
+  hiddenFields: ZSurveyHiddenFields,
   delay: z.number().optional(),
   autoComplete: z.number().optional(),
   closeOnDate: z.date().optional(),

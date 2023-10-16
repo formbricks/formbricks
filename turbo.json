@@ -23,6 +23,20 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/surveys#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/surveys#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/surveys#build"]
+    },
+    "@formbricks/js#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/js#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],

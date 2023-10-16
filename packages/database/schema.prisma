@@ -240,6 +240,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard        Json                    @default("{\"enabled\": false}")
+  /// @zod.custom(imports.ZSurveyHiddenFields)
+  /// [SurveyHiddenFields]
+  hiddenFields        Json                    @default("{\"enabled\": false}")
   responses           Response[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
@@ -265,6 +268,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
+
+  // PIN Protected Surverys
+  pin Int?
 }
 
 model Event {
