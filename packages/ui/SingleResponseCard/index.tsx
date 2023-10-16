@@ -188,7 +188,7 @@ export default function SingleResponseCard({
       )}
     </>
   );
-  const deleteSubmissionToolTip = <>This submission is in progress.</>;
+  const deleteSubmissionToolTip = <>This response is in progress.</>;
 
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
@@ -237,19 +237,21 @@ export default function SingleResponseCard({
               </div>
             )}
 
-            <div className="flex space-x-4 text-sm">
+            <div className="flex cursor-pointer space-x-4 text-sm">
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
-              <TooltipRenderer shouldRender={isSubmissionFresh} tooltipContent={deleteSubmissionToolTip}>
+              <TooltipRenderer
+                shouldRender={isSubmissionFresh || !response.finished}
+                tooltipContent={deleteSubmissionToolTip}>
                 <TrashIcon
                   onClick={() => {
-                    if (!isSubmissionFresh) {
+                    if (!isSubmissionFresh || !response.finished) {
                       setDeleteDialogOpen(true);
                     }
                   }}
                   className={`h-4 w-4 ${
-                    isSubmissionFresh
+                    isSubmissionFresh || !response.finished
                       ? "cursor-not-allowed text-gray-400"
                       : "text-slate-500 hover:text-red-700"
                   } `}
@@ -308,6 +310,18 @@ export default function SingleResponseCard({
               </div>
             );
           })}
+          {survey.hiddenFields?.enabled && survey.hiddenFields?.fieldIds?.length && (
+            <div className="mt-6 flex flex-col gap-6">
+              {survey.hiddenFields.fieldIds.map((field) => {
+                return (
+                  <div key={field}>
+                    <p className="text-sm text-slate-500">Hidden Field: {field}</p>
+                    <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.data[field]}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {response.finished && (
             <div className="flex">
               <CheckCircleIcon className="h-6 w-6 text-slate-400" />

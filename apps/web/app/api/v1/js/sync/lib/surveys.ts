@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { selectSurvey } from "@formbricks/lib/survey/service";
-import { TSurveysWithTriggers } from "@formbricks/types/v1/js";
+import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
 import { TPerson } from "@formbricks/types/v1/people";
 import { unstable_cache } from "next/cache";
 
@@ -26,7 +26,7 @@ export const getSurveysCached = (environmentId: string, person: TPerson) =>
     }
   )();
 
-export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurveysWithTriggers[]> => {
+export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurveyWithTriggers[]> => {
   // get recontactDays from product
   const product = await prisma.product.findFirst({
     where: {
@@ -133,7 +133,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
   });
 
   // filter surveys that meet the recontactDays criteria
-  const surveys: TSurveysWithTriggers[] = potentialSurveysWithAttributes
+  const surveys: TSurveyWithTriggers[] = potentialSurveysWithAttributes
     .filter((survey) => {
       if (!lastDisplayPerson) {
         // no display yet - always display

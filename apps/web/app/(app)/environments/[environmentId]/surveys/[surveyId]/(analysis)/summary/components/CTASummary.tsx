@@ -4,7 +4,7 @@ import { TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { questionTypes } from "@/lib/questions";
+import { questionTypes } from "@/app/lib/questions";
 
 interface CTASummaryProps {
   questionSummary: QuestionSummary<TSurveyCTAQuestion>;

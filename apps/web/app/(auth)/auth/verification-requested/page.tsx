@@ -1,5 +1,5 @@
-import { RequestVerificationEmail } from "@/components/auth/RequestVerificationEmail";
-import FormWrapper from "@/components/auth/FormWrapper";
+import { RequestVerificationEmail } from "@/app/components/auth/RequestVerificationEmail";
+import FormWrapper from "@/app/components/auth/FormWrapper";
 import { z } from "zod";
 
 const VerificationPageSchema = z.string().email();

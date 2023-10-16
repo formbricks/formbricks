@@ -1,4 +1,4 @@
-import { sendToPipeline } from "@/lib/pipelines";
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { TPerson } from "@formbricks/types/v1/people";

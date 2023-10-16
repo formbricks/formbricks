@@ -1,4 +1,4 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/env.mjs";
 import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
