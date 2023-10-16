@@ -271,6 +271,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
+
+  // PIN Protected Surverys
+  pin Int?
 }
 
 model Event {

@@ -319,6 +319,7 @@ export const ZSurvey = z.object({
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
+  pin: z.number().nullable().optional(),
 });
 
 export const ZSurveyInput = z.object({
