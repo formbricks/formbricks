@@ -6,6 +6,7 @@ import dts from "vite-plugin-dts";
 // https://vitejs.dev/config/
 export default defineConfig({
   build: {
+    emptyOutDir: false,
     minify: "terser",
     sourcemap: true,
     lib: {
@@ -17,5 +18,5 @@ export default defineConfig({
       fileName: "index",
     },
   },
-  plugins: [preact(), dts()],
+  plugins: [preact(), dts({ rollupTypes: true })],
 });
