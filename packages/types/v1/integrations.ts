@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { ZEnvironment } from "./environment";
-
-// Define a specific schema for googleSheets config
-
+/* GOOGLE SHEETS CONFIGURATIONS */
 export const ZGoogleCredential = z.object({
   scope: z.string(),
   token_type: z.literal("Bearer"),
@@ -10,11 +8,13 @@ export const ZGoogleCredential = z.object({
   access_token: z.string(),
   refresh_token: z.string(),
 });
+export type TGoogleCredential = z.infer<typeof ZGoogleCredential>;
 
 export const ZGoogleSpreadsheet = z.object({
   name: z.string(),
   id: z.string(),
 });
+export type TGoogleSpreadsheet = z.infer<typeof ZGoogleSpreadsheet>;
 
 export const ZAirTable = ZGoogleSpreadsheet;
 
@@ -25,6 +25,7 @@ const ZBaseSurveyData = z.object({
   surveyId: z.string(),
   surveyName: z.string(),
 });
+export type TGoogleSheetsConfigData = z.infer<typeof ZGoogleSheetsConfigData>;
 
 export const ZGoogleSheetsConfigData = z
   .object({
@@ -68,6 +69,7 @@ export const ZIntegration = z.object({
   environmentId: z.string(),
   config: ZIntegrationConfig,
 });
+export type TGoogleSheetsConfig = z.infer<typeof ZGoogleSheetsConfig>;
 
 export const ZGoogleSheetIntegration = z.object({
   id: z.string(),
@@ -91,14 +93,23 @@ export const ZAirTableIntegration = z.object({
   config: ZAirTableConfig,
 });
 
-export type TIntegration = z.infer<typeof ZIntegration>;
-export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
-export type TGoogleCredential = z.infer<typeof ZGoogleCredential>;
-export type TGoogleSpreadsheet = z.infer<typeof ZGoogleSpreadsheet>;
-export type TGoogleSheetsConfig = z.infer<typeof ZGoogleSheetsConfig>;
-export type TGoogleSheetsConfigData = z.infer<typeof ZGoogleSheetsConfigData>;
-export type TGoogleSheetIntegration = z.infer<typeof ZGoogleSheetIntegration>;
 export type TAirTableIntegration = z.infer<typeof ZAirTableIntegration>;
 export type TPlaceHolderIntegration = z.infer<typeof ZPlaceHolderIntegration>;
 export type TAirtable = z.infer<typeof ZAirTable>;
 export type TZAirTableConfigData = z.infer<typeof ZAirTableConfigData>;
+export type TGoogleSheetIntegration = z.infer<typeof ZGoogleSheetIntegration>;
+
+// Define a specific schema for integration configs
+// When we add other configurations it will be z.union([ZGoogleSheetsConfig, ZSlackConfig, ...])
+export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
+
+export const ZIntegrationType = z.enum(["googleSheets"]);
+export type TIntegrationType = z.infer<typeof ZIntegrationType>;
+
+export type TIntegration = z.infer<typeof ZIntegration>;
+
+export const ZIntegrationInput = z.object({
+  type: ZIntegrationType,
+  config: ZIntegrationConfig,
+});
+export type TIntegrationInput = z.infer<typeof ZIntegrationInput>;

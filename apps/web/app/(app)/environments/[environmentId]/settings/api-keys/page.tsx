@@ -1,10 +1,10 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import ApiKeyList from "./ApiKeyList";
-import EnvironmentNotice from "@/components/shared/EnvironmentNotice";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import ApiKeyList from "./components/ApiKeyList";
+import EnvironmentNotice from "@/app/components/shared/EnvironmentNotice";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function ProfileSettingsPage({ params }) {
@@ -15,7 +15,7 @@ export default async function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="API Keys" />
-      <EnvironmentNotice environment={environment} />
+      <EnvironmentNotice environmentId={environment.id} />
       {environment.type === "development" ? (
         <SettingsCard
           title="Development Env Keys"

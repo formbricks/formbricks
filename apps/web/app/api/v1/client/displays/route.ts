@@ -1,5 +1,5 @@
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { InvalidInputError } from "@formbricks/types/v1/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createDisplay } from "@formbricks/lib/display/service";
@@ -25,7 +25,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const displayInput = inputValidation.data;
-
   // find environmentId from surveyId
   let survey;
 

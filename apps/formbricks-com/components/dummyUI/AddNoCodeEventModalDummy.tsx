@@ -1,17 +1,10 @@
-import {
-  Button,
-  Input,
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/Input";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
-import Modal from "../shared/Modal";
+import { Modal } from "@formbricks/ui/Modal";
 
 interface EventDetailModalProps {
   open: boolean;

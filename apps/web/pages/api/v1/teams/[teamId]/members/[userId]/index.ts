@@ -1,4 +1,4 @@
-import { getSessionUser, hasTeamAccess, isAdminOrOwner } from "@/lib/api/apiHelper";
+import { getSessionUser, hasTeamAccess, isAdminOrOwner } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 

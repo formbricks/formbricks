@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
 import { ZColor, ZSurveyPlacement } from "./common";
 
@@ -7,6 +6,11 @@ export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: z.optional(z.string()),
   subheader: z.optional(z.string()),
+});
+
+export const ZSurveyHiddenFields = z.object({
+  enabled: z.boolean(),
+  fieldIds: z.optional(z.array(z.string())),
 });
 
 export const ZSurveyProductOverwrites = z.object({
@@ -49,6 +53,8 @@ export const ZSurveyVerifyEmail = z
 export type TSurveyVerifyEmail = z.infer<typeof ZSurveyVerifyEmail>;
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
+
+export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 
 export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
@@ -276,11 +282,12 @@ export const ZSurvey = z.object({
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
-  triggers: z.array(ZActionClass),
+  triggers: z.array(z.string()),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
+  hiddenFields: ZSurveyHiddenFields,
   delay: z.number(),
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
@@ -293,7 +300,6 @@ export const ZSurvey = z.object({
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),
-  environmentId: z.string(),
   status: ZSurveyStatus.optional(),
   displayOption: ZSurveyDisplayOption.optional(),
   autoClose: z.number().optional(),
@@ -301,17 +307,22 @@ export const ZSurveyInput = z.object({
   recontactDays: z.number().optional(),
   questions: ZSurveyQuestions.optional(),
   thankYouCard: ZSurveyThankYouCard.optional(),
+  hiddenFields: ZSurveyHiddenFields,
   delay: z.number().optional(),
   autoComplete: z.number().optional(),
   closeOnDate: z.date().optional(),
   surveyClosedMessage: ZSurveyClosedMessage.optional(),
   verifyEmail: ZSurveyVerifyEmail.optional(),
-  // TODO: Update survey create endpoint to accept attributeFilters and triggers like the survey update endpoint
-  // attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
-  //triggers: z.array(ZActionClass).optional(),
+  attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
+  triggers: z.array(z.string()).optional(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
+export type TSurveyDates = {
+  createdAt: TSurvey["createdAt"];
+  updatedAt: TSurvey["updatedAt"];
+  closeOnDate: TSurvey["closeOnDate"];
+};
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 
 export const ZSurveyWithAnalytics = ZSurvey.extend({

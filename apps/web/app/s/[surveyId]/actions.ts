@@ -9,7 +9,7 @@ interface LinkSurveyEmailData {
   } | null;
 }
 
-import { sendLinkSurveyToVerifiedEmail } from "@/lib/email";
+import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 
 export async function sendLinkSurveyEmailAction(data: LinkSurveyEmailData) {

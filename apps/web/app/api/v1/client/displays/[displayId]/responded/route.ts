@@ -1,4 +1,4 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { markDisplayResponded } from "@formbricks/lib/display/service";
 import { NextResponse } from "next/server";
 

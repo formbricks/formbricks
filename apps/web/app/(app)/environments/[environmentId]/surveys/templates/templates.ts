@@ -1,5 +1,5 @@
 import { QuestionType } from "@formbricks/types/questions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/v1/surveys";
 import { TTemplate } from "@formbricks/types/v1/templates";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -7,6 +7,11 @@ const thankYouCardDefault = {
   enabled: true,
   headline: "Thank you!",
   subheader: "We appreciate your feedback.",
+};
+
+const hiddenFieldsDefault: TSurveyHiddenFields = {
+  enabled: true,
+  fieldIds: [],
 };
 
 export const templates: TTemplate[] = [
@@ -105,6 +110,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -207,6 +213,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -294,6 +301,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -358,6 +366,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -460,6 +469,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -506,6 +516,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -529,6 +540,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -624,6 +636,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -673,6 +686,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -714,6 +728,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -757,6 +772,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -820,6 +836,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -860,6 +877,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -897,6 +915,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -945,6 +964,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1007,6 +1027,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1048,6 +1069,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1087,6 +1109,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1131,6 +1154,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1159,6 +1183,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1201,6 +1226,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1239,6 +1265,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -1290,6 +1317,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1320,6 +1348,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1370,6 +1399,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1402,6 +1432,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -1445,6 +1476,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1487,6 +1519,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1529,6 +1562,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1603,6 +1637,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1724,6 +1759,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1757,6 +1793,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1807,6 +1844,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1858,6 +1896,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1956,6 +1995,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -2053,6 +2093,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -2075,6 +2116,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },  */
 ];
@@ -2096,6 +2138,7 @@ export const customSurvey: TTemplate = {
       },
     ],
     thankYouCard: thankYouCardDefault,
+    hiddenFields: hiddenFieldsDefault,
   },
 };
 
@@ -2115,6 +2158,9 @@ export const minimalSurvey: TSurvey = {
   recontactDays: null,
   questions: [],
   thankYouCard: {
+    enabled: false,
+  },
+  hiddenFields: {
     enabled: false,
   },
   delay: 0, // No delay

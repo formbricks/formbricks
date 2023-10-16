@@ -1,4 +1,4 @@
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/lib/email";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/app/lib/email";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";

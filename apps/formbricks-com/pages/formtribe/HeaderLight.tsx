@@ -1,5 +1,6 @@
 import Logo from "@/images/formtribe/formtribe-logo.png";
-import { Button, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+import { Button } from "@formbricks/ui/Button";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
@@ -47,7 +48,7 @@ export default function HeaderLight() {
       </div>
 
       {/* Mobile Menu */}
-      <div className="flex items-center md:hidden">
+      <div className="flex items-center pr-4 md:hidden">
         <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
           <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
             <span>

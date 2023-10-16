@@ -5,11 +5,11 @@ import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import { Card } from "@formbricks/ui/Card";
+import Image from "next/image";
+import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
-import { Card } from "@formbricks/ui";
-import Image from "next/image";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
@@ -64,7 +64,7 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
       connected: userWebhooks > 0,
       statusText:
-        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} zaps`,
+        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,

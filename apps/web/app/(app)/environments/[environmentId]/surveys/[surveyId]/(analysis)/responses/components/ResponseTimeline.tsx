@@ -1,80 +1,34 @@
 "use client";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProfile } from "@formbricks/types/v1/profile";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { createId } from "@paralleldrive/cuid2";
-import { useMemo } from "react";
-import SingleResponse from "./SingleResponse";
-import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TTag } from "@formbricks/types/v1/tags";
+import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
 interface ResponseTimelineProps {
   environment: TEnvironment;
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
+  profile: TProfile;
   environmentTags: TTag[];
 }
 
 export default function ResponseTimeline({
   environment,
-  surveyId,
   responses,
   survey,
+  profile,
   environmentTags,
 }: ResponseTimelineProps) {
-  const matchQandA = useMemo(() => {
-    if (survey && responses) {
-      // Create a mapping of question IDs to their headlines
-      const questionIdToHeadline = {};
-      survey.questions.forEach((question) => {
-        questionIdToHeadline[question.id] = question.headline;
-      });
-
-      // Replace question IDs with question headlines in response data
-      const updatedResponses = responses.map((response) => {
-        const updatedResponse: Array<{
-          id: string;
-          question: string;
-          answer: string;
-          type: string;
-          scale?: "number" | "star" | "smiley";
-          range?: number;
-        }> = []; // Specify the type of updatedData
-        // iterate over survey questions and build the updated response
-        for (const question of survey.questions) {
-          const answer = response.data[question.id];
-          if (answer !== null && answer !== undefined) {
-            updatedResponse.push({
-              id: createId(),
-              question: question.headline,
-              type: question.type,
-              scale: question.scale,
-              range: question.range,
-              answer: answer as string,
-            });
-          }
-        }
-        return { ...response, responses: updatedResponse };
-      });
-
-      const updatedResponsesWithTags = updatedResponses.map((response) => ({
-        ...response,
-        tags: response.tags?.map((tag) => tag),
-      }));
-
-      return updatedResponsesWithTags;
-    }
-    return [];
-  }, [survey, responses]);
-
   return (
     <div className="space-y-4">
-      {survey.type === "web" && responses.length === 0 && (
-        <EmptyInAppSurveys environmentId={environment.id} />
-      )}
-      {survey.type !== "web" && responses.length === 0 ? (
+      {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
+        <EmptyInAppSurveys environment={environment} />
+      ) : responses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
@@ -82,15 +36,18 @@ export default function ResponseTimeline({
         />
       ) : (
         <div>
-          {matchQandA.map((updatedResponse) => {
+          {responses.map((response) => {
             return (
-              <SingleResponse
-                key={updatedResponse.id}
-                data={updatedResponse}
-                surveyId={surveyId}
-                environmentId={environment.id}
-                environmentTags={environmentTags}
-              />
+              <div key={response.id}>
+                <SingleResponseCard
+                  survey={survey}
+                  response={response}
+                  profile={profile}
+                  environmentTags={environmentTags}
+                  pageType="response"
+                  environment={environment}
+                />
+              </div>
             );
           })}
         </div>

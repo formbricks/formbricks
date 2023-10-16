@@ -8,8 +8,11 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  //provider = "prisma-dbml-generator"
 }
+
+// generator dbml {
+//  provider = "prisma-dbml-generator"
+// }
 
 generator zod {
   provider      = "zod-prisma"
@@ -237,6 +240,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard        Json                    @default("{\"enabled\": false}")
+  /// @zod.custom(imports.ZSurveyHiddenFields)
+  /// [SurveyHiddenFields]
+  hiddenFields        Json                    @default("{\"enabled\": false}")
   responses           Response[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
@@ -374,6 +380,8 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+
+  @@unique([teamId, name])
 }
 
 enum Plan {
@@ -498,6 +506,9 @@ model User {
   name                      String?
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
+  twoFactorSecret           String?
+  twoFactorEnabled          Boolean          @default(false)
+  backupCodes               String?
   password                  String?
   onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)

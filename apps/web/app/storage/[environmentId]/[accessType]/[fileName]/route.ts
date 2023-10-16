@@ -1,7 +1,7 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { env } from "@/env.mjs";
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/service";
@@ -46,7 +46,7 @@ export async function GET(
     }
 
     try {
-      const { fileBuffer, metaData } = await getFileFromS3(fileName);
+      const { fileBuffer, metaData } = await getFileFromS3(`${environmentId}/${accessType}/${fileName}`);
 
       return new Response(fileBuffer, {
         headers: {
