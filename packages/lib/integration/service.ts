@@ -13,7 +13,6 @@ export async function createOrUpdateIntegration(
   environmentId: string,
   integrationData: TIntegrationInput
 ): Promise<TIntegration> {
-  const { environmentId: _, ...rest } = integrationData;
   validateInputs([environmentId, ZId]);
 
   try {
@@ -25,11 +24,11 @@ export async function createOrUpdateIntegration(
         },
       },
       update: {
-        ...rest,
+        ...integrationData,
         environment: { connect: { id: environmentId } },
       },
       create: {
-        ...rest,
+        ...integrationData,
         environment: { connect: { id: environmentId } },
       },
     });

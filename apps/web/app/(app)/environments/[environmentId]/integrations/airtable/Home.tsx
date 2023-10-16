@@ -4,12 +4,12 @@ import { timeSince } from "@/../../packages/lib/time";
 import { TEnvironment } from "@/../../packages/types/v1/environment";
 import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integrations";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
-import { Button } from "@/../../packages/ui";
+import { Button, DeleteDialog } from "@/../../packages/ui";
 import AddIntegrationModal, {
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/AddIntegrationModal";
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { useState } from "react";
 import { toast } from "react-hot-toast";

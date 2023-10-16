@@ -3,7 +3,7 @@ import {
   TGoogleSheetIntegration,
   TGoogleSheetsConfigData,
   TGoogleSpreadsheet,
-  TIntegrationInput,
+  TGoogleSheetIntegrationInput,
 } from "@formbricks/types/v1/integrations";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -55,7 +55,7 @@ export default function AddIntegrationModal({
   const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState<any>(null);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
-  const googleSheetIntegrationData: TIntegrationInput = {
+  const googleSheetIntegrationData: TGoogleSheetIntegrationInput = {
     type: "googleSheets",
     config: {
       key: googleSheetIntegration?.config?.key,
