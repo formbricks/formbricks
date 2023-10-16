@@ -36,15 +36,16 @@ type ButtonProps = {
 
 export function Button({ variant = "primary", className, children, arrow, ...props }: ButtonProps) {
   className = clsx(
-    "inline-flex gap-0.5 justify-center overflow-hidden text-sm font-medium transition",
+    "inline-flex gap-0.5 justify-center items-center overflow-hidden font-medium transition text-center",
     variantStyles[variant],
-    className
+    className,
+    "px-5 py-2.5 text-xs"
   );
 
   let arrowIcon = (
     <ArrowIcon
       className={clsx(
-        "mt-0.5 h-5 w-5",
+        "mt-0.5 h-4 w-4",
         variant === "text" && "relative top-px",
         arrow === "left" && "-ml-1 rotate-180",
         arrow === "right" && "-mr-1"

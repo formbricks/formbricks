@@ -8,8 +8,11 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  //provider = "prisma-dbml-generator"
 }
+
+// generator dbml {
+//  provider = "prisma-dbml-generator"
+// }
 
 generator zod {
   provider      = "zod-prisma"
@@ -237,6 +240,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard        Json                    @default("{\"enabled\": false}")
+  /// @zod.custom(imports.ZSurveyHiddenFields)
+  /// [SurveyHiddenFields]
+  hiddenFields        Json                    @default("{\"enabled\": false}")
   responses           Response[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?

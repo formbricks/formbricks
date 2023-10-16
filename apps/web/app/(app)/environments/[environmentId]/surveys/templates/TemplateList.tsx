@@ -1,8 +1,8 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile } from "@/lib/profile";
-import { replacePresetPlaceholders } from "@/lib/templates";
+import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import { useProfile } from "@/app/lib/profile";
+import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { cn } from "@formbricks/lib/cn";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
@@ -15,7 +15,7 @@ import { SparklesIcon } from "@heroicons/react/24/solid";
 import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createSurveyAction } from "./actions";
+import { createSurveyAction } from "../actions";
 import { customSurvey, templates } from "./templates";
 import { TSurveyInput } from "@formbricks/types/v1/surveys";
 

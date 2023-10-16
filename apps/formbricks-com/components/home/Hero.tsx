@@ -22,7 +22,7 @@ export const Hero: React.FC = ({}) => {
         <a
           href="https://formbricks.com/formtribe"
           target="_blank"
-          className="border-brand-dark animate-bounce rounded-full border px-4 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+          className="border-brand-dark xs:text-sm animate-bounce rounded-full border px-4 py-1.5 text-xs text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
           The FormTribe Hackathon is on 🔥
           <ChevronRightIcon className="inline h-5 w-5 text-slate-300" />
         </a>
