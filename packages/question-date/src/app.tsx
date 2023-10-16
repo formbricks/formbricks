@@ -3,10 +3,7 @@ import "react-day-picker/dist/style.css?inline";
 
 export function App() {
   return (
-    <div style={{ margin: "200px" }}>
-      <h1>
-        Hello from <code>question-date</code>!
-      </h1>
+    <div>
       <DayPicker />
     </div>
   );

@@ -30,6 +30,7 @@ import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurveyWithAnalytics;
@@ -221,6 +222,15 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === "date" ? (
+                <DateQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
               ) : null}

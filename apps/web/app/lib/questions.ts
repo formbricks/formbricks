@@ -6,6 +6,7 @@ import {
   QueueListIcon,
   StarIcon,
   CheckIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -108,6 +109,15 @@ export const questionTypes: QuestionType[] = [
       headline: "Terms and Conditions",
       label: "I agree to the terms and conditions",
       dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: "date",
+    label: "Date",
+    description: "Ask your users to select a date",
+    icon: CalendarIcon,
+    preset: {
+      headline: "When is your birthday?",
     },
   },
 ];

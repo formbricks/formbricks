@@ -241,6 +241,15 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
+export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(QuestionType.Date),
+  html: z.string().optional(),
+  label: z.string(),
+  dateSubmitted: z.string(),
+});
+
+export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -249,6 +258,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyNPSQuestion,
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
+  ZSurveyDateQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;

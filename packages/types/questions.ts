@@ -11,6 +11,7 @@ export enum QuestionType {
   CTA = "cta",
   Rating = "rating",
   Consent = "consent",
+  Date = "date",
 }
 
 export type Question =
@@ -20,7 +21,8 @@ export type Question =
   | NPSQuestion
   | CTAQuestion
   | RatingQuestion
-  | ConsentQuestion;
+  | ConsentQuestion
+  | DateQuestion;
 
 export interface IQuestion<T extends Logic> {
   id: string;
@@ -79,6 +81,13 @@ export interface ConsentQuestion extends IQuestion<CTALogic> {
   html?: string;
   label: string;
   dismissButtonLabel?: string;
+}
+
+export interface DateQuestion extends IQuestion<DateLogic> {
+  type: QuestionType.Date;
+  html?: string;
+  label: string;
+  dateSubmitted: string;
 }
 
 export type LogicCondition =
@@ -149,6 +158,11 @@ export interface ConsentLogic extends LogicBase {
   value: undefined;
 }
 
+export interface DateLogic extends LogicBase {
+  condition: "submitted" | "skipped" | undefined;
+  value: string;
+}
+
 export type Logic =
   | OpenTextLogic
   | MultipleChoiceSingleLogic
@@ -156,4 +170,5 @@ export type Logic =
   | NPSLogic
   | CTALogic
   | RatingLogic
-  | ConsentLogic;
+  | ConsentLogic
+  | DateLogic;
