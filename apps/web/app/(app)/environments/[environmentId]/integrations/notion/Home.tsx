@@ -14,7 +14,6 @@ interface HomeProps {
   setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedIntegration: (v: (TNotionConfigData & { index: number }) | null) => void;
-  refreshDatabase: () => void;
 }
 
 export default function Home({
@@ -22,7 +21,6 @@ export default function Home({
   notionIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
-  refreshDatabase,
   setSelectedIntegration,
 }: HomeProps) {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -71,7 +69,6 @@ export default function Home({
         <Button
           variant="darkCTA"
           onClick={() => {
-            refreshDatabase();
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>

@@ -33,11 +33,6 @@ export default function NotionWrapper({
     (TNotionConfigData & { index: number }) | null
   >(null);
 
-  const refreshDatabase = async () => {
-    // const latestDatabases = await refreshDatabasesAction(environment.id);
-    // setDatabases(latestDatabases);
-  };
-
   return (
     <>
       {isConnected && notionIntegration ? (
@@ -57,7 +52,6 @@ export default function NotionWrapper({
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
-            refreshDatabase={refreshDatabase}
           />
         </>
       ) : (
