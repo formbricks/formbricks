@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
-import { uploadFile } from "./lib/fileUpload";
-import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { FileIcon } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { uploadFile } from "./lib/fileUpload";
 
 interface FileInputProps {
   allowedFileExtensions: string[];
@@ -51,15 +51,15 @@ const FileInput: React.FC<FileInputProps> = ({
   return (
     <label
       htmlFor="selectedFile"
-      className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600 dark:hover:bg-gray-800"
+      className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-600 dark:hover:bg-slate-800"
       onDragOver={(e) => handleDragOver(e)}
       onDrop={(e) => handleDrop(e)}>
       {isUploaded && fileUrl ? (
         <>
           <div className="absolute inset-0 mr-4 mt-2 flex items-start justify-end gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-300 bg-opacity-50">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 hover:bg-slate-200/50 text-slate-800 hover:text-slate-900 bg-opacity-50">
               <label htmlFor="modifyFile">
-                <PhotoIcon className="h-6 text-gray-700" />
+                <PhotoIcon className="h-5 text-slate-700 hover:text-slate-900 cursor-pointer" />
 
                 <input
                   type="file"
@@ -80,8 +80,8 @@ const FileInput: React.FC<FileInputProps> = ({
                 />
               </label>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-300 bg-opacity-50">
-              <TrashIcon className="h-6 text-gray-700" onClick={() => onFileUpload(undefined)} />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 hover:bg-slate-200/50 bg-opacity-50">
+              <TrashIcon className="h-5 text-slate-700 hover:text-slate-900" onClick={() => onFileUpload(undefined)} />
             </div>
           </div>
 
@@ -93,8 +93,8 @@ const FileInput: React.FC<FileInputProps> = ({
             />
           ) : (
             <div className="flex flex-col items-center justify-center pb-6 pt-5">
-              <FileIcon className="h-6 text-gray-500" />
-              <p className="dark.text-gray-400 mt-2 text-sm text-gray-500">
+              <FileIcon className="h-6 text-slate-500" />
+              <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
                 <span className="font-semibold">{fileUrl.split("/").pop()}</span>
               </p>
             </div>
@@ -110,8 +110,8 @@ const FileInput: React.FC<FileInputProps> = ({
             />
           ) : (
             <div className="flex flex-col items-center justify-center pb-6 pt-5">
-              <FileIcon className="h-6 text-gray-500" />
-              <p className="dark.text-gray-400 mt-2 text-sm text-gray-500">
+              <FileIcon className="h-6 text-slate-500" />
+              <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
                 <span className="font-semibold">{selectedFile.name}</span>
               </p>
             </div>
@@ -124,8 +124,8 @@ const FileInput: React.FC<FileInputProps> = ({
         </>
       ) : (
         <div className="flex flex-col items-center justify-center pb-6 pt-5">
-          <ArrowUpTrayIcon className="h-6 text-gray-500" />
-          <p className="dark.text-gray-400 mt-2 text-sm text-gray-500">
+          <ArrowUpTrayIcon className="h-6 text-slate-500" />
+          <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
             <span className="font-semibold">Click or drag to upload files.</span>
           </p>
           <input

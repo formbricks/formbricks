@@ -1,15 +1,15 @@
 "use client";
-import { md } from "@formbricks/lib/markdownIt";
 import { cn } from "@formbricks/lib/cn";
+import { md } from "@formbricks/lib/markdownIt";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Editor } from "@formbricks/ui/Editor";
+import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import FileInput from "@formbricks/ui/FileInput";
-import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurveyWithAnalytics;
@@ -96,8 +96,21 @@ export default function EditWelcomeCard({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
+          <div className="mt-2">
+              <Label htmlFor="companyLogo">Company Logo</Label>
+            </div>
+            <div className="mt-3 flex w-full items-center justify-center">
+              <FileInput
+                allowedFileExtensions={["png", "jpeg", "jpg"]}
+                environmentId={environmentId}
+                onFileUpload={(url: string) => {
+                  updateSurvey({ fileUrl: url });
+                }}
+                fileUrl={localSurvey?.welcomeCard?.fileUrl}
+              />
+            </div>
             <div className="mt-3">
-              <Label htmlFor="headline">Question</Label>
+              <Label htmlFor="headline">Headline</Label>
               <div className="mt-2">
                 <Input
                   id="headline"
@@ -110,7 +123,7 @@ export default function EditWelcomeCard({
               </div>
             </div>
             <div className="mt-3">
-              <Label htmlFor="subheader">Description</Label>
+              <Label htmlFor="subheader">Welcome Message</Label>
               <div className="mt-2">
                 <Editor
                   getText={() =>
@@ -129,19 +142,7 @@ export default function EditWelcomeCard({
                 />
               </div>
             </div>
-            <div className="mt-2">
-              <Label htmlFor="companyLogo">Company Logo</Label>
-            </div>
-            <div className="mt-3 flex w-full items-center justify-center">
-              <FileInput
-                allowedFileExtensions={["png", "jpeg", "jpg"]}
-                environmentId={environmentId}
-                onFileUpload={(url: string) => {
-                  updateSurvey({ fileUrl: url });
-                }}
-                fileUrl={localSurvey?.welcomeCard?.fileUrl}
-              />
-            </div>
+      
             <div className="mt-3 flex justify-between gap-8">
               <div className="flex w-full space-x-2">
                 <div className="w-full">
@@ -157,7 +158,7 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
-            <div className="mt-8 flex items-center">
+{/*             <div className="mt-8 flex items-center">
               <div className="mr-2">
                 <Switch
                   id="timeToFinish"
@@ -168,7 +169,7 @@ export default function EditWelcomeCard({
                   }
                 />
               </div>
-              <div className="flex-column ">
+              <div className="flex-column">
                 <Label htmlFor="timeToFinish" className="">
                   Time to Finish
                 </Label>
@@ -176,7 +177,7 @@ export default function EditWelcomeCard({
                   Display an estimate of completion time for survey
                 </div>
               </div>
-            </div>
+            </div> */}
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
