@@ -3,7 +3,7 @@
 import type { NextPage } from "next";
 import { TProduct } from "@/../../packages/types/v1/product";
 import { TResponse } from "@/../../packages/types/v1/responses";
-import { OTPInput} from "@formbricks/ui/OTPInput";
+import { OTPInput } from "@formbricks/ui/OTPInput";
 import { useCallback, useEffect, useState } from "react";
 import { validateSurveyPin } from "@/app/s/[surveyId]/actions";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
@@ -92,12 +92,9 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
           <OTPInput
             disabled={Boolean(error) || loading}
             value={localPinEntry}
-            onChange={value => setLocalPinEntry(value)}
+            onChange={(value) => setLocalPinEntry(value)}
             valueLength={4}
-            inputBoxClassName={cn(
-            
-              {'border-red-400': Boolean(error) }
-            )}
+            inputBoxClassName={cn({ "border-red-400": Boolean(error) })}
           />
         </div>
       </div>

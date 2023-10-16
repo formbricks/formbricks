@@ -12,7 +12,7 @@ import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import LinkSurveyPinScreen from "@/app/s/[surveyId]/LinkSurveyPinScreen";
+import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 
 interface LinkSurveyPageProps {
   params: {
@@ -101,7 +101,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   if (isSurveyPinProtected) {
     return (
-      <LinkSurveyPinScreen
+      <PinScreen
         surveyId={survey.id}
         product={product}
         personId={person?.id}
