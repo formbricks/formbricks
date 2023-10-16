@@ -97,7 +97,7 @@ const SummaryPage = ({
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && <SummaryDropOffs summaryData={summaryData} />}
+      {showDropOffs && <SummaryDropOffs summaryData={summaryData} survey={survey} responses={responses} />}
       <SummaryList
         responses={filterResponses}
         survey={survey}
