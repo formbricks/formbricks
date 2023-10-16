@@ -1,4 +1,4 @@
-export enum ISurveryPinValidationResponseError {
+export enum TSurveryPinValidationResponseError {
   INCORRECT_PIN = "INCORRECT_PIN",
   INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
   NOT_FOUND = "NOT_FOUND",

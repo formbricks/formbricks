@@ -10,11 +10,11 @@ interface LinkSurveyEmailData {
 }
 
 interface ISurveryPinValidationResponse {
-  error?: ISurveryPinValidationResponseError;
+  error?: TSurveryPinValidationResponseError;
   survey?: TSurvey;
 }
 
-import { ISurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { TSurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -36,16 +36,16 @@ export async function validateSurveyPin(
 ): Promise<ISurveryPinValidationResponse> {
   try {
     const survey = await getSurvey(surveyId);
-    if (!survey) return { error: ISurveryPinValidationResponseError.NOT_FOUND };
+    if (!survey) return { error: TSurveryPinValidationResponseError.NOT_FOUND };
 
     const originalPin = survey.pin;
 
     if (!originalPin) return { survey };
 
-    if (originalPin !== pin) return { error: ISurveryPinValidationResponseError.INCORRECT_PIN };
+    if (originalPin !== pin) return { error: TSurveryPinValidationResponseError.INCORRECT_PIN };
 
     return { survey };
   } catch (error) {
-    return { error: ISurveryPinValidationResponseError.INTERNAL_SERVER_ERROR };
+    return { error: TSurveryPinValidationResponseError.INTERNAL_SERVER_ERROR };
   }
 }
