@@ -2,13 +2,14 @@
 import { useState } from "react";
 import { uploadFile } from "./lib/fileUpload";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
+import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { FileIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface FileInputProps {
   allowedFileExtensions: string[];
   environmentId: string | undefined;
-  onFileUpload: (uploadedUrl: string) => void;
+  onFileUpload: (uploadedUrl: string | undefined) => void;
   fileUrl: string | undefined;
 }
 
@@ -50,11 +51,40 @@ const FileInput: React.FC<FileInputProps> = ({
   return (
     <label
       htmlFor="selectedFile"
-      className="relative flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600 dark:hover:bg-gray-800"
+      className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600 dark:hover:bg-gray-800"
       onDragOver={(e) => handleDragOver(e)}
       onDrop={(e) => handleDrop(e)}>
       {isUploaded && fileUrl ? (
         <>
+          <div className="absolute inset-0 mr-4 mt-2 flex items-start justify-end gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-300 bg-opacity-50">
+              <label htmlFor="modifyFile">
+                <PhotoIcon className="h-6 text-gray-700" />
+
+                <input
+                  type="file"
+                  id="modifyFile"
+                  name="modifyFile"
+                  accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
+                  className="hidden"
+                  onChange={async (e) => {
+                    const selectedFile = e.target?.files?.[0];
+                    if (selectedFile) {
+                      setIsUploaded(false);
+                      setSelectedFile(selectedFile);
+                      const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
+                      setIsUploaded(true);
+                      onFileUpload(response.data.url);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-300 bg-opacity-50">
+              <TrashIcon className="h-6 text-gray-700" onClick={() => onFileUpload(undefined)} />
+            </div>
+          </div>
+
           {fileUrl.endsWith("jpg") || fileUrl.endsWith("jpeg") || fileUrl.endsWith("png") ? (
             <img
               src={fileUrl}
@@ -69,11 +99,6 @@ const FileInput: React.FC<FileInputProps> = ({
               </p>
             </div>
           )}
-          <div className="hover.bg-opacity-60 absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 transition-opacity duration-300">
-            <label htmlFor="selectedFile" className="cursor-pointer text-sm font-semibold text-white">
-              Modify
-            </label>
-          </div>
         </>
       ) : !isUploaded && selectedFile ? (
         <>
@@ -103,26 +128,25 @@ const FileInput: React.FC<FileInputProps> = ({
           <p className="dark.text-gray-400 mt-2 text-sm text-gray-500">
             <span className="font-semibold">Click or drag to upload files.</span>
           </p>
+          <input
+            type="file"
+            id="selectedFile"
+            name="selectedFile"
+            accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
+            className="hidden"
+            onChange={async (e) => {
+              const selectedFile = e.target?.files?.[0];
+              if (selectedFile) {
+                setIsUploaded(false);
+                setSelectedFile(selectedFile);
+                const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
+                setIsUploaded(true);
+                onFileUpload(response.data.url);
+              }
+            }}
+          />
         </div>
       )}
-
-      <input
-        type="file"
-        id="selectedFile"
-        name="selectedFile"
-        accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
-        className="hidden"
-        onChange={async (e) => {
-          const selectedFile = e.target?.files?.[0];
-          if (selectedFile) {
-            setIsUploaded(false);
-            setSelectedFile(selectedFile);
-            const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
-            setIsUploaded(true);
-            onFileUpload(response.data.url);
-          }
-        }}
-      />
     </label>
   );
 };
