@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { App } from "./app.tsx";
-import "./index.css?inline";
+import "./index.css";
 
 declare global {
   interface Window {
@@ -8,11 +8,16 @@ declare global {
   }
 }
 
-const init = (element: HTMLElement) => {
-  const container = document.createElement("div");
-  container.id = "datePickerContainer";
-  element.appendChild(container);
-  render(<App />, container);
-};
+// const init = (element: HTMLElement) => {
+//   const container = document.createElement("div");
+//   container.id = "datePickerContainer";
+//   element.appendChild(container);
+//   render(<App />, container);
+// };
 
-window.initDatePicker = init;
+
+render(<App />, document.getElementById("datePickerContainer")!)
+
+// init(document.getElementById("date-pick")!)
+
+// window.initDatePicker = init
