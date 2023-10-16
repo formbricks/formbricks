@@ -1,0 +1,128 @@
+import IntegrationsTab from "./integrations-tab.png";
+import ConnectWithNotion from "./connect-with-notion.png";
+import NotionConnected from "./notion-connected.png";
+import LinkSurveyWithDatabase from "./link-survey-with-database.png";
+import LinkWithDatabases from "./link-with-databases.png";
+import ListLinkedDatabases from "./list-linked-databases.png";
+import DeleteConnection from "./delete-connection.png";
+import Image from "next/image";
+
+export const meta = {
+  title: "Notion",
+  description:
+    "The notion integration allows you to automatically send responses to a Notion database of your choice.",
+};
+
+#### Integrations
+
+# Notion
+
+The notion integration allows you to automatically send responses to a Notion database of your choice.
+
+<Note>
+  This feature is enabled by default in Formbricks Cloud but needs to be self-configured when running a
+  self-hosted version of Formbricks.
+</Note>
+
+## Formbricks Cloud
+
+1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) and click on the "Connect" button under Notion integration.
+
+<Image
+  src={IntegrationsTab}
+  alt="Formbricks Integrations Tab"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+2. Now click on the "Connect with Notion" button to authenticate yourself with Notion.
+
+<Image
+  src={ConnectWithNotion}
+  alt="Connect Formbricks with your Notion account"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. You will now be taken to the Notion OAuth page where you can select the Notion account you want to use for the integration
+
+4. Once you have selected the account and databases and completed the authentication and authorization process, you will be taken back to Formbricks Cloud and see the connected status as below:
+
+<Image
+  src={NotionConnected}
+  alt="Formbricks is now connected with Notion"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+<Note>
+  Before the next step, make sure that you have a Formbricks Survey with at least one question and a Notion
+  database in the Notion account you integrated.
+</Note>
+
+5. Now click on the "Link New Database" button to link a new Notion database with Formbricks and a modal will open up.
+
+<Image
+  src={LinkSurveyWithDatabase}
+  alt="Link Formbricks with a Notion database"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+6. Select the Notion database you want to link with Formbricks and the Survey. On doing so, you will be asked to map formbricks' survey questions with selected databases' column. Complete the mapping and click on the "Link Database" button.
+
+<Image
+  src={LinkWithDatabases}
+  alt="Question to notion database column mapping"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+7. On submitting, the modal will close and you will see the linked Notion database in the list of linked Notion databases.
+
+<Image
+  src={ListLinkedDatabases}
+  alt="List of linked notion databases"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Congratulations! You have successfully linked a Notion database with Formbricks. Now whenever a response is submitted for the linked Survey, it will be automatically added to the linked Notion database.
+
+## Setup in self-hosted Formbricks
+
+Enabling the Notion Integration in a self-hosted environment requires a setup using Notion account and changing the environment variables of your Formbricks instance.
+
+1. Sign up for a [Notion](https://www.notion.so/) account, if you don't have one already.
+2. Go to the [my integrations](https://www.notion.so/my-integrations) page and click on **New integration**.
+3. Fill up the basic information like **Name**, **Logo** and click on **Submit**.
+4. Now, click on **Distribution** tab on the sidebar. A text will appear which will ask you to make the integration public. Click on that toggle button. A form will appear below the text.
+5. Now provide it the details such as requested. Under **Redirect URIs** field:
+   - If you are running formbricks locally, you can enter `http://localhost:3000/api/notion/callback`.
+   - Or, you can enter `https://<your-public-facing-url>/api/notion/callback`
+6. Once you've filled all the necessary details, click on **Submit**.
+7. A screen will appear which will have **Client ID**, **Client secret** and **Authorization URL**. Copy them and set them as the environment variables in your Formbricks instance as:
+   - `NOTION_OAUTH_CLIENT_ID` - OAuth Client ID
+   - `NOTION_OAUTH_CLIENT_SECRET` - OAuth Client Secret
+   - `NOTION_AUTH_URL` - Authorization URL
+   - `NOTION_REDIRECT_URI` - The redirect URL that you entered in step 5.
+
+Voila! You have successfully enabled the Notion integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Formbricks Cloud](#formbricks-cloud) section to link a Notion database with Formbricks.
+
+## Remove Integration with Notion Account
+
+To remove the integration with Notion Account,
+
+1. Visit the Integrations tab in your Formbricks Cloud dashboard.
+2. Select "Manage" button in the Notion card.
+3. Click on the "Connected with `<your-workspace-name-here`> Workspace" just before the "Link new Database" button.
+4. It will now ask for a confirmation to remove the integration. Click on the "Delete" button to remove the integration. You can always come back and connect again with the same Notion Account.
+
+<Image
+  src={DeleteConnection}
+  alt="Delete Notion Integration with Formbricks"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
