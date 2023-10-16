@@ -49,7 +49,7 @@ export const Highlights: React.FC = ({}) => {
             </div>
             <div className="pb-8 md:pb-0">
               <h2 className="xs:text-3xl text-2xl font-bold leading-7 tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
-                Dont&apos; ‘Spray and pray’.
+                Don&apost; ‘Spray and pray’.
                 <br />
                 <span className="font-light">Pre-segment granularly.</span>
               </h2>
