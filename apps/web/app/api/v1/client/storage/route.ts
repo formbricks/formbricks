@@ -58,13 +58,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const uploadPrivateFile = async () => {
     // if s3 is not configured, we'll upload to a local folder named uploads
 
+    const url = new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`)
+
     if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
       try {
         await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
 
         return responses.successResponse({
           uploaded: true,
-          url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+          url: url.href,
         });
       } catch (err) {
         if (err.name === "FileTooLargeError") {
@@ -80,7 +82,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       return responses.successResponse({
         uploaded: true,
-        url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+        url: url.href,
       });
     } catch (err) {
       if (err.name === "FileTooLargeError") {
