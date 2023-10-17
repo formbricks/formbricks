@@ -310,7 +310,7 @@ export default function SingleResponseCard({
               </div>
             );
           })}
-          {survey.hiddenFields?.enabled && survey.hiddenFields?.fieldIds?.length && (
+          {survey.hiddenFields?.enabled && !!survey.hiddenFields?.fieldIds?.length && (
             <div className="mt-6 flex flex-col gap-6">
               {survey.hiddenFields.fieldIds.map((field) => {
                 return (
