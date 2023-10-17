@@ -36,6 +36,7 @@ export const selectSurvey = {
   type: true,
   environmentId: true,
   status: true,
+  welcomeCard: true,
   questions: true,
   thankYouCard: true,
   hiddenFields: true,
@@ -618,8 +619,7 @@ export async function createSurvey(environmentId: string, surveyBody: TSurveyInp
   return transformedSurvey;
 }
 
-
-export async function duplicateSurvey(environmentId:string,surveyId:string){
+export async function duplicateSurvey(environmentId: string, surveyId: string) {
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -672,6 +672,6 @@ export async function duplicateSurvey(environmentId:string,surveyId:string){
 
   revalidateTag(getSurveysCacheTag(environmentId));
   revalidateTag(getSurveyCacheTag(surveyId));
-  
+
   return newSurvey;
 }

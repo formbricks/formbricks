@@ -844,6 +844,9 @@ importers:
       lucide-react:
         specifier: ^0.287.0
         version: 0.287.0(react@18.2.0)
+      mime:
+        specifier: ^3.0.0
+        version: 3.0.0
       react-colorful:
         specifier: ^5.6.1
         version: 5.6.1(react-dom@18.2.0)(react@18.2.0)
