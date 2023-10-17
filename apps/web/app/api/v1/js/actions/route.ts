@@ -25,7 +25,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const { environmentId, sessionId, name, properties } = inputValidation.data;
 
-    createAction({
+    await createAction({
       environmentId,
       sessionId,
       name,
