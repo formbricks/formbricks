@@ -78,25 +78,23 @@ export default function EditWelcomeCard({
               </div>
             </div>
 
-            {localSurvey.type !== "link" && (
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="thank-you-toggle">Show</Label>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="welcome-toggle">Enabled</Label>
 
-                <Switch
-                  id="thank-you-toggle"
-                  checked={localSurvey?.welcomeCard?.enabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateSurvey({ enabled: !localSurvey.welcomeCard?.enabled });
-                  }}
-                />
-              </div>
-            )}
+              <Switch
+                id="welcome-toggle"
+                checked={localSurvey?.welcomeCard?.enabled}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateSurvey({ enabled: !localSurvey.welcomeCard?.enabled });
+                }}
+              />
+            </div>
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
-          <div className="mt-2">
+            <div className="mt-2">
               <Label htmlFor="companyLogo">Company Logo</Label>
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
@@ -128,8 +126,7 @@ export default function EditWelcomeCard({
                 <Editor
                   getText={() =>
                     md.render(
-                      localSurvey?.welcomeCard?.html ||
-                        "We would love to talk to you and learn more about how you use our product."
+                      localSurvey?.welcomeCard?.html || "Thanks for providing your feedback - let's go!"
                     )
                   }
                   setText={(value: string) => {
@@ -142,7 +139,7 @@ export default function EditWelcomeCard({
                 />
               </div>
             </div>
-      
+
             <div className="mt-3 flex justify-between gap-8">
               <div className="flex w-full space-x-2">
                 <div className="w-full">
@@ -158,7 +155,7 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
-{/*             <div className="mt-8 flex items-center">
+            {/*             <div className="mt-8 flex items-center">
               <div className="mr-2">
                 <Switch
                   id="timeToFinish"

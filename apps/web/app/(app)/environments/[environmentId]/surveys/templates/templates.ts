@@ -16,8 +16,8 @@ const hiddenFieldsDefault: TSurveyHiddenFields = {
 
 const welcomeCardDefault: TSurveyWelcomeCard = {
   enabled: true,
-  headline: "Thank you!",
-  html: "We appreciate your feedback.",
+  headline: "Welcome!",
+  html: "Thanks for providing your feedback - let's go!",
   timeToFinish: false,
 };
 

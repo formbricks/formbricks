@@ -24,7 +24,7 @@ export default function WelcomeCard({
   return (
     <div>
       {fileUrl && (
-        <img src={fileUrl} className="max-w-1/3 mb-8 max-h-96 rounded-lg object-contain" alt="Company Logo" />
+        <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
       )}
 
       <Headline headline={headline} questionId="welcomeCard" />
