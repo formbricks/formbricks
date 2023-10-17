@@ -1,6 +1,6 @@
 "use client";
 
-import { TAirtableTables } from "@formbricks/types/v1/integration/lib/airTable";
+import { TAirtableTables } from "@formbricks/types/v1/integration/airtable";
 import {
   TAirTableIntegration,
   TAirtable,

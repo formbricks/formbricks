@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZIntegrationBaseSurveyData } from "../";
+import { ZIntegrationBaseSurveyData } from ".";
 
 export const ZAirtableCredential = z.object({
   expiry_date: z.string(),

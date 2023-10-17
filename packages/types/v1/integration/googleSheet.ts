@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZIntegrationsTypes, ZIntegrationBaseSurveyData } from "../";
+import { ZIntegrationsTypes, ZIntegrationBaseSurveyData } from ".";
 
 export const ZGoogleCredential = z.object({
   scope: z.string(),
