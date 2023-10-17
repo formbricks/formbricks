@@ -1,16 +1,16 @@
 "use client";
 
-import { timeSince } from "@/../../packages/lib/time";
-import { TEnvironment } from "@/../../packages/types/v1/environment";
+import { timeSince } from "@formbricks/lib/time";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integrations";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
-import { Button, DeleteDialog } from "@/../../packages/ui";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import AddIntegrationModal, {
   IntegrationModalInputs,
-} from "@/app/(app)/environments/[environmentId]/integrations/airtable/AddIntegrationModal";
+} from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
-
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 interface handleModalProps {

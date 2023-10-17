@@ -1,4 +1,4 @@
-import { writeData as airTableWriteData } from "@formbricks/lib/services/airTable";
+import { writeData as airTableWriteData } from "@formbricks/lib/airTable/service";
 
 import {
   TAirTableIntegration,

@@ -1,10 +1,10 @@
-import GoBackButton from "@/components/shared/GoBackButton";
+import GoBackButton from "@/app/components/shared/GoBackButton";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TAirTableIntegration, TAirtable } from "@formbricks/types/v1/integrations";
 import { WEBAPP_URL, AIR_TABLE_CLIENT_ID, AIR_TABLE_REDIRECT_URL } from "@formbricks/lib/constants";
-import AirTableWrapper from "./AirTableWrapper";
-import { getAirtableTables } from "@/../../packages/lib/services/airTable";
+import AirTableWrapper from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirTableWrapper";
+import { getAirtableTables } from "@formbricks/lib/airTable/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function AirTable({ params }) {

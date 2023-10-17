@@ -2,11 +2,10 @@
 
 import AirtableLogo from "@/images/airtable.svg";
 import FormbricksLogo from "@/images/logo.svg";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import Image from "next/image";
 import { useState } from "react";
-
-import { authorize } from "@/../../packages/lib/client/airtable";
+import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 
 interface AirTableConnectProps {
   enabled: boolean;

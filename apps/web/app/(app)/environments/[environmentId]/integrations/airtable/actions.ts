@@ -1,6 +1,6 @@
 "use server";
 
-import { getAirtableTables } from "@formbricks/lib/services/airTable";
+import { getAirtableTables } from "@formbricks/lib/airTable/service";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { TAirtableIntegrationInput } from "@formbricks/types/v1/integrations";
 

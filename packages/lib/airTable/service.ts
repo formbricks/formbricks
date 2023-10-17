@@ -1,18 +1,20 @@
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import {
-  TAirTableIntegration,
   TAirtable,
   TAirtableCredential,
   TAirtableIntegrationInput,
-  TZAirTableConfigData,
+  TAirTableConfigData,
   ZAirtableCredential,
   ZAirtableTokenSchema,
+  ZBases,
+  ZTables,
+  ZTablesWithFields,
+  TAirTableIntegration,
 } from "@formbricks/types/v1/integrations";
 import { DatabaseError } from "@formbricks/types/v1/errors";
-import * as z from "zod";
 import { AIR_TABLE_CLIENT_ID } from "../constants";
-import { createOrUpdateIntegration, deleteIntegration } from "../integration/service";
+import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
 
 interface ConnectAirtableOptions {
   environmentId: string;
@@ -46,62 +48,6 @@ export const connectAirtable = async ({ email, environmentId, key }: ConnectAirt
   });
 };
 
-function isAirtableIntegration(integration: any): integration is TAirTableIntegration {
-  const type: TAirTableIntegration["type"] = "airtable";
-  return integration.type === type;
-}
-
-export const findAirtableIntegration = async (
-  environmentId: string
-): Promise<TAirTableIntegration | null> => {
-  const type: TAirTableIntegration["type"] = "airtable";
-  try {
-    const result = await prisma.integration.findUnique({
-      where: {
-        type_environmentId: {
-          environmentId,
-          type,
-        },
-      },
-    });
-    // Type Guard
-    if (result && isAirtableIntegration(result)) {
-      return result as TAirTableIntegration; // Explicit casting
-    }
-    return null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-    throw error;
-  }
-};
-
-const ZBases = z.object({
-  bases: z.array(z.object({ id: z.string(), name: z.string() })),
-});
-
-const ZTables = z.object({
-  tables: z.array(z.object({ id: z.string(), name: z.string() })),
-});
-
-const ZTablesWithFields = z.object({
-  tables: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      fields: z.array(
-        z.object({
-          id: z.string(),
-          name: z.string(),
-        })
-      ),
-    })
-  ),
-});
-
-export type TAirtableTables = z.infer<typeof ZTables>;
-
 export const getBases = async (key: string) => {
   const req = await fetch("https://api.airtable.com/v0/meta/bases", {
     headers: {
@@ -114,10 +60,10 @@ export const getBases = async (key: string) => {
   return ZBases.parse(res);
 };
 
-const tableFetcher = async (key: string, baseId: string) => {
+const tableFetcher = async (key: TAirtableCredential, baseId: string) => {
   const req = await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`, {
     headers: {
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${key.access_token}`,
     },
   });
 
@@ -126,9 +72,8 @@ const tableFetcher = async (key: string, baseId: string) => {
   return res;
 };
 
-export const getTables = async (key: string, baseId: string) => {
+export const getTables = async (key: TAirtableCredential, baseId: string) => {
   const res = await tableFetcher(key, baseId);
-
   return ZTables.parse(res);
 };
 
@@ -161,7 +106,10 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
 
 export const getAirtableToken = async (environmentId: string) => {
   try {
-    const airTableIntegration = await findAirtableIntegration(environmentId);
+    const airTableIntegration = (await getIntegrationByType(
+      environmentId,
+      "airtable"
+    )) as TAirTableIntegration;
 
     const { access_token, expiry_date, refresh_token } = ZAirtableCredential.parse(
       airTableIntegration?.config.key
@@ -215,11 +163,16 @@ export const getAirtableTables = async (environmentId: string) => {
   }
 };
 
-const addRecords = async (key: string, baseId: string, tableId: string, data: Record<string, string>) => {
+const addRecords = async (
+  key: TAirtableCredential,
+  baseId: string,
+  tableId: string,
+  data: Record<string, string>
+) => {
   const req = await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${key.access_token}`,
       "Content-type": "application/json",
     },
     body: JSON.stringify({
@@ -231,11 +184,16 @@ const addRecords = async (key: string, baseId: string, tableId: string, data: Re
   return await req.json();
 };
 
-const addField = async (key: string, baseId: string, tableId: string, data: Record<string, string>) => {
+const addField = async (
+  key: TAirtableCredential,
+  baseId: string,
+  tableId: string,
+  data: Record<string, string>
+) => {
   const req = await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables/${tableId}/fields`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${key.access_token}`,
       "Content-type": "application/json",
     },
     body: JSON.stringify(data),
@@ -244,7 +202,11 @@ const addField = async (key: string, baseId: string, tableId: string, data: Reco
   return await req.json();
 };
 
-export const writeData = async (key: string, configData: TZAirTableConfigData, values: string[][]) => {
+export const writeData = async (
+  key: TAirtableCredential,
+  configData: TAirTableConfigData,
+  values: string[][]
+) => {
   try {
     const responses = values[0];
     const questions = values[1];

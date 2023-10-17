@@ -1,36 +1,27 @@
 "use client";
 
-import { TAirtableTables } from "@/../../packages/lib/services/airTable";
+import { TAirtableTables } from "@formbricks/types/v1/integration/lib/airTable";
 import {
   TAirTableIntegration,
   TAirtable,
   TAirtableIntegrationInput,
-  TZAirTableConfigData,
-} from "@/../../packages/types/v1/integrations";
+  TAirTableConfigData,
+} from "@formbricks/types/v1/integrations";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Button,
-  Checkbox,
-  Label,
-  Modal,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/../../packages/ui";
-
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/Button";
+import { Checkbox } from "@formbricks/ui/Checkbox";
+import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
 import AirtableLogo from "@/images/airtable.svg";
-import { fetchTables } from "@formbricks/lib/client/airtable";
+import { fetchTables } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { upsertIntegrationAction } from "./actions";
+import { upsertIntegrationAction } from "../actions";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -170,7 +161,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       };
 
       const currentTable = tables.find((item) => item.id === data.table);
-      const integrationData: TZAirTableConfigData = {
+      const integrationData: TAirTableConfigData = {
         surveyId: selectedSurvey.id,
         surveyName: selectedSurvey.name,
         questionIds: data.questions,

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-/* COMMON CONFIGURATIONS */
+// ====================
+// COMMON CONFIGURATIONS
+// ====================
 const ZBaseSurveyData = z.object({
   createdAt: z.date(),
   questionIds: z.array(z.string()),
@@ -9,11 +11,14 @@ const ZBaseSurveyData = z.object({
   surveyName: z.string(),
 });
 
-const integrationsTypes = z.enum(["googleSheets", "airtable"]);
+export const ZIntegrationType = z.enum(["googleSheets", "airtable"]);
+export type TIntegrationType = z.infer<typeof ZIntegrationType>;
 
-export type TIntegrationTypes = z.infer<typeof integrationsTypes>;
+export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
 
-/* GOOGLE SHEETS CONFIGURATIONS */
+// ==========================
+// GOOGLE SHEETS CONFIGURATIONS
+// ==========================
 export const ZGoogleCredential = z.object({
   scope: z.string(),
   token_type: z.literal("Bearer"),
@@ -22,34 +27,44 @@ export const ZGoogleCredential = z.object({
   refresh_token: z.string(),
 });
 
-export type TGoogleCredential = z.infer<typeof ZGoogleCredential>;
-
 export const ZGoogleSpreadsheet = z.object({
   name: z.string(),
   id: z.string(),
 });
-export type TGoogleSpreadsheet = z.infer<typeof ZGoogleSpreadsheet>;
 
-export const ZGoogleSheetsConfigData = z
-  .object({
+const ZGoogleSheetsConfigData = ZBaseSurveyData.merge(
+  z.object({
     spreadsheetId: z.string(),
     spreadsheetName: z.string(),
   })
-  .merge(ZBaseSurveyData);
+);
 
-export type TGoogleSheetsConfigData = z.infer<typeof ZGoogleSheetsConfigData>;
+const ZGoogleSheetsConfig = z.object({
+  key: ZGoogleCredential,
+  data: z.array(ZGoogleSheetsConfigData),
+  email: z.string(),
+});
+
+export const ZGoogleSheetIntegration = z.object({
+  id: z.string(),
+  type: z.literal("googleSheets"),
+  environmentId: z.string(),
+  config: ZGoogleSheetsConfig,
+});
 
 export type TGoogleSheetIntegration = z.infer<typeof ZGoogleSheetIntegration>;
-
+export type TGoogleSheetsConfigData = z.infer<typeof ZGoogleSheetsConfigData>;
+export type TGoogleCredential = z.infer<typeof ZGoogleCredential>;
+export type TGoogleSpreadsheet = z.infer<typeof ZGoogleSpreadsheet>;
 export type TGoogleSheetIntegrationInput = Pick<TGoogleSheetIntegration, "type" | "config">;
 
-/* AIRTABLE CONFIGURATIONS */
-export const ZAirTable = z.object({
+// ==========================
+// AIRTABLE CONFIGURATIONS
+// ==========================
+export const ZAirtable = z.object({
   name: z.string(),
   id: z.string(),
 });
-
-export type TAirtable = z.infer<typeof ZAirTable>;
 
 export const ZAirtableCredential = z.object({
   expiry_date: z.string(),
@@ -57,22 +72,13 @@ export const ZAirtableCredential = z.object({
   refresh_token: z.string(),
 });
 
-export type TAirtableCredential = z.infer<typeof ZAirtableCredential>;
-
-export const ZAirTableConfigData = z
-  .object({
+const ZAirTableConfigData = ZBaseSurveyData.merge(
+  z.object({
     tableId: z.string(),
     baseId: z.string(),
     tableName: z.string(),
   })
-  .merge(ZBaseSurveyData);
-
-const ZGoogleSheetsConfig = z.object({
-  key: ZGoogleCredential,
-  data: z.array(ZGoogleSheetsConfigData),
-  email: z.string(),
-});
-export type TZAirTableConfigData = z.infer<typeof ZAirTableConfigData>;
+);
 
 const ZAirTableConfig = z.object({
   key: ZAirtableCredential,
@@ -80,41 +86,11 @@ const ZAirTableConfig = z.object({
   email: z.string(),
 });
 
-export const ZIntegrationConfig = z.union([ZGoogleSheetsConfig, ZAirTableConfig]);
-
-export const ZIntegration = z.object({
-  id: z.string(),
-  type: integrationsTypes,
-  environmentId: z.string(),
-  config: ZIntegrationConfig,
-});
-export type TGoogleSheetsConfig = z.infer<typeof ZGoogleSheetsConfig>;
-
-export const ZGoogleSheetIntegration = z.object({
-  id: z.string(),
-  type: integrationsTypes.extract(["googleSheets"]),
-  environmentId: z.string(),
-  config: ZGoogleSheetsConfig,
-});
-
 export const ZAirTableIntegration = z.object({
   id: z.string(),
-  type: integrationsTypes.extract(["airtable"]),
+  type: z.literal("airtable"),
   environmentId: z.string(),
   config: ZAirTableConfig,
-});
-
-export type TAirTableIntegration = z.infer<typeof ZAirTableIntegration>;
-
-// Define a specific schema for integration configs
-// When we add other configurations it will be z.union([ZGoogleSheetsConfig, ZSlackConfig, ...])
-
-export const ZIntegrationType = z.enum(["googleSheets"]);
-export type TIntegrationType = z.infer<typeof ZIntegrationType>;
-
-export const ZIntegrationInput = z.object({
-  type: ZIntegrationType,
-  config: ZIntegrationConfig,
 });
 
 export const ZAirtableTokenSchema = z.object({
@@ -123,11 +99,45 @@ export const ZAirtableTokenSchema = z.object({
   expires_in: z.coerce.number(),
 });
 
+export const ZBases = z.object({
+  bases: z.array(z.object({ id: z.string(), name: z.string() })),
+});
+
+export const ZTables = z.object({
+  tables: z.array(z.object({ id: z.string(), name: z.string() })),
+});
+
+export const ZTablesWithFields = z.object({
+  tables: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      fields: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+        })
+      ),
+    })
+  ),
+});
+
+export type TAirtableTables = z.infer<typeof ZTables>;
+export type TAirTableIntegration = z.infer<typeof ZAirTableIntegration>;
+export type TAirtable = z.infer<typeof ZAirtable>;
+export type TAirTableConfigData = z.infer<typeof ZAirTableConfigData>;
+export type TAirtableCredential = z.infer<typeof ZAirtableCredential>;
 export type TAirtableIntegrationInput = Pick<TAirTableIntegration, "type" | "config">;
 
-/* COMMON CONFIGURATIONS */
-export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
-
+// ==========================
+// COMBINED CONFIGURATIONS
+// ==========================
+export const ZIntegrationConfig = z.union([ZGoogleSheetsConfig, ZAirTableConfig]);
+export const ZIntegration = z.object({
+  id: z.string(),
+  type: ZIntegrationType,
+  environmentId: z.string(),
+  config: ZIntegrationConfig,
+});
 export type TIntegration = z.infer<typeof ZIntegration>;
-
-export type TIntegrationInput = Pick<TIntegration, "type" | "config">;
+export type TIntegrationInput = TGoogleSheetIntegrationInput | TAirtableIntegrationInput;

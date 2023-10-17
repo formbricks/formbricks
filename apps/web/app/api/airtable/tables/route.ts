@@ -3,7 +3,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import * as z from "zod";
-import { findAirtableIntegration, getTables } from "@/../../packages/lib/services/airTable";
+import { getTables } from "@formbricks/lib/airTable/service";
+import { getIntegrationByType } from "@formbricks/lib/integration/service";
+import { TAirTableIntegration } from "@formbricks/types/v1/integrations";
 
 export async function GET(req: NextRequest) {
   const url = req.url;
@@ -29,13 +31,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ Error: "You dont have access to environment" }, { status: 401 });
   }
 
-  const integration = await findAirtableIntegration(environmentId);
+  const integration = (await getIntegrationByType(environmentId, "airtable")) as TAirTableIntegration;
+  console.log(integration);
 
   if (!integration) {
     return NextResponse.json({ Error: "integration not found" }, { status: 401 });
   }
 
-  const tables = await getTables(integration.config.key.access_token, baseId.data);
+  const tables = await getTables(integration.config.key, baseId.data);
 
   return NextResponse.json(tables, { status: 200 });
 }

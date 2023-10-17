@@ -1,10 +1,10 @@
 "use client";
 import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integrations";
 import Connect from "./Connect";
-import Home from "./Home";
+import Home from "../Home";
 import { useState } from "react";
-import { TSurvey } from "@/../../packages/types/v1/surveys";
-import { TEnvironment } from "@/../../packages/types/v1/environment";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface AirTableWrapperProps {
   environmentId: string;
