@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZBaseSurveyData } from "../";
+import { ZIntegrationBaseSurveyData } from "../";
 
 export const ZAirtableCredential = z.object({
   expiry_date: z.string(),
@@ -13,7 +13,7 @@ export const ZAirTableConfigData = z
     baseId: z.string(),
     tableName: z.string(),
   })
-  .merge(ZBaseSurveyData);
+  .merge(ZIntegrationBaseSurveyData);
 
 export const ZAirTableConfig = z.object({
   key: ZAirtableCredential,
