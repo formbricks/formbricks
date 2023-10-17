@@ -1,9 +1,7 @@
 import { resolve } from "path";
 import { defineConfig } from "vite";
-import preact from "@preact/preset-vite";
 import dts from "vite-plugin-dts";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   build: {
     emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
@@ -12,11 +10,11 @@ export default defineConfig({
     lib: {
       // Could also be a dictionary or array of multiple entry points
       entry: resolve(__dirname, "src/index.ts"),
-      name: "formbricks-surveys",
+      name: "formbricks-api",
       formats: ["cjs", "es", "umd"],
       // the proper extensions will be added
       fileName: "index",
     },
   },
-  plugins: [preact(), dts({ rollupTypes: true })],
+  plugins: [dts({ rollupTypes: true })],
 });
