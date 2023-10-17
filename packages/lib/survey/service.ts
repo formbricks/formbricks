@@ -381,77 +381,44 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
   const surveyId = updatedSurvey.id;
   let data: any = {};
-  let survey: any = { ...updatedSurvey };
-
-  if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
-    const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {
-      if (typeof trigger === "object" && trigger) {
-        return trigger;
-      } else if (typeof trigger === "string" && trigger !== undefined) {
-        return trigger;
-      }
-    });
-
-    survey = { ...updatedSurvey, triggers: modifiedTriggers };
-  }
 
   const actionClasses = await getActionClasses(updatedSurvey.environmentId);
+  const currentSurvey = await getSurvey(surveyId);
 
-  const currentTriggers = await prisma.surveyTrigger.findMany({
-    where: {
-      surveyId,
-    },
-    include: {
-      eventClass: true,
-    },
-  });
-  const currentAttributeFilters = await prisma.surveyAttributeFilter.findMany({
-    where: {
-      surveyId,
-    },
-  });
-
-  delete survey.updatedAt;
-  // preventing issue with unknowingly updating analytics
-  delete survey.analytics;
-
-  if (survey.type === "link") {
-    delete survey.triggers;
-    delete survey.recontactDays;
-    // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
-    if (!survey.surveyClosedMessage) {
-      survey.surveyClosedMessage = null;
-    }
+  if (!currentSurvey) {
+    throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  if (survey.triggers) {
+  const { triggers, attributeFilters, environmentId, ...surveyData } = updatedSurvey;
+
+  if (triggers) {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
     // find added triggers
-    for (const eventClassName of survey.triggers) {
-      if (!eventClassName) {
+    for (const trigger of triggers) {
+      if (!trigger) {
         continue;
       }
-      if (currentTriggers.find((t) => t.eventClass.name === eventClassName)) {
+      if (currentSurvey.triggers.find((t) => t === trigger)) {
         continue;
       } else {
-        newTriggers.push(eventClassName);
+        newTriggers.push(trigger);
       }
     }
     // find removed triggers
-    for (const trigger of currentTriggers) {
-      if (survey.triggers.find((t: any) => t === trigger.eventClass.name)) {
+    for (const trigger of currentSurvey.triggers) {
+      if (triggers.find((t: any) => t === trigger)) {
         continue;
       } else {
-        removedTriggers.push(trigger.eventClass.name);
+        removedTriggers.push(trigger);
       }
     }
     // create new triggers
     if (newTriggers.length > 0) {
       data.triggers = {
         ...(data.triggers || []),
-        create: newTriggers.map((eventClassName) => ({
-          eventClassId: actionClasses.find((actionClass) => actionClass.name === eventClassName)!.id,
+        create: newTriggers.map((trigger) => ({
+          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
         })),
       };
     }
@@ -461,15 +428,15 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         ...(data.triggers || []),
         deleteMany: {
           eventClassId: {
-            in: removedTriggers,
+            in: removedTriggers.map(
+              (trigger) => actionClasses.find((actionClass) => actionClass.name === trigger)!.id
+            ),
           },
         },
       };
     }
-    delete survey.triggers;
   }
 
-  const attributeFilters: TSurveyAttributeFilter[] = survey.attributeFilters;
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
     const removedFilterIds: string[] = [];
@@ -479,7 +446,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         continue;
       }
       if (
-        currentAttributeFilters.find(
+        currentSurvey.attributeFilters.find(
           (f) =>
             f.attributeClassId === attributeFilter.attributeClassId &&
             f.condition === attributeFilter.condition &&
@@ -496,7 +463,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       }
     }
     // find removed attribute filters
-    for (const attributeFilter of currentAttributeFilters) {
+    for (const attributeFilter of currentSurvey.attributeFilters) {
       if (
         attributeFilters.find(
           (f) =>
@@ -534,12 +501,11 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         })
       );
     }
-    delete survey.attributeFilters;
   }
 
   data = {
+    ...surveyData,
     ...data,
-    ...survey,
   };
 
   try {

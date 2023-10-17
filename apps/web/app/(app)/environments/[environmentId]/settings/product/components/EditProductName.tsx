@@ -36,7 +36,7 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
       if (!!updatedProduct?.id) {
         toast.success("Product name updated successfully.");
         router.refresh();
-      } 
+      }
     } catch (err) {
       console.error(err);
       toast.error(`Error: Unable to save product information`);

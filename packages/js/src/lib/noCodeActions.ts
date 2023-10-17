@@ -1,16 +1,7 @@
 import type { TActionClass } from "@formbricks/types/v1/actionClasses";
 import type { TActionClassPageUrlRule } from "@formbricks/types/v1/actionClasses";
 import { Config } from "./config";
-import {
-  ErrorHandler,
-  InvalidMatchTypeError,
-  NetworkError,
-  Result,
-  err,
-  match,
-  ok,
-  okVoid,
-} from "./errors";
+import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { trackAction } from "./actions";
 import { Logger } from "./logger";
 

@@ -64,7 +64,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
         return responses.successResponse({
           uploaded: true,
-          url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href
+          url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
         });
       } catch (err) {
         if (err.name === "FileTooLargeError") {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       return responses.successResponse({
         uploaded: true,
-        url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href
+        url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
       });
     } catch (err) {
       if (err.name === "FileTooLargeError") {
