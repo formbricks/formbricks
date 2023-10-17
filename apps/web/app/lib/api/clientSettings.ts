@@ -107,6 +107,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         },
       },
       thankYouCard: true,
+      welcomeCard: true,
       autoClose: true,
       delay: true,
     },
@@ -182,6 +183,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         questions: JSON.parse(JSON.stringify(survey.questions)),
         triggers: survey.triggers,
         thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
+        welcomeCard: JSON.parse(JSON.stringify(survey.welcomeCard)),
         autoClose: survey.autoClose,
         delay: survey.delay,
       };

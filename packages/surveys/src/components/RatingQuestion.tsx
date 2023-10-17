@@ -187,7 +187,7 @@ export default function RatingQuestion({
         {(!question.required || value) && (
           <SubmitButton
             tabIndex={question.range + 1}
-            question={question}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             onClick={() => {}}

@@ -21,6 +21,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "https",
+        hostname: "app.formbricks.com",
+      },
     ],
   },
   async redirects() {
