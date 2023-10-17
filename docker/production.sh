@@ -171,7 +171,7 @@ x-environment: &environment
     NEXTAUTH_URL: "https://$domain_name"
 
     # Formbricks Encryption Key is used to generate encrypted single use URLs for Link Surveys
-    # You can use: $(openssl rand -base64 16) to generate one
+    # You can use: $(openssl rand -base64 24) to generate one
     FORMBRICKS_ENCRYPTION_KEY:
 
     # PostgreSQL password
