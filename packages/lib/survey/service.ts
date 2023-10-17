@@ -618,3 +618,61 @@ export async function createSurvey(environmentId: string, surveyBody: TSurveyInp
 
   return transformedSurvey;
 }
+
+
+export async function duplicateSurvey(environmentId:string,surveyId:string){
+  const existingSurvey = await getSurvey(surveyId);
+
+  if (!existingSurvey) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+
+  const actionClasses = await getActionClasses(environmentId);
+
+  // create new survey with the data of the existing survey
+  const newSurvey = await prisma.survey.create({
+    data: {
+      ...existingSurvey,
+      id: undefined, // id is auto-generated
+      environmentId: undefined, // environmentId is set below
+      name: `${existingSurvey.name} (copy)`,
+      status: "draft",
+      questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
+      thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
+      triggers: {
+        create: existingSurvey.triggers.map((trigger) => ({
+          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
+        })),
+      },
+      attributeFilters: {
+        create: existingSurvey.attributeFilters.map((attributeFilter) => ({
+          attributeClassId: attributeFilter.attributeClassId,
+          condition: attributeFilter.condition,
+          value: attributeFilter.value,
+        })),
+      },
+      environment: {
+        connect: {
+          id: environmentId,
+        },
+      },
+      surveyClosedMessage: existingSurvey.surveyClosedMessage
+        ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
+        : Prisma.JsonNull,
+      singleUse: existingSurvey.singleUse
+        ? JSON.parse(JSON.stringify(existingSurvey.singleUse))
+        : Prisma.JsonNull,
+      productOverwrites: existingSurvey.productOverwrites
+        ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
+        : Prisma.JsonNull,
+      verifyEmail: existingSurvey.verifyEmail
+        ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
+        : Prisma.JsonNull,
+    },
+  });
+
+  revalidateTag(getSurveysCacheTag(environmentId));
+  revalidateTag(getSurveyCacheTag(surveyId));
+  
+  return newSurvey;
+}

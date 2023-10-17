@@ -35,7 +35,7 @@ export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
       {!loaded && (
         <div className="absolute inset-0">
           <Image
-          priority
+            priority
             src={fallbackImage}
             alt="Fallback Image"
             className="transition-opacity duration-300"
