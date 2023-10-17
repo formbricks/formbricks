@@ -377,7 +377,7 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
   }));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: TSurveyWithAnalytics): Promise<TSurvey> {
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
@@ -390,11 +390,13 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  if (updatedSurvey.triggers) {
+  const { triggers, attributeFilters, environmentId, analytics, ...surveyData } = updatedSurvey;
+
+  if (triggers) {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
     // find added triggers
-    for (const trigger of updatedSurvey.triggers) {
+    for (const trigger of triggers) {
       if (!trigger) {
         continue;
       }
@@ -406,7 +408,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     }
     // find removed triggers
     for (const trigger of currentSurvey.triggers) {
-      if (updatedSurvey.triggers.find((t: any) => t === trigger)) {
+      if (triggers.find((t: any) => t === trigger)) {
         continue;
       } else {
         removedTriggers.push(trigger);
@@ -436,7 +438,6 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     }
   }
 
-  const attributeFilters: TSurveyAttributeFilter[] = updatedSurvey.attributeFilters;
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
     const removedFilterIds: string[] = [];
@@ -504,14 +505,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   }
 
   data = {
-    ...updatedSurvey,
-    triggers: undefined,
-    attributeFilters: undefined,
-    environment: undefined,
-    responses: undefined,
-    displays: undefined,
-    environmentId: undefined,
-    analytics: undefined,
+    ...surveyData,
     ...data,
   };
 
