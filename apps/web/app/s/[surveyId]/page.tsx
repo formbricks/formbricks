@@ -69,7 +69,13 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   let singleUseResponse: TResponse | undefined = undefined;
   if (isSingleUseSurvey) {
-    singleUseResponse = (await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined;
+    try {
+      singleUseResponse = singleUseId
+        ? (await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined
+        : undefined;
+    } catch (error) {
+      singleUseResponse = undefined;
+    }
   }
 
   // verify email: Check if the survey requires email verification

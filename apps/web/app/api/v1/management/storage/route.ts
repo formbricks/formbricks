@@ -66,7 +66,7 @@ const uploadPublicFile = async (
 ) => {
   // if s3 is not configured, we'll upload to a local folder named uploads
 
-  if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
+  if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
     try {
       await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, true);
 
