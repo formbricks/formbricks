@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FooterLogo } from "./Logo";
-import { FaGithub, FaXTwitter, FaDiscord} from "react-icons/fa6";
+import { FaGithub, FaXTwitter, FaDiscord } from "react-icons/fa6";
 
 const navigation = {
   other: [
@@ -14,17 +14,17 @@ const navigation = {
     {
       name: "Twitter",
       href: "https://twitter.com/formbricks",
-      icon: FaXTwitter
+      icon: FaXTwitter,
     },
     {
       name: "GitHub",
       href: "https://github.com/formbricks/formbricks",
-      icon: FaGithub
-    },    
+      icon: FaGithub,
+    },
     {
       name: "Discord",
       href: "https://formbricks.com/discord",
-      icon: FaDiscord
+      icon: FaDiscord,
     },
   ],
 };

@@ -7,6 +7,15 @@ export interface ThankYouCard {
   subheader?: string;
 }
 
+export interface WelcomeCard {
+  enabled: boolean;
+  headline?: string;
+  html?: string;
+  fileUrl?: string;
+  buttonLabel?: string;
+  timeToFinish?: boolean;
+}
+
 export interface SurveyClosedMessage {
   heading?: string;
   subheading?: string;
@@ -41,6 +50,7 @@ export interface Survey {
   environmentId: string;
   status: "draft" | "inProgress" | "paused" | "completed";
   recontactDays: number | null;
+  welcomeCard: WelcomeCard;
   questions: Question[];
   thankYouCard: ThankYouCard;
   triggers: string[];
