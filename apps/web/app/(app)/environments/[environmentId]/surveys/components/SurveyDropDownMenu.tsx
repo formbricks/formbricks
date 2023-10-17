@@ -12,8 +12,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/app/components/shared/DropdownMenu";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+} from "@formbricks/ui/DropdownMenu";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurvey } from "@formbricks/types/v1/surveys";
 import {

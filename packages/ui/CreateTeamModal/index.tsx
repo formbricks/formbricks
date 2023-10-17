@@ -1,8 +1,8 @@
-import { createTeamAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { Modal } from "@formbricks/ui/Modal";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { createTeamAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
+import { Modal } from "../Modal";
+import { Button } from "../Button";
+import { Input } from "../Input";
+import { Label } from "../Label";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,12 +14,16 @@ interface CreateTeamModalProps {
   setOpen: (v: boolean) => void;
 }
 
+type FormValues = {
+  name: string;
+};
+
 export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit } = useForm<FormValues>();
 
-  const submitTeam = async (data) => {
+  const submitTeam = async (data: FormValues) => {
     try {
       setLoading(true);
       const newTeam = await createTeamAction(data.name);
