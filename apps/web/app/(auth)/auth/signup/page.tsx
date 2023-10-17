@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { SignupForm } from "@/components/auth/SignupForm";
-import FormWrapper from "@/components/auth/FormWrapper";
-import Testimonial from "@/components/auth/Testimonial";
+
 import {
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
@@ -13,6 +11,9 @@ import {
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
+import Testimonial from "@/app/(auth)/auth/components/Testimonial";
+import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 
 export default function SignUpPage({
   searchParams,

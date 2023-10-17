@@ -4,10 +4,8 @@ import { createId } from "@paralleldrive/cuid2";
 
 /** @type {import('next').NextConfig} */
 
-const isCloud = process.env.IS_FORMBRICKS_CLOUD === "1";
-
 const nextConfig = {
-  assetPrefix: isCloud ? process.env.WEBAPP_URL : undefined,
+  assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
     serverActions: true,
@@ -22,6 +20,14 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "https",
+        hostname: "app.formbricks.com",
       },
     ],
   },

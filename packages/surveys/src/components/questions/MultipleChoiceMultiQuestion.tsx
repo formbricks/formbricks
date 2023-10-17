@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn, shuffleQuestions } from "../../lib/utils";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
@@ -28,9 +28,18 @@ export default function MultipleChoiceSingleQuestion({
   isLastQuestion,
   brandColor,
 }: MultipleChoiceSingleProps) {
+  const getChoicesWithoutOtherLabels = useCallback(
+    () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
+    [question]
+  );
+
   const [otherSelected, setOtherSelected] = useState(
-    !!value && !question.choices.find((c) => c.label === value)
-  ); // initially set to true if value is not in choices
+    !!value &&
+      (value as string[]).some((item) => {
+        return getChoicesWithoutOtherLabels().includes(item) === false;
+      })
+  ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
+
   const [otherValue, setOtherValue] = useState(
     (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
   ); // initially set to the first value that is not in choices
@@ -77,7 +86,11 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        const newValue = (value as string[])?.filter((item) => {
+          return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
+        }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
+        onChange({ [question.id]: newValue });
+        onSubmit({ [question.id]: newValue });
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -89,17 +102,28 @@ export default function MultipleChoiceSingleQuestion({
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
+                tabIndex={idx + 1}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    if (Array.isArray(value) && value.includes(choice.label)) {
+                      removeItem(choice.label);
+                    } else {
+                      addItem(choice.label);
+                    }
+                  }
+                }}
                 className={cn(
                   value === choice.label
                     ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
                     : "border-[--fb-border]",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] hover:bg-[--fb-bg-2] focus:outline-none"
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] focus-within:border-[--fb-border-highlight] hover:bg-[--fb-bg-2] focus:bg-[--fb-bg-2] focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
                     id={choice.id}
                     name={question.id}
+                    tabIndex={-1}
                     value={choice.label}
                     className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
@@ -111,7 +135,9 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     checked={Array.isArray(value) && value.includes(choice.label)}
-                    required={question.required && idx === 0}
+                    required={
+                      question.required && Array.isArray(value) && value.length ? false : question.required
+                    }
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
@@ -121,15 +147,22 @@ export default function MultipleChoiceSingleQuestion({
             ))}
             {otherOption && (
               <label
+                tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === otherOption.label
                     ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
                     : "border-[--fb-border]",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] hover:bg-[--fb-bg-2] focus:outline-none"
-                )}>
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] focus-within:border-[--fb-border-highlight] focus-within:bg-[--fb-bg-2] hover:bg-[--fb-bg-2] focus:outline-none"
+                )}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    setOtherSelected(!otherSelected);
+                  }
+                }}>
                 <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
+                    tabIndex={-1}
                     id={otherOption.id}
                     name={question.id}
                     value={otherOption.label}
@@ -155,11 +188,18 @@ export default function MultipleChoiceSingleQuestion({
                     ref={otherSpecify}
                     id={`${otherOption.id}-label`}
                     name={question.id}
+                    tabIndex={questionChoices.length + 1}
                     value={otherValue}
                     onChange={(e) => {
                       setOtherValue(e.currentTarget.value);
-                      removeItem(otherValue);
                       addItem(e.currentTarget.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        setTimeout(() => {
+                          onSubmit({ [question.id]: value });
+                        }, 100);
+                      }
                     }}
                     placeholder="Please specify"
                     className="mt-3 flex h-10 w-full rounded-md border border-[--fb-border] bg-[--fb-bg] px-3 py-2 text-sm text-[--fb-text] placeholder:text-[--fb-placeholder] focus:outline-none  focus:ring-2 focus:ring-[--fb-ring-focus] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -173,10 +213,17 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && <BackButton backButtonLabel={question.backButtonLabel} onClick={onBack} />}
+        {!isFirstQuestion && (
+          <BackButton
+            tabIndex={questionChoices.length + 3}
+            backButtonLabel={question.backButtonLabel}
+            onClick={onBack}
+          />
+        )}
         <div></div>
         <SubmitButton
-          question={question}
+          tabIndex={questionChoices.length + 2}
+          buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}

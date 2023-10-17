@@ -1,4 +1,4 @@
-import { sendToPipeline } from "@/lib/pipelines";
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
@@ -109,6 +109,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         data: true,
         meta: true,
         personAttributes: true,
+        singleUseId: true,
         person: {
           select: {
             id: true,
@@ -159,13 +160,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
 
     const transformPrismaPerson = (person): TPerson => {
-      const attributes = person.attributes.reduce(
-        (acc, attr) => {
-          acc[attr.attributeClass.name] = attr.value;
-          return acc;
-        },
-        {} as Record<string, string | number>
-      );
+      const attributes = person.attributes.reduce((acc, attr) => {
+        acc[attr.attributeClass.name] = attr.value;
+        return acc;
+      }, {} as Record<string, string | number>);
 
       return {
         id: person.id,

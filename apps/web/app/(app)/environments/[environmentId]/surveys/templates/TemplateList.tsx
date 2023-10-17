@@ -1,27 +1,23 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile } from "@/lib/profile";
-import { replacePresetPlaceholders } from "@/lib/templates";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { useProfile } from "@/app/lib/profile";
+import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { cn } from "@formbricks/lib/cn";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { TTemplate } from "@formbricks/types/v1/templates";
-import {
-  Button,
-  ErrorComponent,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { Button } from "@formbricks/ui/Button";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createSurveyAction } from "./actions";
+import { createSurveyAction } from "../actions";
 import { customSurvey, templates } from "./templates";
+import { TSurveyInput } from "@formbricks/types/v1/surveys";
 
 type TemplateList = {
   environmentId: string;
@@ -77,7 +73,7 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-    };
+    } as TSurveyInput;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };

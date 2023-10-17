@@ -33,9 +33,10 @@ export default function CTAQuestion({
         {!isFirstQuestion && (
           <BackButton backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
         )}
-        <div className="flex justify-end">
+        <div className="flex w-full justify-end">
           {!question.required && (
             <button
+              tabIndex={0}
               type="button"
               onClick={() => {
                 onSubmit({ [question.id]: "dismissed" });
@@ -45,9 +46,10 @@ export default function CTAQuestion({
             </button>
           )}
           <SubmitButton
-            question={question}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
+            focus={true}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();

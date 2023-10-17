@@ -1,4 +1,4 @@
-import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -99,19 +99,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // POST
   else if (req.method === "PUT") {
     const data = { ...req.body, updatedAt: new Date() };
-    const prismaRes = await prisma.person.update({
+    const person = await prisma.person.update({
       where: { id: personId },
       data,
     });
-    return res.json(prismaRes);
+    return res.json(person);
   }
 
   // Delete
   else if (req.method === "DELETE") {
-    const prismaRes = await prisma.person.delete({
+    const person = await prisma.person.delete({
       where: { id: personId },
     });
-    return res.json(prismaRes);
+    return res.json(person);
   }
 
   // Unknown HTTP Method

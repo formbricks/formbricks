@@ -237,6 +237,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
       { title: "User Identification", href: "/docs/link-surveys/user-identification" },
+      { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
     ],
   },
   {
@@ -245,7 +246,6 @@ export const navigation: Array<NavGroup> = [
       { title: "Deployment", href: "/docs/self-hosting/deployment" },
       { title: "Production", href: "/docs/self-hosting/production" },
       { title: "Docker", href: "/docs/self-hosting/docker" },
-      { title: "From Source", href: "/docs/self-hosting/from-source" },
       { title: "Migration to v1.1", href: "/docs/self-hosting/migrating-to-1.1" },
     ],
   },
@@ -258,18 +258,27 @@ export const navigation: Array<NavGroup> = [
       { title: "Gitpod", href: "/docs/contributing/gitpod" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
+      { title: "FAQ", href: "/docs/faq" },
     ],
   },
   {
-    title: "API",
+    title: "Client API",
     links: [
-      { title: "Overview", href: "/docs/api/overview" },
-      { title: "API Key Setup", href: "/docs/api/api-key-setup" },
-      { title: "Displays", href: "/docs/api/display" },
-      { title: "People", href: "/docs/api/people" },
-      { title: "Responses", href: "/docs/api/responses" },
-      { title: "Surveys", href: "/docs/api/surveys" },
-      { title: "Webhook", href: "/docs/api/webhooks" },
+      { title: "Overview", href: "/docs/api/client/overview" },
+      { title: "Displays", href: "/docs/api/client/displays" },
+      { title: "Responses", href: "/docs/api/client/responses" },
+    ],
+  },
+  {
+    title: "Management API",
+    links: [
+      { title: "API Key Setup", href: "/docs/api/management/api-key-setup" },
+      { title: "Action Classes", href: "/docs/api/management/action-classes" },
+      { title: "Attribute Classes", href: "/docs/api/management/attribute-classes" },
+      { title: "Me", href: "/docs/api/management/me" },
+      { title: "People", href: "/docs/api/management/people" },
+      { title: "Surveys", href: "/docs/api/management/surveys" },
+      { title: "Webhooks", href: "/docs/api/management/webhooks" },
     ],
   },
 ];

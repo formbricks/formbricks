@@ -1,17 +1,18 @@
 import "server-only";
-import z from "zod";
+
 import { prisma } from "@formbricks/database";
 import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/v1/apiKeys";
 import { Prisma } from "@prisma/client";
 import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { cache } from "react";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ITEMS_PER_PAGE } from "../constants";
 
 export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
-  validateInputs([apiKeyId, z.string()]);
+  validateInputs([apiKeyId, ZString]);
   if (!apiKeyId) {
     throw new InvalidInputError("API key cannot be null or undefined.");
   }
@@ -37,13 +38,16 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
   }
 };
 
-export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[]> => {
-  validateInputs([environmentId, ZId]);
+export const getApiKeys = async (environmentId: string, page?: number): Promise<TApiKey[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
   try {
     const apiKeys = await prisma.apiKey.findMany({
       where: {
         environmentId,
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
     return apiKeys;
@@ -53,7 +57,7 @@ export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[]
     }
     throw error;
   }
-});
+};
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
@@ -81,7 +85,7 @@ export async function createApiKey(environmentId: string, apiKeyData: TApiKeyCre
 }
 
 export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> => {
-  validateInputs([apiKey, z.string()]);
+  validateInputs([apiKey, ZString]);
   if (!apiKey) {
     throw new InvalidInputError("API key cannot be null or undefined.");
   }
@@ -103,14 +107,16 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
   }
 };
 
-export const deleteApiKey = async (id: string): Promise<void> => {
+export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {
   validateInputs([id, ZId]);
   try {
-    await prisma.apiKey.delete({
+    const deletedApiKeyData = await prisma.apiKey.delete({
       where: {
         id: id,
       },
     });
+
+    return deletedApiKeyData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

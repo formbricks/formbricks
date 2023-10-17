@@ -7,10 +7,14 @@ export { ZIntegrationConfig } from "@formbricks/types/v1/integrations";
 export { ZResponseData, ZResponsePersonAttributes, ZResponseMeta } from "@formbricks/types/v1/responses";
 
 export {
+  ZSurveyWelcomeCard,
   ZSurveyQuestions,
   ZSurveyThankYouCard,
+  ZSurveyHiddenFields,
   ZSurveyClosedMessage,
+  ZSurveyProductOverwrites,
   ZSurveyVerifyEmail,
+  ZSurveySingleUse,
 } from "@formbricks/types/v1/surveys";
 
 export { ZUserNotificationSettings } from "@formbricks/types/v1/users";

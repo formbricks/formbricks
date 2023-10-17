@@ -1,8 +1,9 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { TTag } from "@formbricks/types/v1/tags";
-import { cache } from "react";
 
-export const getTagsByEnvironmentId = cache(async (environmentId: string): Promise<TTag[]> => {
+export const getTagsByEnvironmentId = async (environmentId: string): Promise<TTag[]> => {
   try {
     const tags = await prisma.tag.findMany({
       where: {
@@ -14,7 +15,7 @@ export const getTagsByEnvironmentId = cache(async (environmentId: string): Promi
   } catch (error) {
     throw error;
   }
-});
+};
 
 export const getTag = async (tagId: string): Promise<TTag | null> => {
   try {

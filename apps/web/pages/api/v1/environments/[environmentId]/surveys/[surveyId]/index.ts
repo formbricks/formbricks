@@ -1,5 +1,5 @@
 import type { AttributeFilter } from "@formbricks/types/surveys";
-import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { Prisma as prismaClient } from "@prisma/client/";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -96,6 +96,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
       if (!body.surveyClosedMessage) {
         body.surveyClosedMessage = prismaClient.JsonNull;
+      }
+
+      if (!body.singleUse) {
+        body.singleUse = prismaClient.JsonNull;
       }
 
       if (!body.verifyEmail) {
@@ -228,6 +232,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     if (data.surveyClosedMessage === null) {
       data.surveyClosedMessage = prismaClient.JsonNull;
+    }
+
+    if (data.singleUse === null) {
+      data.singleUse = prismaClient.JsonNull;
     }
 
     if (data.verifyEmail === null) {

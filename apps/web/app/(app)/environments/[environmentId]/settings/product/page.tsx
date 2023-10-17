@@ -1,12 +1,12 @@
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
 
-import EditProductName from "./EditProductName";
-import EditWaitingTime from "./EditWaitingTime";
-import DeleteProduct from "./DeleteProduct";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import EditProductName from "./components/EditProductName";
+import EditWaitingTime from "./components/EditWaitingTime";
+import DeleteProduct from "./components/DeleteProduct";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [, product] = await Promise.all([

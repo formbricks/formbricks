@@ -1,6 +1,6 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
-import { responses } from "@/lib/api/response";
-import { deletePerson, getPerson } from "@formbricks/lib/services/person";
+import { responses } from "@/app/lib/api/response";
+import { deletePerson, getPerson } from "@formbricks/lib/person/service";
 import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
 import { TPerson } from "@formbricks/types/v1/people";
 import { NextResponse } from "next/server";

@@ -1,8 +1,8 @@
 import React from "react";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
-import footerLogo from "./footerlogo.svg";
+import footerLogo from "./lib/footerlogo.svg";
 import Image from "next/image";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import Link from "next/link";
 
 export default function NotFound() {
@@ -12,7 +12,7 @@ export default function NotFound() {
       <div className="flex flex-col items-center space-y-3 text-slate-300">
         <QuestionMarkCircleIcon className="h-20 w-20" />,
         <h1 className="text-4xl font-bold text-slate-800">Survey not found.</h1>
-        <p className="text-lg leading-10 text-gray-500">There is not survey with this ID.</p>
+        <p className="text-lg leading-10 text-gray-500">There is no survey with this ID.</p>
         <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
           Create your own
         </Button>

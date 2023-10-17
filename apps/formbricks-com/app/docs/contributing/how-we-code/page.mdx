@@ -49,7 +49,7 @@ Server actions are used to perform server actions in client components. For exam
 
 ## Use service abstraction instead of direct database calls
 
-We utilize [prisma](https://www.prisma.io/) as our Object-Relational Mapping (ORM) tool to interact with the database. This implies that when you need to fetch or modify data in the database, you will be utilizing prisma. All prisma calls should be written in the services folder `packages/lib/services`, and before creating a new service, please ensure that one does not already exist.
+We utilize [prisma](https://www.prisma.io/) as our Object-Relational Mapping (ORM) tool to interact with the database. This implies that when you need to fetch or modify data in the database, you will be utilizing prisma. All prisma calls should be written in the services folder `packages/lib`, and before creating a new service, please ensure that one does not already exist.
 
 ## Handle authentication and CORS in management APIs
 
@@ -113,9 +113,21 @@ Add a short video or screenshots of what your PR achieves. Loom is a great way o
 
 ### Code Quality & Styling
 
-All submitted code must match our **[code styling](https://www.notion.so/Code-Styling-65ddc5dd2deb4b28a9876f1f7cc89ca9?pvs=21)** standards. We will reject pull requests that differ significantly from our standardised code styles.
+It's really important to keep our code styles consistent so that the repository is easy to read and work with.
 
-All code is automatically checked by Github actions, and will notify you if there are any issues with the code that you submit. We require that code passes these quality checks before merging.
+We rely on various style guides from other amazing companies because they are widely used and we genuinely enjoy working with them.
+
+While we don't expect you to memorize every rule in these style guides, they serve as valuable references for how your code should be styled. However, if your code style significantly deviates from these guides, we may have to reject your pull request.
+
+#### ESLint & Prettier
+
+Formbricks uses the ESLint and Prettier formatting tools, and the repository comes with defined rules for each tool. We recommend setting up both tools and using these to help automatically style your code to our guidelines.
+
+#### HTML & CSS
+
+We use the **[Google HTML/CSS Style Guide](https://google.github.io/styleguide/htmlcssguide.html)** for any HTML and CSS markup. However, exceptions to the HTML guide apply where JSX differentiates from standard HTML.
+
+**Note:** We will reject pull requests that differ significantly from our standardised code styles. All code is automatically checked by Github actions, and will notify you if there are any issues with the code that you submit. We require that code passes these quality checks before merging.
 
 ### PR review process
 

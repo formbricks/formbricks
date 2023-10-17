@@ -25,7 +25,7 @@ Before you proceed, make sure you have the following:
 ## Single Command Setup
 
 Copy and paste the following command into your terminal:
-
+<Col>
 <CodeGroup title="Single Command to deploy Formbricks">
 
 ```bash
@@ -33,11 +33,11 @@ Copy and paste the following command into your terminal:
 ```
 
 </CodeGroup>
-
+</Col>
 The script will prompt you for the following information:
 
 1. **Overwriting Docker GPG Keys**: If Docker GPG keys already exist, the script will ask if you want to overwrite them.
-
+<Col>
    <CodeGroup title="Docker GPG Keys Overwrite Prompt">
 
    ```bash
@@ -53,9 +53,9 @@ The script will prompt you for the following information:
    ```
 
    </CodeGroup>
-
+</Col>
 2. **Email Address**: Provide your email address for SSL certificate registration with Let's Encrypt.
-
+<Col>
    <CodeGroup title="Email Prompt">
 
    ```bash
@@ -80,9 +80,9 @@ The script will prompt you for the following information:
    ```
 
     </CodeGroup>
-
+</Col>
 3. **Domain Name**: Enter the domain name that Traefik will use to create the SSL certificate and forward requests to Formbricks.
-
+<Col>
    <CodeGroup title="Domain Name for SSL certificate Prompt">
 
    ```bash
@@ -111,9 +111,9 @@ The script will prompt you for the following information:
    ```
 
    </CodeGroup>
-
+</Col>
 **That's it**! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
-
+<Col>
 <CodeGroup title="Successfully setup Formbricks on your Ubuntu machine">
 
 ```bash
@@ -153,11 +153,11 @@ my.hosted.url.com
 ```
 
 </CodeGroup>
-
+</Col>
 ## Debugging
 
 If you encounter any issues, you can check the logs of the container with:
-
+<Col>
 <CodeGroup title="Check logs of the container">
 
 ```bash
@@ -165,16 +165,8 @@ cd formbricks && docker compose logs -f
 ```
 
 </CodeGroup>
-
+</Col>
 You can close the logs again with `CTRL + C`.
-
-<Note>
-## Customizing the Build Time variables
-
-To edit any of the variables that start with `NEXT_PUBLIC_`, you need to rebuild the Formbricks Docker from source! It is just one
-more added step and is not as much of a hassle as you think! Please check the [Building from Source](/docs/self-hosting/from-source) section!
-
-</Note>
 
 ## Troubleshooting
 

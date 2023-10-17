@@ -104,14 +104,14 @@ export default function Modal({
             "pointer-events-auto absolute bottom-0 h-fit w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
           {!isCenter && (
-            <div class="absolute right-0 top-0 block pr-4 pt-4">
+            <div class="absolute right-0 top-0 block pr-[1.4rem] pt-2">
               <button
                 type="button"
                 onClick={onClose}
                 class="relative rounded-md text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
                 <span class="sr-only">Close</span>
                 <svg
-                  class="h-6 w-6"
+                  class="h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke-width="1.5"

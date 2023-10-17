@@ -1,13 +1,13 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import WebhookRowData from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookRowData";
-import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTable";
-import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/webhooks/WebhookTableHeading";
-import GoBackButton from "@/components/shared/GoBackButton";
-import { getSurveys } from "@formbricks/lib/services/survey";
-import { getWebhooks } from "@formbricks/lib/services/webhook";
+import WebhookRowData from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookRowData";
+import WebhookTable from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookTable";
+import WebhookTableHeading from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookTableHeading";
+import GoBackButton from "@formbricks/ui/GoBackButton";
+import { getSurveys } from "@formbricks/lib/survey/service";
+import { getWebhooks } from "@formbricks/lib/webhook/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function CustomWebhookPage({ params }) {
   const [webhooksUnsorted, surveys, environment] = await Promise.all([

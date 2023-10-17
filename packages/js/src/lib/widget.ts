@@ -1,13 +1,13 @@
 import { createDisplay } from "@formbricks/lib/client/display";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
+import SurveyState from "@formbricks/lib/surveyState";
 import { renderSurveyModal } from "@formbricks/surveys";
+import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
 import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import type { TSurvey } from "../../../types/v1/surveys";
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
 import { sync } from "./sync";
-import SurveyState from "@formbricks/lib/surveyState";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -15,7 +15,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 
-export const renderWidget = (survey: TSurvey) => {
+export const renderWidget = (survey: TSurveyWithTriggers) => {
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -42,15 +42,22 @@ export const renderWidget = (survey: TSurvey) => {
     surveyState
   );
 
+  const productOverwrites = survey.productOverwrites ?? {};
+  const brandColor = productOverwrites.brandColor ?? product.brandColor;
+  const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
+  const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
+  const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
+  const placement = productOverwrites.placement ?? product.placement;
+
   setTimeout(() => {
     renderSurveyModal({
       survey: survey,
-      brandColor: product.brandColor,
+      brandColor,
       formbricksSignature: product.formbricksSignature,
-      clickOutside: product.clickOutsideClose,
-      darkOverlay: product.darkOverlay,
-      highlightBorderColor: product.highlightBorderColor,
-      placement: product.placement,
+      clickOutside,
+      darkOverlay,
+      highlightBorderColor,
+      placement,
       onDisplay: async () => {
         const { id } = await createDisplay(
           {
@@ -63,7 +70,10 @@ export const renderWidget = (survey: TSurvey) => {
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        responseQueue.add(responseUpdate);
+        responseQueue.add({
+          data: responseUpdate.data,
+          finished: responseUpdate.finished,
+        });
       },
       onClose: closeSurvey,
     });
@@ -76,7 +86,12 @@ export const closeSurvey = async (): Promise<void> => {
   addWidgetContainer();
 
   try {
-    await sync();
+    await sync({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+      personId: config.get().state.person?.id,
+      sessionId: config.get().state.session?.id,
+    });
     surveyRunning = false;
   } catch (e) {
     errorHandler.handle(e);

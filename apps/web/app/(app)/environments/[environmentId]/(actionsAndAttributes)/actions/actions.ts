@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createActionClass, deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { canUserAccessActionClass } from "@formbricks/lib/actionClass/auth";
@@ -11,8 +11,8 @@ import {
   getActionCountInLast24Hours,
   getActionCountInLast7Days,
   getActionCountInLastHour,
-} from "@formbricks/lib/services/actions";
-import { getSurveysByActionClassId } from "@formbricks/lib/services/survey";
+} from "@formbricks/lib/action/service";
+import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
 
 export async function deleteActionClassAction(environmentId, actionClassId: string) {

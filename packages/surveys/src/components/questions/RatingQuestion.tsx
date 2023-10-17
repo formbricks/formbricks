@@ -84,21 +84,35 @@ export default function RatingQuestion({
                 className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-[--fb-bg] text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
+                    tabIndex={i + 1}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        handleSelect(number);
+                      }
+                    }}
                     className={cn(
                       value === number ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "block h-full w-full border text-[--fb-text] hover:bg-[--fb-bg-2] focus:outline-none"
+                      "block h-full w-full border text-[--fb-text] hover:bg-[--fb-bg-2] focus:bg-[--fb-bg-2] focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
                   </label>
                 ) : question.scale === "star" ? (
                   <label
+                    tabIndex={i + 1}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        handleSelect(number);
+                      }
+                    }}
                     className={cn(
                       number <= hoveredNumber ? "text-[--fb-rating-hover]" : "text-[--fb-text]",
-                      "flex h-full w-full justify-center"
-                    )}>
+                      "flex h-full w-full justify-center focus:text-[--fb-rating-hover] focus:outline-none"
+                    )}
+                    onFocus={() => setHoveredNumber(number)}
+                    onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
                     {typeof value === "number" && value >= number ? (
                       <span className="text-[--fb-rating-fill]">
@@ -137,7 +151,15 @@ export default function RatingQuestion({
                       value === number || hoveredNumber === number
                         ? "stroke-[--fb-rating-selected] text-[--fb-rating-selected]"
                         : "stroke-[--fb-text] text-[--fb-text]"
-                    )}>
+                    )}
+                    tabIndex={i + 1}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        handleSelect(number);
+                      }
+                    }}
+                    onFocus={() => setHoveredNumber(number)}
+                    onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={value === number || hoveredNumber === number}
@@ -159,6 +181,7 @@ export default function RatingQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
+            tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
               onBack();
@@ -168,7 +191,8 @@ export default function RatingQuestion({
         <div></div>
         {(!question.required || value) && (
           <SubmitButton
-            question={question}
+            tabIndex={question.range + 1}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             onClick={() => {}}

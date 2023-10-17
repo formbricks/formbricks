@@ -1,12 +1,14 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { truncateMiddle } from "@/lib/utils";
-import { PEOPLE_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getPeople, getPeopleCount } from "@formbricks/lib/services/person";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { truncateMiddle } from "@/app/lib/utils";
+import { ITEMS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/v1/people";
-import { Pagination, PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { Pagination } from "@formbricks/ui/Pagination";
+
 import Link from "next/link";
 
 const getAttributeValue = (person: TPerson, attributeName: string) =>
@@ -27,7 +29,7 @@ export default async function PeoplePage({
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const maxPageNumber = Math.ceil(totalPeople / PEOPLE_PER_PAGE);
+  const maxPageNumber = Math.ceil(totalPeople / ITEMS_PER_PAGE);
   let hidePagination = false;
 
   let people: TPerson[] = [];
@@ -94,7 +96,7 @@ export default async function PeoplePage({
           baseUrl={`/environments/${params.environmentId}/people`}
           currentPage={pageNumber}
           totalItems={totalPeople}
-          itemsPerPage={PEOPLE_PER_PAGE}
+          itemsPerPage={ITEMS_PER_PAGE}
         />
       )}
     </>

@@ -39,9 +39,15 @@ export default function NPSQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="flex">
-            {Array.from({ length: 11 }, (_, i) => i).map((number) => (
+            {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => (
               <label
                 key={number}
+                tabIndex={idx + 1}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    onSubmit({ [question.id]: number });
+                  }
+                }}
                 className={cn(
                   value === number
                     ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
@@ -78,6 +84,7 @@ export default function NPSQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
+            tabIndex={isLastQuestion ? 12 : 13}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
               onBack();
@@ -87,7 +94,8 @@ export default function NPSQuestion({
         <div></div>
         {!question.required && (
           <SubmitButton
-            question={question}
+            tabIndex={12}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             onClick={() => {}}

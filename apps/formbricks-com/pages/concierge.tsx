@@ -1,7 +1,7 @@
 import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import Cal, { getCalApi } from "@calcom/embed-react";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useEffect } from "react";
 
 const XMOffer = [
@@ -83,8 +83,8 @@ const ConciergePage = () => {
           </div> */}
           <div className="px-6">
             <Button
-              variant="darkCTA"
-              className="w-full justify-center"
+              // variant="darkCTA"
+              className="w-full justify-center bg-gray-800 text-gray-300 hover:text-white"
               href="https://cal.com/johannes/kick-off"
               target="_blank">
               Schedule free Kick-Off call

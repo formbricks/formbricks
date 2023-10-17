@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { verifyToken } from "@formbricks/lib/jwt";
 import { NextResponse } from "next/server";
-import { sendPasswordResetNotifyEmail } from "@/lib/email";
+import { sendPasswordResetNotifyEmail } from "@/app/lib/email";
 
 export async function POST(request: Request) {
   const { token, hashedPassword } = await request.json();

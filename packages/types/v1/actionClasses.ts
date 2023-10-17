@@ -1,5 +1,16 @@
 import z from "zod";
 
+export const ZActionClassPageUrlRule = z.union([
+  z.literal("exactMatch"),
+  z.literal("contains"),
+  z.literal("startsWith"),
+  z.literal("endsWith"),
+  z.literal("notMatch"),
+  z.literal("notContains"),
+]);
+
+export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
+
 export const ZActionClassNoCodeConfig = z.object({
   // The "type field has been made optional to allow for multiple selectors in one noCode action from now on
   // Use the existence check of the fields to determine the types of the noCode action
@@ -7,14 +18,7 @@ export const ZActionClassNoCodeConfig = z.object({
   pageUrl: z.optional(
     z.object({
       value: z.string(),
-      rule: z.union([
-        z.literal("exactMatch"),
-        z.literal("contains"),
-        z.literal("startsWith"),
-        z.literal("endsWith"),
-        z.literal("notMatch"),
-        z.literal("notContains"),
-      ]),
+      rule: ZActionClassPageUrlRule,
     })
   ),
   innerHtml: z.optional(z.object({ value: z.string() })),
@@ -23,11 +27,15 @@ export const ZActionClassNoCodeConfig = z.object({
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;
 
+export const ZActionClassType = z.enum(["code", "noCode", "automatic"]);
+
+export type TActionClassType = z.infer<typeof ZActionClassType>;
+
 export const ZActionClass = z.object({
   id: z.string().cuid2(),
   name: z.string(),
   description: z.string().nullable(),
-  type: z.enum(["code", "noCode", "automatic"]),
+  type: ZActionClassType,
   noCodeConfig: z.union([ZActionClassNoCodeConfig, z.null()]),
   environmentId: z.string(),
   createdAt: z.date(),
@@ -43,5 +51,13 @@ export const ZActionClassInput = z.object({
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
   type: z.enum(["code", "noCode"]),
 });
+
+export const ZActionClassAutomaticInput = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  type: z.enum(["automatic"]),
+});
+
+export type TActionClassAutomaticInput = z.infer<typeof ZActionClassAutomaticInput>;
 
 export type TActionClassInput = z.infer<typeof ZActionClassInput>;
