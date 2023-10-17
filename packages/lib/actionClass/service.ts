@@ -126,6 +126,7 @@ export const createActionClass = async (
     });
 
     actionClassCache.revalidate({
+      name: result.name,
       environmentId: result.environmentId,
       id: result.id,
     });
