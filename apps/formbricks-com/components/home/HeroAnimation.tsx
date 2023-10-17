@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import type { LottiePlayer } from "lottie-web";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 
 export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
   const [loaded, setLoaded] = useState(false);
@@ -18,7 +18,6 @@ export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
         renderer: "svg",
         loop: true,
         autoplay: true,
-        // path to your animation file, place it inside public folder
         path: "/animations/opensource-xm-platform-formbricks.json",
       });
 
@@ -36,11 +35,9 @@ export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
       {!loaded && (
         <div className="absolute inset-0">
           <Image
+            priority
             src={fallbackImage}
             alt="Fallback Image"
-            layout="fill"
-            objectFit="cover"
-            objectPosition="center"
             className="transition-opacity duration-300"
             style={{ opacity: loaded ? 0 : 1 }}
           />

@@ -1,17 +1,17 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TAction } from "@formbricks/types/v1/actions";
+import { TActionClassType } from "@formbricks/types/v1/actionClasses";
+import { TAction, TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { EventType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { getActionClassCacheTag } from "../actionClass/service";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getSessionCached } from "../session/service";
 import { validateInputs } from "../utils/validate";
-import { TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
 
 export const getActionsCacheTag = (environmentId: string): string => `environments-${environmentId}-actions`;
 
@@ -78,9 +78,9 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
   const { environmentId, name, properties, sessionId } = data;
 
-  let eventType: EventType = EventType.code;
+  let eventType: TActionClassType = "code";
   if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
-    eventType = EventType.automatic;
+    eventType = "automatic";
   }
 
   const session = await getSessionCached(sessionId);

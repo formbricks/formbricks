@@ -6,7 +6,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 
 interface IDateQuestionProps {
   question: TSurveyDateQuestion;

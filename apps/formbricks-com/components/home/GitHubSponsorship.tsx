@@ -23,13 +23,7 @@ export const GitHubSponsorship: React.FC = () => {
           height={100}
           className="mr-12 hidden dark:block md:mr-4"
         /> */}
-        <Image
-          src={HackIconGold}
-          alt="Hacktober Icon Gold"
-          width={100}
-          height={100}
-          className="mr-12 md:mr-4"
-        />
+        <Image src={HackIconGold} alt="Hacktober Icon Gold" width={100} className="mr-12 md:mr-4" />
       </div>
       <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 lg:text-2xl">
         The FormTribe goes Hacktoberfest 🥨
