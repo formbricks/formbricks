@@ -72,7 +72,7 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
     },
     [`getActionClass-${actionClassId}`],
     {
-      tags: [actionClassCache.tag.byActionClassId(actionClassId)],
+      tags: [actionClassCache.tag.byId(actionClassId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -94,7 +94,7 @@ export const deleteActionClass = async (
 
     actionClassCache.revalidate({
       environmentId,
-      actionClassId,
+      id: actionClassId,
     });
 
     return result;
@@ -127,7 +127,7 @@ export const createActionClass = async (
 
     actionClassCache.revalidate({
       environmentId: result.environmentId,
-      actionClassId: result.id,
+      id: result.id,
     });
 
     return result;
@@ -163,7 +163,7 @@ export const updateActionClass = async (
     actionClassCache.revalidate({
       environmentId: result.environmentId,
       name: result.name,
-      actionClassId: result.id,
+      id: result.id,
     });
 
     return result;

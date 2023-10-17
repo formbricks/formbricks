@@ -127,7 +127,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
   actionClassCache.revalidate({
     name,
     environmentId,
-    actionClassId: action.eventClass?.id,
+    id: action.eventClass?.id,
   });
   actionCache.revalidate({
     environmentId,
@@ -163,7 +163,7 @@ export const getActionCountInLastHour = async (actionClassId: string): Promise<n
     },
     [`getActionCountInLastHour-${actionClassId}`],
     {
-      tags: [actionClassCache.tag.byActionClassId(actionClassId)],
+      tags: [actionClassCache.tag.byId(actionClassId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -189,7 +189,7 @@ export const getActionCountInLast24Hours = async (actionClassId: string): Promis
     },
     [`getActionCountInLast24Hours-${actionClassId}`],
     {
-      tags: [actionClassCache.tag.byActionClassId(actionClassId)],
+      tags: [actionClassCache.tag.byId(actionClassId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -215,7 +215,7 @@ export const getActionCountInLast7Days = async (actionClassId: string): Promise<
     },
     [`getActionCountInLast7Days-${actionClassId}`],
     {
-      tags: [actionClassCache.tag.byActionClassId(actionClassId)],
+      tags: [actionClassCache.tag.byId(actionClassId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

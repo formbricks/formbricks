@@ -26,6 +26,6 @@ export const canUserAccessActionClass = async (userId: string, actionClassId: st
     [`users-${userId}-actionClasses-${actionClassId}`],
     {
       revalidate: SERVICES_REVALIDATION_INTERVAL,
-      tags: [actionClassCache.tag.byActionClassId(actionClassId)],
+      tags: [actionClassCache.tag.byId(actionClassId)],
     }
   )();
