@@ -1,5 +1,6 @@
 import { Question } from "./questions";
 import { ThankYouCard } from "./surveys";
+import { WelcomeCard } from "./surveys";
 
 export interface ResponseCreateRequest {
   surveyId: string;
@@ -79,6 +80,7 @@ export interface Person {
 
 export interface Survey {
   id: string;
+  welcomeCard: WelcomeCard;
   questions: Question[];
   triggers: Trigger[];
   thankYouCard: ThankYouCard;

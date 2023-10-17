@@ -87,7 +87,7 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - uploads:./apps/web/uploads/
+      - uploads:/apps/web/uploads/
     <<: *environment
 
 volumes:

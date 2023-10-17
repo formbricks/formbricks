@@ -1,4 +1,4 @@
-import { sendToPipeline } from "@/lib/pipelines";
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { captureTelemetry } from "@formbricks/lib/telemetry";

@@ -1,7 +1,7 @@
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { NextResponse } from "next/server";
 
 export async function authenticateRequest(request: Request): Promise<TAuthenticationApiKey | null> {

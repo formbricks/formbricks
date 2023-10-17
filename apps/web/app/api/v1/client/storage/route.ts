@@ -1,5 +1,5 @@
 import { env } from "@/env.mjs";
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { UPLOADS_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
 import { putFileToLocalStorage, putFileToS3 } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -58,13 +58,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const uploadPrivateFile = async () => {
     // if s3 is not configured, we'll upload to a local folder named uploads
 
-    if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
+    if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
       try {
         await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
 
         return responses.successResponse({
           uploaded: true,
-          url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+          url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href
         });
       } catch (err) {
         if (err.name === "FileTooLargeError") {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       return responses.successResponse({
         uploaded: true,
-        url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+        url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href
       });
     } catch (err) {
       if (err.name === "FileTooLargeError") {

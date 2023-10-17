@@ -1,6 +1,6 @@
 "use client";
 
-import { Logo } from "@/components/Logo";
+import { Logo } from "@/app/components/Logo";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
