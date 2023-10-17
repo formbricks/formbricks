@@ -72,7 +72,7 @@ const uploadPublicFile = async (
 
       return responses.successResponse({
         uploaded: true,
-        url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+        url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
       });
     } catch (err) {
       if (err.name === "FileTooLargeError") {
@@ -92,7 +92,7 @@ const uploadPublicFile = async (
 
     return responses.successResponse({
       uploaded: true,
-      url: `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`,
+      url: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
     });
   } catch (err) {
     if (err.name === "FileTooLargeError") {

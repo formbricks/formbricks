@@ -26,15 +26,15 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
   }
 
   for (const event of pageUrlEvents) {
-    const { noCodeConfig } = event;
-
-    const { pageUrl } = noCodeConfig ?? {};
-
-    if (!pageUrl) {
+    if (!event.noCodeConfig?.pageUrl) {
       continue;
     }
 
-    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as TActionClassPageUrlRule);
+    const {
+      noCodeConfig: { pageUrl },
+    } = event;
+
+    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
 
     if (match.ok !== true) return err(match.error);
 
@@ -111,6 +111,7 @@ export const checkClickMatch = (event: MouseEvent) => {
     const innerHtml = action.noCodeConfig?.innerHtml?.value;
     const cssSelectors = action.noCodeConfig?.cssSelector?.value;
     const pageUrl = action.noCodeConfig?.pageUrl?.value;
+    const pageUrlRule = action.noCodeConfig?.pageUrl?.rule;
 
     if (!innerHtml && !cssSelectors && !pageUrl) {
       return;
@@ -129,8 +130,8 @@ export const checkClickMatch = (event: MouseEvent) => {
         }
       }
     }
-    if (pageUrl) {
-      const urlMatch = checkUrlMatch(window.location.href, pageUrl, action.noCodeConfig?.pageUrl?.rule!);
+    if (pageUrl && pageUrlRule) {
+      const urlMatch = checkUrlMatch(window.location.href, pageUrl, pageUrlRule);
       if (!urlMatch.ok || !urlMatch.value) {
         return;
       }
