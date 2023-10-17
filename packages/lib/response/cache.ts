@@ -1,6 +1,6 @@
 import { revalidateTag } from "next/cache";
 
-interface RevalidateResponses {
+interface RevalidateProps {
   environmentId?: string;
   personId?: string;
   responseId?: string;
@@ -26,7 +26,7 @@ export const responseCache = {
       return `surveys-${surveyId}-responses`;
     },
   },
-  revalidate({ environmentId, personId, responseId, singleUseId, surveyId }: RevalidateResponses): void {
+  revalidate({ environmentId, personId, responseId, singleUseId, surveyId }: RevalidateProps): void {
     if (responseId) {
       revalidateTag(this.tag.byResponseId(responseId));
     }
