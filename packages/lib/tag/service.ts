@@ -2,13 +2,21 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { TTag } from "@formbricks/types/v1/tags";
+import { ITEMS_PER_PAGE } from "../constants";
+import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
 
-export const getTagsByEnvironmentId = async (environmentId: string): Promise<TTag[]> => {
+export const getTagsByEnvironmentId = async (environmentId: string, page?: number): Promise<TTag[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
   try {
     const tags = await prisma.tag.findMany({
       where: {
         environmentId,
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
 
     return tags;
@@ -18,6 +26,8 @@ export const getTagsByEnvironmentId = async (environmentId: string): Promise<TTa
 };
 
 export const getTag = async (tagId: string): Promise<TTag | null> => {
+  validateInputs([tagId, ZId]);
+
   try {
     const tag = await prisma.tag.findUnique({
       where: {
@@ -32,6 +42,8 @@ export const getTag = async (tagId: string): Promise<TTag | null> => {
 };
 
 export const createTag = async (environmentId: string, name: string): Promise<TTag> => {
+  validateInputs([environmentId, ZId], [name, ZString]);
+
   try {
     const tag = await prisma.tag.create({
       data: {
@@ -47,6 +59,8 @@ export const createTag = async (environmentId: string, name: string): Promise<TT
 };
 
 export const deleteTag = async (tagId: string): Promise<TTag> => {
+  validateInputs([tagId, ZId]);
+
   try {
     const tag = await prisma.tag.delete({
       where: {
@@ -61,6 +75,8 @@ export const deleteTag = async (tagId: string): Promise<TTag> => {
 };
 
 export const updateTagName = async (tagId: string, name: string): Promise<TTag> => {
+  validateInputs([tagId, ZId], [name, ZString]);
+
   try {
     const tag = await prisma.tag.update({
       where: {
@@ -78,6 +94,8 @@ export const updateTagName = async (tagId: string, name: string): Promise<TTag> 
 };
 
 export const mergeTags = async (originalTagId: string, newTagId: string): Promise<TTag | undefined> => {
+  validateInputs([originalTagId, ZId], [newTagId, ZId]);
+
   try {
     let originalTag: TTag | null;
 
