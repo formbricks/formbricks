@@ -46,7 +46,7 @@ export default function CTAQuestion({
             </button>
           )}
           <SubmitButton
-            question={question}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             focus={true}

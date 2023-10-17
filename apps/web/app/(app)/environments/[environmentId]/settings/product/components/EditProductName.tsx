@@ -32,10 +32,11 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
     try {
-      await updateProductAction(environmentId, product.id, data);
-      toast.success("Product name updated successfully.");
-
-      router.refresh();
+      const updatedProduct = await updateProductAction(environmentId, product.id, data);
+      if (!!updatedProduct?.id) {
+        toast.success("Product name updated successfully.");
+        router.refresh();
+      } 
     } catch (err) {
       console.error(err);
       toast.error(`Error: Unable to save product information`);

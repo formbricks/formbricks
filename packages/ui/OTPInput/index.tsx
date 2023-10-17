@@ -8,7 +8,7 @@ export type OTPInputProps = {
   onChange: (value: string) => void;
   containerClassName?: string;
   inputBoxClassName?: string;
-  disabled?: boolean
+  disabled?: boolean;
 };
 
 const RE_DIGIT = /^\d+$/;
