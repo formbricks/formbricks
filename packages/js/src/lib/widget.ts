@@ -61,9 +61,9 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
       onDisplay: async () => {
         const api = new FormbricksAPI({
           apiHost: config.get().apiHost,
-          environmentId: "",
+          environmentId: config.get().environmentId,
         });
-        const res = await api.client.display.markDisplayedForPerson({
+        const res = await api.client.display.create({
           surveyId: survey.id,
           personId: config.get().state.person.id,        
         });

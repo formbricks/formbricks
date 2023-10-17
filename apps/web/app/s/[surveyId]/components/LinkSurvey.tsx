@@ -139,9 +139,9 @@ export default function LinkSurvey({
             if (!isPreview) {
               const api = new FormbricksAPI({
                 apiHost: webAppUrl,
-                environmentId: "",
+                environmentId: survey.environmentId,
               });
-              const res = await api.client.display.markDisplayedForPerson({
+              const res = await api.client.display.create({
                 surveyId: survey.id,
               });
               if (!res.ok) {
