@@ -64,9 +64,11 @@ export type TResponseDates = {
   notes: TResponse["notes"];
 };
 
-export const ZResponseDefault = z.object({
+export const ZResponseInput = z.object({
+  surveyId: z.string().cuid2(),
   personId: z.string().cuid2().nullable(),
   singleUseId: z.string().nullable().optional(),
+  finished: z.boolean(),
   data: ZResponseData,
   meta: z
     .object({
@@ -82,15 +84,11 @@ export const ZResponseDefault = z.object({
     .optional(),
 });
 
-export const ZResponseInput = ZResponseDefault.extend({
-  surveyId: z.string().cuid2(),
-  finished: z.boolean().optional(),
-});
-
 export type TResponseInput = z.infer<typeof ZResponseInput>;
 
-export const ZResponseUpdateInput = ZResponseDefault.extend({
+export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
+  data: ZResponseData,
 });
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
