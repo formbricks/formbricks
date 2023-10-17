@@ -2,7 +2,6 @@
 
 import ContentWrapper from "@/app/components/shared/ContentWrapper";
 import { SurveyInline } from "@/app/components/shared/Survey";
-import { createDisplay } from "@formbricks/lib/client/display";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/v1/product";
@@ -14,6 +13,7 @@ import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import { FormbricksAPI } from "@formbricks/api";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -137,7 +137,18 @@ export default function LinkSurvey({
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
             if (!isPreview) {
-              const { id } = await createDisplay({ surveyId: survey.id }, webAppUrl);
+              const api = new FormbricksAPI({
+                apiHost: webAppUrl,
+                environmentId: "",
+              });
+              const res = await api.client.display.markDisplayedForPerson({
+                surveyId: survey.id,
+              });
+              if (!res.ok) {
+                throw new Error("Could not create display");
+              }
+              const { id } = res.data;
+      
               const newSurveyState = surveyState.copy();
               newSurveyState.updateDisplayId(id);
               setSurveyState(newSurveyState);

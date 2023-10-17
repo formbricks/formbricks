@@ -1,4 +1,3 @@
-import { createDisplay } from "@formbricks/lib/client/display";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
 import { renderSurveyModal } from "@formbricks/surveys";
@@ -8,6 +7,7 @@ import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
 import { sync } from "./sync";
+import { FormbricksAPI } from "@formbricks/api";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -59,13 +59,19 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
       highlightBorderColor,
       placement,
       onDisplay: async () => {
-        const { id } = await createDisplay(
-          {
-            surveyId: survey.id,
-            personId: config.get().state.person.id,
-          },
-          config.get().apiHost
-        );
+        const api = new FormbricksAPI({
+          apiHost: config.get().apiHost,
+          environmentId: "",
+        });
+        const res = await api.client.display.markDisplayedForPerson({
+          surveyId: survey.id,
+          personId: config.get().state.person.id,        
+        });
+        if (!res.ok) {
+          throw new Error("Could not create display");
+        }
+        const { id } = res.data;
+      
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
