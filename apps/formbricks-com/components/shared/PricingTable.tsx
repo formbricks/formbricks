@@ -76,7 +76,7 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
                 </div>
               ) : (
                 <div className="h-6 w-6 rounded-full border border-red-300 bg-red-100 p-0.5 dark:border-red-600 dark:bg-red-900">
-                  <XMarkIcon className="dark:text-red-600 text-red-500" />
+                  <XMarkIcon className="text-red-500 dark:text-red-600" />
                 </div>
               )}
             </div>

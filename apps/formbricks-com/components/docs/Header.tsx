@@ -67,7 +67,6 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
       <div className="flex items-center gap-6">
         <nav className="hidden lg:block">
           <ul role="list" className="flex items-center gap-8">
-          
             <TopLevelNavItem href="https://github.com/formbricks/formbricks">
               Star us on GitHub
             </TopLevelNavItem>
