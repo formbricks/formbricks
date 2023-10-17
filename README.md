@@ -145,7 +145,7 @@ Let's have a chat about your survey needs and get you started.
 
 ## ⚖️ License
 
-Distributed under the AGPLv3 License. See `LICENSE` for more information.
+Distributed under the AGPLv3 License. See [`LICENSE`](./LICENSE) for more information.
 
 ## 🔒 Security
 
