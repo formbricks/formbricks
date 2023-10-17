@@ -4,9 +4,10 @@ import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[
 import { getQuestionTypeName } from "@/app/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
-import { Switch } from "@formbricks/ui/Switch";
-import { Label } from "@formbricks/ui/Label";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import {
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
@@ -29,10 +30,9 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface QuestionCardProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;

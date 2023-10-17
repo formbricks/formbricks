@@ -474,3 +474,26 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     throw error;
   }
 };
+
+export const getResponseCountBySurveyId = async (surveyId: string): Promise<number> =>
+  unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+
+      try {
+        const responseCount = await prisma.response.count({
+          where: {
+            surveyId: surveyId,
+          },
+        });
+        return responseCount;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [`getResponseCountBySurveyId-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();

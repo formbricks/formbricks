@@ -1,15 +1,15 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { Input } from "@formbricks/ui/Input";
-import { Button } from "@formbricks/ui/Button";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui/Badge";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -17,8 +17,8 @@ const filterConditions = [
 ];
 
 interface WhoToSendCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   environmentId: string;
   attributeClasses: TAttributeClass[];
 }

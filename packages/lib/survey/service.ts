@@ -1,27 +1,18 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import {
-  TSurvey,
-  TSurveyAttributeFilter,
-  TSurveyInput,
-  TSurveyWithAnalytics,
-  ZSurvey,
-} from "@formbricks/types/v1/surveys";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { z } from "zod";
 import { getActionClasses } from "../actionClass/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getDisplaysCacheTag } from "../display/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { responseCache } from "../response/cache";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { formatSurveyDateFields } from "./util";
-import { ITEMS_PER_PAGE } from "../constants";
-import { responseCache } from "../response/cache";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
@@ -77,95 +68,6 @@ export const selectSurvey = {
       value: true,
     },
   },
-};
-
-export const selectSurveyWithAnalytics = {
-  ...selectSurvey,
-  displays: {
-    select: {
-      status: true,
-      responseId: true,
-      id: true,
-    },
-  },
-  _count: {
-    select: {
-      responses: true,
-    },
-  },
-};
-
-export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
-  validateInputs([surveyId, ZString]);
-
-  const survey = await unstable_cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
-
-      let surveyPrisma;
-      try {
-        surveyPrisma = await prisma.survey.findUnique({
-          where: {
-            id: surveyId,
-          },
-          select: selectSurveyWithAnalytics,
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
-          throw new DatabaseError("Database operation failed");
-        }
-
-        throw error;
-      }
-
-      if (!surveyPrisma) {
-        throw new ResourceNotFoundError("Survey", surveyId);
-      }
-
-      let { _count, displays, ...surveyPrismaFields } = surveyPrisma;
-
-      const numDisplays = displays.length;
-      const numDisplaysResponded = displays.filter((item) => {
-        return item.status === "responded" || item.responseId;
-      }).length;
-      const numResponses = _count.responses;
-      // responseRate, rounded to 2 decimal places
-      const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
-
-      const transformedSurvey = {
-        ...surveyPrismaFields,
-        triggers: surveyPrismaFields.triggers.map((trigger) => trigger.eventClass.name),
-        analytics: {
-          numDisplays,
-          responseRate,
-          numResponses,
-        },
-      };
-
-      return transformedSurvey;
-    },
-    [`surveyWithAnalytics-${surveyId}`],
-    {
-      tags: [
-        getSurveyCacheTag(surveyId),
-        getDisplaysCacheTag(surveyId),
-        responseCache.tag.bySurveyId(surveyId),
-      ],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  if (!survey) {
-    return null;
-  }
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return {
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  };
 };
 
 export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
@@ -324,79 +226,6 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
   return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
-};
-
-// TODO: Cache doesn't work for updated displays & responses
-export const getSurveysWithAnalytics = async (
-  environmentId: string,
-  page?: number
-): Promise<TSurveyWithAnalytics[]> => {
-  const surveysWithAnalytics = await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
-
-      let surveysPrisma;
-      try {
-        surveysPrisma = await prisma.survey.findMany({
-          where: {
-            environmentId,
-          },
-          select: selectSurveyWithAnalytics,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
-          throw new DatabaseError("Database operation failed");
-        }
-
-        throw error;
-      }
-
-      try {
-        const surveys: TSurveyWithAnalytics[] = [];
-        for (const { _count, displays, ...surveyPrisma } of surveysPrisma) {
-          const numDisplays = displays.length;
-          const numDisplaysResponded = displays.filter((item) => {
-            return item.status === "responded" || item.responseId;
-          }).length;
-          const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
-
-          const transformedSurvey = {
-            ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
-            analytics: {
-              numDisplays,
-              responseRate,
-              numResponses: _count.responses,
-            },
-          };
-          surveys.push(transformedSurvey);
-        }
-        return surveys;
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        }
-        if (error instanceof z.ZodError) {
-          console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
-        }
-        throw new ValidationError("Data validation of survey failed");
-      }
-    },
-    [`environments-${environmentId}-surveysWithAnalytics`],
-    {
-      tags: [getSurveysCacheTag(environmentId)], // TODO: add tags for displays and responses
-    }
-  )();
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return surveysWithAnalytics.map((survey) => ({
     ...survey,
     ...formatSurveyDateFields(survey),
   }));

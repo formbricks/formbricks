@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@formbricks/lib/cn";
 import { md } from "@formbricks/lib/markdownIt";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
@@ -12,8 +12,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 interface EditWelcomeCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
 }
