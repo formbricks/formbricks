@@ -1,7 +1,7 @@
 import { TAirtableTables } from "@formbricks/types/v1/integrations";
 
 export const fetchTables = async (environmentId: string, baseId: string) => {
-  const res = await fetch(`/api/airtable/tables?baseId=${baseId}`, {
+  const res = await fetch(`/api/v1/integrations/airtable/tables?baseId=${baseId}`, {
     method: "GET",
     headers: { environmentId: environmentId },
     cache: "no-store",
@@ -11,7 +11,7 @@ export const fetchTables = async (environmentId: string, baseId: string) => {
 };
 
 export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
-  const res = await fetch(`${apiHost}/api/airtable`, {
+  const res = await fetch(`${apiHost}/api/v1/integrations/airtable`, {
     method: "GET",
     headers: { environmentId: environmentId },
   });
