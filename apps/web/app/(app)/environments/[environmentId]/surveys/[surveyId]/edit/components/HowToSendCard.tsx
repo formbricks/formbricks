@@ -36,7 +36,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
   }, [environment]);
 
   const setSurveyType = (type: string) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.type = type;
     if (type === "link") {
       updatedSurvey.thankYouCard.enabled = true;

@@ -71,7 +71,7 @@ export default function QuestionsView({
   };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
-    let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    let updatedSurvey = { ...localSurvey };
 
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
@@ -107,7 +107,7 @@ export default function QuestionsView({
 
   const deleteQuestion = (questionIdx: number) => {
     const questionId = localSurvey.questions[questionIdx].id;
-    let updatedSurvey: TSurvey = JSON.parse(JSON.stringify(localSurvey));
+    let updatedSurvey: TSurvey = { ...localSurvey };
     updatedSurvey.questions.splice(questionIdx, 1);
 
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
@@ -139,7 +139,7 @@ export default function QuestionsView({
     };
 
     // insert the new question right after the original one
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
 
     setLocalSurvey(updatedSurvey);
@@ -150,7 +150,7 @@ export default function QuestionsView({
   };
 
   const addQuestion = (question: any) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const updatedSurvey = { ...localSurvey };
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }

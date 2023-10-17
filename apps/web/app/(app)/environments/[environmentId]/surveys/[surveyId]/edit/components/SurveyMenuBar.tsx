@@ -70,7 +70,7 @@ export default function SurveyMenuBar({
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.status = status;
     setLocalSurvey(updatedSurvey);
   };
