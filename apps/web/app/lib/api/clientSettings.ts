@@ -67,6 +67,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     },
     select: {
       id: true,
+      welcomeCard: true,
       questions: true,
       recontactDays: true,
       triggers: {
@@ -179,6 +180,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     .map((survey) => {
       return {
         id: survey.id,
+        welcomeCard: JSON.parse(JSON.stringify(survey.welcomeCard)),
         questions: JSON.parse(JSON.stringify(survey.questions)),
         triggers: survey.triggers,
         thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
