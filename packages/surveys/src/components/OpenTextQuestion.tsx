@@ -105,7 +105,7 @@ export default function OpenTextQuestion({
         )}
         <div></div>
         <SubmitButton
-          question={question}
+          buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}

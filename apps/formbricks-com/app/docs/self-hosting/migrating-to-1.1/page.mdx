@@ -47,22 +47,10 @@ Please note that their values and the logic remains exactly the same. Only the p
 ## Helper Shell Script
 For a seamless migration, below is a shell script for your self-hosted instance that will automatically update your environment variables to be compliant with the new naming conventions.
 
-### Building From Source
-The below script will:
-1. Create a backup of your existing .env file as `.env.old`
-2. Update the .env file to be compliant with the new naming conventions
-<Col>
-<CodeGroup title="Run the below in your terminal in the directory of your .env">
-```shell {{ title: '.env file' }}
-for var in NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED NEXT_PUBLIC_PASSWORD_RESET_DISABLED NEXT_PUBLIC_SIGNUP_DISABLED NEXT_PUBLIC_INVITE_DISABLED NEXT_PUBLIC_PRIVACY_URL NEXT_PUBLIC_TERMS_URL NEXT_PUBLIC_IMPRINT_URL NEXT_PUBLIC_GITHUB_AUTH_ENABLED NEXT_PUBLIC_GOOGLE_AUTH_ENABLED NEXT_PUBLIC_WEBAPP_URL NEXT_PUBLIC_IS_FORMBRICKS_CLOUD NEXT_PUBLIC_SURVEY_BASE_URL; do sed -i.old "s/^$var=/$(echo $var | sed 's/NEXT_PUBLIC_//')=/" .env; done; echo "Formbricks environment variables have been migrated as per v1.1! You are good to go."
-```
-</CodeGroup>
-</Col>
-
 ### Docker & Single Script Setup
 
 Now that these variables can be defined at runtime, you can append them inside your `x-environment` in the `docker-compose.yml` itself.
-For a more detailed guide on these environment variables, please refer to the [Important Runtime Variables](/docs/self-hosting/from-source#important-run-time-variables) section.
+For a more detailed guide on these environment variables, please refer to the [Important Runtime Variables](/docs/self-hosting/docker#important-run-time-variables) section.
 <Col>
 <CodeGroup title="docker-compose.yml">
 ```yaml {{ title: 'docker-compose.yml' }}

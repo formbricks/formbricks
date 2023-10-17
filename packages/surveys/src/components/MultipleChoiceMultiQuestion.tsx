@@ -221,7 +221,7 @@ export default function MultipleChoiceSingleQuestion({
         <div></div>
         <SubmitButton
           tabIndex={questionChoices.length + 2}
-          question={question}
+          buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}
