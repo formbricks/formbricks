@@ -6,7 +6,7 @@ import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { questionTypes } from "@/lib/questions";
+import { questionTypes } from "@/app/lib/questions";
 
 interface OpenTextSummaryProps {
   questionSummary: QuestionSummary<TSurveyOpenTextQuestion>;

@@ -93,7 +93,7 @@ export default function NPSQuestion({
         {!question.required && (
           <SubmitButton
             tabIndex={12}
-            question={question}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             onClick={() => {}}

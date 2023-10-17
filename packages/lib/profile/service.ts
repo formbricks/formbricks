@@ -10,12 +10,12 @@ import {
   TProfileUpdateInput,
   ZProfileUpdateInput,
 } from "@formbricks/types/v1/profile";
-import { MembershipRole, Prisma } from "@prisma/client";
-import { unstable_cache, revalidateTag } from "next/cache";
-import { validateInputs } from "../utils/validate";
-import { deleteTeam } from "../team/service";
+import { Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { deleteTeam } from "../team/service";
+import { validateInputs } from "../utils/validate";
 
 const responseSelection = {
   id: true,
@@ -112,7 +112,7 @@ const updateUserMembership = async (teamId: string, userId: string, role: TMembe
 };
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
-  memberships.filter((membership) => membership.role === MembershipRole.admin);
+  memberships.filter((membership) => membership.role === "admin");
 
 // function to update a user's profile
 export const updateProfile = async (
@@ -196,13 +196,13 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
       const teamAdminMemberships = getAdminMemberships(teamMemberships);
       const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
       const teamHasOnlyOneMember = teamMemberships.length === 1;
-      const currentUserIsTeamOwner = role === MembershipRole.owner;
+      const currentUserIsTeamOwner = role === "owner";
 
       if (teamHasOnlyOneMember) {
         await deleteTeam(teamId);
       } else if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
         const firstAdmin = teamAdminMemberships[0];
-        await updateUserMembership(teamId, firstAdmin.userId, MembershipRole.owner);
+        await updateUserMembership(teamId, firstAdmin.userId, "owner");
       } else if (currentUserIsTeamOwner) {
         await deleteTeam(teamId);
       }

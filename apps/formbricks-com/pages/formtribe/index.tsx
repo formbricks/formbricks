@@ -1,6 +1,6 @@
 import LayoutLight from "@/pages/formtribe/LayoutLight";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { Button } from "@formbricks/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import Head from "next/head";
 import Image from "next/image";
 
@@ -269,12 +269,12 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "1250",
+    points: "1600",
     link: "https://github.com/gupta-piyush19",
   },
   {
     name: "Suman",
-    points: "600",
+    points: "700",
   },
   {
     name: "Subhdeep",
@@ -302,7 +302,7 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "1300",
+    points: "1500",
     link: "https://github.com/KapadiaNaitik",
   },
   {
@@ -335,7 +335,7 @@ const Leaderboard = [
   },
   {
     name: "Eldemarkki",
-    points: "500",
+    points: "600",
   },
   {
     name: "Suyash",
@@ -355,16 +355,16 @@ const Leaderboard = [
   },
   {
     name: "Adarsh Malviya",
-    points: "150",
+    points: "450",
   },
   {
     name: "Aditya Deshlahre",
-    points: "870",
+    points: "1120",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "855",
+    points: "955",
   },
   {
     name: "Sagnik Sahoo",
@@ -372,7 +372,7 @@ const Leaderboard = [
   },
   {
     name: "Prasoon Mahawar",
-    points: "950",
+    points: "1600",
   },
   {
     name: "Dushmanta",
@@ -388,11 +388,11 @@ const Leaderboard = [
   },
   {
     name: "Rohit Mondal",
-    points: "100",
+    points: "205",
   },
   {
     name: "noobcoder",
-    points: "100",
+    points: "250",
   },
   {
     name: "Rayyan Alam (Rayy)",
@@ -412,7 +412,7 @@ const Leaderboard = [
   },
   {
     name: "Anjaneya Gupta",
-    points: "300",
+    points: "650",
   },
   {
     name: "Sachin Kuber",
@@ -428,7 +428,7 @@ const Leaderboard = [
   },
   {
     name: "maciek",
-    points: "350",
+    points: "650",
   },
   {
     name: "yatharth",
@@ -436,12 +436,8 @@ const Leaderboard = [
   },
   {
     name: "Ratish Jain",
-    points: "150",
+    points: "250",
     link: "https://github.com/ratishjain12",
-  },
-  {
-    name: "yatharth",
-    points: "600",
   },
   {
     name: "Subham Raj",
@@ -449,16 +445,16 @@ const Leaderboard = [
   },
   {
     name: "Abhinav Arya",
-    points: "150",
+    points: "400",
     link: "github.com/itzabhinavarya",
   },
   {
     name: "Yash Nirmal",
-    points: "100",
+    points: "200",
   },
   {
     name: "Rohan Gupta",
-    points: "600",
+    points: "1150",
     link: "https://github.com/rohan9896",
   },
   {
@@ -468,11 +464,11 @@ const Leaderboard = [
   },
   {
     name: "Eduardo Noronha",
-    points: "100",
+    points: "200",
   },
   {
     name: "Joyal",
-    points: "550",
+    points: "650",
     link: "https://github.com/joyal007",
   },
   {
@@ -493,6 +489,98 @@ const Leaderboard = [
   },
   {
     name: "0xCgn",
+    points: "100",
+  },
+  {
+    name: "bitnagar",
+    points: "100",
+  },
+  {
+    name: "United1l",
+    points: "350",
+  },
+  {
+    name: "Arya Bhosale",
+    points: "300",
+  },
+  {
+    name: "Bhavya",
+    points: "100",
+  },
+  {
+    name: "Bilal Mirza",
+    points: "550",
+  },
+  {
+    name: "Asharan2511",
+    points: "50",
+  },
+  {
+    name: "bhimanshu",
+    points: "50",
+  },
+  {
+    name: "Digvijay Gupta",
+    points: "100",
+  },
+  {
+    name: "hercules_2401",
+    points: "100",
+  },
+  {
+    name: "iampolska742",
+    points: "50",
+  },
+  {
+    name: "Jonas Hoebenreich",
+    points: "100",
+  },
+  {
+    name: "Markson",
+    points: "100",
+  },
+  {
+    name: "Mohd Zama",
+    points: "50",
+  },
+  {
+    name: "Moheyt",
+    points: "100",
+  },
+  {
+    name: "ortin779",
+    points: "50",
+  },
+  {
+    name: "Piyush Garg",
+    points: "100",
+  },
+  {
+    name: "Sachin Mittal",
+    points: "100",
+  },
+  {
+    name: "Sha1kh4",
+    points: "50",
+  },
+  {
+    name: "Soham Tembhurne",
+    points: "50",
+  },
+  {
+    name: "Sundaram2021",
+    points: "50",
+  },
+  {
+    name: "tarunclub",
+    points: "50",
+  },
+  {
+    name: "thevinitgupta",
+    points: "50",
+  },
+  {
+    name: "Vishal Khoje",
     points: "100",
   },
 ];
@@ -544,7 +632,7 @@ export default function FormTribeHackathon() {
         {/* Right Column: Headline + Ordered List */}
         <div className="flex items-center justify-center sm:pl-12 md:w-1/2">
           <div className="space-y-5">
-            <h1 className="font-kablammo text-3xl font-bold text-slate-800">In a nutshell</h1>
+            <h1 className="font-kablammo text-3xl text-slate-800">In a nutshell</h1>
             <ol className="list-inside list-decimal space-y-3 text-slate-700">
               <li>
                 <strong>As a community,</strong> we will ship all link survey features for a Typeform like
@@ -763,9 +851,7 @@ export default function FormTribeHackathon() {
 
       {/* Side Quests */}
       <div className="mt-16" id="side-quests">
-        <h3 className="font-kablammo my-4 text-4xl font-bold text-slate-800">
-          🏰 Side Quests: Increase your chances
-        </h3>
+        <h3 className="font-kablammo my-4 text-4xl text-slate-800">🏰 Side Quests: Increase your chances</h3>
         <p className="w-3/4 text-slate-600">
           While code contributions are what gives the most points, everyone gets to bump up their chance of
           winning. Here is a list of side quests you can complete:
@@ -900,7 +986,7 @@ export default function FormTribeHackathon() {
 
       {/* FAQ */}
       <div className="mt-32" id="faq">
-        <h3 className="font-kablammo my-4 text-4xl font-bold text-slate-800">FAQ</h3>
+        <h3 className="font-kablammo my-4 text-4xl text-slate-800">FAQ</h3>
         <p className="w-3/4 text-slate-600">Anything unclear?</p>
         <div className="mt-8">
           {FAQ.map((question) => (
@@ -925,11 +1011,12 @@ export default function FormTribeHackathon() {
 const SectionHeading = ({ title, subTitle, description, id }) => {
   return (
     <div id={id} className="lg:pt-18 mt-32 px-4 pb-12 text-center sm:px-6 lg:px-8 ">
-      <p className=" text-[3rem] text-slate-500">{subTitle}</p>
-      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-6xl text-transparent">
+      <p className="pb-4 text-xl text-slate-500 lg:text-[3rem]">{subTitle}</p>
+      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-4xl text-transparent lg:text-6xl">
         {title}
       </h1>
-      <p className="mx-auto mt-4 text-slate-700 sm:w-3/4">{description}</p>
+      <p className="mx-auto mt-4 text-base text-slate-700 sm:w-3/4">{description}</p>{" "}
+      {/* Reduced text size for description */}
     </div>
   );
 };

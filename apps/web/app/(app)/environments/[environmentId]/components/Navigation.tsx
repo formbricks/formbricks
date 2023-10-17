@@ -15,11 +15,11 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/shared/DropdownMenu";
-import CreateTeamModal from "@/components/team/CreateTeamModal";
+} from "@/app/components/shared/DropdownMenu";
+import CreateTeamModal from "@/app/components/team/CreateTeamModal";
 import UrlShortenerModal from "./UrlShortenerModal";
-import { formbricksLogout } from "@/lib/formbricks";
-import { capitalizeFirstLetter, truncate } from "@/lib/utils";
+import { formbricksLogout } from "@/app/lib/formbricks";
+import { capitalizeFirstLetter, truncate } from "@/app/lib/utils";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/v1/environment";
@@ -292,7 +292,7 @@ export default function Navigation({
               <div className="hidden lg:ml-6 lg:flex lg:items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <div className="flex cursor-pointer flex-row items-center space-x-5">
+                    <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
                       <ProfileAvatar userId={session.user.id} />
                       {/* {session.user.image ? (
                         <Image
