@@ -772,6 +772,9 @@ importers:
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib
+      '@formbricks/surveys':
+        specifier: workspace:*
+        version: link:../surveys
       '@heroicons/react':
         specifier: ^2.0.18
         version: 2.0.18(react@18.2.0)
