@@ -28,7 +28,7 @@ export async function GET(
   const { environmentId, accessType, fileName } = params;
 
   const getFile = async () => {
-    if (!env.AWS_ACCESS_KEY || !env.AWS_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
+    if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
       try {
         const { fileBuffer, metaData } = await getFileFromLocalStorage(
           path.join(UPLOADS_DIR, environmentId, accessType, fileName)
