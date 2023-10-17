@@ -1,16 +1,24 @@
-import {useState} from "preact/hooks"
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
+import DatePicker from 'react-date-picker';
+import 'react-date-picker/dist/DatePicker.css?inline';
+import 'react-calendar/dist/Calendar.css?inline';
 
 export function App() {
-  const [open, setOpen] = useState(true)
-
   return (
     <div>
-      hello
-      <DayPicker />
-      {/* <button onClick={() => setOpen(true)}>Open</button> */}
-      {/* {open && <DayPicker mode="single" />} */}
+      {/* @ts-ignore */}
+      <DatePicker 
+        value={new Date()}
+        isOpen
+        autoFocus
+        closeCalendar={false}
+        shouldCloseCalendar={() => false}
+        onChange={(value) => {
+          console.log(value)
+          // window.selectedDate = value as Date
+          const event = new CustomEvent('dateChange', { detail: value });
+          window.dispatchEvent(event);
+        }}
+      />
     </div>
   );
 }

@@ -16,12 +16,11 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.6.0",
-    "date-fns": "^2.30.0",
     "eslint-config-formbricks": "workspace:*",
-    "react-day-picker": "^8.9.0",
+    "react-date-picker": "^10.5.1",
+    "preact": "^10.18.1",
     "terser": "^5.22.0",
     "typescript": "^5.2.2",
-    "vite": "^4.4.11",
-    "preact": "^10.18.1"
+    "vite": "^4.4.11"
   }
 }
