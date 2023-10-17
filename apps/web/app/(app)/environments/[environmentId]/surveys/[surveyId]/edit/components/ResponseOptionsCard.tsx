@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
   isEncryptionKeySet: boolean;
   responseCount: number;
 }
@@ -51,7 +51,7 @@ export default function ResponseOptionsCard({
   });
   const [closeOnDate, setCloseOnDate] = useState<Date>();
 
-  const [verifyProtectWithPinToggle, setVerifyProtectWithPinToggle] = useState(false);
+  const isPinProtectionEnabled = localSurvey.pin !== null;
 
   const [verifyProtectWithPinError, setverifyProtectWithPinError] = useState<string | null>(null);
 
@@ -80,9 +80,7 @@ export default function ResponseOptionsCard({
   };
 
   const handleProtectSurveyWithPinToggle = () => {
-    const currentValue = verifyProtectWithPinToggle;
-    if (currentValue === false) setLocalSurvey({ ...localSurvey, pin: null });
-    setVerifyProtectWithPinToggle(!currentValue);
+    setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : 1234 }));
   };
 
   const handleProtectSurveyPinChange = (pin: string) => {
@@ -221,10 +219,6 @@ export default function ResponseOptionsCard({
     if (localSurvey.redirectUrl) {
       setRedirectUrl(localSurvey.redirectUrl);
       setRedirectToggle(true);
-    }
-
-    if (!!localSurvey.pin) {
-      setVerifyProtectWithPinToggle(true);
     }
 
     if (!!localSurvey.surveyClosedMessage) {
@@ -516,7 +510,7 @@ export default function ResponseOptionsCard({
               </AdvancedOptionToggle>
               <AdvancedOptionToggle
                 htmlId="protectSurveyWithPin"
-                isChecked={verifyProtectWithPinToggle}
+                isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
                 title="Protect Survey with a PIN"
                 description="Only users who have the PIN can access the survey."

@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyType } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
 }
 
@@ -35,13 +35,15 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
     }
   }, [environment]);
 
-  const setSurveyType = (type: string) => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.type = type;
-    if (type === "link") {
-      updatedSurvey.thankYouCard.enabled = true;
-    }
-    setLocalSurvey(updatedSurvey);
+  const setSurveyType = (type: TSurveyType) => {
+    setLocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      type,
+      thankYouCard: {
+        ...prevSurvey.thankYouCard,
+        enabled: type === "link" ? true : prevSurvey.thankYouCard.enabled,
+      },
+    }));
   };
 
   const options = [
