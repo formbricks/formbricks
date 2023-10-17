@@ -4,13 +4,9 @@ import { SurveyModal } from "./components/general/SurveyModal";
 import { addCustomThemeToDom, addStylesToDom } from "./lib/styles";
 import { SurveyInlineProps, SurveyModalProps } from "./types/props";
 
-export const renderSurveyInline = (props: SurveyInlineProps & { brandColor?: string }) => {
+export const renderSurveyInline = (props: SurveyInlineProps & { brandColor: string }) => {
   addStylesToDom();
-
-  // add custom brandColor if provided
-  if (props.brandColor) {
-    addCustomThemeToDom({ brandColor: props.brandColor });
-  }
+  addCustomThemeToDom({ brandColor: props.brandColor });
 
   const { containerId, ...surveyProps } = props;
   const element = document.getElementById(containerId);
@@ -20,13 +16,9 @@ export const renderSurveyInline = (props: SurveyInlineProps & { brandColor?: str
   render(h(SurveyInline, surveyProps), element);
 };
 
-export const renderSurveyModal = (props: SurveyModalProps & { brandColor?: string }) => {
+export const renderSurveyModal = (props: SurveyModalProps & { brandColor: string }) => {
   addStylesToDom();
-
-  // add custom brandColor if provided
-  if (props.brandColor) {
-    addCustomThemeToDom({ brandColor: props.brandColor });
-  }
+  addCustomThemeToDom({ brandColor: props.brandColor });
 
   // add container element to DOM
   const element = document.createElement("div");
