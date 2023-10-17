@@ -16,7 +16,7 @@ interface SettingsViewProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   isEncryptionKeySet: boolean;
-  responsesCount: number;
+  responseCount: number;
 }
 
 export default function SettingsView({
@@ -26,7 +26,7 @@ export default function SettingsView({
   actionClasses,
   attributeClasses,
   isEncryptionKeySet,
-  responsesCount,
+  responseCount,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -50,7 +50,7 @@ export default function SettingsView({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         isEncryptionKeySet={isEncryptionKeySet}
-        responsesCount={responsesCount}
+        responseCount={responseCount}
       />
 
       <RecontactOptionsCard

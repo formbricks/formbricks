@@ -16,14 +16,14 @@ interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   isEncryptionKeySet: boolean;
-  responsesCount: number;
+  responseCount: number;
 }
 
 export default function ResponseOptionsCard({
   localSurvey,
   setLocalSurvey,
   isEncryptionKeySet,
-  responsesCount,
+  responseCount,
 }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
@@ -278,8 +278,8 @@ export default function ResponseOptionsCard({
       return;
     }
 
-    if (parseInt(e.target.value) <= responsesCount) {
-      toast.error(`Response limit needs to exceed number of received responses (${responsesCount}).`);
+    if (parseInt(e.target.value) <= responseCount) {
+      toast.error(`Response limit needs to exceed number of received responses (${responseCount}).`);
       return;
     }
   };
@@ -317,7 +317,7 @@ export default function ResponseOptionsCard({
                 <Input
                   autoFocus
                   type="number"
-                  min={responsesCount ? (responsesCount + 1).toString() : "1"}
+                  min={responseCount ? (responseCount + 1).toString() : "1"}
                   id="autoCompleteResponses"
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}

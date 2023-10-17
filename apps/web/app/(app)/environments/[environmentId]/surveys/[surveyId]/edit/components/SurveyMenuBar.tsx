@@ -26,7 +26,7 @@ interface SurveyMenuBarProps {
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
-  responsesCount: number;
+  responseCount: number;
 }
 
 export default function SurveyMenuBar({
@@ -38,7 +38,7 @@ export default function SurveyMenuBar({
   setActiveId,
   setInvalidQuestions,
   product,
-  responsesCount,
+  responseCount,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -271,7 +271,7 @@ export default function SurveyMenuBar({
             className="w-72 border-white hover:border-slate-200 "
           />
         </div>
-        {responsesCount > 0 && (
+        {responseCount > 0 && (
           <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
             <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
             <p className=" pl-1 text-xs lg:text-sm">

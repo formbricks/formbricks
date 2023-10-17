@@ -21,7 +21,7 @@ interface SurveyEditorProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   isEncryptionKeySet: boolean;
-  responsesCount: number;
+  responseCount: number;
 }
 
 export default function SurveyEditor({
@@ -31,7 +31,7 @@ export default function SurveyEditor({
   actionClasses,
   attributeClasses,
   isEncryptionKeySet,
-  responsesCount,
+  responseCount,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export default function SurveyEditor({
           setActiveId={setActiveView}
           setInvalidQuestions={setInvalidQuestions}
           product={product}
-          responsesCount={responsesCount}
+          responseCount={responseCount}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
@@ -96,7 +96,7 @@ export default function SurveyEditor({
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
                 isEncryptionKeySet={isEncryptionKeySet}
-                responsesCount={responsesCount}
+                responseCount={responseCount}
               />
             )}
           </main>
