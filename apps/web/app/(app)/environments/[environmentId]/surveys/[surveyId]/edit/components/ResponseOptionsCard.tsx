@@ -1,27 +1,29 @@
 "use client";
 
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Switch } from "@formbricks/ui/Switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
-import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   isEncryptionKeySet: boolean;
+  responsesCount: number;
 }
 
 export default function ResponseOptionsCard({
   localSurvey,
   setLocalSurvey,
   isEncryptionKeySet,
+  responsesCount,
 }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
@@ -257,16 +259,16 @@ export default function ResponseOptionsCard({
 
   const handleCheckMark = () => {
     if (autoComplete) {
-      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: null };
+      const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey = { ...localSurvey, autoComplete: 25 };
       setLocalSurvey(updatedSurvey);
     }
   };
 
   const handleInputResponse = (e) => {
-    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: parseInt(e.target.value) };
+    const updatedSurvey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -276,12 +278,8 @@ export default function ResponseOptionsCard({
       return;
     }
 
-    const inputResponses = localSurvey.analytics.numResponses || 0;
-
-    if (parseInt(e.target.value) <= inputResponses) {
-      toast.error(
-        `Response limit needs to exceed number of received responses (${localSurvey.analytics.numResponses}).`
-      );
+    if (parseInt(e.target.value) <= responsesCount) {
+      toast.error(`Response limit needs to exceed number of received responses (${responsesCount}).`);
       return;
     }
   };
@@ -319,11 +317,7 @@ export default function ResponseOptionsCard({
                 <Input
                   autoFocus
                   type="number"
-                  min={
-                    localSurvey?.analytics?.numResponses
-                      ? (localSurvey?.analytics?.numResponses + 1).toString()
-                      : "1"
-                  }
+                  min={responsesCount ? (responsesCount + 1).toString() : "1"}
                   id="autoCompleteResponses"
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}

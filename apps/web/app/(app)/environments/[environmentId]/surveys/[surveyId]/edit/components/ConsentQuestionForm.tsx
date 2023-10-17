@@ -1,14 +1,14 @@
 "use client";
 
 import { md } from "@formbricks/lib/markdownIt";
-import { TSurveyConsentQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 
 interface ConsentQuestionFormProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   question: TSurveyConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;

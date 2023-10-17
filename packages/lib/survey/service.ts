@@ -390,7 +390,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const { triggers, attributeFilters, environmentId, ...surveyData } = updatedSurvey;
+  const { triggers, attributeFilters, environmentId, analytics, ...surveyData } = updatedSurvey;
 
   if (triggers) {
     const newTriggers: string[] = [];
