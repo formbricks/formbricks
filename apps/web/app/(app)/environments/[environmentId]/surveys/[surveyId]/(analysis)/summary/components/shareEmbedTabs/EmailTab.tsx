@@ -7,7 +7,7 @@ import { QuestionType } from "@formbricks/types/questions";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { AuthenticationError } from "@formbricks/types/v1/errors";
 import { sendEmailAction } from "../../actions";
-import CodeBlock from "@/app/components/shared/CodeBlock";
+import CodeBlock from "@formbricks/ui/CodeBlock";
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import {
   Column,

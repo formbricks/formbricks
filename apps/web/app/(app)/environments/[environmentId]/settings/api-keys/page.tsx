@@ -4,7 +4,7 @@ import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import ApiKeyList from "./components/ApiKeyList";
-import EnvironmentNotice from "@/app/components/shared/EnvironmentNotice";
+import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function ProfileSettingsPage({ params }) {

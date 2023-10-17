@@ -16,6 +16,7 @@
     "react": "18.2.0"
   },
   "dependencies": {
+    "@formbricks/surveys": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@heroicons/react": "^2.0.18",
     "@lexical/code": "^0.12.2",

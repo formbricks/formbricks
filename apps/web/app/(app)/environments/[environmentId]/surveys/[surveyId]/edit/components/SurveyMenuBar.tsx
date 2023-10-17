@@ -1,8 +1,7 @@
 "use client";
 
-import AlertDialog from "@/app/components/shared/AlertDialog";
+import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import SurveyStatusDropdown from "@/app/components/shared/SurveyStatusDropdown";
 import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
@@ -17,6 +16,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
 import { deleteSurveyAction, updateSurveyAction } from "../actions";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurveyWithAnalytics;
