@@ -12,7 +12,7 @@ export const OpenSourceInfo = () => {
           <p className=" my-2 text-slate-600 dark:text-slate-300">
             Formbricks is an open source project. You can self-host it for free. We provide multiple easy
             deployment options as per your customisation needs. We have documented the process of self-hosting
-            Formbricks on your own server using Docker, Bash Scripting, and Building from Source.
+            Formbricks on your own server using Docker & Bash Scripting.
           </p>
           <div className="mt-4 space-x-2">
             <Button
