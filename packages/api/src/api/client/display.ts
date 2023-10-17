@@ -20,4 +20,8 @@ export class DisplayAPI {
   async markResponded({ displayId }: { displayId: string }): Promise<Result<TDisplay, NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/displays/${displayId}/responded`, "POST");
   }
+
+  async update(displayId: string, displayInput: any): Promise<Result<TDisplay, NetworkError | Error>> {
+    return makeRequest(this.apiHost, `/api/v1/client/displays/${displayId}`, "PUT", displayInput);
+  }
 }

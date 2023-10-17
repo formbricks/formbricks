@@ -1,5 +1,4 @@
 import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import { updateDisplay } from "./client/display";
 import SurveyState from "./surveyState";
 import { FormbricksAPI } from "@formbricks/api";
 
@@ -87,7 +86,7 @@ export class ResponseQueue {
           throw new Error("Could not create response");
         }
         if (this.surveyState.displayId) {
-          await updateDisplay(this.surveyState.displayId, { responseId: response.data.id }, this.config.apiHost);
+          await this.api.client.display.update(this.surveyState.displayId, { responseId: response.data.id });
         }
         this.surveyState.updateResponseId(response.data.id);
         if (this.config.setSurveyState) {
