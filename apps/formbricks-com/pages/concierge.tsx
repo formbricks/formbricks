@@ -56,7 +56,7 @@ const ConciergePage = () => {
         subheading="Let's set up your system for continuous user discovery together."
       />
       <div className="flex flex-col justify-center gap-2 px-3 md:flex-row">
-        <div className="rounded-xl bg-slate-100 p-12">
+        <div className="rounded-xl bg-slate-100 p-12 md:w-[50%]">
           {XMOffer.map((offer) => (
             <div key={offer.step} className="mb-8 flex items-center gap-x-4">
               <div className=" flex items-center justify-center rounded-full bg-emerald-50 p-4 text-2xl font-bold text-emerald-700">
@@ -91,7 +91,7 @@ const ConciergePage = () => {
             </Button>
           </div>
         </div>
-        <div className="ml-2 w-full rounded-xl">
+        <div className="ml-2 w-full rounded-xl md:w-[40%]">
           <Cal
             calLink="johannes/kick-off"
             style={{
