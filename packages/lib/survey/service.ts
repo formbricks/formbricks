@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import {
@@ -17,10 +17,11 @@ import { z } from "zod";
 import { getActionClasses } from "../actionClass/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getDisplaysCacheTag } from "../display/service";
-import { getResponsesCacheTag } from "../response/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { formatSurveyDateFields } from "./util";
+import { ITEMS_PER_PAGE } from "../constants";
+import { responseCache } from "../response/cache";
 
 // surveys cache key and tags
 const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
@@ -100,6 +101,7 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
   const survey = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
+
       let surveyPrisma;
       try {
         surveyPrisma = await prisma.survey.findUnique({
@@ -145,7 +147,11 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
     },
     [`surveyWithAnalytics-${surveyId}`],
     {
-      tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), getResponsesCacheTag(surveyId)],
+      tags: [
+        getSurveyCacheTag(surveyId),
+        getDisplaysCacheTag(surveyId),
+        responseCache.tag.bySurveyId(surveyId),
+      ],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -213,7 +219,12 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   };
 };
 
-export const getSurveysByAttributeClassId = async (attributeClassId: string): Promise<TSurvey[]> => {
+export const getSurveysByAttributeClassId = async (
+  attributeClassId: string,
+  page?: number
+): Promise<TSurvey[]> => {
+  validateInputs([attributeClassId, ZId], [page, ZOptionalNumber]);
+
   const surveysPrisma = await prisma.survey.findMany({
     where: {
       attributeFilters: {
@@ -223,6 +234,8 @@ export const getSurveysByAttributeClassId = async (attributeClassId: string): Pr
       },
     },
     select: selectSurvey,
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   const surveys: TSurvey[] = [];
@@ -237,7 +250,9 @@ export const getSurveysByAttributeClassId = async (attributeClassId: string): Pr
   return surveys;
 };
 
-export const getSurveysByActionClassId = async (actionClassId: string): Promise<TSurvey[]> => {
+export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
+  validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
+
   const surveysPrisma = await prisma.survey.findMany({
     where: {
       triggers: {
@@ -249,6 +264,8 @@ export const getSurveysByActionClassId = async (actionClassId: string): Promise<
       },
     },
     select: selectSurvey,
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   const surveys: TSurvey[] = [];
@@ -263,10 +280,10 @@ export const getSurveysByActionClassId = async (actionClassId: string): Promise<
   return surveys;
 };
 
-export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
+export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
       let surveysPrisma;
       try {
         surveysPrisma = await prisma.survey.findMany({
@@ -274,6 +291,8 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
             environmentId,
           },
           select: selectSurvey,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -311,10 +330,14 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
 };
 
 // TODO: Cache doesn't work for updated displays & responses
-export const getSurveysWithAnalytics = async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
+export const getSurveysWithAnalytics = async (
+  environmentId: string,
+  page?: number
+): Promise<TSurveyWithAnalytics[]> => {
   const surveysWithAnalytics = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
       let surveysPrisma;
       try {
         surveysPrisma = await prisma.survey.findMany({
@@ -322,6 +345,8 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
             environmentId,
           },
           select: selectSurveyWithAnalytics,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -537,6 +562,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
 export async function deleteSurvey(surveyId: string) {
   validateInputs([surveyId, ZId]);
+
   const deletedSurvey = await prisma.survey.delete({
     where: {
       id: surveyId,
@@ -546,6 +572,11 @@ export async function deleteSurvey(surveyId: string) {
 
   revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
   revalidateTag(getSurveyCacheTag(surveyId));
+
+  responseCache.revalidate({
+    surveyId,
+    environmentId: deletedSurvey.environmentId,
+  });
 
   return deletedSurvey;
 }
