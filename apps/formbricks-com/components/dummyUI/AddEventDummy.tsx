@@ -31,7 +31,7 @@ const DummyUI: React.FC = () => {
       {triggers.map((triggerEventClassId, idx) => (
         <div className="mt-2" key={idx}>
           <div className="flex items-center gap-2">
-            <p className="mr-2 w-14 text-right text-sm text-slate-800 dark:text-slate-300">
+            <p className="mr-2 w-10 text-right text-sm text-slate-800 dark:text-slate-300">
               {idx === 0 ? "When" : "or"}
             </p>
             <Select
@@ -44,7 +44,7 @@ const DummyUI: React.FC = () => {
                 {eventClasses.map((eventClass) => (
                   <SelectItem
                     key={eventClass.id}
-                    className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                    className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300"
                     value={eventClass.id}>
                     {eventClass.name}
                   </SelectItem>
@@ -57,7 +57,7 @@ const DummyUI: React.FC = () => {
           </div>
         </div>
       ))}
-      <div className="w-fit p-3">
+      <div className="w-fit ml-4 p-3">
         <Button
           variant="secondary"
           className="xs:text-base w-fit text-xs dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
