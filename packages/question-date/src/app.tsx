@@ -1,6 +1,5 @@
 import DatePicker from 'react-date-picker';
-import 'react-date-picker/dist/DatePicker.css?inline';
-import 'react-calendar/dist/Calendar.css?inline';
+
 
 export function App() {
   return (
