@@ -357,16 +357,6 @@ export type TSurveyDates = {
 };
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 
-export const ZSurveyWithAnalytics = ZSurvey.extend({
-  analytics: z.object({
-    numDisplays: z.number(),
-    responseRate: z.number(),
-    numResponses: z.number(),
-  }),
-});
-
-export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;
-
 export const ZSurveyQuestionType = z.union([
   z.literal("openText"),
   z.literal("multipleChoiceSingle"),

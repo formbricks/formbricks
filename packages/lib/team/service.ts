@@ -3,11 +3,12 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TTeam, TTeamUpdateInput } from "@formbricks/types/v1/teams";
+import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { getEnvironmentCacheTag } from "../environment/service";
+import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { validateInputs } from "../utils/validate";
 
 export const select = {
@@ -22,9 +23,11 @@ export const select = {
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
 export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
-export const getTeamsByUserId = async (userId: string): Promise<TTeam[]> =>
+export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> =>
   unstable_cache(
     async () => {
+      validateInputs([userId, ZString], [page, ZOptionalNumber]);
+
       try {
         const teams = await prisma.team.findMany({
           where: {
@@ -35,6 +38,8 @@ export const getTeamsByUserId = async (userId: string): Promise<TTeam[]> =>
             },
           },
           select,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
         return teams;
@@ -57,6 +62,7 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
   unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
+
       try {
         const team = await prisma.team.findFirst({
           where: {
@@ -91,6 +97,8 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
 
 export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
   try {
+    validateInputs([teamInput, ZTeamUpdateInput]);
+
     const team = await prisma.team.create({
       data: teamInput,
       select,

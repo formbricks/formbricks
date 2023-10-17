@@ -3,10 +3,9 @@
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { QuestionType } from "@formbricks/types/questions";
-import type { Survey } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
@@ -19,14 +18,15 @@ import { deleteSurveyAction, updateSurveyAction } from "../actions";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 
 interface SurveyMenuBarProps {
-  localSurvey: TSurveyWithAnalytics;
-  survey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  survey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   environment: TEnvironment;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
+  responseCount: number;
 }
 
 export default function SurveyMenuBar({
@@ -38,6 +38,7 @@ export default function SurveyMenuBar({
   setActiveId,
   setInvalidQuestions,
   product,
+  responseCount,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -68,8 +69,8 @@ export default function SurveyMenuBar({
   }, [localSurvey, survey]);
 
   // write a function which updates the local survey status
-  const updateLocalSurveyStatus = (status: Survey["status"]) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+  const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.status = status;
     setLocalSurvey(updatedSurvey);
   };
@@ -270,7 +271,7 @@ export default function SurveyMenuBar({
             className="w-72 border-white hover:border-slate-200 "
           />
         </div>
-        {!!localSurvey.analytics.responseRate && (
+        {responseCount > 0 && (
           <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
             <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
             <p className=" pl-1 text-xs lg:text-sm">
