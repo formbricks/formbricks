@@ -1,6 +1,8 @@
 "use client";
-import Modal from "@/app/components/preview/Modal";
-import TabOption from "@/app/components/preview/TabOption";
+
+import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
+import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
+
 import { SurveyInline } from "@/app/components/shared/Survey";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
