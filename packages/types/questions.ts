@@ -4,6 +4,7 @@ export interface Choice {
 }
 
 export enum QuestionType {
+  FileUpload = "fileUpload",
   OpenText = "openText",
   MultipleChoiceSingle = "multipleChoiceSingle",
   MultipleChoiceMulti = "multipleChoiceMulti",
@@ -14,6 +15,7 @@ export enum QuestionType {
 }
 
 export type Question =
+  | FileUploadQuestion
   | OpenTextQuestion
   | MultipleChoiceSingleQuestion
   | MultipleChoiceMultiQuestion
@@ -32,6 +34,13 @@ export interface IQuestion<T extends Logic> {
   backButtonLabel?: string;
   logic?: T[];
   isDraft?: boolean;
+}
+
+export interface FileUploadQuestion extends IQuestion<FileUploadLogic> {
+  type: QuestionType.FileUpload;
+  allowMultipleFile?: boolean;
+  limitSize?: boolean;
+  limitFileType?: boolean;
 }
 
 export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
@@ -100,7 +109,10 @@ export interface LogicBase {
   value?: number | string | string[] | undefined;
   destination: string | "end" | undefined;
 }
-
+export interface FileUploadLogic extends LogicBase {
+  condition: "submitted" | "skipped" | undefined;
+  value?: string[];
+}
 export interface OpenTextLogic extends LogicBase {
   condition: "submitted" | "skipped" | undefined;
   value?: undefined;
@@ -151,6 +163,7 @@ export interface ConsentLogic extends LogicBase {
 }
 
 export type Logic =
+  | FileUploadLogic
   | OpenTextLogic
   | MultipleChoiceSingleLogic
   | MultipleChoiceMultiLogic

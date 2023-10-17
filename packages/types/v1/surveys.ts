@@ -179,6 +179,17 @@ const ZSurveyQuestionBase = z.object({
   isDraft: z.boolean().optional(),
 });
 
+export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(QuestionType.FileUpload),
+  allowMultipleFile: z.boolean().default(false),
+  limitSize: z.boolean().default(false),
+  maxSize: z.number().optional().default(0),
+  limitFileType: z.boolean().default(false),
+  allowedFileTypes: z.array(z.string()).optional(),
+});
+
+export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
+
 export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
 export type TSurveyOpenTextQuestionInputType = z.infer<typeof ZSurveyOpenTextQuestionInputType>;
 
@@ -265,6 +276,7 @@ export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyQuestion = z.union([
   // ZSurveyWelcomeQuestion,
+  ZSurveyFileUploadQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
   ZSurveyMultipleChoiceSingleQuestion,
@@ -368,6 +380,7 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;
 
 export const ZSurveyQuestionType = z.union([
+  z.literal("fileUpload"),
   z.literal("openText"),
   z.literal("multipleChoiceSingle"),
   z.literal("multipleChoiceMulti"),

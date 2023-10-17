@@ -17,10 +17,12 @@ import {
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
+  ArrowUpTrayIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
+import FileUploadQuestionForm from "./FileUploadQuestionForm";
 import CTAQuestionForm from "./CTAQuestionForm";
 import ConsentQuestionForm from "./ConsentQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
@@ -121,7 +123,9 @@ export default function QuestionCard({
               <div>
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
-                    {question.type === QuestionType.OpenText ? (
+                    {question.type === QuestionType.FileUpload ? (
+                      <ArrowUpTrayIcon />
+                    ) : question.type === QuestionType.OpenText ? (
                       <ChatBubbleBottomCenterTextIcon />
                     ) : question.type === QuestionType.MultipleChoiceSingle ? (
                       <QueueListIcon />
@@ -161,7 +165,16 @@ export default function QuestionCard({
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
-              {question.type === QuestionType.OpenText ? (
+              {question.type === QuestionType.FileUpload ? (
+                <FileUploadQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === QuestionType.OpenText ? (
                 <OpenQuestionForm
                   localSurvey={localSurvey}
                   question={question}

@@ -8,6 +8,7 @@ import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import NPSQuestion from "./NPSQuestion";
 import OpenTextQuestion from "./OpenTextQuestion";
 import RatingQuestion from "./RatingQuestion";
+import FileUploadQuestion from "./FileUploadQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -19,6 +20,7 @@ interface QuestionConditionalProps {
   isLastQuestion: boolean;
   brandColor: string;
   autoFocus?: boolean;
+  environmentId: string;
 }
 
 export default function QuestionConditional({
@@ -31,8 +33,22 @@ export default function QuestionConditional({
   isLastQuestion,
   brandColor,
   autoFocus = true,
+  environmentId,
 }: QuestionConditionalProps) {
-  return question.type === QuestionType.OpenText ? (
+  return question.type === QuestionType.FileUpload ? (
+    <FileUploadQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      brandColor={brandColor}
+      autoFocus={autoFocus}
+      environmentId={environmentId}
+    />
+  ) : question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
       value={value}

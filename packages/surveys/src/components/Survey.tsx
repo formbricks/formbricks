@@ -74,6 +74,8 @@ export function Survey({
   }
 
   const onChange = (responseDataUpdate: TResponseData) => {
+    console.log(responseData);
+    console.log(responseDataUpdate);
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
   };
@@ -151,6 +153,7 @@ export function Survey({
                       }
                       isLastQuestion={idx === survey.questions.length - 1}
                       brandColor={brandColor}
+                      environmentId={survey.environmentId}
                     />
                   )
               )

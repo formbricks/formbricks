@@ -6,6 +6,7 @@ import {
   QueueListIcon,
   StarIcon,
   CheckIcon,
+  ArrowUpTrayIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -20,6 +21,17 @@ export type QuestionType = {
 };
 
 export const questionTypes: QuestionType[] = [
+  {
+    id: QuestionId.FileUpload,
+    label: "File Upload",
+    description: "Take file inputs from user",
+    icon: ArrowUpTrayIcon,
+    preset: {
+      allowMultipleFile: false,
+      limitSize: false,
+      limitFileType: false,
+    },
+  },
   {
     id: QuestionId.OpenText,
     label: "Free text",
