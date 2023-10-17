@@ -10,12 +10,6 @@ interface SummaryDropOffsProps {
 }
 
 export default function SummaryDropOffs({ summaryData, responses, survey }: SummaryDropOffsProps) {
-  console.log("SummaryDropOffs", {
-    summaryData,
-    responses,
-    survey,
-  });
-
   const getDropoff = () => {
     let dropoffArr = new Array(survey.questions.length).fill(0);
 
@@ -81,31 +75,7 @@ export default function SummaryDropOffs({ summaryData, responses, survey }: Summ
     return dropoffArr;
   };
 
-  // getting correct dropoff values for each question
-  console.log("dropoff", getDropoff());
-
-  const dropoff = useMemo(() => {
-    const values: { drop: number; percentage?: number }[] = [];
-    for (let i = 0; i < summaryData.length; i++) {
-      if (i === summaryData.length - 1) values.push({ drop: 0, percentage: 0 });
-      else {
-        const curr = summaryData[i].responses.length;
-        const next = summaryData[i + 1].responses.length;
-        const drop = next - curr;
-
-        if (drop === 0) values.push({ drop: 0, percentage: 0 });
-        else if (curr === 0) values.push({ drop: drop });
-        else {
-          const absDrop = Math.abs(drop);
-          const percentage = (absDrop / curr) * 100;
-          if (percentage % 1 !== 0) values.push({ drop: drop, percentage: Number(percentage.toFixed(2)) });
-          else values.push({ drop, percentage: percentage });
-        }
-      }
-    }
-
-    return values;
-  }, [summaryData]);
+  const dropoffCount = useMemo(() => getDropoff(), [responses]);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -124,8 +94,8 @@ export default function SummaryDropOffs({ summaryData, responses, survey }: Summ
               {questionSummary.responses.length}
             </div>
             <div className="px-4 text-center md:px-6">
-              <span className="font-semibold">{dropoff[i].drop} </span>
-              {dropoff[i].percentage ? <span>({dropoff[i].percentage}%)</span> : null}
+              <span className="font-semibold">{dropoffCount[i]} </span>
+              <span>({Math.round((dropoffCount[i] / responses.length) * 100)}%)</span>
             </div>
           </div>
         ))}
