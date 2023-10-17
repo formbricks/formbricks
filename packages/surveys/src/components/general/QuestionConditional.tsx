@@ -17,7 +17,6 @@ interface QuestionConditionalProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   autoFocus?: boolean;
 }
 
@@ -29,7 +28,6 @@ export default function QuestionConditional({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   autoFocus = true,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
@@ -41,7 +39,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       autoFocus={autoFocus}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
@@ -53,7 +50,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === QuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -64,7 +60,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === QuestionType.NPS ? (
     <NPSQuestion
@@ -75,7 +70,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
@@ -86,7 +80,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === QuestionType.Rating ? (
     <RatingQuestion
@@ -97,7 +90,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
@@ -108,7 +100,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : null;
 }

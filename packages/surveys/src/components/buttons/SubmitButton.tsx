@@ -7,9 +7,6 @@ interface SubmitButtonProps {
   focus?: boolean;
   tabIndex?: number;
   type?: "submit" | "button";
-
-  // DEPRECATED
-  brandColor?: string;
 }
 
 function SubmitButton({

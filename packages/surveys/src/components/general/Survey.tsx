@@ -12,7 +12,6 @@ import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
-  brandColor,
   formbricksSignature,
   activeQuestionId,
   onDisplay = () => {},
@@ -112,7 +111,7 @@ export function Survey({
 
   return (
     <>
-      <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
+      <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div className="formbricks-inner">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {questionId === "start" && survey.welcomeCard.enabled ? (
@@ -122,14 +121,12 @@ export function Survey({
                 fileUrl={survey.welcomeCard.fileUrl}
                 buttonLabel={survey.welcomeCard.buttonLabel}
                 timeToFinish={survey.welcomeCard.timeToFinish}
-                brandColor={brandColor}
                 onSubmit={onSubmit}
               />
             ) : questionId === "end" && survey.thankYouCard.enabled ? (
               <ThankYouCard
                 headline={survey.thankYouCard.headline}
                 subheader={survey.thankYouCard.subheader}
-                brandColor={brandColor}
                 redirectUrl={survey.redirectUrl}
                 isRedirectDisabled={isRedirectDisabled}
               />
@@ -150,7 +147,6 @@ export function Survey({
                           : idx === 0
                       }
                       isLastQuestion={idx === survey.questions.length - 1}
-                      brandColor={brandColor}
                     />
                   )
               )
@@ -158,7 +154,7 @@ export function Survey({
           </div>
           <div className="formbricks-footer">
             {formbricksSignature && <FormbricksSignature />}
-            <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
+            <ProgressBar survey={survey} questionId={questionId} />
           </div>
         </div>
       </AutoCloseWrapper>

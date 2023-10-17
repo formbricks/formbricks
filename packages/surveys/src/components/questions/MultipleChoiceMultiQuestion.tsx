@@ -15,7 +15,6 @@ interface MultipleChoiceSingleProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -26,7 +25,6 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: MultipleChoiceSingleProps) {
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
@@ -225,7 +223,6 @@ export default function MultipleChoiceSingleQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
-          brandColor={brandColor}
           onClick={() => {}}
         />
       </div>

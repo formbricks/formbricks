@@ -8,7 +8,6 @@ interface WelcomeCardProps {
   fileUrl?: string;
   buttonLabel?: string;
   timeToFinish?: boolean;
-  brandColor: string;
   onSubmit: (data: { [x: string]: any }) => void;
 }
 
@@ -18,7 +17,6 @@ export default function WelcomeCard({
   fileUrl,
   buttonLabel,
   timeToFinish,
-  brandColor,
   onSubmit,
 }: WelcomeCardProps) {
   return (
@@ -35,7 +33,6 @@ export default function WelcomeCard({
           <SubmitButton
             buttonLabel={buttonLabel}
             isLastQuestion={false}
-            brandColor={brandColor}
             focus={true}
             onClick={() => {
               onSubmit({ ["welcomeCard"]: "clicked" });

@@ -7,9 +7,6 @@ interface ThankYouCardProps {
   subheader?: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
-
-  // DEPRECATED
-  brandColor?: string;
 }
 
 export default function ThankYouCard({

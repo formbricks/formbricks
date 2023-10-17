@@ -3,7 +3,6 @@ import { TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
 
 export interface SurveyBaseProps {
   survey: TSurveyWithTriggers;
-  brandColor: string;
   formbricksSignature: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;

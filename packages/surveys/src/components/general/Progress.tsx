@@ -1,10 +1,4 @@
-export default function Progress({
-  progress,
-}: {
-  progress: number;
-  // DEPRECATED
-  brandColor?: string;
-}) {
+export default function Progress({ progress }: { progress: number }) {
   return (
     <div className="h-2 w-full rounded-full bg-[--fb-bg-2]">
       <div

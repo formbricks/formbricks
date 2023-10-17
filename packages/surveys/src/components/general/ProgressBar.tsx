@@ -5,12 +5,11 @@ import Progress from "./Progress";
 interface ProgressBarProps {
   survey: TSurveyWithTriggers;
   questionId: string;
-  brandColor: string;
 }
 
 const PROGRESS_INCREMENT = 0.1;
 
-export default function ProgressBar({ survey, questionId, brandColor }: ProgressBarProps) {
+export default function ProgressBar({ survey, questionId }: ProgressBarProps) {
   const [progress, setProgress] = useState(0); // [0, 1]
   const [prevQuestionIdx, setPrevQuestionIdx] = useState(0); // [0, survey.questions.length
 
@@ -64,5 +63,5 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
     }
   }, [questionId, survey, setPrevQuestionIdx]);
 
-  return <Progress progress={progress} brandColor={brandColor} />;
+  return <Progress progress={progress} />;
 }

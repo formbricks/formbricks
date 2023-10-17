@@ -13,7 +13,6 @@ interface CTAQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function CTAQuestion({
@@ -22,7 +21,6 @@ export default function CTAQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: CTAQuestionProps) {
   return (
     <div>
@@ -48,7 +46,6 @@ export default function CTAQuestion({
           <SubmitButton
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
-            brandColor={brandColor}
             focus={true}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
