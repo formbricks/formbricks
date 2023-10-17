@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "@formbricks/database": "workspace:*",
-    "stripe": "^13.10.0"
+    "stripe": "^13.11.0"
   }
 }
