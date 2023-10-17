@@ -20,7 +20,6 @@ export class ResponseQueue {
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
     this.surveyState = surveyState;
-
     this.api = new FormbricksAPI({
       apiHost:config.apiHost,
       environmentId: "",
