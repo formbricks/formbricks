@@ -1,6 +1,6 @@
 "use client";
 
-import AirtableLogo from "@/images/airtable.svg";
+import AirtableLogo from "../images/airtable.svg";
 import FormbricksLogo from "@/images/logo.svg";
 import { Button } from "@formbricks/ui/Button";
 import Image from "next/image";

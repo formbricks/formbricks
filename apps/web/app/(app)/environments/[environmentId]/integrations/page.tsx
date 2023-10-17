@@ -1,5 +1,5 @@
-import AirtableLogo from "@/images/airtable.svg";
-import GoogleSheetsLogo from "@/images/google-sheets-small.png";
+import AirtableLogo from "./airtable/images/airtable.svg";
+import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";

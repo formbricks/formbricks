@@ -7,14 +7,14 @@ import {
   TAirtableIntegrationInput,
   TAirTableConfigData,
 } from "@formbricks/types/v1/integrations";
-import { TSurvey } from "@/../../packages/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
-import AirtableLogo from "@/images/airtable.svg";
+import AirtableLogo from "../images/airtable.svg";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import Image from "next/image";
 import { useRouter } from "next/navigation";

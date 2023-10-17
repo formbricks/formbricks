@@ -2,8 +2,8 @@
 
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integrations";
-import { TSurvey } from "@/../../packages/types/v1/surveys";
+import { TAirTableIntegration, TAirtable } from "@formbricks/types/v1/integrations";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import AddIntegrationModal, {

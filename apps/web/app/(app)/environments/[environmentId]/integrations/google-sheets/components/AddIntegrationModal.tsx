@@ -8,7 +8,7 @@ import {
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { Checkbox } from "@formbricks/ui/Checkbox";
-import GoogleSheetLogo from "@/images/google-sheets-small.png";
+import GoogleSheetLogo from "../images/google-sheets-small.png";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";

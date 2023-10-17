@@ -1,5 +1,5 @@
 "use client";
-import { TAirTableIntegration, TAirtable } from "@/../../packages/types/v1/integrations";
+import { TAirTableIntegration, TAirtable } from "@formbricks/types/v1/integrations";
 import Connect from "./Connect";
 import Home from "../Home";
 import { useState } from "react";
