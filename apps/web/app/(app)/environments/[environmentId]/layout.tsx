@@ -1,5 +1,5 @@
 import EnvironmentsNavbar from "@/app/(app)/environments/[environmentId]/components/EnvironmentsNavbar";
-import ToasterClient from "@/app/components/ToasterClient";
+import ToasterClient from "@formbricks/ui/ToasterClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";

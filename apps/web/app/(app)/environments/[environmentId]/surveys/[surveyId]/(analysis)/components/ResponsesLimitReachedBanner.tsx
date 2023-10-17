@@ -11,7 +11,7 @@ export default async function ResponsesLimitReachedBanner({
   surveyId,
   environmentId,
 }: ResponsesLimitReachedBannerProps) {
-  const { responsesCount, limitReached } = await getAnalysisData(surveyId, environmentId);
+  const { responseCount, limitReached } = await getAnalysisData(surveyId, environmentId);
   return (
     <>
       {limitReached && (
@@ -22,7 +22,7 @@ export default async function ResponsesLimitReachedBanner({
               <svg viewBox="0 0 2 2" className="mx-2 inline h-0.5 w-0.5 fill-current" aria-hidden="true">
                 <circle cx={1} cy={1} r={1} />
               </svg>
-              You can only see {RESPONSES_LIMIT_FREE} of the {responsesCount} responses you received.
+              You can only see {RESPONSES_LIMIT_FREE} of the {responseCount} responses you received.
             </p>
             <Link
               href={`/environments/${environmentId}/settings/billing`}

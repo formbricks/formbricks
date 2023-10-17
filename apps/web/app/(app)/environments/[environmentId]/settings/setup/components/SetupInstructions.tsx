@@ -1,6 +1,6 @@
 "use client";
 
-import CodeBlock from "@/app/components/shared/CodeBlock";
+import CodeBlock from "@formbricks/ui/CodeBlock";
 import { TabBar } from "@formbricks/ui/TabBar";
 import Link from "next/link";
 import "prismjs/themes/prism.css";

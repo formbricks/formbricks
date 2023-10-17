@@ -1,13 +1,13 @@
 "use client";
 
-import { TSurveyWithAnalytics, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 interface UpdateQuestionIdProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   question: TSurveyQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;

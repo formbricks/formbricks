@@ -1,7 +1,7 @@
 "use client";
 
-import ContentWrapper from "@/app/components/shared/ContentWrapper";
-import { SurveyInline } from "@/app/components/shared/Survey";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { SurveyInline } from "@formbricks/ui/Survey";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/v1/product";

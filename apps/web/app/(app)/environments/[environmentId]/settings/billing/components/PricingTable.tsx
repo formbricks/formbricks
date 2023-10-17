@@ -6,7 +6,7 @@ import { Badge } from "@formbricks/ui/Badge";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 // upated on 20th of July 2023
 const stripeURl =

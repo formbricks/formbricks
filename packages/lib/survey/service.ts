@@ -1,23 +1,15 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import {
-  TSurvey,
-  TSurveyAttributeFilter,
-  TSurveyInput,
-  TSurveyWithAnalytics,
-  ZSurvey,
-} from "@formbricks/types/v1/surveys";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { z } from "zod";
 import { getActionClasses } from "../actionClass/service";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getDisplaysCacheTag } from "../display/service";
-import { getResponsesCacheTag } from "../response/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { responseCache } from "../response/cache";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { formatSurveyDateFields } from "./util";
@@ -78,90 +70,6 @@ export const selectSurvey = {
   },
 };
 
-export const selectSurveyWithAnalytics = {
-  ...selectSurvey,
-  displays: {
-    select: {
-      status: true,
-      responseId: true,
-      id: true,
-    },
-  },
-  _count: {
-    select: {
-      responses: true,
-    },
-  },
-};
-
-export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
-  validateInputs([surveyId, ZString]);
-
-  const survey = await unstable_cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
-      let surveyPrisma;
-      try {
-        surveyPrisma = await prisma.survey.findUnique({
-          where: {
-            id: surveyId,
-          },
-          select: selectSurveyWithAnalytics,
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
-          throw new DatabaseError("Database operation failed");
-        }
-
-        throw error;
-      }
-
-      if (!surveyPrisma) {
-        throw new ResourceNotFoundError("Survey", surveyId);
-      }
-
-      let { _count, displays, ...surveyPrismaFields } = surveyPrisma;
-
-      const numDisplays = displays.length;
-      const numDisplaysResponded = displays.filter((item) => {
-        return item.status === "responded" || item.responseId;
-      }).length;
-      const numResponses = _count.responses;
-      // responseRate, rounded to 2 decimal places
-      const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
-
-      const transformedSurvey = {
-        ...surveyPrismaFields,
-        triggers: surveyPrismaFields.triggers.map((trigger) => trigger.eventClass.name),
-        analytics: {
-          numDisplays,
-          responseRate,
-          numResponses,
-        },
-      };
-
-      return transformedSurvey;
-    },
-    [`surveyWithAnalytics-${surveyId}`],
-    {
-      tags: [getSurveyCacheTag(surveyId), getDisplaysCacheTag(surveyId), getResponsesCacheTag(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  if (!survey) {
-    return null;
-  }
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return {
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  };
-};
-
 export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   const survey = await unstable_cache(
     async () => {
@@ -213,7 +121,12 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   };
 };
 
-export const getSurveysByAttributeClassId = async (attributeClassId: string): Promise<TSurvey[]> => {
+export const getSurveysByAttributeClassId = async (
+  attributeClassId: string,
+  page?: number
+): Promise<TSurvey[]> => {
+  validateInputs([attributeClassId, ZId], [page, ZOptionalNumber]);
+
   const surveysPrisma = await prisma.survey.findMany({
     where: {
       attributeFilters: {
@@ -223,6 +136,8 @@ export const getSurveysByAttributeClassId = async (attributeClassId: string): Pr
       },
     },
     select: selectSurvey,
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   const surveys: TSurvey[] = [];
@@ -237,7 +152,9 @@ export const getSurveysByAttributeClassId = async (attributeClassId: string): Pr
   return surveys;
 };
 
-export const getSurveysByActionClassId = async (actionClassId: string): Promise<TSurvey[]> => {
+export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
+  validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
+
   const surveysPrisma = await prisma.survey.findMany({
     where: {
       triggers: {
@@ -249,6 +166,8 @@ export const getSurveysByActionClassId = async (actionClassId: string): Promise<
       },
     },
     select: selectSurvey,
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   const surveys: TSurvey[] = [];
@@ -263,10 +182,10 @@ export const getSurveysByActionClassId = async (actionClassId: string): Promise<
   return surveys;
 };
 
-export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
+export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
       let surveysPrisma;
       try {
         surveysPrisma = await prisma.survey.findMany({
@@ -274,6 +193,8 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
             environmentId,
           },
           select: selectSurvey,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -310,149 +231,49 @@ export const getSurveys = async (environmentId: string): Promise<TSurvey[]> => {
   }));
 };
 
-// TODO: Cache doesn't work for updated displays & responses
-export const getSurveysWithAnalytics = async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
-  const surveysWithAnalytics = await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-      let surveysPrisma;
-      try {
-        surveysPrisma = await prisma.survey.findMany({
-          where: {
-            environmentId,
-          },
-          select: selectSurveyWithAnalytics,
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
-          throw new DatabaseError("Database operation failed");
-        }
-
-        throw error;
-      }
-
-      try {
-        const surveys: TSurveyWithAnalytics[] = [];
-        for (const { _count, displays, ...surveyPrisma } of surveysPrisma) {
-          const numDisplays = displays.length;
-          const numDisplaysResponded = displays.filter((item) => {
-            return item.status === "responded" || item.responseId;
-          }).length;
-          const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
-
-          const transformedSurvey = {
-            ...surveyPrisma,
-            triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
-            analytics: {
-              numDisplays,
-              responseRate,
-              numResponses: _count.responses,
-            },
-          };
-          surveys.push(transformedSurvey);
-        }
-        return surveys;
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        }
-        if (error instanceof z.ZodError) {
-          console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
-        }
-        throw new ValidationError("Data validation of survey failed");
-      }
-    },
-    [`environments-${environmentId}-surveysWithAnalytics`],
-    {
-      tags: [getSurveysCacheTag(environmentId)], // TODO: add tags for displays and responses
-    }
-  )();
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return surveysWithAnalytics.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
-};
-
 export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
   let data: any = {};
-  let survey: any = { ...updatedSurvey };
-
-  if (updatedSurvey.triggers && updatedSurvey.triggers.length > 0) {
-    const modifiedTriggers = updatedSurvey.triggers.map((trigger) => {
-      if (typeof trigger === "object" && trigger) {
-        return trigger;
-      } else if (typeof trigger === "string" && trigger !== undefined) {
-        return trigger;
-      }
-    });
-
-    survey = { ...updatedSurvey, triggers: modifiedTriggers };
-  }
 
   const actionClasses = await getActionClasses(updatedSurvey.environmentId);
+  const currentSurvey = await getSurvey(surveyId);
 
-  const currentTriggers = await prisma.surveyTrigger.findMany({
-    where: {
-      surveyId,
-    },
-    include: {
-      eventClass: true,
-    },
-  });
-  const currentAttributeFilters = await prisma.surveyAttributeFilter.findMany({
-    where: {
-      surveyId,
-    },
-  });
-
-  delete survey.updatedAt;
-  // preventing issue with unknowingly updating analytics
-  delete survey.analytics;
-
-  if (survey.type === "link") {
-    delete survey.triggers;
-    delete survey.recontactDays;
-    // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
-    if (!survey.surveyClosedMessage) {
-      survey.surveyClosedMessage = null;
-    }
+  if (!currentSurvey) {
+    throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  if (survey.triggers) {
+  const { triggers, attributeFilters, environmentId, ...surveyData } = updatedSurvey;
+
+  if (triggers) {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
     // find added triggers
-    for (const eventClassName of survey.triggers) {
-      if (!eventClassName) {
+    for (const trigger of triggers) {
+      if (!trigger) {
         continue;
       }
-      if (currentTriggers.find((t) => t.eventClass.name === eventClassName)) {
+      if (currentSurvey.triggers.find((t) => t === trigger)) {
         continue;
       } else {
-        newTriggers.push(eventClassName);
+        newTriggers.push(trigger);
       }
     }
     // find removed triggers
-    for (const trigger of currentTriggers) {
-      if (survey.triggers.find((t: any) => t === trigger.eventClass.name)) {
+    for (const trigger of currentSurvey.triggers) {
+      if (triggers.find((t: any) => t === trigger)) {
         continue;
       } else {
-        removedTriggers.push(trigger.eventClass.name);
+        removedTriggers.push(trigger);
       }
     }
     // create new triggers
     if (newTriggers.length > 0) {
       data.triggers = {
         ...(data.triggers || []),
-        create: newTriggers.map((eventClassName) => ({
-          eventClassId: actionClasses.find((actionClass) => actionClass.name === eventClassName)!.id,
+        create: newTriggers.map((trigger) => ({
+          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
         })),
       };
     }
@@ -462,15 +283,15 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         ...(data.triggers || []),
         deleteMany: {
           eventClassId: {
-            in: removedTriggers,
+            in: removedTriggers.map(
+              (trigger) => actionClasses.find((actionClass) => actionClass.name === trigger)!.id
+            ),
           },
         },
       };
     }
-    delete survey.triggers;
   }
 
-  const attributeFilters: TSurveyAttributeFilter[] = survey.attributeFilters;
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
     const removedFilterIds: string[] = [];
@@ -480,7 +301,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         continue;
       }
       if (
-        currentAttributeFilters.find(
+        currentSurvey.attributeFilters.find(
           (f) =>
             f.attributeClassId === attributeFilter.attributeClassId &&
             f.condition === attributeFilter.condition &&
@@ -497,7 +318,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       }
     }
     // find removed attribute filters
-    for (const attributeFilter of currentAttributeFilters) {
+    for (const attributeFilter of currentSurvey.attributeFilters) {
       if (
         attributeFilters.find(
           (f) =>
@@ -535,12 +356,11 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         })
       );
     }
-    delete survey.attributeFilters;
   }
 
   data = {
+    ...surveyData,
     ...data,
-    ...survey,
   };
 
   try {
@@ -571,6 +391,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
 export async function deleteSurvey(surveyId: string) {
   validateInputs([surveyId, ZId]);
+
   const deletedSurvey = await prisma.survey.delete({
     where: {
       id: surveyId,
@@ -580,6 +401,11 @@ export async function deleteSurvey(surveyId: string) {
 
   revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
   revalidateTag(getSurveyCacheTag(surveyId));
+
+  responseCache.revalidate({
+    surveyId,
+    environmentId: deletedSurvey.environmentId,
+  });
 
   return deletedSurvey;
 }

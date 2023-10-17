@@ -47,13 +47,10 @@ type TransformPersonInput = {
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
-  const attributes = person.attributes.reduce(
-    (acc, attr) => {
-      acc[attr.attributeClass.name] = attr.value;
-      return acc;
-    },
-    {} as Record<string, string | number>
-  );
+  const attributes = person.attributes.reduce((acc, attr) => {
+    acc[attr.attributeClass.name] = attr.value;
+    return acc;
+  }, {} as Record<string, string | number>);
 
   return {
     id: person.id,

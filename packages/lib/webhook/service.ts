@@ -6,14 +6,19 @@ import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
 import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/types/v1/errors";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ITEMS_PER_PAGE } from "../constants";
 
-export const getWebhooks = async (environmentId: string): Promise<TWebhook[]> => {
-  validateInputs([environmentId, ZId]);
+export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> => {
+  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
   try {
     const webhooks = await prisma.webhook.findMany({
       where: {
         environmentId: environmentId,
       },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
     });
     return webhooks;
   } catch (error) {
