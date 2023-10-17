@@ -292,7 +292,7 @@ export default function Navigation({
               <div className="hidden lg:ml-6 lg:flex lg:items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <div className="flex cursor-pointer flex-row items-center space-x-5">
+                    <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
                       <ProfileAvatar userId={session.user.id} />
                       {/* {session.user.image ? (
                         <Image

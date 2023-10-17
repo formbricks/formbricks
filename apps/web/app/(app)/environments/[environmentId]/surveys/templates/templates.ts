@@ -1,5 +1,5 @@
 import { QuestionType } from "@formbricks/types/questions";
-import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyHiddenFields, TSurveyWelcomeCard } from "@formbricks/types/v1/surveys";
 import { TTemplate } from "@formbricks/types/v1/templates";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -14,6 +14,13 @@ const hiddenFieldsDefault: TSurveyHiddenFields = {
   fieldIds: [],
 };
 
+const welcomeCardDefault: TSurveyWelcomeCard = {
+  enabled: true,
+  headline: "Welcome!",
+  html: "Thanks for providing your feedback - let's go!",
+  timeToFinish: false,
+};
+
 export const templates: TTemplate[] = [
   {
     name: "Product Market Fit (Superhuman)",
@@ -22,6 +29,7 @@ export const templates: TTemplate[] = [
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       name: "Product Market Fit (Superhuman)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -120,6 +128,7 @@ export const templates: TTemplate[] = [
     description: "Learn more about who signed up to your product and why.",
     preset: {
       name: "Onboarding Segmentation",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -224,6 +233,7 @@ export const templates: TTemplate[] = [
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
       name: "Churn Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -312,6 +322,7 @@ export const templates: TTemplate[] = [
       "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
     preset: {
       name: "Earned Advocacy Score (EAS)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -376,6 +387,7 @@ export const templates: TTemplate[] = [
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
       name: "Improve Trial Conversion",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -480,6 +492,7 @@ export const templates: TTemplate[] = [
     description: "Invite users who love your product to review it publicly.",
     preset: {
       name: "Review Prompt",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -527,6 +540,7 @@ export const templates: TTemplate[] = [
     description: "Invite a specific subset of your users to schedule an interview with your product team.",
     preset: {
       name: "Interview Prompt",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -550,6 +564,7 @@ export const templates: TTemplate[] = [
     description: "Identify weaknesses in your onboarding flow to increase user activation.",
     preset: {
       name: "Onboarding Drop-Off Reasons",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -646,6 +661,7 @@ export const templates: TTemplate[] = [
     description: "Find out what users like and don't like about your product or offering.",
     preset: {
       name: "Uncover Strengths & Weaknesses",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -695,6 +711,7 @@ export const templates: TTemplate[] = [
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       name: "Product Market Fit Survey (Short)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -739,6 +756,7 @@ export const templates: TTemplate[] = [
     description: "How did you first hear about us?",
     preset: {
       name: "Marketing Attribution",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -783,6 +801,7 @@ export const templates: TTemplate[] = [
     description: "Find out what goes through peoples minds when changing their subscriptions.",
     preset: {
       name: "Changing subscription experience",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -849,6 +868,7 @@ export const templates: TTemplate[] = [
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
       name: "Identify Customer Goals",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -888,6 +908,7 @@ export const templates: TTemplate[] = [
     description: "Follow up with users who just used a specific feature.",
     preset: {
       name: "Feature Chaser",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -926,6 +947,7 @@ export const templates: TTemplate[] = [
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       name: "Fake Door Follow-Up",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -975,6 +997,7 @@ export const templates: TTemplate[] = [
     description: "Give your users the chance to seamlessly share what's on their minds.",
     preset: {
       name: "Feedback Box",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1038,6 +1061,7 @@ export const templates: TTemplate[] = [
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       name: "Integration Usage Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: "s6ss6znzxdwjod1hv16fow4w",
@@ -1080,6 +1104,7 @@ export const templates: TTemplate[] = [
     description: "Find out which integrations your users would like to see next.",
     preset: {
       name: "New Integration Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1120,6 +1145,7 @@ export const templates: TTemplate[] = [
     description: "Measure how clear each page of your developer documentation is.",
     preset: {
       name: "{{productName}} Docs Feedback",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1165,6 +1191,7 @@ export const templates: TTemplate[] = [
     description: "Measure the Net Promoter Score of your product.",
     preset: {
       name: "{{productName}} NPS",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1194,6 +1221,7 @@ export const templates: TTemplate[] = [
     description: "Measure the Customer Satisfaction Score of your product.",
     preset: {
       name: "{{productName}} CSAT",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1237,6 +1265,7 @@ export const templates: TTemplate[] = [
     description: "Find out how much time your product saves your user. Use it to upsell.",
     preset: {
       name: "Identify upsell opportunities",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1277,6 +1306,7 @@ export const templates: TTemplate[] = [
     description: "Identify features your users need most and least.",
     preset: {
       name: "Feature Prioritization",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1328,6 +1358,7 @@ export const templates: TTemplate[] = [
     description: "Evaluate the satisfaction of specific features of your product.",
     preset: {
       name: "Gauge Feature Satisfaction",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1359,6 +1390,7 @@ export const templates: TTemplate[] = [
     description: "Identify users dropping off your marketing site. Improve your messaging.",
     preset: {
       name: "Marketing Site Clarity",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1410,6 +1442,7 @@ export const templates: TTemplate[] = [
     description: "Determine how easy it is to use a feature.",
     preset: {
       name: "Customer Effort Score (CES)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1444,6 +1477,7 @@ export const templates: TTemplate[] = [
     description: "Let customers rate the checkout experience to tweak conversion.",
     preset: {
       name: "Rate Checkout Experience",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1487,6 +1521,7 @@ export const templates: TTemplate[] = [
     description: "Measure how relevant your search results are.",
     preset: {
       name: "Measure Search Experience",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1530,6 +1565,7 @@ export const templates: TTemplate[] = [
     description: "Measure if your content marketing pieces hit right.",
     preset: {
       name: "Evaluate Content Quality",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1573,6 +1609,7 @@ export const templates: TTemplate[] = [
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       name: "Measure Task Accomplishment",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1648,6 +1685,7 @@ export const templates: TTemplate[] = [
     description: "Offer a discount to gather insights about sign up barriers.",
     preset: {
       name: "{{productName}} Sign Up Barriers",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1770,6 +1808,7 @@ export const templates: TTemplate[] = [
     description: "Identify the ONE thing your users want the most and build it.",
     preset: {
       name: "{{productName}} Roadmap Input",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1804,6 +1843,7 @@ export const templates: TTemplate[] = [
     description: "Find out how close your visitors are to buy or subscribe.",
     preset: {
       name: "Purchase Intention Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1855,6 +1895,7 @@ export const templates: TTemplate[] = [
     description: "Find out how your subscribers like your newsletter content.",
     preset: {
       name: "Improve Newsletter Content",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1907,6 +1948,7 @@ export const templates: TTemplate[] = [
     description: "Survey users about product or feature ideas. Get feedback rapidly.",
     preset: {
       name: "Evaluate a Product Idea",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -2006,6 +2048,7 @@ export const templates: TTemplate[] = [
     description: "Identify reasons for low engagement to improve user adoption.",
     preset: {
       name: "Reasons for Low Engagement",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: "aq9dafe9nxe0kpm67b1os2z9",
@@ -2105,7 +2148,9 @@ export const templates: TTemplate[] = [
     description: "X",
     preset: {
       name: "X",
-      questions: [
+      welcomeCard: welcomeCardDefault,
+questions: [
+
         {
           id: createId(),
           type: "X",
@@ -2126,6 +2171,7 @@ export const customSurvey: TTemplate = {
   description: "Create a survey without template.",
   preset: {
     name: "New Survey",
+    welcomeCard: welcomeCardDefault,
     questions: [
       {
         id: createId(),
@@ -2156,6 +2202,7 @@ export const minimalSurvey: TSurvey = {
   triggers: [],
   redirectUrl: null,
   recontactDays: null,
+  welcomeCard: welcomeCardDefault,
   questions: [],
   thankYouCard: {
     enabled: false,

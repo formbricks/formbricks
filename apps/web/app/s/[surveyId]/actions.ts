@@ -9,12 +9,12 @@ interface LinkSurveyEmailData {
   } | null;
 }
 
-interface ISurveryPinValidationResponse {
-  error?: TSurveryPinValidationResponseError;
+interface ISurveyPinValidationResponse {
+  error?: TSurveyPinValidationResponseError;
   survey?: TSurvey;
 }
 
-import { TSurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -33,19 +33,19 @@ export async function verifyTokenAction(token: string, surveyId: string): Promis
 export async function validateSurveyPin(
   surveyId: string,
   pin: number
-): Promise<ISurveryPinValidationResponse> {
+): Promise<ISurveyPinValidationResponse> {
   try {
     const survey = await getSurvey(surveyId);
-    if (!survey) return { error: TSurveryPinValidationResponseError.NOT_FOUND };
+    if (!survey) return { error: TSurveyPinValidationResponseError.NOT_FOUND };
 
     const originalPin = survey.pin;
 
     if (!originalPin) return { survey };
 
-    if (originalPin !== pin) return { error: TSurveryPinValidationResponseError.INCORRECT_PIN };
+    if (originalPin !== pin) return { error: TSurveyPinValidationResponseError.INCORRECT_PIN };
 
     return { survey };
   } catch (error) {
-    return { error: TSurveryPinValidationResponseError.INTERNAL_SERVER_ERROR };
+    return { error: TSurveyPinValidationResponseError.INTERNAL_SERVER_ERROR };
   }
 }

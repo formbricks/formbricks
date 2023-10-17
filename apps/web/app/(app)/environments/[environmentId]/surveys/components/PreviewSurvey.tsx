@@ -149,7 +149,7 @@ export default function PreviewSurvey({
       setPreviewMode(storePreviewMode);
     }, 10);
 
-    setActiveQuestionId(survey.questions[0].id);
+    setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   }
 
   useEffect(() => {
