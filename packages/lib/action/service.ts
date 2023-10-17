@@ -124,11 +124,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
   });
 
   revalidateTag(sessionId);
-  actionClassCache.revalidate({
-    name,
-    environmentId,
-    id: action.eventClass?.id,
-  });
   actionCache.revalidate({
     environmentId,
   });
