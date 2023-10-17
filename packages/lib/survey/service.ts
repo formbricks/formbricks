@@ -377,7 +377,7 @@ export const getSurveysWithAnalytics = async (environmentId: string): Promise<TS
   }));
 };
 
-export async function updateSurvey(updatedSurvey: TSurveyWithAnalytics): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
@@ -390,7 +390,7 @@ export async function updateSurvey(updatedSurvey: TSurveyWithAnalytics): Promise
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const { triggers, attributeFilters, environmentId, analytics, ...surveyData } = updatedSurvey;
+  const { triggers, attributeFilters, environmentId, ...surveyData } = updatedSurvey;
 
   if (triggers) {
     const newTriggers: string[] = [];
