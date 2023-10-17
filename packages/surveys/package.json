@@ -12,9 +12,7 @@
     ".": {
       "import": "./dist/index.mjs",
       "require": "./dist/index.umd.js"
-    },
-    "./package.json": "./package.json",
-    "./dist/index.d.ts": "./dist/index.d.ts"
+    }
   },
   "scripts": {
     "dev": "vite build --watch",

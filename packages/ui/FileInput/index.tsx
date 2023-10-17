@@ -57,9 +57,9 @@ const FileInput: React.FC<FileInputProps> = ({
       {isUploaded && fileUrl ? (
         <>
           <div className="absolute inset-0 mr-4 mt-2 flex items-start justify-end gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 hover:bg-slate-200/50 text-slate-800 hover:text-slate-900 bg-opacity-50">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 bg-opacity-50 text-slate-800 hover:bg-slate-200/50 hover:text-slate-900">
               <label htmlFor="modifyFile">
-                <PhotoIcon className="h-5 text-slate-700 hover:text-slate-900 cursor-pointer" />
+                <PhotoIcon className="h-5 cursor-pointer text-slate-700 hover:text-slate-900" />
 
                 <input
                   type="file"
@@ -80,8 +80,11 @@ const FileInput: React.FC<FileInputProps> = ({
                 />
               </label>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 hover:bg-slate-200/50 bg-opacity-50">
-              <TrashIcon className="h-5 text-slate-700 hover:text-slate-900" onClick={() => onFileUpload(undefined)} />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 bg-opacity-50 hover:bg-slate-200/50">
+              <TrashIcon
+                className="h-5 text-slate-700 hover:text-slate-900"
+                onClick={() => onFileUpload(undefined)}
+              />
             </div>
           </div>
 
