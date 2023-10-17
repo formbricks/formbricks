@@ -33,7 +33,6 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
   const responseQueue = new ResponseQueue(
     {
       apiHost: config.get().apiHost,
-      environmentId: config.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: (response) => {
         alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
