@@ -189,6 +189,9 @@ export default function SingleResponseCard({
     </>
   );
   const deleteSubmissionToolTip = <>This response is in progress.</>;
+  const hasHiddenFieldsEnabled = survey.hiddenFields?.enabled;
+  const fieldIds = survey.hiddenFields?.fieldIds || [];
+  const hasFieldIds = !!fieldIds.length;
 
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
@@ -310,9 +313,9 @@ export default function SingleResponseCard({
               </div>
             );
           })}
-          {survey.hiddenFields?.enabled && survey.hiddenFields?.fieldIds?.length && (
+          {hasHiddenFieldsEnabled && hasFieldIds && (
             <div className="mt-6 flex flex-col gap-6">
-              {survey.hiddenFields.fieldIds.map((field) => {
+              {fieldIds.map((field) => {
                 return (
                   <div key={field}>
                     <p className="text-sm text-slate-500">Hidden Field: {field}</p>
