@@ -75,7 +75,7 @@ export default function ConsentQuestion({
           <SubmitButton
             tabIndex={2}
             brandColor={brandColor}
-            question={question}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

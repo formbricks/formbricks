@@ -358,6 +358,10 @@ export default function ToolbarPlugin(props: TextEditorProps) {
         const dom = parser.parseFromString(props.getText(), "text/html");
 
         const nodes = $generateNodesFromDOM(editor, dom);
+        const paragraph = $createParagraphNode();
+        $getRoot().clear().append(paragraph);
+
+        paragraph.select();
 
         $getRoot().select();
         $insertNodes(nodes);
