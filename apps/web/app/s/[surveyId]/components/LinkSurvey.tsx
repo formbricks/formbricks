@@ -41,7 +41,9 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
-  const [activeQuestionId, setActiveQuestionId] = useState<string>(survey.questions[0].id);
+  const [activeQuestionId, setActiveQuestionId] = useState<string>(
+    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+  );
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
