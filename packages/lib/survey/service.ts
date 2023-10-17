@@ -99,7 +99,6 @@ export const getSurveyWithAnalytics = async (surveyId: string): Promise<TSurveyW
 
   const survey = await unstable_cache(
     async () => {
-      validateInputs([surveyId, ZId]);
       let surveyPrisma;
       try {
         surveyPrisma = await prisma.survey.findUnique({

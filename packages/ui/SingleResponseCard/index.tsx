@@ -20,7 +20,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
-import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { TTag } from "@formbricks/types/v1/tags";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProfile } from "@formbricks/types/v1/profile";
