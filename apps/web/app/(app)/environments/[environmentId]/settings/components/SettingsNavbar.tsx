@@ -192,7 +192,7 @@ export default function SettingsNavbar({
 
   return (
     <>
-      <div className="fixed hidden h-full bg-white py-2 pl-4 pr-10 md:block ">
+      <div className="lg:h-full md:h-[400px] fixed hidden  bg-white py-2 pl-4 pr-10 overflow-y-auto  md:block ">
         <nav className="flex-1 space-y-1 bg-white px-2">
           {navigation.map((item) => (
             <div key={item.title}>
