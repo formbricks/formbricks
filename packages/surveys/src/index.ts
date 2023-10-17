@@ -1,11 +1,17 @@
 import { h, render } from "preact";
 import { SurveyInline } from "./components/general/SurveyInline";
 import { SurveyModal } from "./components/general/SurveyModal";
-import { addStylesToDom } from "./lib/styles";
+import { addCustomThemeToDom, addStylesToDom } from "./lib/styles";
 import { SurveyInlineProps, SurveyModalProps } from "./types/props";
 
-export const renderSurveyInline = (props: SurveyInlineProps) => {
+export const renderSurveyInline = (props: SurveyInlineProps & { brandColor?: string }) => {
   addStylesToDom();
+
+  // add custom brandColor if provided
+  if (props.brandColor) {
+    addCustomThemeToDom({ brandColor: props.brandColor });
+  }
+
   const { containerId, ...surveyProps } = props;
   const element = document.getElementById(containerId);
   if (!element) {
@@ -14,8 +20,14 @@ export const renderSurveyInline = (props: SurveyInlineProps) => {
   render(h(SurveyInline, surveyProps), element);
 };
 
-export const renderSurveyModal = (props: SurveyModalProps) => {
+export const renderSurveyModal = (props: SurveyModalProps & { brandColor?: string }) => {
   addStylesToDom();
+
+  // add custom brandColor if provided
+  if (props.brandColor) {
+    addCustomThemeToDom({ brandColor: props.brandColor });
+  }
+
   // add container element to DOM
   const element = document.createElement("div");
   element.id = "formbricks-modal-container";
