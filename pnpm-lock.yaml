@@ -327,7 +327,7 @@ importers:
         specifier: ^0.0.7
         version: 0.0.7
       '@sentry/nextjs':
-        specifier: ^7.74.0
+        specifier: ^7.73.0
         version: 7.74.0(encoding@0.1.13)(next@13.5.5)(react@18.2.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.7.1
