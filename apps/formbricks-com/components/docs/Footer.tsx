@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaGithub, FaXTwitter, FaDiscord} from "react-icons/fa6";
+import { FaGithub, FaXTwitter, FaDiscord } from "react-icons/fa6";
 import { Button } from "./Button";
 import { navigation } from "./Navigation";
 

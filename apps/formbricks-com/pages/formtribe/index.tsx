@@ -851,9 +851,7 @@ export default function FormTribeHackathon() {
 
       {/* Side Quests */}
       <div className="mt-16" id="side-quests">
-        <h3 className="font-kablammo my-4 text-4xl text-slate-800">
-          🏰 Side Quests: Increase your chances
-        </h3>
+        <h3 className="font-kablammo my-4 text-4xl text-slate-800">🏰 Side Quests: Increase your chances</h3>
         <p className="w-3/4 text-slate-600">
           While code contributions are what gives the most points, everyone gets to bump up their chance of
           winning. Here is a list of side quests you can complete:
@@ -1013,8 +1011,8 @@ export default function FormTribeHackathon() {
 const SectionHeading = ({ title, subTitle, description, id }) => {
   return (
     <div id={id} className="lg:pt-18 mt-32 px-4 pb-12 text-center sm:px-6 lg:px-8 ">
-      <p className="text-xl lg:text-[3rem] pb-4 text-slate-500">{subTitle}</p>
-      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-4xl lg:text-6xl text-transparent">
+      <p className="pb-4 text-xl text-slate-500 lg:text-[3rem]">{subTitle}</p>
+      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-4xl text-transparent lg:text-6xl">
         {title}
       </h1>
       <p className="mx-auto mt-4 text-base text-slate-700 sm:w-3/4">{description}</p>{" "}

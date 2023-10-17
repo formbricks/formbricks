@@ -18,7 +18,7 @@ export default function OSSFriendsPage({ OSSFriends }: Props) {
       <HeroTitle headingPt1="Our" headingTeal="Open-source" headingPt2="Friends" />
       <div className="m-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {OSSFriends.map((friend, index) => (
-          <div key={index} className="overflow-hidden rounded bg-slate-100 dark:bg-slate-800 p-6 shadow-md">
+          <div key={index} className="overflow-hidden rounded bg-slate-100 p-6 shadow-md dark:bg-slate-800">
             <a href={friend.href} className="mb-2 text-xl font-bold text-slate-900 dark:text-slate-100">
               {friend.name}
             </a>
@@ -31,8 +31,15 @@ export default function OSSFriendsPage({ OSSFriends }: Props) {
           </div>
         ))}
       </div>
-      <div className="text-center mt-4">
-      <Button variant="minimal" className="dark:text-slate-400" href="https://formbricks.com/clhys1p9r001cpr0hu65rwh17" target="_blank">Wanna join OSS Friends?</Button></div>
+      <div className="mt-4 text-center">
+        <Button
+          variant="minimal"
+          className="dark:text-slate-400"
+          href="https://formbricks.com/clhys1p9r001cpr0hu65rwh17"
+          target="_blank">
+          Wanna join OSS Friends?
+        </Button>
+      </div>
     </Layout>
   );
 }
