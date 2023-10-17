@@ -6,7 +6,8 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
-import { getResponse, getResponseCacheTag } from "./service";
+import { getResponse } from "./service";
+import { responseCache } from "./cache";
 
 export const canUserAccessResponse = async (userId: string, responseId: string): Promise<boolean> =>
   await unstable_cache(
@@ -27,5 +28,5 @@ export const canUserAccessResponse = async (userId: string, responseId: string):
       return true;
     },
     [`users-${userId}-responses-${responseId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [getResponseCacheTag(responseId)] }
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [responseCache.tag.byResponseId(responseId)] }
   )();
