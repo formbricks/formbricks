@@ -1,6 +1,5 @@
 "use client";
 
-import { GoogleButton } from "@/app/components/auth/GoogleButton";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
 import { Button } from "@formbricks/ui/Button";
 import { XCircleIcon } from "@heroicons/react/24/solid";
@@ -8,11 +7,13 @@ import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { GithubButton } from "./GithubButton";
 import { Controller, SubmitHandler, useForm, FormProvider } from "react-hook-form";
-import TwoFactor from "@/app/components/auth/TwoFactor";
+
 import { cn } from "@formbricks/lib/cn";
-import TwoFactorBackup from "@/app/components/auth/TwoFactorBackup";
+import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
+import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
+import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 
 type TSigninFormState = {
   email: string;

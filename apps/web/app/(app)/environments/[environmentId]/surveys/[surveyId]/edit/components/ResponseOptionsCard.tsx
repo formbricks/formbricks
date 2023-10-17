@@ -83,7 +83,7 @@ export default function ResponseOptionsCard({
     setVerifyProtectWithPinToggle(!currentValue);
   };
 
-  const handleProtectSurveryPinChange = (pin: string) => {
+  const handleProtectSurveyPinChange = (pin: string) => {
     const pinAsNumber = Number(pin);
 
     if (isNaN(pinAsNumber)) return toast.error("PIN can only contain numbers");
@@ -521,10 +521,10 @@ export default function ResponseOptionsCard({
                 </div>
               </AdvancedOptionToggle>
               <AdvancedOptionToggle
-                htmlId="protectSurveryWithPin"
+                htmlId="protectSurveyWithPin"
                 isChecked={verifyProtectWithPinToggle}
                 onToggle={handleProtectSurveyWithPinToggle}
-                title="Protect Survery with a PIN"
+                title="Protect Survey with a PIN"
                 description="Only users who have the PIN can access the survey."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
@@ -541,7 +541,7 @@ export default function ResponseOptionsCard({
                       onBlur={handleProtectSurveyPinBlurEvent}
                       defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
                       onKeyDown={handleSurveyPinInputKeyDown}
-                      onChange={(e) => handleProtectSurveryPinChange(e.target.value)}
+                      onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
                     />
                     {verifyProtectWithPinError && (
                       <p className="text-sm text-red-700">{verifyProtectWithPinError}</p>
