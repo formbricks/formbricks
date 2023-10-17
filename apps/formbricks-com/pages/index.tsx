@@ -3,6 +3,7 @@ import Features from "@/components/home/Features";
 import GitHubSponsorship from "@/components/home/GitHubSponsorship";
 import Hero from "@/components/home/Hero";
 import Highlights from "@/components/home/Highlights";
+import ScrollToTopButton from "@/components/home/ScrollToTop";
 import Steps from "@/components/home/Steps";
 import BestPractices from "@/components/shared/BestPractices";
 import BreakerCTA from "@/components/shared/BreakerCTA";
@@ -19,6 +20,7 @@ const IndexPage = () => (
     <BestPractices />
     <Features />
     <Highlights />
+    <ScrollToTopButton />
     <div className="block lg:hidden">
       <GitHubSponsorship />
     </div>

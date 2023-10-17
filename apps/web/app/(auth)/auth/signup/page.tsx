@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { SignupForm } from "@/components/auth/SignupForm";
-import FormWrapper from "@/components/auth/FormWrapper";
-import Testimonial from "@/components/auth/Testimonial";
+import { SignupForm } from "@/app/components/auth/SignupForm";
+import FormWrapper from "@/app/components/auth/FormWrapper";
+import Testimonial from "@/app/components/auth/Testimonial";
 import {
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,

@@ -1,11 +1,11 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/v1/errors";
 import {
   deleteInvite,
-  getInviteToken,
+  getInvite,
   inviteUser,
   resendInvite,
   updateInvite,
@@ -136,7 +136,7 @@ export const leaveTeamAction = async (teamId: string) => {
 };
 
 export const createInviteTokenAction = async (inviteId: string) => {
-  const { email } = await getInviteToken(inviteId);
+  const { email } = await getInvite(inviteId);
 
   const inviteToken = createInviteToken(inviteId, email, {
     expiresIn: "7d",

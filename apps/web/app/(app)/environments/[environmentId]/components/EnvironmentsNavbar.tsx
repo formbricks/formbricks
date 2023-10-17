@@ -5,7 +5,7 @@ import { IS_FORMBRICKS_CLOUD, REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@fo
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getProducts } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId, getTeamsByUserId } from "@formbricks/lib/team/service";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import type { Session } from "next-auth";
 
 interface EnvironmentsNavbarProps {

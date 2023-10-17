@@ -1,11 +1,11 @@
 "use client";
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
+import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
-import ContentWrapper from "@/components/shared/ContentWrapper";
+import ContentWrapper from "@/app/components/shared/ContentWrapper";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getFilterResponses } from "@/lib/surveys/surveys";
+import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useSearchParams } from "next/navigation";
@@ -72,6 +72,7 @@ const ResponsePage = ({
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
+        profile={profile}
         environmentTags={environmentTags}
       />
     </ContentWrapper>

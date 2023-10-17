@@ -5,10 +5,16 @@ import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
 import { ZProduct } from "./product";
 
+const ZSurveyWithTriggers = ZSurvey.extend({
+  triggers: z.array(ZActionClass).or(z.array(z.string())),
+});
+
+export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
+
 export const ZJsState = z.object({
   person: ZPerson,
   session: ZSession,
-  surveys: z.array(ZSurvey),
+  surveys: z.array(ZSurveyWithTriggers),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
@@ -31,6 +37,15 @@ export const ZJsConfig = z.object({
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;
+
+export const ZJsConfigInput = z.object({
+  environmentId: z.string().cuid2(),
+  apiHost: z.string(),
+  debug: z.boolean().optional(),
+  errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
+});
+
+export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),
@@ -57,3 +72,12 @@ export const ZJsActionInput = z.object({
 });
 
 export type TJsActionInput = z.infer<typeof ZJsActionInput>;
+
+export const ZJsSyncParams = z.object({
+  environmentId: z.string().cuid2(),
+  apiHost: z.string(),
+  personId: z.string().cuid2().optional(),
+  sessionId: z.string().cuid2().optional(),
+});
+
+export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;

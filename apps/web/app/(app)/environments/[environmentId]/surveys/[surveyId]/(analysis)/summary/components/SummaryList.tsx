@@ -1,7 +1,10 @@
+import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
+import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
 import { QuestionType } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TResponse } from "@formbricks/types/v1/responses";
 import {
   TSurvey,
@@ -19,8 +22,6 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SummaryListProps {
   environment: TEnvironment;
@@ -48,11 +49,9 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
   return (
     <>
       <div className="mt-10 space-y-8">
-        {survey.type === "web" && responses.length === 0 && (
-          <EmptyInAppSurveys environmentId={environment.id} />
-        )}
-
-        {survey.type !== "web" && responses.length === 0 ? (
+        {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
+          <EmptyInAppSurveys environment={environment} />
+        ) : responses.length === 0 ? (
           <EmptySpaceFiller
             type="response"
             environment={environment}
@@ -121,6 +120,18 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
               }
               return null;
             })}
+            {survey.hiddenFields?.enabled &&
+              survey.hiddenFields.fieldIds?.map((question) => {
+                return (
+                  <HiddenFieldsSummary
+                    environment={environment}
+                    question={question}
+                    responses={responses}
+                    survey={survey}
+                    key={question}
+                  />
+                );
+              })}
           </>
         )}
       </div>

@@ -29,6 +29,14 @@
 <a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f#gh-light-mode-only" height="20px"></a><a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/72809645/9d9711dc-75e5-4084-b7fa-bbaf621064a8#gh-dark-mode-only" height="20px">
 </p>
 
+<img width="1527" alt="formtribe hackathon" src="https://github.com/formbricks/formbricks/assets/72809645/addc3a5b-421c-4c8d-8be2-eedf087100ed">
+
+## 🔥 The FormTribe Hackathon is on!
+
+To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
+
+**Join lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
+
 ## ✨ About Formbricks
 
 <img width="1527" alt="formbricks-sneak" src="https://github-production-user-asset-6210df.s3.amazonaws.com/675065/249441967-ccb89ea3-82b4-4bf2-8d2c-528721ec313b.png">
@@ -43,13 +51,13 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ### Features
 
-- 📲 Create **in-product surveys** with our no code editor with multiple question types
-- 📚 Choose from a variety of best-practice **templates**
-- 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code
-- 🔗 Create shareable **link surveys**
-- 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys
-- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier, n8n and more**
-- 🔒 All **open source**, transparent and self-hostable
+- 📲 Create **in-product surveys** with our no code editor with multiple question types.
+- 📚 Choose from a variety of best-practice **templates**.
+- 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code.
+- 🔗 Create shareable **link surveys**.
+- 👨‍👩‍👦 Invite your team members to **collaborate** on your surveys.
+- 🔌 Integrate Formbricks with **Slack, Posthog, Zapier, n8n and more**.
+- 🔒 All **open source**, transparent and self-hostable.
 
 ### Built on Open Source
 
@@ -63,11 +71,11 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ## 🚀 Getting started
 
-We've got several options depending on your need to help you quickly get started with Formbricks
+We've got several options depending on your need to help you quickly get started with Formbricks.
 
 ### ☁️ Cloud Version
 
-Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com)
+Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com).
 
 ### 🐳 Self-hosted version
 
@@ -93,9 +101,9 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 #### Prerequisites
 
-Here is what you need to be able to run Formbricks
+Here is what you need to be able to run Formbricks:
 
-- Node.js (Version: >=18.x)
+- [Node.js](https://nodejs.org/en) (Version: >=18.x)
 - [Pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
 
@@ -117,11 +125,17 @@ We are very happy if you are interested in contributing to Formbricks 🤗
 
 Here are a few options:
 
-- Star this repo
-- Create issues every time you feel something is missing or goes wrong
-- Upvote issues with 👍 reaction so we know what's the demand for particular issue to prioritize it within roadmap
+- Star this repo.
+- Create issues every time you feel something is missing or goes wrong.
+- Upvote issues with 👍 reaction so we know what's the demand for a particular issue to prioritize it within the roadmap.
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
+
+## All Thanks To Our Contributors
+
+<a href="https://github.com/formbricks/formbricks/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=formbricks/formbricks" />
+</a>
 
 ## 📆 Contact us
 
@@ -131,8 +145,8 @@ Let's have a chat about your survey needs and get you started.
 
 ## ⚖️ License
 
-Distributed under the AGPLv3 License. See `LICENSE` for more information.
+Distributed under the AGPLv3 License. See [`LICENSE`](./LICENSE) for more information.
 
 ## 🔒 Security
 
-We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See `SECURITY.md` for more information.
+We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See [`SECURITY.md`](./SECURITY.md) for more information.

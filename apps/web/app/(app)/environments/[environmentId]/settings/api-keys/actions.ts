@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { deleteApiKey, createApiKey } from "@formbricks/lib/apiKey/service";
 import { canUserAccessApiKey } from "@formbricks/lib/apiKey/auth";

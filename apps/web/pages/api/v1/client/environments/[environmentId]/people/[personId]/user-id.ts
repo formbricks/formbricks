@@ -1,4 +1,4 @@
-import { getSettings } from "@/lib/api/clientSettings";
+import { getSettings } from "@/app/lib/api/clientSettings";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -28,7 +28,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (!sessionId) {
       return res.status(400).json({ message: "Missing sessionId" });
     }
-    let returnedPerson;
+    let person;
     // check if person exists
     const existingPerson = await prisma.person.findFirst({
       where: {
@@ -81,10 +81,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: personId,
         },
       });
-      returnedPerson = existingPerson;
+      person = existingPerson;
     } else {
       // update person
-      returnedPerson = await prisma.person.update({
+      person = await prisma.person.update({
         where: {
           id: personId,
         },
@@ -122,10 +122,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
     }
 
-    const settings = await getSettings(environmentId, returnedPerson.id);
+    const settings = await getSettings(environmentId, person.id);
 
     // return updated person and settings
-    return res.json({ person: returnedPerson, settings });
+    return res.json({ person, settings });
   }
 
   // Unknown HTTP Method

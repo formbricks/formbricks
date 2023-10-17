@@ -10,3 +10,12 @@ export const ZAction = z.object({
 });
 
 export type TAction = z.infer<typeof ZAction>;
+
+export const ZActionInput = z.object({
+  environmentId: z.string().cuid2(),
+  sessionId: z.string().cuid2(),
+  name: z.string(),
+  properties: z.record(z.string()),
+});
+
+export type TActionInput = z.infer<typeof ZActionInput>;

@@ -3,11 +3,13 @@
 import LinkTab from "./shareEmbedTabs/LinkTab";
 import EmailTab from "./shareEmbedTabs/EmailTab";
 import WebpageTab from "./shareEmbedTabs/WebpageTab";
+import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { useMemo, useState } from "react";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { cn } from "@formbricks/lib/cn";
-import { DialogContent, Button, Dialog } from "@formbricks/ui";
+import { DialogContent, Dialog } from "@formbricks/ui/Dialog";
+import { Button } from "@formbricks/ui/Button";
 import { LinkIcon, EnvelopeIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
 import { TProfile } from "@formbricks/types/v1/profile";
 
@@ -19,7 +21,6 @@ interface ShareEmbedSurveyProps {
   product: TProduct;
   profile: TProfile;
 }
-
 export default function ShareEmbedSurvey({
   survey,
   open,
@@ -29,15 +30,26 @@ export default function ShareEmbedSurvey({
   profile,
 }: ShareEmbedSurveyProps) {
   const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
-
+  const isSingleUseLinkSurvey = survey.singleUse?.enabled;
   const { email } = profile;
   const { brandColor } = product;
+  const surveyBrandColor = survey.productOverwrites?.brandColor || brandColor;
+
+  const tabs = [
+    { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
+    { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
+    { id: "webpage", label: "Embed in a Web Page", icon: CodeBracketIcon },
+  ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
 
   const componentMap = {
-    link: <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={brandColor} />,
-    email: <EmailTab survey={survey} surveyUrl={surveyUrl} email={email} brandColor={brandColor} />,
+    link: isSingleUseLinkSurvey ? (
+      <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={surveyBaseUrl} />
+    ) : (
+      <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={surveyBrandColor} />
+    ),
+    email: <EmailTab survey={survey} surveyUrl={surveyUrl} email={email} brandColor={surveyBrandColor} />,
     webpage: <WebpageTab surveyUrl={surveyUrl} />,
   };
 
@@ -99,9 +111,3 @@ export default function ShareEmbedSurvey({
     </Dialog>
   );
 }
-
-const tabs = [
-  { id: "link", label: "Share the Link", icon: LinkIcon },
-  { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
-  { id: "webpage", label: "Embed in a Web Page", icon: CodeBracketIcon },
-];

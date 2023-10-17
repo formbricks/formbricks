@@ -1,19 +1,23 @@
 import "server-only";
 
-import { prisma } from "@formbricks/database";
+import { z } from "zod";
+import { validateInputs } from "../utils/validate";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
-import { cache } from "react";
+import { ZId } from "@formbricks/types/v1/environment";
 import {
+  ZGoogleCredential,
   TGoogleCredential,
-  TGoogleSheetIntegration,
   TGoogleSpreadsheet,
+  TGoogleSheetIntegration,
 } from "@formbricks/types/v1/integrations";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
+import { ZString } from "@formbricks/types/v1/common";
+import { getIntegrationByType } from "../integration/service";
 
 const { google } = require("googleapis");
 
@@ -31,38 +35,15 @@ async function fetchSpreadsheets(auth: any) {
   }
 }
 
-export const getGoogleSheetIntegration = cache(
-  async (environmentId: string): Promise<TGoogleSheetIntegration | null> => {
-    try {
-      const result = await prisma.integration.findUnique({
-        where: {
-          type_environmentId: {
-            environmentId,
-            type: "googleSheets",
-          },
-        },
-      });
-      // Type Guard
-      if (result && isGoogleSheetIntegration(result)) {
-        return result as TGoogleSheetIntegration; // Explicit casting
-      }
-      return null;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-      throw error;
-    }
-  }
-);
-function isGoogleSheetIntegration(integration: any): integration is TGoogleSheetIntegration {
-  return integration.type === "googleSheets";
-}
-
 export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpreadsheet[]> => {
+  validateInputs([environmentId, ZId]);
+
   let spreadsheets: TGoogleSpreadsheet[] = [];
   try {
-    const googleIntegration = await getGoogleSheetIntegration(environmentId);
+    const googleIntegration = (await getIntegrationByType(
+      environmentId,
+      "googleSheets"
+    )) as TGoogleSheetIntegration;
     if (googleIntegration && googleIntegration.config?.key) {
       spreadsheets = await fetchSpreadsheets(googleIntegration.config?.key);
     }
@@ -75,6 +56,12 @@ export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpr
   }
 };
 export async function writeData(credentials: TGoogleCredential, spreadsheetId: string, values: string[][]) {
+  validateInputs(
+    [credentials, ZGoogleCredential],
+    [spreadsheetId, ZString],
+    [values, z.array(z.array(ZString))]
+  );
+
   try {
     const authClient = authorize(credentials);
     const sheets = google.sheets({ version: "v4", auth: authClient });

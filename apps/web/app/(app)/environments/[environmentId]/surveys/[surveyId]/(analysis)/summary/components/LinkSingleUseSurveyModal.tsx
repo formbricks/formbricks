@@ -1,35 +1,47 @@
 "use client";
 
-import { Button, Dialog, DialogContent } from "@formbricks/ui";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { ArrowPathIcon, CheckIcon } from "@heroicons/react/24/outline";
-import { CheckCircleIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
-import { useRef, useState } from "react";
-import toast from "react-hot-toast";
-import { truncateMiddle } from "@/lib/utils";
+import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
+import { truncateMiddle } from "@/app/lib/utils";
 import { cn } from "@formbricks/lib/cn";
-import { useRouter } from "next/navigation";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 interface LinkSingleUseSurveyModalProps {
   survey: TSurvey;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  singleUseIds: string[];
+  surveyBaseUrl: string;
 }
 
-export default function LinkSingleUseSurveyModal({
-  survey,
-  open,
-  setOpen,
-  singleUseIds,
-}: LinkSingleUseSurveyModalProps) {
-  const defaultSurveyUrl = `${window.location.protocol}//${window.location.host}/s/${survey.id}`;
+export default function LinkSingleUseSurveyModal({ survey, surveyBaseUrl }: LinkSingleUseSurveyModalProps) {
+  const [singleUseIds, setSingleUseIds] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    fetchSingleUseIds();
+  }, [survey.singleUse?.isEncrypted]);
+
+  const fetchSingleUseIds = async () => {
+    const ids = await generateSingleUseIds(survey.singleUse?.isEncrypted ?? false);
+    setSingleUseIds(ids);
+  };
+
+  const generateSingleUseIds = async (isEncrypted: boolean) => {
+    const promises = Array(7)
+      .fill(null)
+      .map(() => generateSingleUseIdAction(isEncrypted));
+    const ids = await Promise.all(promises);
+    return ids;
+  };
+
+  const defaultSurveyUrl = `${surveyBaseUrl}/${survey.id}`;
   const [selectedSingleUseIds, setSelectedSingleIds] = useState<number[]>([]);
 
   const linkTextRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   const handleLinkOnClick = (index: number) => {
+    if (!singleUseIds) return;
     setSelectedSingleIds([...selectedSingleUseIds, index]);
     const surveyUrl = `${defaultSurveyUrl}?suId=${singleUseIds[index]}`;
     navigator.clipboard.writeText(surveyUrl);
@@ -37,41 +49,54 @@ export default function LinkSingleUseSurveyModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="bottom-0 max-w-sm bg-white p-4 sm:bottom-auto sm:max-w-xl sm:p-6">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-100">
-          <CheckIcon className="h-6 w-6 text-teal-600" aria-hidden="true" />
-        </div>
-        <div className="mt-3 text-center sm:mt-5">
-          <h3 className="text-lg font-semibold leading-6 text-gray-900">Your survey is ready!</h3>
-          <div className="mt-4">
-            <p className="text-sm text-gray-500">
-              Here are 5 single use links to let people answer your survey:
-            </p>
-            <div ref={linkTextRef}>
-              {singleUseIds.map((singleUseId, index) => {
-                const isSelected = selectedSingleUseIds.includes(index);
-                return (
-                  <div
-                    key={singleUseId}
-                    className={cn(
-                      "row relative mt-3 flex max-w-full cursor-pointer items-center justify-between overflow-auto rounded-lg border border-slate-300 bg-slate-50 px-8 py-4 text-left text-slate-800 transition-all duration-200 ease-in-out hover:border-slate-500",
-                      isSelected && "border-slate-200 text-slate-400 hover:border-slate-200"
-                    )}
-                    onClick={() => {
-                      if (!isSelected) {
-                        handleLinkOnClick(index);
-                      }
-                    }}>
-                    <span>{truncateMiddle(`${defaultSurveyUrl}?suId=${singleUseId}`, 48)}</span>
-                    {isSelected ? (
-                      <CheckCircleIcon className="ml-4 h-4 w-4" />
-                    ) : (
-                      <DocumentDuplicateIcon className="ml-4 h-4 w-4" />
-                    )}
-                  </div>
-                );
-              })}
+    <>
+      {singleUseIds && (
+        <div className="w-full">
+          <div className="flex justify-end">
+            <Button
+              variant="darkCTA"
+              title="Preview survey"
+              aria-label="Preview survey"
+              className="flex w-fit justify-center"
+              href={`${defaultSurveyUrl}?suId=${singleUseIds[0]}&preview=true`}
+              target="_blank"
+              EndIcon={EyeIcon}>
+              Preview Survey
+            </Button>
+          </div>
+
+          <div className="my-4 border-t border-slate-300 pb-2 pt-4">
+            <p className="mb-3 font-semibold text-slate-800">Single Use Links</p>
+            <div ref={linkTextRef} className="min flex flex-col space-y-4">
+              {singleUseIds &&
+                singleUseIds.map((singleUseId, index) => {
+                  const isSelected = selectedSingleUseIds.includes(index);
+                  return (
+                    <div className="flex h-fit  justify-center p-0">
+                      <div
+                        key={singleUseId}
+                        className={cn(
+                          "row relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-slate-300 bg-white px-6 py-2 text-left text-slate-800 transition-all duration-200 ease-in-out hover:border-slate-500",
+                          isSelected && "border-slate-200 text-slate-400 hover:border-slate-200"
+                        )}
+                        onClick={() => {
+                          if (!isSelected) {
+                            handleLinkOnClick(index);
+                          }
+                        }}>
+                        <span>{truncateMiddle(`${defaultSurveyUrl}?suId=${singleUseId}`, 48)}</span>
+                      </div>
+                      <div className="ml-2 min-h-full">
+                        <Button
+                          variant="secondary"
+                          className="m-0 my-0 h-full w-full overflow-hidden whitespace-pre text-center"
+                          onClick={() => handleLinkOnClick(index)}>
+                          {isSelected ? "Copied" : "  Copy  "}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
           <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row sm:justify-end">
@@ -81,7 +106,7 @@ export default function LinkSingleUseSurveyModal({
               aria-label="Generate new single-use survey link"
               className="flex justify-center"
               onClick={() => {
-                router.refresh();
+                fetchSingleUseIds();
                 setSelectedSingleIds([]);
                 toast.success("New survey links generated!");
               }}
@@ -102,21 +127,11 @@ export default function LinkSingleUseSurveyModal({
               aria-label="Copy all survey links to clipboard"
               className="flex justify-center"
               EndIcon={DocumentDuplicateIcon}>
-              Copy 5 URLs
-            </Button>
-            <Button
-              variant="darkCTA"
-              title="Preview survey"
-              aria-label="Preview survey"
-              className="flex justify-center"
-              href={`${defaultSurveyUrl}?suId=${singleUseIds[0]}&preview=true`}
-              target="_blank"
-              EndIcon={EyeIcon}>
-              Preview
+              Copy all URLs
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 }

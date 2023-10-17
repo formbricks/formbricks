@@ -8,8 +8,11 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  //provider = "prisma-dbml-generator"
 }
+
+// generator dbml {
+//  provider = "prisma-dbml-generator"
+// }
 
 generator zod {
   provider      = "zod-prisma"
@@ -166,14 +169,15 @@ enum DisplayStatus {
 }
 
 model Display {
-  id        String        @id @default(cuid())
-  createdAt DateTime      @default(now()) @map(name: "created_at")
-  updatedAt DateTime      @updatedAt @map(name: "updated_at")
-  survey    Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId  String
-  person    Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId  String?
-  status    DisplayStatus @default(seen)
+  id         String         @id @default(cuid())
+  createdAt  DateTime       @default(now()) @map(name: "created_at")
+  updatedAt  DateTime       @updatedAt @map(name: "updated_at")
+  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId   String
+  person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId   String?
+  responseId String?        @unique
+  status     DisplayStatus?
 }
 
 model SurveyTrigger {
@@ -230,12 +234,18 @@ model Survey {
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
   status              SurveyStatus            @default(draft)
+  /// @zod.custom(imports.ZSurveyWelcomeCard)
+  /// [SurveyWelcomeCard]
+  welcomeCard         Json                    @default("{\"enabled\": false}")
   /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions           Json                    @default("[]")
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard        Json                    @default("{\"enabled\": false}")
+  /// @zod.custom(imports.ZSurveyHiddenFields)
+  /// [SurveyHiddenFields]
+  hiddenFields        Json                    @default("{\"enabled\": false}")
   responses           Response[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
@@ -261,6 +271,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
+
+  // PIN Protected Surverys
+  pin Int?
 }
 
 model Event {
@@ -372,6 +385,8 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+
+  @@unique([teamId, name])
 }
 
 enum Plan {
@@ -496,6 +511,9 @@ model User {
   name                      String?
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
+  twoFactorSecret           String?
+  twoFactorEnabled          Boolean          @default(false)
+  backupCodes               String?
   password                  String?
   onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)

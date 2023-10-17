@@ -9,6 +9,8 @@ export const env = createEnv({
   server: {
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
+    ENCRYPTION_KEY: z.string().length(32),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)),
     NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
@@ -52,6 +54,10 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
+    AWS_ACCESS_KEY: z.string().optional(),
+    AWS_SECRET_KEY: z.string().optional(),
+    S3_REGION: z.string().optional(),
+    S3_BUCKET_NAME: z.string().optional(),
   },
 
   /*
@@ -70,7 +76,6 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
-    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)).optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -81,6 +86,8 @@ export const env = createEnv({
   runtimeEnv: {
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+    FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     MAIL_FROM: process.env.MAIL_FROM,
@@ -108,6 +115,10 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
+    AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+    AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
+    S3_REGION: process.env.S3_REGION,
+    S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,

@@ -23,12 +23,33 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/surveys#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/surveys#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/surveys#build"]
+    },
+    "@formbricks/js#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/js#build"]
+    },
+    "@formbricks/api#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/api#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "ASSET_PREFIX_URL",
         "CRON_SECRET",
+        "ENCRYPTION_KEY",
+        "FORMBRICKS_ENCRYPTION_KEY",
         "DEBUG",
         "GITHUB_ID",
         "GITHUB_SECRET",
@@ -88,7 +109,11 @@
         "STRIPE_WEBHOOK_SECRET",
         "TELEMETRY_DISABLED",
         "VERCEL_URL",
-        "WEBAPP_URL"
+        "WEBAPP_URL",
+        "AWS_ACCESS_KEY",
+        "AWS_SECRET_KEY",
+        "S3_REGION",
+        "S3_BUCKET_NAME"
       ]
     },
     "post-install": {

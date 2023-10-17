@@ -1,4 +1,4 @@
-import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -50,6 +50,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Deletes a single survey
   else if (req.method === "DELETE") {
     const submissionId = req.query.submissionId?.toString();
+
+    try {
+      await prisma.display.delete({
+        where: {
+          responseId: submissionId,
+        },
+      });
+    } catch (error) {
+      console.error(`No display found for submissionId: ${submissionId}`);
+    }
     const prismaRes = await prisma.response.delete({
       where: { id: submissionId },
     });

@@ -1,13 +1,12 @@
 "use client";
 
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Confetti } from "@formbricks/ui";
+import { Confetti } from "@formbricks/ui/Confetti";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
 import { TProduct } from "@formbricks/types/v1/product";
-import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProfile } from "@formbricks/types/v1/profile";
 
@@ -26,10 +25,7 @@ export default function SuccessMessage({
   surveyBaseUrl,
   product,
   profile,
-  singleUseIds,
 }: SummaryMetadataProps) {
-  const isSingleUse = survey.singleUse?.enabled ?? false;
-
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -60,23 +56,14 @@ export default function SuccessMessage({
 
   return (
     <>
-      {showLinkModal && isSingleUse && singleUseIds ? (
-        <LinkSingleUseSurveyModal
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          singleUseIds={singleUseIds}
-        />
-      ) : (
-        <ShareEmbedSurvey
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          surveyBaseUrl={surveyBaseUrl}
-          product={product}
-          profile={profile}
-        />
-      )}
+      <ShareEmbedSurvey
+        survey={survey}
+        open={showLinkModal}
+        setOpen={setShowLinkModal}
+        surveyBaseUrl={surveyBaseUrl}
+        product={product}
+        profile={profile}
+      />
       {confetti && <Confetti />}
     </>
   );

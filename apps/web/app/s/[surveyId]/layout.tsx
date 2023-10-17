@@ -1,4 +1,4 @@
-import LegalFooter from "@/app/s/[surveyId]/LegalFooter";
+import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 
 export default function SurveyLayout({ children }) {
   return (

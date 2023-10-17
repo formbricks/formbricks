@@ -130,6 +130,7 @@ export interface CTALogic extends LogicBase {
   condition: "clicked" | "skipped" | undefined;
   value?: undefined;
 }
+
 export interface RatingLogic extends LogicBase {
   condition:
     | "submitted"

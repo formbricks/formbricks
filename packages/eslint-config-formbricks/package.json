@@ -8,10 +8,13 @@
     "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
-    "eslint": "^8.50.0",
-    "eslint-config-next": "^13.5.3",
+    "eslint": "^8.51.0",
+    "eslint-config-next": "^13.5.5",
     "eslint-config-prettier": "^9.0.0",
     "eslint-config-turbo": "latest",
-    "eslint-plugin-react": "7.33.2"
+    "eslint-plugin-react": "7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "eslint-plugin-storybook": "^0.6.15"
   }
 }
