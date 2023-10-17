@@ -5,7 +5,7 @@ import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[sur
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import ContentWrapper from "@/app/components/shared/ContentWrapper";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";

@@ -80,8 +80,8 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && searchValue !== "") {
                   if (
-                    !tagsToSearch?.find(
-                      (tag) => tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
+                    !tagsToSearch?.find((tag) =>
+                      tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
                     )
                   ) {
                     createTag?.(searchValue);

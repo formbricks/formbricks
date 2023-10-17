@@ -1,8 +1,9 @@
 import { cn } from "@formbricks/lib/cn";
-import SurveyNavBarName from "@/app/components/shared/SurveyNavBarName";
+
 import Link from "next/link";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import SurveyNavBarName from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/SurveyNavBarName";
 
 interface SecondNavbarProps {
   tabs: { id: string; label: string; href: string; icon?: React.ReactNode }[];

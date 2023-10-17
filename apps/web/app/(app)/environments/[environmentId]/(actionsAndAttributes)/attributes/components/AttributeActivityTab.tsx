@@ -1,7 +1,7 @@
 "use client";
 
 import { GetActiveInactiveSurveysAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { capitalizeFirstLetter } from "@/app/lib/utils";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
