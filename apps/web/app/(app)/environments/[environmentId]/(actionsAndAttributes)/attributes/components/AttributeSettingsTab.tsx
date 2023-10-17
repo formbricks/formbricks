@@ -76,7 +76,7 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
           <div className="flex items-center">
             <Button
               variant="secondary"
-              href="https://formbricks.com/docs/getting-started/identify-users"
+              href="https://formbricks.com/docs/attributes/identify-users"
               target="_blank">
               Read Docs
             </Button>
