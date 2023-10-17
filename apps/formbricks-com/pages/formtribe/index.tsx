@@ -302,7 +302,7 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "1400",
+    points: "1500",
     link: "https://github.com/KapadiaNaitik",
   },
   {
@@ -388,7 +388,7 @@ const Leaderboard = [
   },
   {
     name: "Rohit Mondal",
-    points: "155",
+    points: "205",
   },
   {
     name: "noobcoder",
@@ -436,7 +436,7 @@ const Leaderboard = [
   },
   {
     name: "Ratish Jain",
-    points: "150",
+    points: "250",
     link: "https://github.com/ratishjain12",
   },
   {
@@ -445,12 +445,12 @@ const Leaderboard = [
   },
   {
     name: "Abhinav Arya",
-    points: "300",
+    points: "400",
     link: "github.com/itzabhinavarya",
   },
   {
     name: "Yash Nirmal",
-    points: "100",
+    points: "200",
   },
   {
     name: "Rohan Gupta",
@@ -464,7 +464,7 @@ const Leaderboard = [
   },
   {
     name: "Eduardo Noronha",
-    points: "100",
+    points: "200",
   },
   {
     name: "Joyal",
@@ -497,11 +497,11 @@ const Leaderboard = [
   },
   {
     name: "United1l",
-    points: "250",
+    points: "350",
   },
   {
     name: "Arya Bhosale",
-    points: "200",
+    points: "300",
   },
   {
     name: "Bhavya",
@@ -509,7 +509,79 @@ const Leaderboard = [
   },
   {
     name: "Bilal Mirza",
-    points: "150",
+    points: "550",
+  },
+  {
+    name: "Asharan2511",
+    points: "50",
+  },
+  {
+    name: "bhimanshu",
+    points: "50",
+  },
+  {
+    name: "Digvijay Gupta",
+    points: "100",
+  },
+  {
+    name: "hercules_2401",
+    points: "100",
+  },
+  {
+    name: "iampolska742",
+    points: "50",
+  },
+  {
+    name: "Jonas Hoebenreich",
+    points: "100",
+  },
+  {
+    name: "Markson",
+    points: "100",
+  },
+  {
+    name: "Mohd Zama",
+    points: "50",
+  },
+  {
+    name: "Moheyt",
+    points: "100",
+  },
+  {
+    name: "ortin779",
+    points: "50",
+  },
+  {
+    name: "Piyush Garg",
+    points: "100",
+  },
+  {
+    name: "Sachin Mittal",
+    points: "100",
+  },
+  {
+    name: "Sha1kh4",
+    points: "50",
+  },
+  {
+    name: "Soham Tembhurne",
+    points: "50",
+  },
+  {
+    name: "Sundaram2021",
+    points: "50",
+  },
+  {
+    name: "tarunclub",
+    points: "50",
+  },
+  {
+    name: "thevinitgupta",
+    points: "50",
+  },
+  {
+    name: "Vishal Khoje",
+    points: "100",
   },
 ];
 
