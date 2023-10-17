@@ -1,4 +1,4 @@
-import { Logo } from "@/app/components/Logo";
+import { Logo } from "@formbricks/ui/Logo";
 
 export default function FormWrapper({ children }: { children: React.ReactNode }) {
   return (
