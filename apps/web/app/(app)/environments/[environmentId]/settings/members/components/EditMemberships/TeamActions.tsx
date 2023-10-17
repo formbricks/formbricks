@@ -6,7 +6,7 @@ import {
   leaveTeamAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import CustomDialog from "@/app/components/shared/CustomDialog";
-import CreateTeamModal from "@/app/components/team/CreateTeamModal";
+import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
 import { TMembershipRole } from "@formbricks/types/v1/memberships";
 import { TTeam } from "@formbricks/types/v1/teams";
 import { Button } from "@formbricks/ui/Button";

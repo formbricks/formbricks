@@ -16,7 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/app/components/shared/DropdownMenu";
-import CreateTeamModal from "@/app/components/team/CreateTeamModal";
+import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
 import UrlShortenerModal from "./UrlShortenerModal";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import { capitalizeFirstLetter, truncate } from "@/app/lib/utils";
