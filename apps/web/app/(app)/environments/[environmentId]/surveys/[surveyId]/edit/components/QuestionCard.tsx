@@ -299,17 +299,19 @@ export default function QuestionCard({
                     />
                   </div>
                 )}
-                <div className="my-4 flex items-center justify-end space-x-2">
-                  <Label htmlFor="required-toggle">Required</Label>
-                  <Switch
-                    id="required-toggle"
-                    checked={question.required}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateQuestion(questionIdx, { required: !question.required });
-                    }}
-                  />
-                </div>
+                {
+                  <div className="my-4 flex items-center justify-end space-x-2">
+                    <Label htmlFor="required-toggle">Required</Label>
+                    <Switch
+                      id="required-toggle"
+                      checked={question.required}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuestion(questionIdx, { required: !question.required });
+                      }}
+                    />
+                  </div>
+                }
               </div>
             )}
           </Collapsible.Root>

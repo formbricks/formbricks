@@ -7,29 +7,15 @@ interface Tag {
 }
 
 interface ResponseTagsWrapperProps {
-  tags: Tag[];
   tagId: string;
   tagName: string;
   onDelete: (tagId: string) => void;
-  setTagsState: (tags: Tag[]) => void;
+  tags?: Tag[];
+  setTagsState?: (tags: Tag[]) => void;
   highlight?: boolean;
 }
 
-export function Tag({
-  tagId,
-  tagName,
-  onDelete,
-  tags,
-  setTagsState,
-  highlight,
-}: {
-  tagId: string;
-  tagName: string;
-  onDelete: (tagId: string) => void;
-  tags: ResponseTagsWrapperProps["tags"];
-  setTagsState: (tags: ResponseTagsWrapperProps["tags"]) => void;
-  highlight?: boolean;
-}) {
+export function Tag({ tagId, tagName, onDelete, tags, setTagsState, highlight }: ResponseTagsWrapperProps) {
   return (
     <div
       key={tagId}
@@ -44,7 +30,7 @@ export function Tag({
       <span
         className="cursor-pointer text-sm"
         onClick={() => {
-          setTagsState(tags.filter((tag) => tag.tagId !== tagId));
+          if (tags && setTagsState) setTagsState(tags.filter((tag) => tag.tagId !== tagId));
           onDelete(tagId);
         }}>
         <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-100 hover:text-slate-200" />
