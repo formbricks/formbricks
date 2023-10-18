@@ -16,10 +16,12 @@ import { getPerson, transformPrismaPerson } from "../person/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/v1/environment";
-import { revalidateTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { deleteDisplayByResponseId } from "../display/service";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
-import { ITEMS_PER_PAGE } from "../constants";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { responseCache } from "./cache";
+import { formatResponseDateFields } from "../response/util";
 
 const responseSelection = {
   id: true,
@@ -80,89 +82,114 @@ const responseSelection = {
   },
 };
 
-export const getResponsesCacheTag = (surveyId: string) => `surveys-${surveyId}-responses`;
-
-export const getResponseCacheTag = (responseId: string) => `responses-${responseId}`;
-
 export const getResponsesByPersonId = async (
   personId: string,
   page?: number
 ): Promise<Array<TResponse> | null> => {
-  validateInputs([personId, ZId], [page, ZOptionalNumber]);
+  const responses = await unstable_cache(
+    async () => {
+      validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
-  try {
-    const responsePrisma = await prisma.response.findMany({
-      where: {
-        personId,
-      },
-      select: responseSelection,
-      take: page ? ITEMS_PER_PAGE : undefined,
-      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-    });
+      try {
+        const responsePrisma = await prisma.response.findMany({
+          where: {
+            personId,
+          },
+          select: responseSelection,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        });
 
-    if (!responsePrisma) {
-      throw new ResourceNotFoundError("Response from PersonId", personId);
+        if (!responsePrisma) {
+          throw new ResourceNotFoundError("Response from PersonId", personId);
+        }
+
+        let responses: Array<TResponse> = [];
+
+        responsePrisma.forEach((response) => {
+          responses.push({
+            ...response,
+            person: response.person ? transformPrismaPerson(response.person) : null,
+            tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+          });
+        });
+
+        return responses;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getResponsesByPersonId-${personId}-${page}`],
+    {
+      tags: [responseCache.tag.byPersonId(personId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
+  )();
 
-    let responses: Array<TResponse> = [];
-
-    responsePrisma.forEach((response) => {
-      responses.push({
-        ...response,
-        person: response.person ? transformPrismaPerson(response.person) : null,
-        tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-      });
-    });
-
-    return responses;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
-  }
+  return responses.map((response) => ({
+    ...response,
+    ...formatResponseDateFields(response),
+  }));
 };
 
 export const getResponseBySingleUseId = async (
   surveyId: string,
-  singleUseId?: string
+  singleUseId: string
 ): Promise<TResponse | null> => {
-  validateInputs([surveyId, ZId], [singleUseId, ZString]);
+  const response = await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId], [singleUseId, ZString]);
 
-  try {
-    if (!singleUseId) {
-      return null;
+      try {
+        const responsePrisma = await prisma.response.findUnique({
+          where: {
+            surveyId_singleUseId: { surveyId, singleUseId },
+          },
+          select: responseSelection,
+        });
+
+        if (!responsePrisma) {
+          return null;
+        }
+
+        const response: TResponse = {
+          ...responsePrisma,
+          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+        };
+
+        return response;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getResponseBySingleUseId-${surveyId}-${singleUseId}`],
+    {
+      tags: [responseCache.tag.bySingleUseId(surveyId, singleUseId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
-    const responsePrisma = await prisma.response.findUnique({
-      where: {
-        surveyId_singleUseId: { surveyId, singleUseId },
-      },
-      select: responseSelection,
-    });
+  )();
 
-    if (!responsePrisma) {
-      return null;
-    }
-
-    const response: TResponse = {
-      ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
+  if (!response) {
+    return null;
   }
+
+  return {
+    ...response,
+    ...formatResponseDateFields(response),
+  };
 };
 
-export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput.partial()]);
+export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
   try {
@@ -201,9 +228,11 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    if (response.surveyId) {
-      revalidateTag(getResponsesCacheTag(response.surveyId));
-    }
+    responseCache.revalidate({
+      personId: response.person?.id,
+      responseId: response.id,
+      surveyId: response.surveyId,
+    });
 
     return response;
   } catch (error) {
@@ -216,104 +245,150 @@ export const createResponse = async (responseInput: Partial<TResponseInput>): Pr
 };
 
 export const getResponse = async (responseId: string): Promise<TResponse | null> => {
-  validateInputs([responseId, ZId]);
+  const response = await unstable_cache(
+    async () => {
+      validateInputs([responseId, ZId]);
 
-  try {
-    const responsePrisma = await prisma.response.findUnique({
-      where: {
-        id: responseId,
-      },
-      select: responseSelection,
-    });
+      try {
+        const responsePrisma = await prisma.response.findUnique({
+          where: {
+            id: responseId,
+          },
+          select: responseSelection,
+        });
 
-    if (!responsePrisma) {
-      throw new ResourceNotFoundError("Response", responseId);
-    }
+        if (!responsePrisma) {
+          throw new ResourceNotFoundError("Response", responseId);
+        }
 
-    const response: TResponse = {
-      ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
+        const response: TResponse = {
+          ...responsePrisma,
+          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+        };
 
-    return response;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
+        return response;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
 
-    throw error;
+        throw error;
+      }
+    },
+    [`getResponse-${responseId}`],
+    { tags: [responseCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+  )();
+
+  if (!response) {
+    return null;
   }
+
+  return {
+    ...response,
+    ...formatResponseDateFields(response),
+  } as TResponse;
 };
 
-export const getSurveyResponses = async (surveyId: string, page?: number): Promise<TResponse[]> => {
-  validateInputs([surveyId, ZId], [page, ZOptionalNumber]);
+export const getResponses = async (surveyId: string, page?: number): Promise<TResponse[]> => {
+  const responses = await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId], [page, ZOptionalNumber]);
 
-  try {
-    const responses = await prisma.response.findMany({
-      where: {
-        surveyId,
-      },
-      select: responseSelection,
-      orderBy: [
-        {
-          createdAt: "desc",
-        },
-      ],
-      take: page ? ITEMS_PER_PAGE : undefined,
-      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-    });
+      try {
+        const responses = await prisma.response.findMany({
+          where: {
+            surveyId,
+          },
+          select: responseSelection,
+          orderBy: [
+            {
+              createdAt: "desc",
+            },
+          ],
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        });
 
-    const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
-      ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    }));
+        const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
+          ...responsePrisma,
+          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+        }));
 
-    return transformedResponses;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+        return transformedResponses;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getResponses-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
+  )();
 
-    throw error;
-  }
+  return responses.map((response) => ({
+    ...response,
+    ...formatResponseDateFields(response),
+  }));
 };
 
-export const getEnvironmentResponses = async (environmentId: string, page?: number): Promise<TResponse[]> => {
-  validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+export const getResponsesByEnvironmentId = async (
+  environmentId: string,
+  page?: number
+): Promise<TResponse[]> => {
+  const responses = await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
-  try {
-    const responses = await prisma.response.findMany({
-      where: {
-        survey: {
-          environmentId,
-        },
-      },
-      select: responseSelection,
-      orderBy: [
-        {
-          createdAt: "desc",
-        },
-      ],
-      take: page ? ITEMS_PER_PAGE : undefined,
-      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-    });
+      try {
+        const responses = await prisma.response.findMany({
+          where: {
+            survey: {
+              environmentId,
+            },
+          },
+          select: responseSelection,
+          orderBy: [
+            {
+              createdAt: "desc",
+            },
+          ],
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        });
 
-    const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
-      ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    }));
+        const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
+          ...responsePrisma,
+          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+        }));
 
-    return transformedResponses;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+        return transformedResponses;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getResponsesByEnvironmentId-${environmentId}`],
+    {
+      tags: [responseCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
+  )();
 
-    throw error;
-  }
+  return responses.map((response) => ({
+    ...response,
+    ...formatResponseDateFields(response),
+  }));
 };
 
 export const updateResponse = async (
@@ -351,9 +426,11 @@ export const updateResponse = async (
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    if (response.surveyId) {
-      revalidateTag(getResponsesCacheTag(response.surveyId));
-    }
+    responseCache.revalidate({
+      personId: response.person?.id,
+      responseId: response.id,
+      surveyId: response.surveyId,
+    });
 
     return response;
   } catch (error) {
@@ -381,6 +458,13 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
     deleteDisplayByResponseId(responseId, response.surveyId);
+
+    responseCache.revalidate({
+      personId: response.person?.id,
+      responseId: response.id,
+      surveyId: response.surveyId,
+    });
+
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -390,3 +474,26 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     throw error;
   }
 };
+
+export const getResponseCountBySurveyId = async (surveyId: string): Promise<number> =>
+  unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+
+      try {
+        const responseCount = await prisma.response.count({
+          where: {
+            surveyId: surveyId,
+          },
+        });
+        return responseCount;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [`getResponseCountBySurveyId-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();

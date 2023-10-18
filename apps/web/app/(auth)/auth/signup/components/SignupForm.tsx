@@ -1,7 +1,5 @@
 "use client";
 
-import { GoogleButton } from "@/app/components/auth/GoogleButton";
-import IsPasswordValid from "@/app/components/auth/IsPasswordValid";
 import { createUser } from "@/app/lib/users/users";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
 import { Button } from "@formbricks/ui/Button";
@@ -9,7 +7,9 @@ import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { GithubButton } from "./GithubButton";
+import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
+import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 
 export const SignupForm = ({
   webAppUrl,
