@@ -86,6 +86,11 @@ export default function EditWelcomeCard({
                 checked={localSurvey?.welcomeCard?.enabled}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!localSurvey.welcomeCard?.enabled) {
+                    setActiveQuestionId("start");
+                  } else {
+                    setActiveQuestionId(null);
+                  }
                   updateSurvey({ enabled: !localSurvey.welcomeCard?.enabled });
                 }}
               />

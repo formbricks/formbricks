@@ -124,6 +124,9 @@ export default function QuestionsView({
         setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
       }
     }
+    if (localSurvey?.questions?.length > 0) {
+      setActiveQuestionId(localSurvey?.questions[0]?.id);
+    }
     toast.success("Question deleted.");
   };
 
