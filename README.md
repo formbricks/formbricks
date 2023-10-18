@@ -31,6 +31,8 @@
 
 <img width="1527" alt="formtribe hackathon" src="https://github.com/formbricks/formbricks/assets/72809645/addc3a5b-421c-4c8d-8be2-eedf087100ed">
 
+<a href="https://trendshift.io/repositories/2570" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2570" alt="formbricks%2Fformbricks | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 ## 🔥 The FormTribe Hackathon is on!
 
 To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
