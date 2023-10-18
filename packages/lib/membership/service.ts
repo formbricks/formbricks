@@ -122,6 +122,7 @@ export const updateMembership = async (
       },
       data,
     });
+    revalidateTag(getTeamsByUserIdCacheTag(userId));
 
     return membership;
   } catch (error) {
@@ -144,6 +145,7 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
       },
     },
   });
+  revalidateTag(getTeamsByUserIdCacheTag(userId));
 
   return deletedMembership;
 };
@@ -180,6 +182,7 @@ export const transferOwnership = async (
         },
       }),
     ]);
+    revalidateTag(getTeamsByUserIdCacheTag(teamId));
 
     return memberships;
   } catch (error) {
