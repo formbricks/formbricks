@@ -2,7 +2,7 @@ import { QuestionSummary } from "@formbricks/types/responses";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyQuestion, TSurvey } from "@formbricks/types/v1/surveys";
 import { useMemo } from "react";
-import {} from "@formbricks/surveys";
+
 interface SummaryDropOffsProps {
   summaryData: QuestionSummary<TSurveyQuestion>[];
   survey: TSurvey;
