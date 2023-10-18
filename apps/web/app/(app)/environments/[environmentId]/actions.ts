@@ -56,7 +56,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const duplicatedSurvey = await duplicateSurvey(environmentId,surveyId)
+  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId);
   return duplicatedSurvey;
 }
 

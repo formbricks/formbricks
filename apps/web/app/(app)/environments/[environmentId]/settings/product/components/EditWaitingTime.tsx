@@ -34,7 +34,7 @@ const EditWaitingTime: React.FC<EditWaitingTimeProps> = ({ product, environmentI
   const updateWaitingTime: SubmitHandler<EditWaitingTimeFormValues> = async (data) => {
     try {
       const updatedProduct = await updateProductAction(environmentId, product.id, data);
-      if(!!updatedProduct?.id) {
+      if (!!updatedProduct?.id) {
         toast.success("Waiting period updated successfully.");
         router.refresh();
       }

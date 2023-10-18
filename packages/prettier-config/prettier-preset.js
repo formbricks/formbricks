@@ -7,5 +7,5 @@ module.exports = {
   semi: true,
   printWidth: 110,
   arrowParens: "always",
-  plugins: ["prettier-plugin-tailwindcss"],
+  plugins: [require("./merged-prettier-plugin.js")],
 };

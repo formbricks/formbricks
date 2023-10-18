@@ -1,12 +1,12 @@
 "use client";
 
-import IsPasswordValid from "@/app/components/auth/IsPasswordValid";
 import { resetPassword } from "@/app/lib/users/users";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
 import { Button } from "@formbricks/ui/Button";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 
 export const ResetPasswordForm = () => {
   const searchParams = useSearchParams();

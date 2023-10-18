@@ -103,8 +103,8 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
       return `
         <div style="display: block; margin-top:3em;">
           <a href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-            survey.id
-          }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
+        survey.id
+      }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
             <h2 style="text-decoration: underline; display:inline;">${survey.name}</h2>
           </a>
           <span style="display: inline; margin-left: 10px; background-color: ${
@@ -118,11 +118,11 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
               : createSurveyFields(survey.responses)
           }
           ${
-            survey.responsesCount >= 0
+            survey.responseCount >= 0
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
                 }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
-                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responsesCount)}
+                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
               </a>`
               : ""
           }
