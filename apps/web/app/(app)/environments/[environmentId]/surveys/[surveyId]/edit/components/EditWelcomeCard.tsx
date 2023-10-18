@@ -16,6 +16,7 @@ interface EditWelcomeCardProps {
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
+  internalQuestionIdMap: object;
 }
 
 export default function EditWelcomeCard({
@@ -23,6 +24,7 @@ export default function EditWelcomeCard({
   setLocalSurvey,
   setActiveQuestionId,
   activeQuestionId,
+  internalQuestionIdMap,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -86,6 +88,13 @@ export default function EditWelcomeCard({
                 checked={localSurvey?.welcomeCard?.enabled}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (localSurvey?.welcomeCard?.enabled && open) {
+                    if (Object.keys(internalQuestionIdMap).length > 0) {
+                      setActiveQuestionId(Object.keys(internalQuestionIdMap)[0]);
+                    } else {
+                      setActiveQuestionId(null);
+                    }
+                  }
                   updateSurvey({ enabled: !localSurvey.welcomeCard?.enabled });
                 }}
               />

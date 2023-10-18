@@ -190,6 +190,7 @@ export default function QuestionsView({
           setLocalSurvey={setLocalSurvey}
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
+          internalQuestionIdMap={internalQuestionIdMap}
         />
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
