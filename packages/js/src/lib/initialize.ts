@@ -33,6 +33,7 @@ const setDebugLevel = (c: TJsConfigInput): void => {
 export const initialize = async (
   c: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  return;
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
     return okVoid();
