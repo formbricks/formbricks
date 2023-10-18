@@ -1,4 +1,4 @@
-FROM node:18-alpine AS installer
+FROM node:18-buster-slim AS installer
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 ARG DATABASE_URL
@@ -19,7 +19,8 @@ RUN pnpm install
 RUN pnpm post-install --filter=web...
 RUN pnpm turbo run build --filter=web...
 
-FROM node:18-alpine AS runner
+FROM node:18-buster-slim AS runner
+
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Don't run production as root
@@ -43,10 +44,12 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages/database/migrations ./
 EXPOSE 3000
 
 ENV HOSTNAME "0.0.0.0"
+ENV CMAKE_MAKE_PROGRAM=make
+ENV CMAKE_C_COMPILER=gcc
 
 CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
-        pnpm dlx prisma migrate deploy && node apps/web/server.js; \
+    pnpm dlx prisma migrate deploy && node apps/web/server.js; \
     else \
-        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
-        exit 1; \
+    echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
+    exit 1; \
     fi
