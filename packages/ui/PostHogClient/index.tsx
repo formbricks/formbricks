@@ -1,6 +1,6 @@
 "use client";
 
-import { env } from "@/env.mjs";
+import { env } from "../../../apps/web/env.mjs";
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";

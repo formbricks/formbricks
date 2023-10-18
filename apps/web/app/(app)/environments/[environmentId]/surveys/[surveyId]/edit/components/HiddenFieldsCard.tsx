@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurveyHiddenFields, TSurveyQuestions, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestions } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -11,8 +11,8 @@ import { FC, useState } from "react";
 import toast from "react-hot-toast";
 
 interface HiddenFieldsCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
 }
