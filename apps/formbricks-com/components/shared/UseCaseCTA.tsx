@@ -15,7 +15,7 @@ export default function UseCaseHeader({ href }: UseCaseCTAProps) {
       </Button>
       <div className="space-y-1 text-center">
         <Button
-          className="bg-gray-800 text-gray-300 hover:text-white"
+          className="bg-slate-800 text-slate-300 hover:text-white dark:bg-slate-500 dark:text-slate-100 dark:hover:bg-slate-400"
           onClick={() => {
             router.push("https://app.formbricks.com/auth/signup");
             /* plausible("BestPractice_SubPage_CTA_TryItNow"); */
