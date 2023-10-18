@@ -1,17 +1,55 @@
 import { QuestionSummary } from "@formbricks/types/responses";
 import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestion, TSurvey } from "@formbricks/types/v1/surveys";
 import { useMemo } from "react";
 import {} from "@formbricks/surveys";
 interface SummaryDropOffsProps {
   summaryData: QuestionSummary<TSurveyQuestion>[];
-  survey: TSurveyWithAnalytics;
+  survey: TSurvey;
   responses: TResponse[];
 }
 
 export default function SummaryDropOffs({ summaryData, responses, survey }: SummaryDropOffsProps) {
+  const getViewsForFinishedResponses = () => {
+    const finishedResponses = responses.filter((r) => r.finished);
+    let views = new Array(survey.questions.length).fill(0);
+    finishedResponses.forEach((response) => {
+      for (let i = 0; i < survey.questions.length; i++) {
+        const currQues = survey.questions[i];
+        const currResp = response.data[currQues.id];
+
+        if (i === survey.questions.length - 1) {
+          views[i]++;
+        } else if (!currQues.required && !currResp) {
+          views[i]++;
+        } else if (currResp) {
+          views[i]++;
+          if (!currQues.logic) {
+            continue;
+          } else {
+            let respondedLogic: any = null;
+            for (let logic of currQues.logic) {
+              if (!logic.destination) continue;
+              if (response.data[logic.destination]) {
+                respondedLogic = logic;
+                break;
+              }
+            }
+            if (!respondedLogic) {
+              break;
+            } else {
+              i = survey.questions.findIndex((q) => q.id === respondedLogic.destination) - 1;
+            }
+          }
+        }
+      }
+    });
+    return views;
+  };
+
   const getDropoff = () => {
     let dropoffArr = new Array(survey.questions.length).fill(0);
+    let viewsArr = getViewsForFinishedResponses();
 
     // calculating dropoff for each response
     responses.forEach((response) => {
@@ -25,6 +63,8 @@ export default function SummaryDropOffs({ summaryData, responses, survey }: Summ
       for (let i = 0; i < survey.questions.length; i++) {
         const currQues = survey.questions[i];
         const currResp = response.data[currQues.id];
+
+        viewsArr[i]++;
 
         if (currQues.required && !currResp) {
           // if a question is required and not answered, then we can calculate dropoff
@@ -72,10 +112,10 @@ export default function SummaryDropOffs({ summaryData, responses, survey }: Summ
         }
       }
     });
-    return dropoffArr;
+    return [dropoffArr, viewsArr];
   };
 
-  const dropoffCount = useMemo(() => getDropoff(), [responses]);
+  const [dropoffCount, viewsArr] = useMemo(() => getDropoff(), [responses]);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -90,9 +130,7 @@ export default function SummaryDropOffs({ summaryData, responses, survey }: Summ
             key={questionSummary.question.id}
             className="grid grid-cols-5 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
             <div className="col-span-3 pl-4 md:pl-6">{questionSummary.question.headline}</div>
-            <div className="whitespace-pre-wrap pl-6 text-center font-semibold">
-              {questionSummary.responses.length}
-            </div>
+            <div className="whitespace-pre-wrap pl-6 text-center font-semibold">{viewsArr[i]}</div>
             <div className="px-4 text-center md:px-6">
               <span className="font-semibold">{dropoffCount[i]} </span>
               <span>({Math.round((dropoffCount[i] / responses.length) * 100)}%)</span>
