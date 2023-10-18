@@ -14,28 +14,28 @@ interface EventDetailModalProps {
 export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open, setOpen }) => {
   return (
     <Modal open={open} setOpen={setOpen} noPadding>
-      <div className="flex h-full flex-col rounded-lg bg-slate-50 dark:bg-slate-800">
-        <div className="rounded-t-lg bg-slate-100 dark:bg-slate-700">
-          <div className="flex items-center justify-between p-6">
+      <div className="vertical-align: middle; flex flex-col bg-slate-50 dark:bg-slate-800">
+        <div className="bg-slate-90 dark:bg-slate-700">
+          <div className="p-4 sm:p-6">
             <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
+              <div className="h-6 w-6 text-slate-500">
                 <CursorArrowRaysIcon />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700 dark:text-slate-300">Add Action</div>
+                <div className="text-lg font-medium text-slate-700 dark:text-slate-300">Add Action</div>
                 <div className="text-sm text-slate-500">
-                  Create a new user action to display surveys when it&apos;s triggered.
+                  Create a new user action to display surveys when its triggered.
                 </div>
               </div>
             </div>
           </div>
         </div>
         <form>
-          <div className="flex justify-between rounded-lg p-6">
+          <div className="p-4 sm:p-6">
             <div className="space-y-4">
               <div>
                 <Label>Select By</Label>
-                <RadioGroup className="grid grid-cols-2 gap-1 md:grid-cols-3" defaultValue="pageUrl">
+                <RadioGroup className="grid grid-cols-1 gap-2 sm:grid-cols-2" defaultValue="pageUrl">
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3 dark:border-slate-500">
                     <RadioGroupItem value="pageUrl" id="pageUrl" className="bg-slate-50" />
                     <Label htmlFor="pageUrl" className="cursor-pointer dark:text-slate-200">
@@ -60,18 +60,19 @@ export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open
                   </div>
                 </RadioGroup>
               </div>
-              <div className="grid grid-cols-2 gap-x-2">
-                <div>
+              <div className="space-y-2 sm:flex sm:justify-between sm:gap-x-4 sm:space-y-0">
+                <div className="sm:w-1/2">
                   <Label>Name</Label>
                   <Input placeholder="e.g. Dashboard Page View" defaultValue="Dashboard view" />
                 </div>
-                <div>
+                <div className="sm:w-1/2">
                   <Label>Description</Label>
                   <Input placeholder="e.g. User visited dashboard" defaultValue="User visited dashboard" />
+                  &apos;
                 </div>
               </div>
-              <div className="grid w-full grid-cols-3 gap-x-8">
-                <div className="col-span-1">
+              <div className="space-y-2 sm:flex sm:justify-between sm:gap-x-4">
+                <div className="w-full">
                   <Label>URL</Label>
                   <Select defaultValue="endsWith">
                     <SelectTrigger
@@ -90,31 +91,30 @@ export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="col-span-2 flex w-full items-end">
+                <div className="mt-2 w-full sm:mt-0">
                   <Input type="text" defaultValue="/dashboard" />
                 </div>
               </div>
             </div>
-          </div>
-          <div className="flex justify-end border-t border-slate-200 p-6 dark:border-slate-700">
-            <div className="flex space-x-2">
-              <Button
-                variant="minimal"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpen(false);
-                }}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpen(false);
-                }}>
-                Add event
-              </Button>
+            <div className="mt-6 flex justify-center sm:mt-8 sm:justify-end">
+              <div className="flex space-x-4">
+                <Button
+                  variant="minimal"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpen(false);
+                  }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpen(false);
+                  }}>
+                  Add event
+                </Button>
+              </div>
             </div>
           </div>
         </form>
