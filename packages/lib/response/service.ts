@@ -229,8 +229,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     };
 
     responseCache.revalidate({
+      id: response.id,
       personId: response.person?.id,
-      responseId: response.id,
       surveyId: response.surveyId,
     });
 
@@ -277,7 +277,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       }
     },
     [`getResponse-${responseId}`],
-    { tags: [responseCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    { tags: [responseCache.tag.byId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
   if (!response) {
@@ -427,8 +427,8 @@ export const updateResponse = async (
     };
 
     responseCache.revalidate({
+      id: response.id,
       personId: response.person?.id,
-      responseId: response.id,
       surveyId: response.surveyId,
     });
 
@@ -460,8 +460,8 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     deleteDisplayByResponseId(responseId, response.surveyId);
 
     responseCache.revalidate({
+      id: response.id,
       personId: response.person?.id,
-      responseId: response.id,
       surveyId: response.surveyId,
     });
 
