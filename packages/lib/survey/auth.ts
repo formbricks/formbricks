@@ -3,6 +3,7 @@ import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getSurvey, getSurveyCacheTag } from "./service";
 import { unstable_cache } from "next/cache";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 
 export const canUserAccessSurvey = async (userId: string, surveyId: string): Promise<boolean> =>
   await unstable_cache(
@@ -20,5 +21,5 @@ export const canUserAccessSurvey = async (userId: string, surveyId: string): Pro
       return true;
     },
     [`users-${userId}-surveys-${surveyId}`],
-    { revalidate: 30 * 60, tags: [getSurveyCacheTag(surveyId)] }
-  )(); // 30 minutes
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [getSurveyCacheTag(surveyId)] }
+  )();

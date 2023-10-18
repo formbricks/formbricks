@@ -7,7 +7,7 @@ import { OTPInput } from "@formbricks/ui/OTPInput";
 import { useCallback, useEffect, useState } from "react";
 import { validateSurveyPin } from "@/app/s/[surveyId]/actions";
 import { TSurvey } from "@/../../packages/types/v1/surveys";
-import { TSurveryPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import { cn } from "@formbricks/lib/cn";
 
@@ -37,7 +37,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [error, setError] = useState<TSurveryPinValidationResponseError>();
+  const [error, setError] = useState<TSurveyPinValidationResponseError>();
   const [survey, setSurvey] = useState<TSurvey>();
 
   const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: number) => {

@@ -7,7 +7,7 @@ import AddWebhookModal from "@/app/(app)/environments/[environmentId]/integratio
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
 import { Webhook } from "lucide-react";
-import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 
 export default function WebhookTable({
