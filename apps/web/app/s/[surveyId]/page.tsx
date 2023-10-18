@@ -15,7 +15,6 @@ import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import type { Metadata } from "next";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 
-
 interface LinkSurveyPageProps {
   params: {
     surveyId: string;
@@ -55,8 +54,8 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
 
   return {
     openGraph: {
-      title: "Formbricks",
-      description: "Open-Source In-Product Survey Platform",
+      title: survey.name,
+      description: "Create your own survey like this with Formbricks' open source survey suite.",
       url: `${SURVEY_BASE_URL}/${survey.id}`,
       siteName: "",
       images: [ogImgURL],
@@ -65,8 +64,8 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
     },
     twitter: {
       card: "summary_large_image",
-      title: "Formbricks",
-      description: "Open-Source In-Product Survey Platform",
+      title: survey.name,
+      description: "Create your own survey like this with Formbricks' open source survey suite.",
       images: [ogImgURL],
     },
   };

@@ -1,22 +1,4 @@
 import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
-import { type Metadata } from "next/types";
-
-export const metadata: Metadata = {
-  title: "Formbricks",
-  description: "Open-Source In-Product Survey Platform",
-  openGraph: {
-    title: "Formbricks",
-    description: "Open-Source In-Product Survey Platform",
-  },
-  twitter: {
-    title: "Formbricks",
-    description: "Open-Source In-Product Survey Platform",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
 
 export default async function SurveyLayout({ children }) {
   return (
