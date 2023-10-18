@@ -44,8 +44,6 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages/database/migrations ./
 EXPOSE 3000
 
 ENV HOSTNAME "0.0.0.0"
-ENV CMAKE_MAKE_PROGRAM=make
-ENV CMAKE_C_COMPILER=gcc
 
 CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
     pnpm dlx prisma migrate deploy && node apps/web/server.js; \
