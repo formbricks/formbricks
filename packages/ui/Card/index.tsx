@@ -56,7 +56,7 @@ export const Card: React.FC<CardProps> = ({
         </Button>
       )}
       {docsHref && (
-        <Button href={docsHref} target={docsNewTab ? "_blank" : "_self"} size="sm" variant="secondary">
+        <Button href={docsHref} target={docsNewTab ? "_blank" : "_self"} size="sm" variant="primary">
           {docsText}
         </Button>
       )}
