@@ -29,7 +29,7 @@ export default function DateQuestion({
   isLastQuestion,
   brandColor,
 }: IDateQuestionProps) {
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [datePickerOpen, _setDatePickerOpen] = useState(true);
   const [date, setDate] = useState(new Date());
   // const date = useRef(new Date()).current;
 
@@ -105,17 +105,15 @@ export default function DateQuestion({
       <div className="mt-4" id="date-pick">
         {/* From here, the date picker should be opened? */}
 
-        <button
+        {/* <button
           className="px-3 py-1 rounded-sm bg-slate-800"
           type="button"
           onClick={() => {
             setDatePickerOpen(true);
           }}>
           <span className="text-white">Open date picker</span>
-        </button>
+        </button> */}
       </div>
-
-      
 
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (

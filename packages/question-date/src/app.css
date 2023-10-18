@@ -24,10 +24,39 @@
   color: #888;
 }
 
-/* .react-date-picker__inputGroup {
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* margin-bottom: 2em; */
+  width: 180px;
+  border: 2px solid #333;
+  cursor: pointer;
+}
+
+.react-date-picker__inputGroup {
   display: none;
 }
 
 .react-date-picker__wrapper {
   display: none
-} */
+}
+
+.react-calendar {
+  box-shadow: 2px 2px 10px #333;
+  padding-bottom: 16px !important;
+}
+
+.react-calendar__tile {
+  padding: 0.5em !important;
+}
+
+.react-calendar__tile--active {
+  background: teal !important;
+  color: white !important;
+}
+
+.react-calendar__tile--now {
+  background: #333 !important;
+  color: white !important;
+}
