@@ -1,11 +1,11 @@
 "use client";
 
-import AirtableLogo from "../images/airtable.svg";
+import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import FormbricksLogo from "@/images/logo.svg";
 import { Button } from "@formbricks/ui/Button";
 import Image from "next/image";
 import { useState } from "react";
-import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
+import AirtableLogo from "../images/airtable.svg";
 
 interface AirTableConnectProps {
   enabled: boolean;
@@ -36,7 +36,11 @@ export default function AirTableConnect({ environmentId, enabled, webAppUrl }: A
           </div>
         </div>
         <p className="my-8">Sync responses directly with Airtable.</p>
-
+        {!enabled && (
+          <p className="mb-8 rounded border-gray-200 bg-gray-100 p-3 text-sm">
+            Airtable Integration is not configured in your instance of Formbricks.
+          </p>
+        )}
         <Button variant="darkCTA" loading={isConnecting} onClick={handleGoogleLogin} disabled={!enabled}>
           Connect with Airtable
         </Button>

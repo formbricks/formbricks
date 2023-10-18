@@ -10,9 +10,9 @@ import AddIntegrationModal, {
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
-import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 interface handleModalProps {
   airTableIntegration: TAirTableIntegration;
   environment: TEnvironment;
