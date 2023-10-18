@@ -117,7 +117,7 @@ export const getResponsesByPersonId = async (
         return responses;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -165,7 +165,7 @@ export const getResponseBySingleUseId = async (
         return response;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -237,7 +237,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -270,7 +270,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
         return response;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -319,7 +319,7 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
         return transformedResponses;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -372,7 +372,7 @@ export const getResponsesByEnvironmentId = async (
         return transformedResponses;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -435,7 +435,7 @@ export const updateResponse = async (
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -468,9 +468,32 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
   }
 };
+
+export const getResponseCountBySurveyId = async (surveyId: string): Promise<number> =>
+  unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+
+      try {
+        const responseCount = await prisma.response.count({
+          where: {
+            surveyId: surveyId,
+          },
+        });
+        return responseCount;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [`getResponseCountBySurveyId-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();

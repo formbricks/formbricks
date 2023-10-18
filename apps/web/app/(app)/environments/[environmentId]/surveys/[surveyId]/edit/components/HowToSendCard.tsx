@@ -1,8 +1,10 @@
 "use client";
 import { cn } from "@formbricks/lib/cn";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TSurvey, TSurveyType } from "@formbricks/types/v1/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import {
   CheckCircleIcon,
   ComputerDesktopIcon,
@@ -14,12 +16,10 @@ import {
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface HowToSendCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
 }
 
@@ -35,13 +35,15 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
     }
   }, [environment]);
 
-  const setSurveyType = (type: string) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
-    updatedSurvey.type = type;
-    if (type === "link") {
-      updatedSurvey.thankYouCard.enabled = true;
-    }
-    setLocalSurvey(updatedSurvey);
+  const setSurveyType = (type: TSurveyType) => {
+    setLocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      type,
+      thankYouCard: {
+        ...prevSurvey.thankYouCard,
+        enabled: type === "link" ? true : prevSurvey.thankYouCard.enabled,
+      },
+    }));
   };
 
   const options = [

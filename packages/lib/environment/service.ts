@@ -37,7 +37,8 @@ export const getEnvironment = (environmentId: string) =>
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          console.error(error.message);
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -80,7 +81,7 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
         }
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
         throw error;
       }
@@ -128,7 +129,7 @@ export const updateEnvironment = async (
     return updatedEnvironment;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -153,7 +154,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

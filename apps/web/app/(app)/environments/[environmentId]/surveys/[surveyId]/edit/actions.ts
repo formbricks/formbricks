@@ -1,14 +1,14 @@
 "use server";
 
-import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { deleteSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
+import { deleteSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
+import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { getServerSession } from "next-auth";
 
-export async function updateSurveyAction(survey: TSurveyWithAnalytics | TSurvey): Promise<TSurvey> {
+export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

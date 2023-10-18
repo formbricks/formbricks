@@ -1,5 +1,6 @@
 import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
+import { Button } from "@formbricks/ui/Button";
 import {
   BaseballIcon,
   CancelSubscriptionIcon,
@@ -10,7 +11,6 @@ import {
   OnboardingIcon,
   PMFIcon,
 } from "@formbricks/ui/icons";
-import { Button } from "@formbricks/ui/Button";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -18,7 +18,7 @@ import { usePlausible } from "next-plausible";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
@@ -99,10 +99,29 @@ export default function Header() {
   const [mobileSubOpen, setMobileSubOpen] = useState(false);
   const plausible = usePlausible();
   const router = useRouter();
+  const [stickyNav, setStickyNav] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 250) {
+        setStickyNav(true);
+      } else {
+        setStickyNav(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const stickyNavClass = stickyNav
+    ? `bg-transparent shadow-md backdrop-blur-lg fixed top-0 z-30 w-full`
+    : "relative";
   return (
-    <Popover className="relative" as="header">
+    <Popover className={`${stickyNavClass}`} as="header">
       <a href="https://www.producthunt.com/products/formbricks" target="_blank">
-        <div className="bg-[#ff6154] text-center text-sm text-white">
+        <div className="bg-[#ff6154] px-4 py-2 text-center text-sm text-white lg:py-0">
           We&apos;re launching soon on Product Hunt - get notified 🚀
         </div>
       </a>
