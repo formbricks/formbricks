@@ -7,7 +7,7 @@ import {
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
-import { QuestionType } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TTag } from "@formbricks/types/v1/tags";

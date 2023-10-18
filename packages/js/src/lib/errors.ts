@@ -1,6 +1,6 @@
 import { Logger } from "./logger";
 
-export type { ErrorHandler as IErrorHandler } from "@formbricks/types/js";
+export type { ZErrorHandler } from "@formbricks/types/v1/errors";
 
 export type ResultError<T> = { ok: false; error: T };
 

@@ -1,5 +1,5 @@
-import { QuestionType } from "@formbricks/types/questions";
-import type { QuestionSummary } from "@formbricks/types/responses";
+import { QuestionType } from "@formbricks/types/v1/surveys";
+import type { QuestionSummary } from "@formbricks/types/v1/responses";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";

@@ -1,5 +1,10 @@
-import { LogicCondition, QuestionType } from "@formbricks/types/questions";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyLogic,
+  TSurveyQuestion,
+  QuestionType,
+  TLogicCondition,
+} from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -24,7 +29,7 @@ interface LogicEditorProps {
 }
 
 type LogicConditions = {
-  [K in LogicCondition]: {
+  [K in TLogicCondition]: {
     label: string;
     values: string[] | null;
     unique?: boolean;

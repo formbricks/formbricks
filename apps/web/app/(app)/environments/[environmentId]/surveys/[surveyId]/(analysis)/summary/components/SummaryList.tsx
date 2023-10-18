@@ -2,8 +2,8 @@ import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { QuestionType } from "@formbricks/types/questions";
-import type { QuestionSummary } from "@formbricks/types/responses";
+import { QuestionType } from "@formbricks/types/v1/surveys";
+import type { QuestionSummary } from "@formbricks/types/v1/responses";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TResponse } from "@formbricks/types/v1/responses";
 import {

@@ -1,8 +1,8 @@
-import type { QuestionSummary } from "@formbricks/types/responses";
+import type { QuestionSummary } from "@formbricks/types/v1/responses";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { QuestionType } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
 import { questionTypes } from "@/app/lib/questions";

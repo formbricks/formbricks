@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { QuestionType } from "../questions";
 import { ZColor, ZSurveyPlacement } from "./common";
 
 export const ZSurveyThankYouCard = z.object({
@@ -7,6 +6,16 @@ export const ZSurveyThankYouCard = z.object({
   headline: z.optional(z.string()),
   subheader: z.optional(z.string()),
 });
+
+export enum QuestionType {
+  OpenText = "openText",
+  MultipleChoiceSingle = "multipleChoiceSingle",
+  MultipleChoiceMulti = "multipleChoiceMulti",
+  NPS = "nps",
+  CTA = "cta",
+  Rating = "rating",
+  Consent = "consent",
+}
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
@@ -16,6 +25,23 @@ export const ZSurveyWelcomeCard = z.object({
   buttonLabel: z.string().optional(),
   timeToFinish: z.boolean().default(false),
 });
+
+export const ZLogicCondition = z.union([
+  z.literal("submitted"),
+  z.literal("skipped"),
+  z.literal("accepted"),
+  z.literal("clicked"),
+  z.literal("equals"),
+  z.literal("notEquals"),
+  z.literal("lessThan"),
+  z.literal("lessEqual"),
+  z.literal("greaterThan"),
+  z.literal("greaterEqual"),
+  z.literal("includesAll"),
+  z.literal("includesOne"),
+]);
+
+export type TLogicCondition = z.infer<typeof ZLogicCondition>;
 
 export const ZSurveyHiddenFields = z.object({
   enabled: z.boolean(),
@@ -368,3 +394,47 @@ export const ZSurveyQuestionType = z.union([
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
+
+const ZObjective = z.union([
+  z.literal("increase_user_adoption"),
+  z.literal("increase_conversion"),
+  z.literal("support_sales"),
+  z.literal("sharpen_marketing_messaging"),
+  z.literal("improve_user_retention"),
+  z.literal("other"),
+]);
+
+export type TObjective = z.infer<typeof ZObjective>;
+
+const ZTemplate = z.object({
+  name: z.string(),
+  description: z.string(),
+  icon: z.optional(z.any()),
+  category: z.optional(
+    z.union([
+      z.literal("Product Experience"),
+      z.literal("Exploration"),
+      z.literal("Growth"),
+      z.literal("Increase Revenue"),
+      z.literal("Customer Success"),
+    ])
+  ),
+  objectives: z.optional(z.tuple([ZObjective, ZObjective.optional(), ZObjective.optional()])),
+  preset: z.object({
+    name: z.string(),
+    questions: z.array(ZSurveyQuestion),
+    thankYouCard: ZSurveyThankYouCard,
+  }),
+});
+
+export type TTemplate = z.infer<typeof ZTemplate>;
+
+export const ZPlacementType = z.union([
+  z.literal("bottomLeft"),
+  z.literal("bottomRight"),
+  z.literal("topLeft"),
+  z.literal("topRight"),
+  z.literal("center"),
+]);
+
+export type TPlacementType = z.infer<typeof ZPlacementType>;

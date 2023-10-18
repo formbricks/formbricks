@@ -1,4 +1,4 @@
-import { QuestionType } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 import { TResponseData } from "@formbricks/types/v1/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 

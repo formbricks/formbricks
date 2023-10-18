@@ -2,7 +2,7 @@
 
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { QuestionType } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";

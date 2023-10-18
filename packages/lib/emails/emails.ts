@@ -1,4 +1,4 @@
-import { Question } from "@formbricks/types/questions";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { WEBAPP_URL } from "../constants";
 import { createInviteToken, createToken } from "../jwt";
@@ -128,7 +128,7 @@ export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: 
 export const sendResponseFinishedEmail = async (
   email: string,
   environmentId: string,
-  survey: { id: string; name: string; questions: Question[] },
+  survey: { id: string; name: string; questions: TSurveyQuestion[] },
   response: TResponse
 ) => {
   const personEmail = response.person?.attributes["email"];

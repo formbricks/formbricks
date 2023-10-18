@@ -1,11 +1,11 @@
-import type { RatingQuestion } from "@formbricks/types/questions";
+import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface RatingQuestionProps {
-  question: RatingQuestion;
+  question: TSurveyRatingQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

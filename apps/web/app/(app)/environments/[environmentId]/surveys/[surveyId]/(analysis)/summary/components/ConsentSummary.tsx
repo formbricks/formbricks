@@ -1,4 +1,4 @@
-import type { QuestionSummary } from "@formbricks/types/responses";
+import type { QuestionSummary } from "@formbricks/types/v1/responses";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";

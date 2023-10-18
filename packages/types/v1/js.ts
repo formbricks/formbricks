@@ -81,3 +81,42 @@ export const ZJsSyncParams = z.object({
 });
 
 export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;
+
+const ZSettingsSurvey = ZSurvey.pick({
+  id: true,
+  welcomeCard: true,
+  questions: true,
+  triggers: true,
+  thankYouCard: true,
+  autoClose: true,
+  delay: true,
+});
+
+export const ZSettings = z.object({
+  surveys: z.optional(z.array(ZSettingsSurvey)),
+  noCodeEvents: z.optional(z.array(z.any())), // You might want to further refine this.
+  brandColor: z.optional(z.string()),
+  formbricksSignature: z.optional(z.boolean()),
+  placement: z.optional(
+    z.union([
+      z.literal("bottomLeft"),
+      z.literal("bottomRight"),
+      z.literal("topLeft"),
+      z.literal("topRight"),
+      z.literal("center"),
+    ])
+  ),
+  clickOutsideClose: z.optional(z.boolean()),
+  darkOverlay: z.optional(z.boolean()),
+});
+
+export type TSettings = z.infer<typeof ZSettings>;
+
+export const ZMatchType = z.union([
+  z.literal("exactMatch"),
+  z.literal("contains"),
+  z.literal("startsWith"),
+  z.literal("endsWith"),
+  z.literal("notMatch"),
+  z.literal("notContains"),
+]);

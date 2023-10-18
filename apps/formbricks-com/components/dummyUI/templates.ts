@@ -23,8 +23,8 @@ import {
 } from "@formbricks/ui/icons";
 
 import { createId } from "@paralleldrive/cuid2";
-import type { Template } from "@formbricks/types/templates";
-import { QuestionType } from "@formbricks/types/questions";
+import { TTemplate } from "@formbricks/types/v1/surveys";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 
 const thankYouCardDefault = {
   enabled: true,
@@ -32,7 +32,7 @@ const thankYouCardDefault = {
   subheader: "We appreciate your feedback.",
 };
 
-export const customSurvey: Template = {
+export const customSurvey: TTemplate = {
   name: "Start from scratch",
   description: "Create a survey without template.",
   icon: null,
@@ -45,6 +45,7 @@ export const customSurvey: Template = {
         headline: "Custom Survey",
         subheader: "This is an example survey.",
         placeholder: "Type your answer here...",
+        inputType: "text",
         longAnswer: true,
         required: true,
       },
@@ -53,7 +54,7 @@ export const customSurvey: Template = {
   },
 };
 
-export const templates: Template[] = [
+export const templates: TTemplate[] = [
   {
     name: "Product Market Fit (Superhuman)",
     icon: PMFIcon,
@@ -119,6 +120,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "What type of people do you think would most benefit from Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: true,
         },
@@ -126,6 +128,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "What is the main benefit your receive from Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: true,
         },
@@ -133,6 +136,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "How can we improve our service for you?",
+          inputType: "text",
           subheader: "Please be as specific as possible.",
           longAnswer: true,
           required: true,
@@ -309,6 +313,7 @@ export const templates: Template[] = [
           type: QuestionType.OpenText,
           headline: "Would you like to add something?",
           subheader: "Feel free to speak your mind, we do too.",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -401,6 +406,7 @@ export const templates: Template[] = [
           type: QuestionType.OpenText,
           headline: "How can we win you back?",
           subheader: "Feel free to speak your mind, we do too.",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -450,6 +456,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "Any details to share?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -457,6 +464,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "How are you solving your problem instead?",
+          inputType: "text",
           subheader: "Please name alternative tools:",
           longAnswer: true,
           required: false,
@@ -570,6 +578,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "What did you come here to do today?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -637,6 +646,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "Wanna add something?",
+          inputType: "text",
           subheader: "This really helps us do better!",
           longAnswer: true,
           required: false,
@@ -702,6 +712,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "How can we improve our service for you?",
+          inputType: "text",
           subheader: "Please be as specific as possible.",
           longAnswer: true,
           required: true,
@@ -740,6 +751,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "Give us the juicy details:",
+          inputType: "text",
           longAnswer: true,
           required: true,
         },
@@ -788,6 +800,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "Which product would you like to integrate next?",
+          inputType: "text",
           subheader: "We keep building integrations. Yours can be next:",
           longAnswer: true,
           required: false,
@@ -837,6 +850,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "If you chose other, please clarify:",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -873,12 +887,14 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "Please elaborate:",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
         {
           id: createId(),
           type: QuestionType.OpenText,
+          inputType: "url",
           headline: "Page URL",
           longAnswer: true,
           required: false,
@@ -1010,6 +1026,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "What's the #1 thing you'd like to change in Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -1039,6 +1056,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "What is one thing we could do better?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -1079,6 +1097,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.OpenText,
           headline: "What’s missing or unclear to you about Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
@@ -1097,6 +1116,6 @@ export const templates: Template[] = [
   },
 ];
 
-export const findTemplateByName = (name: string): Template | undefined => {
+export const findTemplateByName = (name: string): TTemplate | undefined => {
   return templates.find((template) => template.name === name);
 };

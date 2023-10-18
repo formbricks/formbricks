@@ -4,7 +4,7 @@ import { cn } from "@formbricks/lib/cn";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@/app/lib/preview";
-import { PlacementType } from "@formbricks/types/js";
+import { TPlacementType } from "@formbricks/types/v1/surveys";
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
   { name: "Top Right", value: "topRight", disabled: false },
@@ -14,8 +14,8 @@ const placements = [
 ];
 
 type TPlacementProps = {
-  currentPlacement: PlacementType;
-  setCurrentPlacement: (placement: PlacementType) => void;
+  currentPlacement: TPlacementType;
+  setCurrentPlacement: (placement: TPlacementType) => void;
   setOverlay: (overlay: string) => void;
   overlay: string;
   setClickOutside: (clickOutside: boolean) => void;
@@ -33,7 +33,7 @@ export default function Placement({
   return (
     <>
       <div className="flex">
-        <RadioGroup onValueChange={(e) => setCurrentPlacement(e as PlacementType)} value={currentPlacement}>
+        <RadioGroup onValueChange={(e) => setCurrentPlacement(e as TPlacementType)} value={currentPlacement}>
           {placements.map((placement) => (
             <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
               <RadioGroupItem id={placement.value} value={placement.value} disabled={placement.disabled} />

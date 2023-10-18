@@ -3,7 +3,7 @@
 import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
 import { getQuestionTypeName } from "@/app/lib/questions";
 import { cn } from "@formbricks/lib/cn";
-import { QuestionType } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";

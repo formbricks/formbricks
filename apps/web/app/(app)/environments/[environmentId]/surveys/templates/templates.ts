@@ -1,4 +1,4 @@
-import { QuestionType } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 import { TSurvey, TSurveyHiddenFields, TSurveyWelcomeCard } from "@formbricks/types/v1/surveys";
 import { TTemplate } from "@formbricks/types/v1/templates";
 import { createId } from "@paralleldrive/cuid2";

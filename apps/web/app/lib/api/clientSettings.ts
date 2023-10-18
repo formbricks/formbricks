@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
-import { Settings } from "@formbricks/types/js";
+import { TSettings } from "@formbricks/types/v1/js";
 
-export const getSettings = async (environmentId: string, personId: string): Promise<Settings> => {
+export const getSettings = async (environmentId: string, personId: string): Promise<TSettings> => {
   // get recontactDays from product
   const product = await prisma.product.findFirst({
     where: {
@@ -181,7 +181,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       return {
         id: survey.id,
         questions: JSON.parse(JSON.stringify(survey.questions)),
-        triggers: survey.triggers,
+        triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
         thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
         welcomeCard: JSON.parse(JSON.stringify(survey.welcomeCard)),
         autoClose: survey.autoClose,

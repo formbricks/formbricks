@@ -1,4 +1,4 @@
-import { QuestionType, type Question } from "@formbricks/types/questions";
+import { TSurveyQuestion, QuestionType } from "@formbricks/types/v1/surveys";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
@@ -7,7 +7,7 @@ import CTAQuestion from "./CTAQuestion";
 import RatingQuestion from "./RatingQuestion";
 
 interface QuestionConditionalProps {
-  question: Question;
+  question: TSurveyQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

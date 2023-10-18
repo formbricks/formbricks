@@ -8,7 +8,7 @@ import { DeleteDialog } from "../DeleteDialog";
 import QuestionSkip from "./components/QuestionSkip";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { timeSince } from "@formbricks/lib/time";
-import { QuestionType } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/v1/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
