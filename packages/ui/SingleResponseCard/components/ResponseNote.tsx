@@ -47,7 +47,7 @@ export default function ResponseNotes({ profile, responseId, notes, isOpen, setI
 
   const handleResolveNote = (note: TResponseNote) => {
     try {
-      resolveResponseNoteAction(note.id);
+      resolveResponseNoteAction(responseId, note.id);
       // when this was the last note, close the notes panel
       if (unresolvedNotes.length === 1) {
         setIsOpen(false);
