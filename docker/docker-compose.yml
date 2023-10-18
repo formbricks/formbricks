@@ -24,12 +24,12 @@ x-environment: &environment
     POSTGRES_PASSWORD: postgres
 
     # Email Configuration
-    MAIL_FROM:
-    SMTP_HOST:
-    SMTP_PORT:
-    SMTP_SECURE_ENABLED:
-    SMTP_USER:
-    SMTP_PASSWORD:
+    # MAIL_FROM:
+    # SMTP_HOST:
+    # SMTP_PORT:
+    # SMTP_SECURE_ENABLED:
+    # SMTP_USER:
+    # SMTP_PASSWORD:
 
     # Set the below value if you want to have another base URL apart from your Domain Name
     # SURVEY_BASE_URL:
@@ -37,11 +37,11 @@ x-environment: &environment
     # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
     # SHORT_SURVEY_BASE_URL:
 
-    # Uncomment the below and set it to 1 to disable Email Verification for new signups
-    # EMAIL_VERIFICATION_DISABLED:
+    # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
+    EMAIL_VERIFICATION_DISABLED: 1
 
-    # Uncomment the below and set it to 1 to disable Password Reset
-    # PASSWORD_RESET_DISABLED:
+    # Set the below to 0 to enable Password Reset (will required Email Configuration)
+    PASSWORD_RESET_DISABLED: 1
 
     # Uncomment the below and set it to 1 to disable Signups
     # SIGNUP_DISABLED:
