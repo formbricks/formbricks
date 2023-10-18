@@ -15,7 +15,7 @@ import { createActionClass, getActionClassByEnvironmentIdAndName } from "../acti
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 
-export const getLastestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
+export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
   const action = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);

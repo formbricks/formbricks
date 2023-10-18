@@ -1,4 +1,4 @@
-import { getLastestActionByEnvironmentId } from "@formbricks/lib/action/service";
+import { getLatestActionByEnvironmentId } from "@formbricks/lib/action/service";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { timeSince } from "@formbricks/lib/time";
 import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
@@ -13,7 +13,7 @@ interface WidgetStatusIndicatorProps {
 export default async function WidgetStatusIndicator({ environmentId, type }: WidgetStatusIndicatorProps) {
   const [environment, latestAction] = await Promise.all([
     getEnvironment(environmentId),
-    getLastestActionByEnvironmentId(environmentId),
+    getLatestActionByEnvironmentId(environmentId),
   ]);
 
   if (!environment?.widgetSetupCompleted && latestAction) {
