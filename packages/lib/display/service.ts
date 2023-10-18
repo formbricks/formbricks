@@ -4,9 +4,11 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/v1/common";
 import {
   TDisplay,
-  TDisplayInput,
+  TDisplayCreateInput,
+  TDisplayUpdateInput,
   TDisplaysWithSurveyName,
-  ZDisplayInput,
+  ZDisplayCreateInput,
+  ZDisplayUpdateInput,
 } from "@formbricks/types/v1/displays";
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
@@ -44,9 +46,9 @@ const selectDisplay = {
 
 export const updateDisplay = async (
   displayId: string,
-  displayInput: Partial<TDisplayInput>
+  displayInput: Partial<TDisplayUpdateInput>
 ): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayInput.partial()]);
+  validateInputs([displayInput, ZDisplayUpdateInput.partial()]);
   try {
     const displayPrisma = await prisma.display.update({
       where: {
@@ -72,8 +74,8 @@ export const updateDisplay = async (
 };
 export const getDisplaysCacheTag = (surveyId: string) => `surveys-${surveyId}-displays`;
 
-export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayInput]);
+export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayCreateInput]);
   try {
     const displayPrisma = await prisma.display.create({
       data: {
