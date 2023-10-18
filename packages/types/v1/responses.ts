@@ -102,6 +102,7 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
+  source: z.string().optional(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
