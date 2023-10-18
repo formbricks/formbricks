@@ -1,4 +1,4 @@
-import { TSurveyFileUploadQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyFileUploadQuestion, TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
@@ -8,7 +8,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 interface FileUploadFormProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -106,10 +106,16 @@ export default function FileUploadQuestionForm({
       </div>
       {question.limitSize && (
         <div className="mt-3">
-          <Label htmlFor="maxSize">Input Type</Label>
           <div className="mt-2 flex w-full items-center justify-between rounded-md border bg-slate-50 p-5">
             <div className="rounded-md  bg-white p-2">
-              <input className="rounded-md" id="maxSize" name="maxSize" type="number" />
+              <input
+                className="rounded-md border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                id="maxSize"
+                name="maxSize"
+                type="number"
+                value={question?.maxSize}
+                onChange={(e) => updateQuestion(questionIdx, { maxSize: e.target.value })}
+              />
               MB
             </div>
           </div>
@@ -133,6 +139,19 @@ export default function FileUploadQuestionForm({
           </div>
         </div>
       </div>
+      {question.limitFileType && (
+        <div className="mt-3">
+          <div className="mt-2 flex w-full items-center justify-between rounded-md border bg-slate-50 p-5">
+            <div className="flex items-center justify-center rounded-lg bg-slate-100 p-4">
+              <input
+                className="w-36 rounded-md border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                placeholder="Add pdf"
+                type="text"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

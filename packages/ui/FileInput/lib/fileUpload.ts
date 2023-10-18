@@ -1,6 +1,6 @@
 const uploadFile = async (
   file: File | Blob,
-  allowedFileExtensions: string[],
+  allowedFileExtensions: string[] | undefined,
   environmentId: string | undefined
 ) => {
   try {

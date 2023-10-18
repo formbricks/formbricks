@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { uploadFile } from "./lib/fileUpload";
 
 interface FileInputProps {
-  allowedFileExtensions: string[];
+  allowedFileExtensions?: string[];
   environmentId: string | undefined;
   onFileUpload: (uploadedUrl: string | undefined) => void;
   fileUrl: string | undefined;
@@ -36,7 +36,7 @@ const FileInput: React.FC<FileInputProps> = ({
     if (
       file &&
       file.type &&
-      allowedFileExtensions.includes(file.type.substring(file.type.lastIndexOf("/") + 1))
+      allowedFileExtensions?.includes(file.type.substring(file.type.lastIndexOf("/") + 1))
     ) {
       setIsUploaded(false);
       setSelectedFile(file);
@@ -65,7 +65,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   type="file"
                   id="modifyFile"
                   name="modifyFile"
-                  accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
+                  accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
                   className="hidden"
                   onChange={async (e) => {
                     const selectedFile = e.target?.files?.[0];
@@ -135,7 +135,7 @@ const FileInput: React.FC<FileInputProps> = ({
             type="file"
             id="selectedFile"
             name="selectedFile"
-            accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
+            accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
             className="hidden"
             onChange={async (e) => {
               const selectedFile = e.target?.files?.[0];
