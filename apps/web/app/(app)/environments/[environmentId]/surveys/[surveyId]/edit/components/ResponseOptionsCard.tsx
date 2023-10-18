@@ -9,7 +9,7 @@ import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react";
+import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
@@ -49,6 +49,10 @@ export default function ResponseOptionsCard({
   });
   const [closeOnDate, setCloseOnDate] = useState<Date>();
 
+  const [verifyProtectWithPinToggle, setVerifyProtectWithPinToggle] = useState(false);
+
+  const [verifyProtectWithPinError, setverifyProtectWithPinError] = useState<string | null>(null);
+
   const handleRedirectCheckMark = () => {
     setRedirectToggle((prev) => !prev);
 
@@ -71,6 +75,34 @@ export default function ResponseOptionsCard({
       return;
     }
     setSurveyCloseOnDateToggle(true);
+  };
+
+  const handleProtectSurveyWithPinToggle = () => {
+    const currentValue = verifyProtectWithPinToggle;
+    if (currentValue === false) setLocalSurvey({ ...localSurvey, pin: null });
+    setVerifyProtectWithPinToggle(!currentValue);
+  };
+
+  const handleProtectSurveyPinChange = (pin: string) => {
+    const pinAsNumber = Number(pin);
+
+    if (isNaN(pinAsNumber)) return toast.error("PIN can only contain numbers");
+    setLocalSurvey({ ...localSurvey, pin: pinAsNumber });
+  };
+
+  const handleProtectSurveyPinBlurEvent = () => {
+    if (!localSurvey.pin) return setverifyProtectWithPinError(null);
+
+    const regexPattern = /^\d{4}$/;
+    const isValidPin = regexPattern.test(`${localSurvey.pin}`);
+
+    if (!isValidPin) return setverifyProtectWithPinError("PIN must be a four digit number.");
+    setverifyProtectWithPinError(null);
+  };
+
+  const handleSurveyPinInputKeyDown: KeyboardEventHandler<HTMLInputElement> = (e) => {
+    const exceptThisSymbols = ["e", "E", "+", "-", "."];
+    if (exceptThisSymbols.includes(e.key)) e.preventDefault();
   };
 
   const handleRedirectUrlChange = (link: string) => {
@@ -187,6 +219,10 @@ export default function ResponseOptionsCard({
     if (localSurvey.redirectUrl) {
       setRedirectUrl(localSurvey.redirectUrl);
       setRedirectToggle(true);
+    }
+
+    if (!!localSurvey.pin) {
+      setVerifyProtectWithPinToggle(true);
     }
 
     if (!!localSurvey.surveyClosedMessage) {
@@ -481,6 +517,35 @@ export default function ResponseOptionsCard({
                       defaultValue={verifyEmailSurveyDetails.subheading}
                       onChange={(e) => handleVerifyEmailSurveyDetailsChange({ subheading: e.target.value })}
                     />
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+              <AdvancedOptionToggle
+                htmlId="protectSurveyWithPin"
+                isChecked={verifyProtectWithPinToggle}
+                onToggle={handleProtectSurveyWithPinToggle}
+                title="Protect Survey with a PIN"
+                description="Only users who have the PIN can access the survey."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <Label htmlFor="headline">Add PIN</Label>
+                    <Input
+                      autoFocus
+                      type="number"
+                      id="heading"
+                      isInvalid={Boolean(verifyProtectWithPinError)}
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      placeholder="1234"
+                      onBlur={handleProtectSurveyPinBlurEvent}
+                      defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
+                      onKeyDown={handleSurveyPinInputKeyDown}
+                      onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
+                    />
+                    {verifyProtectWithPinError && (
+                      <p className="text-sm text-red-700">{verifyProtectWithPinError}</p>
+                    )}
                   </div>
                 </div>
               </AdvancedOptionToggle>

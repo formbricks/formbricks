@@ -1,5 +1,5 @@
 import FormbricksClient from "@/app/(app)/components/FormbricksClient";
-import { PHProvider, PostHogPageview } from "@/app/components/PostHogClient";
+import { PHProvider, PostHogPageview } from "@formbricks/ui/PostHogClient";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";

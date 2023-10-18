@@ -7,15 +7,15 @@ import { env } from "@/env.mjs";
 
 const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
 const AWS_REGION = env.S3_REGION!;
-const AWS_ACCESS_KEY = env.AWS_ACCESS_KEY!;
-const AWS_SECRET_KEY = env.AWS_SECRET_KEY!;
+const S3_ACCESS_KEY = env.S3_ACCESS_KEY!;
+const S3_SECRET_KEY = env.S3_SECRET_KEY!;
 
 // S3Client Singleton
 
 const s3Client = new S3Client({
   credentials: {
-    accessKeyId: AWS_ACCESS_KEY,
-    secretAccessKey: AWS_SECRET_KEY!,
+    accessKeyId: S3_ACCESS_KEY,
+    secretAccessKey: S3_SECRET_KEY!,
   },
   region: AWS_REGION!,
 });
