@@ -5,7 +5,7 @@ import { prisma } from "@formbricks/database";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { ZId } from "@formbricks/types/v1/environment";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
@@ -48,6 +48,35 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
     [`getActionClasses-${environmentId}-${page}`],
     {
       tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getActionClassByEnvironmentIdAndName = async (
+  environmentId: string,
+  name: string
+): Promise<TActionClass | null> =>
+  unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId], [name, ZString]);
+
+      try {
+        const actionClass = await prisma.eventClass.findFirst({
+          where: {
+            name,
+            environmentId,
+          },
+          select,
+        });
+
+        return actionClass;
+      } catch (error) {
+        throw new DatabaseError(`Database error when fetching action`);
+      }
+    },
+    [`getActionClass-${environmentId}-${name}`],
+    {
+      tags: [actionClassCache.tag.byNameAndEnvironmentId(environmentId, name)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -112,7 +141,7 @@ export const createActionClass = async (
   validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
 
   try {
-    const result = await prisma.eventClass.create({
+    const actionClassPrisma = await prisma.eventClass.create({
       data: {
         name: actionClass.name,
         description: actionClass.description,
@@ -126,12 +155,12 @@ export const createActionClass = async (
     });
 
     actionClassCache.revalidate({
-      name: result.name,
-      environmentId: result.environmentId,
-      id: result.id,
+      name: actionClassPrisma.name,
+      environmentId: actionClassPrisma.environmentId,
+      id: actionClassPrisma.id,
     });
 
-    return result;
+    return actionClassPrisma;
   } catch (error) {
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
   }

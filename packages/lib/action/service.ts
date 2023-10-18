@@ -11,6 +11,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getSessionCached } from "../session/service";
+import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 
@@ -90,6 +91,16 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     throw new ResourceNotFoundError("Session", sessionId);
   }
 
+  let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
+
+  if (!actionClass) {
+    actionClass = await createActionClass(environmentId, {
+      name,
+      type: eventType,
+      environmentId,
+    });
+  }
+
   const action = await prisma.event.create({
     data: {
       properties,
@@ -99,27 +110,10 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
         },
       },
       eventClass: {
-        connectOrCreate: {
-          where: {
-            name_environmentId: {
-              name,
-              environmentId,
-            },
-          },
-          create: {
-            name,
-            type: eventType,
-            environment: {
-              connect: {
-                id: environmentId,
-              },
-            },
-          },
+        connect: {
+          id: actionClass.id,
         },
       },
-    },
-    include: {
-      eventClass: true,
     },
   });
 
@@ -133,7 +127,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     createdAt: action.createdAt,
     sessionId: action.sessionId,
     properties: action.properties,
-    actionClass: action.eventClass,
+    actionClass,
   };
 };
 
