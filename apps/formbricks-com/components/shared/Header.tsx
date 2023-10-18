@@ -1,5 +1,6 @@
 import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
+import { Button } from "@formbricks/ui/Button";
 import {
   BaseballIcon,
   CancelSubscriptionIcon,
@@ -10,7 +11,6 @@ import {
   OnboardingIcon,
   PMFIcon,
 } from "@formbricks/ui/icons";
-import { Button } from "@formbricks/ui/Button";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -102,7 +102,7 @@ export default function Header() {
   return (
     <Popover className="relative" as="header">
       <a href="https://www.producthunt.com/products/formbricks" target="_blank">
-        <div className="bg-[#ff6154] text-center text-sm text-white">
+        <div className="bg-[#ff6154] px-4 py-2 text-center text-sm text-white lg:py-0">
           We&apos;re launching soon on Product Hunt - get notified 🚀
         </div>
       </a>
