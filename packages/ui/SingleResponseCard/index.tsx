@@ -1,18 +1,13 @@
 "use client";
 
-import { RatingResponse } from "../RatingResponse";
-import ResponseNotes from "./components/ResponseNote";
-import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
-import { deleteResponseAction } from "./actions";
-import { DeleteDialog } from "../DeleteDialog";
-import QuestionSkip from "./components/QuestionSkip";
-import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
+import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProfile } from "@formbricks/types/v1/profile";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
-import { PersonAvatar } from "../Avatars";
+import { TTag } from "@formbricks/types/v1/tags";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
@@ -20,10 +15,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
-import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { PersonAvatar } from "../Avatars";
+import { DeleteDialog } from "../DeleteDialog";
+import { RatingResponse } from "../RatingResponse";
+import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
+import { deleteResponseAction } from "./actions";
+import QuestionSkip from "./components/QuestionSkip";
+import ResponseNotes from "./components/ResponseNote";
+import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -184,6 +184,7 @@ export default function SingleResponseCard({
               {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
             </p>
           )}
+          {response.meta?.source && <p>Source: {response.meta.source}</p>}
         </div>
       )}
     </>
