@@ -157,7 +157,7 @@ export default function EditWelcomeCard({
                     <Input
                       id="buttonLabel"
                       name="buttonLabel"
-                      value={localSurvey?.welcomeCard?.buttonLabel || "Next"}
+                      defaultValue={localSurvey?.welcomeCard?.buttonLabel || "Next"}
                       onChange={(e) => updateSurvey({ buttonLabel: e.target.value })}
                     />
                   </div>

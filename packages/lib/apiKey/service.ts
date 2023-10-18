@@ -31,7 +31,7 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
     return apiKeyData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -53,7 +53,7 @@ export const getApiKeys = async (environmentId: string, page?: number): Promise<
     return apiKeys;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -78,7 +78,7 @@ export async function createApiKey(environmentId: string, apiKeyData: TApiKeyCre
     return { ...result, apiKey: key };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -100,7 +100,7 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
     return apiKeyData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -119,7 +119,7 @@ export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {
     return deletedApiKeyData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

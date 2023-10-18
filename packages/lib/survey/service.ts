@@ -85,7 +85,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error.message);
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -199,7 +199,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error.message);
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -382,7 +382,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error(error.message);
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
