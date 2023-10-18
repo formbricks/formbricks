@@ -19,7 +19,7 @@ const SelectTrigger: React.ComponentType<SelectPrimitive.SelectTriggerProps> = R
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ",
+      "flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ",
       className
     )}
     {...props}>
@@ -37,7 +37,7 @@ const SelectContent: React.ComponentType<SelectPrimitive.SelectContentProps> = R
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-slate-50 text-slate-700 shadow-md dark:text-slate-300 ",
+        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-slate-50 dark:bg-slate-700 text-slate-700 shadow-md dark:text-slate-300",
         className
       )}
       {...props}>

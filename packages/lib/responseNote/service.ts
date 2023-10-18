@@ -58,6 +58,24 @@ export const createResponseNote = async (
   }
 };
 
+export const getResponseNote = async (responseNoteId: string): Promise<TResponseNote | null> => {
+  try {
+    const responseNote = await prisma.responseNote.findUnique({
+      where: {
+        id: responseNoteId,
+      },
+      select,
+    });
+    return responseNote;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
 export const updateResponseNote = async (responseNoteId: string, text: string): Promise<TResponseNote> => {
   try {
     const updatedResponseNote = await prisma.responseNote.update({
