@@ -179,6 +179,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
           href: "https://spark-framework.net",
         },
+         {
+          name: "Firecamp",
+          description:
+            "vscode for apis, open-source postman/insomnia alternative",
+          href: "https://firecamp.io",
+        },
       ],
     });
   }
