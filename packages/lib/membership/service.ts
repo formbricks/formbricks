@@ -69,12 +69,15 @@ export const getMembershipByUserIdTeamId = async (
   return membership;
 };
 
-export const getMembershipsByUserId = async (userId: string): Promise<TMembership[]> => {
-  validateInputs([userId, ZString]);
+export const getMembershipsByUserId = async (userId: string, page?: number): Promise<TMembership[]> => {
+  validateInputs([userId, ZString], [page, ZOptionalNumber]);
+
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
     },
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   return memberships;

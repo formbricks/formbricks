@@ -1,4 +1,4 @@
-import ModalWithTabs from "@/app/components/shared/ModalWithTabs";
+import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 import { TagIcon } from "@heroicons/react/24/solid";
 import AttributeActivityTab from "./AttributeActivityTab";
 import AttributeSettingsTab from "./AttributeSettingsTab";

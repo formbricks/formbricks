@@ -1,14 +1,16 @@
 import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getSurveyWithAnalytics } from "@formbricks/lib/survey/service";
-import { getSurveyResponses } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { getResponses } from "@formbricks/lib/response/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getDisplayCountBySurveyId } from "@formbricks/lib/display/service";
 
 export const getAnalysisData = async (surveyId: string, environmentId: string) => {
-  const [survey, team, allResponses] = await Promise.all([
-    getSurveyWithAnalytics(surveyId),
+  const [survey, team, allResponses, displayCount] = await Promise.all([
+    getSurvey(surveyId),
     getTeamByEnvironmentId(environmentId),
-    getSurveyResponses(surveyId),
+    getResponses(surveyId),
+    getDisplayCountBySurveyId(surveyId),
   ]);
   if (!survey) throw new Error(`Survey not found: ${surveyId}`);
   if (!team) throw new Error(`Team not found for environment: ${environmentId}`);
@@ -19,7 +21,7 @@ export const getAnalysisData = async (surveyId: string, environmentId: string) =
     survey.type === "web" &&
     allResponses.length >= RESPONSES_LIMIT_FREE;
   const responses = limitReached ? allResponses.slice(0, RESPONSES_LIMIT_FREE) : allResponses;
-  const responsesCount = allResponses.length;
+  const responseCount = allResponses.length;
 
-  return { responses, responsesCount, limitReached, survey };
+  return { responses, responseCount, limitReached, survey, displayCount };
 };

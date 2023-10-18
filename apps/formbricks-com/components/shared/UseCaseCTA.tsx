@@ -9,13 +9,13 @@ export default function UseCaseHeader({ href }: UseCaseCTAProps) {
   /*   const plausible = usePlausible(); */
   const router = useRouter();
   return (
-    <div className="my-8 flex space-x-2 whitespace-nowrap">
-      <Button variant="secondary" href={href}>
+    <div className="my-8 flex flex-col justify-center space-x-2 space-y-2 whitespace-nowrap align-top sm:flex-row">
+      <Button className="mx-auto mt-2 flex w-fit justify-center align-middle" variant="secondary" href={href}>
         Step-by-step manual
       </Button>
-      <div className="space-y-1 text-center ">
+      <div className="space-y-1 text-center">
         <Button
-          className="bg-gray-800 text-gray-300 hover:text-white"
+          className="bg-slate-800 text-slate-300 hover:text-white dark:bg-slate-500 dark:text-slate-100 dark:hover:bg-slate-400"
           onClick={() => {
             router.push("https://app.formbricks.com/auth/signup");
             /* plausible("BestPractice_SubPage_CTA_TryItNow"); */

@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/v1/tags";
+import { responseCache } from "../response/cache";
 
 export const getTagOnResponseCacheTag = (tagId: string, responseId: string) =>
   `tagsOnResponse-${tagId}-${responseId}`;
@@ -13,6 +14,10 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
         responseId,
         tagId,
       },
+    });
+
+    responseCache.revalidate({
+      responseId,
     });
     return tagOnResponse;
   } catch (error) {
@@ -29,6 +34,10 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
           tagId,
         },
       },
+    });
+
+    responseCache.revalidate({
+      responseId,
     });
     return deletedTag;
   } catch (error) {
