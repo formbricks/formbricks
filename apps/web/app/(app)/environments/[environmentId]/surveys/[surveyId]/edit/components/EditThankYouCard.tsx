@@ -1,15 +1,15 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Switch } from "@formbricks/ui/Switch";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface EditThankYouCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
 }

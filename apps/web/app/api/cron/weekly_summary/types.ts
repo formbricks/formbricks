@@ -18,7 +18,7 @@ export interface Survey {
   id: string;
   name: string;
   responses: SurveyResponse[];
-  responsesCount: number;
+  responseCount: number;
   status: string;
 }
 
