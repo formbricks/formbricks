@@ -1,14 +1,14 @@
+import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
-import Dropdown from "./RatingTypeDropdown";
-import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { TSurveyRatingQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import Dropdown from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   question: TSurveyRatingQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;

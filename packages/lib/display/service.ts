@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber } from "@formbricks/types/v1/common";
 import {
   TDisplay,
   TDisplayInput,
@@ -10,11 +11,10 @@ import {
 import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
-import { revalidateTag } from "next/cache";
-import { validateInputs } from "../utils/validate";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { transformPrismaPerson } from "../person/service";
-import { ITEMS_PER_PAGE } from "../constants";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { validateInputs } from "../utils/validate";
 
 const selectDisplay = {
   id: true,
@@ -223,3 +223,26 @@ export const deleteDisplayByResponseId = async (responseId: string, surveyId: st
     throw error;
   }
 };
+
+export const getDisplayCountBySurveyId = async (surveyId: string): Promise<number> =>
+  unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+
+      try {
+        const displayCount = await prisma.response.count({
+          where: {
+            surveyId: surveyId,
+          },
+        });
+        return displayCount;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [`getDisplayCountBySurveyId-${surveyId}`],
+    {
+      tags: [getDisplaysCacheTag(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();

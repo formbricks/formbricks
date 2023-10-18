@@ -1,33 +1,35 @@
 "use client";
 
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import ContentWrapper from "@/app/components/shared/ContentWrapper";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { useSearchParams } from "next/navigation";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { useEffect, useMemo, useState } from "react";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTag } from "@formbricks/types/v1/tags";
 import { QuestionSummary } from "@formbricks/types/responses";
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TProduct } from "@formbricks/types/v1/product";
 import { TProfile } from "@formbricks/types/v1/profile";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TTag } from "@formbricks/types/v1/tags";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { useSearchParams } from "next/navigation";
 
 interface SummaryPageProps {
   environment: TEnvironment;
-  survey: TSurveyWithAnalytics;
+  survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
   surveyBaseUrl: string;
   product: TProduct;
   profile: TProfile;
   environmentTags: TTag[];
+  displayCount: number;
 }
 
 const SummaryPage = ({
@@ -39,6 +41,7 @@ const SummaryPage = ({
   product,
   profile,
   environmentTags,
+  displayCount,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
@@ -94,6 +97,7 @@ const SummaryPage = ({
       <SummaryMetadata
         responses={filterResponses}
         survey={survey}
+        displayCount={displayCount}
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />

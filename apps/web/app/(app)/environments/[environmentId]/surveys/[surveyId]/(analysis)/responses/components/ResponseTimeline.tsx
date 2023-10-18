@@ -1,6 +1,6 @@
 "use client";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProfile } from "@formbricks/types/v1/profile";
 import { TResponse } from "@formbricks/types/v1/responses";

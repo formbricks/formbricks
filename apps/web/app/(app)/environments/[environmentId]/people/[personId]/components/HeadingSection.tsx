@@ -1,4 +1,4 @@
-import GoBackButton from "@/app/components/shared/GoBackButton";
+import GoBackButton from "@formbricks/ui/GoBackButton";
 import { DeletePersonButton } from "./DeletePersonButton";
 import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import { getPerson } from "@formbricks/lib/person/service";
