@@ -187,7 +187,7 @@ export const transferOwnership = async (
     return memberships;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     const message = error instanceof Error ? error.message : "";
