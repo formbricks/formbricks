@@ -57,7 +57,7 @@ const DummyUI: React.FC = () => {
           </div>
         </div>
       ))}
-      <div className="w-fit ml-4 p-3">
+      <div className="ml-4 w-fit p-3">
         <Button
           variant="secondary"
           className="xs:text-base w-fit text-xs dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
