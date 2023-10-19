@@ -11,7 +11,7 @@ interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -28,6 +28,26 @@ export default function MultipleChoiceSingleQuestion({
   isLastQuestion,
   brandColor,
 }: MultipleChoiceSingleProps) {
+  const startTime = useRef<number>(performance.now());
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Restart the timer when the tab becomes visible again
+        startTime.current = performance.now();
+      } else {
+        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+      }
+    };
+
+    // Attach the event listener
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      // Clean up the event listener when the component is unmounted
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
   const [otherSelected, setOtherSelected] = useState(
     !!value && !question.choices.find((c) => c.label === value)
   ); // initially set to true if value is not in choices
@@ -59,7 +79,7 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -78,7 +98,7 @@ export default function MultipleChoiceSingleQuestion({
                   if (e.key == "Enter") {
                     onChange({ [question.id]: choice.label });
                     setTimeout(() => {
-                      onSubmit({ [question.id]: choice.label });
+                      onSubmit({ [question.id]: choice.label }, performance.now() - startTime.current);
                     }, 350);
                   }
                 }}
@@ -155,7 +175,7 @@ export default function MultipleChoiceSingleQuestion({
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value });
+                          onSubmit({ [question.id]: value }, performance.now() - startTime.current);
                         }, 100);
                       }
                     }}
@@ -175,7 +195,10 @@ export default function MultipleChoiceSingleQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             tabIndex={questionChoices.length + 3}
-            onClick={onBack}
+            onClick={() => {
+              onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+              onBack();
+            }}
           />
         )}
         <div></div>

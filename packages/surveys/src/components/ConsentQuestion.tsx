@@ -4,12 +4,13 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
+import { useRef, useEffect } from "react";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -26,6 +27,26 @@ export default function ConsentQuestion({
   isLastQuestion,
   brandColor,
 }: ConsentQuestionProps) {
+  const startTime = useRef<number>(performance.now());
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Restart the timer when the tab becomes visible again
+        startTime.current = performance.now();
+      } else {
+        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+      }
+    };
+
+    // Attach the event listener
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      // Clean up the event listener when the component is unmounted
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
   return (
     <div>
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -34,7 +55,7 @@ export default function ConsentQuestion({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit({ [question.id]: value });
+          onSubmit({ [question.id]: value }, performance.now() - startTime.current);
         }}>
         <label
           tabIndex={1}
@@ -69,7 +90,14 @@ export default function ConsentQuestion({
 
         <div className="mt-4 flex w-full justify-between">
           {!isFirstQuestion && (
-            <BackButton tabIndex={3} backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
+            <BackButton
+              tabIndex={3}
+              backButtonLabel={question.backButtonLabel}
+              onClick={() => {
+                onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+                onBack();
+              }}
+            />
           )}
           <div />
           <SubmitButton

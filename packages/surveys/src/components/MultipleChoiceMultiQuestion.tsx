@@ -11,7 +11,7 @@ interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -28,6 +28,26 @@ export default function MultipleChoiceSingleQuestion({
   isLastQuestion,
   brandColor,
 }: MultipleChoiceSingleProps) {
+  const startTime = useRef<number>(performance.now());
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Restart the timer when the tab becomes visible again
+        startTime.current = performance.now();
+      } else {
+        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+      }
+    };
+
+    // Attach the event listener
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      // Clean up the event listener when the component is unmounted
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
     [question]
@@ -90,7 +110,6 @@ export default function MultipleChoiceSingleQuestion({
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
         onChange({ [question.id]: newValue });
-        onSubmit({ [question.id]: newValue });
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -195,7 +214,7 @@ export default function MultipleChoiceSingleQuestion({
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value });
+                          onSubmit({ [question.id]: value }, performance.now() - startTime.current);
                         }, 100);
                       }
                     }}
@@ -215,7 +234,10 @@ export default function MultipleChoiceSingleQuestion({
           <BackButton
             tabIndex={questionChoices.length + 3}
             backButtonLabel={question.backButtonLabel}
-            onClick={onBack}
+            onClick={() => {
+              onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+              onBack();
+            }}
           />
         )}
         <div></div>

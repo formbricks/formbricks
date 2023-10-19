@@ -78,11 +78,15 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData) => {
+  const onSubmit = (responseData: TResponseData, time?: any) => {
+    console.log(time);
+    const questionId = Object.keys(responseData)[0];
+    const timeData = { [questionId]: time };
+    Object.keys(responseData)[0];
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
-    onResponse({ data: responseData, finished });
+    onResponse({ data: responseData, ttc: timeData, finished });
     if (finished) {
       onFinished();
     }
