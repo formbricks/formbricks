@@ -359,7 +359,7 @@ const Leaderboard = [
   },
   {
     name: "Aditya Deshlahre",
-    points: "1120",
+    points: "1220",
     link: "https://github.com/adityadeshlahre",
   },
   {
@@ -412,7 +412,7 @@ const Leaderboard = [
   },
   {
     name: "Anjaneya Gupta",
-    points: "650",
+    points: "1150",
   },
   {
     name: "Sachin Kuber",
@@ -432,11 +432,11 @@ const Leaderboard = [
   },
   {
     name: "yatharth",
-    points: "600",
+    points: "650",
   },
   {
     name: "Ratish Jain",
-    points: "250",
+    points: "300",
     link: "https://github.com/ratishjain12",
   },
   {
@@ -445,7 +445,7 @@ const Leaderboard = [
   },
   {
     name: "Abhinav Arya",
-    points: "400",
+    points: "550",
     link: "github.com/itzabhinavarya",
   },
   {
@@ -493,7 +493,7 @@ const Leaderboard = [
   },
   {
     name: "bitnagar",
-    points: "100",
+    points: "150",
   },
   {
     name: "United1l",
@@ -509,7 +509,7 @@ const Leaderboard = [
   },
   {
     name: "Bilal Mirza",
-    points: "550",
+    points: "925",
   },
   {
     name: "Asharan2511",
@@ -521,7 +521,7 @@ const Leaderboard = [
   },
   {
     name: "Digvijay Gupta",
-    points: "100",
+    points: "300",
   },
   {
     name: "hercules_2401",
@@ -545,11 +545,11 @@ const Leaderboard = [
   },
   {
     name: "Moheyt",
-    points: "100",
+    points: "400",
   },
   {
     name: "ortin779",
-    points: "50",
+    points: "125",
   },
   {
     name: "Piyush Garg",
@@ -582,6 +582,38 @@ const Leaderboard = [
   {
     name: "Vishal Khoje",
     points: "100",
+  },
+  {
+    name: "Aadish1233",
+    points: "50",
+  },
+  {
+    name: "aahsihsadish1233",
+    points: "350",
+  },
+  {
+    name: "AliYar-Khan",
+    points: "50",
+  },
+  {
+    name: "Hanan Mehmood",
+    points: "50",
+  },
+  {
+    name: "Janumala Akhilendra",
+    points: "50",
+  },
+  {
+    name: "Nilanjan Pramanik",
+    points: "50",
+  },
+  {
+    name: "Vedant-Z",
+    points: "200",
+  },
+  {
+    name: "Vineetjk",
+    points: "50",
   },
 ];
 
