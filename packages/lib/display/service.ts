@@ -64,7 +64,7 @@ export const updateDisplay = async (
   } catch (error) {
     console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -110,7 +110,7 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -144,7 +144,7 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -200,7 +200,7 @@ export const getDisplaysOfPerson = async (
     return displays;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -218,7 +218,7 @@ export const deleteDisplayByResponseId = async (responseId: string, surveyId: st
     revalidateTag(getDisplaysCacheTag(surveyId));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }

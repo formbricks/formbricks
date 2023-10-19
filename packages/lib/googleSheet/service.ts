@@ -50,7 +50,7 @@ export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpr
     return spreadsheets;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -96,7 +96,7 @@ export async function writeData(credentials: TGoogleCredential, spreadsheetId: s
     );
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }

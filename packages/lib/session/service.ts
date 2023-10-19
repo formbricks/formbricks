@@ -36,7 +36,7 @@ export const getSession = async (sessionId: string): Promise<TSession | null> =>
     return session;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -89,7 +89,7 @@ export const getSessionWithActionsOfPerson = async (
     return sessionsWithActionsForPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -106,7 +106,7 @@ export const getSessionCount = async (personId: string): Promise<number> => {
     return sessionCount;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -135,7 +135,7 @@ export const createSession = async (personId: string): Promise<TSession> => {
     return session;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -161,7 +161,7 @@ export const extendSession = async (sessionId: string): Promise<TSession> => {
     return session;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
