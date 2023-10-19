@@ -1,13 +1,14 @@
-import AirTableWrapper from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirTableWrapper";
-import { getAirtableTables } from "@formbricks/lib/airTable/service";
+import AirtableWrapper from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
+import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { AIR_TABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TAirTableIntegration, TAirtable } from "@formbricks/types/v1/integrations";
+import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
 import GoBackButton from "@formbricks/ui/GoBackButton";
 
-export default async function AirTable({ params }) {
+export default async function Airtable({ params }) {
   const enabled = !!AIR_TABLE_CLIENT_ID;
   const [surveys, integrations, environment] = await Promise.all([
     getSurveys(params.environmentId),
@@ -18,23 +19,23 @@ export default async function AirTable({ params }) {
     throw new Error("Environment not found");
   }
 
-  const airtableIntegration: TAirTableIntegration | undefined = integrations?.find(
-    (integration): integration is TAirTableIntegration => integration.type === "airtable"
+  const airtableIntegration: TIntegrationAirtable | undefined = integrations?.find(
+    (integration): integration is TIntegrationAirtable => integration.type === "airtable"
   );
 
-  let airTableArray: TAirtable[] = [];
+  let airtableArray: TIntegrationItem[] = [];
   if (airtableIntegration && airtableIntegration.config.key) {
-    airTableArray = await getAirtableTables(params.environmentId);
+    airtableArray = await getAirtableTables(params.environmentId);
   }
 
   return (
     <>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
       <div className="h-[75vh] w-full">
-        <AirTableWrapper
+        <AirtableWrapper
           enabled={enabled}
           airtableIntegration={airtableIntegration}
-          airTableArray={airTableArray}
+          airtableArray={airtableArray}
           environmentId={environment.id}
           surveys={surveys}
           environment={environment}

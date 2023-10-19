@@ -1,17 +1,23 @@
 import { z } from "zod";
-import { ZGoogleSheetsConfig } from "./googleSheet";
-import { ZAirTableConfig } from "./airTable";
+import {
+  ZIntegrationGoogleSheetsConfig,
+  ZIntegrationGoogleSheets,
+  ZIntegrationGoogleSheetsInput,
+} from "./googleSheet";
+import { ZIntegrationAirtableConfig, ZIntegrationAirtable, ZIntegrationAirtableInput } from "./airtable";
 
-export const ZIntegrationsTypes = z.enum(["googleSheets", "airtable"]);
+export const ZIntegrationsType = z.enum(["googleSheets", "airtable"]);
 
-export const ZIntegrationConfig = z.union([ZGoogleSheetsConfig, ZAirTableConfig]);
+export const ZIntegrationConfig = z.union([ZIntegrationGoogleSheetsConfig, ZIntegrationAirtableConfig]);
 
-export const ZIntegration = z.object({
+export const ZIntegrationBase = z.object({
   id: z.string(),
-  type: ZIntegrationsTypes,
   environmentId: z.string(),
-  config: ZIntegrationConfig,
 });
+
+export const ZIntegration = z.union([ZIntegrationGoogleSheets, ZIntegrationAirtable]);
+
+export type TIntegration = z.infer<typeof ZIntegration>;
 
 export const ZIntegrationBaseSurveyData = z.object({
   createdAt: z.date(),
@@ -20,3 +26,12 @@ export const ZIntegrationBaseSurveyData = z.object({
   surveyId: z.string(),
   surveyName: z.string(),
 });
+
+export const ZIntegrationInput = z.union([ZIntegrationGoogleSheetsInput, ZIntegrationAirtableInput]);
+export type TIntegrationInput = z.infer<typeof ZIntegrationInput>;
+
+export const ZIntegrationItem = z.object({
+  name: z.string(),
+  id: z.string(),
+});
+export type TIntegrationItem = z.infer<typeof ZIntegrationItem>;

@@ -7,13 +7,13 @@ import Image from "next/image";
 import { useState } from "react";
 import AirtableLogo from "../images/airtable.svg";
 
-interface AirTableConnectProps {
+interface AirtableConnectProps {
   enabled: boolean;
   environmentId: string;
   webAppUrl: string;
 }
 
-export default function AirTableConnect({ environmentId, enabled, webAppUrl }: AirTableConnectProps) {
+export default function AirtableConnect({ environmentId, enabled, webAppUrl }: AirtableConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const handleGoogleLogin = async () => {
     setIsConnecting(true);

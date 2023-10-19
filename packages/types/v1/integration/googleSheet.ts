@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZIntegrationsTypes, ZIntegrationBaseSurveyData } from ".";
+import { ZIntegrationsType, ZIntegrationBaseSurveyData, ZIntegrationBase } from ".";
 
 export const ZGoogleCredential = z.object({
   scope: z.string(),
@@ -9,22 +9,42 @@ export const ZGoogleCredential = z.object({
   refresh_token: z.string(),
 });
 
-export const ZGoogleSheetsConfigData = z
+export type TGoogleCredential = z.infer<typeof ZGoogleCredential>;
+
+export const ZIntegrationGoogleSheetsConfigData = z
   .object({
     spreadsheetId: z.string(),
     spreadsheetName: z.string(),
   })
   .merge(ZIntegrationBaseSurveyData);
 
-export const ZGoogleSheetsConfig = z.object({
+export type TIntegrationGoogleSheetsConfigData = z.infer<typeof ZIntegrationGoogleSheetsConfigData>;
+
+export const ZIntegrationGoogleSheetsConfig = z.object({
   key: ZGoogleCredential,
-  data: z.array(ZGoogleSheetsConfigData),
+  data: z.array(ZIntegrationGoogleSheetsConfigData),
   email: z.string(),
 });
 
+export type TIntegrationGoogleSheetsConfig = z.infer<typeof ZIntegrationGoogleSheetsConfig>;
+
 export const ZGoogleSheetIntegration = z.object({
   id: z.string(),
-  type: ZIntegrationsTypes.extract(["googleSheets"]),
+  type: ZIntegrationsType.extract(["googleSheets"]),
   environmentId: z.string(),
-  config: ZGoogleSheetsConfig,
+  config: ZIntegrationGoogleSheetsConfig,
 });
+
+export const ZIntegrationGoogleSheets = ZIntegrationBase.extend({
+  type: z.literal("googleSheets"),
+  config: ZIntegrationGoogleSheetsConfig,
+});
+
+export type TIntegrationGoogleSheets = z.infer<typeof ZIntegrationGoogleSheets>;
+
+export const ZIntegrationGoogleSheetsInput = z.object({
+  type: z.enum(["googleSheets"]),
+  config: ZIntegrationGoogleSheetsConfig,
+});
+
+export type TIntegrationGoogleSheetsInput = z.infer<typeof ZIntegrationGoogleSheetsInput>;

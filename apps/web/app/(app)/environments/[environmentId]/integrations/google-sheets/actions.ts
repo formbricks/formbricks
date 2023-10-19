@@ -8,7 +8,7 @@ import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/in
 import { canUserAccessIntegration } from "@formbricks/lib/integration/auth";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { TGoogleSheetIntegrationInput } from "@formbricks/types/v1/integrations";
+import { TGoogleSheetIntegrationInput } from "@formbricks/types/v1/integration";
 
 export async function upsertIntegrationAction(
   environmentId: string,

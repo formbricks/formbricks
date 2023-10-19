@@ -25,7 +25,7 @@ export default async function IntegrationsPage({ params }) {
     (integration) => integration.type === "googleSheets"
   );
 
-  const containsAirTableIntegration = integrations.some((integration) => integration.type === "airtable");
+  const containsAirtableIntegration = integrations.some((integration) => integration.type === "airtable");
 
   const integrationCards = [
     {
@@ -81,7 +81,7 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/airtable`,
-      connectText: `${containsAirTableIntegration ? "Manage Table" : "Connect"}`,
+      connectText: `${containsAirtableIntegration ? "Manage Table" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/airtable",
       docsText: "Docs",
@@ -89,8 +89,8 @@ export default async function IntegrationsPage({ params }) {
       label: "Airtable",
       description: "Instantly populate your airtable table with survey data",
       icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
-      connected: containsAirTableIntegration ? true : false,
-      statusText: containsAirTableIntegration ? "Connected" : "Not Connected",
+      connected: containsAirtableIntegration ? true : false,
+      statusText: containsAirtableIntegration ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",

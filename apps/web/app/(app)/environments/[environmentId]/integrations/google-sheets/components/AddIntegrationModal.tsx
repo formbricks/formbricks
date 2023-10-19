@@ -1,31 +1,31 @@
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 import {
-  TGoogleSheetIntegration,
-  TGoogleSheetsConfigData,
-  TGoogleSpreadsheet,
-  TGoogleSheetIntegrationInput,
-} from "@formbricks/types/v1/integrations";
+  TIntegrationGoogleSheets,
+  TIntegrationGoogleSheetsConfigData,
+  TIntegrationGoogleSheetsInput,
+} from "@formbricks/types/v1/integration/googleSheet";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
 import { Checkbox } from "@formbricks/ui/Checkbox";
-import GoogleSheetLogo from "../images/google-sheets-small.png";
-import { useState, useEffect } from "react";
+import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import Image from "next/image";
-import { Modal } from "@formbricks/ui/Modal";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import GoogleSheetLogo from "../images/google-sheets-small.png";
+import { TIntegrationItem } from "@formbricks/types/v1/integration";
 
 interface AddWebhookModalProps {
   environmentId: string;
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
-  spreadsheets: TGoogleSpreadsheet[];
-  googleSheetIntegration: TGoogleSheetIntegration;
-  selectedIntegration?: (TGoogleSheetsConfigData & { index: number }) | null;
+  spreadsheets: TIntegrationItem[];
+  googleSheetIntegration: TIntegrationGoogleSheets;
+  selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
 }
 
 export default function AddIntegrationModal({
@@ -55,7 +55,7 @@ export default function AddIntegrationModal({
   const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState<any>(null);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
-  const googleSheetIntegrationData: TGoogleSheetIntegrationInput = {
+  const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
     type: "googleSheets",
     config: {
       key: googleSheetIntegration?.config?.key,

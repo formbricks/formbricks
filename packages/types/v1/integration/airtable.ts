@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { ZIntegrationBaseSurveyData } from ".";
+import { ZIntegrationBase, ZIntegrationBaseSurveyData } from ".";
 
-export const ZAirtableCredential = z.object({
+export const ZIntegrationAirtableCredential = z.object({
   expiry_date: z.string(),
   access_token: z.string(),
   refresh_token: z.string(),
 });
 
-export const ZAirTableConfigData = z
+export const ZIntegrationAirtableConfigData = z
   .object({
     tableId: z.string(),
     baseId: z.string(),
@@ -15,11 +15,15 @@ export const ZAirTableConfigData = z
   })
   .merge(ZIntegrationBaseSurveyData);
 
-export const ZAirTableConfig = z.object({
-  key: ZAirtableCredential,
-  data: z.array(ZAirTableConfigData),
+export type TIntegrationAirtableConfigData = z.infer<typeof ZIntegrationAirtableConfigData>;
+
+export const ZIntegrationAirtableConfig = z.object({
+  key: ZIntegrationAirtableCredential,
+  data: z.array(ZIntegrationAirtableConfigData),
   email: z.string(),
 });
+
+export type TIntegrationAirtableConfig = z.infer<typeof ZIntegrationAirtableConfig>;
 
 export const ZBases = z.object({
   bases: z.array(z.object({ id: z.string(), name: z.string() })),
@@ -44,4 +48,18 @@ export const ZTablesWithFields = z.object({
   ),
 });
 
-export type TAirtableTables = z.infer<typeof ZTables>;
+export type TIntegrationAirtableTables = z.infer<typeof ZTables>;
+
+export const ZIntegrationAirtable = ZIntegrationBase.extend({
+  type: z.literal("airtable"),
+  config: ZIntegrationAirtableConfig,
+});
+
+export type TIntegrationAirtable = z.infer<typeof ZIntegrationAirtable>;
+
+export const ZIntegrationAirtableInput = z.object({
+  type: z.enum(["airtable"]),
+  config: ZIntegrationAirtableConfig,
+});
+
+export type TIntegrationAirtableInput = z.infer<typeof ZIntegrationAirtableInput>;

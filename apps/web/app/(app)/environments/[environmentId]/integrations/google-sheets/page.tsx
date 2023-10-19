@@ -3,7 +3,7 @@ import GoBackButton from "@formbricks/ui/GoBackButton";
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TGoogleSheetIntegration, TGoogleSpreadsheet } from "@formbricks/types/v1/integrations";
+import { TGoogleSheetIntegration, TGoogleSpreadsheet } from "@formbricks/types/v1/integration";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   WEBAPP_URL,

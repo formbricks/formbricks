@@ -5,7 +5,7 @@ import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TGoogleSheetIntegration, TGoogleSheetsConfigData } from "@formbricks/types/v1/integrations";
+import { TGoogleSheetIntegration, TGoogleSheetsConfigData } from "@formbricks/types/v1/integration";
 import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";
 import toast from "react-hot-toast";

@@ -1,12 +1,11 @@
 "use client";
 
-import { TAirtableTables } from "@formbricks/types/v1/integration/airtable";
 import {
-  TAirTableIntegration,
-  TAirtable,
-  TAirtableIntegrationInput,
-  TAirTableConfigData,
-} from "@formbricks/types/v1/integrations";
+  TIntegrationAirtableTables,
+  TIntegrationAirtable,
+  TIntegrationAirtableConfigData,
+  TIntegrationAirtableInput,
+} from "@formbricks/types/v1/integration/airtable";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
@@ -22,6 +21,7 @@ import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { upsertIntegrationAction } from "../actions";
+import { TIntegrationItem } from "@formbricks/types/v1/integration";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -31,9 +31,9 @@ type AddIntegrationModalProps = {
   open: boolean;
   setOpenWithStates: (v: boolean) => void;
   environmentId: string;
-  airTableArray: TAirtable[];
+  airtableArray: TIntegrationItem[];
   surveys: TSurvey[];
-  airtableIntegration: TAirTableIntegration;
+  airtableIntegration: TIntegrationAirtable;
 } & EditModeProps;
 
 export type IntegrationModalInputs = {
@@ -56,13 +56,13 @@ interface BaseSelectProps {
   control: Control<IntegrationModalInputs, any>;
   isLoading: boolean;
   fetchTable: (val: string) => Promise<void>;
-  airTableArray: TAirtable[];
+  airtableArray: TIntegrationItem[];
   setValue: UseFormSetValue<IntegrationModalInputs>;
   defaultValue: string | undefined;
 }
 
 function BaseSelect({
-  airTableArray,
+  airtableArray,
   control,
   fetchTable,
   isLoading,
@@ -90,7 +90,7 @@ function BaseSelect({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {airTableArray.map((item) => (
+                {airtableArray.map((item) => (
                   <SelectItem key={item.id} value={item.id}>
                     {item.name}
                   </SelectItem>
@@ -109,14 +109,14 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
     open,
     setOpenWithStates,
     environmentId,
-    airTableArray,
+    airtableArray,
     surveys,
     airtableIntegration,
     isEditMode,
     defaultData,
   } = props;
   const router = useRouter();
-  const [tables, setTables] = useState<TAirtableTables["tables"]>([]);
+  const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
 
@@ -151,7 +151,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
         throw new Error("Please select at least one question");
       }
 
-      const airtableIntegrationData: TAirtableIntegrationInput = {
+      const airtableIntegrationData: TIntegrationAirtableInput = {
         type: "airtable",
         config: {
           key: airtableIntegration?.config?.key,
@@ -161,7 +161,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       };
 
       const currentTable = tables.find((item) => item.id === data.table);
-      const integrationData: TAirTableConfigData = {
+      const integrationData: TIntegrationAirtableConfigData = {
         surveyId: selectedSurvey.id,
         surveyName: selectedSurvey.name,
         questionIds: data.questions,
@@ -243,12 +243,12 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       <form onSubmit={handleSubmit(submitHandler)}>
         <div className="flex rounded-lg p-6">
           <div className="flex w-full flex-col gap-y-4 pt-5">
-            {airTableArray.length ? (
+            {airtableArray.length ? (
               <BaseSelect
                 control={control}
                 isLoading={isLoading}
                 fetchTable={fetchTable}
-                airTableArray={airTableArray}
+                airtableArray={airtableArray}
                 setValue={setValue}
                 defaultValue={defaultData?.base}
               />

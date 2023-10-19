@@ -8,7 +8,7 @@ import {
   TGoogleSheetIntegration,
   TGoogleSheetsConfigData,
   TGoogleSpreadsheet,
-} from "@formbricks/types/v1/integrations";
+} from "@formbricks/types/v1/integration";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 import { TEnvironment } from "@formbricks/types/v1/environment";

@@ -4,14 +4,14 @@ import {
   TAirtable,
   TAirtableCredential,
   TAirtableIntegrationInput,
-  TAirTableConfigData,
+  TAirtableConfigData,
   ZAirtableCredential,
   ZAirtableTokenSchema,
   ZBases,
   ZTables,
   ZTablesWithFields,
-  TAirTableIntegration,
-} from "@formbricks/types/v1/integrations";
+  TAirtableIntegration,
+} from "@formbricks/types/v1/integration";
 import { DatabaseError } from "@formbricks/types/v1/errors";
 import { AIR_TABLE_CLIENT_ID } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
@@ -106,13 +106,13 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
 
 export const getAirtableToken = async (environmentId: string) => {
   try {
-    const airTableIntegration = (await getIntegrationByType(
+    const airtableIntegration = (await getIntegrationByType(
       environmentId,
       "airtable"
-    )) as TAirTableIntegration;
+    )) as TAirtableIntegration;
 
     const { access_token, expiry_date, refresh_token } = ZAirtableCredential.parse(
-      airTableIntegration?.config.key
+      airtableIntegration?.config.key
     );
 
     const expiryDate = new Date(expiry_date);
@@ -130,8 +130,8 @@ export const getAirtableToken = async (environmentId: string) => {
       await createOrUpdateIntegration(environmentId, {
         type: "airtable",
         config: {
-          data: airTableIntegration?.config?.data ?? [],
-          email: airTableIntegration?.config?.email ?? "",
+          data: airtableIntegration?.config?.data ?? [],
+          email: airtableIntegration?.config?.email ?? "",
           key: newToken,
         },
       });
@@ -204,7 +204,7 @@ const addField = async (
 
 export const writeData = async (
   key: TAirtableCredential,
-  configData: TAirTableConfigData,
+  configData: TAirtableConfigData,
   values: string[][]
 ) => {
   try {

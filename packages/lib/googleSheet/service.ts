@@ -10,7 +10,7 @@ import {
   TGoogleCredential,
   TGoogleSpreadsheet,
   TGoogleSheetIntegration,
-} from "@formbricks/types/v1/integrations";
+} from "@formbricks/types/v1/integration";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,

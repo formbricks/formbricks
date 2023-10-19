@@ -2,7 +2,6 @@
 
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TAirTableIntegration, TAirtable } from "@formbricks/types/v1/integrations";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -13,19 +12,21 @@ import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
+import { TIntegrationItem } from "@formbricks/types/v1/integration";
 interface handleModalProps {
-  airTableIntegration: TAirTableIntegration;
+  airtableIntegration: TIntegrationAirtable;
   environment: TEnvironment;
   environmentId: string;
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
-  airTableArray: TAirtable[];
+  airtableArray: TIntegrationItem[];
 }
 
 const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At"];
 
 export default function Home(props: handleModalProps) {
-  const { airTableIntegration, environment, environmentId, setIsConnected, surveys, airTableArray } = props;
+  const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<(IntegrationModalInputs & { index: number }) | null>(
@@ -33,12 +34,12 @@ export default function Home(props: handleModalProps) {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const integrationData = airTableIntegration?.config?.data ?? [];
+  const integrationData = airtableIntegration?.config?.data ?? [];
 
   const handleDeleteIntegration = async () => {
     try {
       setisDeleting(true);
-      await deleteIntegrationAction(airTableIntegration.id);
+      await deleteIntegrationAction(airtableIntegration.id);
       setIsConnected(false);
       toast.success("Integration removed successfully");
     } catch (error) {
@@ -66,7 +67,7 @@ export default function Home(props: handleModalProps) {
             onClick={() => {
               setIsDeleteIntegrationModalOpen(true);
             }}>
-            Connected with {airTableIntegration.config.email}
+            Connected with {airtableIntegration.config.email}
           </span>
         </div>
         <Button
@@ -132,12 +133,12 @@ export default function Home(props: handleModalProps) {
 
       {isModalOpen && (
         <AddIntegrationModal
-          airTableArray={airTableArray}
+          airtableArray={airtableArray}
           open={isModalOpen}
           setOpenWithStates={handleModal}
           environmentId={environmentId}
           surveys={surveys}
-          airtableIntegration={airTableIntegration}
+          airtableIntegration={airtableIntegration}
           {...data}
         />
       )}
