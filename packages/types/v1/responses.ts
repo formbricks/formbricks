@@ -104,10 +104,12 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
-  meta: z.object({
-    url: z.string().optional(),
-    source: z.string().optional(),
-  }),
+  meta: z
+    .object({
+      url: z.string().optional(),
+      source: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
