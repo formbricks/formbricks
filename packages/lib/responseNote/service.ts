@@ -6,6 +6,9 @@ import { DatabaseError } from "@formbricks/types/v1/errors";
 import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Prisma } from "@prisma/client";
 import { responseCache } from "../response/cache";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/v1/environment";
+import { ZString } from "@formbricks/types/v1/common";
 
 const select = {
   id: true,
@@ -33,6 +36,8 @@ export const createResponseNote = async (
   userId: string,
   text: string
 ): Promise<TResponseNote> => {
+  validateInputs([responseId, ZId], [userId, ZId], [text, ZString]);
+
   try {
     const responseNote = await prisma.responseNote.create({
       data: {
@@ -44,7 +49,7 @@ export const createResponseNote = async (
     });
 
     responseCache.revalidate({
-      id: responseId,
+      id: responseNote.response.id,
       surveyId: responseNote.response.surveyId,
     });
 
@@ -59,6 +64,8 @@ export const createResponseNote = async (
 };
 
 export const updateResponseNote = async (responseNoteId: string, text: string): Promise<TResponseNote> => {
+  validateInputs([responseNoteId, ZString], [text, ZString]);
+
   try {
     const updatedResponseNote = await prisma.responseNote.update({
       where: {
@@ -88,6 +95,8 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
 };
 
 export const resolveResponseNote = async (responseNoteId: string): Promise<TResponseNote> => {
+  validateInputs([responseNoteId, ZString]);
+
   try {
     const responseNote = await prisma.responseNote.update({
       where: {
