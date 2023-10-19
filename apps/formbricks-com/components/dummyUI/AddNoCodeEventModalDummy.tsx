@@ -14,7 +14,7 @@ interface EventDetailModalProps {
 export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open, setOpen }) => {
   return (
     <Modal open={open} setOpen={setOpen} noPadding>
-      <div className="flex flex-col bg-slate-50 p-2 dark:bg-slate-800">
+      <div className="flex flex-col rounded-lg bg-slate-50 p-2 dark:bg-slate-800">
         <div className="bg-slate-90 dark:bg-slate-700">
           <div className="p-4 sm:p-6">
             <div className="flex items-center space-x-2">
