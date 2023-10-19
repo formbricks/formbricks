@@ -133,6 +133,22 @@ export function Survey({
                 redirectUrl={survey.redirectUrl}
                 isRedirectDisabled={isRedirectDisabled}
               />
+            ) : questionId === "start" && !survey.welcomeCard.enabled?(
+                <QuestionConditional
+                  question={survey?.questions[0]}
+                  value={responseData[survey?.questions[0]?.id]}
+                  onChange={onChange}
+                  onSubmit={onSubmit}
+                  onBack={onBack}
+                  isFirstQuestion={
+                    // if prefillResponseData is provided, check if we're on the first "real" question
+                    history && prefillResponseData
+                      ? history[history.length - 1] === survey.questions[0].id
+                      : true
+                  }
+                  isLastQuestion={0 === survey.questions.length - 1}
+                  brandColor={brandColor}
+                />
             ) : (
               survey.questions.map(
                 (question, idx) =>
