@@ -10,9 +10,14 @@
     <h1>This is A TEST</h1>
 
     <!-- Load formbricks-js package -->
+<script src="../dist/index.umd.js"></script>
 <script type="text/javascript">
-    !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "clj82u6xw000kmv0h35f7sg5b", apiHost: "https://app.formbricks.com"})},500)}();
-    </script>
-
+    // Wait for the DOM to be fully loaded before initializing FormBricks
+    window.formbricks.init({
+      environmentId: "clj0zabr40009ma0hs7bb4cq9",
+      apiHost: "https://app.formbricks.com",
+      debug: true
+    });
+</script>
 </body>
 </html>
