@@ -7,9 +7,9 @@ import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/v1/
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { getEnvironmentCacheTag } from "../environment/service";
 import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { validateInputs } from "../utils/validate";
+import { environmentCache } from "../environment/cache";
 
 export const select = {
   id: true,
@@ -170,7 +170,10 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
     deletedTeam?.products.forEach((product) => {
       product.environments.forEach((environment) => {
         revalidateTag(getTeamByEnvironmentIdCacheTag(environment.id));
-        revalidateTag(getEnvironmentCacheTag(environment.id));
+
+        environmentCache.revalidate({
+          id: environment.id,
+        });
       });
     });
 

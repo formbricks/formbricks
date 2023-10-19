@@ -14,15 +14,13 @@ import {
 } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import "server-only";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
-
-export const getEnvironmentCacheTag = (environmentId: string) => `environments-${environmentId}`;
-export const getEnvironmentsCacheTag = (productId: string) => `products-${productId}-environments`;
+import { formatEnvironmentDateFields } from "./util";
 
 export const getEnvironment = (environmentId: string) =>
   unstable_cache(
@@ -139,29 +137,40 @@ export const updateEnvironment = async (
 };
 
 export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
-  validateInputs([userId, ZId]);
-  try {
-    return await prisma.environment.findFirst({
-      where: {
-        type: "production",
-        product: {
-          team: {
-            memberships: {
-              some: {
-                userId,
+  const environment = await unstable_cache(
+    async () => {
+      validateInputs([userId, ZId]);
+      try {
+        return await prisma.environment.findFirst({
+          where: {
+            type: "production",
+            product: {
+              team: {
+                memberships: {
+                  some: {
+                    userId,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
 
-    throw error;
-  }
+        throw error;
+      }
+    },
+    [],
+    {
+      tags: [],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return environment ? formatEnvironmentDateFields(environment) : environment;
 };
 
 export const createEnvironment = async (

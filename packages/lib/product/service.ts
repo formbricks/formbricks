@@ -10,7 +10,8 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "../environment/service";
+import { createEnvironment } from "../environment/service";
+import { environmentCache } from "../environment/cache";
 import { ZOptionalNumber } from "@formbricks/types/v1/common";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
@@ -177,11 +178,16 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
 
   if (product) {
     revalidateTag(getProductsCacheTag(product.teamId));
-    revalidateTag(getEnvironmentsCacheTag(product.id));
+    environmentCache.revalidate({
+      productId: product.id,
+    });
+
     product.environments.forEach((environment) => {
       // revalidate product cache
       revalidateTag(getProductCacheTag(environment.id));
-      revalidateTag(getEnvironmentCacheTag(environment.id));
+      environmentCache.revalidate({
+        id: environment.id,
+      });
     });
   }
 
