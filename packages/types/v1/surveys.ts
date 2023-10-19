@@ -261,6 +261,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
+  imageUrl: z.string().optional(),
   lowerLabel: z.string(),
   upperLabel: z.string(),
   logic: z.array(ZSurveyRatingLogic).optional(),

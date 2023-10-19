@@ -6,6 +6,9 @@ import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outlin
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import Dropdown from "./RatingTypeDropdown";
+import FileInput from "@formbricks/ui/FileInput";
+import { usePathname } from "next/navigation";
+import { ImagePlusIcon } from "lucide-react";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;
@@ -24,20 +27,39 @@ export default function RatingQuestionForm({
   isInValid,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
+  const pathName = usePathname();
+  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
 
   return (
     <form>
       <div className="mt-3">
         <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
+        <div className="mt-2 flex flex-col gap-6">
+          {showImageUploader && (
+            <FileInput
+              allowedFileExtensions={["png", "jpeg", "jpg"]}
+              environmentId={environmentId}
+              onFileUpload={(url: string) => {
+                updateQuestion(questionIdx, { imageUrl: url });
+              }}
+              fileUrl={question.imageUrl || ""}
+            />
+          )}
+          <div className="flex items-center space-x-2">
+            <Input
+              autoFocus
+              id="headline"
+              name="headline"
+              value={question.headline}
+              onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
+              isInvalid={isInValid && question.headline.trim() === ""}
+            />
+            <ImagePlusIcon
+              className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => setShowImageUploader((prev) => !prev)}
+            />
+          </div>
         </div>
       </div>
 
