@@ -37,6 +37,11 @@
       "persistent": true,
       "dependsOn": ["@formbricks/js#build"]
     },
+    "@formbricks/api#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/api#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
@@ -108,8 +113,8 @@
         "TELEMETRY_DISABLED",
         "VERCEL_URL",
         "WEBAPP_URL",
-        "AWS_ACCESS_KEY",
-        "AWS_SECRET_KEY",
+        "S3_ACCESS_KEY",
+        "S3_SECRET_KEY",
         "S3_REGION",
         "S3_BUCKET_NAME"
       ]

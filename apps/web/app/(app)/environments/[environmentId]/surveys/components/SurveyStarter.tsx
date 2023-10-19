@@ -1,7 +1,7 @@
 "use client";
 import { createSurveyAction } from "../actions";
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { TSurveyInput } from "@formbricks/types/v1/surveys";

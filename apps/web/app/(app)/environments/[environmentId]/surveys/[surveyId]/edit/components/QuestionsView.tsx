@@ -2,20 +2,21 @@
 
 import HiddenFieldsCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldsCard";
 import { TProduct } from "@formbricks/types/v1/product";
-import { TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestion, TSurvey } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
+import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { validateQuestion } from "./Validation";
 
 interface QuestionsViewProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   product: TProduct;
@@ -41,11 +42,7 @@ export default function QuestionsView({
 
   const [backButtonLabel, setbackButtonLabel] = useState(null);
 
-  const handleQuestionLogicChange = (
-    survey: TSurveyWithAnalytics,
-    compareId: string,
-    updatedId: string
-  ): TSurveyWithAnalytics => {
+  const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
       if (!question.logic) return;
       question.logic.forEach((rule) => {
@@ -74,7 +71,7 @@ export default function QuestionsView({
   };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
-    let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    let updatedSurvey = { ...localSurvey };
 
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
@@ -110,7 +107,7 @@ export default function QuestionsView({
 
   const deleteQuestion = (questionIdx: number) => {
     const questionId = localSurvey.questions[questionIdx].id;
-    let updatedSurvey: TSurveyWithAnalytics = JSON.parse(JSON.stringify(localSurvey));
+    let updatedSurvey: TSurvey = { ...localSurvey };
     updatedSurvey.questions.splice(questionIdx, 1);
 
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
@@ -132,6 +129,7 @@ export default function QuestionsView({
 
   const duplicateQuestion = (questionIdx: number) => {
     const questionToDuplicate = JSON.parse(JSON.stringify(localSurvey.questions[questionIdx]));
+
     const newQuestionId = createId();
 
     // create a copy of the question with a new id
@@ -141,7 +139,7 @@ export default function QuestionsView({
     };
 
     // insert the new question right after the original one
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
 
     setLocalSurvey(updatedSurvey);
@@ -152,11 +150,13 @@ export default function QuestionsView({
   };
 
   const addQuestion = (question: any) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const updatedSurvey = { ...localSurvey };
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }
+
     updatedSurvey.questions.push({ ...question, isDraft: true });
+
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
     internalQuestionIdMap[question.id] = createId();
@@ -174,7 +174,6 @@ export default function QuestionsView({
   };
 
   const moveQuestion = (questionIndex: number, up: boolean) => {
-    // move the question up or down in the localSurvey questions array
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
     const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
@@ -185,6 +184,14 @@ export default function QuestionsView({
 
   return (
     <div className="mt-12 px-5 py-4">
+      <div className="mb-5 flex flex-col gap-5">
+        <EditWelcomeCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+        />
+      </div>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="mb-5 grid grid-cols-1 gap-5 ">
           <StrictModeDroppable droppableId="questionsList">

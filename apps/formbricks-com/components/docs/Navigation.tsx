@@ -247,7 +247,6 @@ export const navigation: Array<NavGroup> = [
       { title: "Deployment", href: "/docs/self-hosting/deployment" },
       { title: "Production", href: "/docs/self-hosting/production" },
       { title: "Docker", href: "/docs/self-hosting/docker" },
-      { title: "From Source", href: "/docs/self-hosting/from-source" },
       { title: "Migration to v1.1", href: "/docs/self-hosting/migrating-to-1.1" },
     ],
   },
