@@ -5,7 +5,7 @@ import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
-import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
