@@ -42,7 +42,6 @@ export default function LinkSurvey({
   const sourceParam = searchParams?.get("source");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
-  const [source, setSource] = useState<string>("");
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
@@ -51,12 +50,6 @@ export default function LinkSurvey({
     : undefined;
 
   const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
-
-  useEffect(() => {
-    if (sourceParam) {
-      setSource(sourceParam);
-    }
-  }, [sourceParam]);
 
   const responseQueue = useMemo(
     () =>
@@ -161,7 +154,7 @@ export default function LinkSurvey({
                 finished: responseUpdate.finished,
                 meta: {
                   url: window.location.href,
-                  source: source,
+                  source: sourceParam || "",
                 },
               });
           }}
