@@ -20,6 +20,8 @@ export default function LinkSingleUseSurveyModal({ survey, surveyBaseUrl }: Link
 
   useEffect(() => {
     fetchSingleUseIds();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey.singleUse?.isEncrypted]);
 
   const fetchSingleUseIds = async () => {
@@ -30,9 +32,8 @@ export default function LinkSingleUseSurveyModal({ survey, surveyBaseUrl }: Link
   const generateSingleUseIds = async (isEncrypted: boolean) => {
     const promises = Array(7)
       .fill(null)
-      .map(() => generateSingleUseIdAction(isEncrypted));
-    const ids = await Promise.all(promises);
-    return ids;
+      .map(() => generateSingleUseIdAction(survey.id, isEncrypted));
+    return await Promise.all(promises);
   };
 
   const defaultSurveyUrl = `${surveyBaseUrl}/${survey.id}`;
