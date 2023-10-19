@@ -121,7 +121,7 @@ export default function Header() {
   return (
     <Popover className={`${stickyNavClass}`} as="header">
       <a href="https://www.producthunt.com/products/formbricks" target="_blank">
-        <div className="bg-[#ff6154] px-2 text-center text-sm text-white lg:py-0">
+        <div className="hidden bg-[#ff6154] px-2 text-center text-sm text-white md:block lg:py-0">
           We&apos;re launching soon on Product Hunt - get notified 🚀
         </div>
       </a>
