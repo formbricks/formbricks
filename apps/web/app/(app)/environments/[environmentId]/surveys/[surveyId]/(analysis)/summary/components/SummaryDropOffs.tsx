@@ -24,8 +24,8 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
         if (!currQues.required) {
           if (!response.data[currQues.id]) {
             viewsArr[currQuesIdx]++;
-            const questionHasCustomLogic = currQues.logic;
 
+            const questionHasCustomLogic = currQues.logic;
             if (questionHasCustomLogic) {
               for (let logic of questionHasCustomLogic) {
                 if (!logic.destination) continue;
@@ -34,8 +34,10 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
                   break;
                 }
               }
+            } else {
+              currQuesIdx++;
             }
-            break;
+            continue;
           }
         }
 
@@ -73,7 +75,7 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
       }
     });
 
-    dropoffPercentageArr[0] = (dropoffArr[0] / displayCount) * 100;
+    dropoffPercentageArr[0] = (dropoffArr[0] / displayCount) * 100 || 0;
     for (let i = 1; i < survey.questions.length; i++) {
       if (viewsArr[i - 1] !== 0) {
         dropoffPercentageArr[i] = (dropoffArr[i] / viewsArr[i - 1]) * 100;
