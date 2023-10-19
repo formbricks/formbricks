@@ -1,3 +1,5 @@
+"use client";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -7,6 +9,9 @@ import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
 import { useEffect, useRef, useState } from "react";
 import { TSurveyMultipleChoiceSingleQuestion, TSurvey } from "@formbricks/types/v1/surveys";
+import { ImagePlusIcon } from "lucide-react";
+import FileInput from "@formbricks/ui/FileInput";
+import { usePathname } from "next/navigation";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -28,6 +33,8 @@ export default function MultipleChoiceSingleForm({
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
   const questionRef = useRef<HTMLInputElement>(null);
+  const [showImageUploader, setShowImageUploader] = useState<boolean>(question.imageUrl !== "");
+  const pathName = usePathname();
 
   const shuffleOptionsTypes = {
     none: {
@@ -155,19 +162,37 @@ export default function MultipleChoiceSingleForm({
     }
   }, [isNew]);
 
+  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
+
   return (
     <form>
       <div className="mt-3">
         <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            ref={questionRef}
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
+        <div className="mt-2 flex flex-col gap-6">
+          {showImageUploader && (
+            <FileInput
+              allowedFileExtensions={["png", "jpeg", "jpg"]}
+              environmentId={environmentId}
+              onFileUpload={(url: string) => {
+                updateQuestion(questionIdx, { imageUrl: url });
+              }}
+              fileUrl={question.imageUrl || ""}
+            />
+          )}
+          <div className="flex items-center space-x-2">
+            <Input
+              ref={questionRef}
+              id="headline"
+              name="headline"
+              value={question.headline}
+              onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
+              isInvalid={isInValid && question.headline.trim() === ""}
+            />
+            <ImagePlusIcon
+              className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => setShowImageUploader((prev) => !prev)}
+            />
+          </div>
         </div>
       </div>
 

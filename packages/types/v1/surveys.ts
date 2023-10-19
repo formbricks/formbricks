@@ -207,6 +207,7 @@ export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceSingle),
   choices: z.array(ZSurveyChoice),
+  imageUrl: z.string().optional(),
   logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
