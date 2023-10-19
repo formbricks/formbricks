@@ -49,7 +49,7 @@ export const ZActionClassInput = z.object({
   name: z.string(),
   description: z.string().optional(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
-  type: z.enum(["code", "noCode"]),
+  type: z.enum(["code", "noCode", "automatic"]),
 });
 
 export const ZActionClassAutomaticInput = z.object({

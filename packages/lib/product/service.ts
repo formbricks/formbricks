@@ -51,7 +51,7 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
         return products;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -85,7 +85,8 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
     return productPrisma;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      console.error(error.message);
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -125,7 +126,7 @@ export const updateProduct = async (
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
   }
 
@@ -160,7 +161,7 @@ export const getProduct = async (productId: string): Promise<TProduct | null> =>
     return productPrisma;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
