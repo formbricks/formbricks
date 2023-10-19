@@ -41,11 +41,12 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
+        revalidateTag(getTeamsByUserIdCacheTag(userId));
 
         return teams;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -78,11 +79,13 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
           },
           select: { ...select, memberships: true }, // include memberships
         });
+        revalidateTag(getTeamByEnvironmentIdCacheTag(environmentId));
 
         return team;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          console.error(error.message);
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -180,7 +183,7 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
     return team;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

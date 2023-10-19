@@ -56,7 +56,25 @@ export const createResponseNote = async (
     return responseNote;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getResponseNote = async (responseNoteId: string): Promise<TResponseNote | null> => {
+  try {
+    const responseNote = await prisma.responseNote.findUnique({
+      where: {
+        id: responseNoteId,
+      },
+      select,
+    });
+    return responseNote;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -87,7 +105,7 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
     return updatedResponseNote;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -117,7 +135,7 @@ export const resolveResponseNote = async (responseNoteId: string): Promise<TResp
     return responseNote;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

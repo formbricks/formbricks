@@ -8,21 +8,72 @@ import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { getActionClassCacheTag } from "../actionClass/service";
+import { actionClassCache } from "../actionClass/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getSessionCached } from "../session/service";
+import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
+import { actionCache } from "./cache";
 
-export const getActionsCacheTag = (environmentId: string): string => `environments-${environmentId}-actions`;
+export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
+  const action = await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
 
-export const getActionsByEnvironmentId = async (
-  environmentId: string,
-  limit?: number,
-  page?: number
-): Promise<TAction[]> => {
+      try {
+        const actionPrisma = await prisma.event.findFirst({
+          where: {
+            eventClass: {
+              environmentId: environmentId,
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            eventClass: true,
+          },
+        });
+        if (!actionPrisma) {
+          return null;
+        }
+        const action: TAction = {
+          id: actionPrisma.id,
+          createdAt: actionPrisma.createdAt,
+          sessionId: actionPrisma.sessionId,
+          properties: actionPrisma.properties,
+          actionClass: actionPrisma.eventClass,
+        };
+        return action;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getLastestActionByEnvironmentId-${environmentId}`],
+    {
+      tags: [actionCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
+  return action
+    ? {
+        ...action,
+        createdAt: new Date(action.createdAt),
+      }
+    : action;
+};
+
+export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
       try {
         const actionsPrisma = await prisma.event.findMany({
@@ -60,12 +111,13 @@ export const getActionsByEnvironmentId = async (
         throw error;
       }
     },
-    [`environments-${environmentId}-actionClasses`],
+    [`getActionsByEnvironmentId-${environmentId}-${page}`],
     {
-      tags: [getActionsCacheTag(environmentId)],
+      tags: [actionCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
   return actions.map((action) => ({
@@ -76,6 +128,7 @@ export const getActionsByEnvironmentId = async (
 
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
+
   const { environmentId, name, properties, sessionId } = data;
 
   let eventType: TActionClassType = "code";
@@ -89,6 +142,16 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     throw new ResourceNotFoundError("Session", sessionId);
   }
 
+  let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
+
+  if (!actionClass) {
+    actionClass = await createActionClass(environmentId, {
+      name,
+      type: eventType,
+      environmentId,
+    });
+  }
+
   const action = await prisma.event.create({
     data: {
       properties,
@@ -98,91 +161,101 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
         },
       },
       eventClass: {
-        connectOrCreate: {
-          where: {
-            name_environmentId: {
-              name,
-              environmentId,
-            },
-          },
-          create: {
-            name,
-            type: eventType,
-            environment: {
-              connect: {
-                id: environmentId,
-              },
-            },
-          },
+        connect: {
+          id: actionClass.id,
         },
       },
     },
-    include: {
-      eventClass: true,
-    },
   });
 
-  // revalidate cache
   revalidateTag(sessionId);
-  revalidateTag(getActionClassCacheTag(name, environmentId));
-  revalidateTag(getActionsCacheTag(environmentId));
+  actionCache.revalidate({
+    environmentId,
+  });
 
   return {
     id: action.id,
     createdAt: action.createdAt,
     sessionId: action.sessionId,
     properties: action.properties,
-    actionClass: action.eventClass,
+    actionClass,
   };
 };
 
-export const getActionCountInLastHour = async (actionClassId: string): Promise<number> => {
-  validateInputs([actionClassId, ZId]);
-  try {
-    const numEventsLastHour = await prisma.event.count({
-      where: {
-        eventClassId: actionClassId,
-        createdAt: {
-          gte: new Date(Date.now() - 60 * 60 * 1000),
-        },
-      },
-    });
-    return numEventsLastHour;
-  } catch (error) {
-    throw error;
-  }
-};
+export const getActionCountInLastHour = async (actionClassId: string): Promise<number> =>
+  unstable_cache(
+    async () => {
+      validateInputs([actionClassId, ZId]);
 
-export const getActionCountInLast24Hours = async (actionClassId: string): Promise<number> => {
-  validateInputs([actionClassId, ZId]);
-  try {
-    const numEventsLast24Hours = await prisma.event.count({
-      where: {
-        eventClassId: actionClassId,
-        createdAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        },
-      },
-    });
-    return numEventsLast24Hours;
-  } catch (error) {
-    throw error;
-  }
-};
+      try {
+        const numEventsLastHour = await prisma.event.count({
+          where: {
+            eventClassId: actionClassId,
+            createdAt: {
+              gte: new Date(Date.now() - 60 * 60 * 1000),
+            },
+          },
+        });
+        return numEventsLastHour;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [`getActionCountInLastHour-${actionClassId}`],
+    {
+      tags: [actionClassCache.tag.byId(actionClassId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
 
-export const getActionCountInLast7Days = async (actionClassId: string): Promise<number> => {
-  validateInputs([actionClassId, ZId]);
-  try {
-    const numEventsLast7Days = await prisma.event.count({
-      where: {
-        eventClassId: actionClassId,
-        createdAt: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        },
-      },
-    });
-    return numEventsLast7Days;
-  } catch (error) {
-    throw error;
-  }
-};
+export const getActionCountInLast24Hours = async (actionClassId: string): Promise<number> =>
+  unstable_cache(
+    async () => {
+      validateInputs([actionClassId, ZId]);
+
+      try {
+        const numEventsLast24Hours = await prisma.event.count({
+          where: {
+            eventClassId: actionClassId,
+            createdAt: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            },
+          },
+        });
+        return numEventsLast24Hours;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [`getActionCountInLast24Hours-${actionClassId}`],
+    {
+      tags: [actionClassCache.tag.byId(actionClassId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getActionCountInLast7Days = async (actionClassId: string): Promise<number> =>
+  unstable_cache(
+    async () => {
+      validateInputs([actionClassId, ZId]);
+
+      try {
+        const numEventsLast7Days = await prisma.event.count({
+          where: {
+            eventClassId: actionClassId,
+            createdAt: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+        });
+        return numEventsLast7Days;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [`getActionCountInLast7Days-${actionClassId}`],
+    {
+      tags: [actionClassCache.tag.byId(actionClassId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
