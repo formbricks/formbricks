@@ -32,32 +32,25 @@ export default function ActivityFeed({ activities, sortByDate, environment }: Ac
     }
   };
 
+  const getGroupKey = (activity: TActivityFeedItem, count: number) =>
+    `${getLabelByType(activity) || ""}/grp${count}`;
+
   const EVENT_GROUP_COUNT = 3;
 
   const groupedActivities = useMemo(() => {
     const groupedActivities = new Map<string, TActivityPopOverItem>();
-    let prevType: string | null = null;
     let currGroupKey = "";
     let grpCount = 0;
 
     for (let i = 0; i < sortedActivities.length; i++) {
       const activity = sortedActivities[i];
 
-      if (prevType === null) {
-        grpCount++;
-        (currGroupKey = `${getLabelByType(activity) || ""}/grp${grpCount}`),
-          groupedActivities.set(currGroupKey, {
-            count: 1,
-            activityFeedItem: activity,
-          });
-      } else {
-        grpCount++;
-        (currGroupKey = `${getLabelByType(activity) || ""}/grp${grpCount}`),
-          groupedActivities.set(currGroupKey, {
-            count: 1,
-            activityFeedItem: activity,
-          });
-      }
+      grpCount++;
+      (currGroupKey = getGroupKey(activity, grpCount)),
+        groupedActivities.set(currGroupKey, {
+          count: 1,
+          activityFeedItem: activity,
+        });
 
       if (i + EVENT_GROUP_COUNT - 1 < sortedActivities.length) {
         let j = i;
@@ -93,8 +86,6 @@ export default function ActivityFeed({ activities, sortByDate, environment }: Ac
           i = j;
         }
       }
-
-      prevType = activity.type;
     }
 
     return groupedActivities;
