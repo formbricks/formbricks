@@ -3,6 +3,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
 import { Switch } from "@formbricks/ui/Switch";
+import { toast } from "react-hot-toast";
 
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
@@ -23,7 +24,34 @@ export default function FileUploadQuestionForm({
   isInValid,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const [extension, setExtension] = useState("");
 
+  const handleInputChange = (event) => {
+    setExtension(event.target.value);
+  };
+  const addExtension = () => {
+    if (extension && extension.trim() !== "") {
+      if (question.allowedFileTypes) {
+        if (!question.allowedFileTypes.includes(extension)) {
+          updateQuestion(questionIdx, { allowedFileTypes: [...question.allowedFileTypes, extension] });
+          setExtension("");
+        } else {
+          toast.error("This extension is already added");
+        }
+      } else {
+        updateQuestion(questionIdx, { allowedFileTypes: [extension] });
+        setExtension("");
+      }
+    }
+  };
+
+  const removeExtension = (index: number) => {
+    if (question.allowedFileTypes) {
+      const updatedExtensions = [...question?.allowedFileTypes];
+      updatedExtensions.splice(index, 1);
+      updateQuestion(questionIdx, { allowedFileTypes: updatedExtensions });
+    }
+  };
   return (
     <form>
       <div className="mt-3">
@@ -141,13 +169,33 @@ export default function FileUploadQuestionForm({
       </div>
       {question.limitFileType && (
         <div className="mt-3">
-          <div className="mt-2 flex w-full items-center justify-between rounded-md border bg-slate-50 p-5">
-            <div className="flex items-center justify-center rounded-lg bg-slate-100 p-4">
+          <div className="mt-2 flex w-full items-center justify-start rounded-md border bg-slate-50 p-5">
+            {question.allowedFileTypes &&
+              question?.allowedFileTypes.map((item, index) => {
+                return (
+                  <div className="m-2 flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-4">
+                    <p>{item}</p>
+                    <div
+                      className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-50"
+                      onClick={() => removeExtension(index)}>
+                      -
+                    </div>
+                  </div>
+                );
+              })}
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-4">
               <input
-                className="w-36 rounded-md border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                placeholder="Add pdf"
+                className="w-16 rounded-md border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                placeholder="pdf"
+                value={extension}
+                onChange={handleInputChange}
                 type="text"
               />
+              <div
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-50"
+                onClick={addExtension}>
+                +
+              </div>
             </div>
           </div>
         </div>
