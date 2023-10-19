@@ -24,6 +24,7 @@ export default function InsightOppos() {
 
       <div className="mx-auto mt-4 w-fit px-4 py-2 text-center">
         <Button
+          className="hidden md:block"
           variant="highlight"
           onClick={() => {
             router.push("/demo");

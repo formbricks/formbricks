@@ -59,7 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           res.status(400).send({ message: "Tag already exists" });
         }
 
-        throw new DatabaseError("Database operation failed");
+        throw new DatabaseError(error.message);
       }
 
       throw error;

@@ -80,7 +80,7 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
     return invite;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
