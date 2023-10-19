@@ -77,7 +77,7 @@ x-environment: &environment
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -base64 32` to generate one
+    # You can use: `openssl rand -hex 16` to generate one
     NEXTAUTH_SECRET:
 
     # Set this to your public-facing URL, e.g., https://example.com

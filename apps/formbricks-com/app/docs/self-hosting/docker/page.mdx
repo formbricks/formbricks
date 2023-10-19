@@ -52,7 +52,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
    <CodeGroup title="Generate NextAuth Secret">
 
    ```bash
-   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)/" docker-compose.yml
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 16)/" docker-compose.yml
    ```
 
    </CodeGroup>

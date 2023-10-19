@@ -9,7 +9,7 @@ x-environment: &environment
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -base64 32` to generate one
+    # You can use: `openssl rand -hex 16` to generate one
     NEXTAUTH_SECRET:
 
     # Set this to your public-facing URL, e.g., https://example.com
@@ -17,7 +17,7 @@ x-environment: &environment
     NEXTAUTH_URL: http://localhost:3000
 
     # Formbricks Encryption Key is used to generate encrypted single use URLs for Link Surveys
-    # You can use: $(openssl rand -base64 24) to generate one
+    # You can use: $(openssl rand -hex 12) to generate one
     # FORMBRICKS_ENCRYPTION_KEY:
 
     # PostgreSQL password
