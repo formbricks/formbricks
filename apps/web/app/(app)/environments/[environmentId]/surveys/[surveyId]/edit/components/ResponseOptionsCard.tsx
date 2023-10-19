@@ -1,12 +1,10 @@
 "use client";
-
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { KeyboardEventHandler, useEffect, useState } from "react";
@@ -15,14 +13,12 @@ import toast from "react-hot-toast";
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
-  isEncryptionKeySet: boolean;
   responseCount: number;
 }
 
 export default function ResponseOptionsCard({
   localSurvey,
   setLocalSurvey,
-  isEncryptionKeySet,
   responseCount,
 }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
@@ -44,7 +40,7 @@ export default function ResponseOptionsCard({
     subheading: "You can only use this link once.",
   });
 
-  const [singleUseEncryption, setSingleUseEncryption] = useState(isEncryptionKeySet);
+  const [singleUseEncryption, setSingleUseEncryption] = useState(true);
   const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
     name: "",
     subheading: "",
@@ -438,34 +434,20 @@ export default function ResponseOptionsCard({
                     />
                     <Label htmlFor="headline">URL Encryption</Label>
                     <div>
-                      <TooltipProvider delayDuration={50}>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className="mt-2 flex items-center space-x-1 ">
-                              <Switch
-                                id="encryption-switch"
-                                checked={singleUseEncryption}
-                                onCheckedChange={hangleSingleUseEncryptionToggle}
-                                disabled={!isEncryptionKeySet}
-                              />
-                              <Label htmlFor="encryption-label">
-                                <div className="ml-2">
-                                  <p className="text-sm font-normal text-slate-600">
-                                    Enable encryption of Single Use Id (suId) in survey URL.
-                                  </p>
-                                </div>
-                              </Label>
-                            </div>
-                          </TooltipTrigger>
-                          {!isEncryptionKeySet && (
-                            <TooltipContent side={"top"}>
-                              <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                                FORMBRICKS_ENCRYPTION_KEY needs to be set to enable this feature.
-                              </p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
+                      <div className="mt-2 flex items-center space-x-1 ">
+                        <Switch
+                          id="encryption-switch"
+                          checked={singleUseEncryption}
+                          onCheckedChange={hangleSingleUseEncryptionToggle}
+                        />
+                        <Label htmlFor="encryption-label">
+                          <div className="ml-2">
+                            <p className="text-sm font-normal text-slate-600">
+                              Enable encryption of Single Use Id (suId) in survey URL.
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
                     </div>
                   </div>
                 </div>
