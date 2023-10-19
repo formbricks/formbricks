@@ -1,22 +1,15 @@
 import { evaluateCondition } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/evaluateLogic";
-import { QuestionSummary } from "@formbricks/types/responses";
 import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurveyQuestion, TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useMemo } from "react";
 
 interface SummaryDropOffsProps {
-  summaryData: QuestionSummary<TSurveyQuestion>[];
   survey: TSurvey;
   responses: TResponse[];
   displayCount: number;
 }
 
-export default function SummaryDropOffs({
-  summaryData,
-  responses,
-  survey,
-  displayCount,
-}: SummaryDropOffsProps) {
+export default function SummaryDropOffs({ responses, survey, displayCount }: SummaryDropOffsProps) {
   const getDropoff = () => {
     let dropoffArr = new Array(survey.questions.length).fill(0);
     let viewsArr = new Array(survey.questions.length).fill(0);
@@ -28,7 +21,28 @@ export default function SummaryDropOffs({
       while (currQuesIdx < survey.questions.length) {
         const currQues = survey.questions[currQuesIdx];
 
-        if (response.data[currQues.id] === undefined && !response.finished) {
+        if (!currQues.required) {
+          if (!response.data[currQues.id]) {
+            viewsArr[currQuesIdx]++;
+            const questionHasCustomLogic = currQues.logic;
+
+            if (questionHasCustomLogic) {
+              for (let logic of questionHasCustomLogic) {
+                if (!logic.destination) continue;
+                if (evaluateCondition(logic, response.data[currQues.id])) {
+                  currQuesIdx = survey.questions.findIndex((q) => q.id === logic.destination);
+                  break;
+                }
+              }
+            }
+            break;
+          }
+        }
+
+        if (
+          (response.data[currQues.id] === undefined && !response.finished) ||
+          (currQues.required && !response.data[currQues.id])
+        ) {
           dropoffArr[currQuesIdx]++;
           viewsArr[currQuesIdx]++;
           break;
@@ -79,11 +93,11 @@ export default function SummaryDropOffs({
           <div className="pl-4 text-center md:pl-6">Views</div>
           <div className="px-4 text-center md:px-6">Drop-off</div>
         </div>
-        {summaryData.map((questionSummary, i) => (
+        {survey.questions.map((question, i) => (
           <div
-            key={questionSummary.question.id}
+            key={question.id}
             className="grid grid-cols-5 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
-            <div className="col-span-3 pl-4 md:pl-6">{questionSummary.question.headline}</div>
+            <div className="col-span-3 pl-4 md:pl-6">{question.headline}</div>
             <div className="whitespace-pre-wrap pl-6 text-center font-semibold">{viewsCount[i]}</div>
             <div className="px-4 text-center md:px-6">
               <span className="font-semibold">{dropoffCount[i]} </span>
