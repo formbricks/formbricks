@@ -14,7 +14,7 @@ interface EventDetailModalProps {
 export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open, setOpen }) => {
   return (
     <Modal open={open} setOpen={setOpen} noPadding>
-      <div className="flex flex-col rounded-lg bg-slate-50 p-2 dark:bg-slate-800">
+      <div className="flex flex-col rounded-lg bg-slate-50 p-6 dark:bg-slate-800">
         <div className="bg-slate-90 dark:bg-slate-700">
           <div className="p-4 sm:p-6">
             <div className="flex items-center space-x-2">
@@ -36,7 +36,12 @@ export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open
               <Label>Select By</Label>
               <RadioGroup className="grid grid-cols-1 gap-2 sm:grid-cols-2" defaultValue="pageUrl">
                 <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3 dark:border-slate-500">
-                  <RadioGroupItem value="pageUrl" id="pageUrl" className="bg-slate-50" />
+                  <RadioGroupItem
+                    value="pageUrl"
+                    id="pageUrl"
+                    className="flex items-center justify-center bg-slate-50">
+                    <div className="h-2 w-2 rounded-full bg-black dark:bg-white" />
+                  </RadioGroupItem>
                   <Label htmlFor="pageUrl" className="cursor-pointer dark:text-slate-200">
                     Page URL
                   </Label>
