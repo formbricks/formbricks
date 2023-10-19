@@ -1,6 +1,6 @@
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/notion/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TNotionConfigData, TNotionIntegration } from "@formbricks/types/v1/integrations";
@@ -81,7 +81,7 @@ export default function Home({
             type="table"
             environment={environment}
             noWidgetRequired={true}
-            emptyMessage="Your notion integrations will appear here as soon as you add them. ⏲️"
+            emptyMessage="Your Notion integrations will appear here as soon as you add them. ⏲️"
           />
         </div>
       ) : (
@@ -97,7 +97,7 @@ export default function Home({
                 return (
                   <div
                     key={index}
-                    className="m-2 grid h-16 grid-cols-6 content-center rounded-lg hover:bg-slate-100"
+                    className="m-2 grid h-16 cursor-pointer grid-cols-6 content-center rounded-lg hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>
