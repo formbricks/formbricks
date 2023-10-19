@@ -5,8 +5,7 @@ import { prisma } from "@formbricks/database";
 import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
 import { verifyPassword } from "../auth";
 import { totpAuthenticatorCheck } from "../totp";
-import { revalidateTag } from "next/cache";
-import { getProfileCacheTag } from "../profile/service";
+import { profileCache } from "../profile/cache";
 import { ENCRYPTION_KEY } from "../constants";
 
 export const setupTwoFactorAuth = async (
@@ -121,7 +120,9 @@ export const enableTwoFactorAuth = async (userId: string, code: string) => {
     },
   });
 
-  revalidateTag(getProfileCacheTag(userId));
+  profileCache.revalidate({
+    userId,
+  });
 
   return {
     message: "Two factor authentication enabled",
@@ -220,7 +221,9 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
     },
   });
 
-  revalidateTag(getProfileCacheTag(userId));
+  profileCache.revalidate({
+    userId,
+  });
 
   return {
     message: "Two factor authentication disabled",
