@@ -1,24 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import Home from "./Home";
-import Connect from "./Connect";
-import AddIntegrationModal from "./AddIntegrationModal";
-import {
-  TGoogleSheetIntegration,
-  TGoogleSheetsConfigData,
-  TGoogleSpreadsheet,
-} from "@formbricks/types/v1/integrations";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import {
+  TIntegrationGoogleSheets,
+  TIntegrationGoogleSheetsConfigData,
+} from "@formbricks/types/v1/integration/googleSheet";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { useState } from "react";
+import AddIntegrationModal from "./AddIntegrationModal";
+import Connect from "./Connect";
+import Home from "./Home";
 
 interface GoogleSheetWrapperProps {
   enabled: boolean;
   environment: TEnvironment;
   surveys: TSurvey[];
-  spreadSheetArray: TGoogleSpreadsheet[];
-  googleSheetIntegration: TGoogleSheetIntegration | undefined;
+  spreadSheetArray: TIntegrationItem[];
+  googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
 }
 
@@ -36,7 +36,7 @@ export default function GoogleSheetWrapper({
   const [spreadsheets, setSpreadsheets] = useState(spreadSheetArray);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
-    (TGoogleSheetsConfigData & { index: number }) | null
+    (TIntegrationGoogleSheetsConfigData & { index: number }) | null
   >(null);
 
   const refreshSheet = async () => {
