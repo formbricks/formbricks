@@ -170,6 +170,7 @@ const ZSurveyQuestionBase = z.object({
   type: z.string(),
   headline: z.string(),
   subheader: z.string().optional(),
+  imageUrl: z.string().optional(),
   required: z.boolean(),
   buttonLabel: z.string().optional(),
   backButtonLabel: z.string().optional(),
@@ -186,7 +187,6 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
   longAnswer: z.boolean().optional(),
-  imageUrl: z.string().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
 });
@@ -197,7 +197,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Consent),
   html: z.string().optional(),
   label: z.string(),
-  imageUrl: z.string().optional(),
   dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
@@ -208,7 +207,6 @@ export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceSingle),
   choices: z.array(ZSurveyChoice),
-  imageUrl: z.string().optional(),
   logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
@@ -218,7 +216,6 @@ export type TSurveyMultipleChoiceSingleQuestion = z.infer<typeof ZSurveyMultiple
 export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceMulti),
   choices: z.array(ZSurveyChoice),
-  imageUrl: z.string().optional(),
   logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
@@ -229,7 +226,6 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.NPS),
   lowerLabel: z.string(),
   upperLabel: z.string(),
-  imageUrl: z.string().optional(),
   logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
@@ -239,7 +235,6 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.CTA),
   html: z.string().optional(),
   buttonUrl: z.string().optional(),
-  imageUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: z.string().optional(),
   logic: z.array(ZSurveyCTALogic).optional(),
@@ -262,7 +257,6 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
-  imageUrl: z.string().optional(),
   lowerLabel: z.string(),
   upperLabel: z.string(),
   logic: z.array(ZSurveyRatingLogic).optional(),
