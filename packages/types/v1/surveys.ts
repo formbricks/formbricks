@@ -197,6 +197,7 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Consent),
   html: z.string().optional(),
   label: z.string(),
+  imageUrl: z.string().optional(),
   dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
