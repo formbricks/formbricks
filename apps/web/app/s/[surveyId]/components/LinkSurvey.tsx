@@ -159,7 +159,10 @@ export default function LinkSurvey({
                   ...hiddenFieldsRecord,
                 },
                 finished: responseUpdate.finished,
-                source: source,
+                meta: {
+                  url: window.location.href,
+                  source: source,
+                },
               });
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}

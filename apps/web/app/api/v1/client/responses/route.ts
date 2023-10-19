@@ -44,7 +44,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   let response: TResponse;
   try {
     const meta = {
-      url: responseInput?.meta?.url ?? "",
+      source: responseInput?.meta?.source,
+      url: responseInput?.meta?.url,
       userAgent: {
         browser: agent?.browser.name,
         device: agent?.device.type,
