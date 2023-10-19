@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
 import { ZIntegrationGoogleSheetsConfig, ZIntegrationGoogleSheetsInput } from "./googleSheet";
-
-export const ZIntegrationType = z.enum(["googleSheets", "airtable"]);
+import { ZIntegrationType } from "./sharedTypes";
+export * from "./sharedTypes";
 
 export const ZIntegrationConfig = z.union([ZIntegrationGoogleSheetsConfig, ZIntegrationAirtableConfig]);
 
