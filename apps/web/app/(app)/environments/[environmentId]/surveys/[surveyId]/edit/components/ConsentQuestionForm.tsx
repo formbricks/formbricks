@@ -1,12 +1,11 @@
 "use client";
 
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { md } from "@formbricks/lib/markdownIt";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
 import { Editor } from "@formbricks/ui/Editor";
-import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { ImagePlusIcon } from "lucide-react";
 import { useState } from "react";
 
 interface ConsentQuestionFormProps {
@@ -25,41 +24,17 @@ export default function ConsentQuestionForm({
   localSurvey,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
-  const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
   const environmentId = localSurvey.environmentId;
 
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2 flex flex-col gap-6">
-          {showImageUploader && (
-            <FileInput
-              allowedFileExtensions={["png", "jpeg", "jpg"]}
-              environmentId={environmentId}
-              onFileUpload={(url: string) => {
-                updateQuestion(questionIdx, { imageUrl: url });
-              }}
-              fileUrl={question.imageUrl || ""}
-            />
-          )}
-          <div className="flex items-center space-x-2">
-            <Input
-              autoFocus
-              id="headline"
-              name="headline"
-              value={question.headline}
-              onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-              isInvalid={isInValid && question.headline.trim() === ""}
-            />
-            <ImagePlusIcon
-              aria-label="Toggle image uploader"
-              className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => setShowImageUploader((prev) => !prev)}
-            />
-          </div>
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
 
       <div className="mt-3">
         <Label htmlFor="subheader">Description</Label>
