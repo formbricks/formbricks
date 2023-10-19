@@ -238,6 +238,7 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.CTA),
   html: z.string().optional(),
   buttonUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: z.string().optional(),
   logic: z.array(ZSurveyCTALogic).optional(),

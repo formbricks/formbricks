@@ -1,3 +1,5 @@
+"use client";
+
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import FileInput from "@formbricks/ui/FileInput";
