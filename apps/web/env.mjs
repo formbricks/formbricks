@@ -62,7 +62,7 @@ export const env = createEnv({
     AZURE_CLIENT_SECRET: z.string().optional(),
     AZURE_TENANT_ID: z.string().optional(),
     AZURE_CLIENT_ID: z.string().optional(),
-    DIRECT_AZURE_REDIRECT: z.string().optional(),
+    AZURE_DIRECT_REDIRECT: z.string().optional(),
   },
 
   /*
@@ -139,6 +139,6 @@ export const env = createEnv({
     AZURE_CLIENT_ID: process.env.AZURE_CLIENT_ID,
     AZURE_CLIENT_SECRET: process.env.AZURE_CLIENT_SECRET,
     AZURE_TENANT_ID: process.env.AZURE_TENANT_ID,
-    DIRECT_AZURE_REDIRECT: process.env.DIRECT_AZURE_REDIRECT,
+    AZURE_DIRECT_REDIRECT: process.env.AZURE_DIRECT_REDIRECT,
   },
 });
