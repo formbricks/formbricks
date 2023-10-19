@@ -167,8 +167,8 @@ export default function RatingQuestion({
             ))}
           </div>
           <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
-            <p>{question.lowerLabel}</p>
-            <p>{question.upperLabel}</p>
+            <p className="w-1/2 text-left">{question.lowerLabel}</p>
+            <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>
         </fieldset>
       </div>
