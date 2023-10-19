@@ -349,6 +349,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      lru-cache:
+        specifier: ^10.0.1
+        version: 10.0.1
       lucide-react:
         specifier: ^0.287.0
         version: 0.287.0(react@18.2.0)
@@ -21910,6 +21913,13 @@ packages:
     engines: { node: ">=8" }
     dev: false
 
+  /lru-cache@10.0.1:
+    resolution:
+      {
+        integrity: sha512-IJ4uwUTi2qCccrioU6g9g/5rvvVl13bsdczUUcqbciD9iLr095yj8DQKdObriEvuNSx325N1rV1O0sJFszx75g==,
+      }
+    engines: { node: 14 || >=16.14 }
+
   /lru-cache@4.1.5:
     resolution:
       {
@@ -24752,7 +24762,7 @@ packages:
       }
     engines: { node: ">=16 || 14 >=14.17" }
     dependencies:
-      lru-cache: 9.1.1
+      lru-cache: 10.0.1
       minipass: 5.0.0
 
   /path-to-regexp@0.1.7:
