@@ -15,14 +15,65 @@ import { createActionClass, getActionClassByEnvironmentIdAndName } from "../acti
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 
-export const getActionsByEnvironmentId = async (
-  environmentId: string,
-  limit?: number,
-  page?: number
-): Promise<TAction[]> => {
+export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
+  const action = await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+
+      try {
+        const actionPrisma = await prisma.event.findFirst({
+          where: {
+            eventClass: {
+              environmentId: environmentId,
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            eventClass: true,
+          },
+        });
+        if (!actionPrisma) {
+          return null;
+        }
+        const action: TAction = {
+          id: actionPrisma.id,
+          createdAt: actionPrisma.createdAt,
+          sessionId: actionPrisma.sessionId,
+          properties: actionPrisma.properties,
+          actionClass: actionPrisma.eventClass,
+        };
+        return action;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getLastestActionByEnvironmentId-${environmentId}`],
+    {
+      tags: [actionCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
+  return action
+    ? {
+        ...action,
+        createdAt: new Date(action.createdAt),
+      }
+    : action;
+};
+
+export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
       try {
         const actionsPrisma = await prisma.event.findMany({
