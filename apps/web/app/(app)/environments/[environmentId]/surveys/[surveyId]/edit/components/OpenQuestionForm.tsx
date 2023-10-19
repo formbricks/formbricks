@@ -80,6 +80,7 @@ export default function OpenQuestionForm({
               isInvalid={isInValid && question.headline.trim() === ""}
             />
             <ImagePlusIcon
+              aria-label="Toggle image uploader"
               className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
               onClick={() => setShowImageUploader((prev) => !prev)}
             />
