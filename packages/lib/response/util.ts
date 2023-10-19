@@ -24,3 +24,21 @@ export const formatResponseDateFields = (response: TResponseDates): TResponseDat
 
   return response;
 };
+
+export function mergeAndAdd(obj1: any, obj2: any, finished = false) {
+  const result = { ...obj1 };
+
+  for (let key in obj2) {
+    if (result.hasOwnProperty(key)) {
+      result[key] += obj2[key];
+    } else {
+      result[key] = obj2[key];
+    }
+  }
+
+  if (finished) {
+    result._total = Object.values(result).reduce((acc, val) => acc + val, 0);
+  }
+
+  return result;
+}

@@ -17,6 +17,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 export async function POST(request: Request): Promise<NextResponse> {
   const responseInput: TResponseInput = await request.json();
   const agent = UAParser(request.headers.get("user-agent"));
+  console.log(responseInput);
   const inputValidation = ZResponseInput.safeParse(responseInput);
 
   if (!inputValidation.success) {
@@ -28,7 +29,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   let survey;
-
+  console.log(responseInput);
   try {
     survey = await getSurvey(responseInput.surveyId);
   } catch (error) {

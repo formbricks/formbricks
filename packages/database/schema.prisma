@@ -111,6 +111,9 @@ model Response {
   data             Json              @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
+  ttc              Json              @default("{}")
+  /// @zod.custom(imports.ZResponseTtc)
+  /// [ResponseTtc]
   meta             Json              @default("{}")
   tags             TagsOnResponses[]
   /// @zod.custom(imports.ZResponsePersonAttributes)

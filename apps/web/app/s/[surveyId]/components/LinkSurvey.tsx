@@ -150,6 +150,9 @@ export default function LinkSurvey({
                   ...responseUpdate.data,
                   ...hiddenFieldsRecord,
                 },
+                ttc: {
+                  ...responseUpdate.ttc,
+                },
                 finished: responseUpdate.finished,
               });
           }}

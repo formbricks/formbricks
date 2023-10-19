@@ -21,7 +21,7 @@ import { deleteDisplayByResponseId } from "../display/service";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "./cache";
-import { formatResponseDateFields } from "../response/util";
+import { formatResponseDateFields, mergeAndAdd } from "../response/util";
 
 const responseSelection = {
   id: true,
@@ -31,6 +31,7 @@ const responseSelection = {
   finished: true,
   data: true,
   meta: true,
+  ttc: true,
   personAttributes: true,
   singleUseId: true,
   person: {
@@ -189,6 +190,7 @@ export const getResponseBySingleUseId = async (
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+  console.log(responseInput);
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
@@ -208,6 +210,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
         finished: responseInput.finished,
         data: responseInput.data,
+        ttc: responseInput.ttc,
         ...(responseInput.personId && {
           person: {
             connect: {
@@ -216,6 +219,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           },
           personAttributes: person?.attributes,
         }),
+
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
         singleUseId: responseInput.singleUseId,
       },
@@ -408,6 +412,9 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
+    console.log(currentResponse.ttc);
+    console.log(responseInput.ttc);
+    const ttc = mergeAndAdd(currentResponse.ttc, responseInput.ttc, responseInput.finished);
 
     const responsePrisma = await prisma.response.update({
       where: {
@@ -416,6 +423,7 @@ export const updateResponse = async (
       data: {
         finished: responseInput.finished,
         data,
+        ttc,
       },
       select: responseSelection,
     });

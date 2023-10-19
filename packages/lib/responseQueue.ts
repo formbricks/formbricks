@@ -24,6 +24,7 @@ export class ResponseQueue {
 
   add(responseUpdate: TResponseUpdate) {
     // update survey state
+    console.log(responseUpdate);
     this.surveyState.accumulateResponse(responseUpdate);
     if (this.config.setSurveyState) {
       this.config.setSurveyState(this.surveyState);

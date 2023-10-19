@@ -4,7 +4,12 @@ export const ZEventProperties = z.record(z.string());
 export { ZActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
 export { ZIntegrationConfig } from "@formbricks/types/v1/integrations";
 
-export { ZResponseData, ZResponsePersonAttributes, ZResponseMeta } from "@formbricks/types/v1/responses";
+export {
+  ZResponseData,
+  ZResponsePersonAttributes,
+  ZResponseMeta,
+  ZResponseTtc,
+} from "@formbricks/types/v1/responses";
 
 export {
   ZSurveyWelcomeCard,

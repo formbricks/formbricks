@@ -39,6 +39,7 @@ export default async function Page({ params }) {
 
   return (
     <>
+      {console.log(responses)}
       <ResponsesLimitReachedBanner environmentId={params.environmentId} surveyId={params.surveyId} />
       <SummaryPage
         environment={environment}

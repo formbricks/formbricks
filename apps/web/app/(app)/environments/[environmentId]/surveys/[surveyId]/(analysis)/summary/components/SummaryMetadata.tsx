@@ -32,6 +32,27 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
 
 export default function SummaryMetadata({ responses, survey, displayCount }: SummaryMetadataProps) {
   const completedResponses = responses.filter((r) => r.finished).length;
+  let ttcTemp = 0;
+  responses.map((response) => {
+    if (response.ttc._total) {
+      ttcTemp = ttcTemp + response.ttc._total;
+    }
+  });
+
+  function formatTime(ttcTemp, totalResponses) {
+    const seconds = ttcTemp / (1000 * totalResponses);
+    let formattedValue;
+
+    if (seconds >= 60) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      formattedValue = `${minutes}m ${remainingSeconds.toFixed(2)}s`;
+    } else {
+      formattedValue = `${seconds.toFixed(2)}s`;
+    }
+
+    return formattedValue;
+  }
   const totalResponses = responses.length;
 
   return (
@@ -61,6 +82,12 @@ export default function SummaryMetadata({ responses, survey, displayCount }: Sum
             percentage={`${Math.round(((totalResponses - completedResponses) / totalResponses) * 100)}%`}
             value={responses.length === 0 ? <span>-</span> : totalResponses - completedResponses}
             tooltipText="People who started but not completed the survey."
+          />
+          <StatCard
+            label="Time to Complete"
+            percentage={null}
+            value={`${formatTime(ttcTemp, totalResponses)}`}
+            tooltipText="Average time to complete a survey."
           />
         </div>
         <div className="flex flex-col justify-between lg:col-span-1">

@@ -5,6 +5,10 @@ import { ZTag } from "./tags";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
 
+export const ZResponseTtc = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
+
+export type TResponseTtc = z.infer<typeof ZResponseTtc>;
+
 export type TResponseData = z.infer<typeof ZResponseData>;
 
 export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
@@ -50,6 +54,7 @@ export const ZResponse = z.object({
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
+  ttc: ZResponseTtc,
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
   meta: ZResponseMeta.nullable(),
@@ -70,6 +75,7 @@ export const ZResponseInput = z.object({
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
   data: ZResponseData,
+  ttc: ZResponseTtc,
   meta: z
     .object({
       url: z.string().optional(),
@@ -89,6 +95,7 @@ export type TResponseInput = z.infer<typeof ZResponseInput>;
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
   data: ZResponseData,
+  ttc: ZResponseTtc,
 });
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
@@ -101,6 +108,7 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
+  ttc: ZResponseTtc,
   data: ZResponseData,
 });
 
