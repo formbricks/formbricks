@@ -22,8 +22,7 @@ export const canUserAccessPerson = async (userId: string, personId: string): Pro
 
       return true;
     },
-
-    [`users-${userId}-people-${personId}`],
+    [`canUserAccessPerson-${userId}-people-${personId}`],
     {
       revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [personCache.tag.byId(personId), personCache.tag.byUserId(userId)],

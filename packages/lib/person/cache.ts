@@ -17,9 +17,6 @@ export const personCache = {
     byUserId(userId: string): string {
       return `users-${userId}-people`;
     },
-    byUserIdAndEnvironmentId(userId: string, environmentId: string): string {
-      return `users-${userId}-environments-${environmentId}-people`;
-    },
   },
   revalidate({ id, environmentId, userId }: RevalidateProps): void {
     if (id) {
@@ -32,10 +29,6 @@ export const personCache = {
 
     if (userId) {
       revalidateTag(this.tag.byUserId(userId));
-    }
-
-    if (userId && environmentId) {
-      revalidateTag(this.tag.byUserIdAndEnvironmentId(userId, environmentId));
     }
   },
 };
