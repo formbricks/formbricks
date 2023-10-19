@@ -52,12 +52,26 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
    <CodeGroup title="Generate NextAuth Secret">
 
    ```bash
-   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)/" docker-compose.yml
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 16)/" docker-compose.yml
    ```
 
    </CodeGroup>
 </Col>
-4. **Start the Docker Setup**
+
+4. **Generate Encryption Key**
+
+   Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. The `sed` command below generates a random string using `openssl`, then replaces the `ENCRYPTION_KEY:` placeholder in the `docker-compose.yml` file with this generated secret:
+<Col>
+   <CodeGroup title="Generate Encryption Key">
+
+   ```bash
+   sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 16)/" docker-compose.yml
+   ```
+
+   </CodeGroup>
+</Col>
+
+5. **Start the Docker Setup**
 
    You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
 
@@ -73,7 +87,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
 </Col>
    The `-d` flag will run the containers in detached mode, meaning they'll run in the background.
 
-5. **Visit Formbricks in Your Browser**
+6. **Visit Formbricks in Your Browser**
 
    After starting the Docker setup, visit http://localhost:3000 in your browser to interact with the Formbricks application. The first time you access this page, you'll be greeted by a setup wizard. Follow the prompts to define your first user and get started.
 

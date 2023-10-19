@@ -34,8 +34,6 @@ tasks:
       cp .env.example .env &&
       sed -i -r "s#^(WEBAPP_URL=).*#\1 $(gp url 3000)#" .env &&
       sed -i -r "s#^(NEXTAUTH_URL=).*#\1 $(gp url 3000)#" .env &&
-      RANDOM_FORMBRICKS_ENCRYPTION_KEY=$(openssl rand -base64 16)
-      sed -i 's/^FORMBRICKS_ENCRYPTION_KEY=.*/FORMBRICKS_ENCRYPTION_KEY='"$RANDOM_FORMBRICKS_ENCRYPTION_KEY"'/' .env
       RANDOM_ENCRYPTION_KEY=$(openssl rand -base64 24)
       sed -i 's/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY='"$RANDOM_ENCRYPTION_KEY"'/' .env
       turbo --filter "@formbricks/web" go

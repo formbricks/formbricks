@@ -11,16 +11,16 @@ x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formb
 
 # NextJS Auth
 # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-# You can use: `openssl rand -base64 32` to generate one
-x-nextauth-secret: &nextauth_secret luJthrnoDpVgGakjVYlccsZ1FdlwxIWogWIsrxzoQ6E=
+# You can use: `openssl rand -hex 16` to generate one
+x-nextauth-secret: &nextauth_secret 10ee8bc17d40a457544cf373affbab16
 
 # Set this to your public-facing URL, e.g., https://example.com
 # You do not need the NEXTAUTH_URL environment variable in Vercel.
 x-nextauth-url: &nextauth_url http://localhost:3000
 
 # Encryption key
-# You can use: `openssl rand -base64 16` to generate one
-x-formbricks-encryption-key: &formbricks_encryption_key
+# You can use: `openssl rand -hex 16` to generate one
+x-encryption-key: &encryption_key 1b3d888592454d23b520040950654669
 
 # Necessary if email verification and password reset are enabled.
 # See further below if you want to disable these features.
@@ -112,7 +112,7 @@ services:
       SMTP_SECURE_ENABLED: *smtp_secure_enabled
       SMTP_USER: *smtp_user
       SMTP_PASSWORD: *smtp_password
-      FORMBRICKS_ENCRYPTION_KEY: *formbricks_encryption_key
+      ENCRYPTION_KEY: *encryption_key
       SURVEY_BASE_URL: *survey_base_url
       SHORT_SURVEY_BASE_URL: *short_survey_base_url
       PRIVACY_URL: *privacy_url

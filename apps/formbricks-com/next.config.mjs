@@ -145,6 +145,11 @@ const nextConfig = {
         destination: "https://app.formbricks.com/s/clhys1p9r001cpr0hu65rwh17",
         permanent: true,
       },
+      {
+        source: "/docs/self-hosting/migrating-to-1.1",
+        destination: "/docs/self-hosting/migration-guide",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
