@@ -5,6 +5,7 @@ import { AuthorizationError } from "@formbricks/types/v1/errors";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { deleteResponse } from "@formbricks/lib/response/service";
 import { canUserAccessResponse } from "@formbricks/lib/response/auth";
+import { canUserModifyResponseNote, canUserResolveResponseNote } from "@formbricks/lib/responseNote/auth";
 import {
   updateResponseNote,
   resolveResponseNote,
@@ -58,12 +59,20 @@ export const deleteResponseAction = async (responseId: string) => {
 export const updateResponseNoteAction = async (responseNoteId: string, text: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserModifyResponseNote(session.user!.id, responseNoteId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
   await updateResponseNote(responseNoteId, text);
 };
 
-export const resolveResponseNoteAction = async (responseNoteId: string) => {
+export const resolveResponseNoteAction = async (responseId: string, responseNoteId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserResolveResponseNote(session.user!.id, responseId, responseNoteId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
   await resolveResponseNote(responseNoteId);
 };
 

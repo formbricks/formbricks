@@ -36,6 +36,7 @@
     "googleapis": "^127.0.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "lru-cache": "^10.0.1",
     "lucide-react": "^0.287.0",
     "mime": "^3.0.0",
     "next": "13.5.5",

@@ -42,29 +42,39 @@ export const SigninForm = ({
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
 
-    const signInResponse = await signIn("credentials", {
-      callbackUrl: searchParams?.get("callbackUrl") || "/",
-      email: data.email,
-      password: data.password,
-      ...(totpLogin && { totpCode: data.totpCode }),
-      ...(totpBackup && { backupCode: data.backupCode }),
-      redirect: false,
-    });
+    try {
+      const signInResponse = await signIn("credentials", {
+        callbackUrl: searchParams?.get("callbackUrl") || "/",
+        email: data.email,
+        password: data.password,
+        ...(totpLogin && { totpCode: data.totpCode }),
+        ...(totpBackup && { backupCode: data.backupCode }),
+        redirect: false,
+      });
 
-    if (signInResponse?.error === "second factor required") {
-      setTotpLogin(true);
+      if (signInResponse?.error === "second factor required") {
+        setTotpLogin(true);
+        setLoggingIn(false);
+        return;
+      }
+
+      if (signInResponse?.error) {
+        setLoggingIn(false);
+        setSignInError(signInResponse.error);
+        return;
+      }
+
+      if (!signInResponse?.error) {
+        router.push(searchParams?.get("callbackUrl") || "/");
+      }
+    } catch (error) {
+      const errorMessage = error.toString();
+      const errorFeedback = errorMessage.includes("Invalid URL")
+        ? "Too many requests, please try again after some time!"
+        : error.message;
+      setSignInError(errorFeedback);
+    } finally {
       setLoggingIn(false);
-      return;
-    }
-
-    if (signInResponse?.error) {
-      setLoggingIn(false);
-      setSignInError(signInResponse.error);
-      return;
-    }
-
-    if (!signInResponse?.error) {
-      router.push(searchParams?.get("callbackUrl") || "/");
     }
   };
 
