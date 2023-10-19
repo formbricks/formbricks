@@ -116,7 +116,7 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
                 onBlur={handleUrlValidation}
               />
               <Button
-                disabled={watch("url") == "" ? true : false}
+                disabled={watch("url") === "" ? true : false}
                 variant="darkCTA"
                 size="sm"
                 className="col-span-1 text-center"
