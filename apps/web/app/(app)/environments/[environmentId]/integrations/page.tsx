@@ -25,6 +25,8 @@ export default async function IntegrationsPage({ params }) {
     (integration) => integration.type === "googleSheets"
   );
 
+  const containsSlackIntegration = integrations.some((integration) => integration.type === "slack");
+
   const integrationCards = [
     {
       docsHref: "https://formbricks.com/docs/getting-started/framework-guides#next-js",
@@ -79,7 +81,7 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/slack`,
-      connectText: "Connect",
+      connectText: `${containsSlackIntegration ? "Manage Channel Stream" : "Connect"}`,
       connectNewTab: false,
       // TODO - update docs
       docsHref: "https://formbricks.com/docs/integrations/slack",
@@ -88,8 +90,8 @@ export default async function IntegrationsPage({ params }) {
       label: "Slack",
       description: "Instantly Connect your Slack Workspace with Formbricks",
       icon: <Image src={SlackLogo} alt="Slack Logo" />,
-      connected: false,
-      statusText: "Not Connected",
+      connected: containsSlackIntegration,
+      statusText: containsSlackIntegration ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
