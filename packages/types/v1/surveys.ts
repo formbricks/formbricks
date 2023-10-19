@@ -228,6 +228,7 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.NPS),
   lowerLabel: z.string(),
   upperLabel: z.string(),
+  imageUrl: z.string().optional(),
   logic: z.array(ZSurveyNPSLogic).optional(),
 });
 

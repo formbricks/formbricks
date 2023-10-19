@@ -38,9 +38,11 @@ export default function OpenQuestionForm({
   updateQuestion,
   isInValid,
 }: OpenQuestionFormProps): JSX.Element {
+  console.log(question.imageUrl);
+
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
-  const [showImageUploader, setShowImageUploader] = useState<boolean>(question.imageUrl !== "");
+  const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
   const pathName = usePathname();
 
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {

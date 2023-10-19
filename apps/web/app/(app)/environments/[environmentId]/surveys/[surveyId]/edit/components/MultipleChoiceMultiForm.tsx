@@ -33,7 +33,7 @@ export default function MultipleChoiceMultiForm({
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
-  const [showImageUploader, setShowImageUploader] = useState<boolean>(question.imageUrl !== "");
+  const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
   const pathName = usePathname();
 
   const shuffleOptionsTypes = {
