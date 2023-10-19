@@ -1,3 +1,4 @@
+import { evaluateCondition } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/evaluateLogic";
 import { QuestionSummary } from "@formbricks/types/responses";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyQuestion, TSurvey } from "@formbricks/types/v1/surveys";
@@ -7,115 +8,68 @@ interface SummaryDropOffsProps {
   summaryData: QuestionSummary<TSurveyQuestion>[];
   survey: TSurvey;
   responses: TResponse[];
+  displayCount: number;
 }
 
-export default function SummaryDropOffs({ summaryData, responses, survey }: SummaryDropOffsProps) {
-  const getViewsForFinishedResponses = () => {
-    const finishedResponses = responses.filter((r) => r.finished);
-    let views = new Array(survey.questions.length).fill(0);
-    finishedResponses.forEach((response) => {
-      for (let i = 0; i < survey.questions.length; i++) {
-        const currQues = survey.questions[i];
-        const currResp = response.data[currQues.id];
-
-        if (i === survey.questions.length - 1) {
-          views[i]++;
-        } else if (!currQues.required && !currResp) {
-          views[i]++;
-        } else if (currResp) {
-          views[i]++;
-          if (!currQues.logic) {
-            continue;
-          } else {
-            let respondedLogic: any = null;
-            for (let logic of currQues.logic) {
-              if (!logic.destination) continue;
-              if (response.data[logic.destination]) {
-                respondedLogic = logic;
-                break;
-              }
-            }
-            if (!respondedLogic) {
-              break;
-            } else {
-              i = survey.questions.findIndex((q) => q.id === respondedLogic.destination) - 1;
-            }
-          }
-        }
-      }
-    });
-    return views;
-  };
-
+export default function SummaryDropOffs({
+  summaryData,
+  responses,
+  survey,
+  displayCount,
+}: SummaryDropOffsProps) {
   const getDropoff = () => {
     let dropoffArr = new Array(survey.questions.length).fill(0);
-    let viewsArr = getViewsForFinishedResponses();
+    let viewsArr = new Array(survey.questions.length).fill(0);
+    let dropoffPercentageArr = new Array(survey.questions.length).fill(0);
 
-    // calculating dropoff for each response
     responses.forEach((response) => {
-      // if a survey is finished, then we don't need to calculate dropoff
-      if (response.finished) return;
+      let currQuesIdx = 0;
 
-      // possible dropoff index, variable to keep track of the last question that was answered
-      let possibleDropoffIdx = 0;
+      while (currQuesIdx < survey.questions.length) {
+        const currQues = survey.questions[currQuesIdx];
 
-      // loop through each question in the survey
-      for (let i = 0; i < survey.questions.length; i++) {
-        const currQues = survey.questions[i];
-        const currResp = response.data[currQues.id];
-
-        viewsArr[i]++;
-
-        if (currQues.required && !currResp) {
-          // if a question is required and not answered, then we can calculate dropoff
-          dropoffArr[possibleDropoffIdx]++;
+        if (response.data[currQues.id] === undefined && !response.finished) {
+          dropoffArr[currQuesIdx]++;
+          viewsArr[currQuesIdx]++;
           break;
-        } else if (i === survey.questions.length - 1) {
-          // if we are at the last question, then we can calculate dropoff
-          dropoffArr[possibleDropoffIdx]++;
-          break;
-        } else if (!currQues.required && !currResp) {
-          // if a question is not required and not answered, then we can't calculate dropoff and we move on to the next question
-          continue;
-        } else if (currResp) {
-          //if there is a response
+        }
 
-          // setting the possible dropoff index to the current question index
-          possibleDropoffIdx = i;
+        viewsArr[currQuesIdx]++;
 
-          if (!currQues.logic) {
-            // if there is no logic, then we can move on to the next question
-            continue;
-          } else {
-            // if there is logic, then we need to check the logical destination
-            let respondedLogic: any = null;
+        let nextQuesIdx = currQuesIdx + 1;
+        const questionHasCustomLogic = currQues.logic;
 
-            // loop through each logic in the question, and checking for which logic was responded to by the user(it is being used as a workaround for evaluateCondition function)
-            for (let logic of currQues.logic) {
-              if (!logic.destination) continue;
-              if (response.data[logic.destination]) {
-                // if the get the logic that was responded to by the user, then we set the respondedLogic variable to that logic and break out of the loop
-                respondedLogic = logic;
-                possibleDropoffIdx = survey.questions.findIndex((q) => q.id === logic.destination);
-                break;
-              }
-            }
-            if (!respondedLogic) {
-              // if there is no responded logic, then we can move on to the next question
-              dropoffArr[possibleDropoffIdx]++;
+        if (questionHasCustomLogic) {
+          for (let logic of questionHasCustomLogic) {
+            if (!logic.destination) continue;
+            if (evaluateCondition(logic, response.data[currQues.id])) {
+              nextQuesIdx = survey.questions.findIndex((q) => q.id === logic.destination);
               break;
-            } else {
-              // if there is a responded logic, then we change the current question index to the index of the logical destination(-1 here because we are incrementing the index in the for loop)
-              i = possibleDropoffIdx - 1;
             }
           }
         }
+
+        if (!response.data[survey.questions[nextQuesIdx]?.id] && !response.finished) {
+          dropoffArr[nextQuesIdx]++;
+          viewsArr[nextQuesIdx]++;
+          break;
+        }
+
+        currQuesIdx = nextQuesIdx;
       }
     });
-    return [dropoffArr, viewsArr];
+
+    dropoffPercentageArr[0] = (dropoffArr[0] / displayCount) * 100;
+    for (let i = 1; i < survey.questions.length; i++) {
+      if (viewsArr[i - 1] !== 0) {
+        dropoffPercentageArr[i] = (dropoffArr[i] / viewsArr[i - 1]) * 100;
+      }
+    }
+
+    return [dropoffArr, viewsArr, dropoffPercentageArr];
   };
 
-  const [dropoffCount, viewsArr] = useMemo(() => getDropoff(), [responses]);
+  const [dropoffCount, viewsCount, dropoffPercentage] = useMemo(() => getDropoff(), [responses]);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -130,10 +84,10 @@ export default function SummaryDropOffs({ summaryData, responses, survey }: Summ
             key={questionSummary.question.id}
             className="grid grid-cols-5 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
             <div className="col-span-3 pl-4 md:pl-6">{questionSummary.question.headline}</div>
-            <div className="whitespace-pre-wrap pl-6 text-center font-semibold">{viewsArr[i]}</div>
+            <div className="whitespace-pre-wrap pl-6 text-center font-semibold">{viewsCount[i]}</div>
             <div className="px-4 text-center md:px-6">
               <span className="font-semibold">{dropoffCount[i]} </span>
-              <span>({Math.round((dropoffCount[i] / responses.length) * 100)}%)</span>
+              <span>({Math.round(dropoffPercentage[i])}%)</span>
             </div>
           </div>
         ))}
