@@ -28,17 +28,10 @@ export async function middleware(request: NextRequest) {
     } catch (_e) {
       console.log("Rate Limiting IP: ", ip);
 
-      return NextResponse.json(
-        { error: "Too many requests, Please try after a while!" },
-        { status: 429 }
-      );
+      return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
   } else {
-    return NextResponse.json(
-      { error: "Too many requests, Please try after a while!" },
-      { status: 429 }
-    );
-
+    return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
   }
 }
 

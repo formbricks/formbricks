@@ -588,7 +588,7 @@ const Leaderboard = [
     points: "50",
   },
   {
-    name: "aahsihsadish1233",
+    name: "aashish",
     points: "350",
   },
   {
