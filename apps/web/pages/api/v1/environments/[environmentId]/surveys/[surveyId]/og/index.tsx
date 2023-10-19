@@ -1,5 +1,4 @@
-import { ImageResponse } from "next/server";
-import { NextRequest } from "next/server";
+import { ImageResponse, NextRequest } from "next/server";
 
 export const dynamic = "auto";
 export const dynamicParams = true;
@@ -17,24 +16,24 @@ export default async function GET(req: NextRequest) {
 
   return new ImageResponse(
     (
-      <div tw="flex flex-col w-full h-full items-center  bg-[#00001e] rounded-xl">
+      <div tw={`flex flex-col w-full h-full items-center  bg-[${brandColor}]/75 rounded-xl `}>
         <div
-          tw="flex flex-col w-[80%] h-[69%] items-center  bg-gray-500 rounded-xl transform origin-bottom mt-9 absolute left-7 top-3 pacity-10"
+          tw="flex flex-col w-[80%] h-[60%] bg-white rounded-xl mt-13 absolute left-12 top-3 opacity-20"
+          style={{
+            transform: "rotate(356deg)",
+          }}></div>
+        <div
+          tw="flex flex-col w-[84%] h-[60%] bg-white rounded-xl mt-12 absolute top-5 left-13  border-2 opacity-60"
           style={{
             transform: "rotate(357deg)",
           }}></div>
         <div
-          tw="flex flex-col w-[90%] h-[69%] items-center  bg-white rounded-xl transform origin-bottom mt-9 absolute top-5 left-8  border-2 opacity-60"
-          style={{
-            transform: "rotate(358deg)",
-          }}></div>
-        <div
-          tw="flex flex-col w-[91%] h-[67%] items-center  bg-white rounded-xl transform origin-bottom mt-9 absolute top-[2.3rem] left-9"
+          tw="flex flex-col w-[85%] h-[67%] items-center  bg-white rounded-xl  mt-8 absolute top-[2.3rem] left-14"
           style={{
             transform: "rotate(360deg)",
           }}>
           <div tw="flex flex-col w-full">
-            <div tw="flex flex-col md:flex-row w-full  md:items-center justify-between ">
+            <div tw="flex flex-col md:flex-row w-full md:items-center justify-between ">
               <div tw="flex flex-col  px-8">
                 <h2 tw="flex flex-col text-[8] sm:text-4xl font-bold tracking-tight text-gray-900 text-left mt-15">
                   {name}
@@ -42,14 +41,13 @@ export default async function GET(req: NextRequest) {
                 <span tw="text-gray-600 text-xl">Complete in ~ 4 minutes</span>
               </div>
             </div>
-            <div tw="flex  justify-end mr-10 ">
-              <div tw="flex rounded-2xl absolute left-[34.88rem] top-[.35rem]">
-                <a
-                  tw={`flex items-center justify-center rounded-xl border border-transparent bg-[${brandColor}] px-5 py-3 text-2xl text-white h-15 w-34 font-extrabold opacity-50`}></a>
+            <div tw="flex justify-end mr-10 ">
+              <div tw="flex rounded-2xl absolute -right-2 mt-2">
+                <a tw={`rounded-xl border border-transparent bg-[${brandColor}] h-18 w-38 opacity-50`}></a>
               </div>
               <div tw="flex rounded-2xl shadow ">
                 <a
-                  tw={`flex items-center justify-center rounded-xl border border-transparent bg-[${brandColor}] px-5 py-3 text-2xl text-white h-15 w-34 font-extrabold`}>
+                  tw={`flex items-center justify-center rounded-xl border border-transparent bg-[${brandColor}] text-2xl text-white h-18 w-38`}>
                   Begin!
                 </a>
               </div>
