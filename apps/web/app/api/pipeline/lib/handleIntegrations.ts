@@ -1,19 +1,37 @@
+import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
+import { TIntegration } from "@formbricks/types/v1/integration";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { TGoogleSheetIntegration, TIntegration } from "@formbricks/types/v1/integrations";
 import { TPipelineInput } from "@formbricks/types/v1/pipelines";
+import { TIntegrationGoogleSheets } from "@formbricks/types/v1/integration/googleSheet";
+import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
 
 export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
-        await handleGoogleSheetsIntegration(integration as TGoogleSheetIntegration, data);
+        await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data);
+        break;
+      case "airtable":
+        await handleAirtableIntegration(integration as TIntegrationAirtable, data);
         break;
     }
   }
 }
 
-async function handleGoogleSheetsIntegration(integration: TGoogleSheetIntegration, data: TPipelineInput) {
+async function handleAirtableIntegration(integration: TIntegrationAirtable, data: TPipelineInput) {
+  if (integration.config.data.length > 0) {
+    for (const element of integration.config.data) {
+      if (element.surveyId === data.surveyId) {
+        const values = await extractResponses(data, element.questionIds);
+
+        await airtableWriteData(integration.config.key, element, values);
+      }
+    }
+  }
+}
+
+async function handleGoogleSheetsIntegration(integration: TIntegrationGoogleSheets, data: TPipelineInput) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
