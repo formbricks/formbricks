@@ -1,7 +1,7 @@
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airTable/service";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { WEBAPP_URL, AIR_TABLE_CLIENT_ID, AIR_TABLE_REDIRECT_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL, AIR_TABLE_CLIENT_ID } from "@formbricks/lib/constants";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   }
 
   const client_id = AIR_TABLE_CLIENT_ID;
-  const redirect_uri = AIR_TABLE_REDIRECT_URL;
+  const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
   const code_verifier = Buffer.from(environmentId + session.user.id + environmentId).toString("base64");
 
   if (!client_id) return NextResponse.json({ Error: "Airtable client id is missing" }, { status: 400 });

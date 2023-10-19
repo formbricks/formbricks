@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import crypto from "crypto";
 
-import { AIR_TABLE_CLIENT_ID, AIR_TABLE_REDIRECT_URL } from "@formbricks/lib/constants";
+import { AIR_TABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 
   const client_id = AIR_TABLE_CLIENT_ID;
-  const redirect_uri = AIR_TABLE_REDIRECT_URL;
+  const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
   if (!client_id) return NextResponse.json({ Error: "Airtable client id is missing" }, { status: 400 });
   if (!redirect_uri) return NextResponse.json({ Error: "Airtable redirect url is missing" }, { status: 400 });
 

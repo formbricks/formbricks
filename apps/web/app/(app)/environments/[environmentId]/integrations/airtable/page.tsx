@@ -1,14 +1,14 @@
+import AirTableWrapper from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirTableWrapper";
+import { getAirtableTables } from "@formbricks/lib/airTable/service";
+import { AIR_TABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TAirTableIntegration, TAirtable } from "@formbricks/types/v1/integrations";
-import { WEBAPP_URL, AIR_TABLE_CLIENT_ID, AIR_TABLE_REDIRECT_URL } from "@formbricks/lib/constants";
-import AirTableWrapper from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirTableWrapper";
-import { getAirtableTables } from "@formbricks/lib/airTable/service";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function AirTable({ params }) {
-  const enabled = !!(AIR_TABLE_CLIENT_ID && AIR_TABLE_REDIRECT_URL);
+  const enabled = !!AIR_TABLE_CLIENT_ID;
   const [surveys, integrations, environment] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
