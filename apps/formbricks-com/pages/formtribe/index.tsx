@@ -1,8 +1,8 @@
-import LayoutLight from "@/pages/formtribe/LayoutLight";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import Head from "next/head";
 import Image from "next/image";
+import LayoutTribe from "./LayoutTribe";
 
 import Dhru from "@/images/formtribe/dhru.jpeg";
 import Jojo from "@/images/formtribe/jojo.jpeg";
@@ -623,7 +623,7 @@ export default function FormTribeHackathon() {
     document.documentElement.classList.remove("dark");
   }, []);
   return (
-    <LayoutLight
+    <LayoutTribe
       title="FormTribe Hackathon"
       description="Can we ship an Open Source Typeform alternative in 30 days?">
       <Head>
@@ -1036,7 +1036,7 @@ export default function FormTribeHackathon() {
       </Button>
       {/* Breaker 3 */}
       <Breaker icon="👋" title="Join the Tribe!" />
-    </LayoutLight>
+    </LayoutTribe>
   );
 }
 
