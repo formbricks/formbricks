@@ -1,18 +1,18 @@
 "use server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getServerSession } from "next-auth";
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
+import { getServerSession } from "next-auth";
 
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessIntegration } from "@formbricks/lib/integration/auth";
 import { AuthorizationError } from "@formbricks/types/v1/errors";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { TGoogleSheetIntegrationInput } from "@formbricks/types/v1/integration";
+import { TIntegrationGoogleSheetsInput } from "@formbricks/types/v1/integration/googleSheet";
 
-export async function upsertIntegrationAction(
+export async function createOrUpdateIntegrationAction(
   environmentId: string,
-  integrationData: TGoogleSheetIntegrationInput
+  integrationData: TIntegrationGoogleSheetsInput
 ) {
   return await createOrUpdateIntegration(environmentId, integrationData);
 }

@@ -1,4 +1,4 @@
-import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -120,7 +120,7 @@ export default function AddIntegrationModal({
         // create action
         googleSheetIntegrationData.config!.data.push(integrationData);
       }
-      await upsertIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
@@ -153,7 +153,7 @@ export default function AddIntegrationModal({
     googleSheetIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await upsertIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {

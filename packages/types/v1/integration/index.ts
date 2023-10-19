@@ -10,6 +10,8 @@ export const ZIntegrationsType = z.enum(["googleSheets", "airtable"]);
 
 export const ZIntegrationConfig = z.union([ZIntegrationGoogleSheetsConfig, ZIntegrationAirtableConfig]);
 
+export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
+
 export const ZIntegrationBase = z.object({
   id: z.string(),
   environmentId: z.string(),
