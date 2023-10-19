@@ -128,7 +128,7 @@ export default function Loading() {
                       <div className="relative animate-pulse cursor-not-allowed select-none">
                         <ActivityItemPopover activityItem={activityItem}>
                           <div className="flex cursor-not-allowed select-none items-center space-x-3">
-                            <ActivityItemIcon activityItem={activityItem} />
+                            <ActivityItemIcon count={1} activityItem={activityItem} />
                             <div className="font-semibold text-slate-700">Loading</div>
                           </div>
                         </ActivityItemPopover>
