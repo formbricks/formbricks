@@ -81,7 +81,7 @@ services:
 
   formbricks:
     restart: always
-    image: formbricks/formbricks:latest
+    image: laalshaitaan/formbricks:0.0.15
     depends_on:
       - postgres
     ports:
