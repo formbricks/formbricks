@@ -163,9 +163,9 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
         throw error;
       }
     },
-    [],
+    [`getFirstEnvironmentByUserId-${userId}`],
     {
-      tags: [],
+      tags: [environmentCache.tag.byUserId(userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -179,7 +179,7 @@ export const createEnvironment = async (
 ): Promise<TEnvironment> => {
   validateInputs([productId, ZId], [environmentInput, ZEnvironmentCreateInput]);
 
-  const environemt = await prisma.environment.create({
+  const environment = await prisma.environment.create({
     data: {
       type: environmentInput.type || "development",
       product: { connect: { id: productId } },
@@ -213,9 +213,9 @@ export const createEnvironment = async (
   });
 
   environmentCache.revalidate({
-    id: environemt.id,
-    productId: environemt.productId,
+    id: environment.id,
+    productId: environment.productId,
   });
 
-  return environemt;
+  return environment;
 };

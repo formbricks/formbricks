@@ -6,17 +6,14 @@ import { DatabaseError, ValidationError } from "@formbricks/types/v1/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { createEnvironment } from "../environment/service";
 import { environmentCache } from "../environment/cache";
 import { ZOptionalNumber } from "@formbricks/types/v1/common";
-
-export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
-export const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
-const getProductCacheKey = (environmentId: string): string[] => [getProductCacheTag(environmentId)];
+import { productCache } from "./cache";
 
 const selectProduct = {
   id: true,
@@ -58,49 +55,45 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
         throw error;
       }
     },
-    [`teams-${teamId}-products`],
+    [`getProducts-${teamId}-${page}`],
     {
-      tags: [getProductsCacheTag(teamId)],
+      tags: [productCache.tag.byTeamId(teamId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> => {
-  if (!environmentId) {
-    throw new ValidationError("EnvironmentId is required");
-  }
-  let productPrisma;
-
-  try {
-    productPrisma = await prisma.product.findFirst({
-      where: {
-        environments: {
-          some: {
-            id: environmentId,
-          },
-        },
-      },
-      select: selectProduct,
-    });
-
-    return productPrisma;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error.message);
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const getProductByEnvironmentIdCached = (environmentId: string): Promise<TProduct | null> =>
+export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> =>
   unstable_cache(
     async () => {
-      return await getProductByEnvironmentId(environmentId);
+      if (!environmentId) {
+        throw new ValidationError("EnvironmentId is required");
+      }
+      let productPrisma;
+
+      try {
+        productPrisma = await prisma.product.findFirst({
+          where: {
+            environments: {
+              some: {
+                id: environmentId,
+              },
+            },
+          },
+          select: selectProduct,
+        });
+
+        return productPrisma;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error.message);
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
     },
-    getProductCacheKey(environmentId),
+    [`getProductByEnvironmentId-${environmentId}`],
     {
-      tags: getProductCacheKey(environmentId),
+      tags: [productCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -110,6 +103,7 @@ export const updateProduct = async (
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
+
   const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {
@@ -134,10 +128,16 @@ export const updateProduct = async (
   try {
     const product = ZProduct.parse(updatedProduct);
 
-    revalidateTag(getProductsCacheTag(product.teamId));
+    productCache.revalidate({
+      id: product.id,
+      teamId: product.teamId,
+    });
+
     product.environments.forEach((environment) => {
       // revalidate environment cache
-      revalidateTag(getProductCacheTag(environment.id));
+      productCache.revalidate({
+        environmentId: environment.id,
+      });
     });
 
     return product;
@@ -149,24 +149,32 @@ export const updateProduct = async (
   }
 };
 
-export const getProduct = async (productId: string): Promise<TProduct | null> => {
-  let productPrisma;
-  try {
-    productPrisma = await prisma.product.findUnique({
-      where: {
-        id: productId,
-      },
-      select: selectProduct,
-    });
+export const getProduct = async (productId: string): Promise<TProduct | null> =>
+  unstable_cache(
+    async () => {
+      let productPrisma;
+      try {
+        productPrisma = await prisma.product.findUnique({
+          where: {
+            id: productId,
+          },
+          select: selectProduct,
+        });
 
-    return productPrisma;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+        return productPrisma;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+    [`getProduct-${productId}`],
+    {
+      tags: [productCache.tag.byId(productId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
-    throw error;
-  }
-};
+  )();
 
 export const deleteProduct = async (productId: string): Promise<TProduct> => {
   const product = await prisma.product.delete({
@@ -177,14 +185,20 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
   });
 
   if (product) {
-    revalidateTag(getProductsCacheTag(product.teamId));
+    productCache.revalidate({
+      id: product.id,
+      teamId: product.teamId,
+    });
+
     environmentCache.revalidate({
       productId: product.id,
     });
 
     product.environments.forEach((environment) => {
       // revalidate product cache
-      revalidateTag(getProductCacheTag(environment.id));
+      productCache.revalidate({
+        environmentId: environment.id,
+      });
       environmentCache.revalidate({
         id: environment.id,
       });
