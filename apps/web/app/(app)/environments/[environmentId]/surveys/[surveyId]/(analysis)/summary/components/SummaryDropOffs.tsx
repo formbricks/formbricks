@@ -25,6 +25,11 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
           if (!response.data[currQues.id]) {
             viewsArr[currQuesIdx]++;
 
+            if (currQuesIdx === survey.questions.length - 1 && !response.finished) {
+              dropoffArr[currQuesIdx]++;
+              break;
+            }
+
             const questionHasCustomLogic = currQues.logic;
             if (questionHasCustomLogic) {
               for (let logic of questionHasCustomLogic) {
