@@ -5,16 +5,17 @@ import { signIn } from "next-auth/react";
 import { FaSlack } from "react-icons/fa";
 
 export const SlackButton = ({
+  environmentId,
   text = "Continue with Slack",
-  inviteUrl,
 }: {
+  environmentId: string;
   text?: string;
   inviteUrl?: string | null;
 }) => {
   const handleLogin = async () => {
     await signIn("slack", {
       redirect: true,
-      callbackUrl: inviteUrl ? inviteUrl : "/", // redirect after login to /
+      callbackUrl: `/api/slack/callback?environment=${environmentId}`, // redirect after login to /
     });
   };
 

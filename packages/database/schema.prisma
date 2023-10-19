@@ -317,6 +317,7 @@ enum EnvironmentType {
 
 enum IntegrationType {
   googleSheets
+  slack
 }
 
 model Integration {

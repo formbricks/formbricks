@@ -4,6 +4,13 @@ import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyToken } from "@formbricks/lib/jwt";
 import { getProfileByEmail } from "@formbricks/lib/profile/service";
+import {
+  TIntegration,
+  TSlackConfig,
+  TSlackConfigData,
+  TSlackCredential,
+  TSlackIntegration,
+} from "@formbricks/types/v1/integrations";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -140,26 +147,49 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token }) {
+    async jwt({ token, account }) {
       const existingUser = await getProfileByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
       }
 
-      const additionalAttributs = {
+      let additionalAttributes: any = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
         name: existingUser.name,
       };
 
+      if (account && account.provider && account.provider === "slack") {
+        const accountAttributes = {
+          accessToken: account.access_token,
+          idToken: account.id_token,
+          refreshToken: account.refresh_token,
+          expiresAt: account.expires_at,
+        };
+
+        additionalAttributes = { ...additionalAttributes, accountAttributes };
+      }
+
       return {
         ...token,
-        ...additionalAttributs,
+        ...additionalAttributes,
       };
     },
+    // @ts-nocheck
     async session({ session, token }) {
+      if (token.accountAttributes) {
+        // @ts-ignore
+        session.user.accessToken = token.accountAttributes.accessToken;
+        // @ts-ignore
+        session.user.idToken = token.accountAttributes.idToken;
+        // @ts-ignore
+        session.user.refreshToken = token.accountAttributes.refreshToken;
+        // @ts-ignore
+        session.user.expiresAt = token.accountAttributes.expiresAt;
+      }
+
       // @ts-ignore
       session.user.id = token?.id;
       // @ts-ignore
@@ -172,7 +202,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: any) {
-      console.log("userrrrrrrrrr", user, account);
+      console.log(user, account);
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
@@ -185,6 +215,11 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account.provider) {
+        // Handle Logic of Connecting with the slack Integration
+        if (account.provider === "slack") {
+          return true;
+        }
+
         const provider = account.provider.toLowerCase() as IdentityProvider;
         // check if accounts for this provider / account Id already exists
         const existingUserWithAccount = await prisma.user.findFirst({

@@ -15,7 +15,7 @@ interface ConnectProps {
   webAppUrl: string;
 }
 
-export default function Connect({ enabled }: ConnectProps) {
+export default function Connect({ enabled, environmentId }: ConnectProps) {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl");
 
@@ -43,7 +43,7 @@ export default function Connect({ enabled }: ConnectProps) {
           </p>
         )}
         {/*   Connect with Google */}
-        <SlackButton inviteUrl={callbackUrl} />
+        <SlackButton inviteUrl={callbackUrl} environmentId={environmentId} />
       </div>
     </div>
   );

@@ -33,6 +33,9 @@ export const GITHUB_SECRET = env.GITHUB_SECRET;
 export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
+export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
+export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
+
 export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 

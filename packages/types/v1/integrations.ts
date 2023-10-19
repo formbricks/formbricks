@@ -1,8 +1,43 @@
 import { z } from "zod";
 import { ZEnvironment } from "./environment";
 
-// Define a specific schema for googleSheets config
+// Schema for the slack configuration
+export const ZSlackCredential = z.object({
+  token_type: z.literal("Bearer"),
+  id_token: z.string(),
+  expiry_date: z.number(),
+  access_token: z.string(),
+  refresh_token: z.string(),
+});
 
+export const ZSlackConfigData = z.object({
+  createdAt: z.date(),
+
+  // Data sent from formbricks
+  questionIds: z.array(z.string()),
+  questions: z.string(),
+  surveyId: z.string(),
+  surveyName: z.string(),
+
+  // Channel Mapped to a Particular Survey where we have to send the data from the above survey
+  channelId: z.string(),
+  channelName: z.string(),
+});
+
+export const ZSlackUser = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email("Not a valid email address"),
+  avatar: z.string().url("Avatar must be a url"),
+});
+
+export const ZSlackConfig = z.object({
+  key: ZSlackCredential,
+  data: z.array(ZSlackConfigData),
+  user: ZSlackUser,
+});
+
+// Define a specific schema for googleSheets config
 export const ZGoogleCredential = z.object({
   scope: z.string(),
   token_type: z.literal("Bearer"),
@@ -37,11 +72,11 @@ const ZPlaceholderConfig = z.object({
   placeholder: z.string(),
 });
 
-export const ZIntegrationConfig = z.union([ZGoogleSheetsConfig, ZPlaceholderConfig]);
+export const ZIntegrationConfig = z.union([ZGoogleSheetsConfig, ZPlaceholderConfig, ZSlackConfig]);
 
 export const ZIntegration = z.object({
   id: z.string(),
-  type: z.enum(["googleSheets", "placeholder"]),
+  type: z.enum(["googleSheets", "placeholder", "slack"]),
   environmentId: z.string(),
   config: ZIntegrationConfig,
 });
@@ -61,11 +96,30 @@ export const ZPlaceHolderIntegration = z.object({
   environment: ZEnvironment,
 });
 
+export const ZSlackIntegration = z.object({
+  id: z.string(),
+  type: z.enum(["slack"]),
+  environmentId: z.string(),
+  config: ZSlackConfig,
+});
+
+// ================= Generic Integration Types ===============================
 export type TIntegration = z.infer<typeof ZIntegration>;
 export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
+
+// =============== GoogleSheets Integration Types ============================
 export type TGoogleCredential = z.infer<typeof ZGoogleCredential>;
 export type TGoogleSpreadsheet = z.infer<typeof ZGoogleSpreadsheet>;
 export type TGoogleSheetsConfig = z.infer<typeof ZGoogleSheetsConfig>;
 export type TGoogleSheetsConfigData = z.infer<typeof ZGoogleSheetsConfigData>;
 export type TGoogleSheetIntegration = z.infer<typeof ZGoogleSheetIntegration>;
+
+// ================== Slack Integration Types ================================
+export type TSlackCredential = z.infer<typeof ZSlackCredential>;
+export type TSlackConfig = z.infer<typeof ZSlackConfig>;
+export type TSlackConfigData = z.infer<typeof ZSlackConfigData>;
+export type TSlackIntegration = z.infer<typeof ZSlackIntegration>;
+export type TSlackUser = z.infer<typeof ZSlackUser>;
+
+// ================ Placeholder Integration Types ============================
 export type TPlaceHolderIntegration = z.infer<typeof ZPlaceHolderIntegration>;
