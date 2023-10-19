@@ -5,7 +5,7 @@ export const formatActivityFeedItemDateFields = (
 ): TActivityFeedItem[] => {
   return activityFeedItem.map((item) => ({
     ...item,
-    createdAt: item.createdAt,
+    createdAt: new Date(item.createdAt),
     updatedAt: item.updatedAt ? new Date(item.updatedAt) : item.updatedAt,
   }));
 };
