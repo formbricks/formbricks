@@ -186,6 +186,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
   longAnswer: z.boolean().optional(),
+  imageUrl: z.string().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
 });

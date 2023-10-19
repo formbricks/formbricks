@@ -1,13 +1,18 @@
+"use client";
+
 import {
+  TSurvey,
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
-  TSurvey,
 } from "@formbricks/types/v1/surveys";
-import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
 import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
+import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ImagePlusIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const questionTypes = [
@@ -35,6 +40,8 @@ export default function OpenQuestionForm({
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
+  const [showImageUploader, setShowImageUploader] = useState<boolean>(question.imageUrl !== "");
+  const pathName = usePathname();
 
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
@@ -45,19 +52,37 @@ export default function OpenQuestionForm({
     updateQuestion(questionIdx, updatedAttributes);
   };
 
+  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
+
   return (
     <form>
       <div className="mt-3">
         <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
+        <div className="mt-2 flex flex-col gap-6">
+          {showImageUploader && (
+            <FileInput
+              allowedFileExtensions={["png", "jpeg", "jpg"]}
+              environmentId={environmentId}
+              onFileUpload={(url: string) => {
+                updateQuestion(questionIdx, { imageUrl: url });
+              }}
+              fileUrl={question.imageUrl || ""}
+            />
+          )}
+          <div className="flex items-center space-x-2">
+            <Input
+              autoFocus
+              id="headline"
+              name="headline"
+              value={question.headline}
+              onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
+              isInvalid={isInValid && question.headline.trim() === ""}
+            />
+            <ImagePlusIcon
+              className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => setShowImageUploader((prev) => !prev)}
+            />
+          </div>
         </div>
       </div>
 
