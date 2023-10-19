@@ -35,7 +35,7 @@ export const ZIntegrationAirtable = ZIntegrationBase.extend({
 export type TIntegrationAirtable = z.infer<typeof ZIntegrationAirtable>;
 
 export const ZIntegrationAirtableInput = z.object({
-  type: z.enum(["airtable"]),
+  type: z.literal("airtable"),
   config: ZIntegrationAirtableConfig,
 });
 

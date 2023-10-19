@@ -5,7 +5,6 @@ export const ZIntegrationBase = z.object({
   id: z.string(),
   environmentId: z.string(),
 });
-export const ZIntegrationType = z.enum(["googleSheets", "airtable"]);
 
 export const ZIntegrationBaseSurveyData = z.object({
   createdAt: z.date(),
