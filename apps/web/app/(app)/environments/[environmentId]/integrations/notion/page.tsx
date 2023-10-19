@@ -1,5 +1,5 @@
 import NotionWrapper from "@/app/(app)/environments/[environmentId]/integrations/notion/NotionWrapper";
-import GoBackButton from "@/app/components/shared/GoBackButton";
+import GoBackButton from "@formbricks/ui/GoBackButton";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
