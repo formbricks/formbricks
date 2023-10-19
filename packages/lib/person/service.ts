@@ -76,7 +76,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -109,7 +109,7 @@ export const getPeople = async (environmentId: string, page?: number): Promise<T
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -209,7 +209,7 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
     return transformedPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -236,7 +236,7 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
     return transformPrismaPerson(person);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

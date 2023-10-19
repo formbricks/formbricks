@@ -118,11 +118,11 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
               : createSurveyFields(survey.responses)
           }
           ${
-            survey.responsesCount >= 0
+            survey.responseCount >= 0
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
                 }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
-                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responsesCount)}
+                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
               </a>`
               : ""
           }

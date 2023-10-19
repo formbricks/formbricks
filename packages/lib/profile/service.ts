@@ -51,7 +51,7 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -83,7 +83,7 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -215,7 +215,7 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
     return deletedProfile;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
