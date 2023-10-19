@@ -133,10 +133,10 @@ export function Survey({
                 redirectUrl={survey.redirectUrl}
                 isRedirectDisabled={isRedirectDisabled}
               />
-            ) : questionId === "start" && !survey.welcomeCard.enabled?(
+            ) : questionId === "start" && !survey.welcomeCard.enabled && survey?.questions[0] ? (
                 <QuestionConditional
-                  question={survey?.questions[0]}
-                  value={responseData[survey?.questions[0]?.id]}
+                  question={survey.questions[0]}
+                  value={responseData[survey.questions[0]?.id]}
                   onChange={onChange}
                   onSubmit={onSubmit}
                   onBack={onBack}
