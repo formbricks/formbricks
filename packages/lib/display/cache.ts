@@ -9,7 +9,7 @@ interface RevalidateProps {
 export const displayCache = {
   tag: {
     byId(id: string) {
-      return `display-${id}`;
+      return `displays-${id}`;
     },
     bySurveyId(surveyId: string) {
       return `surveys-${surveyId}-displays`;
