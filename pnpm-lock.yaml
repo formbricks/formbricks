@@ -346,6 +346,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      lru-cache:
+        specifier: ^10.0.1
+        version: 10.0.1
       lucide-react:
         specifier: ^0.287.0
         version: 0.287.0(react@18.2.0)

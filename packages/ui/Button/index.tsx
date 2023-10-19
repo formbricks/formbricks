@@ -98,7 +98,7 @@ export const Button: React.ForwardRefExoticComponent<
         variant === "darkCTA" &&
           (disabled
             ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
-            : "text-slate-100 hover:text-slate-50 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:bg-slate-200 dark:text-slate-700 dark:hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
+            : "text-slate-100 hover:text-slate-50 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
 
         // set not-allowed cursor if disabled
         loading ? "cursor-wait" : disabled ? "cursor-not-allowed" : "",
