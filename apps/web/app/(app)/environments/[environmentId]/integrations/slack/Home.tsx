@@ -5,56 +5,58 @@ import DeleteDialog from "@/components/shared/DeleteDialog";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TGoogleSheetIntegration, TGoogleSheetsConfigData } from "@formbricks/types/v1/integrations";
+import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 interface HomeProps {
   environment: TEnvironment;
-  googleSheetIntegration: TGoogleSheetIntegration;
+  slackIntegration: TSlackIntegration;
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
-  setSelectedIntegration: (v: (TGoogleSheetsConfigData & { index: number }) | null) => void;
+  setSelectedIntegration: (v: (TSlackConfigData & { index: number }) | null) => void;
   refreshSheet: () => void;
 }
 
 export default function Home({
   environment,
-  googleSheetIntegration,
+  slackIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
   refreshSheet,
 }: HomeProps) {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
-  const integrationArray = googleSheetIntegration
-    ? googleSheetIntegration.config.data
-      ? googleSheetIntegration.config.data
+  const integrationArray = slackIntegration
+    ? slackIntegration.config.data
+      ? slackIntegration.config.data
       : []
     : [];
   const [isDeleting, setisDeleting] = useState(false);
 
   const handleDeleteIntegration = async () => {
-    try {
-      setisDeleting(true);
-      await deleteIntegrationAction(googleSheetIntegration.id);
-      setIsConnected(false);
-      toast.success("Integration removed successfully");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setisDeleting(false);
-      setIsDeleteIntegrationModalOpen(false);
-    }
+    console.log("I am deleting");
+    // try {
+    //   setisDeleting(true);
+    //   await deleteIntegrationAction(slackIntegration.id);
+    //   setIsConnected(false);
+    //   toast.success("Integration removed successfully");
+    // } catch (error) {
+    //   toast.error(error.message);
+    // } finally {
+    //   setisDeleting(false);
+    //   setIsDeleteIntegrationModalOpen(false);
+    // }
   };
 
   const editIntegration = (index: number) => {
-    setSelectedIntegration({
-      ...googleSheetIntegration.config.data[index],
-      index: index,
-    });
-    setOpenAddIntegrationModal(true);
+    console.log("I am deleting");
+    // setSelectedIntegration({
+    //   ...slackIntegration.config.data[index],
+    //   index: index,
+    // });
+    // setOpenAddIntegrationModal(true);
   };
 
   return (
@@ -67,7 +69,7 @@ export default function Home({
             onClick={() => {
               setIsDeleteIntegrationModalOpen(true);
             }}>
-            Connected with {googleSheetIntegration.config.email}
+            Connected with {slackIntegration.config.user.email}
           </span>
         </div>
         <Button
@@ -77,7 +79,7 @@ export default function Home({
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>
-          Link new Sheet
+          Map New Channel
         </Button>
       </div>
       {!integrationArray || integrationArray.length === 0 ? (
@@ -86,7 +88,7 @@ export default function Home({
             type="table"
             environment={environment}
             noWidgetRequired={true}
-            emptyMessage="Your google sheet integrations will appear here as soon as you add them. ⏲️"
+            emptyMessage="Your Slack channel mappings will appear here as soon as you add them. ⏲️"
           />
         </div>
       ) : (
@@ -94,7 +96,7 @@ export default function Home({
           <div className="mt-6 w-full rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-2 hidden text-center sm:block">Survey</div>
-              <div className="col-span-2 hidden text-center sm:block">Google Sheet Name</div>
+              <div className="col-span-2 hidden text-center sm:block">Channel Name</div>
               <div className="col-span-2 hidden text-center sm:block">Questions</div>
               <div className="col-span-2 hidden text-center sm:block">Updated At</div>
             </div>
@@ -108,7 +110,7 @@ export default function Home({
                       editIntegration(index);
                     }}>
                     <div className="col-span-2 text-center">{data.surveyName}</div>
-                    <div className="col-span-2 text-center">{data.spreadsheetName}</div>
+                    <div className="col-span-2 text-center">{data.channelName}</div>
                     <div className="col-span-2 text-center">{data.questions}</div>
                     <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
                   </div>
@@ -121,7 +123,7 @@ export default function Home({
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat="Google Connection"
+        deleteWhat="Slack Connection"
         onDelete={handleDeleteIntegration}
         text="Are you sure? Your integrations will break."
         isDeleting={isDeleting}
