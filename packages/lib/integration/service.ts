@@ -36,7 +36,7 @@ export async function createOrUpdateIntegration(
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error(error);
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -56,7 +56,7 @@ export const getIntegrations = async (environmentId: string, page?: number): Pro
     return result;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -72,7 +72,7 @@ export const getIntegration = async (integrationId: string): Promise<TIntegratio
     return result;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -97,7 +97,7 @@ export const getIntegrationByType = async (
     return result;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -116,7 +116,7 @@ export const deleteIntegration = async (integrationId: string): Promise<TIntegra
     return integrationData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

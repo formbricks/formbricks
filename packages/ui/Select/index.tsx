@@ -37,7 +37,7 @@ const SelectContent: React.ComponentType<SelectPrimitive.SelectContentProps> = R
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-slate-50 dark:bg-slate-700 text-slate-700 shadow-md dark:text-slate-300",
+        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-slate-50 text-slate-700 shadow-md dark:bg-slate-700 dark:text-slate-300",
         className
       )}
       {...props}>
