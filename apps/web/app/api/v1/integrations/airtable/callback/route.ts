@@ -1,7 +1,7 @@
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { WEBAPP_URL, AIR_TABLE_CLIENT_ID } from "@formbricks/lib/constants";
+import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
+import { AIR_TABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";

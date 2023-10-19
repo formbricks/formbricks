@@ -1,31 +1,31 @@
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@prisma/client";
-import {
-  TAirtable,
-  TAirtableCredential,
-  TAirtableIntegrationInput,
-  TAirtableConfigData,
-  ZAirtableCredential,
-  ZAirtableTokenSchema,
-  ZBases,
-  ZTables,
-  ZTablesWithFields,
-  TAirtableIntegration,
-} from "@formbricks/types/v1/integration";
 import { DatabaseError } from "@formbricks/types/v1/errors";
+import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import {
+  TIntegrationAirtable,
+  TIntegrationAirtableConfigData,
+  TIntegrationAirtableCredential,
+  TIntegrationAirtableInput,
+  ZIntegrationAirtableBases,
+  ZIntegrationAirtableCredential,
+  ZIntegrationAirtableTables,
+  ZIntegrationAirtableTablesWithFields,
+  ZIntegrationAirtableTokenSchema,
+} from "@formbricks/types/v1/integration/airtable";
+import { Prisma } from "@prisma/client";
 import { AIR_TABLE_CLIENT_ID } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
 
 interface ConnectAirtableOptions {
   environmentId: string;
-  key: TAirtableCredential;
+  key: TIntegrationAirtableCredential;
   email: string;
 }
 
 export const connectAirtable = async ({ email, environmentId, key }: ConnectAirtableOptions) => {
-  const type: TAirtableIntegrationInput["type"] = "airtable";
+  const type: TIntegrationAirtableInput["type"] = "airtable";
 
-  const baseData: TAirtableIntegrationInput = {
+  const baseData: TIntegrationAirtableInput = {
     type,
     config: { data: [], key, email },
   };
@@ -57,10 +57,10 @@ export const getBases = async (key: string) => {
 
   const res = await req.json();
 
-  return ZBases.parse(res);
+  return ZIntegrationAirtableBases.parse(res);
 };
 
-const tableFetcher = async (key: TAirtableCredential, baseId: string) => {
+const tableFetcher = async (key: TIntegrationAirtableCredential, baseId: string) => {
   const req = await fetch(`https://api.airtable.com/v0/meta/bases/${baseId}/tables`, {
     headers: {
       Authorization: `Bearer ${key.access_token}`,
@@ -72,9 +72,9 @@ const tableFetcher = async (key: TAirtableCredential, baseId: string) => {
   return res;
 };
 
-export const getTables = async (key: TAirtableCredential, baseId: string) => {
+export const getTables = async (key: TIntegrationAirtableCredential, baseId: string) => {
   const res = await tableFetcher(key, baseId);
-  return ZTables.parse(res);
+  return ZIntegrationAirtableTables.parse(res);
 };
 
 export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
@@ -90,9 +90,9 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
     method: "POST",
   });
 
-  const tokenRes = await tokenReq.json();
+  const tokenRes: unknown = await tokenReq.json();
 
-  const { access_token, expires_in, refresh_token } = ZAirtableTokenSchema.parse(tokenRes);
+  const { access_token, expires_in, refresh_token } = ZIntegrationAirtableTokenSchema.parse(tokenRes);
 
   const expiry_date = new Date();
   expiry_date.setSeconds(expiry_date.getSeconds() + expires_in);
@@ -109,9 +109,9 @@ export const getAirtableToken = async (environmentId: string) => {
     const airtableIntegration = (await getIntegrationByType(
       environmentId,
       "airtable"
-    )) as TAirtableIntegration;
+    )) as TIntegrationAirtable;
 
-    const { access_token, expiry_date, refresh_token } = ZAirtableCredential.parse(
+    const { access_token, expiry_date, refresh_token } = ZIntegrationAirtableCredential.parse(
       airtableIntegration?.config.key
     );
 
@@ -148,7 +148,7 @@ export const getAirtableToken = async (environmentId: string) => {
 };
 
 export const getAirtableTables = async (environmentId: string) => {
-  let tables: TAirtable[] = [];
+  let tables: TIntegrationItem[] = [];
   try {
     const token = await getAirtableToken(environmentId);
 
@@ -164,7 +164,7 @@ export const getAirtableTables = async (environmentId: string) => {
 };
 
 const addRecords = async (
-  key: TAirtableCredential,
+  key: TIntegrationAirtableCredential,
   baseId: string,
   tableId: string,
   data: Record<string, string>
@@ -185,7 +185,7 @@ const addRecords = async (
 };
 
 const addField = async (
-  key: TAirtableCredential,
+  key: TIntegrationAirtableCredential,
   baseId: string,
   tableId: string,
   data: Record<string, string>
@@ -203,8 +203,8 @@ const addField = async (
 };
 
 export const writeData = async (
-  key: TAirtableCredential,
-  configData: TAirtableConfigData,
+  key: TIntegrationAirtableCredential,
+  configData: TIntegrationAirtableConfigData,
   values: string[][]
 ) => {
   try {
@@ -217,7 +217,7 @@ export const writeData = async (
     }
 
     const req = await tableFetcher(key, configData.baseId);
-    const tables = ZTablesWithFields.parse(req).tables;
+    const tables = ZIntegrationAirtableTablesWithFields.parse(req).tables;
 
     const currentTable = tables.find((table) => table.id === configData.tableId);
     if (currentTable) {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZIntegrationsType, ZIntegrationBaseSurveyData, ZIntegrationBase } from ".";
+import { ZIntegrationType, ZIntegrationBaseSurveyData, ZIntegrationBase } from ".";
 
 export const ZGoogleCredential = z.object({
   scope: z.string(),
@@ -30,7 +30,7 @@ export type TIntegrationGoogleSheetsConfig = z.infer<typeof ZIntegrationGoogleSh
 
 export const ZGoogleSheetIntegration = z.object({
   id: z.string(),
-  type: ZIntegrationsType.extract(["googleSheets"]),
+  type: ZIntegrationType.extract(["googleSheets"]),
   environmentId: z.string(),
   config: ZIntegrationGoogleSheetsConfig,
 });
@@ -48,3 +48,13 @@ export const ZIntegrationGoogleSheetsInput = z.object({
 });
 
 export type TIntegrationGoogleSheetsInput = z.infer<typeof ZIntegrationGoogleSheetsInput>;
+
+export const ZIntegrationGoogleSheetsCredential = z.object({
+  scope: z.string(),
+  token_type: z.literal("Bearer"),
+  expiry_date: z.number(),
+  access_token: z.string(),
+  refresh_token: z.string(),
+});
+
+export type TIntegrationGoogleSheetsCredential = z.infer<typeof ZIntegrationGoogleSheetsCredential>;

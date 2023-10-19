@@ -1,12 +1,8 @@
 import { z } from "zod";
-import {
-  ZIntegrationGoogleSheetsConfig,
-  ZIntegrationGoogleSheets,
-  ZIntegrationGoogleSheetsInput,
-} from "./googleSheet";
-import { ZIntegrationAirtableConfig, ZIntegrationAirtable, ZIntegrationAirtableInput } from "./airtable";
+import { ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
+import { ZIntegrationGoogleSheetsConfig, ZIntegrationGoogleSheetsInput } from "./googleSheet";
 
-export const ZIntegrationsType = z.enum(["googleSheets", "airtable"]);
+export const ZIntegrationType = z.enum(["googleSheets", "airtable"]);
 
 export const ZIntegrationConfig = z.union([ZIntegrationGoogleSheetsConfig, ZIntegrationAirtableConfig]);
 
@@ -17,7 +13,10 @@ export const ZIntegrationBase = z.object({
   environmentId: z.string(),
 });
 
-export const ZIntegration = z.union([ZIntegrationGoogleSheets, ZIntegrationAirtable]);
+export const ZIntegration = ZIntegrationBase.extend({
+  type: ZIntegrationType,
+  config: ZIntegrationConfig,
+});
 
 export type TIntegration = z.infer<typeof ZIntegration>;
 

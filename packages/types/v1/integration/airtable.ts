@@ -7,6 +7,8 @@ export const ZIntegrationAirtableCredential = z.object({
   refresh_token: z.string(),
 });
 
+export type TIntegrationAirtableCredential = z.infer<typeof ZIntegrationAirtableCredential>;
+
 export const ZIntegrationAirtableConfigData = z
   .object({
     tableId: z.string(),
@@ -25,15 +27,41 @@ export const ZIntegrationAirtableConfig = z.object({
 
 export type TIntegrationAirtableConfig = z.infer<typeof ZIntegrationAirtableConfig>;
 
-export const ZBases = z.object({
+export const ZIntegrationAirtable = ZIntegrationBase.extend({
+  type: z.literal("airtable"),
+  config: ZIntegrationAirtableConfig,
+});
+
+export type TIntegrationAirtable = z.infer<typeof ZIntegrationAirtable>;
+
+export const ZIntegrationAirtableInput = z.object({
+  type: z.enum(["airtable"]),
+  config: ZIntegrationAirtableConfig,
+});
+
+export type TIntegrationAirtableInput = z.infer<typeof ZIntegrationAirtableInput>;
+
+export const ZIntegrationAirtableBases = z.object({
   bases: z.array(z.object({ id: z.string(), name: z.string() })),
 });
 
-export const ZTables = z.object({
+export type TIntegrationAirtableBases = z.infer<typeof ZIntegrationAirtableBases>;
+
+export const ZIntegrationAirtableTables = z.object({
   tables: z.array(z.object({ id: z.string(), name: z.string() })),
 });
 
-export const ZTablesWithFields = z.object({
+export type TIntegrationAirtableTables = z.infer<typeof ZIntegrationAirtableTables>;
+
+export const ZIntegrationAirtableTokenSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_in: z.coerce.number(),
+});
+
+export type TIntegrationAirtableTokenSchema = z.infer<typeof ZIntegrationAirtableTokenSchema>;
+
+export const ZIntegrationAirtableTablesWithFields = z.object({
   tables: z.array(
     z.object({
       id: z.string(),
@@ -48,18 +76,4 @@ export const ZTablesWithFields = z.object({
   ),
 });
 
-export type TIntegrationAirtableTables = z.infer<typeof ZTables>;
-
-export const ZIntegrationAirtable = ZIntegrationBase.extend({
-  type: z.literal("airtable"),
-  config: ZIntegrationAirtableConfig,
-});
-
-export type TIntegrationAirtable = z.infer<typeof ZIntegrationAirtable>;
-
-export const ZIntegrationAirtableInput = z.object({
-  type: z.enum(["airtable"]),
-  config: ZIntegrationAirtableConfig,
-});
-
-export type TIntegrationAirtableInput = z.infer<typeof ZIntegrationAirtableInput>;
+export type TIntegrationAirtableTablesWithFields = z.infer<typeof ZIntegrationAirtableTablesWithFields>;
