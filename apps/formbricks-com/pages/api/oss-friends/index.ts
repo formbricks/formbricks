@@ -128,6 +128,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://rivet.gg",
         },
         {
+          name: "Shelf.nu",
+          description:
+            "Open Source Asset and Equipment tracking software that lets you create QR asset labels, manage and overview your assets across locations.",
+          href: "https://www.shelf.nu/",
+        },
+        {
           name: "Sniffnet",
           description:
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
@@ -172,6 +178,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
           href: "https://spark-framework.net",
+        },
+        {
+          name: "Firecamp",
+          description: "vscode for apis, open-source postman/insomnia alternative",
+          href: "https://firecamp.io",
         },
       ],
     });

@@ -4,9 +4,10 @@ import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[
 import { getQuestionTypeName } from "@/app/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";
-import { Switch } from "@formbricks/ui/Switch";
-import { Label } from "@formbricks/ui/Label";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import {
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
@@ -29,10 +30,9 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface QuestionCardProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -247,15 +247,22 @@ export default function QuestionCard({
                               id="buttonLabel"
                               name="buttonLabel"
                               value={question.buttonLabel}
+                              maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
-                              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+                              onChange={(e) => {
+                                if (e.target.value.trim() == "") e.target.value = "";
+                                updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                              }}
                             />
                           </div>
                         </div>
                         {questionIdx !== 0 && (
                           <BackButtonInput
                             value={question.backButtonLabel}
-                            onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+                            onChange={(e) => {
+                              if (e.target.value.trim() == "") e.target.value = "";
+                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
+                            }}
                           />
                         )}
                       </div>
@@ -265,7 +272,10 @@ export default function QuestionCard({
                         <div className="mt-4">
                           <BackButtonInput
                             value={question.backButtonLabel}
-                            onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+                            onChange={(e) => {
+                              if (e.target.value.trim() == "") e.target.value = "";
+                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
+                            }}
                           />
                         </div>
                       )}
@@ -299,17 +309,19 @@ export default function QuestionCard({
                     />
                   </div>
                 )}
-                <div className="my-4 flex items-center justify-end space-x-2">
-                  <Label htmlFor="required-toggle">Required</Label>
-                  <Switch
-                    id="required-toggle"
-                    checked={question.required}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateQuestion(questionIdx, { required: !question.required });
-                    }}
-                  />
-                </div>
+                {
+                  <div className="my-4 flex items-center justify-end space-x-2">
+                    <Label htmlFor="required-toggle">Required</Label>
+                    <Switch
+                      id="required-toggle"
+                      checked={question.required}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuestion(questionIdx, { required: !question.required });
+                      }}
+                    />
+                  </div>
+                }
               </div>
             )}
           </Collapsible.Root>

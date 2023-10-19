@@ -13,7 +13,7 @@ import {
   ZId,
 } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
-import { EventType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import "server-only";
 import { z } from "zod";
@@ -37,7 +37,8 @@ export const getEnvironment = (environmentId: string) =>
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          console.error(error.message);
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -80,7 +81,7 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
         }
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
         throw error;
       }
@@ -128,7 +129,7 @@ export const updateEnvironment = async (
     return updatedEnvironment;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -153,7 +154,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -172,35 +173,30 @@ export const createEnvironment = async (
       product: { connect: { id: productId } },
       widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
       eventClasses: {
-        create: populateEnvironment.eventClasses,
+        create: [
+          {
+            name: "New Session",
+            description: "Gets fired when a new session is created",
+            type: "automatic",
+          },
+          {
+            name: "Exit Intent (Desktop)",
+            description: "A user on Desktop leaves the website with the cursor.",
+            type: "automatic",
+          },
+          {
+            name: "50% Scroll",
+            description: "A user scrolled 50% of the current page",
+            type: "automatic",
+          },
+        ],
       },
       attributeClasses: {
-        create: populateEnvironment.attributeClasses,
+        create: [
+          { name: "userId", description: "The internal ID of the person", type: "automatic" },
+          { name: "email", description: "The email of the person", type: "automatic" },
+        ],
       },
     },
   });
-};
-
-export const populateEnvironment = {
-  eventClasses: [
-    {
-      name: "New Session",
-      description: "Gets fired when a new session is created",
-      type: EventType.automatic,
-    },
-    {
-      name: "Exit Intent (Desktop)",
-      description: "A user on Desktop leaves the website with the cursor.",
-      type: EventType.automatic,
-    },
-    {
-      name: "50% Scroll",
-      description: "A user scrolled 50% of the current page",
-      type: EventType.automatic,
-    },
-  ],
-  attributeClasses: [
-    { name: "userId", description: "The internal ID of the person", type: EventType.automatic },
-    { name: "email", description: "The email of the person", type: EventType.automatic },
-  ],
 };

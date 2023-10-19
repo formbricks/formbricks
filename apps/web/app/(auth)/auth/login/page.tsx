@@ -1,6 +1,3 @@
-import { SigninForm } from "@/app/components/auth/SigninForm";
-import Testimonial from "@/app/components/auth/Testimonial";
-import FormWrapper from "@/app/components/auth/FormWrapper";
 import { Metadata } from "next";
 import {
   GITHUB_OAUTH_ENABLED,
@@ -10,6 +7,9 @@ import {
   AZURE_OAUTH_ENABLED,
   AZURE_DIRECT_REDIRECT,
 } from "@formbricks/lib/constants";
+import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
+import Testimonial from "@/app/(auth)/auth/components/Testimonial";
+import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 
 export const metadata: Metadata = {
   title: "Login",

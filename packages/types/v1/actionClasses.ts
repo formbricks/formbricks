@@ -27,11 +27,15 @@ export const ZActionClassNoCodeConfig = z.object({
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;
 
+export const ZActionClassType = z.enum(["code", "noCode", "automatic"]);
+
+export type TActionClassType = z.infer<typeof ZActionClassType>;
+
 export const ZActionClass = z.object({
   id: z.string().cuid2(),
   name: z.string(),
   description: z.string().nullable(),
-  type: z.enum(["code", "noCode", "automatic"]),
+  type: ZActionClassType,
   noCodeConfig: z.union([ZActionClassNoCodeConfig, z.null()]),
   environmentId: z.string(),
   createdAt: z.date(),
@@ -45,7 +49,7 @@ export const ZActionClassInput = z.object({
   name: z.string(),
   description: z.string().optional(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
-  type: z.enum(["code", "noCode"]),
+  type: z.enum(["code", "noCode", "automatic"]),
 });
 
 export const ZActionClassAutomaticInput = z.object({

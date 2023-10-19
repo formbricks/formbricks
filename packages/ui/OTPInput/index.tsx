@@ -8,6 +8,7 @@ export type OTPInputProps = {
   onChange: (value: string) => void;
   containerClassName?: string;
   inputBoxClassName?: string;
+  disabled?: boolean;
 };
 
 const RE_DIGIT = /^\d+$/;
@@ -18,6 +19,7 @@ export function OTPInput({
   onChange,
   containerClassName,
   inputBoxClassName,
+  disabled,
 }: OTPInputProps) {
   const valueItems = useMemo(() => {
     const valueArray = value.split("");
@@ -144,6 +146,7 @@ export function OTPInput({
           onChange={(e) => inputOnChange(e, idx)}
           onKeyDown={inputOnKeyDown}
           onFocus={inputOnFocus}
+          disabled={disabled}
         />
       ))}
     </div>

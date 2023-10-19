@@ -1,6 +1,6 @@
 "use client";
 
-import ContentWrapper from "@/app/components/shared/ContentWrapper";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { Button } from "@formbricks/ui/Button";
 import { Confetti } from "@formbricks/ui/Confetti";
 import { useEffect, useState } from "react";
