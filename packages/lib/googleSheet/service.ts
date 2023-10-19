@@ -15,12 +15,9 @@ import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
-  SERVICES_REVALIDATION_INTERVAL,
 } from "../constants";
 import { ZString } from "@formbricks/types/v1/common";
 import { getIntegrationByType } from "../integration/service";
-import { unstable_cache } from "next/cache";
-import { googleSheetCache } from "./cache";
 
 const { google } = require("googleapis");
 
@@ -38,34 +35,26 @@ async function fetchSpreadsheets(auth: any) {
   }
 }
 
-export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpreadsheet[]> =>
-  unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
+export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpreadsheet[]> => {
+  validateInputs([environmentId, ZId]);
 
-      let spreadsheets: TGoogleSpreadsheet[] = [];
-      try {
-        const googleIntegration = (await getIntegrationByType(
-          environmentId,
-          "googleSheets"
-        )) as TGoogleSheetIntegration;
-        if (googleIntegration && googleIntegration.config?.key) {
-          spreadsheets = await fetchSpreadsheets(googleIntegration.config?.key);
-        }
-        return spreadsheets;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    [`getSpreadSheets-${environmentId}`],
-    {
-      tags: [googleSheetCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+  let spreadsheets: TGoogleSpreadsheet[] = [];
+  try {
+    const googleIntegration = (await getIntegrationByType(
+      environmentId,
+      "googleSheets"
+    )) as TGoogleSheetIntegration;
+    if (googleIntegration && googleIntegration.config?.key) {
+      spreadsheets = await fetchSpreadsheets(googleIntegration.config?.key);
     }
-  )();
+    return spreadsheets;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
 
 export async function writeData(credentials: TGoogleCredential, spreadsheetId: string, values: string[][]) {
   validateInputs(

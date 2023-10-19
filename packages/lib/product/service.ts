@@ -12,7 +12,7 @@ import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { createEnvironment } from "../environment/service";
 import { environmentCache } from "../environment/cache";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { productCache } from "./cache";
 
 const selectProduct = {
@@ -65,9 +65,8 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
 export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> =>
   unstable_cache(
     async () => {
-      if (!environmentId) {
-        throw new ValidationError("EnvironmentId is required");
-      }
+      validateInputs([environmentId, ZId]);
+
       let productPrisma;
 
       try {
@@ -212,6 +211,8 @@ export const createProduct = async (
   teamId: string,
   productInput: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
+  validateInputs([teamId, ZString], [productInput, ZProductUpdateInput.partial()]);
+
   if (!productInput.name) {
     throw new ValidationError("Product Name is required");
   }
