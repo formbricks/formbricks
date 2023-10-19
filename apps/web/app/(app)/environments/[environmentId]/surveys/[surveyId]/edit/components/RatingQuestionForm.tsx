@@ -1,14 +1,13 @@
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
+import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ImagePlusIcon } from "lucide-react";
 import { useState } from "react";
 import Dropdown from "./RatingTypeDropdown";
-import FileInput from "@formbricks/ui/FileInput";
-import { usePathname } from "next/navigation";
-import { ImagePlusIcon } from "lucide-react";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;
@@ -25,11 +24,11 @@ export default function RatingQuestionForm({
   updateQuestion,
   lastQuestion,
   isInValid,
+  localSurvey,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
-  const pathName = usePathname();
-  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
@@ -56,6 +55,7 @@ export default function RatingQuestionForm({
               isInvalid={isInValid && question.headline.trim() === ""}
             />
             <ImagePlusIcon
+              aria-label="Toggle image uploader"
               className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
               onClick={() => setShowImageUploader((prev) => !prev)}
             />

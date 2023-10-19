@@ -1,17 +1,16 @@
 "use client";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { cn } from "@formbricks/lib/cn";
+import { TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
+import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
-import { cn } from "@formbricks/lib/cn";
-import { useEffect, useRef, useState } from "react";
-import { TSurveyMultipleChoiceMultiQuestion, TSurvey } from "@formbricks/types/v1/surveys";
-import { usePathname } from "next/navigation";
-import FileInput from "@formbricks/ui/FileInput";
 import { ImagePlusIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -27,6 +26,7 @@ export default function MultipleChoiceMultiForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  localSurvey,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -34,7 +34,6 @@ export default function MultipleChoiceMultiForm({
   const questionRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
-  const pathName = usePathname();
 
   const shuffleOptionsTypes = {
     none: {
@@ -162,7 +161,7 @@ export default function MultipleChoiceMultiForm({
     }
   }, [isNew]);
 
-  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>

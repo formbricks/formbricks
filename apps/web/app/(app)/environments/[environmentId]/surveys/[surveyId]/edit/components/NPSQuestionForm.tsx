@@ -7,7 +7,6 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { ImagePlusIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 interface NPSQuestionFormProps {
@@ -25,11 +24,11 @@ export default function NPSQuestionForm({
   updateQuestion,
   lastQuestion,
   isInValid,
+  localSurvey,
 }: NPSQuestionFormProps): JSX.Element {
-  const pathName = usePathname();
   const [showImageUploader, setShowImageUploader] = useState(!!question.imageUrl);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>

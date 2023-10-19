@@ -7,7 +7,6 @@ import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { ImagePlusIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 interface ConsentQuestionFormProps {
@@ -23,11 +22,11 @@ export default function ConsentQuestionForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  localSurvey,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
-  const pathName = usePathname();
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
-  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>

@@ -12,7 +12,6 @@ import { Label } from "@formbricks/ui/Label";
 import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { ImagePlusIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const questionTypes = [
@@ -37,13 +36,13 @@ export default function OpenQuestionForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  localSurvey,
 }: OpenQuestionFormProps): JSX.Element {
   console.log(question.imageUrl);
 
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
-  const pathName = usePathname();
 
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
@@ -54,7 +53,7 @@ export default function OpenQuestionForm({
     updateQuestion(questionIdx, updatedAttributes);
   };
 
-  const environmentId = pathName?.split("/").filter((x) => x !== "")[1];
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
