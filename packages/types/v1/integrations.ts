@@ -24,10 +24,17 @@ export const ZSlackConfigData = z.object({
   channelName: z.string(),
 });
 
+export const ZSlackUser = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email("Not a valid email address"),
+  avatar: z.string().url("Avatar must be a url"),
+});
+
 export const ZSlackConfig = z.object({
   key: ZSlackCredential,
   data: z.array(ZSlackConfigData),
-  email: z.string(),
+  user: ZSlackUser,
 });
 
 // Define a specific schema for googleSheets config
@@ -112,5 +119,7 @@ export type TSlackCredential = z.infer<typeof ZSlackCredential>;
 export type TSlackConfig = z.infer<typeof ZSlackConfig>;
 export type TSlackConfigData = z.infer<typeof ZSlackConfigData>;
 export type TSlackIntegration = z.infer<typeof ZSlackIntegration>;
+export type TSlackUser = z.infer<typeof ZSlackUser>;
 
+// ================ Placeholder Integration Types ============================
 export type TPlaceHolderIntegration = z.infer<typeof ZPlaceHolderIntegration>;
