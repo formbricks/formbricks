@@ -40,16 +40,7 @@ export default function LinkSurveyShareButton({
         }}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {showLinkModal && isSingleUse ? (
-        <ShareEmbedSurvey
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          product={product}
-          surveyBaseUrl={surveyBaseUrl}
-          profile={profile}
-        />
-      ) : (
+      {showLinkModal && isSingleUse && (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}

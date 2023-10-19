@@ -1,6 +1,5 @@
 "use client";
 
-import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
 import { TEnvironment } from "@formbricks/types/v1/environment";
@@ -24,6 +23,7 @@ import { deleteResponseAction } from "./actions";
 import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
