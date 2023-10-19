@@ -1,23 +1,26 @@
 "use client";
-
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Switch } from "@formbricks/ui/Switch";
-import { Tooltip, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
-import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
+  responseCount: number;
 }
 
-export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
+export default function ResponseOptionsCard({
+  localSurvey,
+  setLocalSurvey,
+  responseCount,
+}: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
@@ -44,7 +47,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   });
   const [closeOnDate, setCloseOnDate] = useState<Date>();
 
-  const [verifyProtectWithPinToggle, setVerifyProtectWithPinToggle] = useState(false);
+  const isPinProtectionEnabled = localSurvey.pin !== null;
 
   const [verifyProtectWithPinError, setverifyProtectWithPinError] = useState<string | null>(null);
 
@@ -73,12 +76,10 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   };
 
   const handleProtectSurveyWithPinToggle = () => {
-    const currentValue = verifyProtectWithPinToggle;
-    if (currentValue === false) setLocalSurvey({ ...localSurvey, pin: null });
-    setVerifyProtectWithPinToggle(!currentValue);
+    setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : 1234 }));
   };
 
-  const handleProtectSurveryPinChange = (pin: string) => {
+  const handleProtectSurveyPinChange = (pin: string) => {
     const pinAsNumber = Number(pin);
 
     if (isNaN(pinAsNumber)) return toast.error("PIN can only contain numbers");
@@ -216,10 +217,6 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       setRedirectToggle(true);
     }
 
-    if (!!localSurvey.pin) {
-      setVerifyProtectWithPinToggle(true);
-    }
-
     if (!!localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
         heading: localSurvey.surveyClosedMessage.heading ?? surveyClosedMessage.heading,
@@ -252,16 +249,16 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
   const handleCheckMark = () => {
     if (autoComplete) {
-      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: null };
+      const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey = { ...localSurvey, autoComplete: 25 };
       setLocalSurvey(updatedSurvey);
     }
   };
 
   const handleInputResponse = (e) => {
-    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: parseInt(e.target.value) };
+    const updatedSurvey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -271,12 +268,8 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       return;
     }
 
-    const inputResponses = localSurvey.analytics.numResponses || 0;
-
-    if (parseInt(e.target.value) <= inputResponses) {
-      toast.error(
-        `Response limit needs to exceed number of received responses (${localSurvey.analytics.numResponses}).`
-      );
+    if (parseInt(e.target.value) <= responseCount) {
+      toast.error(`Response limit needs to exceed number of received responses (${responseCount}).`);
       return;
     }
   };
@@ -314,11 +307,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 <Input
                   autoFocus
                   type="number"
-                  min={
-                    localSurvey?.analytics?.numResponses
-                      ? (localSurvey?.analytics?.numResponses + 1).toString()
-                      : "1"
-                  }
+                  min={responseCount ? (responseCount + 1).toString() : "1"}
                   id="autoCompleteResponses"
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}
@@ -502,10 +491,10 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 </div>
               </AdvancedOptionToggle>
               <AdvancedOptionToggle
-                htmlId="protectSurveryWithPin"
-                isChecked={verifyProtectWithPinToggle}
+                htmlId="protectSurveyWithPin"
+                isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
-                title="Protect Survery with a PIN"
+                title="Protect Survey with a PIN"
                 description="Only users who have the PIN can access the survey."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
@@ -522,7 +511,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       onBlur={handleProtectSurveyPinBlurEvent}
                       defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
                       onKeyDown={handleSurveyPinInputKeyDown}
-                      onChange={(e) => handleProtectSurveryPinChange(e.target.value)}
+                      onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
                     />
                     {verifyProtectWithPinError && (
                       <p className="text-sm text-red-700">{verifyProtectWithPinError}</p>

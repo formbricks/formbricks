@@ -29,7 +29,7 @@ export const createShortUrl = async (url: string): Promise<TShortUrl> => {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -47,7 +47,7 @@ export const getShortUrl = async (id: string): Promise<TShortUrl | null> => {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -64,7 +64,7 @@ export const getShortUrlByUrl = async (url: string): Promise<TShortUrl | null> =
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

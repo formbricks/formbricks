@@ -8,18 +8,19 @@ import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
 import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 interface SurveyEditorProps {
-  survey: TSurveyWithAnalytics;
+  survey: TSurvey;
   product: TProduct;
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  responseCount: number;
 }
 
 export default function SurveyEditor({
@@ -28,10 +29,11 @@ export default function SurveyEditor({
   environment,
   actionClasses,
   attributeClasses,
+  responseCount,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics | null>();
+  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export default function SurveyEditor({
           setActiveId={setActiveView}
           setInvalidQuestions={setInvalidQuestions}
           product={product}
+          responseCount={responseCount}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
@@ -90,6 +93,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
+                responseCount={responseCount}
               />
             )}
           </main>

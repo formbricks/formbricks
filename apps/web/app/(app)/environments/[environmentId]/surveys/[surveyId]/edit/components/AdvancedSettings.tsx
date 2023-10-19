@@ -1,12 +1,11 @@
-import React from "react";
 import LogicEditor from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditor";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import UpdateQuestionId from "./UpdateQuestionId";
-import { TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface AdvancedSettingsProps {
   question: TSurveyQuestion;
   questionIdx: number;
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
 }
 

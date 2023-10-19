@@ -4,17 +4,18 @@ import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
 import StylingCard from "./StylingCard";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 interface SettingsViewProps {
   environment: TEnvironment;
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
+  responseCount: number;
 }
 
 export default function SettingsView({
@@ -23,6 +24,7 @@ export default function SettingsView({
   setLocalSurvey,
   actionClasses,
   attributeClasses,
+  responseCount,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -42,7 +44,11 @@ export default function SettingsView({
         actionClasses={actionClasses}
       />
 
-      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <ResponseOptionsCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        responseCount={responseCount}
+      />
 
       <RecontactOptionsCard
         localSurvey={localSurvey}

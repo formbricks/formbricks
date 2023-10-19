@@ -69,12 +69,15 @@ export const getMembershipByUserIdTeamId = async (
   return membership;
 };
 
-export const getMembershipsByUserId = async (userId: string): Promise<TMembership[]> => {
-  validateInputs([userId, ZString]);
+export const getMembershipsByUserId = async (userId: string, page?: number): Promise<TMembership[]> => {
+  validateInputs([userId, ZString], [page, ZOptionalNumber]);
+
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
     },
+    take: page ? ITEMS_PER_PAGE : undefined,
+    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
   });
 
   return memberships;
@@ -119,6 +122,7 @@ export const updateMembership = async (
       },
       data,
     });
+    revalidateTag(getTeamsByUserIdCacheTag(userId));
 
     return membership;
   } catch (error) {
@@ -141,6 +145,7 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
       },
     },
   });
+  revalidateTag(getTeamsByUserIdCacheTag(userId));
 
   return deletedMembership;
 };
@@ -177,11 +182,12 @@ export const transferOwnership = async (
         },
       }),
     ]);
+    revalidateTag(getTeamsByUserIdCacheTag(teamId));
 
     return memberships;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     const message = error instanceof Error ? error.message : "";

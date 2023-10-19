@@ -1,7 +1,7 @@
 import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
-  TSurveyWithAnalytics,
+  TSurvey,
 } from "@formbricks/types/v1/surveys";
 import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
 import { Button } from "@formbricks/ui/Button";
@@ -19,7 +19,7 @@ const questionTypes = [
 ];
 
 interface OpenQuestionFormProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   question: TSurveyOpenTextQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
