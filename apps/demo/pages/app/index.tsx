@@ -29,7 +29,7 @@ export default function AppPage({}) {
         <button
           className="mt-2 rounded-lg bg-slate-200 px-6 py-1 dark:bg-slate-700 dark:text-slate-100"
           onClick={() => setDarkMode(!darkMode)}>
-          Toggle Dark Mode
+          {darkMode ? "Toggle Light Mode" : "Toggle Dark Mode"}
         </button>
       </div>
 
