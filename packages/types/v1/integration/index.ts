@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZGoogleSheetsConfig } from "./googleSheet";
-import { ZAirTableConfig } from "./airTable";
+import { ZAirTableConfig } from "./airtable";
 
 export const ZIntegrationsTypes = z.enum(["googleSheets", "airtable"]);
 
