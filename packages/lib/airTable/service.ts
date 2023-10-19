@@ -56,7 +56,6 @@ export const getBases = async (key: string) => {
   });
 
   const res = await req.json();
-
   return ZIntegrationAirtableBases.parse(res);
 };
 
