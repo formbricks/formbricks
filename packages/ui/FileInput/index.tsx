@@ -1,4 +1,5 @@
 "use client";
+
 import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { FileIcon } from "lucide-react";
@@ -28,11 +29,7 @@ const FileInput: React.FC<FileInputProps> = ({
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const file = e.dataTransfer.files[0];
+  const handleFileChange = async (file: File) => {
     if (
       file &&
       file.type &&
@@ -41,11 +38,21 @@ const FileInput: React.FC<FileInputProps> = ({
       setIsUploaded(false);
       setSelectedFile(file);
       const response = await uploadFile(file, allowedFileExtensions, environmentId);
-      setIsUploaded(true);
-      onFileUpload(response.data.url);
+      if (response.uploaded) {
+        setIsUploaded(true);
+        onFileUpload(response.url);
+      }
     } else {
       toast.error("File not supported");
     }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    await handleFileChange(file);
   };
 
   return (
@@ -70,11 +77,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   onChange={async (e) => {
                     const selectedFile = e.target?.files?.[0];
                     if (selectedFile) {
-                      setIsUploaded(false);
-                      setSelectedFile(selectedFile);
-                      const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
-                      setIsUploaded(true);
-                      onFileUpload(response.data.url);
+                      await handleFileChange(selectedFile);
                     }
                   }}
                 />
@@ -140,11 +143,7 @@ const FileInput: React.FC<FileInputProps> = ({
             onChange={async (e) => {
               const selectedFile = e.target?.files?.[0];
               if (selectedFile) {
-                setIsUploaded(false);
-                setSelectedFile(selectedFile);
-                const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
-                setIsUploaded(true);
-                onFileUpload(response.data.url);
+                await handleFileChange(selectedFile);
               }
             }}
           />

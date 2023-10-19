@@ -46,6 +46,7 @@ export default function EditWelcomeCard({
       },
     });
   };
+
   return (
     <div
       className={cn(

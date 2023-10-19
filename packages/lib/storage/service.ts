@@ -1,4 +1,5 @@
 import { PutObjectCommand, S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { access, mkdir, writeFile, readFile } from "fs/promises";
 import mime from "mime";
 import { env } from "@/env.mjs";
@@ -39,23 +40,27 @@ type TGetFileResponse = {
   };
 };
 
-export const getFileFromS3 = async (fileKey: string): Promise<TGetFileResponse> => {
+export const getFileFromS3 = async (fileKey: string): Promise<{ signedUrl: string }> => {
   const getObjectCommand = new GetObjectCommand({
     Bucket: AWS_BUCKET_NAME,
     Key: fileKey,
   });
 
   try {
-    const data = await s3Client.send(getObjectCommand);
-    const byteArray = await data.Body?.transformToByteArray();
-    const buffer = Buffer.from(byteArray as Uint8Array);
-
+    const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 });
     return {
-      fileBuffer: buffer,
-      metaData: {
-        contentType: data.ContentType ?? "",
-      },
+      signedUrl,
     };
+    // const data = await s3Client.send(getObjectCommand);
+    // const byteArray = await data.Body?.transformToByteArray();
+    // const buffer = Buffer.from(byteArray as Uint8Array);
+
+    // return {
+    //   fileBuffer: buffer,
+    //   metaData: {
+    //     contentType: data.ContentType ?? "",
+    //   },
+    // };
   } catch (err) {
     throw err;
   }
@@ -83,39 +88,21 @@ export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFil
   }
 };
 
-export const putFileToS3 = async (
+export const getSignedUrlForS3Upload = async (
   fileName: string,
   contentType: string,
-  fileBuffer: Buffer,
   accessType: string,
-  environmentId: string,
-  isPublic: boolean = false
+  environmentId: string
 ) => {
   try {
-    const buffer = Buffer.from(fileBuffer);
-
-    if (isPublic) {
-      //check the size of buffer and if it is greater than 10MB, return error
-
-      const bufferBytes = buffer.byteLength;
-      const bufferKB = bufferBytes / 1024;
-
-      if (bufferKB > 10240) {
-        const err = new Error("File size is greater than 10MB");
-        err.name = "FileTooLargeError";
-
-        throw err;
-      }
-    }
-
     const putObjectCommand = new PutObjectCommand({
       Bucket: AWS_BUCKET_NAME,
       Key: `${environmentId}/${accessType}/${fileName}`,
-      Body: buffer,
       ContentType: contentType,
     });
 
-    await s3Client.send(putObjectCommand);
+    const signedUrl = await getSignedUrl(s3Client, putObjectCommand, { expiresIn: 5 * 60 });
+    return signedUrl;
   } catch (err) {
     throw err;
   }

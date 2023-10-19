@@ -1,3 +1,5 @@
+"use client";
+
 const uploadFile = async (
   file: File | Blob,
   allowedFileExtensions: string[],
@@ -10,8 +12,19 @@ const uploadFile = async (
 
     const fileBuffer = await file.arrayBuffer();
 
+    // check the file size
+
+    const bufferBytes = fileBuffer.byteLength;
+    const bufferKB = bufferBytes / 1024;
+
+    if (bufferKB > 10240) {
+      const err = new Error("File size is greater than 10MB");
+      err.name = "FileTooLargeError";
+
+      throw err;
+    }
+
     const payload = {
-      fileBuffer: Array.from(new Uint8Array(fileBuffer)),
       fileName: file.name,
       contentType: file.type,
       allowedFileExtensions: allowedFileExtensions,
@@ -30,7 +43,38 @@ const uploadFile = async (
       throw new Error(`Upload failed with status: ${response.status}`);
     }
 
-    return response.json();
+    const json = await response.json();
+
+    const { data } = json;
+    const { signedUrl, fileUrl, signingData } = data;
+
+    const requestHeaders: Record<string, string> = {
+      "Content-Type": file.type,
+      fileName: file.name,
+      environmentId: environmentId ?? "",
+    };
+
+    if (signingData) {
+      const { signature, timestamp, uuid } = signingData;
+      requestHeaders.signature = signature;
+      requestHeaders.timestamp = timestamp;
+      requestHeaders.uuid = uuid;
+    }
+
+    const uploadResponse = await fetch(signedUrl, {
+      method: "PUT",
+      headers: requestHeaders,
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+    }
+
+    return {
+      uploaded: true,
+      url: fileUrl,
+    };
   } catch (error) {
     console.error("Upload error:", error);
     throw error;

@@ -1,5 +1,6 @@
 import crypto from "crypto";
-import { createHash, createCipheriv, createDecipheriv } from "crypto";
+import { createHash, createCipheriv, createDecipheriv, createHmac, randomBytes } from "crypto";
+import { ENCRYPTION_KEY } from "./constants";
 
 const ALGORITHM = "aes256";
 const INPUT_ENCODING = "utf8";
@@ -58,3 +59,39 @@ export const decryptAES128 = (encryptionKey: string, data: string): string => {
   decrypted += cipher.final("utf-8");
   return decrypted;
 };
+
+export function generateSignedUrl(
+  fileName: string,
+  environmentId: string,
+  contentType: string
+): { signature: string; uuid: string; timestamp: number } {
+  const uuid = randomBytes(16).toString("hex");
+  const timestamp = Date.now();
+  const data = `${uuid}:${fileName}:${environmentId}:${contentType}:${timestamp}`;
+  const signature = createHmac("sha256", ENCRYPTION_KEY).update(data).digest("hex");
+  return { signature, uuid, timestamp };
+}
+
+export function validateSignedUrl(
+  uuid: string,
+  fileName: string,
+  environmentId: string,
+  contentType: string,
+  timestamp: number,
+  signature: string,
+  secret: string
+): boolean {
+  const data = `${uuid}:${fileName}:${environmentId}:${contentType}:${timestamp}`;
+  const expectedSignature = createHmac("sha256", secret).update(data).digest("hex");
+
+  if (expectedSignature !== signature) {
+    return false;
+  }
+
+  // valid for 5 minutes
+  if (Date.now() - timestamp > 1000 * 60 * 5) {
+    return false;
+  }
+
+  return true;
+}
