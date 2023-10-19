@@ -19,6 +19,7 @@ import "server-only";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
+import { environmentCache } from "./cache";
 
 export const getEnvironmentCacheTag = (environmentId: string) => `environments-${environmentId}`;
 export const getEnvironmentsCacheTag = (productId: string) => `products-${productId}-environments`;
@@ -54,9 +55,9 @@ export const getEnvironment = (environmentId: string) =>
         throw new ValidationError("Data validation of environment failed");
       }
     },
-    [`environments-${environmentId}`],
+    [`getEnvironment-${environmentId}`],
     {
-      tags: [getEnvironmentCacheTag(environmentId)],
+      tags: [environmentCache.tag.byId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -101,9 +102,9 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
         throw new ValidationError("Data validation of environments array failed");
       }
     },
-    [`products-${productId}-environments`],
+    [`getEnvironments-${productId}`],
     {
-      tags: [getEnvironmentsCacheTag(productId)],
+      tags: [environmentCache.tag.byProductId(productId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -123,8 +124,10 @@ export const updateEnvironment = async (
       data: newData,
     });
 
-    revalidateTag(getEnvironmentsCacheTag(updatedEnvironment.productId));
-    revalidateTag(getEnvironmentCacheTag(environmentId));
+    environmentCache.revalidate({
+      id: environmentId,
+      productId: updatedEnvironment.productId,
+    });
 
     return updatedEnvironment;
   } catch (error) {
@@ -167,7 +170,7 @@ export const createEnvironment = async (
 ): Promise<TEnvironment> => {
   validateInputs([productId, ZId], [environmentInput, ZEnvironmentCreateInput]);
 
-  return await prisma.environment.create({
+  const environemt = await prisma.environment.create({
     data: {
       type: environmentInput.type || "development",
       product: { connect: { id: productId } },
@@ -199,4 +202,11 @@ export const createEnvironment = async (
       },
     },
   });
+
+  environmentCache.revalidate({
+    id: environemt.id,
+    productId: environemt.productId,
+  });
+
+  return environemt;
 };
