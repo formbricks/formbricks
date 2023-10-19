@@ -311,7 +311,7 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
     },
     [`getOrCreatePersonByUserId-${userId}-${environmentId}`],
     {
-      tags: [personCache.tag.byUserId(userId), personCache.tag.byEnvironmentId(environmentId)],
+      tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
