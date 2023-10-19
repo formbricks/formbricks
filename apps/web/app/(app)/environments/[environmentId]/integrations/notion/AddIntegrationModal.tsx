@@ -418,8 +418,8 @@ export default function AddIntegrationModal({
                   />
                   {selectedDatabase && hasMatchingId && (
                     <p className="text-xs text-amber-700">
-                      <strong>Warning:</strong> You have already connected one survey with this database. Your
-                      data will be inconsistent
+                      <strong>Warning:</strong> A connection with this database is live. Please make changes
+                      with caution.
                     </p>
                   )}
                   <p className="m-1 text-xs text-slate-500">
