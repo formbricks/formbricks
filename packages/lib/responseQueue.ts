@@ -1,6 +1,6 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import SurveyState from "./surveyState";
 import { FormbricksAPI } from "@formbricks/api";
+import { TResponseUpdate } from "@formbricks/types/responses";
+import SurveyState from "./surveyState";
 
 interface QueueConfig {
   apiHost: string;
@@ -21,7 +21,7 @@ export class ResponseQueue {
     this.config = config;
     this.surveyState = surveyState;
     this.api = new FormbricksAPI({
-      apiHost:config.apiHost,
+      apiHost: config.apiHost,
       environmentId: "",
     });
   }

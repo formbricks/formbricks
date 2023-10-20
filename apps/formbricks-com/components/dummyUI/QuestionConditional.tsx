@@ -1,4 +1,4 @@
-import { QuestionType, type Question } from "@formbricks/types/questions";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
@@ -7,7 +7,7 @@ import CTAQuestion from "./CTAQuestion";
 import RatingQuestion from "./RatingQuestion";
 
 interface QuestionConditionalProps {
-  question: Question;
+  question: TSurveyQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
@@ -19,42 +19,42 @@ export default function QuestionConditional({
   lastQuestion,
   brandColor,
 }: QuestionConditionalProps) {
-  return question.type === QuestionType.OpenText ? (
+  return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.MultipleChoiceSingle ? (
+  ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.MultipleChoiceMulti ? (
+  ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.NPS ? (
+  ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.CTA ? (
+  ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.Rating ? (
+  ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
       question={question}
       onSubmit={onSubmit}

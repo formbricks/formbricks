@@ -1,14 +1,14 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/v1/teams";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { getEnvironmentCacheTag } from "../environment/service";
-import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { validateInputs } from "../utils/validate";
 
 export const select = {
@@ -41,11 +41,12 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
+        revalidateTag(getTeamsByUserIdCacheTag(userId));
 
         return teams;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -78,11 +79,13 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
           },
           select: { ...select, memberships: true }, // include memberships
         });
+        revalidateTag(getTeamByEnvironmentIdCacheTag(environmentId));
 
         return team;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          console.error(error.message);
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -180,7 +183,7 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
     return team;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

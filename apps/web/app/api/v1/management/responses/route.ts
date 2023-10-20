@@ -1,7 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 
 export async function GET(request: Request) {
   try {

@@ -1,8 +1,10 @@
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
+import { ZId } from "@formbricks/types/environment";
 import { unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getTeamsByUserIdCacheTag } from "../team/service";
+import { revalidateTag } from "next/cache";
 
 export const hasUserEnvironmentAccess = async (userId: string, environmentId: string) => {
   return await unstable_cache(
@@ -28,6 +30,8 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
           },
         },
       });
+      revalidateTag(getTeamsByUserIdCacheTag(userId));
+
       const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
       return environmentUsers.includes(userId);
     },

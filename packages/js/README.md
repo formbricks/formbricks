@@ -4,7 +4,7 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-red.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 Please see [Formbricks Docs](https://formbricks.com/docs).
-Specifically, [Quickstart/Implementation details](https://formbricks.com/docs/getting-started/quickstart).
+Specifically, [Quickstart/Implementation details](https://formbricks.com/docs/getting-started/quickstart-in-app-survey).
 
 ## What is Formbricks
 
@@ -33,4 +33,4 @@ if (typeof window !== "undefined") {
 
 Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings.
 
-For more detailed guides for different frameworks, check out our [Next.js](https://formbricks.com/docs/getting-started/nextjs) and [Vue.js](https://formbricks.com/docs/getting-started/vuejs) guides.
+For more detailed guides for different frameworks, check out our [Framework Guides](https://formbricks.com/docs/getting-started/framework-guides).

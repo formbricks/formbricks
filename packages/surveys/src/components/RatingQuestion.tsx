@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
@@ -70,6 +70,12 @@ export default function RatingQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
@@ -167,8 +173,8 @@ export default function RatingQuestion({
             ))}
           </div>
           <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
-            <p>{question.lowerLabel}</p>
-            <p>{question.upperLabel}</p>
+            <p className="w-1/2 text-left">{question.lowerLabel}</p>
+            <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>
         </fieldset>
       </div>

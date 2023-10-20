@@ -7,13 +7,13 @@ import {
 } from "@heroicons/react/24/solid";
 import React from "react";
 
-interface QuestionType {
+interface TSurveyQuestionType {
   value: string;
   label: string;
 }
 
 interface QuestionTypeSelectorProps {
-  questionTypes: QuestionType[];
+  questionTypes: TSurveyQuestionType[];
   currentType: string | undefined;
   handleTypeChange: (value: string) => void;
 }

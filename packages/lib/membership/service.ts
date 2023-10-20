@@ -1,17 +1,17 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
+import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/errors";
 import {
   TMember,
   TMembership,
   ZMembership,
   TMembershipUpdateInput,
   ZMembershipUpdateInput,
-} from "@formbricks/types/v1/memberships";
+} from "@formbricks/types/memberships";
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
-import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { getTeamsByUserIdCacheTag } from "../team/service";
 import { revalidateTag } from "next/cache";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -122,6 +122,7 @@ export const updateMembership = async (
       },
       data,
     });
+    revalidateTag(getTeamsByUserIdCacheTag(userId));
 
     return membership;
   } catch (error) {
@@ -144,6 +145,7 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
       },
     },
   });
+  revalidateTag(getTeamsByUserIdCacheTag(userId));
 
   return deletedMembership;
 };
@@ -180,11 +182,12 @@ export const transferOwnership = async (
         },
       }),
     ]);
+    revalidateTag(getTeamsByUserIdCacheTag(teamId));
 
     return memberships;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     const message = error instanceof Error ? error.message : "";

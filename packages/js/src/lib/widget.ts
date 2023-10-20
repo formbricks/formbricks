@@ -1,8 +1,8 @@
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
 import { renderSurveyModal } from "@formbricks/surveys";
-import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TResponseUpdate } from "@formbricks/types/responses";
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
@@ -65,13 +65,13 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         });
         const res = await api.client.display.create({
           surveyId: survey.id,
-          personId: config.get().state.person.id,        
+          personId: config.get().state.person.id,
         });
         if (!res.ok) {
           throw new Error("Could not create display");
         }
         const { id } = res.data;
-      
+
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
