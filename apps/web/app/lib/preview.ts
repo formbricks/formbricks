@@ -1,6 +1,6 @@
-import { PlacementType } from "@formbricks/types/js";
+import { TPlacement } from "@formbricks/types/common";
 
-export const getPlacementStyle = (placement: PlacementType) => {
+export const getPlacementStyle = (placement: TPlacement) => {
   switch (placement) {
     case "bottomRight":
       return "bottom-3 sm:right-3";

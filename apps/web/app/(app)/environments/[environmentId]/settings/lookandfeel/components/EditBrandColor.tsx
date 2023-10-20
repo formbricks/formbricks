@@ -1,6 +1,6 @@
 "use client";
 
-import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";

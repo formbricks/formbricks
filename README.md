@@ -1,3 +1,4 @@
+<div id="top"></div>
 <p align="center">
 <a href="https://formbricks.com">
     <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
@@ -154,3 +155,5 @@ Distributed under the AGPLv3 License. See [`LICENSE`](./LICENSE) for more inform
 ## 🔒 Security
 
 We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See [`SECURITY.md`](./SECURITY.md) for more information.
+
+<p align="right"><a href="#top">🔼 Back to top</a></p>

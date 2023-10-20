@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { TActionClassType } from "@formbricks/types/v1/actionClasses";
+import { TActionClassType } from "@formbricks/types/actionClasses";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {

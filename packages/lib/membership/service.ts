@@ -1,17 +1,17 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
+import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/errors";
 import {
   TMember,
   TMembership,
   ZMembership,
   TMembershipUpdateInput,
   ZMembershipUpdateInput,
-} from "@formbricks/types/v1/memberships";
+} from "@formbricks/types/memberships";
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
-import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { getTeamsByUserIdCacheTag } from "../team/service";
 import { revalidateTag } from "next/cache";
 import { ITEMS_PER_PAGE } from "../constants";

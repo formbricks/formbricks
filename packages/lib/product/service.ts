@@ -1,17 +1,17 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ValidationError } from "@formbricks/types/v1/errors";
-import type { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
-import { ZProduct, ZProductUpdateInput } from "@formbricks/types/v1/product";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "../environment/service";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZOptionalNumber } from "@formbricks/types/common";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 export const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
