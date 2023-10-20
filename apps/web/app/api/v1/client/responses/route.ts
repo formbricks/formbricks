@@ -1,12 +1,12 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { InvalidInputError } from "@formbricks/types/v1/errors";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
-import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 

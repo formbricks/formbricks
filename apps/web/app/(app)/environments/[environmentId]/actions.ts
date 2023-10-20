@@ -10,7 +10,7 @@ import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, duplicateSurvey } from "@formbricks/lib/survey/service";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { getServerSession } from "next-auth";

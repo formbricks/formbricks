@@ -1,7 +1,7 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 

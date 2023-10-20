@@ -4,9 +4,9 @@ import { sendResponseFinishedEmail } from "@/app/lib/email";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { convertDatesInObject } from "@formbricks/lib/time";
-import { Question } from "@formbricks/types/questions";
-import { NotificationSettings } from "@formbricks/types/users";
-import { ZPipelineInput } from "@formbricks/types/v1/pipelines";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TUserNotificationSettings } from "@formbricks/types/users";
+import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handleIntegrations } from "./lib/handleIntegrations";
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
-      const notificationSettings: NotificationSettings | null = user.notificationSettings;
+      const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;
       if (notificationSettings?.alert && notificationSettings.alert[surveyId]) {
         return true;
       }
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       const survey = {
         id: surveyData.id,
         name: surveyData.name,
-        questions: JSON.parse(JSON.stringify(surveyData.questions)) as Question[],
+        questions: JSON.parse(JSON.stringify(surveyData.questions)) as TSurveyQuestion[],
       };
       // send email to all users
       await Promise.all(

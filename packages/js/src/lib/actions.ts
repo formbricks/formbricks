@@ -1,4 +1,4 @@
-import { TJsActionInput, TSurveyWithTriggers } from "@formbricks/types/v1/js";
+import { TJsActionInput, TSurveyWithTriggers } from "@formbricks/types/js";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";

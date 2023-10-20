@@ -2,10 +2,10 @@
 import { createSurveyAction } from "../actions";
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TProduct } from "@formbricks/types/v1/product";
-import { TSurveyInput } from "@formbricks/types/v1/surveys";
-import { TTemplate } from "@formbricks/types/v1/templates";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TSurveyInput } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";

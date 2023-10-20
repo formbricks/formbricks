@@ -5,7 +5,7 @@ import {
   TSurvey,
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
-} from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";

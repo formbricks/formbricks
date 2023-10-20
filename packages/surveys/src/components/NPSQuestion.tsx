@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";

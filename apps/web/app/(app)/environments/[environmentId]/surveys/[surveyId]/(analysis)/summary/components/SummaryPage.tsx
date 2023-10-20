@@ -7,16 +7,14 @@ import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[s
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
-import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { useEffect, useMemo, useState } from "react";
-import { QuestionSummary } from "@formbricks/types/responses";
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useSearchParams } from "next/navigation";
 
@@ -58,25 +56,6 @@ const SummaryPage = ({
     return getFilterResponses(responses, selectedFilter, survey, dateRange);
   }, [selectedFilter, responses, survey, dateRange]);
 
-  const summaryData: QuestionSummary<TSurveyQuestion>[] = useMemo(
-    () =>
-      survey.questions.map((question) => {
-        const questionResponses = responses
-          .filter((response) => question.id in response.data)
-          .map((r) => ({
-            id: r.id,
-            value: r.data[question.id],
-            updatedAt: r.updatedAt,
-            person: r.person,
-          }));
-        return {
-          question,
-          responses: questionResponses,
-        };
-      }),
-    [responses, survey]
-  );
-
   return (
     <ContentWrapper>
       <SummaryHeader
@@ -102,12 +81,7 @@ const SummaryPage = ({
         setShowDropOffs={setShowDropOffs}
       />
       {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
-      <SummaryList
-        responses={filterResponses}
-        survey={survey}
-        environment={environment}
-        summaryData={summaryData}
-      />
+      <SummaryList responses={filterResponses} survey={survey} environment={environment} />
     </ContentWrapper>
   );
 };

@@ -1,4 +1,4 @@
-import { TSurveyLogic } from "@formbricks/types/v1/surveys";
+import { TSurveyLogic } from "@formbricks/types/surveys";
 
 export function evaluateCondition(logic: TSurveyLogic, responseValue: any): boolean {
   switch (logic.condition) {

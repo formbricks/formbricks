@@ -3,7 +3,7 @@
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/settings/product/actions";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { truncate } from "@/app/lib/utils";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";

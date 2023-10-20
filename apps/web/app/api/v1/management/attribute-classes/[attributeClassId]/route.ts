@@ -6,10 +6,10 @@ import {
   getAttributeClass,
   updatetAttributeClass,
 } from "@formbricks/lib/attributeClass/service";
-import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/v1/attributeClasses";
+import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/attributeClasses";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 async function fetchAndAuthorizeAttributeClass(
   authentication: TAuthenticationApiKey,

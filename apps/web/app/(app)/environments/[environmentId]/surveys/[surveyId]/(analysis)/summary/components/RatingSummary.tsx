@@ -1,15 +1,15 @@
-import type { QuestionSummary } from "@formbricks/types/responses";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { QuestionType } from "@formbricks/types/questions";
-import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
 import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface RatingSummaryProps {
-  questionSummary: QuestionSummary<TSurveyRatingQuestion>;
+  questionSummary: TSurveyQuestionSummary<TSurveyRatingQuestion>;
 }
 
 interface ChoiceResult {
@@ -22,7 +22,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const results: ChoiceResult[] = useMemo(() => {
-    if (questionSummary.question.type !== QuestionType.Rating) return [];
+    if (questionSummary.question.type !== TSurveyQuestionType.Rating) return [];
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (let i = 1; i <= questionSummary.question.range; i++) {
