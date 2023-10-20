@@ -10,7 +10,7 @@ import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getSessionCached } from "../session/service";
+import { getSession } from "../session/service";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
@@ -136,7 +136,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     eventType = "automatic";
   }
 
-  const session = await getSessionCached(sessionId);
+  const session = await getSession(sessionId);
 
   if (!session) {
     throw new ResourceNotFoundError("Session", sessionId);
