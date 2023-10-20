@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { AuthenticationError } from "@formbricks/types/v1/errors";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { compare, hash } from "bcryptjs";
 
 export async function hashPassword(password: string) {

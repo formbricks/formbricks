@@ -1,7 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { deleteResponse } from "@formbricks/lib/response/service";
 import { canUserAccessResponse } from "@formbricks/lib/response/auth";

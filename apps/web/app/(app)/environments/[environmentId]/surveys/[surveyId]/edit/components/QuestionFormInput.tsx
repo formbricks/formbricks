@@ -1,6 +1,6 @@
 "use client";
 
-import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
