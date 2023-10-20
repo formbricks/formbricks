@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct } from "@formbricks/types/product";
 import { updateProductAction } from "../actions";
 
 type EditWaitingTimeFormValues = {

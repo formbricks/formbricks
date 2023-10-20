@@ -5,7 +5,7 @@ import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AddNoCodeActionModal from "./AddNoCodeActionModal";
 import ActionDetailModal from "./ActionDetailModal";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TActionClass } from "@formbricks/types/actionClasses";
 
 export default function ActionClassesTable({
   environmentId,

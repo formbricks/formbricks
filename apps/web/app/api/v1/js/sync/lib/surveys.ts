@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { selectSurvey } from "@formbricks/lib/survey/service";
-import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
 import { unstable_cache } from "next/cache";
 
 const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [

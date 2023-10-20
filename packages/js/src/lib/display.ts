@@ -1,5 +1,5 @@
-import type { TDisplay, TDisplayInput } from "../../../types/v1/displays";
-import type { TJsConfig } from "../../../types/v1/js";
+import type { TDisplay, TDisplayInput } from "../../../types/displays";
+import type { TJsConfig } from "../../../types/js";
 import { NetworkError, Result, err, ok, okVoid } from "./errors";
 
 export const createDisplay = async (

@@ -1,10 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { NextResponse } from "next/server";
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
-import { TActionClass, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { TActionClass, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 
 async function fetchAndAuthorizeActionClass(

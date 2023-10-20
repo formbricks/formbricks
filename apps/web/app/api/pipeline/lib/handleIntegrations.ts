@@ -1,10 +1,10 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
-import { TIntegration } from "@formbricks/types/v1/integration";
+import { TIntegration } from "@formbricks/types/integration";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { TPipelineInput } from "@formbricks/types/v1/pipelines";
-import { TIntegrationGoogleSheets } from "@formbricks/types/v1/integration/googleSheet";
-import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
+import { TPipelineInput } from "@formbricks/types/pipelines";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
 export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {
   for (const integration of integrations) {

@@ -10,8 +10,8 @@ import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProfile } from "@formbricks/types/profile";
+import { TProduct } from "@formbricks/types/product";
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 
 const MAX_STEPS = 6;

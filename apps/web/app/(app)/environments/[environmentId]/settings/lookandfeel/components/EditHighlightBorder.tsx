@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct } from "@formbricks/types/product";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";

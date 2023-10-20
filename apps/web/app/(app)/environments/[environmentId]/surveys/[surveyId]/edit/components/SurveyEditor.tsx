@@ -7,11 +7,11 @@ import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TProduct } from "@formbricks/types/product";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 interface SurveyEditorProps {
