@@ -1,20 +1,19 @@
 "use client";
 
-import GoogleSheetLogo from "../images/google-sheets-small.png";
+import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import FormbricksLogo from "@/images/logo.svg";
-import { authorize } from "../lib/google";
 import { Button } from "@formbricks/ui/Button";
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
+import AirtableLogo from "../images/airtable.svg";
 
-interface ConnectProps {
+interface AirtableConnectProps {
   enabled: boolean;
   environmentId: string;
   webAppUrl: string;
 }
 
-export default function Connect({ enabled, environmentId, webAppUrl }: ConnectProps) {
+export default function AirtableConnect({ environmentId, enabled, webAppUrl }: AirtableConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const handleGoogleLogin = async () => {
     setIsConnecting(true);
@@ -33,23 +32,17 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
             <Image className="w-1/2" src={FormbricksLogo} alt="Formbricks Logo" />
           </div>
           <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-4 shadow-md">
-            <Image className="w-1/2" src={GoogleSheetLogo} alt="Google Sheet logo" />
+            <Image className="w-1/2" src={AirtableLogo} alt="Airtable Logo" />
           </div>
         </div>
-        <p className="my-8">Sync responses directly with Google Sheets.</p>
+        <p className="my-8">Sync responses directly with Airtable.</p>
         {!enabled && (
           <p className="mb-8 rounded border-gray-200 bg-gray-100 p-3 text-sm">
-            Google Sheets Integration is not configured in your instance of Formbricks.
-            <br />
-            Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/google-sheets" className="underline">
-              docs
-            </Link>{" "}
-            to configure it.
+            Airtable Integration is not configured in your instance of Formbricks.
           </p>
         )}
         <Button variant="darkCTA" loading={isConnecting} onClick={handleGoogleLogin} disabled={!enabled}>
-          Connect with Google
+          Connect with Airtable
         </Button>
       </div>
     </div>
