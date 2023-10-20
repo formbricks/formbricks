@@ -1,12 +1,12 @@
 import "server-only";
 
-import { TWebhook, TWebhookInput, ZWebhookInput } from "@formbricks/types/v1/webhooks";
+import { TWebhook, TWebhookInput, ZWebhookInput } from "@formbricks/types/webhooks";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
-import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/types/v1/errors";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZId } from "@formbricks/types/environment";
+import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE } from "../constants";
 
 export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> => {

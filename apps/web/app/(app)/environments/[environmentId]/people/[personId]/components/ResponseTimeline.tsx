@@ -1,13 +1,13 @@
 "use client";
 
 import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponsesFeed";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TTag } from "@formbricks/types/tags";
+import { TProfile } from "@formbricks/types/profile";
 
 export default function ResponseTimeline({
   surveys,

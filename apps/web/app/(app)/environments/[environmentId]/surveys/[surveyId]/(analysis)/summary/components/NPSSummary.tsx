@@ -1,13 +1,13 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import type { QuestionSummary } from "@formbricks/types/responses";
-import { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { ProgressBar, HalfCircle } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { questionTypes } from "@/app/lib/questions";
 
 interface NPSSummaryProps {
-  questionSummary: QuestionSummary<TSurveyNPSQuestion>;
+  questionSummary: TSurveyQuestionSummary<TSurveyNPSQuestion>;
 }
 
 interface Result {

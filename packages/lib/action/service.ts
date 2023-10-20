@@ -1,11 +1,11 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TActionClassType } from "@formbricks/types/v1/actionClasses";
-import { TAction, TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { TActionClassType } from "@formbricks/types/actionClasses";
+import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
+import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";

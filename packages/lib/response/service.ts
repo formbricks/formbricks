@@ -7,18 +7,18 @@ import {
   TResponseUpdateInput,
   ZResponseInput,
   ZResponseUpdateInput,
-} from "@formbricks/types/v1/responses";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TTag } from "@formbricks/types/v1/tags";
+} from "@formbricks/types/responses";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson } from "@formbricks/types/people";
+import { TTag } from "@formbricks/types/tags";
 import { Prisma } from "@prisma/client";
 import { getPerson, transformPrismaPerson } from "../person/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
+import { ZId } from "@formbricks/types/environment";
 import { unstable_cache } from "next/cache";
 import { deleteDisplayByResponseId } from "../display/service";
-import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "./cache";
 import { formatResponseDateFields } from "../response/util";

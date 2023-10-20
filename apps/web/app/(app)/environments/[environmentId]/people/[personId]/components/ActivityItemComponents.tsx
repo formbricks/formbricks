@@ -1,5 +1,5 @@
 import { capitalizeFirstLetter } from "@/app/lib/utils";
-import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { TActivityFeedItem } from "@formbricks/types/activity";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Label } from "@formbricks/ui/Label";
 import {

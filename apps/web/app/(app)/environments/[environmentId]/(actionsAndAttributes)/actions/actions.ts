@@ -5,7 +5,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createActionClass, deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { canUserAccessActionClass } from "@formbricks/lib/actionClass/auth";
 import { getServerSession } from "next-auth";
-import { TActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { TActionClassInput } from "@formbricks/types/actionClasses";
 
 import {
   getActionCountInLast24Hours,
@@ -13,7 +13,7 @@ import {
   getActionCountInLastHour,
 } from "@formbricks/lib/action/service";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 
 export async function deleteActionClassAction(environmentId, actionClassId: string) {
   const session = await getServerSession(authOptions);

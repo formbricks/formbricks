@@ -2,8 +2,8 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TResponseNote } from "@formbricks/types/v1/responses";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TResponseNote } from "@formbricks/types/responses";
 import { Prisma } from "@prisma/client";
 import { responseCache } from "../response/cache";
 import { validateInputs } from "../utils/validate";

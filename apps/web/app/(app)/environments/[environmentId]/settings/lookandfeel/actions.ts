@@ -2,9 +2,9 @@
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { updateProduct } from "@formbricks/lib/product/service";
-import { TProductUpdateInput } from "@formbricks/types/v1/product";
+import { TProductUpdateInput } from "@formbricks/types/product";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { canUserAccessProduct } from "@formbricks/lib/product/auth";
 
 export async function updateProductAction(productId: string, inputProduct: Partial<TProductUpdateInput>) {

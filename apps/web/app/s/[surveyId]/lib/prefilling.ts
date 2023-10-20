@@ -1,6 +1,6 @@
-import { QuestionType } from "@formbricks/types/questions";
-import { TResponseData } from "@formbricks/types/v1/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 export function getPrefillResponseData(
   currentQuestion: TSurveyQuestion,
@@ -19,7 +19,7 @@ export function getPrefillResponseData(
       const answerObj = { [firstQuestionId]: answer };
 
       if (
-        question.type === QuestionType.CTA &&
+        question.type === TSurveyQuestionType.CTA &&
         question.buttonExternal &&
         question.buttonUrl &&
         answer === "clicked"
@@ -39,10 +39,10 @@ export const checkValidity = (question: TSurveyQuestion, answer: any): boolean =
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
-      case QuestionType.OpenText: {
+      case TSurveyQuestionType.OpenText: {
         return true;
       }
-      case QuestionType.MultipleChoiceSingle: {
+      case TSurveyQuestionType.MultipleChoiceSingle: {
         const hasOther = question.choices[question.choices.length - 1].id === "other";
         if (!hasOther) {
           if (!question.choices.find((choice) => choice.label === answer)) return false;
@@ -50,7 +50,7 @@ export const checkValidity = (question: TSurveyQuestion, answer: any): boolean =
         }
         return true;
       }
-      case QuestionType.MultipleChoiceMulti: {
+      case TSurveyQuestionType.MultipleChoiceMulti: {
         answer = answer.split(",");
         const hasOther = question.choices[question.choices.length - 1].id === "other";
         if (!hasOther) {
@@ -60,7 +60,7 @@ export const checkValidity = (question: TSurveyQuestion, answer: any): boolean =
         }
         return true;
       }
-      case QuestionType.NPS: {
+      case TSurveyQuestionType.NPS: {
         answer = answer.replace(/&/g, ";");
         const answerNumber = Number(JSON.parse(answer));
 
@@ -68,17 +68,17 @@ export const checkValidity = (question: TSurveyQuestion, answer: any): boolean =
         if (answerNumber < 0 || answerNumber > 10) return false;
         return true;
       }
-      case QuestionType.CTA: {
+      case TSurveyQuestionType.CTA: {
         if (question.required && answer === "dismissed") return false;
         if (answer !== "clicked" && answer !== "dismissed") return false;
         return true;
       }
-      case QuestionType.Consent: {
+      case TSurveyQuestionType.Consent: {
         if (question.required && answer === "dismissed") return false;
         if (answer !== "accepted" && answer !== "dismissed") return false;
         return true;
       }
-      case QuestionType.Rating: {
+      case TSurveyQuestionType.Rating: {
         answer = answer.replace(/&/g, ";");
         const answerNumber = Number(JSON.parse(answer));
         if (answerNumber < 1 || answerNumber > question.range) return false;
@@ -94,20 +94,20 @@ export const checkValidity = (question: TSurveyQuestion, answer: any): boolean =
 
 export const transformAnswer = (question: TSurveyQuestion, answer: string): string | number | string[] => {
   switch (question.type) {
-    case QuestionType.OpenText:
-    case QuestionType.MultipleChoiceSingle:
-    case QuestionType.Consent:
-    case QuestionType.CTA: {
+    case TSurveyQuestionType.OpenText:
+    case TSurveyQuestionType.MultipleChoiceSingle:
+    case TSurveyQuestionType.Consent:
+    case TSurveyQuestionType.CTA: {
       return answer;
     }
 
-    case QuestionType.Rating:
-    case QuestionType.NPS: {
+    case TSurveyQuestionType.Rating:
+    case TSurveyQuestionType.NPS: {
       answer = answer.replace(/&/g, ";");
       return Number(JSON.parse(answer));
     }
 
-    case QuestionType.MultipleChoiceMulti: {
+    case TSurveyQuestionType.MultipleChoiceMulti: {
       let ansArr = answer.split(",");
       const hasOthers = question.choices[question.choices.length - 1].id === "other";
       if (!hasOthers) return ansArr;
