@@ -1,6 +1,6 @@
 "use client";
 
-import GoogleSheetLogo from "@/images/google-sheets-small.png";
+import GoogleSheetLogo from "../images/google-sheets-small.png";
 import FormbricksLogo from "@/images/logo.svg";
 import { authorize } from "../lib/google";
 import { Button } from "@formbricks/ui/Button";
