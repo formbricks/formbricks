@@ -1,6 +1,6 @@
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import { TSurvey, TSurveyHiddenFields, TSurveyWelcomeCard } from "@formbricks/types/v1/surveys";
-import { TTemplate } from "@formbricks/types/v1/templates";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyHiddenFields, TSurveyWelcomeCard } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {

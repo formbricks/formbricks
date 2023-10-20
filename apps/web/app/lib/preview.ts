@@ -1,4 +1,4 @@
-import { TPlacement } from "@formbricks/types/v1/common";
+import { TPlacement } from "@formbricks/types/common";
 
 export const getPlacementStyle = (placement: TPlacement) => {
   switch (placement) {

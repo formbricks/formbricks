@@ -1,4 +1,4 @@
-import { TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 

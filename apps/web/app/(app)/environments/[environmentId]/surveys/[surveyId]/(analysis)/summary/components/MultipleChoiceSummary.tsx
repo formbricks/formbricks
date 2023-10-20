@@ -1,5 +1,5 @@
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import type { TSurveyQuestionSummary } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
@@ -9,7 +9,7 @@ import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
-} from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/surveys";
 import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 

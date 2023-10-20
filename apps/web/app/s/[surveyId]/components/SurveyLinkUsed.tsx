@@ -1,4 +1,4 @@
-import { TSurveySingleUse } from "@formbricks/types/v1/surveys";
+import { TSurveySingleUse } from "@formbricks/types/surveys";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";

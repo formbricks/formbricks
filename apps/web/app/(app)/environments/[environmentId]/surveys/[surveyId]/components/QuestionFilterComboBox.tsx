@@ -10,7 +10,7 @@ import {
 import { Command, CommandGroup, CommandItem, CommandEmpty } from "@formbricks/ui/Command";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import clsx from "clsx";
 
 type QuestionFilterComboBoxProps = {

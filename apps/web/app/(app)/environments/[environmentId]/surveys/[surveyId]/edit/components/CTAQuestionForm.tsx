@@ -2,7 +2,7 @@
 
 import { BackButtonInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionCard";
 import { md } from "@formbricks/lib/markdownIt";
-import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";

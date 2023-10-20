@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { useMemo, useRef, useState, useEffect } from "preact/hooks";
 import { cn, shuffleQuestions } from "../lib/utils";
 import { BackButton } from "./BackButton";

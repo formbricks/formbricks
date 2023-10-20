@@ -1,5 +1,5 @@
-import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
-import { TTemplate } from "@formbricks/types/v1/templates";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 
 export const replaceQuestionPresetPlaceholders = (question: TSurveyQuestion, product) => {
   if (!question) return;

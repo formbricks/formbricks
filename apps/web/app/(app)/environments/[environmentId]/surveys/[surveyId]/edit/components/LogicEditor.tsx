@@ -4,7 +4,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionType,
   TSurveyLogicCondition,
-} from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,

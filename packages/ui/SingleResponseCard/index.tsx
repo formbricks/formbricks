@@ -1,12 +1,12 @@
 "use client";
 
 import { timeSince } from "@formbricks/lib/time";
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";

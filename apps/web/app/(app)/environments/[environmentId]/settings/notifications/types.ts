@@ -1,4 +1,4 @@
-import { TUserNotificationSettings } from "@formbricks/types/v1/users";
+import { TUserNotificationSettings } from "@formbricks/types/users";
 
 export interface Membership {
   team: {

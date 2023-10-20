@@ -1,5 +1,5 @@
-import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TResponse } from "@formbricks/types/responses";
 import { WEBAPP_URL } from "../constants";
 import { createInviteToken, createToken } from "../jwt";
 import { getQuestionResponseMapping } from "../responses";

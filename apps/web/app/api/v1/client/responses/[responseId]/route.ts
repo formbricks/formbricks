@@ -1,10 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { updateResponse } from "@formbricks/lib/response/service";
-import { ZResponseUpdateInput } from "@formbricks/types/v1/responses";
+import { ZResponseUpdateInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {

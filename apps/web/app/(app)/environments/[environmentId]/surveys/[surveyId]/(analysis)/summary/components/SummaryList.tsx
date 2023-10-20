@@ -2,10 +2,10 @@ import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import type { TSurveyQuestionSummary } from "@formbricks/types/v1/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -16,7 +16,7 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyQuestion,
   TSurveyRatingQuestion,
-} from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/surveys";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";

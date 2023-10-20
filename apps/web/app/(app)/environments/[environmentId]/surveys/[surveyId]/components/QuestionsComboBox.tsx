@@ -5,7 +5,7 @@ import { Command, CommandGroup, CommandItem, CommandInput, CommandEmpty } from "
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
   StarIcon,
   HashtagIcon,

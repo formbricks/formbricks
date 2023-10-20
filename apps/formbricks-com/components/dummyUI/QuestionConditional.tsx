@@ -1,4 +1,4 @@
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";

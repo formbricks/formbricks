@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
 export type TSurveyQuestionType = {
   id: string;

@@ -1,4 +1,4 @@
-import { TPlacement } from "@formbricks/types/v1/common";
+import { TPlacement } from "@formbricks/types/common";
 import { VNode } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn } from "../lib/utils";

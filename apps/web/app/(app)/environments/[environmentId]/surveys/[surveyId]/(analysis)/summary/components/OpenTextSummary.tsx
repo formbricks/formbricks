@@ -1,8 +1,8 @@
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { timeSince } from "@formbricks/lib/time";
-import type { TSurveyQuestionSummary } from "@formbricks/types/v1/surveys";
-import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";

@@ -23,8 +23,8 @@ import {
 } from "@formbricks/ui/icons";
 
 import { createId } from "@paralleldrive/cuid2";
-import { TTemplate } from "@formbricks/types/v1/surveys";
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import { TTemplate } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 
 const thankYouCardDefault = {
   enabled: true,

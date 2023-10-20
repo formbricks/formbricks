@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

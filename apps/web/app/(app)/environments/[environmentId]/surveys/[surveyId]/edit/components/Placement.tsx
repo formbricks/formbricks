@@ -4,7 +4,7 @@ import { cn } from "@formbricks/lib/cn";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@/app/lib/preview";
-import { TPlacement } from "@formbricks/types/v1/common";
+import { TPlacement } from "@formbricks/types/common";
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
   { name: "Top Right", value: "topRight", disabled: false },

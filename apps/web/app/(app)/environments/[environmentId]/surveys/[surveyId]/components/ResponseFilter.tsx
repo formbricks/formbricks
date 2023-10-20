@@ -2,7 +2,7 @@
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
-import { TSurveyTSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import { TSurveyTSurveyQuestionType } from "@formbricks/types/surveys";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";

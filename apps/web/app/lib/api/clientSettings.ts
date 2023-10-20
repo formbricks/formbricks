@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { TSettings } from "@formbricks/types/v1/js";
+import { TSettings } from "@formbricks/types/js";
 
 export const getSettings = async (environmentId: string, personId: string): Promise<TSettings> => {
   // get recontactDays from product

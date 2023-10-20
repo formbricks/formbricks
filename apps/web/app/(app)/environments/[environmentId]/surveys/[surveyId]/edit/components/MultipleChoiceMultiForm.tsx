@@ -6,7 +6,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
 import { useEffect, useRef, useState } from "react";
-import { TSurveyMultipleChoiceMultiQuestion, TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurveyMultipleChoiceMultiQuestion, TSurvey } from "@formbricks/types/surveys";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;

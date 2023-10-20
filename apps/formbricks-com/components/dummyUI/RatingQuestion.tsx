@@ -1,4 +1,4 @@
-import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import Headline from "./Headline";

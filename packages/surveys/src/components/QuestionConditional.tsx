@@ -1,6 +1,6 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import { TSurveyQuestion } from "../../../types/v1/surveys";
-import { TSurveyQuestionType } from "../../../types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import CTAQuestion from "./CTAQuestion";
 import ConsentQuestion from "./ConsentQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";

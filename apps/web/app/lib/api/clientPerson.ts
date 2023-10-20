@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TPerson } from "@formbricks/types/people";
 import { transformPrismaPerson } from "@formbricks/lib/person/service";
 
 const select = {

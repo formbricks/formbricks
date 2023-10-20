@@ -3,9 +3,9 @@
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { AuthenticationError } from "@formbricks/types/v1/errors";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { sendEmailAction } from "../../actions";
 import CodeBlock from "@formbricks/ui/CodeBlock";
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";

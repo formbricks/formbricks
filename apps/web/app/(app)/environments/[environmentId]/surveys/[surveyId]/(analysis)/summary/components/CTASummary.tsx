@@ -1,6 +1,6 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import type { TSurveyQuestionSummary } from "@formbricks/types/v1/surveys";
-import { TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";

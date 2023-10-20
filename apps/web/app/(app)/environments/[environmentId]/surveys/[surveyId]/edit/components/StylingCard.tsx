@@ -1,7 +1,7 @@
 "use client";
 
-import { TPlacement } from "@formbricks/types/v1/common";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TPlacement } from "@formbricks/types/common";
+import { TSurvey } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";

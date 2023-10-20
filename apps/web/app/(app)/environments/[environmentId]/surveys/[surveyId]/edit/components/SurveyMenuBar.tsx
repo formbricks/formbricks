@@ -2,10 +2,10 @@
 
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";

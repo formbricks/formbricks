@@ -1,4 +1,4 @@
-import { TSurveyAttributeFilter } from "@formbricks/types/v1/surveys";
+import { TSurveyAttributeFilter } from "@formbricks/types/surveys";
 import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { Prisma as prismaClient } from "@prisma/client/";

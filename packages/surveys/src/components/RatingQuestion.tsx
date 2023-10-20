@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
