@@ -60,28 +60,28 @@ export const decryptAES128 = (encryptionKey: string, data: string): string => {
   return decrypted;
 };
 
-export function generateSignedUrl(
+export function generateLocalSignedUrl(
   fileName: string,
   environmentId: string,
-  contentType: string
+  fileType: string
 ): { signature: string; uuid: string; timestamp: number } {
   const uuid = randomBytes(16).toString("hex");
   const timestamp = Date.now();
-  const data = `${uuid}:${fileName}:${environmentId}:${contentType}:${timestamp}`;
+  const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
   const signature = createHmac("sha256", ENCRYPTION_KEY).update(data).digest("hex");
   return { signature, uuid, timestamp };
 }
 
-export function validateSignedUrl(
+export function validateLocalSignedUrl(
   uuid: string,
   fileName: string,
   environmentId: string,
-  contentType: string,
+  fileType: string,
   timestamp: number,
   signature: string,
   secret: string
 ): boolean {
-  const data = `${uuid}:${fileName}:${environmentId}:${contentType}:${timestamp}`;
+  const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
   const expectedSignature = createHmac("sha256", secret).update(data).digest("hex");
 
   if (expectedSignature !== signature) {

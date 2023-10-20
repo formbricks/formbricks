@@ -26,7 +26,7 @@ const uploadFile = async (
 
     const payload = {
       fileName: file.name,
-      contentType: file.type,
+      fileType: file.type,
       allowedFileExtensions: allowedFileExtensions,
       environmentId: environmentId,
     };
@@ -46,25 +46,38 @@ const uploadFile = async (
     const json = await response.json();
 
     const { data } = json;
-    const { signedUrl, fileUrl, signingData } = data;
+    const { signedUrl, fileUrl, signingData, presignedFields } = data;
 
-    const requestHeaders: Record<string, string> = {
-      "Content-Type": file.type,
-      fileName: file.name,
-      environmentId: environmentId ?? "",
-    };
+    let requestHeaders: Record<string, string> = {};
 
     if (signingData) {
       const { signature, timestamp, uuid } = signingData;
-      requestHeaders.signature = signature;
-      requestHeaders.timestamp = timestamp;
-      requestHeaders.uuid = uuid;
+
+      requestHeaders = {
+        fileType: file.type,
+        fileName: file.name,
+        environmentId: environmentId ?? "",
+        signature,
+        timestamp,
+        uuid,
+      };
     }
 
+    const formData = new FormData();
+
+    if (presignedFields) {
+      Object.keys(presignedFields).forEach((key) => {
+        formData.append(key, presignedFields[key]);
+      });
+    }
+
+    // Add the actual file to be uploaded
+    formData.append("file", file);
+
     const uploadResponse = await fetch(signedUrl, {
-      method: "PUT",
-      headers: requestHeaders,
-      body: file,
+      method: "POST",
+      ...(signingData ? { headers: requestHeaders } : {}),
+      body: formData,
     });
 
     if (!uploadResponse.ok) {
@@ -76,7 +89,7 @@ const uploadFile = async (
       url: fileUrl,
     };
   } catch (error) {
-    console.error("Upload error:", error);
+    console.log({ error });
     throw error;
   }
 };
