@@ -2,7 +2,7 @@
 
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";

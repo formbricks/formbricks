@@ -7,8 +7,8 @@ import { getServerSession } from "next-auth";
 
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessIntegration } from "@formbricks/lib/integration/auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
-import { TIntegrationGoogleSheetsInput } from "@formbricks/types/v1/integration/googleSheet";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { TIntegrationGoogleSheetsInput } from "@formbricks/types/integration/googleSheet";
 
 export async function createOrUpdateIntegrationAction(
   environmentId: string,

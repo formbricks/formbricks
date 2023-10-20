@@ -1,11 +1,11 @@
-import type { Template } from "@formbricks/types/templates";
+import { TTemplate } from "@formbricks/types/surveys";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "./PreviewSurvey";
 import TemplateList from "./TemplateList";
 import { templates } from "./templates";
 
 export default function SurveyTemplatesPage({}) {
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
+import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";

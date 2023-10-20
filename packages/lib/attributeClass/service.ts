@@ -7,13 +7,13 @@ import {
   TAttributeClassUpdateInput,
   ZAttributeClassUpdateInput,
   TAttributeClassType,
-} from "@formbricks/types/v1/attributeClasses";
-import { ZId } from "@formbricks/types/v1/environment";
+} from "@formbricks/types/attributeClasses";
+import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZOptionalNumber } from "@formbricks/types/common";
 
 const attributeClassesCacheTag = (environmentId: string): string =>
   `environments-${environmentId}-attributeClasses`;

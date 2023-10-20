@@ -1,13 +1,13 @@
 "use client";
 
 import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
-} from "@formbricks/types/v1/integration/googleSheet";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/integration/googleSheet";
+import { TSurvey } from "@formbricks/types/surveys";
 import { useState } from "react";
 import AddIntegrationModal from "./AddIntegrationModal";
 import Connect from "./Connect";

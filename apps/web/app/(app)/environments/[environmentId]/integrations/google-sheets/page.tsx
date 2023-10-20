@@ -9,8 +9,8 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
-import { TIntegrationGoogleSheets } from "@formbricks/types/v1/integration/googleSheet";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
 import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function GoogleSheet({ params }) {

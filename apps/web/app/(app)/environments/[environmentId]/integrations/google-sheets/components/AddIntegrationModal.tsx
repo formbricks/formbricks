@@ -3,8 +3,8 @@ import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
   TIntegrationGoogleSheetsInput,
-} from "@formbricks/types/v1/integration/googleSheet";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/integration/googleSheet";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Label } from "@formbricks/ui/Label";
@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import GoogleSheetLogo from "../images/google-sheets-small.png";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { TIntegrationItem } from "@formbricks/types/integration";
 
 interface AddWebhookModalProps {
   environmentId: string;

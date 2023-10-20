@@ -1,100 +1,113 @@
-import { Question } from "./questions";
-import { ThankYouCard } from "./surveys";
-import { WelcomeCard } from "./surveys";
+import z from "zod";
+import { ZPerson } from "./people";
+import { ZSession } from "./sessions";
+import { ZSurvey } from "./surveys";
+import { ZActionClass } from "./actionClasses";
+import { ZProduct } from "./product";
 
-export interface ResponseCreateRequest {
-  surveyId: string;
-  personId?: string;
-  response: {
-    finished?: boolean;
-    data: {
-      [name: string]: string | number | string[] | number[] | undefined;
-    };
-  };
-}
+const ZSurveyWithTriggers = ZSurvey.extend({
+  triggers: z.array(ZActionClass).or(z.array(z.string())),
+});
 
-export interface ResponseUpdateRequest {
-  response: {
-    finished?: boolean;
-    data: {
-      [name: string]: string | number | string[] | number[] | undefined;
-    };
-  };
-}
+export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
-export interface DisplayCreateRequest {
-  surveyId: string;
-  personId?: string;
-}
+export const ZJsState = z.object({
+  person: ZPerson,
+  session: ZSession,
+  surveys: z.array(ZSurveyWithTriggers),
+  noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
+});
 
-export interface Response {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  organisationId: string;
-  formId: string;
-  customerId: string;
-  data: {
-    [name: string]: string | number | string[] | number[] | undefined | null;
-  };
-}
+export type TJsState = z.infer<typeof ZJsState>;
 
-export interface InitConfig {
-  environmentId: string;
-  apiHost: string;
-  debug?: boolean;
-  errorHandler?: ErrorHandler;
-}
+export const ZJsSyncInput = z.object({
+  environmentId: z.string().cuid2(),
+  personId: z.string().cuid2().optional(),
+  sessionId: z.string().cuid2().optional(),
+  jsVersion: z.string().optional(),
+});
 
-//TODO: add type to error
-export type ErrorHandler = (error: any) => void;
+export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
 
-export interface Settings {
-  surveys?: Survey[];
-  noCodeEvents?: any[];
-  brandColor?: string;
-  formbricksSignature?: boolean;
-  placement?: PlacementType;
-  clickOutsideClose?: boolean;
-  darkOverlay?: boolean;
-}
+export const ZJsConfig = z.object({
+  environmentId: z.string().cuid2(),
+  apiHost: z.string(),
+  state: ZJsState,
+});
 
-export interface JsConfig {
-  environmentId: string;
-  apiHost: string;
-  person?: Person;
-  session?: Session;
-  settings?: Settings;
-}
+export type TJsConfig = z.infer<typeof ZJsConfig>;
 
-export interface Session {
-  id: string;
-  expiresAt?: number;
-}
+export const ZJsConfigInput = z.object({
+  environmentId: z.string().cuid2(),
+  apiHost: z.string(),
+  debug: z.boolean().optional(),
+  errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
+});
 
-export interface Person {
-  id: string;
-  attributes?: any;
-  environmentId: string;
-}
+export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 
-export interface Survey {
-  id: string;
-  welcomeCard: WelcomeCard;
-  questions: Question[];
-  triggers: Trigger[];
-  thankYouCard: ThankYouCard;
-  autoClose?: number | null;
-  delay: number;
-}
+export const ZJsPeopleUserIdInput = z.object({
+  environmentId: z.string().cuid2(),
+  userId: z.string().min(1).max(255),
+  sessionId: z.string().cuid2(),
+});
 
-export interface Trigger {
-  id: string;
-  eventClass: {
-    id: string;
-    name: string;
-  };
-}
+export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
 
-export type MatchType = "exactMatch" | "contains" | "startsWith" | "endsWith" | "notMatch" | "notContains";
-export type PlacementType = "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+export const ZJsPeopleAttributeInput = z.object({
+  environmentId: z.string().cuid2(),
+  sessionId: z.string().cuid2(),
+  key: z.string(),
+  value: z.string(),
+});
+
+export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
+
+export const ZJsActionInput = z.object({
+  environmentId: z.string().cuid2(),
+  sessionId: z.string().cuid2(),
+  name: z.string(),
+  properties: z.record(z.string()),
+});
+
+export type TJsActionInput = z.infer<typeof ZJsActionInput>;
+
+export const ZJsSyncParams = z.object({
+  environmentId: z.string().cuid2(),
+  apiHost: z.string(),
+  personId: z.string().cuid2().optional(),
+  sessionId: z.string().cuid2().optional(),
+});
+
+export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;
+
+const ZJsSettingsSurvey = ZSurvey.pick({
+  id: true,
+  welcomeCard: true,
+  questions: true,
+  triggers: true,
+  thankYouCard: true,
+  autoClose: true,
+  delay: true,
+});
+
+export const ZJsSettings = z.object({
+  surveys: z.optional(z.array(ZJsSettingsSurvey)),
+  noCodeEvents: z.optional(z.array(z.any())), // You might want to further refine this.
+  brandColor: z.optional(z.string()),
+  formbricksSignature: z.optional(z.boolean()),
+  placement: z.optional(
+    z.union([
+      z.literal("bottomLeft"),
+      z.literal("bottomRight"),
+      z.literal("topLeft"),
+      z.literal("topRight"),
+      z.literal("center"),
+    ])
+  ),
+  clickOutsideClose: z.optional(z.boolean()),
+  darkOverlay: z.optional(z.boolean()),
+});
+
+export type TSettings = z.infer<typeof ZJsSettings>;

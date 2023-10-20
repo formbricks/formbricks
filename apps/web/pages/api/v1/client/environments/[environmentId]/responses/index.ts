@@ -2,9 +2,9 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TPerson } from "@formbricks/types/people";
+import { TResponse } from "@formbricks/types/responses";
+import { TTag } from "@formbricks/types/tags";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {

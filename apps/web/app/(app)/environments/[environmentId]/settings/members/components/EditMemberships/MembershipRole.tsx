@@ -7,7 +7,7 @@ import {
   updateMembershipAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "@/app/lib/utils";
-import { TMembershipRole } from "@formbricks/types/v1/memberships";
+import { TMembershipRole } from "@formbricks/types/memberships";
 import {
   DropdownMenu,
   DropdownMenuContent,
