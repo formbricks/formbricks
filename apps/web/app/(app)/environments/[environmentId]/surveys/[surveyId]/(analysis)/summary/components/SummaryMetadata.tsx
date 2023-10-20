@@ -1,9 +1,9 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TResponse } from "@formbricks/types/v1/responses";
-import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { Button } from "@formbricks/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 interface SummaryMetadataProps {
   responses: TResponse[];
@@ -78,11 +78,11 @@ export default function SummaryMetadata({
             Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
           </div>
           <Button
-            variant="secondary"
-            className="w-max self-end"
-            EndIcon={showDropOffs ? ChevronDownIcon : ChevronRightIcon}
+            variant="minimal"
+            className="w-max self-start"
+            EndIcon={showDropOffs ? ChevronDownIcon : ChevronUpIcon}
             onClick={() => setShowDropOffs(!showDropOffs)}>
-            Analyze Drop-offs
+            Analyze Drop Offs
           </Button>
         </div>
       </div>
