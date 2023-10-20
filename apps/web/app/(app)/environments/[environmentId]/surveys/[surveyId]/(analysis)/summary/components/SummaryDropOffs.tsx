@@ -32,13 +32,16 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
 
             const questionHasCustomLogic = currQues.logic;
             if (questionHasCustomLogic) {
+              let didLogicPass = false;
               for (let logic of questionHasCustomLogic) {
                 if (!logic.destination) continue;
-                if (evaluateCondition(logic, response.data[currQues.id])) {
+                if (evaluateCondition(logic, response.data[currQues.id] ?? null)) {
+                  didLogicPass = true;
                   currQuesIdx = survey.questions.findIndex((q) => q.id === logic.destination);
                   break;
                 }
               }
+              if (!didLogicPass) currQuesIdx++;
             } else {
               currQuesIdx++;
             }
