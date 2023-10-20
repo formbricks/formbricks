@@ -187,9 +187,9 @@ export const authOptions: NextAuthOptions = {
       allowDangerousEmailAccountLinking: true,
     }),
     AzureAD({
-      clientId: env.AZURE_CLIENT_ID || "",
-      clientSecret: env.AZURE_CLIENT_SECRET || "",
-      tenantId: env.AZURE_TENANT_ID || "",
+      clientId: env.AZUREAD_CLIENT_ID || "",
+      clientSecret: env.AZUREAD_CLIENT_SECRET || "",
+      tenantId: env.AZUREAD_TENANT_ID || "",
     }),
   ],
   callbacks: {

@@ -5,7 +5,6 @@ import {
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
   AZURE_OAUTH_ENABLED,
-  AZURE_DIRECT_REDIRECT,
 } from "@formbricks/lib/constants";
 import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
 import Testimonial from "@/app/(auth)/auth/components/Testimonial";
@@ -30,7 +29,6 @@ export default function SignInPage() {
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
             githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
             azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-            azureDirectRedirect={AZURE_DIRECT_REDIRECT}
           />
         </FormWrapper>
       </div>

@@ -21,7 +21,6 @@ export const SignupForm = ({
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
-  azureDirectRedirect,
 }: {
   webAppUrl: string;
   privacyUrl: string | undefined;
@@ -31,7 +30,6 @@ export const SignupForm = ({
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
-  azureDirectRedirect: boolean;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -206,7 +204,7 @@ export const SignupForm = ({
           )}
           {azureOAuthEnabled && (
             <>
-              <AzureButton inviteUrl={callbackUrl} directRedirect={azureDirectRedirect} />
+              <AzureButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>

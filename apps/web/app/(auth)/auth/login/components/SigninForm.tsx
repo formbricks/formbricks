@@ -29,14 +29,12 @@ export const SigninForm = ({
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
-  azureDirectRedirect,
 }: {
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
-  azureDirectRedirect: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -212,7 +210,7 @@ export const SigninForm = ({
 
           {azureOAuthEnabled && !totpLogin && (
             <>
-              <AzureButton inviteUrl={callbackUrl} directRedirect={azureDirectRedirect} />
+              <AzureButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>

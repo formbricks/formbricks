@@ -5,7 +5,6 @@ import {
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   AZURE_OAUTH_ENABLED,
-  AZURE_DIRECT_REDIRECT,
   INVITE_DISABLED,
   PASSWORD_RESET_DISABLED,
   PRIVACY_URL,
@@ -55,7 +54,6 @@ export default function SignUpPage({
               googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
               githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
               azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-              azureDirectRedirect={AZURE_DIRECT_REDIRECT}
             />
           )}
         </FormWrapper>
