@@ -1,12 +1,15 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+"use client";
+
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import { cn } from "@formbricks/lib/cn";
+import { TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
-import { cn } from "@formbricks/lib/cn";
 import { useEffect, useRef, useState } from "react";
-import { TSurveyMultipleChoiceMultiQuestion, TSurvey } from "@formbricks/types/v1/surveys";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -22,6 +25,7 @@ export default function MultipleChoiceMultiForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  localSurvey,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -155,21 +159,18 @@ export default function MultipleChoiceMultiForm({
     }
   }, [isNew]);
 
+  const environmentId = localSurvey.environmentId;
+
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            ref={questionRef}
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        ref={questionRef}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
 
       <div className="mt-3">
         {showSubheader && (

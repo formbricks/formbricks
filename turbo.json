@@ -47,6 +47,10 @@
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "ASSET_PREFIX_URL",
+        "AZUREAD_AUTH_ENABLED",
+        "AZUREAD_CLIENT_ID",
+        "AZUREAD_CLIENT_SECRET",
+        "AZUREAD_TENANT_ID",
         "CRON_SECRET",
         "ENCRYPTION_KEY",
         "FORMBRICKS_ENCRYPTION_KEY",

@@ -170,6 +170,7 @@ const ZSurveyQuestionBase = z.object({
   type: z.string(),
   headline: z.string(),
   subheader: z.string().optional(),
+  imageUrl: z.string().optional(),
   required: z.boolean(),
   buttonLabel: z.string().optional(),
   backButtonLabel: z.string().optional(),
