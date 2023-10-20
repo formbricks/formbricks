@@ -34,6 +34,7 @@ export function DeleteDialog({
       <div>{children}</div>
       <div className="space-x-2 text-right">
         <Button
+          disabled={disabled}
           variant="secondary"
           onClick={() => {
             if (useSaveInsteadOfCancel && onSave) {
