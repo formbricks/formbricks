@@ -64,37 +64,38 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
     }
   )();
 
-export const getProfileByEmail = async (email: string): Promise<TProfile | null> =>
-  unstable_cache(
-    async () => {
-      validateInputs([email, z.string().email()]);
-      try {
-        const profile = await prisma.user.findFirst({
-          where: {
-            email,
-          },
-          select: responseSelection,
-        });
+export const getProfileByEmail = async (email: string): Promise<TProfile | null> => {
+  validateInputs([email, z.string().email()]);
+  try {
+    const profile = await prisma.user.findFirst({
+      where: {
+        email,
+      },
+      select: responseSelection,
+    });
 
-        if (!profile) {
-          return null;
-        }
-
-        return profile;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`profiles-${email}`],
-    {
-      tags: [getProfileCacheTag(email)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    if (!profile) {
+      return null;
     }
-  )();
+
+    unstable_cache(
+      async () => profile, // Cache only if the profile is not null
+      [`profiles-${email}`],
+      {
+        tags: [getProfileCacheTag(email)],
+        revalidate: SERVICES_REVALIDATION_INTERVAL,
+      }
+    );
+
+    return profile;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
 
 const updateUserMembership = async (teamId: string, userId: string, role: TMembershipRole) => {
   validateInputs([teamId, ZId], [userId, ZId], [role, ZMembershipRole]);
