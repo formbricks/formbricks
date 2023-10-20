@@ -39,7 +39,7 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
       setOpen(false);
     } catch (error) {
       console.error(error);
-      toast.error(`Unable to `);
+      toast.error(`Unable to create team`);
     } finally {
       setLoading(false);
     }
