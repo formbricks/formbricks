@@ -28,6 +28,12 @@ export default function ConsentQuestion({
 }: ConsentQuestionProps) {
   return (
     <div>
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
