@@ -1,19 +1,19 @@
 "use client";
 
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
-import { SurveyInline } from "@formbricks/ui/Survey";
+import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
+import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
 import { createDisplay } from "@formbricks/lib/client/display";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TProduct } from "@formbricks/types/product";
+import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { SurveyInline } from "@formbricks/ui/Survey";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
-import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
-import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -39,6 +39,7 @@ export default function LinkSurvey({
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
+  const sourceParam = searchParams?.get("source");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
@@ -151,6 +152,10 @@ export default function LinkSurvey({
                   ...hiddenFieldsRecord,
                 },
                 finished: responseUpdate.finished,
+                meta: {
+                  url: window.location.href,
+                  source: sourceParam || "",
+                },
               });
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}

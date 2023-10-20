@@ -1,8 +1,8 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { deletePerson, getPerson } from "@formbricks/lib/person/service";
-import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { TPerson } from "@formbricks/types/people";
 import { NextResponse } from "next/server";
 
 async function fetchAndAuthorizePerson(

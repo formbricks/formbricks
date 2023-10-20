@@ -2,8 +2,8 @@
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddNoCodeActionModal";
 import { cn } from "@formbricks/lib/cn";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";

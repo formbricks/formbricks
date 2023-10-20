@@ -4,9 +4,9 @@ import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
 import { Modal } from "@formbricks/ui/Modal";
 import { createWebhookAction } from "../actions";
-import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TWebhookInput } from "@formbricks/types/v1/webhooks";
+import { TPipelineTrigger } from "@formbricks/types/pipelines";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TWebhookInput } from "@formbricks/types/webhooks";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";

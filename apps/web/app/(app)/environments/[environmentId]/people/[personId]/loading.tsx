@@ -2,7 +2,7 @@ import {
   ActivityItemIcon,
   ActivityItemPopover,
 } from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivityItemComponents";
-import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { TActivityFeedItem } from "@formbricks/types/activity";
 import { BackIcon } from "@formbricks/ui/icons";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "lucide-react";

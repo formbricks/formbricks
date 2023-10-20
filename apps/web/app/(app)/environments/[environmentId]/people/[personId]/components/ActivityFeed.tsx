@@ -4,8 +4,8 @@ import { useMemo } from "react";
 import { entries } from "lodash";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
-import { TActivityFeedItem, TActivityPopOverItem } from "@formbricks/types/v1/activity";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TActivityFeedItem, TActivityPopOverItem } from "@formbricks/types/activity";
+import { TEnvironment } from "@formbricks/types/environment";
 
 interface ActivityFeedProps {
   activities: TActivityFeedItem[];
