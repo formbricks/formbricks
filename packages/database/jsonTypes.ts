@@ -1,5 +1,5 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
-import { TIntegrationConfig } from "@formbricks/types/v1/integrations";
+import { TIntegrationConfig } from "@formbricks/types/v1/integration";
 import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/v1/responses";
 import {
   TSurveyWelcomeCard,

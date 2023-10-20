@@ -73,6 +73,7 @@ export const ZResponseInput = z.object({
   data: ZResponseData,
   meta: z
     .object({
+      source: z.string().optional(),
       url: z.string().optional(),
       userAgent: z
         .object({
@@ -103,7 +104,12 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
-  source: z.string().optional(),
+  meta: z
+    .object({
+      url: z.string().optional(),
+      source: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;

@@ -1,4 +1,4 @@
-import { Question } from "@/../../packages/types/questions";
+import { Question } from "@formbricks/types/questions";
 import { TTemplate } from "@formbricks/types/v1/templates";
 
 export const replaceQuestionPresetPlaceholders = (question: Question, product) => {
