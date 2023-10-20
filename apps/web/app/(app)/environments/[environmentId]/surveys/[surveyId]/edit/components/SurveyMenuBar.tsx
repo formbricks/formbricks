@@ -108,7 +108,7 @@ export default function SurveyMenuBar({
     }
 
     let pin = survey?.pin;
-    if (!pin || pin.toString().length !== 4) {
+    if (pin !== null && pin.toString().length !== 4) {
       toast.error("PIN must be a four digit number.");
       return;
     }
