@@ -4,6 +4,7 @@ import {
   GOOGLE_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
+  AZURE_OAUTH_ENABLED,
 } from "@formbricks/lib/constants";
 import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
 import Testimonial from "@/app/(auth)/auth/components/Testimonial";
@@ -27,6 +28,7 @@ export default function SignInPage() {
             passwordResetEnabled={!PASSWORD_RESET_DISABLED}
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
             githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+            azureOAuthEnabled={AZURE_OAUTH_ENABLED}
           />
         </FormWrapper>
       </div>
