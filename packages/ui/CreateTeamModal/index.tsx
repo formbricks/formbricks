@@ -21,12 +21,17 @@ type FormValues = {
 export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const isTeamNameValid = teamName.trim() !== "";
   const { register, handleSubmit } = useForm<FormValues>();
 
   const submitTeam = async (data: FormValues) => {
+    const trimmedName = data.name.trim();
+    if (!trimmedName) return;
+
     try {
       setLoading(true);
-      const newTeam = await createTeamAction(data.name);
+      const newTeam = await createTeamAction(trimmedName);
 
       toast.success("Team created successfully!");
       router.push(`/teams/${newTeam.id}`);
@@ -66,6 +71,8 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
                   autoFocus
                   placeholder="e.g. Power Puff Girls"
                   {...register("name", { required: true })}
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
                 />
               </div>
             </div>
@@ -80,7 +87,7 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={loading}>
+              <Button variant="darkCTA" type="submit" loading={loading} disabled={!isTeamNameValid}>
                 Create team
               </Button>
             </div>

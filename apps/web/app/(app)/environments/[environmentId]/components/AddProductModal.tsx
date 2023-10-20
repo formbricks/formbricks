@@ -20,12 +20,17 @@ interface AddProductModalProps {
 export default function AddProductModal({ environmentId, open, setOpen }: AddProductModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [productName, setProductName] = useState("");
+  const isProductNameValid = productName.trim() !== "";
   const { register, handleSubmit } = useForm();
 
   const submitProduct = async (data: { name: string }) => {
+    const trimmedName = data.name.trim();
+    if (!isProductNameValid) return;
+
     try {
       setLoading(true);
-      const newEnv = await createProductAction(environmentId, data.name);
+      const newEnv = await createProductAction(environmentId, trimmedName);
 
       toast.success("Product created successfully!");
       router.push(`/environments/${newEnv.id}/`);
@@ -59,7 +64,12 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
             <div className="grid w-full gap-x-2">
               <div>
                 <Label>Name</Label>
-                <Input placeholder="e.g. My New Product" {...register("name", { required: true })} />
+                <Input
+                  placeholder="e.g. My New Product"
+                  {...register("name", { required: true })}
+                  value={productName}
+                  onChange={(e) => setProductName(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -73,7 +83,7 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={loading}>
+              <Button variant="darkCTA" type="submit" loading={loading} disabled={!isProductNameValid}>
                 Add product
               </Button>
             </div>
