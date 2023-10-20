@@ -1,6 +1,6 @@
 import { evaluateCondition } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/evaluateLogic";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { useMemo } from "react";
 
 interface SummaryDropOffsProps {
