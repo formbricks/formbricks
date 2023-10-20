@@ -9,7 +9,7 @@ interface LinkSurveyEmailData {
   } | null;
 }
 
-interface ISurveyPinValidationResponse {
+interface TSurveyPinValidationResponse {
   error?: TSurveyPinValidationResponseError;
   survey?: TSurvey;
 }
@@ -30,15 +30,15 @@ export async function verifyTokenAction(token: string, surveyId: string): Promis
   return await verifyTokenForLinkSurvey(token, surveyId);
 }
 
-export async function validateSurveyPin(
+export async function validateSurveyPinAction(
   surveyId: string,
-  pin: number
-): Promise<ISurveyPinValidationResponse> {
+  pin: string
+): Promise<TSurveyPinValidationResponse> {
   try {
     const survey = await getSurvey(surveyId);
     if (!survey) return { error: TSurveyPinValidationResponseError.NOT_FOUND };
 
-    const originalPin = survey.pin;
+    const originalPin = survey.pin?.toString();
 
     if (!originalPin) return { survey };
 
