@@ -38,13 +38,32 @@ const FileInput: React.FC<FileInputProps> = ({
       file.type &&
       allowedFileExtensions.includes(file.type.substring(file.type.lastIndexOf("/") + 1))
     ) {
-      setIsUploaded(false);
-      setSelectedFile(file);
-      const response = await uploadFile(file, allowedFileExtensions, environmentId);
-      setIsUploaded(true);
-      onFileUpload(response.data.url);
+      await handleFileUpload({
+        file,
+        allowedFileExtensions,
+        environmentId,
+      });
     } else {
       toast.error("File not supported");
+    }
+  };
+
+  const handleFileUpload = async (params: {
+    file: File;
+    allowedFileExtensions: string[];
+    environmentId: string | undefined;
+  }) => {
+    setIsUploaded(false);
+    setSelectedFile(params.file);
+
+    try {
+      let response = await uploadFile(params.file, params.allowedFileExtensions, params.environmentId);
+      setIsUploaded(true);
+      onFileUpload(response.data.url);
+    } catch (error: any) {
+      setIsUploaded(false);
+      setSelectedFile(null);
+      toast.error(error.message || "Something went wrong");
     }
   };
 
@@ -68,13 +87,13 @@ const FileInput: React.FC<FileInputProps> = ({
                   accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
                   className="hidden"
                   onChange={async (e) => {
-                    const selectedFile = e.target?.files?.[0];
-                    if (selectedFile) {
-                      setIsUploaded(false);
-                      setSelectedFile(selectedFile);
-                      const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
-                      setIsUploaded(true);
-                      onFileUpload(response.data.url);
+                    const file = e.target?.files?.[0];
+                    if (file) {
+                      await handleFileUpload({
+                        file,
+                        allowedFileExtensions,
+                        environmentId,
+                      });
                     }
                   }}
                 />
@@ -138,13 +157,13 @@ const FileInput: React.FC<FileInputProps> = ({
             accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
             className="hidden"
             onChange={async (e) => {
-              const selectedFile = e.target?.files?.[0];
-              if (selectedFile) {
-                setIsUploaded(false);
-                setSelectedFile(selectedFile);
-                const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
-                setIsUploaded(true);
-                onFileUpload(response.data.url);
+              const file = e.target?.files?.[0];
+              if (file) {
+                await handleFileUpload({
+                  file,
+                  allowedFileExtensions,
+                  environmentId,
+                });
               }
             }}
           />
