@@ -24,10 +24,10 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
   const { register, handleSubmit } = useForm<FormValues>();
 
   const submitTeam = async (data: FormValues) => {
-    const isOnlySpaces = /^\s*$/.test(data.name); //Test Cases
+    const isOnlySpaces = /^\s*$/.test(data.name); //Test Cases.
 
     if (isOnlySpaces) {
-      return; // Check if there is Spaces then return
+      return; // Check if there is Spaces then return.
     }
 
     try {
