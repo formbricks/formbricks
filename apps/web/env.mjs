@@ -8,7 +8,7 @@ export const env = createEnv({
    */
   server: {
     WEBAPP_URL: z.string().url().optional(),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.string().url().optional(),
     ENCRYPTION_KEY: z.string().length(32).optional(),
     FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).optional().or(z.string().length(0)),
     NEXTAUTH_SECRET: z.string().min(1).optional(),
