@@ -1,11 +1,11 @@
-import { SurveySingleUse } from "@formbricks/types/surveys";
+import { TSurveySingleUse } from "@formbricks/types/surveys";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import footerLogo from "../lib/footerlogo.svg";
 
 type SurveyLinkUsedProps = {
-  singleUseMessage: Omit<SurveySingleUse, "enabled"> | null;
+  singleUseMessage: TSurveySingleUse | null;
 };
 
 const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {

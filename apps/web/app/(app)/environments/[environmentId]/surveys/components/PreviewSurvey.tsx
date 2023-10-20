@@ -4,9 +4,9 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 
 import { SurveyInline } from "@formbricks/ui/Survey";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {

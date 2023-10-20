@@ -1,7 +1,8 @@
 import z from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
-const ZObjective = z.enum([
+
+export const ZProfileObjective = z.enum([
   "increase_conversion",
   "improve_user_retention",
   "increase_user_adoption",
@@ -9,6 +10,9 @@ const ZObjective = z.enum([
   "support_sales",
   "other",
 ]);
+
+export type TProfileObjective = z.infer<typeof ZProfileObjective>;
+
 export const ZProfile = z.object({
   id: z.string(),
   name: z.string().nullable(),
@@ -27,7 +31,7 @@ export const ZProfileUpdateInput = z.object({
   email: z.string().optional(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZObjective.optional(),
+  objective: ZProfileObjective.optional(),
 });
 
 export type TProfileUpdateInput = z.infer<typeof ZProfileUpdateInput>;
@@ -37,7 +41,7 @@ export const ZProfileCreateInput = z.object({
   email: z.string(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZObjective.optional(),
+  objective: ZProfileObjective.optional(),
 });
 
 export type TProfileCreateInput = z.infer<typeof ZProfileCreateInput>;

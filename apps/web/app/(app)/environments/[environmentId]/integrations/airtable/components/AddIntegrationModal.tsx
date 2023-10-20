@@ -5,8 +5,8 @@ import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
   TIntegrationAirtableInput,
-} from "@formbricks/types/v1/integration/airtable";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/integration/airtable";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Button } from "@formbricks/ui/Button";
@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { upsertIntegrationAction } from "../actions";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { TIntegrationItem } from "@formbricks/types/integration";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }

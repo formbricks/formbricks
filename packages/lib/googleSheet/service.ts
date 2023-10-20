@@ -1,14 +1,14 @@
 import "server-only";
 
-import { ZString } from "@formbricks/types/v1/common";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsCredential,
   ZIntegrationGoogleSheetsCredential,
-} from "@formbricks/types/v1/integration/googleSheet";
+} from "@formbricks/types/integration/googleSheet";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import {
