@@ -5,7 +5,6 @@ import {
   INVITE_DISABLED,
   SIGNUP_ENABLED,
   DEFAULT_TEAM,
-  SKIP_ONBOARDING,
 } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { deleteInvite } from "@formbricks/lib/invite/service";

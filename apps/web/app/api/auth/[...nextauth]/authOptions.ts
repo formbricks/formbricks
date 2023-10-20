@@ -203,7 +203,7 @@ export const authOptions: NextAuthOptions = {
       const additionalAttributs = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
-        onboardingCompleted: env.SKIP_ONBOARDING ? true : existingUser.onboardingCompleted,
+        onboardingCompleted: env.SKIP_ONBOARDING === "1" ? true : existingUser.onboardingCompleted,
         name: existingUser.name,
       };
 
@@ -218,7 +218,7 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.createdAt = token?.createdAt ? new Date(token?.createdAt).toISOString() : undefined;
       // @ts-ignore
-      session.user.onboardingCompleted = env.SKIP_ONBOARDING ? true : token?.onboardingCompleted;
+      session.user.onboardingCompleted = env.SKIP_ONBOARDING === "1" ? true : token?.onboardingCompleted;
       // @ts-ignore
       session.user.name = token.name || "";
 
@@ -385,7 +385,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             email: user.email,
             emailVerified: new Date(Date.now()),
-            onboardingCompleted: env.SKIP_ONBOARDING ? true : false,
+            onboardingCompleted: env.SKIP_ONBOARDING === "1" ? true : false,
             identityProvider: provider,
             identityProviderAccountId: user.id as string,
             accounts: {
