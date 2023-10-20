@@ -7,6 +7,8 @@ import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[s
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
+import { useEffect, useMemo, useState } from "react";
+import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TProfile } from "@formbricks/types/profile";
@@ -15,7 +17,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
 
 interface SummaryPageProps {
   environment: TEnvironment;
@@ -41,6 +42,7 @@ const SummaryPage = ({
   displayCount,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -71,7 +73,14 @@ const SummaryPage = ({
         totalResponses={responses}
       />
       <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
-      <SummaryMetadata responses={filterResponses} survey={survey} displayCount={displayCount} />
+      <SummaryMetadata
+        responses={filterResponses}
+        survey={survey}
+        displayCount={displayCount}
+        showDropOffs={showDropOffs}
+        setShowDropOffs={setShowDropOffs}
+      />
+      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
       <SummaryList responses={filterResponses} survey={survey} environment={environment} />
     </ContentWrapper>
   );
