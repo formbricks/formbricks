@@ -67,7 +67,7 @@ const getFile = async (environmentId: string, accessType: string, fileName: stri
   }
 
   try {
-    const { signedUrl } = await getFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+    const signedUrl = await getFileFromS3(`${environmentId}/${accessType}/${fileName}`);
 
     return new Response(null, {
       status: 302,

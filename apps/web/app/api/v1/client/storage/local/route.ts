@@ -5,11 +5,8 @@ import { responses } from "@/app/lib/api/response";
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { validateSignedUrl } from "@formbricks/lib/crypto";
+import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -17,7 +14,8 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 export async function PUT(req: NextRequest): Promise<NextResponse> {
   const accessType = "private"; // private files are accessible only by authorized users
   const headersList = headers();
-  const contentType = headersList.get("Content-Type");
+
+  const fileType = headersList.get("fileType");
   const fileName = headersList.get("fileName");
   const surveyId = headersList.get("surveyId");
 
@@ -25,7 +23,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   const signedUuid = headersList.get("uuid");
   const signedTimestamp = headersList.get("timestamp");
 
-  if (!contentType) {
+  if (!fileType) {
     return responses.badRequestResponse("contentType is required");
   }
 
@@ -65,11 +63,11 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 
   // validate signature
 
-  const validated = validateSignedUrl(
+  const validated = validateLocalSignedUrl(
     signedUuid,
     fileName,
     environmentId,
-    contentType,
+    fileType,
     Number(signedTimestamp),
     signedSignature,
     ENCRYPTION_KEY
@@ -79,26 +77,27 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     return responses.unauthorizedResponse();
   }
 
-  const file = req.body;
+  const formData = await req.formData();
+  const file = formData.get("file") as unknown as File;
 
   if (!file) {
     return responses.badRequestResponse("fileBuffer is required");
   }
 
   try {
-    let chunks: Uint8Array[] = [];
-    for await (let chunk of file as any) {
-      chunks.push(chunk);
-    }
+    const { plan } = team;
+    const bytes = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(bytes);
 
-    const fileBuffer = Buffer.concat(chunks);
+    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, false, plan);
 
-    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
     return responses.successResponse({
       message: "File uploaded successfully",
     });
   } catch (err) {
-    console.log(`Error uploading file: ${err}`);
+    if (err.name === "FileTooLargeError") {
+      return responses.badRequestResponse(err.message);
+    }
     return responses.internalServerErrorResponse("File upload failed");
   }
 }

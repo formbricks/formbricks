@@ -9,13 +9,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { validateSignedUrl } from "@formbricks/lib/crypto";
+import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
 
-export async function PUT(req: NextRequest): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "public"; // public files are accessible by anyone
   const headersList = headers();
-  const contentType = headersList.get("Content-Type");
+
+  const fileType = headersList.get("fileType");
   const fileName = headersList.get("fileName");
   const environmentId = headersList.get("environmentId");
 
@@ -23,8 +24,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   const signedUuid = headersList.get("uuid");
   const signedTimestamp = headersList.get("timestamp");
 
-  if (!contentType) {
-    return responses.badRequestResponse("contentType is required");
+  if (!fileType) {
+    return responses.badRequestResponse("fileType is required");
   }
 
   if (!fileName) {
@@ -61,11 +62,11 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 
   // validate signature
 
-  const validated = validateSignedUrl(
+  const validated = validateLocalSignedUrl(
     signedUuid,
     fileName,
     environmentId,
-    contentType,
+    fileType,
     Number(signedTimestamp),
     signedSignature,
     ENCRYPTION_KEY
@@ -75,26 +76,26 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     return responses.unauthorizedResponse();
   }
 
-  const file = req.body;
+  const formData = await req.formData();
+  const file = formData.get("file") as unknown as File;
 
   if (!file) {
     return responses.badRequestResponse("fileBuffer is required");
   }
 
   try {
-    let chunks: Uint8Array[] = [];
-    for await (let chunk of file as any) {
-      chunks.push(chunk);
-    }
-
-    const fileBuffer = Buffer.concat(chunks);
+    const bytes = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(bytes);
 
     await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, true);
+
     return responses.successResponse({
       message: "File uploaded successfully",
     });
   } catch (err) {
-    console.log(`Error uploading file: ${err}`);
+    if (err.name === "FileTooLargeError") {
+      return responses.badRequestResponse(err.message);
+    }
     return responses.internalServerErrorResponse("File upload failed");
   }
 }
