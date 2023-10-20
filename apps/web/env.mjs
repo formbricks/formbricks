@@ -8,10 +8,10 @@ export const env = createEnv({
    */
   server: {
     WEBAPP_URL: z.string().url().optional(),
-    DATABASE_URL: z.string().url(),
-    ENCRYPTION_KEY: z.string().length(32),
-    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)),
-    NEXTAUTH_SECRET: z.string().min(1),
+    DATABASE_URL: z.string().url().optional(),
+    ENCRYPTION_KEY: z.string().length(32).optional(),
+    FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).optional().or(z.string().length(0)),
+    NEXTAUTH_SECRET: z.string().min(1).optional(),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
     SMTP_HOST: z.string().min(1).optional(),
