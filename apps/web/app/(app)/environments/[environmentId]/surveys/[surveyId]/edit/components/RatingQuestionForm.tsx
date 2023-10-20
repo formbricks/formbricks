@@ -1,3 +1,4 @@
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -22,24 +23,20 @@ export default function RatingQuestionForm({
   updateQuestion,
   lastQuestion,
   isInValid,
+  localSurvey,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
 
       <div className="mt-3">
         {showSubheader && (
