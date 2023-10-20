@@ -45,6 +45,8 @@ export default function SurveyMenuBar({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isMutatingSurvey, setIsMutatingSurvey] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   let faultyQuestions: String[] = [];
 
   useEffect(() => {
@@ -333,10 +335,20 @@ export default function SurveyMenuBar({
           deleteWhat="Draft"
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
-          onDelete={() => deleteSurvey(localSurvey.id)}
+          onDelete={async () => {
+            setIsDeleting(true);
+            await deleteSurvey(localSurvey.id);
+            setIsDeleting(false);
+          }}
           text="Do you want to delete this draft?"
+          isDeleting={isDeleting}
+          isSaving={isSaving}
           useSaveInsteadOfCancel={true}
-          onSave={() => saveSurveyAction(true)}
+          onSave={async () => {
+            setIsSaving(true);
+            await saveSurveyAction(true);
+            setIsSaving(false);
+          }}
         />
         <AlertDialog
           confirmWhat="Survey changes"
