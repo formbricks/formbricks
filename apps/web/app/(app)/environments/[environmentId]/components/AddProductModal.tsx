@@ -23,10 +23,10 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
   const { register, handleSubmit } = useForm();
 
   const submitProduct = async (data: { name: string }) => {
-    const isOnlySpaces = /^\s*$/.test(data.name);
+    const isOnlySpaces = /^\s*$/.test(data.name); //  Test Cases
 
     if (isOnlySpaces) {
-      // Do not submit the form if the input contains only spaces
+      // Check if there is Spaces then return
       return;
     }
 
