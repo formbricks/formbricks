@@ -2,8 +2,8 @@ import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { QuestionType } from "@formbricks/types/v1/surveys";
-import type { QuestionSummary } from "@formbricks/types/v1/responses";
+import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TResponse } from "@formbricks/types/v1/responses";
 import {
@@ -30,7 +30,7 @@ interface SummaryListProps {
 }
 
 export default function SummaryList({ environment, survey, responses }: SummaryListProps) {
-  const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
+  const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses
         .filter((response) => question.id in response.data)
@@ -60,24 +60,24 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
         ) : (
           <>
             {getSummaryData().map((questionSummary) => {
-              if (questionSummary.question.type === QuestionType.OpenText) {
+              if (questionSummary.question.type === TSurveyQuestionType.OpenText) {
                 return (
                   <OpenTextSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyOpenTextQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
                     environmentId={environment.id}
                   />
                 );
               }
               if (
-                questionSummary.question.type === QuestionType.MultipleChoiceSingle ||
-                questionSummary.question.type === QuestionType.MultipleChoiceMulti
+                questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+                questionSummary.question.type === TSurveyQuestionType.MultipleChoiceMulti
               ) {
                 return (
                   <MultipleChoiceSummary
                     key={questionSummary.question.id}
                     questionSummary={
-                      questionSummary as QuestionSummary<
+                      questionSummary as TSurveyQuestionSummary<
                         TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
                       >
                     }
@@ -86,35 +86,35 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.NPS) {
+              if (questionSummary.question.type === TSurveyQuestionType.NPS) {
                 return (
                   <NPSSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyNPSQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyNPSQuestion>}
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.CTA) {
+              if (questionSummary.question.type === TSurveyQuestionType.CTA) {
                 return (
                   <CTASummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyCTAQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCTAQuestion>}
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.Rating) {
+              if (questionSummary.question.type === TSurveyQuestionType.Rating) {
                 return (
                   <RatingSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyRatingQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyRatingQuestion>}
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.Consent) {
+              if (questionSummary.question.type === TSurveyQuestionType.Consent) {
                 return (
                   <ConsentSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyConsentQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
                   />
                 );
               }

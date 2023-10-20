@@ -1,5 +1,5 @@
-import { QuestionType } from "@formbricks/types/v1/surveys";
-import type { QuestionSummary } from "@formbricks/types/v1/responses";
+import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/v1/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
@@ -14,7 +14,9 @@ import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface MultipleChoiceSummaryProps {
-  questionSummary: QuestionSummary<TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion>;
+  questionSummary: TSurveyQuestionSummary<
+    TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
+  >;
   environmentId: string;
   surveyType: string;
 }
@@ -39,7 +41,7 @@ export default function MultipleChoiceSummary({
   environmentId,
   surveyType,
 }: MultipleChoiceSummaryProps) {
-  const isSingleChoice = questionSummary.question.type === QuestionType.MultipleChoiceSingle;
+  const isSingleChoice = questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle;
 
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 

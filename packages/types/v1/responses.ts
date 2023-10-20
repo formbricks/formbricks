@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZPerson, ZPersonAttributes, TPerson } from "./people";
+import { ZPerson, ZPersonAttributes } from "./people";
 import { ZSurvey } from "./surveys";
 import { ZTag } from "./tags";
 
@@ -63,16 +63,6 @@ export type TResponseDates = {
   updatedAt: TResponse["updatedAt"];
   notes: TResponse["notes"];
 };
-
-export interface QuestionSummary<T> {
-  question: T;
-  responses: {
-    id: string;
-    value: string | number | string[];
-    updatedAt: Date;
-    person: TPerson | null;
-  }[];
-}
 
 export const ZResponseInput = z.object({
   surveyId: z.string().cuid2(),

@@ -1,14 +1,6 @@
 import { z } from "zod";
 import { ZSurveyWelcomeCard, ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard } from "./surveys";
-
-const ZTemplateObjective = z.enum([
-  "increase_user_adoption",
-  "increase_conversion",
-  "support_sales",
-  "sharpen_marketing_messaging",
-  "improve_user_retention",
-  "other",
-]);
+import { ZProfileObjective } from "./profile";
 
 export const ZTemplate = z.object({
   name: z.string(),
@@ -17,7 +9,7 @@ export const ZTemplate = z.object({
   category: z
     .enum(["Product Experience", "Exploration", "Growth", "Increase Revenue", "Customer Success"])
     .optional(),
-  objectives: z.array(ZTemplateObjective).optional(),
+  objectives: z.array(ZProfileObjective).optional(),
   preset: z.object({
     name: z.string(),
     welcomeCard: ZSurveyWelcomeCard,

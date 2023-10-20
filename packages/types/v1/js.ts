@@ -82,7 +82,7 @@ export const ZJsSyncParams = z.object({
 
 export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;
 
-const ZSettingsSurvey = ZSurvey.pick({
+const ZJsSettingsSurvey = ZSurvey.pick({
   id: true,
   welcomeCard: true,
   questions: true,
@@ -92,8 +92,8 @@ const ZSettingsSurvey = ZSurvey.pick({
   delay: true,
 });
 
-export const ZSettings = z.object({
-  surveys: z.optional(z.array(ZSettingsSurvey)),
+export const ZJsSettings = z.object({
+  surveys: z.optional(z.array(ZJsSettingsSurvey)),
   noCodeEvents: z.optional(z.array(z.any())), // You might want to further refine this.
   brandColor: z.optional(z.string()),
   formbricksSignature: z.optional(z.boolean()),
@@ -110,13 +110,4 @@ export const ZSettings = z.object({
   darkOverlay: z.optional(z.boolean()),
 });
 
-export type TSettings = z.infer<typeof ZSettings>;
-
-export const ZMatchType = z.union([
-  z.literal("exactMatch"),
-  z.literal("contains"),
-  z.literal("startsWith"),
-  z.literal("endsWith"),
-  z.literal("notMatch"),
-  z.literal("notContains"),
-]);
+export type TSettings = z.infer<typeof ZJsSettings>;

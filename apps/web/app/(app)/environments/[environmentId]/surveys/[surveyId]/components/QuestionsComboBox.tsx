@@ -5,7 +5,7 @@ import { Command, CommandGroup, CommandItem, CommandInput, CommandEmpty } from "
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { QuestionType } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
 import {
   StarIcon,
   HashtagIcon,
@@ -26,7 +26,7 @@ export enum OptionsType {
 
 export type QuestionOption = {
   label: string;
-  questionType?: QuestionType;
+  questionType?: TSurveyQuestionType;
   type: OptionsType;
   id: string;
 };
@@ -45,19 +45,19 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   const getIconType = () => {
     if (type === OptionsType.QUESTIONS) {
       switch (questionType) {
-        case QuestionType.Rating:
+        case TSurveyQuestionType.Rating:
           return <StarIcon width={18} className="text-white" />;
-        case QuestionType.CTA:
+        case TSurveyQuestionType.CTA:
           return <CursorArrowRippleIcon width={18} className="text-white" />;
-        case QuestionType.OpenText:
+        case TSurveyQuestionType.OpenText:
           return <QuestionMarkCircleIcon width={18} className="text-white" />;
-        case QuestionType.MultipleChoiceMulti:
+        case TSurveyQuestionType.MultipleChoiceMulti:
           return <ListBulletIcon width={18} className="text-white" />;
-        case QuestionType.MultipleChoiceSingle:
+        case TSurveyQuestionType.MultipleChoiceSingle:
           return <QueueListIcon width={18} className="text-white" />;
-        case QuestionType.NPS:
+        case TSurveyQuestionType.NPS:
           return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
-        case QuestionType.Consent:
+        case TSurveyQuestionType.Consent:
           return <CheckIcon width={18} height={18} className="text-white" />;
       }
     }

@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const ZMatchType = z.union([
+export const ZActionClassMatchType = z.union([
   z.literal("exactMatch"),
   z.literal("contains"),
   z.literal("startsWith"),
@@ -77,7 +77,7 @@ export const ZNoCodeConfig = z.object({
   pageUrl: z.optional(
     z.object({
       value: z.string(),
-      rule: ZMatchType, // Assuming MatchType is a Zod schema, otherwise you'll need to convert it too.
+      rule: ZActionClassMatchType, // Assuming MatchType is a Zod schema, otherwise you'll need to convert it too.
     })
   ),
   innerHtml: z.optional(

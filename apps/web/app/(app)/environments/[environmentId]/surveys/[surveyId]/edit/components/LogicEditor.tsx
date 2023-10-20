@@ -2,8 +2,8 @@ import {
   TSurvey,
   TSurveyLogic,
   TSurveyQuestion,
-  QuestionType,
-  TLogicCondition,
+  TSurveyQuestionType,
+  TSurveyLogicCondition,
 } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -29,7 +29,7 @@ interface LogicEditorProps {
 }
 
 type LogicConditions = {
-  [K in TLogicCondition]: {
+  [K in TSurveyLogicCondition]: {
     label: string;
     values: string[] | null;
     unique?: boolean;
@@ -48,7 +48,7 @@ export default function LogicEditor({
       return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
-    } else if (question.type === QuestionType.NPS) {
+    } else if (question.type === TSurveyQuestionType.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];

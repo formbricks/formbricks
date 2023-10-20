@@ -4,7 +4,7 @@ import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 import { env } from "@/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
-import { TObjective } from "@formbricks/types/v1/surveys";
+import { TProfileObjective } from "@formbricks/types/v1/profile";
 import { TProfile } from "@formbricks/types/v1/profile";
 import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";
@@ -19,7 +19,7 @@ type ObjectiveProps = {
 
 type ObjectiveChoice = {
   label: string;
-  id: TObjective;
+  id: TProfileObjective;
 };
 
 const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId, profile }) => {

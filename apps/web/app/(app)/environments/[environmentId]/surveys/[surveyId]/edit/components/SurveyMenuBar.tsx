@@ -2,7 +2,7 @@
 
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { QuestionType } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/v1/surveys";
 import { TEnvironment } from "@formbricks/types/v1/environment";
 import { TProduct } from "@formbricks/types/v1/product";
 import { TSurvey } from "@formbricks/types/v1/surveys";
@@ -133,8 +133,8 @@ export default function SurveyMenuBar({
       existingQuestionIds.add(question.id);
 
       if (
-        question.type === QuestionType.MultipleChoiceSingle ||
-        question.type === QuestionType.MultipleChoiceMulti
+        question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
           question.choices.some((element) => element.label.trim() === "") ||

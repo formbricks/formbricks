@@ -1,7 +1,7 @@
 import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { timeSince } from "@formbricks/lib/time";
-import type { QuestionSummary } from "@formbricks/types/v1/responses";
+import type { TSurveyQuestionSummary } from "@formbricks/types/v1/surveys";
 import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
@@ -9,7 +9,7 @@ import Link from "next/link";
 import { questionTypes } from "@/app/lib/questions";
 
 interface OpenTextSummaryProps {
-  questionSummary: QuestionSummary<TSurveyOpenTextQuestion>;
+  questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
 }
 
