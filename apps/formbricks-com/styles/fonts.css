@@ -15,8 +15,8 @@
 }
 @font-face {
   font-family: "Inter";
-  font-weight: url("../fonts/Jost-Italic-VariableFont_wght.woff2") format("woff2"),
-    url("../fonts/Jost-Italic-VariableFont_wght.woff") format("woff");
+  font-weight: 100 900;
+  font-display: block;
   font-style: italic;
   font-named-instance: "Italic";
   src: url("/fonts/Inter-italic.var.woff2") format("woff2");
