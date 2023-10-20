@@ -26,7 +26,11 @@ export default function MetaInformation({
       <meta name="description" content={description} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
+      <meta name="image" content={`https://${process.env.VERCEL_URL}/favicon.ico`} />
       <meta property="og:image" content={`https://${process.env.VERCEL_URL}/social-image.png`} />
+      <link rel="icon" type="image/x-icon" href={`https://${process.env.VERCEL_URL}/favicon.ico`} />
+      <meta name="msapplication-TileColor" content="#00C4B8" />
+      <meta name="msapplication-TileImage" content={`https://${process.env.VERCEL_URL}/favicon.ico`} />
       <meta property="og:image:alt" content="Open Source Experience Management, Privacy-first" />
       <meta property="og:image:type" content="image/png" />
       <meta property="og:image:width" content="1200" />
