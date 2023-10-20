@@ -1,5 +1,5 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Button } from "@formbricks/ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
@@ -57,7 +57,7 @@ const DummyUI: React.FC = () => {
           </div>
         </div>
       ))}
-      <div className="w-fit ml-4 p-3">
+      <div className="ml-4 w-fit p-3">
         <Button
           variant="secondary"
           className="xs:text-base w-fit text-xs dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"

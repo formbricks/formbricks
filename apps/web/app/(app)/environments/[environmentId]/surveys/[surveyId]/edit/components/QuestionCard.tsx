@@ -247,15 +247,22 @@ export default function QuestionCard({
                               id="buttonLabel"
                               name="buttonLabel"
                               value={question.buttonLabel}
+                              maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
-                              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+                              onChange={(e) => {
+                                if (e.target.value.trim() == "") e.target.value = "";
+                                updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                              }}
                             />
                           </div>
                         </div>
                         {questionIdx !== 0 && (
                           <BackButtonInput
                             value={question.backButtonLabel}
-                            onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+                            onChange={(e) => {
+                              if (e.target.value.trim() == "") e.target.value = "";
+                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
+                            }}
                           />
                         )}
                       </div>
@@ -266,7 +273,10 @@ export default function QuestionCard({
                         <div className="mt-4">
                           <BackButtonInput
                             value={question.backButtonLabel}
-                            onChange={(e) => updateQuestion(questionIdx, { backButtonLabel: e.target.value })}
+                            onChange={(e) => {
+                              if (e.target.value.trim() == "") e.target.value = "";
+                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
+                            }}
                           />
                         </div>
                       )}

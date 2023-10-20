@@ -1,12 +1,12 @@
 "use client";
 
 import type { NextPage } from "next";
-import { TProduct } from "@/../../packages/types/v1/product";
-import { TResponse } from "@/../../packages/types/v1/responses";
+import { TProduct } from "@formbricks/types/v1/product";
+import { TResponse } from "@formbricks/types/v1/responses";
 import { OTPInput } from "@formbricks/ui/OTPInput";
 import { useCallback, useEffect, useState } from "react";
-import { validateSurveyPin } from "@/app/s/[surveyId]/actions";
-import { TSurvey } from "@/../../packages/types/v1/surveys";
+import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import { cn } from "@formbricks/lib/cn";
@@ -40,8 +40,8 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   const [error, setError] = useState<TSurveyPinValidationResponseError>();
   const [survey, setSurvey] = useState<TSurvey>();
 
-  const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: number) => {
-    const response = await validateSurveyPin(surveyId, pin);
+  const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: string) => {
+    const response = await validateSurveyPinAction(surveyId, pin);
     if (response.error) {
       setError(response.error);
     } else if (response.survey) {
@@ -69,12 +69,10 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     const validPinRegex = /^\d{4}$/;
     const isValidPin = validPinRegex.test(localPinEntry);
 
-    const pinAsNumber = Number(localPinEntry);
-
     if (isValidPin) {
       // Show loading and check against the server
       setLoading(true);
-      _validateSurveyPinAsync(surveyId, pinAsNumber);
+      _validateSurveyPinAsync(surveyId, localPinEntry);
       return;
     }
 
