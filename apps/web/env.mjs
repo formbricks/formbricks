@@ -46,6 +46,7 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
+    AZUREAD_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().optional(),
@@ -54,6 +55,9 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
+    AIR_TABLE_CLIENT_ID: z.string().optional(),
+    AWS_ACCESS_KEY: z.string().optional(),
+    AWS_SECRET_KEY: z.string().optional(),
     S3_ACCESS_KEY: z.string().optional(),
     S3_SECRET_KEY: z.string().optional(),
     S3_REGION: z.string().optional(),
@@ -62,6 +66,9 @@ export const env = createEnv({
     NOTION_OAUTH_CLIENT_SECRET: z.string().optional(),
     NOTION_AUTH_URL: z.string().optional(),
     NOTION_REDIRECT_URI: z.string().optional(),
+    AZUREAD_CLIENT_SECRET: z.string().optional(),
+    AZUREAD_TENANT_ID: z.string().optional(),
+    AZUREAD_CLIENT_ID: z.string().optional(),
   },
 
   /*
@@ -138,5 +145,10 @@ export const env = createEnv({
     SURVEY_BASE_URL: process.env.SURVEY_BASE_URL,
     SHORT_SURVEY_BASE_URL: process.env.SHORT_SURVEY_BASE_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    AZUREAD_AUTH_ENABLED: process.env.AZUREAD_AUTH_ENABLED,
+    AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
+    AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
+    AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
+    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
   },
 });
