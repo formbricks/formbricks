@@ -12,11 +12,10 @@ import {
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
 import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
-import { getTeamsByUserIdCacheTag } from "../team/service";
-import { revalidateTag } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { membershipCache } from "./cache";
+import { teamCache } from "../team/cache";
 
 export const getMembersByTeamId = async (teamId: string, page?: number): Promise<TMember[]> =>
   unstable_cache(
@@ -125,7 +124,10 @@ export const createMembership = async (
         role: data.role as TMembership["role"],
       },
     });
-    revalidateTag(getTeamsByUserIdCacheTag(userId));
+    teamCache.revalidate({
+      userId,
+      id: teamId,
+    });
 
     membershipCache.revalidate({
       userId,
@@ -137,6 +139,7 @@ export const createMembership = async (
     throw error;
   }
 };
+
 export const updateMembership = async (
   userId: string,
   teamId: string,
@@ -154,7 +157,12 @@ export const updateMembership = async (
       },
       data,
     });
-    revalidateTag(getTeamsByUserIdCacheTag(userId));
+
+    teamCache.revalidate({
+      userId,
+      id: teamId,
+    });
+
     membershipCache.revalidate({
       userId,
       teamId,
@@ -181,7 +189,12 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
       },
     },
   });
-  revalidateTag(getTeamsByUserIdCacheTag(userId));
+
+  teamCache.revalidate({
+    userId,
+    id: teamId,
+  });
+
   membershipCache.revalidate({
     userId,
     teamId,
@@ -222,9 +235,17 @@ export const transferOwnership = async (
         },
       }),
     ]);
-    revalidateTag(getTeamsByUserIdCacheTag(teamId));
+
+    teamCache.revalidate({
+      id: teamId,
+    });
 
     memberships.forEach((membership) => {
+      teamCache.revalidate({
+        id: membership.teamId,
+        userId: membership.userId,
+      });
+
       membershipCache.revalidate({
         userId: membership.userId,
         teamId: membership.teamId,

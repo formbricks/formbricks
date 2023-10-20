@@ -5,11 +5,12 @@ import { ZId } from "@formbricks/types/v1/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/v1/teams";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "../environment/cache";
+import { teamCache } from "./cache";
 
 export const select = {
   id: true,
@@ -19,9 +20,6 @@ export const select = {
   plan: true,
   stripeCustomerId: true,
 };
-
-export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
-export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
 export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> =>
   unstable_cache(
@@ -41,7 +39,10 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
-        revalidateTag(getTeamsByUserIdCacheTag(userId));
+
+        teamCache.revalidate({
+          userId,
+        });
 
         return teams;
       } catch (error) {
@@ -52,9 +53,9 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
         throw error;
       }
     },
-    [`users-${userId}-teams`],
+    [`getTeamsByUserId-${userId}-${page}`],
     {
-      tags: [getTeamsByUserIdCacheTag(userId)],
+      tags: [teamCache.tag.byUserId(userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -79,7 +80,10 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
           },
           select: { ...select, memberships: true }, // include memberships
         });
-        revalidateTag(getTeamByEnvironmentIdCacheTag(environmentId));
+
+        teamCache.revalidate({
+          environmentId,
+        });
 
         return team;
       } catch (error) {
@@ -91,9 +95,9 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
         throw error;
       }
     },
-    [`environments-${environmentId}-team`],
+    [`getTeamByEnvironmentId-${environmentId}`],
     {
-      tags: [getTeamByEnvironmentIdCacheTag(environmentId)],
+      tags: [teamCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -105,6 +109,10 @@ export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> =>
     const team = await prisma.team.create({
       data: teamInput,
       select,
+    });
+
+    teamCache.revalidate({
+      id: team.id,
     });
 
     return team;
@@ -125,13 +133,17 @@ export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>
 
     // revalidate cache for members
     updatedTeam?.memberships.forEach((membership) => {
-      revalidateTag(getTeamsByUserIdCacheTag(membership.userId));
+      teamCache.revalidate({
+        userId: membership.userId,
+      });
     });
 
     // revalidate cache for environments
     updatedTeam?.products.forEach((product) => {
       product.environments.forEach((environment) => {
-        revalidateTag(getTeamByEnvironmentIdCacheTag(environment.id));
+        teamCache.revalidate({
+          environmentId: environment.id,
+        });
       });
     });
 
@@ -140,6 +152,10 @@ export const updateTeam = async (teamId: string, data: Partial<TTeamUpdateInput>
       memberships: undefined,
       products: undefined,
     };
+
+    teamCache.revalidate({
+      id: team.id,
+    });
 
     return team;
   } catch (error) {
@@ -163,16 +179,20 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
 
     // revalidate cache for members
     deletedTeam?.memberships.forEach((membership) => {
-      revalidateTag(getTeamsByUserIdCacheTag(membership.userId));
+      teamCache.revalidate({
+        userId: membership.userId,
+      });
     });
 
     // revalidate cache for environments
     deletedTeam?.products.forEach((product) => {
       product.environments.forEach((environment) => {
-        revalidateTag(getTeamByEnvironmentIdCacheTag(environment.id));
-
         environmentCache.revalidate({
           id: environment.id,
+        });
+
+        teamCache.revalidate({
+          environmentId: environment.id,
         });
       });
     });
@@ -182,6 +202,10 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
       memberships: undefined,
       products: undefined,
     };
+
+    teamCache.revalidate({
+      id: team.id,
+    });
 
     return team;
   } catch (error) {
