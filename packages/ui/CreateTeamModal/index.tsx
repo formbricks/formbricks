@@ -24,6 +24,13 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
   const { register, handleSubmit } = useForm<FormValues>();
 
   const submitTeam = async (data: FormValues) => {
+    const isOnlySpaces = /^\s*$/.test(data.name);
+
+    if (isOnlySpaces) {
+      // Do not submit the form if the input contains only spaces
+      return;
+    }
+
     try {
       setLoading(true);
       const newTeam = await createTeamAction(data.name);
@@ -33,7 +40,7 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
       setOpen(false);
     } catch (error) {
       console.error(error);
-      toast.error(`Unable to create team`);
+      toast.error(`Unable to `);
     } finally {
       setLoading(false);
     }
