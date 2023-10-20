@@ -146,7 +146,7 @@ sed -i "/NEXTAUTH_URL:/s|NEXTAUTH_URL:.*|NEXTAUTH_URL: \"https://$domain_name\"|
 nextauth_secret=$(openssl rand -hex 16) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
 echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
-encryption_key=$(openssl rand -hex 16 | tr -dc 'a-zA-Z0-9' | head -c 24) && sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $encryption_key/" docker-compose.yml
+encryption_key=$(openssl rand -hex 16) && sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $encryption_key/" docker-compose.yml
 echo "🚗 ENCRYPTION_KEY updated successfully!"
 
 
@@ -197,7 +197,7 @@ awk -v domain_name="$domain_name" '
 
 newgrp docker <<END
 
-docker compose --env-file /dev/null up
+docker compose up
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 

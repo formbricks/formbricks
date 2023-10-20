@@ -75,12 +75,11 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
 
    You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
 
-   We pass the `--env-file /dev/null` flag to docker-compose to prevent it from reading the .env file. This is because we're using environment variables directly in the docker-compose.yml file as the env file is currently in a format not well recognised by docker systems.
 <Col>
    <CodeGroup title="Launch Docker Instance">
 
    ```bash
-    docker compose --env-file /dev/null up -d
+    docker compose up -d
    ```
 
    </CodeGroup>
@@ -119,7 +118,7 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
    <CodeGroup title="Relaunch the Docker Instance">
 
    ```bash
-   docker compose --env-file /dev/null up -d
+   docker compose up -d
    ```
 
    </CodeGroup>
