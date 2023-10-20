@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getShortUrl } from "@formbricks/lib/shortUrl/service";
-import { ZShortUrlId } from "@formbricks/types/v1/shortUrl";
+import { ZShortUrlId } from "@formbricks/types/shortUrl";
 
 export default async function ShortUrlPage({ params }) {
   if (!params.shortUrlId) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,10 +20,10 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProfile } from "@formbricks/types/profile";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 
 interface SummaryHeaderProps {

@@ -67,7 +67,10 @@ export async function GET(req: NextRequest) {
       key,
     });
     return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+    NextResponse.json({ Error: error }, { status: 500 });
+  }
 
   NextResponse.json({ Error: "unknown error occurred" }, { status: 400 });
 }

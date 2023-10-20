@@ -4,9 +4,9 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { deleteApiKey, createApiKey } from "@formbricks/lib/apiKey/service";
 import { canUserAccessApiKey } from "@formbricks/lib/apiKey/auth";
-import { TApiKeyCreateInput } from "@formbricks/types/v1/apiKeys";
+import { TApiKeyCreateInput } from "@formbricks/types/apiKeys";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 
 export async function deleteApiKeyAction(id: string) {
   const session = await getServerSession(authOptions);

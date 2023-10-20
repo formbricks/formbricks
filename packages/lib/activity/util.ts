@@ -1,4 +1,4 @@
-import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { TActivityFeedItem } from "@formbricks/types/activity";
 
 export const formatActivityFeedItemDateFields = (
   activityFeedItem: TActivityFeedItem[]
