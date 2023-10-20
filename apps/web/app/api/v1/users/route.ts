@@ -1,6 +1,12 @@
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/app/lib/email";
 import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  INVITE_DISABLED,
+  SIGNUP_ENABLED,
+  DEFAULT_TEAM,
+  SKIP_ONBOARDING,
+} from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -53,12 +59,18 @@ export async function POST(request: Request) {
 
       return NextResponse.json(profile);
     } else {
-      const team = await createTeam({
-        name: `${user.name}'s Team`,
-      });
-      await createProduct(team.id, { name: "My Product" });
-      const profile = await createProfile(user);
-      await createMembership(team.id, profile.id, { role: "owner", accepted: true });
+      let profile;
+      if (DEFAULT_TEAM) {
+        profile = await createProfile(user);
+        await createMembership(DEFAULT_TEAM, profile.id, { role: "viewer", accepted: true });
+      } else {
+        const team = await createTeam({
+          name: `${user.name}'s Team`,
+        });
+        await createProduct(team.id, { name: "My Product" });
+        profile = await createProfile(user);
+        await createMembership(team.id, profile.id, { role: "owner", accepted: true });
+      }
 
       if (!EMAIL_VERIFICATION_DISABLED) {
         await sendVerificationEmail(profile);

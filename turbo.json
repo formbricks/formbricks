@@ -51,6 +51,8 @@
         "AZUREAD_CLIENT_ID",
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
+        "DEFAULT_TEAM",
+        "SKIP_ONBOARDING",
         "CRON_SECRET",
         "ENCRYPTION_KEY",
         "FORMBRICKS_ENCRYPTION_KEY",

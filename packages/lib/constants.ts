@@ -62,5 +62,8 @@ export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
 
+export const DEFAULT_TEAM = env.DEFAULT_TEAM;
+export const SKIP_ONBOARDING = env.SKIP_ONBOARDING;
+
 // Storage constants
 export const UPLOADS_DIR = path.resolve("./uploads");
