@@ -671,48 +671,83 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 
 
 
-============================================================
-                 SIL OPEN FONT LICENSE
-============================================================
-
-Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
 
 PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
 
-The Jost Font is an open font licensed by SIL.
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
 
-TERMS AND CONDITIONS
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
 
-Lost is free to use, modify, and distribute. By downloading and using the font, you agree to the following terms:
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
 
-1. PERMISSION & CONDITIONS
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
 
-   a. You are free to use, modify, and distribute the font, either for personal or commercial purposes.
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
 
-   b. You may bundle or redistribute the font with your projects, provided that you do not sell the font by itself.
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
 
-   c. If you modify the font, you must rename the modified font and clearly indicate that it has been modified.
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
 
-   d. The font can be embedded in documents (such as web pages and PDFs) under the condition that the font files are not extracted.
+1) Neither the Font Software nor any of its individual components, in Original or Modified Versions, may be sold by itself. Derivative works, whether modified or unmodified, are allowed.
 
-   e. The font can be subsetted and converted to other formats (e.g., webfont formats) as long as it remains under the terms of this license.
+2) Original or Modified Versions of the Font Software may be bundled, redistributed, and/or sold with any software, provided that each copy contains the above copyright notice and this license.
 
-2. RESERVATION OF RIGHTS
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
 
-   The above conditions do not grant any rights beyond what is expressly stated in this license. All other rights are reserved by the copyright owner.
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
 
-3. DISCLAIMER
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
 
-   The font is provided "as-is" without any warranty. The author is not responsible for any damage or issues caused by the use of the font.
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
 
-4. ATTRIBUTION
-
-   a. If you distribute the font, you must include the original Jost OFL.txt file, unmodified, in the distribution.
-
-   b. You must also include clear and visible attribution to Formbricks in any project or documentation that uses the font.
-
-5. CONTACT
-
-   For questions or additional information, contact hola@formbricks.com.
-
-============================================================
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
