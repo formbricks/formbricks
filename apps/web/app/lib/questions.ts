@@ -6,6 +6,7 @@ import {
   QueueListIcon,
   StarIcon,
   CheckIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -20,6 +21,15 @@ export type TSurveyQuestionType = {
 };
 
 export const questionTypes: TSurveyQuestionType[] = [
+  {
+    id: QuestionId.PictureSelection,
+    label: "Picture Selection",
+    description: "Select one or more pictures",
+    icon: PhotoIcon,
+    preset: {
+      allowMulti: true,
+    },
+  },
   {
     id: QuestionId.OpenText,
     label: "Free text",
@@ -100,7 +110,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
-    id: "consent",
+    id: QuestionId.Consent,
     label: "Consent",
     description: "Ask your users to accept something",
     icon: CheckIcon,
