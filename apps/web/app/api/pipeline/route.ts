@@ -60,6 +60,9 @@ export async function POST(request: Request) {
     webhooks.map(async (webhook) => {
       await fetch(webhook.url, {
         method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
         body: JSON.stringify({
           webhookId: webhook.id,
           event,

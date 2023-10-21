@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import PreviewSurvey from "./PreviewSurvey";
 import { findTemplateByName } from "./templates";
-import { TTemplate } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 
 interface DemoPreviewProps {
   template: string;
