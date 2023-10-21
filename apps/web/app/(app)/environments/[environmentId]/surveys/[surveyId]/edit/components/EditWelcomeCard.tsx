@@ -101,10 +101,10 @@ export default function EditWelcomeCard({
               <FileInput
                 allowedFileExtensions={["png", "jpeg", "jpg"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string) => {
-                  updateSurvey({ fileUrl: url });
+                onFileUpload={(url: string[]) => {
+                  updateSurvey({ fileUrl: url[0] });
                 }}
-                fileUrl={localSurvey?.welcomeCard?.fileUrl}
+                fileUrl={localSurvey?.welcomeCard?.fileUrl ? [localSurvey?.welcomeCard?.fileUrl] : undefined}
               />
             </div>
             <div className="mt-3">

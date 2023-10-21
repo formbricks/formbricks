@@ -27,7 +27,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Select one or more pictures",
     icon: PhotoIcon,
     preset: {
+      headline: "",
       allowMulti: true,
+      choices: [],
     },
   },
   {

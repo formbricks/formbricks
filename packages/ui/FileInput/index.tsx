@@ -1,5 +1,5 @@
 "use client";
-import { PhotoIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { FileIcon } from "lucide-react";
 import { useState } from "react";
@@ -95,50 +95,118 @@ const FileInput: React.FC<FileInputProps> = ({
     onFileUpload(newFileUrl);
   };
 
+  const handleUploadMoreDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    handleUploadMore(files);
+  };
+
+  const handleUploadMore = async (files: File[]) => {
+    let filesToUpload: File[] = files;
+
+    const areAllFilesAllowed = filesToUpload.every(
+      (file) =>
+        file &&
+        file.type &&
+        allowedFileExtensions.includes(file.name.split(".").pop() as AllowedFileExtensions)
+    );
+    if (areAllFilesAllowed) {
+      setIsUploaded(false);
+      setSelectedFiles(filesToUpload);
+
+      const uploadedFiles = await Promise.all(
+        filesToUpload.map((file) => uploadFile(file, allowedFileExtensions, environmentId))
+      );
+
+      setIsUploaded(true);
+      onFileUpload([...(fileUrl || []), ...uploadedFiles.map((file) => file.data.url)]);
+    } else {
+      toast.error("Files not supported");
+    }
+  };
+
   return (
-    <div className="w-full">
+    <div className="w-full cursor-default">
       {isUploaded && fileUrl && fileUrl.length > 0 ? (
         multiple ? (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {fileUrl.map((url, idx) => (
               <>
                 {url.endsWith("jpg") || url.endsWith("jpeg") || url.endsWith("png") ? (
                   <div className="relative h-24 w-40 rounded-lg">
-                    <img src={url} alt="Company Logo" className="h-full w-full rounded-lg" />
+                    <img src={url} alt={url.split("/").pop()} className="h-full w-full rounded-lg" />
                     <div
-                      className="absolute right-2 top-2 flex items-center justify-center rounded-md bg-white p-1 hover:bg-white/90"
+                      className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                       onClick={() => handleRemove(idx)}>
                       <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                  <div className="relative flex h-24 w-40 flex-col items-center justify-center rounded-lg border border-slate-300 px-2 py-3">
                     <FileIcon className="h-6 text-slate-500" />
-                    <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
+                    <p
+                      className="dark.text-slate-400 mt-2 w-full truncate text-center text-sm text-slate-500"
+                      title={url.split("/").pop()}>
                       <span className="font-semibold">{url.split("/").pop()}</span>
                     </p>
+                    <div
+                      className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200"
+                      onClick={() => handleRemove(idx)}>
+                      <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                    </div>
                   </div>
                 )}
               </>
             ))}
+            <label
+              htmlFor="uploadMore"
+              className="relative flex h-24 w-40 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+              onDragOver={(e) => handleDragOver(e)}
+              onDrop={(e) => handleUploadMoreDrop(e)}>
+              <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                <ArrowUpTrayIcon className="h-6 text-slate-500" />
+                <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
+                  <span className="font-semibold">Upload</span>
+                </p>
+                <input
+                  type="file"
+                  id="uploadMore"
+                  name="uploadMore"
+                  accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
+                  className="hidden"
+                  multiple={multiple}
+                  onChange={async (e) => {
+                    let selectedFiles = Array.from(e.target?.files || []);
+                    handleUploadMore(selectedFiles);
+                  }}
+                />
+              </div>
+            </label>
           </div>
         ) : (
           <div className="h-52">
             {fileUrl[0].endsWith("jpg") || fileUrl[0].endsWith("jpeg") || fileUrl[0].endsWith("png") ? (
               <div className="relative mx-auto h-full w-max max-w-full rounded-lg">
-                <img src={fileUrl[0]} alt="Company Logo" className="h-full rounded-lg" />
+                <img src={fileUrl[0]} alt={fileUrl[0].split("/").pop()} className="h-full rounded-lg" />
                 <div
-                  className="absolute right-2 top-2 flex items-center justify-center rounded-md bg-white p-1"
+                  className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200"
                   onClick={() => handleRemove(0)}>
                   <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center pb-6 pt-5">
+              <div className="relative flex h-full w-full flex-col items-center justify-center border border-slate-300">
                 <FileIcon className="h-6 text-slate-500" />
                 <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
                   <span className="font-semibold">{fileUrl[0].split("/").pop()}</span>
                 </p>
+                <div
+                  className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200"
+                  onClick={() => handleRemove(0)}>
+                  <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                </div>
               </div>
             )}
           </div>
@@ -152,14 +220,16 @@ const FileInput: React.FC<FileInputProps> = ({
                   <div className="h-24 w-40 rounded-lg">
                     <img
                       src={URL.createObjectURL(file)}
-                      alt="Company Logo"
+                      alt={file.name}
                       className="h-full w-full rounded-lg"
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                  <div className="relative flex h-24 w-40 flex-col items-center justify-center rounded-lg border border-slate-300 px-2 py-3">
                     <FileIcon className="h-6 text-slate-500" />
-                    <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
+                    <p
+                      className="dark.text-slate-400 mt-2 w-full truncate text-center text-sm text-slate-500"
+                      title={file.name}>
                       <span className="font-semibold">{file.name}</span>
                     </p>
                   </div>
@@ -172,11 +242,11 @@ const FileInput: React.FC<FileInputProps> = ({
             {selectedFiles[0].type.startsWith("image/") ? (
               <img
                 src={URL.createObjectURL(selectedFiles[0])}
-                alt="Company Logo"
+                alt={selectedFiles[0].name}
                 className="mx-auto max-h-full max-w-full rounded-lg object-contain"
               />
             ) : (
-              <div className="flex flex-col items-center justify-center pb-6 pt-5">
+              <div className="relative flex h-full w-full flex-col items-center justify-center border border-slate-300">
                 <FileIcon className="h-6 text-slate-500" />
                 <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
                   <span className="font-semibold">{selectedFiles[0].name}</span>
@@ -204,119 +274,13 @@ const FileInput: React.FC<FileInputProps> = ({
               className="hidden"
               multiple={multiple}
               onChange={async (e) => {
-                let selectedFile = Array.from(e.target?.files || []);
-                handleUpload(selectedFile);
+                let selectedFiles = Array.from(e.target?.files || []);
+                handleUpload(selectedFiles);
               }}
             />
           </div>
         </label>
       )}
-
-      {/* <label
-        htmlFor="selectedFile"
-        className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-600 dark:hover:bg-slate-800"
-        // select single or multiple files
-        // allow multiple files only if multiple prop is true
-
-        onDragOver={(e) => handleDragOver(e)}
-        onDrop={(e) => handleDrop(e)}>
-        {isUploaded && fileUrl ? (
-          <>
-            <div className="absolute inset-0 mr-4 mt-2 flex items-start justify-end gap-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 bg-opacity-50 text-slate-800 hover:bg-slate-200/50 hover:text-slate-900">
-                <label htmlFor="modifyFile">
-                  <PhotoIcon className="h-5 cursor-pointer text-slate-700 hover:text-slate-900" />
-
-                  <input
-                    type="file"
-                    id="modifyFile"
-                    name="modifyFile"
-                    accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
-                    className="hidden"
-                    onChange={async (e) => {
-                      const selectedFile = e.target?.files?.[0];
-                      if (selectedFile) {
-                        setIsUploaded(false);
-                        setSelectedFile([selectedFile]);
-                        const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
-                        setIsUploaded(true);
-                        onFileUpload(response.data.url);
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-300 bg-opacity-50 hover:bg-slate-200/50">
-                <TrashIcon
-                  className="h-5 text-slate-700 hover:text-slate-900"
-                  onClick={() => onFileUpload(undefined)}
-                />
-              </div>
-            </div>
-
-            {fileUrl.endsWith("jpg") || fileUrl.endsWith("jpeg") || fileUrl.endsWith("png") ? (
-              <img
-                src={fileUrl}
-                alt="Company Logo"
-                className="max-h-full max-w-full rounded-lg object-contain"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center pb-6 pt-5">
-                <FileIcon className="h-6 text-slate-500" />
-                <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
-                  <span className="font-semibold">{fileUrl.split("/").pop()}</span>
-                </p>
-              </div>
-            )}
-          </>
-        ) : !isUploaded && selectedFile ? (
-          <>
-            {selectedFile[0].type.startsWith("image/") ? (
-              <img
-                src={URL.createObjectURL(selectedFile[0])}
-                alt="Company Logo"
-                className="max-h-full max-w-full rounded-lg object-contain"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center pb-6 pt-5">
-                <FileIcon className="h-6 text-slate-500" />
-                <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
-                  <span className="font-semibold">{selectedFile[0].name}</span>
-                </p>
-              </div>
-            )}
-            <div className="hover.bg-opacity-60 absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 transition-opacity duration-300">
-              <label htmlFor="selectedFile" className="cursor-pointer text-sm font-semibold text-white">
-                Uploading
-              </label>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center pb-6 pt-5">
-            <ArrowUpTrayIcon className="h-6 text-slate-500" />
-            <p className="dark.text-slate-400 mt-2 text-sm text-slate-500">
-              <span className="font-semibold">Click or drag to upload files.</span>
-            </p>
-            <input
-              type="file"
-              id="selectedFile"
-              name="selectedFile"
-              accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
-              className="hidden"
-              onChange={async (e) => {
-                const selectedFile = e.target?.files?.[0];
-                if (selectedFile) {
-                  setIsUploaded(false);
-                  setSelectedFile([selectedFile]);
-                  const response = await uploadFile(selectedFile, allowedFileExtensions, environmentId);
-                  setIsUploaded(true);
-                  onFileUpload(response.data.url);
-                }
-              }}
-            />
-          </div>
-        )}
-      </label> */}
     </div>
   );
 };

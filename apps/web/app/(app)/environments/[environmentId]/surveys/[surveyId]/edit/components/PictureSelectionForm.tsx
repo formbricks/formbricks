@@ -3,7 +3,8 @@ import { Label } from "@formbricks/ui/Label";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { Switch } from "@formbricks/ui/Switch";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import cuid2, { createId } from "@paralleldrive/cuid2";
+import { createId } from "@paralleldrive/cuid2";
+import { cn } from "@formbricks/lib/cn";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
@@ -12,7 +13,6 @@ interface PictureSelectionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInValid: boolean;
-  showImageUploader?: boolean;
 }
 
 export default function PictureSelectionForm({
@@ -21,13 +21,8 @@ export default function PictureSelectionForm({
   questionIdx,
   updateQuestion,
   isInValid,
-  showImageUploader = true,
 }: PictureSelectionFormProps): JSX.Element {
   const environmentId = localSurvey.environmentId;
-
-  const updateSurvey = (prop) => {
-    // updateQuestion(questionIdx, updatedAttributes);
-  };
 
   return (
     <form>
@@ -39,7 +34,15 @@ export default function PictureSelectionForm({
         updateQuestion={updateQuestion}
       />
       <div className="mt-2">
-        <Label htmlFor="Images">Images</Label>
+        <Label htmlFor="Images">
+          Images
+          <span
+            className={cn("text-slate-400", {
+              "text-red-600": isInValid && question.choices?.length < 2,
+            })}>
+            (Upload atleast 2 images)
+          </span>
+        </Label>
         <div className="mt-3 flex w-full items-center justify-center">
           <FileInput
             allowedFileExtensions={["png", "jpeg", "jpg"]}
@@ -50,7 +53,7 @@ export default function PictureSelectionForm({
               });
             }}
             fileUrl={question?.choices?.map((choice) => choice.imageUrl)}
-            multiple={question.allowMulti}
+            multiple={true}
           />
         </div>
       </div>
