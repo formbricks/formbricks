@@ -3,7 +3,7 @@
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { truncateMiddle } from "@/app/lib/utils";
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";

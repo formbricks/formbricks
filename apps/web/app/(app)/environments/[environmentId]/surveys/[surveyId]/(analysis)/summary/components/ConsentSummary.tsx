@@ -1,13 +1,13 @@
-import type { QuestionSummary } from "@formbricks/types/responses";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface ConsentSummaryProps {
-  questionSummary: QuestionSummary<TSurveyConsentQuestion>;
+  questionSummary: TSurveyQuestionSummary<TSurveyConsentQuestion>;
 }
 
 interface ChoiceResult {

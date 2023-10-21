@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@formbricks/lib/cn";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSurvey, TSurveyType } from "@formbricks/types/v1/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";

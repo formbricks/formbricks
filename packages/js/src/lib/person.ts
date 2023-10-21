@@ -1,5 +1,5 @@
-import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
