@@ -4,7 +4,7 @@ import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service
 import { canUserAccessTag } from "@formbricks/lib/tag/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 
 export const deleteTagAction = async (tagId: string) => {
   const session = await getServerSession(authOptions);

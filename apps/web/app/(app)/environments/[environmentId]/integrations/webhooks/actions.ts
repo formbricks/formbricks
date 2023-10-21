@@ -2,9 +2,9 @@
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
-import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
+import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessWebhook } from "@formbricks/lib/webhook/auth";
 

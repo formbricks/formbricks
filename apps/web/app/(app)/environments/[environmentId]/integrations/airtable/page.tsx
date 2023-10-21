@@ -4,8 +4,8 @@ import { AIR_TABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
-import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function Airtable({ params }) {

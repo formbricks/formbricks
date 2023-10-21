@@ -1,4 +1,4 @@
-import { TInvite } from "@formbricks/types/v1/invites";
+import { TInvite } from "@formbricks/types/invites";
 
 export function capitalizeFirstLetter(string: string | null = "") {
   if (string === null) {

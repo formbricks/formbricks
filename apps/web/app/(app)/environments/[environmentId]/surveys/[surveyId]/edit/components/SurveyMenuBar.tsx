@@ -2,10 +2,10 @@
 
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { QuestionType } from "@formbricks/types/questions";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
@@ -107,6 +107,12 @@ export default function SurveyMenuBar({
       return;
     }
 
+    let pin = survey?.pin;
+    if (pin !== null && pin.toString().length !== 4) {
+      toast.error("PIN must be a four digit number.");
+      return;
+    }
+
     faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
@@ -133,8 +139,8 @@ export default function SurveyMenuBar({
       existingQuestionIds.add(question.id);
 
       if (
-        question.type === QuestionType.MultipleChoiceSingle ||
-        question.type === QuestionType.MultipleChoiceMulti
+        question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
           question.choices.some((element) => element.label.trim() === "") ||

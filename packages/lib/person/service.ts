@@ -1,15 +1,15 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/v1/people";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/people";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
 import { getAttributeClassByName } from "../attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { personCache } from "./cache";
 
 export const selectPerson = {
