@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
   const brandColor = getBrandColorForURL(product.brandColor);
   const surveyName = getNameForURL(survey.name);
 
-  const ogImgURL = `${WEBAPP_URL}/api/v1/environments/${survey.environmentId}/surveys/${survey.id}/og?brandColor=${brandColor}&name=${surveyName}`;
+  const ogImgURL = `${WEBAPP_URL}/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
 
   return {
     openGraph: {
