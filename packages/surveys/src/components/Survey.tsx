@@ -74,8 +74,7 @@ export function Survey({
   }
 
   const onChange = (responseDataUpdate: TResponseData) => {
-    const updatedResponseData = { ...responseData, ...responseDataUpdate };
-    setResponseData(updatedResponseData);
+    setResponseData((prevResponseData) => ({ ...prevResponseData, ...responseDataUpdate }));
   };
 
   const onSubmit = (responseData: TResponseData) => {
@@ -139,6 +138,8 @@ export function Survey({
                   questionId === question.id && (
                     <QuestionConditional
                       question={question}
+                      responseData={responseData}
+                      survey={survey}
                       value={responseData[question.id]}
                       onChange={onChange}
                       onSubmit={onSubmit}

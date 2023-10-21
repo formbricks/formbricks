@@ -8,6 +8,7 @@ import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import NPSQuestion from "./NPSQuestion";
 import OpenTextQuestion from "./OpenTextQuestion";
 import RatingQuestion from "./RatingQuestion";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -19,6 +20,8 @@ interface QuestionConditionalProps {
   isLastQuestion: boolean;
   brandColor: string;
   autoFocus?: boolean;
+  survey: TSurveyWithTriggers;
+  responseData: TResponseData;
 }
 
 export default function QuestionConditional({
@@ -30,10 +33,14 @@ export default function QuestionConditional({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  responseData,
+  survey,
   autoFocus = true,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
+      survey={survey}
+      responseData={responseData}
       question={question}
       value={value}
       onChange={onChange}

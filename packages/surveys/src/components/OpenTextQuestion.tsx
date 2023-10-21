@@ -5,6 +5,8 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 import { useCallback } from "react";
+import { useMemo } from "preact/hooks";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -16,6 +18,8 @@ interface OpenTextQuestionProps {
   isLastQuestion: boolean;
   brandColor: string;
   autoFocus?: boolean;
+  survey: TSurveyWithTriggers;
+  responseData: TResponseData;
 }
 
 export default function OpenTextQuestion({
@@ -24,8 +28,10 @@ export default function OpenTextQuestion({
   onChange,
   onSubmit,
   onBack,
+  responseData,
   isFirstQuestion,
   isLastQuestion,
+  survey,
   brandColor,
   autoFocus = true,
 }: OpenTextQuestionProps) {
@@ -39,6 +45,43 @@ export default function OpenTextQuestion({
       currentElement.focus();
     }
   }, []);
+
+  const questionHeadlineWithRecall = useMemo(() => {
+    const arr = question.headline.split(" ");
+    for (let i = 0; i < arr.length; i++) {
+      const x = arr[i];
+      if (x.includes("PJ9A9hiyITOyMgWlF4H5j6otrBexUTG8:")) {
+        let prevQid = x.split(":")[1];
+
+        if (prevQid.includes("/fallback")) {
+          prevQid = prevQid.split("/fallback")[0];
+        }
+
+        const fbq = x.split("/")[1];
+
+        const fallback = fbq ? decodeURI(fbq.split(":")[1]) : undefined;
+
+        const prevQ = survey.questions.find((q) => q.id === prevQid);
+
+        if (prevQ) {
+          const prevR = responseData[prevQ.id];
+
+          if (prevR) {
+            arr[i] = prevR as string;
+            return arr.join(" ");
+          } else if (fallback) {
+            arr[i] = fallback;
+            return arr.join(" ");
+          } else {
+            arr[i] = "";
+            return arr.join(" ");
+          }
+        }
+      }
+    }
+    return question.headline;
+    // if (question.headline.includes("PJ9A9hiyITOyMgWlF4H5j6otrBexUTG8"))
+  }, [question.headline, responseData, survey.questions]);
 
   return (
     <form
@@ -55,7 +98,7 @@ export default function OpenTextQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
+      <Headline headline={questionHeadlineWithRecall} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         {question.longAnswer === false ? (
