@@ -1,11 +1,11 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TActionClassType } from "@formbricks/types/v1/actionClasses";
-import { TAction, TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { TActionClassType } from "@formbricks/types/actionClasses";
+import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
+import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
@@ -15,14 +15,65 @@ import { createActionClass, getActionClassByEnvironmentIdAndName } from "../acti
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 
-export const getActionsByEnvironmentId = async (
-  environmentId: string,
-  limit?: number,
-  page?: number
-): Promise<TAction[]> => {
+export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
+  const action = await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+
+      try {
+        const actionPrisma = await prisma.event.findFirst({
+          where: {
+            eventClass: {
+              environmentId: environmentId,
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            eventClass: true,
+          },
+        });
+        if (!actionPrisma) {
+          return null;
+        }
+        const action: TAction = {
+          id: actionPrisma.id,
+          createdAt: actionPrisma.createdAt,
+          sessionId: actionPrisma.sessionId,
+          properties: actionPrisma.properties,
+          actionClass: actionPrisma.eventClass,
+        };
+        return action;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getLastestActionByEnvironmentId-${environmentId}`],
+    {
+      tags: [actionCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
+  return action
+    ? {
+        ...action,
+        createdAt: new Date(action.createdAt),
+      }
+    : action;
+};
+
+export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
       try {
         const actionsPrisma = await prisma.event.findMany({

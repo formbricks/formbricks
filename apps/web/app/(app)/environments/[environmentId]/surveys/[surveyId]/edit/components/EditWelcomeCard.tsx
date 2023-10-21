@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@formbricks/lib/cn";
 import { md } from "@formbricks/lib/markdownIt";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
@@ -148,7 +148,7 @@ export default function EditWelcomeCard({
                     <Input
                       id="buttonLabel"
                       name="buttonLabel"
-                      value={localSurvey?.welcomeCard?.buttonLabel || "Next"}
+                      defaultValue={localSurvey?.welcomeCard?.buttonLabel || "Next"}
                       onChange={(e) => updateSurvey({ buttonLabel: e.target.value })}
                     />
                   </div>

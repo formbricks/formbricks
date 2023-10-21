@@ -1,7 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getSurveysByAttributeClassId } from "@formbricks/lib/survey/service";
 import { canUserAccessAttributeClass } from "@formbricks/lib/attributeClass/auth";

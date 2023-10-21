@@ -1,4 +1,4 @@
-import type { TResponseData } from "@formbricks/types/v1/responses";
+import type { TResponseData } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";

@@ -1,15 +1,15 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/memberships";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/memberships";
 import {
   TProfile,
   TProfileCreateInput,
   TProfileUpdateInput,
   ZProfileUpdateInput,
-} from "@formbricks/types/v1/profile";
+} from "@formbricks/types/profile";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
@@ -51,7 +51,7 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -83,7 +83,7 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -215,7 +215,7 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
     return deletedProfile;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

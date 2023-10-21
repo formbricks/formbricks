@@ -7,11 +7,11 @@ import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TProduct } from "@formbricks/types/product";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 interface SurveyEditorProps {
@@ -20,7 +20,6 @@ interface SurveyEditorProps {
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  isEncryptionKeySet: boolean;
   responseCount: number;
 }
 
@@ -30,7 +29,6 @@ export default function SurveyEditor({
   environment,
   actionClasses,
   attributeClasses,
-  isEncryptionKeySet,
   responseCount,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
@@ -95,7 +93,6 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
-                isEncryptionKeySet={isEncryptionKeySet}
                 responseCount={responseCount}
               />
             )}

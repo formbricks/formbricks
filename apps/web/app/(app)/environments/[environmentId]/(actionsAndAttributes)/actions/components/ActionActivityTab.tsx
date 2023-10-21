@@ -6,7 +6,7 @@ import { Label } from "@formbricks/ui/Label";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/app/lib/utils";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { useEffect, useState } from "react";
 import {
   getActionCountInLastHourAction,

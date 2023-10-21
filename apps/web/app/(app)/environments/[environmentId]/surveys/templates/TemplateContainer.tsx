@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { TTemplate } from "@formbricks/types/v1/templates";
+import type { TTemplate } from "@formbricks/types/templates";
 import { useEffect } from "react";
 import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { minimalSurvey, templates } from "./templates";
 import PreviewSurvey from "../components/PreviewSurvey";
 import TemplateList from "./TemplateList";
-import type { TProduct } from "@formbricks/types/v1/product";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TProduct } from "@formbricks/types/product";
+import type { TEnvironment } from "@formbricks/types/environment";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 
 type TemplateContainerWithPreviewProps = {

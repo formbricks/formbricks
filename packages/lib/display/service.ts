@@ -1,20 +1,18 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
-import {
-  TDisplay,
-  TDisplayInput,
-  TDisplaysWithSurveyName,
-  ZDisplayInput,
-} from "@formbricks/types/v1/displays";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { ZOptionalNumber } from "@formbricks/types/common";
+import { TDisplay, TDisplayInput, TDisplaysWithSurveyName, ZDisplayInput } from "@formbricks/types/displays";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { transformPrismaPerson } from "../person/service";
 import { validateInputs } from "../utils/validate";
+import { displayCache } from "./cache";
+import { formatDisplaysDateFields } from "./util";
+import { responseCache } from "../response/cache";
 
 const selectDisplay = {
   id: true,
@@ -60,20 +58,25 @@ export const updateDisplay = async (
       person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
     };
 
+    displayCache.revalidate({
+      id: display.id,
+      surveyId: display.surveyId,
+    });
+
     return display;
   } catch (error) {
     console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
   }
 };
-export const getDisplaysCacheTag = (surveyId: string) => `surveys-${surveyId}-displays`;
 
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayInput]);
+
   try {
     const displayPrisma = await prisma.display.create({
       data: {
@@ -99,18 +102,16 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
       person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
     };
 
-    if (displayInput.personId) {
-      revalidateTag(displayInput.personId);
-    }
-
-    if (displayInput.surveyId) {
-      revalidateTag(getDisplaysCacheTag(displayInput.surveyId));
-    }
+    displayCache.revalidate({
+      id: display.id,
+      personId: display.person?.id,
+      surveyId: display.surveyId,
+    });
 
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -119,6 +120,7 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
 
 export const markDisplayResponded = async (displayId: string): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);
+
   try {
     if (!displayId) throw new Error("Display ID is required");
 
@@ -141,10 +143,16 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
       person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
     };
 
+    displayCache.revalidate({
+      id: display.id,
+      personId: display.person?.id,
+      surveyId: display.surveyId,
+    });
+
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -155,70 +163,100 @@ export const getDisplaysOfPerson = async (
   personId: string,
   page?: number
 ): Promise<TDisplaysWithSurveyName[] | null> => {
-  validateInputs([personId, ZId], [page, ZOptionalNumber]);
-  try {
-    const displaysPrisma = await prisma.display.findMany({
-      where: {
-        personId: personId,
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        responseId: true,
-        survey: {
-          select: {
-            name: true,
+  const displays = await unstable_cache(
+    async () => {
+      validateInputs([personId, ZId], [page, ZOptionalNumber]);
+
+      try {
+        const displaysPrisma = await prisma.display.findMany({
+          where: {
+            personId: personId,
           },
-        },
-        status: true,
-      },
-      take: page ? ITEMS_PER_PAGE : undefined,
-      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-    });
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            surveyId: true,
+            responseId: true,
+            survey: {
+              select: {
+                name: true,
+              },
+            },
+            status: true,
+          },
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        });
 
-    if (!displaysPrisma) {
-      throw new ResourceNotFoundError("Display from PersonId", personId);
+        if (!displaysPrisma) {
+          throw new ResourceNotFoundError("Display from PersonId", personId);
+        }
+
+        let displays: TDisplaysWithSurveyName[] = [];
+
+        displaysPrisma.forEach((displayPrisma) => {
+          const display: TDisplaysWithSurveyName = {
+            id: displayPrisma.id,
+            createdAt: displayPrisma.createdAt,
+            updatedAt: displayPrisma.updatedAt,
+            person: null,
+            surveyId: displayPrisma.surveyId,
+            surveyName: displayPrisma.survey.name,
+            responseId: displayPrisma.responseId,
+          };
+          displays.push(display);
+        });
+
+        return displays;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getDisplaysOfPerson-${personId}-${page}`],
+    {
+      tags: [displayCache.tag.byPersonId(personId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
+  )();
 
-    let displays: TDisplaysWithSurveyName[] = [];
-
-    displaysPrisma.forEach((displayPrisma) => {
-      const display: TDisplaysWithSurveyName = {
-        id: displayPrisma.id,
-        createdAt: displayPrisma.createdAt,
-        updatedAt: displayPrisma.updatedAt,
-        person: null,
-        surveyId: displayPrisma.surveyId,
-        surveyName: displayPrisma.survey.name,
-        responseId: displayPrisma.responseId,
-      };
-      displays.push(display);
-    });
-
-    return displays;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-
-    throw error;
-  }
+  return formatDisplaysDateFields(displays);
 };
 
-export const deleteDisplayByResponseId = async (responseId: string, surveyId: string): Promise<void> => {
-  validateInputs([responseId, ZId]);
+export const deleteDisplayByResponseId = async (responseId: string, surveyId: string): Promise<TDisplay> => {
+  validateInputs([responseId, ZId], [surveyId, ZId]);
+
   try {
-    await prisma.display.delete({
+    const deletedDisplay = await prisma.display.delete({
       where: {
         responseId,
       },
+      select: selectDisplay,
     });
-    revalidateTag(getDisplaysCacheTag(surveyId));
+
+    const display: TDisplay = {
+      ...deletedDisplay,
+      person: deletedDisplay.person ? transformPrismaPerson(deletedDisplay.person) : null,
+    };
+
+    displayCache.revalidate({
+      id: display.id,
+      personId: display.person?.id,
+      surveyId,
+    });
+
+    responseCache.revalidate({
+      responseId,
+    });
+
+    return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
@@ -242,7 +280,7 @@ export const getDisplayCountBySurveyId = async (surveyId: string): Promise<numbe
     },
     [`getDisplayCountBySurveyId-${surveyId}`],
     {
-      tags: [getDisplaysCacheTag(surveyId)],
+      tags: [displayCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

@@ -1,5 +1,5 @@
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { TPipelineInput } from "@formbricks/types/v1/pipelines";
+import { TPipelineInput } from "@formbricks/types/pipelines";
 
 export async function sendToPipeline({ event, surveyId, environmentId, response }: TPipelineInput) {
   return fetch(`${WEBAPP_URL}/api/pipeline`, {

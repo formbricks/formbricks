@@ -10,7 +10,7 @@ import { getEmailVerificationStatus } from "./lib/helpers";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
-import { TResponse } from "@formbricks/types/v1/responses";
+import { TResponse } from "@formbricks/types/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 
