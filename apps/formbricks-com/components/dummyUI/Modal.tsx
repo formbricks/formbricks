@@ -17,7 +17,7 @@ export default function Modal({
 
   return (
     <div aria-live="assertive" className="flex  items-end">
-      <div className="flex w-full flex-col items-center p-4  sm:items-end md:min-w-[390px]">
+      <div className="flex w-full flex-col items-center p-12 sm:items-center md:min-w-[390px]">
         <div
           className={cn(
             show ? "translate-x-0 opacity-100" : "translate-x-28 opacity-0",
