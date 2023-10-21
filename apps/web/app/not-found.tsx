@@ -14,8 +14,7 @@ export default function NotFound() {
         </p>
         <Button
           onClick={() => {
-            router.push("/");
-            router.refresh();
+            router.replace("/");
           }}
           className="mt-8">
           Back to home
