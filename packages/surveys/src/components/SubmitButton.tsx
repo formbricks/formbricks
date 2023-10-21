@@ -39,7 +39,7 @@ function SubmitButton({
         "flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2",
         isLight(brandColor) ? "text-black" : "text-white"
       )}
-      style={{ backgroundColor: brandColor }}
+      style={{ backgroundColor: "#14a3b8" }}
       onClick={onClick}>
       {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
     </button>
