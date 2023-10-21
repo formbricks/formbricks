@@ -145,6 +145,12 @@ const nextConfig = {
         destination: "https://app.formbricks.com/s/clhys1p9r001cpr0hu65rwh17",
         permanent: true,
       },
+      {
+        source: "/cla",
+        destination: "https://formbricks.com/clmyhzfrymr4ko00hycsg1tvx",
+        permanent: true,
+      },
+      
     ];
   },
   async rewrites() {
