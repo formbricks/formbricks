@@ -18,6 +18,8 @@ export default function OpenTextQuestion({
 }: OpenTextQuestionProps) {
   const [value, setValue] = useState<string>("");
 
+  const nextBrandColor= value? "#00C4B8" : brandColor;
+
   return (
     <form
       onSubmit={(e) => {
@@ -47,7 +49,7 @@ export default function OpenTextQuestion({
         <button
           type="submit"
           className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-          style={{ backgroundColor: brandColor }}>
+          style={{ backgroundColor: nextBrandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>
       </div>
