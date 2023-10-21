@@ -3,9 +3,8 @@ import { Button } from "@formbricks/ui/Button";
 export const GetStartedWithPricing = ({ showDetailed }: { showDetailed: boolean }) => {
   return (
     <>
-      <div className="flex items-center gap-x-4 px-4 pb-4 md:gap-4 md:px-16">
-        <div className="w-1/3"></div>
-        <div className="w-1/3 text-left text-sm text-slate-800 dark:text-slate-100">
+      <div className="xs:flex-row flex flex-col items-center justify-center gap-x-4 px-4 pb-4 md:gap-4 md:px-16">
+        <div className="text-left text-sm text-slate-800 dark:text-slate-100">
           <p className="text-base font-semibold">Free</p>
 
           {showDetailed && (
@@ -23,7 +22,7 @@ export const GetStartedWithPricing = ({ showDetailed }: { showDetailed: boolean 
             Get started - free
           </Button>
         </div>
-        <div className="w-1/3 text-left text-sm text-slate-800 dark:text-slate-100">
+        <div className="xs:mt-0 mt-5 text-left text-sm text-slate-800 dark:text-slate-100">
           <p className="text-base font-semibold"> Paid</p>
           {showDetailed && (
             <p className="leading text-xs text-slate-500 dark:text-slate-400 md:text-base">
