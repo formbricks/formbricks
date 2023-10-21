@@ -11,7 +11,7 @@ interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, time: any) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -36,7 +36,7 @@ export default function MultipleChoiceSingleQuestion({
         // Restart the timer when the tab becomes visible again
         startTime.current = performance.now();
       } else {
-        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
       }
     };
 
@@ -214,7 +214,7 @@ export default function MultipleChoiceSingleQuestion({
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+                          onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
                         }, 100);
                       }
                     }}
@@ -235,7 +235,7 @@ export default function MultipleChoiceSingleQuestion({
             tabIndex={questionChoices.length + 3}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
               onBack();
             }}
           />

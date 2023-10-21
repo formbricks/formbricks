@@ -10,7 +10,7 @@ interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, time: any) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -35,7 +35,7 @@ export default function ConsentQuestion({
         // Restart the timer when the tab becomes visible again
         startTime.current = performance.now();
       } else {
-        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
       }
     };
 
@@ -55,7 +55,7 @@ export default function ConsentQuestion({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+          onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
         }}>
         <label
           tabIndex={1}
@@ -94,7 +94,7 @@ export default function ConsentQuestion({
               tabIndex={3}
               backButtonLabel={question.backButtonLabel}
               onClick={() => {
-                onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+                onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
                 onBack();
               }}
             />

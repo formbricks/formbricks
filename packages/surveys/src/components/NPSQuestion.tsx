@@ -11,7 +11,7 @@ interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, time: any) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -36,7 +36,7 @@ export default function NPSQuestion({
         // Restart the timer when the tab becomes visible again
         startTime.current = performance.now();
       } else {
-        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
       }
     };
 
@@ -52,7 +52,7 @@ export default function NPSQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
       }}>
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -66,7 +66,7 @@ export default function NPSQuestion({
                 tabIndex={idx + 1}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
-                    onSubmit({ [question.id]: number }, performance.now() - startTime.current);
+                    onSubmit({ [question.id]: number }, true, performance.now() - startTime.current);
                   }
                 }}
                 className={cn(
@@ -85,6 +85,7 @@ export default function NPSQuestion({
                         {
                           [question.id]: number,
                         },
+                        true,
                         performance.now() - startTime.current
                       );
                     }
@@ -109,7 +110,7 @@ export default function NPSQuestion({
             tabIndex={isLastQuestion ? 12 : 13}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
               onBack();
             }}
           />

@@ -13,7 +13,7 @@ interface QuestionConditionalProps {
   question: TSurveyQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;

@@ -11,7 +11,7 @@ interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, time: any) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -36,7 +36,7 @@ export default function MultipleChoiceSingleQuestion({
         // Restart the timer when the tab becomes visible again
         startTime.current = performance.now();
       } else {
-        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
       }
     };
 
@@ -79,7 +79,7 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
@@ -98,7 +98,7 @@ export default function MultipleChoiceSingleQuestion({
                   if (e.key == "Enter") {
                     onChange({ [question.id]: choice.label });
                     setTimeout(() => {
-                      onSubmit({ [question.id]: choice.label }, performance.now() - startTime.current);
+                      onSubmit({ [question.id]: choice.label }, true, performance.now() - startTime.current);
                     }, 350);
                   }
                 }}
@@ -175,7 +175,7 @@ export default function MultipleChoiceSingleQuestion({
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+                          onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
                         }, 100);
                       }
                     }}
@@ -196,7 +196,7 @@ export default function MultipleChoiceSingleQuestion({
             backButtonLabel={question.backButtonLabel}
             tabIndex={questionChoices.length + 3}
             onClick={() => {
-              onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
               onBack();
             }}
           />

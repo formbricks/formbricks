@@ -10,7 +10,7 @@ interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, time: any) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -37,7 +37,7 @@ export default function OpenTextQuestion({
         // Restart the timer when the tab becomes visible again
         startTime.current = performance.now();
       } else {
-        onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
       }
     };
 
@@ -68,6 +68,7 @@ export default function OpenTextQuestion({
         //  if ( validateInput(value as string, question.inputType, question.required)) {
         onSubmit(
           { [question.id]: value, inputType: question.inputType },
+          true,
           performance.now() - startTime.current
         );
         // }
@@ -89,7 +90,8 @@ export default function OpenTextQuestion({
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
             onKeyDown={(e) => {
-              if (e.key == "Enter") onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+              if (e.key == "Enter")
+                onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
             }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
@@ -123,7 +125,7 @@ export default function OpenTextQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: value }, performance.now() - startTime.current);
+              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
               onBack();
             }}
           />
@@ -136,6 +138,7 @@ export default function OpenTextQuestion({
           onClick={() => {
             onSubmit(
               { [question.id]: value, inputType: question.inputType },
+              true,
               performance.now() - startTime.current
             );
           }}

@@ -10,7 +10,7 @@ interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, time?: any) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -33,7 +33,7 @@ export default function CTAQuestion({
         // Restart the timer when the tab becomes visible again
         startTime.current = performance.now();
       } else {
-        onSubmit({ [question.id]: "" }, performance.now() - startTime.current);
+        onSubmit({ [question.id]: "" }, false, performance.now() - startTime.current);
       }
     };
 
@@ -56,7 +56,7 @@ export default function CTAQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: "" }, performance.now() - startTime.current);
+              onSubmit({ [question.id]: "" }, false, performance.now() - startTime.current);
               onBack();
             }}
           />
@@ -67,7 +67,7 @@ export default function CTAQuestion({
               tabIndex={0}
               type="button"
               onClick={() => {
-                onSubmit({ [question.id]: "dismissed" }, performance.now() - startTime.current);
+                onSubmit({ [question.id]: "dismissed" }, true, performance.now() - startTime.current);
               }}
               className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:text-slate-400">
               {question.dismissButtonLabel || "Skip"}
@@ -83,7 +83,7 @@ export default function CTAQuestion({
                 window?.open(question.buttonUrl, "_blank")?.focus();
               }
               console.log({ startTime });
-              onSubmit({ [question.id]: "clicked" }, performance.now() - startTime.current);
+              onSubmit({ [question.id]: "clicked" }, true, performance.now() - startTime.current);
             }}
             type="button"
           />
