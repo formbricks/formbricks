@@ -4,7 +4,7 @@ import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { AuthenticationError, AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { getServerSession } from "next-auth";
 
 type TSendEmailActionArgs = {

@@ -6,14 +6,14 @@ import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TTag } from "@formbricks/types/tags";
+import { TProfile } from "@formbricks/types/profile";
 
 interface ResponsePageProps {
   environment: TEnvironment;

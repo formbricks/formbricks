@@ -1,5 +1,5 @@
-import type { TJsConfig } from "../../../types/v1/js";
-import type { TResponse, TResponseInput } from "../../../types/v1/responses";
+import type { TJsConfig } from "../../../types/js";
+import type { TResponse, TResponseInput } from "../../../types/responses";
 import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (

@@ -5,7 +5,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/service";
-import { ZStorageRetrievalParams } from "@formbricks/types/v1/storage";
+import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { NextRequest } from "next/server";

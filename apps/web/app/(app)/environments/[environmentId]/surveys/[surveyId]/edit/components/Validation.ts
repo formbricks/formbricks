@@ -5,7 +5,7 @@ import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyQuestion,
-} from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/surveys";
 
 const validationRules = {
   multipleChoiceMulti: (question: TSurveyMultipleChoiceMultiQuestion) => {
