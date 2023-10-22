@@ -1,7 +1,6 @@
 export const meta = {
   title: "Integrating Google OAuth with Formbricks",
-  description:
-    "Simplify user access to your Formbricks instance by enabling Google OAuth. Follow our detailed guide to set up Google OAuth, ensuring a seamless login experience for your users. Need assistance? Our community is here to help.",
+  description: "Enable Google OAuth for your Formbricks instance. Follow our guide for a seamless user login experience.",
 };
 
 ## Google OAuth Authentication
@@ -40,6 +39,15 @@ Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google
 5. **Update Environment Variables in Docker**:
     - To integrate the Google OAuth, you have two options: either update the environment variables in the docker-compose file or directly add them to the running container.
     - In your Docker setup directory, open the `.env` file, and add or update the following lines with the `Client ID` and `Client Secret` obtained from Google Cloud Platform:
+   - Alternatively, you can add the environment variables directly to the running container using the following commands (replace `container_id` with your actual Docker container ID):
+
+```
+docker exec -it container_id /bin/bash
+export GOOGLE_AUTH_ENABLED=1
+export GOOGLE_CLIENT_ID=your-client-id-here
+export GOOGLE_CLIENT_SECRET=your-client-secret-here
+exit
+```
 
 ```
 GOOGLE_AUTH_ENABLED=1
@@ -48,9 +56,7 @@ GOOGLE_CLIENT_SECRET=your-client-secret-here
 ```
 
 6. **Restart Your Formbricks Instance**:
+   - **Note:** Restarting your Docker containers may cause a brief period of downtime. Plan accordingly.
     - Once the environment variables have been updated, it's crucial to restart your Docker containers to apply the changes. This ensures that your Formbricks instance can utilize the new Google OAuth configuration for user authentication. Here's how you can do it:
     - Navigate to your Docker setup directory where your `docker-compose.yml` file is located.
     - Run the following command to bring down your current Docker containers and then bring them back up with the updated environment configuration:
-```
-docker-compose down && docker-compose up -d
-```
