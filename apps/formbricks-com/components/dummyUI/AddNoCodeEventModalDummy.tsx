@@ -99,8 +99,8 @@ export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open
               </div>
             </div>
           </div>
-          <div className="mt-6 flex justify-center px-6 pb-8 sm:mt-8 sm:justify-end">
-            <div className="flex space-x-4">
+          <div className="mt-6 flex justify-center pb-8 sm:mt-8 sm:justify-end">
+            <div className="mx-6 flex space-x-4">
               <Button
                 variant="minimal"
                 onClick={(e) => {
