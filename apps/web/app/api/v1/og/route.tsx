@@ -1,10 +1,4 @@
 import { ImageResponse, NextRequest } from "next/server";
-
-export const dynamic = "auto";
-export const dynamicParams = true;
-export const revalidate = false;
-export const fetchCache = false;
-
 // App router includes @vercel/og.
 // No need to install it.
 
