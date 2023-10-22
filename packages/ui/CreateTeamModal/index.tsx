@@ -26,12 +26,12 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
   const { register, handleSubmit } = useForm<FormValues>();
 
   const submitTeam = async (data: FormValues) => {
-    const trimmedName = data.name.trim();
-    if (!trimmedName) return;
+    data.name = data.name.trim();
+    if (!data.name) return;
 
     try {
       setLoading(true);
-      const newTeam = await createTeamAction(trimmedName);
+      const newTeam = await createTeamAction(data.name);
 
       toast.success("Team created successfully!");
       router.push(`/teams/${newTeam.id}`);

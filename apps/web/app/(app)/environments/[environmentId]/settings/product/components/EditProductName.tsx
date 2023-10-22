@@ -34,17 +34,17 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
   const isNotEmptySpaces = (value: string) => value.trim() !== "";
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
-    const trimmedName = data.name.trim();
+    data.name = data.name.trim();
     try {
-      if (!isNotEmptySpaces(trimmedName)) {
+      if (!isNotEmptySpaces(data.name)) {
         toast.error("Please enter at least one character");
         return;
       }
-      if (trimmedName === product.name) {
+      if (data.name === product.name) {
         toast.success("This is already your product name");
         return;
       }
-      const updatedProduct = await updateProductAction(environmentId, product.id, { name: trimmedName });
+      const updatedProduct = await updateProductAction(environmentId, product.id, { name: data.name });
       if (!!updatedProduct?.id) {
         toast.success("Product name updated successfully.");
         router.refresh();
