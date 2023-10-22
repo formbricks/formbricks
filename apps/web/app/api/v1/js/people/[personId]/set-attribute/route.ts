@@ -3,7 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/attributeClass/service";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
-import { ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
+import { ZJsPeopleAttributeInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
