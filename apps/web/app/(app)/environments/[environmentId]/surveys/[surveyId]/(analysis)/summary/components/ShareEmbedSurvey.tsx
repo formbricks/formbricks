@@ -62,7 +62,7 @@ export default function ShareEmbedSurvey({
       }}>
       <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[960px]">
         <div className="border-b border-gray-200 px-4 py-3 lg:px-6 lg:py-4 ">Share or embed your survey</div>
-        <div className="flex grow overflow-x-hidden overflow-y-scroll">
+        <div className="flex grow overflow-y-auto overflow-x-hidden">
           <div className="hidden basis-[326px] border-r border-gray-200 px-6 py-8 lg:block lg:shrink-0">
             <div className="flex w-max flex-col gap-3">
               {tabs.map((tab) => (

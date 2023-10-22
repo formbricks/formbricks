@@ -29,7 +29,7 @@ export default function WebpageTab({ surveyUrl }) {
           Copy code
         </Button>
       </div>
-      <div className="grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
+      <div className="grow overflow-y-auto rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
         <CodeBlock
           customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
           language="html"

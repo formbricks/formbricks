@@ -52,7 +52,7 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
           Copy URL
         </Button>
       </div>
-      <div className="relative grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
+      <div className="relative grow overflow-y-auto rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
         <SurveyInline
           brandColor={brandColor}
           survey={survey}
