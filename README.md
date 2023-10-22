@@ -8,9 +8,10 @@
   <p align="center">
     The Open Source Survey & Experience Management solution for fast growing companies
     <br />
-    <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
+    <a href="https://formbricks.com/"><img src="https://img.shields.io/static/v1?label=Website&message=Formbricks&color=blue&style=flat-square" alt="Website"></a>
+    <a href="https://formbricks.com/discord"><img src="https://img.shields.io/static/v1?label=Join%20Discord%20community&message=Formbricks&color=blue&style=flat-square"         alt="Join Discord community"></a>
   </p>
-</p>
+
 
 <p align="center">
 <a href="https://github.com/formbricks/formbricks/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL-purple" alt="License"></a> <a href="https://formbricks.com/discord"><img src="https://img.shields.io/discord/979077669410979880?label=Discord&logo=discord&logoColor=%23fff" alt="Join Formbricks Discord"></a> <a href="https://github.com/formbricks/formbricks/stargazers"><img src="https://img.shields.io/github/stars/formbricks/formbricks?logo=github" alt="Github Stars"></a>
