@@ -1,11 +1,21 @@
-import TemplateContainerWithPreview from "./TemplateContainer";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getServerSession } from "next-auth";
+import TemplateContainerWithPreview from "./TemplateContainer";
 
 export default async function SurveyTemplatesPage({ params }) {
+  const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
-  const environment = await getEnvironment(environmentId);
-  const product = await getProductByEnvironmentId(environmentId);
+
+  const [environment, product] = await Promise.all([
+    getEnvironment(environmentId),
+    getProductByEnvironmentId(environmentId),
+  ]);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
 
   if (!product) {
     throw new Error("Product not found");
@@ -16,6 +26,11 @@ export default async function SurveyTemplatesPage({ params }) {
   }
 
   return (
-    <TemplateContainerWithPreview environmentId={environmentId} environment={environment} product={product} />
+    <TemplateContainerWithPreview
+      environmentId={environmentId}
+      profile={session.user}
+      environment={environment}
+      product={product}
+    />
   );
 }
