@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
 import { Badge } from "@formbricks/ui/Badge";
 import { CheckIcon } from "@heroicons/react/24/outline";

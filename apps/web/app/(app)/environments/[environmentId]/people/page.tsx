@@ -5,7 +5,7 @@ import { truncateMiddle } from "@/app/lib/utils";
 import { ITEMS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TPerson } from "@formbricks/types/people";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Pagination } from "@formbricks/ui/Pagination";
 

@@ -6,7 +6,7 @@ import { Label } from "@formbricks/ui/Label";
 import { useForm, SubmitHandler } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateProfileAction } from "../actions";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProfile } from "@formbricks/types/profile";
 
 type FormData = {
   name: string;

@@ -1,7 +1,7 @@
-import { Question } from "@formbricks/types/questions";
-import { TTemplate } from "@formbricks/types/v1/templates";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 
-export const replaceQuestionPresetPlaceholders = (question: Question, product) => {
+export const replaceQuestionPresetPlaceholders = (question: TSurveyQuestion, product) => {
   if (!question) return;
   if (!product) return question;
   const newQuestion = JSON.parse(JSON.stringify(question));
