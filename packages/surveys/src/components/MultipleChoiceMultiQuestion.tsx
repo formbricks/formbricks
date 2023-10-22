@@ -35,7 +35,7 @@ export default function MultipleChoiceSingleQuestion({
 
   const [otherSelected, setOtherSelected] = useState(
     !!value &&
-      (value as string[]).some((item) => {
+      ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
         return getChoicesWithoutOtherLabels().includes(item) === false;
       })
   ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
