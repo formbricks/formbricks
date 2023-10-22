@@ -100,7 +100,7 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
       <div className="grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
         {showEmbed ? (
           <CodeBlock
-            customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
+            customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all"
             language="html"
             showCopyToClipboard={false}>
             {emailValues.html}
