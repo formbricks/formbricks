@@ -192,7 +192,7 @@ export default function SettingsNavbar({
 
   return (
     <>
-      <div className="fixed hidden h-full bg-white py-2 pl-4 pr-10 md:block ">
+      <div className="fixed hidden h-full overflow-y-scroll bg-white py-2 pl-4 pr-10 md:block ">
         <nav className="flex-1 space-y-1 bg-white px-2">
           {navigation.map((item) => (
             <div key={item.title}>
@@ -231,7 +231,7 @@ export default function SettingsNavbar({
       </div>
 
       {/* Mobile Menu */}
-      <div className="fixed z-10 flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 md:hidden">
+      <div className="fixed z-10 flex h-14 overflow-x-scroll w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 md:hidden">
         <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
           <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
             <span className="flex items-center">
