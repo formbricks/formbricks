@@ -109,15 +109,6 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 key={choice.id}
                 tabIndex={idx + 1}
-                onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    if (Array.isArray(value) && value.includes(choice.label)) {
-                      removeItem(choice.label);
-                    } else {
-                      addItem(choice.label);
-                    }
-                  }
-                }}
                 className={cn(
                   value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
                   "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 focus-within:border-slate-400 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none "
