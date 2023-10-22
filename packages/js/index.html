@@ -6,14 +6,14 @@
         (t.async = !0),
         (t.src = "https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js");
       var e = document.getElementsByTagName("script")[0];
-      e.parentNode.insertBefore(t, e),
-        setTimeout(function () {
-          window.formbricks.init({
-            environmentId: "clnojpqde0008qh46cge60d89",
-            apiHost: "http://localhost:3000",
-            debug: true,
-          });
-        }, 500);
+      e.parentNode.insertBefore(t, e);
+      if (document.readyState === "interactive") {
+        window.formbricks.init({
+          environmentId: "clnojpqde0008qh46cge60d89",
+          apiHost: "http://localhost:3000",
+          debug: true,
+        });
+      }
     })();
   </script>
 </head>
