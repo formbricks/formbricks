@@ -1,6 +1,7 @@
 "use client";
 
 import QuestionFormHeaderInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormHeaderInput";
+import { QuestionFormInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -45,11 +46,20 @@ export default function NPSQuestionForm({
           <>
             <Label htmlFor="subheader">Description</Label>
             <div className="mt-2 inline-flex w-full items-center">
-              <Input
-                id="subheader"
-                name="subheader"
-                value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+              <QuestionFormInput
+                question={question}
+                questionIdx={questionIdx}
+                updateProperty="subheader"
+                updateQuestion={updateQuestion}
+                questionsBeforeCurrent={questionsBeforeCurrent}
+                inputProps={{
+                  id: "subheader",
+                  name: "subheader",
+                  value: question.subheader,
+                }}
+                onInputChange={(val) => {
+                  updateQuestion(questionIdx, { subheader: val });
+                }}
               />
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
