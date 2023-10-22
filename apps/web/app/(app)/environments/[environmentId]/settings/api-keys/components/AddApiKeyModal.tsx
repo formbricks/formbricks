@@ -5,7 +5,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 interface MemberModalProps {
   open: boolean;
@@ -14,11 +14,17 @@ interface MemberModalProps {
 }
 
 export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalProps) {
-  const { register, getValues, handleSubmit, reset } = useForm<{ label: string; environment: string }>();
+  const { register, getValues, handleSubmit, reset, control } = useForm<{
+    label: string;
+    environment: string;
+  }>();
+  const labelValue = useWatch({ control, name: "label" }) || "";
+  const isLabelValid = (label: string) => label.trim() !== "";
 
-  const submitAPIKey = async () => {
-    const data = getValues();
-    onSubmit(data);
+  const submitAPIKey = async (data: { label: string; environment: string }) => {
+    const trimmedName = data.label.trim();
+    if (trimmedName === "") return;
+    onSubmit({ label: trimmedName, environment: data.environment });
     setOpen(false);
     reset();
   };
@@ -60,7 +66,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit">
+              <Button variant="darkCTA" type="submit" disabled={!isLabelValid(labelValue)}>
                 Add API Key
               </Button>
             </div>

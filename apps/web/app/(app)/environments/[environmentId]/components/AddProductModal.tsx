@@ -25,12 +25,12 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
   const { register, handleSubmit } = useForm();
 
   const submitProduct = async (data: { name: string }) => {
-    const trimmedName = data.name.trim();
+    data.name = data.name.trim();
     if (!isProductNameValid) return;
 
     try {
       setLoading(true);
-      const newEnv = await createProductAction(environmentId, trimmedName);
+      const newEnv = await createProductAction(environmentId, data.name);
 
       toast.success("Product created successfully!");
       router.push(`/environments/${newEnv.id}/`);
