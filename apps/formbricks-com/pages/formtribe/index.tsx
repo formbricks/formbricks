@@ -269,12 +269,12 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "1600",
+    points: "2450",
     link: "https://github.com/gupta-piyush19",
   },
   {
     name: "Suman",
-    points: "700",
+    points: "1000",
   },
   {
     name: "Subhdeep",
@@ -302,7 +302,7 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "1500",
+    points: "2250",
     link: "https://github.com/KapadiaNaitik",
   },
   {
@@ -343,7 +343,7 @@ const Leaderboard = [
   },
   {
     name: "Nafees Nazik",
-    points: "100",
+    points: "600",
   },
   {
     name: "monk",
@@ -359,12 +359,12 @@ const Leaderboard = [
   },
   {
     name: "Aditya Deshlahre",
-    points: "1220",
+    points: "1320",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "955",
+    points: "1105",
   },
   {
     name: "Sagnik Sahoo",
@@ -392,7 +392,7 @@ const Leaderboard = [
   },
   {
     name: "noobcoder",
-    points: "250",
+    points: "650",
   },
   {
     name: "Rayyan Alam (Rayy)",
@@ -445,7 +445,7 @@ const Leaderboard = [
   },
   {
     name: "Abhinav Arya",
-    points: "550",
+    points: "850",
     link: "github.com/itzabhinavarya",
   },
   {
@@ -454,7 +454,7 @@ const Leaderboard = [
   },
   {
     name: "Rohan Gupta",
-    points: "1150",
+    points: "1300",
     link: "https://github.com/rohan9896",
   },
   {
@@ -509,7 +509,7 @@ const Leaderboard = [
   },
   {
     name: "Bilal Mirza",
-    points: "925",
+    points: "1025",
   },
   {
     name: "Asharan2511",
@@ -553,7 +553,7 @@ const Leaderboard = [
   },
   {
     name: "Piyush Garg",
-    points: "100",
+    points: "150",
   },
   {
     name: "Sachin Mittal",
@@ -589,7 +589,7 @@ const Leaderboard = [
   },
   {
     name: "aashish",
-    points: "350",
+    points: "650",
   },
   {
     name: "AliYar-Khan",
@@ -614,6 +614,34 @@ const Leaderboard = [
   {
     name: "Vineetjk",
     points: "50",
+  },
+  {
+    name: "Hemanth Wasthere",
+    points: "100",
+  },
+  {
+    name: "Ola",
+    points: "550",
+  },
+  {
+    name: "Olalaye Blessing",
+    points: "50",
+  },
+  {
+    name: "Raju Gangitla",
+    points: "100",
+  },
+  {
+    name: "Ronit Panda",
+    points: "750",
+  },
+  {
+    name: "Shyam Raghu",
+    points: "300",
+  },
+  {
+    name: "Vikas Patil",
+    points: "100",
   },
 ];
 
