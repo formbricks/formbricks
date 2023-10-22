@@ -1,6 +1,6 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import QuestionFormHeaderInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormHeaderInput";
 import { md } from "@formbricks/lib/markdownIt";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
@@ -25,13 +25,15 @@ export default function ConsentQuestionForm({
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   const environmentId = localSurvey.environmentId;
+  const questionsBeforeCurrent = localSurvey.questions.slice(0, questionIdx);
 
   return (
     <form>
-      <QuestionFormInput
+      <QuestionFormHeaderInput
         environmentId={environmentId}
         isInValid={isInValid}
         question={question}
+        questionsBeforeCurrent={questionsBeforeCurrent}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
       />

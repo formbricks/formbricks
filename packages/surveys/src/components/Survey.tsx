@@ -9,6 +9,7 @@ import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 export function Survey({
   survey,
@@ -109,6 +110,96 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
 
+  const checkForRecall = (inputString: string) => {
+    const regex = /recall:(\w+)(\/fallback:(\w+))?/;
+    const match = regex.exec(inputString);
+    if (!match) return false;
+    return true;
+  };
+
+  const helper = (inputString: string) => {
+    const regexFallback = /recall:(\w+)(\/fallback:(\w+))?/;
+    const regexNoFallback = /recall:(\w+)?/;
+
+    const matchFallback = regexFallback.exec(inputString);
+    const matchNoFallback = regexNoFallback.exec(inputString);
+    let finalMatch = null;
+    let finalRegex = null;
+
+    if (matchFallback) {
+      finalMatch = matchFallback;
+      finalRegex = regexFallback;
+    } else if (matchNoFallback) {
+      finalMatch = matchNoFallback;
+      finalRegex = regexNoFallback;
+    }
+
+    if (finalMatch && finalRegex) {
+      let recallValue = finalMatch[1];
+      let fallbackValue = finalMatch[3];
+
+      return { recallValue, fallbackValue, checkRegex: finalRegex };
+    }
+
+    return { recallValue: null, fallbackValue: null, checkRegex: null };
+  };
+
+  const parseQuestionForRecall = (question: TSurveyQuestion): TSurveyQuestion => {
+    let ques = { ...question };
+    if (!ques.headline) return ques;
+    if (!ques.subheader) return ques;
+    if (checkForRecall(ques.subheader) || checkForRecall(ques.headline)) {
+      let inputSubheaderString = ques.subheader;
+      let inputHeadlineString = ques.headline;
+      let {
+        recallValue: recallValueHeading,
+        fallbackValue: fallbackValueHeading,
+        checkRegex: checkRegexHeading,
+      } = helper(inputHeadlineString);
+      let {
+        recallValue: recallValueSubheading,
+        fallbackValue: fallbackValueSubheading,
+        checkRegex: checkRegexSubheading,
+      } = helper(inputSubheaderString);
+
+      if (checkRegexSubheading)
+        if (recallValueSubheading && fallbackValueSubheading) {
+          ques.subheader = ques.subheader.replace(
+            checkRegexSubheading,
+            (responseData[recallValueSubheading] as string) ?? fallbackValueSubheading
+          );
+        } else if (recallValueSubheading) {
+          ques.subheader = ques.subheader.replace(
+            checkRegexSubheading,
+            (responseData[recallValueSubheading] as string) ?? ""
+          );
+        } else {
+          ques.subheader = ques.subheader.replace(checkRegexSubheading, "");
+        }
+
+      if (checkRegexHeading)
+        if (recallValueHeading && fallbackValueHeading) {
+          ques.headline = ques.headline.replace(
+            checkRegexHeading,
+            (responseData[recallValueHeading] as string) ?? fallbackValueHeading
+          );
+        } else if (recallValueHeading) {
+          ques.headline = ques.headline.replace(
+            checkRegexHeading,
+            (responseData[recallValueHeading] as string) ?? ""
+          );
+        } else {
+          ques.headline = ques.headline.replace(checkRegexHeading, "");
+        }
+
+      console.log(ques.headline, ques.subheader);
+
+      return parseQuestionForRecall(ques);
+    } else {
+      return ques;
+    }
+  };
+
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
@@ -137,9 +228,7 @@ export function Survey({
                 (question, idx) =>
                   questionId === question.id && (
                     <QuestionConditional
-                      question={question}
-                      responseData={responseData}
-                      survey={survey}
+                      question={parseQuestionForRecall(question)}
                       value={responseData[question.id]}
                       onChange={onChange}
                       onSubmit={onSubmit}
