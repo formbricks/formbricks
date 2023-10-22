@@ -197,8 +197,6 @@ export function Survey({
           ques.headline = ques.headline.replace(checkRegexHeading, "");
         }
 
-      console.log(ques.headline, ques.subheader);
-
       return parseQuestionForRecall(ques);
     } else {
       return ques;

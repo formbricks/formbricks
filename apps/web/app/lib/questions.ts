@@ -15,7 +15,12 @@ export type TSurveyQuestionType = {
   id: string;
   label: string;
   description: string;
-  icon: any;
+  icon: React.ForwardRefExoticComponent<
+    Omit<React.SVGProps<SVGSVGElement>, "ref"> & {
+      title?: string | undefined;
+      titleId?: string | undefined;
+    } & React.RefAttributes<SVGSVGElement>
+  >;
   preset: any;
 };
 

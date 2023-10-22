@@ -86,6 +86,26 @@ export default function QuestionCard({
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
+  const questionsBeforeCurrent = localSurvey.questions.slice(0, questionIdx);
+
+  const parseInputValue = (value?: string) => {
+    // val --> this is nice recall:<questionID>/fallback:hello
+    // this needs to parsed to --> this is nice @question-name
+    if (!value) return "";
+    const recallRegex = /recall:(\w+)(\/fallback:(\w+))?/;
+    const match = recallRegex.exec(value);
+    if (!match) return value;
+    const questionId = match[1];
+    const question = questionsBeforeCurrent.find((q) => q.id === questionId);
+    if (!question) return value;
+    const questionName = question.headline;
+    console.log(value);
+
+    const html = value.replace(match[0], `<span class="bg-gray-100 px-1 rounded">${questionName}</span>`);
+
+    return html;
+  };
+
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -138,9 +158,14 @@ export default function QuestionCard({
                     ) : null}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">
-                      {question.headline || getTSurveyQuestionTypeName(question.type)}
-                    </p>
+                    <p
+                      className="text-sm font-semibold"
+                      // eslint-disable-next-line react/no-children-prop
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          parseInputValue(question.headline) ||
+                          (getTSurveyQuestionTypeName(question.type) as string),
+                      }}></p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">
                         {question?.required && "Required"}
