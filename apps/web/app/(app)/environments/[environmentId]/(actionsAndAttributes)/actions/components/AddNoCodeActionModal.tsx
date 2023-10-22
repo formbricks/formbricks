@@ -9,11 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "../lib/testURLmatch";
-import {
-  TActionClassInput,
-  TActionClassNoCodeConfig,
-  TActionClass,
-} from "@formbricks/types/v1/actionClasses";
+import { TActionClassInput, TActionClassNoCodeConfig, TActionClass } from "@formbricks/types/actionClasses";
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";

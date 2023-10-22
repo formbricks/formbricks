@@ -2,7 +2,7 @@
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { deletePerson } from "@formbricks/lib/person/service";
 import { canUserAccessPerson } from "@formbricks/lib/person/auth";
 

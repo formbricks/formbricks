@@ -2,7 +2,7 @@
 
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
-import { TIntegrationInput } from "@formbricks/types/v1/integration";
+import { TIntegrationInput } from "@formbricks/types/integration";
 
 export async function upsertIntegrationAction(environmentId: string, integrationData: TIntegrationInput) {
   return await createOrUpdateIntegration(environmentId, integrationData);

@@ -1,10 +1,10 @@
-import type { OpenTextQuestion } from "@formbricks/types/questions";
+import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface OpenTextQuestionProps {
-  question: OpenTextQuestion;
+  question: TSurveyOpenTextQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
