@@ -26,7 +26,7 @@ function DarkIcon(props) {
 
 export function ThemeSelector(props) {
   // Initialize the state with a default value
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Use a useEffect to run code on the client side
   useEffect(() => {
@@ -48,7 +48,8 @@ export function ThemeSelector(props) {
   return (
     <div
       className="shadow-black/8 mr-5 flex h-6 w-6 items-center justify-center rounded-lg shadow-md ring-1 ring-black/5 dark:bg-slate-700 dark:ring-inset dark:ring-white/5"
-      onClick={toggleTheme}>
+      onClick={toggleTheme}
+      style={{ cursor: "pointer" }}>
       {isDarkMode ? (
         <DarkIcon className="fill-brand h-4 w-4" />
       ) : (
