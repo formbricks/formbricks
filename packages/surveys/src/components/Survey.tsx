@@ -110,16 +110,19 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
 
-  const checkForRecall = (inputString: string) => {
+  const checkForRecall = (inputString?: string) => {
     const regex = /recall:(\w+)(\/fallback:(\w+))?/;
+    if (!inputString) return false;
     const match = regex.exec(inputString);
     if (!match) return false;
     return true;
   };
 
-  const helper = (inputString: string) => {
+  const helper = (inputString?: string) => {
     const regexFallback = /recall:(\w+)(\/fallback:(\w+))?/;
     const regexNoFallback = /recall:(\w+)?/;
+
+    if (!inputString) return { recallValue: null, fallbackValue: null, checkRegex: null };
 
     const matchFallback = regexFallback.exec(inputString);
     const matchNoFallback = regexNoFallback.exec(inputString);
@@ -146,8 +149,6 @@ export function Survey({
 
   const parseQuestionForRecall = (question: TSurveyQuestion): TSurveyQuestion => {
     let ques = { ...question };
-    if (!ques.headline) return ques;
-    if (!ques.subheader) return ques;
     if (checkForRecall(ques.subheader) || checkForRecall(ques.headline)) {
       let inputSubheaderString = ques.subheader;
       let inputHeadlineString = ques.headline;
@@ -164,17 +165,21 @@ export function Survey({
 
       if (checkRegexSubheading)
         if (recallValueSubheading && fallbackValueSubheading) {
-          ques.subheader = ques.subheader.replace(
-            checkRegexSubheading,
-            (responseData[recallValueSubheading] as string) ?? fallbackValueSubheading
-          );
+          ques.subheader = ques.subheader
+            ? ques.subheader.replace(
+                checkRegexSubheading,
+                (responseData[recallValueSubheading] as string) ?? fallbackValueSubheading
+              )
+            : ques.subheader;
         } else if (recallValueSubheading) {
-          ques.subheader = ques.subheader.replace(
-            checkRegexSubheading,
-            (responseData[recallValueSubheading] as string) ?? ""
-          );
+          ques.subheader = ques.subheader
+            ? ques.subheader.replace(
+                checkRegexSubheading,
+                (responseData[recallValueSubheading] as string) ?? ""
+              )
+            : ques.subheader;
         } else {
-          ques.subheader = ques.subheader.replace(checkRegexSubheading, "");
+          ques.subheader = ques.subheader ? ques.subheader.replace(checkRegexSubheading, "") : ques.subheader;
         }
 
       if (checkRegexHeading)
