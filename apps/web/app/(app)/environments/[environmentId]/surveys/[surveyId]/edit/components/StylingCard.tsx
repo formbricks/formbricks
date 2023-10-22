@@ -1,7 +1,7 @@
 "use client";
 
-import { PlacementType } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TPlacement } from "@formbricks/types/common";
+import { TSurvey } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -71,7 +71,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
-  const handlePlacementChange = (placement: PlacementType) => {
+  const handlePlacementChange = (placement: TPlacement) => {
     setLocalSurvey({
       ...localSurvey,
       productOverwrites: {

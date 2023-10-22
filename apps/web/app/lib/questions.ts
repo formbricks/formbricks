@@ -10,9 +10,9 @@ import {
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
-import { QuestionType as QuestionId } from "@formbricks/types/questions";
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
-export type QuestionType = {
+export type TSurveyQuestionType = {
   id: string;
   label: string;
   description: string;
@@ -20,7 +20,7 @@ export type QuestionType = {
   preset: any;
 };
 
-export const questionTypes: QuestionType[] = [
+export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.FileUpload,
     label: "File Upload",
@@ -133,7 +133,7 @@ export const getQuestionDefaults = (id: string, product: any) => {
   return replaceQuestionPresetPlaceholders(questionType?.preset, product);
 };
 
-export const getQuestionTypeName = (id: string) => {
+export const getTSurveyQuestionTypeName = (id: string) => {
   const questionType = questionTypes.find((questionType) => questionType.id === id);
   return questionType?.label;
 };

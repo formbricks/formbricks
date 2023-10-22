@@ -1,4 +1,4 @@
-import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
+import { TPipelineTrigger } from "@formbricks/types/pipelines";
 
 export const triggers = [
   { title: "Response Created", value: "responseCreated" as TPipelineTrigger },

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TEnvironment } from "@formbricks/types/environment";
 
 type EmptySpaceFillerProps = {
   type: "table" | "response" | "event" | "linkResponse" | "tag";

@@ -1,7 +1,7 @@
-import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { responses } from "@/app/lib/api/response";
 import { createAction } from "@formbricks/lib/action/service";
-import { ZActionInput } from "@formbricks/types/v1/actions";
+import { ZActionInput } from "@formbricks/types/actions";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -24,6 +24,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const { environmentId, sessionId, name, properties } = inputValidation.data;
+
+    // hotfix: don't create action for "Exit Intent (Desktop)", 50% Scroll events
+    if (["Exit Intent (Desktop)", "50% Scroll"].includes(name)) {
+      return responses.successResponse({}, true);
+    }
 
     createAction({
       environmentId,
