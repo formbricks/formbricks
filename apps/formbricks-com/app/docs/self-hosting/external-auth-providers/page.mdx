@@ -1,0 +1,56 @@
+export const meta = {
+  title: "Integrating Google OAuth with Formbricks",
+  description:
+    "Simplify user access to your Formbricks instance by enabling Google OAuth. Follow our detailed guide to set up Google OAuth, ensuring a seamless login experience for your users. Need assistance? Our community is here to help.",
+};
+
+## Google OAuth Authentication
+
+Integrating Google OAuth with your Formbricks instance allows users to log in using their Google credentials, ensuring a secure and streamlined user experience. This guide will walk you through the process of setting up Google OAuth for your Formbricks instance.
+
+### Requirements
+
+- A Google Cloud Platform (GCP) account.
+- A Formbricks instance running and accessible.
+
+### Steps
+
+1. **Create a GCP Project**:
+   - Navigate to the [GCP Console](https://console.cloud.google.com/).
+   - From the projects list, select a project or create a new one.
+
+2. **Setting up OAuth 2.0**:
+   - If the **APIs & services** page isn't already open, open the console left side menu and select **APIs & services**.
+   - On the left, click **Credentials**.
+   - Click **New Credentials**, then select **OAuth client ID**.
+
+3. **Configure OAuth Consent Screen**:
+   - If this is your first time creating a client ID, configure your consent screen by clicking **Consent Screen**.
+   - Fill in the necessary details and under **Authorized domains**, add the domain where your Formbricks instance is hosted.
+
+4. **Create OAuth 2.0 Client IDs**:
+   - Select the appropriate application type for your project and enter any additional information required.
+   - Ensure to specify authorized JavaScript origins and authorized redirect URIs.
+
+```
+Authorized JavaScript origins: {WEBAPP_URL}
+Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google
+```
+
+5. **Update Environment Variables in Docker**:
+    - To integrate the Google OAuth, you have two options: either update the environment variables in the docker-compose file or directly add them to the running container.
+    - In your Docker setup directory, open the `.env` file, and add or update the following lines with the `Client ID` and `Client Secret` obtained from Google Cloud Platform:
+
+```
+GOOGLE_AUTH_ENABLED=1
+GOOGLE_CLIENT_ID=your-client-id-here
+GOOGLE_CLIENT_SECRET=your-client-secret-here
+```
+
+6. **Restart Your Formbricks Instance**:
+    - Once the environment variables have been updated, it's crucial to restart your Docker containers to apply the changes. This ensures that your Formbricks instance can utilize the new Google OAuth configuration for user authentication. Here's how you can do it:
+    - Navigate to your Docker setup directory where your `docker-compose.yml` file is located.
+    - Run the following command to bring down your current Docker containers and then bring them back up with the updated environment configuration:
+```
+docker-compose down && docker-compose up -d
+```
