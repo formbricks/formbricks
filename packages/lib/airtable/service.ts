@@ -91,8 +91,13 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
 
   const tokenRes: unknown = await tokenReq.json();
 
-  const { access_token, expires_in, refresh_token } = ZIntegrationAirtableTokenSchema.parse(tokenRes);
+  const parsedToken = ZIntegrationAirtableTokenSchema.safeParse(tokenRes);
 
+  if (!parsedToken.success) {
+    throw new Error("invalid token format");
+    return;
+  }
+  const { access_token, refresh_token, expires_in } = parsedToken.data;
   const expiry_date = new Date();
   expiry_date.setSeconds(expiry_date.getSeconds() + expires_in);
 
@@ -125,6 +130,10 @@ export const getAirtableToken = async (environmentId: string) => {
         refresh_token,
         client_id,
       });
+
+      if (!newToken) {
+        throw new Error("Failed to create new token");
+      }
 
       await createOrUpdateIntegration(environmentId, {
         type: "airtable",
