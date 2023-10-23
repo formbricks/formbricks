@@ -42,7 +42,6 @@ const IndexPage = () => (
       subheadline="All 'Pro' features are free on Formbricks. Give it a go!"
       cta="Start for free"
       href="https://app.formbricks.com/auth/signup"
-      inverted
     />
 
     <Faq />
