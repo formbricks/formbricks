@@ -1,12 +1,12 @@
 "use client";
 
 import type { NextPage } from "next";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TResponse } from "@formbricks/types/v1/responses";
+import { TProduct } from "@formbricks/types/product";
+import { TResponse } from "@formbricks/types/responses";
 import { OTPInput } from "@formbricks/ui/OTPInput";
 import { useCallback, useEffect, useState } from "react";
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import { cn } from "@formbricks/lib/cn";

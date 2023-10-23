@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import { TProfile } from "./v1/profile";
+import { TProfile } from "./profile";
 
 declare module "next-auth" {
   /**

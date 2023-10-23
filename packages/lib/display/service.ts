@@ -1,15 +1,10 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
-import {
-  TDisplay,
-  TDisplayInput,
-  TDisplaysWithSurveyName,
-  ZDisplayInput,
-} from "@formbricks/types/v1/displays";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { ZOptionalNumber } from "@formbricks/types/common";
+import { TDisplay, TDisplayInput, TDisplaysWithSurveyName, ZDisplayInput } from "@formbricks/types/displays";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";

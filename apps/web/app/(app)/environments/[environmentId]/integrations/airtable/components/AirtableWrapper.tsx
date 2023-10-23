@@ -2,10 +2,10 @@
 import Connect from "./Connect";
 import Home from "../Home";
 import { useState } from "react";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
+import { TIntegrationItem } from "@formbricks/types/integration";
 
 interface AirtableWrapperProps {
   environmentId: string;
