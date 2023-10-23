@@ -109,5 +109,6 @@ export const getSyncSurveys = async (
       return true;
     }
   });
+
   return surveys;
 };
