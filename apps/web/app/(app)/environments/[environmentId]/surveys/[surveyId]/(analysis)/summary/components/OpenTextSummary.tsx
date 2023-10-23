@@ -84,7 +84,7 @@ export default function OpenTextSummary({
           {displayCount < questionSummary.responses.length && (
             <button
               onClick={() => setDisplayCount((prevCount) => prevCount + openTextResponsesPerPage)}
-              className="flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+              className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
               Show more
             </button>
           )}
