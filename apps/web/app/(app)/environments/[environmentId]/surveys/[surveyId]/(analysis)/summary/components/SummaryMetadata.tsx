@@ -34,6 +34,21 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   </TooltipProvider>
 );
 
+function formatTime(ttcTemp, totalResponses) {
+  const seconds = ttcTemp / (1000 * totalResponses);
+  let formattedValue;
+
+  if (seconds >= 60) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    formattedValue = `${minutes}m ${remainingSeconds.toFixed(2)}s`;
+  } else {
+    formattedValue = `${seconds.toFixed(2)}s`;
+  }
+
+  return formattedValue;
+}
+
 export default function SummaryMetadata({
   responses,
   survey,
@@ -51,20 +66,6 @@ export default function SummaryMetadata({
     }
   });
 
-  function formatTime(ttcTemp, totalResponses) {
-    const seconds = ttcTemp / (1000 * totalResponses);
-    let formattedValue;
-
-    if (seconds >= 60) {
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      formattedValue = `${minutes}m ${remainingSeconds.toFixed(2)}s`;
-    } else {
-      formattedValue = `${seconds.toFixed(2)}s`;
-    }
-
-    return formattedValue;
-  }
   const totalResponses = responses.length;
 
   return (

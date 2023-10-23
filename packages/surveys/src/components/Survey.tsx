@@ -94,7 +94,6 @@ export function Survey({
   ) => {
     const questionId = Object.keys(responseData)[0];
     const timeData = { [questionId]: time };
-    Object.keys(responseData)[0];
     if (!isSubmit) {
       onResponse({ data: responseData, ttc: timeData, finished: false });
       return;

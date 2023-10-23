@@ -151,9 +151,7 @@ export default function LinkSurvey({
                   ...responseUpdate.data,
                   ...hiddenFieldsRecord,
                 },
-                ttc: {
-                  ...responseUpdate.ttc,
-                },
+                ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
                 meta: {
                   url: window.location.href,

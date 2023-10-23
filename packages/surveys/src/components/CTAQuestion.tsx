@@ -10,7 +10,7 @@ interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
