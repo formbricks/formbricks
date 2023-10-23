@@ -5,7 +5,7 @@ import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/
 import { notFound } from "next/navigation";
 import path from "path";
 
-export const getFile = async (environmentId: string, accessType: string, fileName: string) => {
+const getFile = async (environmentId: string, accessType: string, fileName: string) => {
   if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
     try {
       const { fileBuffer, metaData } = await getFileFromLocalStorage(
@@ -40,3 +40,5 @@ export const getFile = async (environmentId: string, accessType: string, fileNam
     }
   }
 };
+
+export default getFile;

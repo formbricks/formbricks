@@ -5,7 +5,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { getFile } from "./lib";
+import getFile from "./lib/getFile";
 
 export async function GET(
   _: NextRequest,
