@@ -11,9 +11,17 @@ import { Badge } from "@formbricks/ui/Badge";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@formbricks/lib/authOptions";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
+  const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(environmentId);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
   if (!product) {
     throw new Error("Product not found");
   }
@@ -28,7 +36,14 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   if (surveys.length === 0) {
-    return <SurveyStarter environmentId={environmentId} environment={environment} product={product} />;
+    return (
+      <SurveyStarter
+        environmentId={environmentId}
+        environment={environment}
+        product={product}
+        profile={session.user}
+      />
+    );
   }
 
   return (
