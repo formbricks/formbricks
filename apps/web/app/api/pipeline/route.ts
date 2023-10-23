@@ -173,7 +173,6 @@ export async function POST(request: Request) {
               status: "completed",
             },
           });
-          console.log("revalidating");
           revalidateTag(getSurveysCacheTag(updatedSurvey.environmentId));
           revalidateTag(getSurveyCacheTag(updatedSurvey.id));
         }
