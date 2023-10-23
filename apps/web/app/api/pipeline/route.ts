@@ -10,6 +10,8 @@ import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handleIntegrations } from "./lib/handleIntegrations";
+import { revalidateTag } from "next/cache";
+import { getSurveyCacheTag, getSurveysCacheTag } from "@formbricks/lib/survey/service";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -163,7 +165,7 @@ export async function POST(request: Request) {
           },
         });
         if (responseCount === survey.autoComplete) {
-          await prisma.survey.update({
+          const updatedSurvey = await prisma.survey.update({
             where: {
               id: surveyId,
             },
@@ -171,6 +173,9 @@ export async function POST(request: Request) {
               status: "completed",
             },
           });
+          console.log("revalidating");
+          revalidateTag(getSurveysCacheTag(updatedSurvey.environmentId));
+          revalidateTag(getSurveyCacheTag(updatedSurvey.id));
         }
       }
     };

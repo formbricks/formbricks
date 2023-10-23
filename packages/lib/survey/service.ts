@@ -15,7 +15,7 @@ import { validateInputs } from "../utils/validate";
 import { formatSurveyDateFields } from "./util";
 
 // surveys cache key and tags
-const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
+export const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
 
 // survey cache key and tags
 export const getSurveyCacheTag = (surveyId: string): string => `surveys-${surveyId}`;
