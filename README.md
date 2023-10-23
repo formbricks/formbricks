@@ -54,6 +54,17 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 
 Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
 
+### Table of Contents
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Cloud Version](#cloud-version)
+  - [Self-hosted Version](#self-hosted-version)
+  - [Development](#development)
+- [Contribution](#contribution)
+- [License](#license)
+- [Security](#security)
+- [Contact](#contact)
+
 ### Features
 
 - 📲 Create **in-product surveys** with our no code editor with multiple question types.
