@@ -40,7 +40,7 @@ export default function UpdateQuestionId({
       updateQuestion(questionIdx, { id: prevValue });
       toast.error("ID should not be empty.");
       return;
-    } else if (currentValue === "source" || currentValue === "suID" || currentValue || "userId") {
+    } else if (currentValue === "source" || currentValue === "suID" || currentValue === "userId") {
       setCurrentValue(prevValue);
       updateQuestion(questionIdx, { id: prevValue });
       toast.error("ID cannot used reserved words.");
