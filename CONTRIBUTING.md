@@ -1,29 +1,34 @@
-We are so happy that you are interested in contributing to Formbricks 🤗
+# 🚀 Join the Formbricks Tribe! 🧱
 
-There are many ways to contribute to Formbricks with writing Issues, fixing bugs, building new features or updating the docs.
+First and foremost, we're absolutely thrilled that you're considering becoming a part of the Formbricks Tribe! 🤗
 
-# Issues
+Discover a myriad of ways to leave your mark on Formbricks — whether it's by squashing bugs, crafting new features, or enhancing our documentation.
 
-Spotted a bug? Has deployment gone wrong? Do you have user feedback? [Raise an issue](https://github.com/formbricks/formbricks/issues/new/choose) for the fastest response.
+## 🐛 Issue Hunters
 
-... or pick up and fix an issue if you want to do a Pull Request.
+Did you stumble upon a bug? Encountered a hiccup in deployment? Perhaps you have some user feedback to share? Your quickest route to help us out is by [raising an issue](https://github.com/formbricks/formbricks/issues/new/choose). We're on standby to respond swiftly. 
 
-# Feature requests
+## 💡 Feature Architects
 
-Raise an issue for these and tag it as an Enhancement. We love every idea. Please give us as much context on the why as possible.
+Are you brimming with brilliant ideas? For new features that can elevate Formbricks, create an issue and slap on the "Enhancement" tag. We adore every concept that you throw our way. Just make sure to provide us with the "why" behind your idea. We're all ears!
 
-# Creating a PR
+## 🛠 Crafting Pull Requests
 
-Please fork the repository, make your changes and create a new pull request if you want to make an update.
+Ready to dive into the code and make a real impact? Here's your path:
 
-If you want to speak to us before doing lots of work, please join our [Discord server](https://formbricks.com/discord) and tell us what you would like to work on - we're very responsive and friendly!
+1. **Read our Best Practices**: [It takes 5 minutes](https://formbricks.com/docs/contributing/how-we-code) but will help you save hours 🤓
 
-For QA of your Pull-Request, you can also get in touch with Matti on Discord. But we will also get to your PR without you taking additional action ;-)
+1. **Fork the Repository:** Fork our repository or use [Gitpod](https://formbricks.com/docs/contributing/gitpod)
 
-# Features
+2. **Tweak and Transform:** Work your coding magic and apply your changes.
 
-We are currently working on having a clear [Roadmap](https://github.com/orgs/formbricks/projects/1) for the next steps ahead.
+3. **Pull Request Act:** If you're ready to go, craft a new pull request closely following our PR template 🙏
 
-But you can also pick a feature that is not already on the roadmap if you think it creates a positive impact for Formbricks.
+Would you prefer a chat before you dive into a lot of work? Our [Discord server](https://formbricks.com/discord) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
 
-If you are at all unsure, just raise it as an enhancement issue first and tell us that you like to work on it, and we'll very quickly respond.
+
+## 🚀 Aspiring Features
+
+If you spot a feature that isn't part of our official plan but could propel Formbricks forward, don't hesitate. Raise it as an enhancement issue, and let us know you're ready to take the lead. We'll be quick to respond.
+
+Together, let's craft the future of Formbricks, making it better, bolder, and more brilliant! 🚀🧱🌟
