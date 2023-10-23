@@ -92,7 +92,6 @@ export function Survey({
     time: number,
     isFromPrefilling: Boolean = false
   ) => {
-    console.log();
     const questionId = Object.keys(responseData)[0];
     const timeData = { [questionId]: time };
     Object.keys(responseData)[0];
