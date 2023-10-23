@@ -1,4 +1,5 @@
 "use client";
+
 import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { FileIcon } from "lucide-react";
@@ -32,24 +33,30 @@ const FileInput: React.FC<FileInputProps> = ({
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const file = e.dataTransfer.files[0];
+  const handleFileChange = async (file: File) => {
     if (
       file &&
       file.type &&
       allowedFileExtensions.includes(file.type.substring(file.type.lastIndexOf("/") + 1))
     ) {
-      await handleFileUpload({
-        file,
-        allowedFileExtensions,
-        environmentId,
-      });
+      setIsUploaded(false);
+      setSelectedFile(file);
+      const response = await uploadFile(file, allowedFileExtensions, environmentId);
+      if (response.uploaded) {
+        setIsUploaded(true);
+        onFileUpload(response.url);
+      }
     } else {
       toast.error("File not supported");
     }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    await handleFileChange(file);
   };
 
   const handleFileUpload = async (params: {
@@ -64,7 +71,7 @@ const FileInput: React.FC<FileInputProps> = ({
     try {
       let response = await uploadFile(params.file, params.allowedFileExtensions, params.environmentId);
       setIsUploaded(true);
-      onFileUpload(response.data.url);
+      onFileUpload(response.url);
     } catch (error: any) {
       setIsUploaded(false);
       setSelectedFile(null);
