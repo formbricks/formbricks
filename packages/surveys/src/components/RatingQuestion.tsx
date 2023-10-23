@@ -1,4 +1,4 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
+import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { cn } from "../lib/utils";

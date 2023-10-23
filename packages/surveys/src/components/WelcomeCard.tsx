@@ -9,7 +9,7 @@ interface WelcomeCardProps {
   buttonLabel?: string;
   timeToFinish?: boolean;
   brandColor: string;
-  onSubmit: (data: { [x: string]: any }, isSubmit: boolean) => void;
+  onSubmit: (data: { [x: string]: any }, isSubmit: boolean, time: number) => void;
 }
 
 export default function WelcomeCard({
@@ -38,7 +38,7 @@ export default function WelcomeCard({
             brandColor={brandColor}
             focus={true}
             onClick={() => {
-              onSubmit({ ["welcomeCard"]: "clicked" }, true);
+              onSubmit({ ["welcomeCard"]: "clicked" }, true, 0);
             }}
             type="button"
           />

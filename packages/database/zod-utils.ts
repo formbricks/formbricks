@@ -9,7 +9,7 @@ export {
   ZResponsePersonAttributes,
   ZResponseMeta,
   ZResponseTtc,
-} from "@formbricks/types/v1/responses";
+} from "@formbricks/types/responses";
 
 export {
   ZSurveyWelcomeCard,
