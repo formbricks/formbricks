@@ -69,7 +69,7 @@ const FileInput: React.FC<FileInputProps> = ({
       setIsUploaded(false);
       setSelectedFile(null);
       setIsError(true);
-      toast.error(error.message || "Something went wrong");
+      toast.error("Something went wrong.");
     }
   };
 
