@@ -4,7 +4,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import { getServerSession } from "next-auth";
-import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -46,6 +46,7 @@ export default async function Page({ params }) {
         product={product}
         environmentTags={tags}
         profile={profile}
+        responsesPerPage={RESPONSES_PER_PAGE}
       />
     </>
   );
