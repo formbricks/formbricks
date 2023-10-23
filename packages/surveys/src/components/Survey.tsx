@@ -51,9 +51,9 @@ export function Survey({
       onSubmit(prefillResponseData, true);
     }
   }, []);
-  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false)): string {
+  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
-    const responseValue = data[questionId
+    const responseValue = data[questionId];
     
     let currIdx = currentQuestionIndex;
     let currQues = currentQuestion;
