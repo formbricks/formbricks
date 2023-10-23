@@ -632,6 +632,9 @@ importers:
       markdown-it:
         specifier: ^13.0.2
         version: 13.0.2
+      mime:
+        specifier: 3.0.0
+        version: 3.0.0
       nanoid:
         specifier: ^5.0.2
         version: 5.0.2

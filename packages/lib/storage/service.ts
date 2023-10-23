@@ -4,6 +4,7 @@ import { createPresignedPost, PresignedPostOptions } from "@aws-sdk/s3-presigned
 import { access, mkdir, writeFile, readFile } from "fs/promises";
 import mime from "mime";
 import { env } from "@/env.mjs";
+import { MAX_SIZES } from "../constants";
 
 // global variables
 
@@ -11,12 +12,6 @@ const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
 const AWS_REGION = env.S3_REGION!;
 const S3_ACCESS_KEY = env.S3_ACCESS_KEY!;
 const S3_SECRET_KEY = env.S3_SECRET_KEY!;
-
-const MAX_SIZES = {
-  public: 1024 * 1024 * 10, // 10MB
-  free: 1024 * 1024 * 10, // 10MB
-  pro: 1024 * 1024 * 1024, // 1GB
-} as Record<string, number>;
 
 // S3Client Singleton
 
@@ -96,6 +91,7 @@ export const getSignedUrlForS3Upload = async (
   const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
 
   try {
+    // @ts-ignore
     const { fields, url } = await createPresignedPost(s3Client, {
       Expires: 10 * 60, // 10 minutes
       Bucket: AWS_BUCKET_NAME,
