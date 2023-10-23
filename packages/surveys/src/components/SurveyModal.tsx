@@ -45,7 +45,7 @@ export function SurveyModal({
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
-          onClose={onClose}
+          onClose={close}
           onFinished={() => {
             onFinished();
             setTimeout(() => {
