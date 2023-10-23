@@ -29,11 +29,13 @@ export default function SettingsNavbar({
   isFormbricksCloud,
   team,
   product,
+  isPricingDisabled,
 }: {
   environmentId: string;
   isFormbricksCloud: boolean;
   team: TTeam;
   product: TProduct;
+  isPricingDisabled: boolean;
 }) {
   const pathname = usePathname();
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
@@ -120,7 +122,7 @@ export default function SettingsNavbar({
             name: "Billing & Plan",
             href: `/environments/${environmentId}/settings/billing`,
             icon: CreditCardIcon,
-            hidden: !isFormbricksCloud,
+            hidden: !isFormbricksCloud || isPricingDisabled,
             current: pathname?.includes("/billing"),
           },
         ],
@@ -185,7 +187,7 @@ export default function SettingsNavbar({
         ],
       },
     ],
-    [environmentId, isFormbricksCloud, pathname]
+    [environmentId, isFormbricksCloud, isPricingDisabled, pathname]
   );
 
   if (!navigation) return null;

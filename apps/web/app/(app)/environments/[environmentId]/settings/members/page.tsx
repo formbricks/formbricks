@@ -50,7 +50,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const userMemberships = await getMembershipsByUserId(session.user.id);
 
-  const isDeleteDisabled = userMemberships.length <= 1;
+  const isDeleteDisabled = userMemberships.length <= 1 || currentUserMembership?.role !== "owner";
   const currentUserRole = currentUserMembership?.role;
 
   const isLeaveTeamDisabled = userMemberships.length <= 1;

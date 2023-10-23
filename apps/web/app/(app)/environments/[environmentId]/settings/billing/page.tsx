@@ -12,11 +12,13 @@ import {
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import SettingsTitle from "../components/SettingsTitle";
 import PricingTable from "./components/PricingTable";
 import { PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function ProfileSettingsPage({ params }) {
   if (!IS_FORMBRICKS_CLOUD) {
@@ -39,19 +41,26 @@ export default async function ProfileSettingsPage({ params }) {
     getMonthlyActiveTeamPeopleCount(team.id),
     getMonthlyTeamResponseCount(team.id),
   ]);
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const isPricingDisabled =
+    currentUserMembership?.role !== "owner" ? currentUserMembership?.role !== "admin" : false;
 
   return (
     <>
       <div>
         <SettingsTitle title="Billing & Plan" />
-        <PricingTable
-          team={team}
-          environmentId={params.environmentId}
-          peopleCount={peopleCount}
-          responseCount={responseCount}
-          userTargetingFreeMtu={PRICING_USERTARGETING_FREE_MTU}
-          inAppSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
-        />
+        {!isPricingDisabled ? (
+          <PricingTable
+            team={team}
+            environmentId={params.environmentId}
+            peopleCount={peopleCount}
+            responseCount={responseCount}
+            userTargetingFreeMtu={PRICING_USERTARGETING_FREE_MTU}
+            inAppSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
+          />
+        ) : (
+          <ErrorComponent />
+        )}
       </div>
     </>
   );
