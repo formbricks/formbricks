@@ -82,7 +82,6 @@ export default function CTAQuestion({
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();
               }
-              console.log({ startTime });
               onSubmit({ [question.id]: "clicked" }, true, performance.now() - startTime.current);
             }}
             type="button"

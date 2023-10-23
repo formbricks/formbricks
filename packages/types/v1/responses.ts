@@ -5,7 +5,7 @@ import { ZTag } from "./tags";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
 
-export const ZResponseTtc = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
+export const ZResponseTtc = z.record(z.number());
 
 export type TResponseTtc = z.infer<typeof ZResponseTtc>;
 

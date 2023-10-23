@@ -32,9 +32,11 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
 
 export default function SummaryMetadata({ responses, survey, displayCount }: SummaryMetadataProps) {
   const completedResponses = responses.filter((r) => r.finished).length;
+  let validTtcResponseCount = 0; //stores the count of responses that contains a _total value
   let ttcTemp = 0;
   responses.map((response) => {
     if (response.ttc._total) {
+      validTtcResponseCount++;
       ttcTemp = ttcTemp + response.ttc._total;
     }
   });
@@ -57,8 +59,8 @@ export default function SummaryMetadata({ responses, survey, displayCount }: Sum
 
   return (
     <div className="mb-4">
-      <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-2 lg:gap-x-2">
-        <div className="grid grid-cols-2 gap-4 md:grid md:grid-cols-4 md:gap-x-2">
+      <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-3 lg:gap-x-2">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-2">
           <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-slate-600">Displays</p>
             <p className="text-2xl font-bold text-slate-800">
@@ -86,7 +88,9 @@ export default function SummaryMetadata({ responses, survey, displayCount }: Sum
           <StatCard
             label="Time to Complete"
             percentage={null}
-            value={`${formatTime(ttcTemp, totalResponses)}`}
+            value={
+              validTtcResponseCount === 0 ? <span>-</span> : `${formatTime(ttcTemp, validTtcResponseCount)}`
+            }
             tooltipText="Average time to complete a survey."
           />
         </div>

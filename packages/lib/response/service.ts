@@ -190,7 +190,6 @@ export const getResponseBySingleUseId = async (
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
-  console.log(responseInput);
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
@@ -412,9 +411,7 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
-    console.log(currentResponse.ttc);
-    console.log(responseInput.ttc);
-    const ttc = mergeAndAdd(currentResponse.ttc, responseInput.ttc, responseInput.finished);
+    const ttc = mergeAndAdd(currentResponse.ttc, responseInput.ttc!, responseInput.finished);
 
     const responsePrisma = await prisma.response.update({
       where: {

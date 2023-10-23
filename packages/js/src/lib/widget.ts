@@ -72,6 +72,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
       onResponse: (responseUpdate: TResponseUpdate) => {
         responseQueue.add({
           data: responseUpdate.data,
+          ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
         });
       },

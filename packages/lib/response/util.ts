@@ -1,6 +1,6 @@
 import "server-only";
 
-import { TResponseDates } from "@formbricks/types/v1/responses";
+import { TResponseDates, TResponseTtc } from "@formbricks/types/v1/responses";
 
 export const formatResponseDateFields = (response: TResponseDates): TResponseDates => {
   if (typeof response.createdAt === "string") {
@@ -25,7 +25,7 @@ export const formatResponseDateFields = (response: TResponseDates): TResponseDat
   return response;
 };
 
-export function mergeAndAdd(obj1: any, obj2: any, finished = false) {
+export function mergeAndAdd(obj1: TResponseTtc, obj2: TResponseTtc, finished = false) {
   const result = { ...obj1 };
 
   for (let key in obj2) {
@@ -37,7 +37,7 @@ export function mergeAndAdd(obj1: any, obj2: any, finished = false) {
   }
 
   if (finished) {
-    result._total = Object.values(result).reduce((acc, val) => acc + val, 0);
+    result._total = Object.values(result).reduce((acc: number, val: number) => acc + val, 0);
   }
 
   return result;

@@ -107,6 +107,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         surveyId: true,
         finished: true,
         data: true,
+        ttc: true,
         meta: true,
         personAttributes: true,
         singleUseId: true,

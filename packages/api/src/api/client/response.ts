@@ -17,7 +17,7 @@ export class ResponseAPI {
     personId,
     finished,
     data,
-  }: TResponseInput): Promise<Result<TResponse, NetworkError | Error>> {
+  }: Partial<TResponseInput>): Promise<Result<TResponse, NetworkError | Error>> {
     return makeRequest(this.apiHost, "/api/v1/client/responses", "POST", {
       surveyId,
       personId,
@@ -30,7 +30,7 @@ export class ResponseAPI {
     responseId,
     finished,
     data,
-  }: TResponseUpdateInputWithResponseId): Promise<Result<TResponse, NetworkError | Error>> {
+  }: Partial<TResponseUpdateInputWithResponseId>): Promise<Result<TResponse, NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/responses/${responseId}`, "PUT", {
       finished,
       data,

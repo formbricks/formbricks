@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/v1/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
-import { useState } from "preact/hooks";
+import { useState, useEffect, useRef } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -23,7 +23,7 @@ interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: any) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -41,13 +41,37 @@ export default function RatingQuestion({
   brandColor,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
+  const startTime = useRef<number>(performance.now());
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Restart the timer when the tab becomes visible again
+        startTime.current = performance.now();
+      } else {
+        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+      }
+    };
+
+    // Attach the event listener
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      // Clean up the event listener when the component is unmounted
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
     if (question.required) {
-      onSubmit({
-        [question.id]: number,
-      });
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        true,
+        performance.now() - startTime.current
+      );
     }
   };
 
@@ -67,7 +91,7 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />

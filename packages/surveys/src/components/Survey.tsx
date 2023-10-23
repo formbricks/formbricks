@@ -48,7 +48,7 @@ export function Survey({
   useEffect(() => {
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData);
+      onSubmit(prefillResponseData, true);
     }
   }, []);
   function getNextQuestionId(data: TResponseData): string {
@@ -79,7 +79,6 @@ export function Survey({
   };
 
   const onSubmit = (responseData: TResponseData, isSubmit: boolean, time?: any) => {
-    console.log(time);
     const questionId = Object.keys(responseData)[0];
     const timeData = { [questionId]: time };
     Object.keys(responseData)[0];
