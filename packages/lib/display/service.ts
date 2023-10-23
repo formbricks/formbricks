@@ -159,10 +159,10 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
   }
 };
 
-export const getDisplaysOfPerson = async (
+export const getDisplaysByPersonId = async (
   personId: string,
   page?: number
-): Promise<TDisplaysWithSurveyName[] | null> => {
+): Promise<TDisplaysWithSurveyName[]> => {
   const displays = await unstable_cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
@@ -187,6 +187,9 @@ export const getDisplaysOfPerson = async (
           },
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            createdAt: "desc",
+          },
         });
 
         if (!displaysPrisma) {
@@ -217,7 +220,7 @@ export const getDisplaysOfPerson = async (
         throw error;
       }
     },
-    [`getDisplaysOfPerson-${personId}-${page}`],
+    [`getDisplaysByPersonId-${personId}-${page}`],
     {
       tags: [displayCache.tag.byPersonId(personId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
