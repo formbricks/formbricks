@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TTagsCount, TTagsOnResponses } from "@formbricks/types/v1/tags";
+import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 import { responseCache } from "../response/cache";
 
 export const getTagOnResponseCacheTag = (tagId: string, responseId: string) =>

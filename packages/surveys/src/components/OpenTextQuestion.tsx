@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -74,6 +74,12 @@ export default function OpenTextQuestion({
         // }
       }}
       className="w-full">
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

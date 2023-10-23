@@ -3,7 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/person/service";
-import { ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
+import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 

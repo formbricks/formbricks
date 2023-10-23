@@ -7,7 +7,7 @@ import { Tag } from "../../Tag";
 import { ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { Button } from "../../Button";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TTag } from "@formbricks/types/tags";
 import { createTagToResponeAction, createTagAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {

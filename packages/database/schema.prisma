@@ -270,13 +270,11 @@ model Survey {
   productOverwrites Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse         Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
+  singleUse         Json?   @default("{\"enabled\": false, \"isEncrypted\": true}")
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
-
-  // PIN Protected Surveys
-  pin Int?
+  pin               String?
 }
 
 model Event {
@@ -333,6 +331,7 @@ enum EnvironmentType {
 
 enum IntegrationType {
   googleSheets
+  airtable
 }
 
 model Integration {
@@ -460,6 +459,7 @@ enum IdentityProvider {
   email
   github
   google
+  azuread
 }
 
 model Account {
@@ -474,6 +474,7 @@ model Account {
   access_token      String?  @db.Text
   refresh_token     String?  @db.Text
   expires_at        Int?
+  ext_expires_in    Int?
   token_type        String?
   scope             String?
   id_token          String?  @db.Text

@@ -1,5 +1,11 @@
 # @formbricks/js
 
+## 1.1.3
+
+### Patch Changes
+
+- d1172831: Multiple bugfixes and performance improvements
+
 ## 1.1.0
 
 ### Minor Changes

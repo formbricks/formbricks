@@ -1,4 +1,4 @@
-import type { TResponseData } from "@formbricks/types/v1/responses";
+import type { TResponseData } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
@@ -51,18 +51,26 @@ export function Survey({
       onSubmit(prefillResponseData, true);
     }
   }, []);
-  function getNextQuestionId(data: TResponseData): string {
+  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
+    let currIdx = currentQuestionIndex;
+    let currQues = currentQuestion;
+
     if (questionId === "start") {
-      return questions[0]?.id || "end";
+      if (!isFromPrefilling) {
+        return questions[0]?.id || "end";
+      } else {
+        currIdx = 0;
+        currQues = questions[0];
+      }
     }
 
-    if (currentQuestionIndex === -1) throw new Error("Question not found");
+    if (currIdx === -1) throw new Error("Question not found");
 
-    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
+    if (currQues?.logic && currQues?.logic.length > 0) {
+      for (let logic of currQues.logic) {
         if (!logic.destination) continue;
 
         if (evaluateCondition(logic, responseValue)) {
@@ -70,7 +78,7 @@ export function Survey({
         }
       }
     }
-    return questions[currentQuestionIndex + 1]?.id || "end";
+    return questions[currIdx + 1]?.id || "end";
   }
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -78,16 +86,21 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData, isSubmit: boolean, time?: any) => {
+  const onSubmit = (
+    responseData: TResponseData,
+    isSubmit: boolean,
+    isFromPrefilling: Boolean = false,
+    time?: number
+  ) => {
     const questionId = Object.keys(responseData)[0];
-    const timeData = { [questionId]: time };
+    const timeData = { [questionId]: time ? time : 0 };
     Object.keys(responseData)[0];
     if (!isSubmit) {
       onResponse({ data: responseData, ttc: timeData, finished: false });
       return;
     }
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData);
+    const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc: timeData, finished });
     if (finished) {

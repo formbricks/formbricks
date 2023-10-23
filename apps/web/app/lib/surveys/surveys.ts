@@ -7,10 +7,10 @@ import {
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
-import { QuestionType } from "@formbricks/types/questions";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import { isWithinInterval } from "date-fns";
 
 export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
@@ -116,7 +116,10 @@ export const generateQuestionAndFilterOptions = (
   questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
-      if (q.type === QuestionType.MultipleChoiceMulti || q.type === QuestionType.MultipleChoiceSingle) {
+      if (
+        q.type === TSurveyQuestionType.MultipleChoiceMulti ||
+        q.type === TSurveyQuestionType.MultipleChoiceSingle
+      ) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
@@ -196,10 +199,10 @@ export const getFilterResponses = (
   selectedFilter.filter.forEach((filter) => {
     if (filter.questionType?.type === "Questions") {
       switch (filter.questionType?.questionType) {
-        case QuestionType.Consent:
+        case TSurveyQuestionType.Consent:
           toBeFilterResponses = toBeFilterResponses.filter((response) => {
             const questionID = response.questions.find(
-              (q) => q?.type === QuestionType.Consent && q?.id === filter?.questionType?.id
+              (q) => q?.type === TSurveyQuestionType.Consent && q?.id === filter?.questionType?.id
             )?.id;
             if (filter?.filterType?.filterComboBoxValue) {
               if (questionID) {
@@ -217,10 +220,10 @@ export const getFilterResponses = (
             return true;
           });
           break;
-        case QuestionType.OpenText:
+        case TSurveyQuestionType.OpenText:
           toBeFilterResponses = toBeFilterResponses.filter((response) => {
             const questionID = response.questions.find(
-              (q) => q?.type === QuestionType.OpenText && q?.id === filter?.questionType?.id
+              (q) => q?.type === TSurveyQuestionType.OpenText && q?.id === filter?.questionType?.id
             )?.id;
             if (filter?.filterType?.filterComboBoxValue) {
               if (questionID) {
@@ -238,10 +241,10 @@ export const getFilterResponses = (
             return true;
           });
           break;
-        case QuestionType.CTA:
+        case TSurveyQuestionType.CTA:
           toBeFilterResponses = toBeFilterResponses.filter((response) => {
             const questionID = response.questions.find(
-              (q) => q?.type === QuestionType.CTA && q?.id === filter?.questionType?.id
+              (q) => q?.type === TSurveyQuestionType.CTA && q?.id === filter?.questionType?.id
             )?.id;
             if (filter?.filterType?.filterComboBoxValue) {
               if (questionID) {
@@ -259,10 +262,10 @@ export const getFilterResponses = (
             return true;
           });
           break;
-        case QuestionType.MultipleChoiceMulti:
+        case TSurveyQuestionType.MultipleChoiceMulti:
           toBeFilterResponses = toBeFilterResponses.filter((response) => {
             const question = response.questions.find(
-              (q) => q?.type === QuestionType.MultipleChoiceMulti && q?.id === filter?.questionType?.id
+              (q) => q?.type === TSurveyQuestionType.MultipleChoiceMulti && q?.id === filter?.questionType?.id
             );
             if (filter?.filterType?.filterComboBoxValue) {
               if (question) {
@@ -288,10 +291,11 @@ export const getFilterResponses = (
             return true;
           });
           break;
-        case QuestionType.MultipleChoiceSingle:
+        case TSurveyQuestionType.MultipleChoiceSingle:
           toBeFilterResponses = toBeFilterResponses.filter((response) => {
             const questionID = response.questions.find(
-              (q) => q?.type === QuestionType.MultipleChoiceSingle && q?.id === filter?.questionType?.id
+              (q) =>
+                q?.type === TSurveyQuestionType.MultipleChoiceSingle && q?.id === filter?.questionType?.id
             )?.id;
             if (filter?.filterType?.filterComboBoxValue) {
               if (questionID) {
@@ -312,10 +316,10 @@ export const getFilterResponses = (
             return true;
           });
           break;
-        case QuestionType.NPS:
+        case TSurveyQuestionType.NPS:
           toBeFilterResponses = toBeFilterResponses.filter((response) => {
             const questionID = response.questions.find(
-              (q) => q?.type === QuestionType.NPS && q?.id === filter?.questionType?.id
+              (q) => q?.type === TSurveyQuestionType.NPS && q?.id === filter?.questionType?.id
             )?.id;
             const responseValue = questionID ? response.data[questionID] : undefined;
             const filterValue =
@@ -345,10 +349,10 @@ export const getFilterResponses = (
             return true;
           });
           break;
-        case QuestionType.Rating:
+        case TSurveyQuestionType.Rating:
           toBeFilterResponses = toBeFilterResponses.filter((response) => {
             const questionID = response.questions.find(
-              (q) => q?.type === QuestionType.Rating && q?.id === filter?.questionType?.id
+              (q) => q?.type === TSurveyQuestionType.Rating && q?.id === filter?.questionType?.id
             )?.id;
             const responseValue = questionID ? response.data[questionID] : undefined;
             const filterValue =

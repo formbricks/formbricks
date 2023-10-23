@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { useMemo, useRef, useState, useEffect, useCallback } from "preact/hooks";
 import { cn, shuffleQuestions } from "../lib/utils";
 import { BackButton } from "./BackButton";
@@ -55,7 +55,7 @@ export default function MultipleChoiceSingleQuestion({
 
   const [otherSelected, setOtherSelected] = useState(
     !!value &&
-      (value as string[]).some((item) => {
+      ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
         return getChoicesWithoutOtherLabels().includes(item) === false;
       })
   ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
@@ -112,6 +112,12 @@ export default function MultipleChoiceSingleQuestion({
         onChange({ [question.id]: newValue });
       }}
       className="w-full">
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

@@ -1,10 +1,14 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 interface SummaryMetadataProps {
   responses: TResponse[];
+  showDropOffs: boolean;
+  setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;
   survey: TSurvey;
   displayCount: number;
 }
@@ -30,7 +34,13 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   </TooltipProvider>
 );
 
-export default function SummaryMetadata({ responses, survey, displayCount }: SummaryMetadataProps) {
+export default function SummaryMetadata({
+  responses,
+  survey,
+  displayCount,
+  setShowDropOffs,
+  showDropOffs,
+}: SummaryMetadataProps) {
   const completedResponses = responses.filter((r) => r.finished).length;
   let validTtcResponseCount = 0; //stores the count of responses that contains a _total value
   let ttcTemp = 0;
@@ -94,10 +104,17 @@ export default function SummaryMetadata({ responses, survey, displayCount }: Sum
             tooltipText="Average time to complete a survey."
           />
         </div>
-        <div className="flex flex-col justify-between lg:col-span-1">
+        <div className="flex flex-col justify-between gap-2 lg:col-span-1">
           <div className="text-right text-xs text-slate-400">
             Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
           </div>
+          <Button
+            variant="minimal"
+            className="w-max self-start"
+            EndIcon={showDropOffs ? ChevronDownIcon : ChevronUpIcon}
+            onClick={() => setShowDropOffs(!showDropOffs)}>
+            Analyze Drop Offs
+          </Button>
         </div>
       </div>
     </div>
