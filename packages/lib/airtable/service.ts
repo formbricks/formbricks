@@ -94,8 +94,8 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   const parsedToken = ZIntegrationAirtableTokenSchema.safeParse(tokenRes);
 
   if (!parsedToken.success) {
-    throw new Error("invalid token format");
-    return;
+    console.error(parsedToken.error);
+    throw new Error("Invalid token format");
   }
   const { access_token, refresh_token, expires_in } = parsedToken.data;
   const expiry_date = new Date();
