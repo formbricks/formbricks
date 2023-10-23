@@ -6,10 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 
 export async function PUT(req: NextRequest): Promise<NextResponse> {
   const accessType = "private"; // private files are accessible only by authorized users
