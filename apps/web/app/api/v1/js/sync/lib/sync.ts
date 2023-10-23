@@ -6,10 +6,10 @@ import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbrick
 import { getProductByEnvironmentIdCached } from "@formbricks/lib/product/service";
 import { createSession, extendSession, getSessionCached } from "@formbricks/lib/session/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TJsState } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TSession } from "@formbricks/types/v1/sessions";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TJsState } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
+import { TSession } from "@formbricks/types/sessions";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });

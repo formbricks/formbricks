@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";

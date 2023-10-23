@@ -2,10 +2,10 @@
 
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { QuestionType } from "@formbricks/types/questions";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
@@ -45,6 +45,8 @@ export default function SurveyMenuBar({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isMutatingSurvey, setIsMutatingSurvey] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   let faultyQuestions: String[] = [];
 
   useEffect(() => {
@@ -107,6 +109,12 @@ export default function SurveyMenuBar({
       return;
     }
 
+    let pin = survey?.pin;
+    if (pin !== null && pin.toString().length !== 4) {
+      toast.error("PIN must be a four digit number.");
+      return;
+    }
+
     faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
@@ -133,8 +141,8 @@ export default function SurveyMenuBar({
       existingQuestionIds.add(question.id);
 
       if (
-        question.type === QuestionType.MultipleChoiceSingle ||
-        question.type === QuestionType.MultipleChoiceMulti
+        question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
           question.choices.some((element) => element.label.trim() === "") ||
@@ -333,10 +341,20 @@ export default function SurveyMenuBar({
           deleteWhat="Draft"
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
-          onDelete={() => deleteSurvey(localSurvey.id)}
+          onDelete={async () => {
+            setIsDeleting(true);
+            await deleteSurvey(localSurvey.id);
+            setIsDeleting(false);
+          }}
           text="Do you want to delete this draft?"
+          isDeleting={isDeleting}
+          isSaving={isSaving}
           useSaveInsteadOfCancel={true}
-          onSave={() => saveSurveyAction(true)}
+          onSave={async () => {
+            setIsSaving(true);
+            await saveSurveyAction(true);
+            setIsSaving(false);
+          }}
         />
         <AlertDialog
           confirmWhat="Survey changes"

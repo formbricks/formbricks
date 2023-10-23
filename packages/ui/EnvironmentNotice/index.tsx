@@ -8,7 +8,7 @@ interface EnvironmentNoticeProps {
 
 export default async function EnvironmentNotice({ environmentId }: EnvironmentNoticeProps) {
   const headersList = headers();
-  const currentUrl = headersList.get("x-invoke-path") || "";
+  const currentUrl = headersList.get("referer") || headersList.get("x-invoke-path") || "";
   const environment = await getEnvironment(environmentId);
   const environments = await getEnvironments(environment.productId);
   const otherEnvironmentId = environments.find((e) => e.id !== environment.id)?.id || "";

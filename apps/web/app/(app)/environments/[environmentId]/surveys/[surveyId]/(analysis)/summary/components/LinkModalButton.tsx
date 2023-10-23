@@ -1,13 +1,13 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct } from "@formbricks/types/product";
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProfile } from "@formbricks/types/profile";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
@@ -25,7 +25,6 @@ export default function LinkSurveyShareButton({
   profile,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
-  const isSingleUse = survey.singleUse?.enabled ?? false;
 
   return (
     <>
@@ -40,7 +39,7 @@ export default function LinkSurveyShareButton({
         }}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {showLinkModal && isSingleUse && (
+      {showLinkModal && (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}

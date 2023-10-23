@@ -4,8 +4,8 @@ import { displayCache } from "@formbricks/lib/display/cache";
 import { getDisplaysByPersonId } from "@formbricks/lib/display/service";
 import { getProductByEnvironmentIdCached, getProductCacheTag } from "@formbricks/lib/product/service";
 import { getSurveyCacheTag, getSurveys } from "@formbricks/lib/survey/service";
-import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
 import { unstable_cache } from "next/cache";
 
 export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>

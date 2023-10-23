@@ -1,4 +1,4 @@
-import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/responses";
 
 export const createResponse = async (responseInput: TResponseInput, apiHost: string): Promise<TResponse> => {
   const res = await fetch(`${apiHost}/api/v1/client/responses`, {
