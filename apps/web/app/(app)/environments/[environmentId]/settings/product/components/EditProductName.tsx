@@ -70,7 +70,7 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
         variant="darkCTA"
         className="mt-4"
         loading={isSubmitting}
-        disabled={!productNameValue || isSubmitting}>
+        disabled={!isNotEmptySpaces(productNameValue) || isSubmitting}>
         Update
       </Button>
     </form>
