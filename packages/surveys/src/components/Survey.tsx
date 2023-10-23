@@ -1,4 +1,4 @@
-import type { TResponseData } from "@formbricks/types/responses";
+import type { TResponseData } from "@formbricks/types/v1/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
@@ -46,29 +46,21 @@ export function Survey({
   useEffect(() => {
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData, true);
+      onSubmit(prefillResponseData);
     }
   }, []);
-  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
+  function getNextQuestionId(data: TResponseData): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
-    let currIdx = currentQuestionIndex;
-    let currQues = currentQuestion;
-
     if (questionId === "start") {
-      if (!isFromPrefilling) {
-        return questions[0]?.id || "end";
-      } else {
-        currIdx = 0;
-        currQues = questions[0];
-      }
+      return questions[0]?.id || "end";
     }
 
-    if (currIdx === -1) throw new Error("Question not found");
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
 
-    if (currQues?.logic && currQues?.logic.length > 0) {
-      for (let logic of currQues.logic) {
+    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
         if (evaluateCondition(logic, responseValue)) {
@@ -76,7 +68,7 @@ export function Survey({
         }
       }
     }
-    return questions[currIdx + 1]?.id || "end";
+    return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -84,9 +76,9 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData, isFromPrefilling: Boolean = false) => {
+  const onSubmit = (responseData: TResponseData) => {
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
+    const nextQuestionId = getNextQuestionId(responseData);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, finished });
     if (finished) {
@@ -156,11 +148,11 @@ export function Survey({
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
             brandColor={brandColor}
           />
+         )
         )
-      );
+      }
     }
-  }
-
+  
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
