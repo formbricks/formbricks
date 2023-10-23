@@ -4,7 +4,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getSignedUrlForS3Upload } from "@formbricks/lib/storage/service";
 import { generateLocalSignedUrl } from "@formbricks/lib/crypto";
 
-export const uploadPrivateFile = async (
+const uploadPrivateFile = async (
   fileName: string,
   environmentId: string,
   fileType: string,
@@ -49,3 +49,5 @@ export const uploadPrivateFile = async (
     return responses.internalServerErrorResponse(err.message);
   }
 };
+
+export default uploadPrivateFile;

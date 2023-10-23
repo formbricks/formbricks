@@ -2,7 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { NextRequest, NextResponse } from "next/server";
-import { uploadPrivateFile } from "./lib";
+import uploadPrivateFile from "./lib/uploadPrivateFile";
 
 // api endpoint for uploading private files
 // uploaded files will be private, only the user who has access to the environment can access the file
