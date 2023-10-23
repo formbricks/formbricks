@@ -61,8 +61,7 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
 
   return (
     <div className="flex h-full grow flex-col gap-5">
-      <div className="flex items-center gap-4">
-        <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+      <div className="flex items-center justify-end gap-4">
         {showEmbed ? (
           <Button
             variant="darkCTA"
@@ -77,15 +76,18 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
             Copy code
           </Button>
         ) : (
-          <Button
-            variant="secondary"
-            title="send preview email"
-            aria-label="send preview email"
-            onClick={sendPreviewEmail}
-            EndIcon={EnvelopeIcon}
-            className="shrink-0">
-            Send Preview
-          </Button>
+          <>
+            <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+            <Button
+              variant="secondary"
+              title="send preview email"
+              aria-label="send preview email"
+              onClick={sendPreviewEmail}
+              EndIcon={EnvelopeIcon}
+              className="shrink-0">
+              Send Preview
+            </Button>
+          </>
         )}
         <Button
           variant="darkCTA"

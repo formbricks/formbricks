@@ -44,6 +44,7 @@ export default function EditTeamName({ team }: TEditTeamNameProps) {
 
   const handleUpdateTeamName: SubmitHandler<TEditTeamNameForm> = async (data) => {
     try {
+      data.name = data.name.trim();
       setIsUpdatingTeam(true);
       await updateTeamNameAction(team.id, data.name);
 
