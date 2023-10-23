@@ -36,7 +36,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           }}
         />
       )}
-      <pre>
+      <pre className="!whitespace-pre-wrap">
         <code className={cn(`language-${language} whitespace-pre-wrap`, customCodeClass)}>{children}</code>
       </pre>
     </div>
