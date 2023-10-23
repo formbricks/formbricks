@@ -1,14 +1,14 @@
 "use client";
 
 import { truncate } from "@/app/lib/utils";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TProduct } from "@formbricks/types/product";
+import { TTeam } from "@formbricks/types/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { FaDiscord } from "react-icons/fa6";
 import {
   AdjustmentsVerticalIcon,
   BellAlertIcon,
-  ChatBubbleLeftEllipsisIcon,
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
@@ -145,7 +145,7 @@ export default function SettingsNavbar({
           {
             name: "Join Discord",
             href: "https://formbricks.com/discord",
-            icon: ChatBubbleLeftEllipsisIcon,
+            icon: FaDiscord,
             target: "_blank",
             hidden: false,
           },

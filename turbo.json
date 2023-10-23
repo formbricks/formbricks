@@ -23,11 +23,34 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/surveys#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/surveys#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/surveys#build"]
+    },
+    "@formbricks/js#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/js#build"]
+    },
+    "@formbricks/api#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/api#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "ASSET_PREFIX_URL",
+        "AZUREAD_AUTH_ENABLED",
+        "AZUREAD_CLIENT_ID",
+        "AZUREAD_CLIENT_SECRET",
+        "AZUREAD_TENANT_ID",
         "CRON_SECRET",
         "ENCRYPTION_KEY",
         "FORMBRICKS_ENCRYPTION_KEY",
@@ -91,8 +114,11 @@
         "TELEMETRY_DISABLED",
         "VERCEL_URL",
         "WEBAPP_URL",
+        "AIR_TABLE_CLIENT_ID",
         "AWS_ACCESS_KEY",
         "AWS_SECRET_KEY",
+        "S3_ACCESS_KEY",
+        "S3_SECRET_KEY",
         "S3_REGION",
         "S3_BUCKET_NAME"
       ]

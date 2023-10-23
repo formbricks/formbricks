@@ -135,6 +135,22 @@ const nextConfig = {
         destination: "https://www.producthunt.com/products/formbricks",
         permanent: true,
       },
+      {
+        source: "/docs/self-hosting/from-source",
+        destination: "/docs/self-hosting/docker",
+        permanent: true,
+      },
+      {
+        source: "/join-oss-friends",
+        destination: "https://app.formbricks.com/s/clhys1p9r001cpr0hu65rwh17",
+        permanent: true,
+      },
+      {
+        source: "/cla",
+        destination: "https://formbricks.com/clmyhzfrymr4ko00hycsg1tvx",
+        permanent: true,
+      },
+      
     ];
   },
   async rewrites() {

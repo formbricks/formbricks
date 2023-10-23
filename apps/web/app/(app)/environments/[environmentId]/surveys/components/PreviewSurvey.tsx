@@ -1,10 +1,12 @@
 "use client";
-import Modal from "@/app/components/preview/Modal";
-import TabOption from "@/app/components/preview/TabOption";
-import { SurveyInline } from "@/app/components/shared/Survey";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+
+import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
+import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
+
+import { SurveyInline } from "@formbricks/ui/Survey";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
@@ -147,7 +149,7 @@ export default function PreviewSurvey({
       setPreviewMode(storePreviewMode);
     }, 10);
 
-    setActiveQuestionId(survey.questions[0].id);
+    setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   }
 
   useEffect(() => {

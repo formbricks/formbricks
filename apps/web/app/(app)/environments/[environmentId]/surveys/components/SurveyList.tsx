@@ -6,15 +6,23 @@ import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TEnvironment } from "@formbricks/types/environment";
 import { Badge } from "@formbricks/ui/Badge";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@formbricks/lib/authOptions";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
+  const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(environmentId);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
   if (!product) {
     throw new Error("Product not found");
   }
@@ -36,7 +44,13 @@ export default async function SurveysList({ environmentId }: { environmentId: st
 
   if (surveys.length === 0) {
     return (
-      <SurveyStarter environmentId={environmentId} environment={environment} product={product} team={team} />
+      <SurveyStarter
+        environmentId={environmentId}
+        environment={environment}
+        product={product}
+        profile={session.user}
+        team={team}
+      />
     );
   }
 

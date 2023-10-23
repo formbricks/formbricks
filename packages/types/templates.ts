@@ -1,26 +1,22 @@
-import { Question } from "./questions";
+import { z } from "zod";
+import { ZSurveyWelcomeCard, ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard } from "./surveys";
+import { ZProfileObjective } from "./profile";
 
-export type Objective =
-  | "increase_user_adoption"
-  | "increase_conversion"
-  | "support_sales"
-  | "sharpen_marketing_messaging"
-  | "improve_user_retention"
-  | "other";
+export const ZTemplate = z.object({
+  name: z.string(),
+  description: z.string(),
+  icon: z.any().optional(),
+  category: z
+    .enum(["Product Experience", "Exploration", "Growth", "Increase Revenue", "Customer Success"])
+    .optional(),
+  objectives: z.array(ZProfileObjective).optional(),
+  preset: z.object({
+    name: z.string(),
+    welcomeCard: ZSurveyWelcomeCard,
+    questions: ZSurveyQuestions,
+    thankYouCard: ZSurveyThankYouCard,
+    hiddenFields: ZSurveyHiddenFields,
+  }),
+});
 
-export interface Template {
-  name: string;
-  description: string;
-  icon?: any;
-  category?: "Product Experience" | "Exploration" | "Growth" | "Increase Revenue" | "Customer Success";
-  objectives?: [Objective, Objective?, Objective?];
-  preset: {
-    name: string;
-    questions: Question[];
-    thankYouCard: {
-      enabled: boolean;
-      headline: string;
-      subheader: string;
-    };
-  };
-}
+export type TTemplate = z.infer<typeof ZTemplate>;

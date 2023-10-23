@@ -1,13 +1,11 @@
 "use client";
 
-import AlertDialog from "@/app/components/shared/AlertDialog";
+import AlertDialog from "@formbricks/ui/AlertDialog";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import SurveyStatusDropdown from "@/app/components/shared/SurveyStatusDropdown";
-import { QuestionType } from "@formbricks/types/questions";
-import type { Survey } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
@@ -17,16 +15,18 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
 import { deleteSurveyAction, updateSurveyAction } from "../actions";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 
 interface SurveyMenuBarProps {
-  localSurvey: TSurveyWithAnalytics;
-  survey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: TSurvey;
+  survey: TSurvey;
+  setLocalSurvey: (survey: TSurvey) => void;
   environment: TEnvironment;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
+  responseCount: number;
 }
 
 export default function SurveyMenuBar({
@@ -38,12 +38,15 @@ export default function SurveyMenuBar({
   setActiveId,
   setInvalidQuestions,
   product,
+  responseCount,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isMutatingSurvey, setIsMutatingSurvey] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   let faultyQuestions: String[] = [];
 
   useEffect(() => {
@@ -68,8 +71,8 @@ export default function SurveyMenuBar({
   }, [localSurvey, survey]);
 
   // write a function which updates the local survey status
-  const updateLocalSurveyStatus = (status: Survey["status"]) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+  const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.status = status;
     setLocalSurvey(updatedSurvey);
   };
@@ -106,6 +109,12 @@ export default function SurveyMenuBar({
       return;
     }
 
+    let pin = survey?.pin;
+    if (pin !== null && pin.toString().length !== 4) {
+      toast.error("PIN must be a four digit number.");
+      return;
+    }
+
     faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
@@ -132,8 +141,8 @@ export default function SurveyMenuBar({
       existingQuestionIds.add(question.id);
 
       if (
-        question.type === QuestionType.MultipleChoiceSingle ||
-        question.type === QuestionType.MultipleChoiceMulti
+        question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
           question.choices.some((element) => element.label.trim() === "") ||
@@ -270,7 +279,7 @@ export default function SurveyMenuBar({
             className="w-72 border-white hover:border-slate-200 "
           />
         </div>
-        {!!localSurvey.analytics.responseRate && (
+        {responseCount > 0 && (
           <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
             <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
             <p className=" pl-1 text-xs lg:text-sm">
@@ -332,10 +341,20 @@ export default function SurveyMenuBar({
           deleteWhat="Draft"
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
-          onDelete={() => deleteSurvey(localSurvey.id)}
+          onDelete={async () => {
+            setIsDeleting(true);
+            await deleteSurvey(localSurvey.id);
+            setIsDeleting(false);
+          }}
           text="Do you want to delete this draft?"
+          isDeleting={isDeleting}
+          isSaving={isSaving}
           useSaveInsteadOfCancel={true}
-          onSave={() => saveSurveyAction(true)}
+          onSave={async () => {
+            setIsSaving(true);
+            await saveSurveyAction(true);
+            setIsSaving(false);
+          }}
         />
         <AlertDialog
           confirmWhat="Survey changes"

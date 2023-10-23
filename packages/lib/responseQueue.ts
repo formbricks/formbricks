@@ -1,4 +1,4 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TResponseUpdate } from "@formbricks/types/responses";
 import { createResponse, updateResponse } from "./client/response";
 import { updateDisplay } from "./client/display";
 import SurveyState from "./surveyState";

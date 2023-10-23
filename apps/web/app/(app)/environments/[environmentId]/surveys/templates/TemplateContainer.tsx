@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import type { TTemplate } from "@formbricks/types/v1/templates";
+import type { TTemplate } from "@formbricks/types/templates";
 import { useEffect } from "react";
 import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { minimalSurvey, templates } from "./templates";
 import PreviewSurvey from "../components/PreviewSurvey";
 import TemplateList from "./TemplateList";
-import type { TProduct } from "@formbricks/types/v1/product";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TProduct } from "@formbricks/types/product";
+import type { TEnvironment } from "@formbricks/types/environment";
 import { SearchBox } from "@formbricks/ui/SearchBox";
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TProfile } from "@formbricks/types/profile";
+import { TTeam } from "@formbricks/types/teams";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
   product: TProduct;
   environment: TEnvironment;
   team: TTeam;
+  profile: TProfile;
 };
 
 export default function TemplateContainerWithPreview({
@@ -24,6 +26,7 @@ export default function TemplateContainerWithPreview({
   product,
   environment,
   team,
+  profile,
 }: TemplateContainerWithPreviewProps) {
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -60,6 +63,7 @@ export default function TemplateContainerWithPreview({
             environment={environment}
             product={product}
             team={team}
+            profile={profile}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
               setActiveQuestionId(template.preset.questions[0].id);

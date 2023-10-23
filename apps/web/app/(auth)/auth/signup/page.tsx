@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { SignupForm } from "@/app/components/auth/SignupForm";
-import FormWrapper from "@/app/components/auth/FormWrapper";
-import Testimonial from "@/app/components/auth/Testimonial";
+
 import {
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
+  AZURE_OAUTH_ENABLED,
   INVITE_DISABLED,
   PASSWORD_RESET_DISABLED,
   PRIVACY_URL,
@@ -13,6 +12,9 @@ import {
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
+import Testimonial from "@/app/(auth)/auth/components/Testimonial";
+import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 
 export default function SignUpPage({
   searchParams,
@@ -51,6 +53,7 @@ export default function SignUpPage({
               emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
               googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
               githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+              azureOAuthEnabled={AZURE_OAUTH_ENABLED}
             />
           )}
         </FormWrapper>

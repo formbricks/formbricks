@@ -1,21 +1,21 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/memberships";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/memberships";
 import {
   TProfile,
   TProfileCreateInput,
   TProfileUpdateInput,
   ZProfileUpdateInput,
-} from "@formbricks/types/v1/profile";
-import { MembershipRole, Prisma } from "@prisma/client";
-import { unstable_cache, revalidateTag } from "next/cache";
-import { validateInputs } from "../utils/validate";
-import { deleteTeam } from "../team/service";
+} from "@formbricks/types/profile";
+import { Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { deleteTeam } from "../team/service";
+import { validateInputs } from "../utils/validate";
 
 const responseSelection = {
   id: true,
@@ -26,6 +26,7 @@ const responseSelection = {
   onboardingCompleted: true,
   twoFactorEnabled: true,
   identityProvider: true,
+  objective: true,
 };
 
 export const getProfileCacheTag = (userId: string): string => `profiles-${userId}`;
@@ -51,7 +52,7 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -83,7 +84,7 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
+          throw new DatabaseError(error.message);
         }
 
         throw error;
@@ -112,7 +113,7 @@ const updateUserMembership = async (teamId: string, userId: string, role: TMembe
 };
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
-  memberships.filter((membership) => membership.role === MembershipRole.admin);
+  memberships.filter((membership) => membership.role === "admin");
 
 // function to update a user's profile
 export const updateProfile = async (
@@ -196,13 +197,13 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
       const teamAdminMemberships = getAdminMemberships(teamMemberships);
       const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
       const teamHasOnlyOneMember = teamMemberships.length === 1;
-      const currentUserIsTeamOwner = role === MembershipRole.owner;
+      const currentUserIsTeamOwner = role === "owner";
 
       if (teamHasOnlyOneMember) {
         await deleteTeam(teamId);
       } else if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
         const firstAdmin = teamAdminMemberships[0];
-        await updateUserMembership(teamId, firstAdmin.userId, MembershipRole.owner);
+        await updateUserMembership(teamId, firstAdmin.userId, "owner");
       } else if (currentUserIsTeamOwner) {
         await deleteTeam(teamId);
       }
@@ -215,7 +216,7 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
     return deletedProfile;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

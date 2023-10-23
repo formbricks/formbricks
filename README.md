@@ -1,3 +1,4 @@
+<div id="top"></div>
 <p align="center">
 <a href="https://formbricks.com">
     <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
@@ -27,6 +28,10 @@
 <a href="https://github.com/CrowdDotDev/crowd.dev"><img src="https://github.com/formbricks/formbricks/assets/675065/59b1a4d4-25e4-4ef3-b0bf-4426446fbfd0#gh-light-mode-only" height="20px"></a><a href="https://github.com/CrowdDotDev/crowd.dev"><img src="https://github.com/formbricks/formbricks/assets/72809645/4bb4caf7-4b64-44c8-94bd-850606d181c1#gh-dark-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://clovyr.io/"><img src="https://github.com/formbricks/formbricks/assets/675065/9291c8df-9aac-423a-a430-a9a581240075" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f#gh-light-mode-only" height="20px"></a><a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/72809645/9d9711dc-75e5-4084-b7fa-bbaf621064a8#gh-dark-mode-only" height="20px">
+</p>
+
+<p align="center">
+  <a href="https://trendshift.io/repositories/2570" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2570" alt="Trendshift Badge for formbricks/formbricks" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </p>
 
 <img width="1527" alt="formtribe hackathon" src="https://github.com/formbricks/formbricks/assets/72809645/addc3a5b-421c-4c8d-8be2-eedf087100ed">
@@ -145,8 +150,10 @@ Let's have a chat about your survey needs and get you started.
 
 ## ⚖️ License
 
-Distributed under the AGPLv3 License. See `LICENSE` for more information.
+Distributed under the AGPLv3 License. See [`LICENSE`](./LICENSE) for more information.
 
 ## 🔒 Security
 
-We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See `SECURITY.md` for more information.
+We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See [`SECURITY.md`](./SECURITY.md) for more information.
+
+<p align="right"><a href="#top">🔼 Back to top</a></p>

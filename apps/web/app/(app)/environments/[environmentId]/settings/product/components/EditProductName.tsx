@@ -1,7 +1,7 @@
 "use client";
 
 import { updateProductAction } from "../actions";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct } from "@formbricks/types/product";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -32,10 +32,11 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
     try {
-      await updateProductAction(environmentId, product.id, data);
-      toast.success("Product name updated successfully.");
-
-      router.refresh();
+      const updatedProduct = await updateProductAction(environmentId, product.id, data);
+      if (!!updatedProduct?.id) {
+        toast.success("Product name updated successfully.");
+        router.refresh();
+      }
     } catch (err) {
       console.error(err);
       toast.error(`Error: Unable to save product information`);

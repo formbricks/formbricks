@@ -1,4 +1,4 @@
-import ClientLogout from "@/app/components/ClientLogout";
+import ClientLogout from "@formbricks/ui/ClientLogout";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import type { Session } from "next-auth";

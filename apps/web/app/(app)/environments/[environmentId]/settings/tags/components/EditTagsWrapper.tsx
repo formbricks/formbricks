@@ -1,11 +1,11 @@
 "use client";
 
 import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/components/MergeTagsCombobox";
-import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { cn } from "@formbricks/lib/cn";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TTag, TTagsCount } from "@formbricks/types/v1/tags";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TTag, TTagsCount } from "@formbricks/types/tags";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import React, { useState } from "react";

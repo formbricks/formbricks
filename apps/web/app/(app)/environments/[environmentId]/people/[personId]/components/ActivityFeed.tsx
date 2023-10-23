@@ -1,7 +1,7 @@
-import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
-import { TActivityFeedItem } from "@formbricks/types/v1/activity";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TActivityFeedItem } from "@formbricks/types/activity";
+import { TEnvironment } from "@formbricks/types/environment";
 
 interface ActivityFeedProps {
   activities: TActivityFeedItem[];

@@ -1,27 +1,25 @@
 "use client";
-
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
-import { Switch } from "@formbricks/ui/Switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
-import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react";
+import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
-  isEncryptionKeySet: boolean;
+  localSurvey: TSurvey;
+  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
+  responseCount: number;
 }
 
 export default function ResponseOptionsCard({
   localSurvey,
   setLocalSurvey,
-  isEncryptionKeySet,
+  responseCount,
 }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
@@ -42,12 +40,16 @@ export default function ResponseOptionsCard({
     subheading: "You can only use this link once.",
   });
 
-  const [singleUseEncryption, setSingleUseEncryption] = useState(isEncryptionKeySet);
+  const [singleUseEncryption, setSingleUseEncryption] = useState(true);
   const [verifyEmailSurveyDetails, setVerifyEmailSurveyDetails] = useState({
     name: "",
     subheading: "",
   });
   const [closeOnDate, setCloseOnDate] = useState<Date>();
+
+  const isPinProtectionEnabled = localSurvey.pin !== null;
+
+  const [verifyProtectWithPinError, setVerifyProtectWithPinError] = useState<string | null>(null);
 
   const handleRedirectCheckMark = () => {
     setRedirectToggle((prev) => !prev);
@@ -71,6 +73,33 @@ export default function ResponseOptionsCard({
       return;
     }
     setSurveyCloseOnDateToggle(true);
+  };
+
+  const handleProtectSurveyWithPinToggle = () => {
+    setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : 1234 }));
+  };
+
+  const handleProtectSurveyPinChange = (pin: string) => {
+    //check if pin only contains numbers
+    const validation = /^\d+$/;
+    const isValidPin = validation.test(pin);
+    if (!isValidPin) return toast.error("PIN can only contain numbers");
+    setLocalSurvey({ ...localSurvey, pin });
+  };
+
+  const handleProtectSurveyPinBlurEvent = () => {
+    if (!localSurvey.pin) return setVerifyProtectWithPinError(null);
+
+    const regexPattern = /^\d{4}$/;
+    const isValidPin = regexPattern.test(`${localSurvey.pin}`);
+
+    if (!isValidPin) return setVerifyProtectWithPinError("PIN must be a four digit number.");
+    setVerifyProtectWithPinError(null);
+  };
+
+  const handleSurveyPinInputKeyDown: KeyboardEventHandler<HTMLInputElement> = (e) => {
+    const exceptThisSymbols = ["e", "E", "+", "-", "."];
+    if (exceptThisSymbols.includes(e.key)) e.preventDefault();
   };
 
   const handleRedirectUrlChange = (link: string) => {
@@ -221,16 +250,16 @@ export default function ResponseOptionsCard({
 
   const handleCheckMark = () => {
     if (autoComplete) {
-      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: null };
+      const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey = { ...localSurvey, autoComplete: 25 };
       setLocalSurvey(updatedSurvey);
     }
   };
 
   const handleInputResponse = (e) => {
-    const updatedSurvey: TSurveyWithAnalytics = { ...localSurvey, autoComplete: parseInt(e.target.value) };
+    const updatedSurvey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -240,12 +269,8 @@ export default function ResponseOptionsCard({
       return;
     }
 
-    const inputResponses = localSurvey.analytics.numResponses || 0;
-
-    if (parseInt(e.target.value) <= inputResponses) {
-      toast.error(
-        `Response limit needs to exceed number of received responses (${localSurvey.analytics.numResponses}).`
-      );
+    if (parseInt(e.target.value) <= responseCount) {
+      toast.error(`Response limit needs to exceed number of received responses (${responseCount}).`);
       return;
     }
   };
@@ -283,11 +308,7 @@ export default function ResponseOptionsCard({
                 <Input
                   autoFocus
                   type="number"
-                  min={
-                    localSurvey?.analytics?.numResponses
-                      ? (localSurvey?.analytics?.numResponses + 1).toString()
-                      : "1"
-                  }
+                  min={responseCount ? (responseCount + 1).toString() : "1"}
                   id="autoCompleteResponses"
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}
@@ -414,34 +435,20 @@ export default function ResponseOptionsCard({
                     />
                     <Label htmlFor="headline">URL Encryption</Label>
                     <div>
-                      <TooltipProvider delayDuration={50}>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className="mt-2 flex items-center space-x-1 ">
-                              <Switch
-                                id="encryption-switch"
-                                checked={singleUseEncryption}
-                                onCheckedChange={hangleSingleUseEncryptionToggle}
-                                disabled={!isEncryptionKeySet}
-                              />
-                              <Label htmlFor="encryption-label">
-                                <div className="ml-2">
-                                  <p className="text-sm font-normal text-slate-600">
-                                    Enable encryption of Single Use Id (suId) in survey URL.
-                                  </p>
-                                </div>
-                              </Label>
-                            </div>
-                          </TooltipTrigger>
-                          {!isEncryptionKeySet && (
-                            <TooltipContent side={"top"}>
-                              <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                                FORMBRICKS_ENCRYPTION_KEY needs to be set to enable this feature.
-                              </p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
+                      <div className="mt-2 flex items-center space-x-1 ">
+                        <Switch
+                          id="encryption-switch"
+                          checked={singleUseEncryption}
+                          onCheckedChange={hangleSingleUseEncryptionToggle}
+                        />
+                        <Label htmlFor="encryption-label">
+                          <div className="ml-2">
+                            <p className="text-sm font-normal text-slate-600">
+                              Enable encryption of Single Use Id (suId) in survey URL.
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -481,6 +488,34 @@ export default function ResponseOptionsCard({
                       defaultValue={verifyEmailSurveyDetails.subheading}
                       onChange={(e) => handleVerifyEmailSurveyDetailsChange({ subheading: e.target.value })}
                     />
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+              <AdvancedOptionToggle
+                htmlId="protectSurveyWithPin"
+                isChecked={isPinProtectionEnabled}
+                onToggle={handleProtectSurveyWithPinToggle}
+                title="Protect Survey with a PIN"
+                description="Only users who have the PIN can access the survey."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center  bg-slate-50">
+                    <Label htmlFor="headline">Add PIN</Label>
+                    <Input
+                      autoFocus
+                      id="pin"
+                      isInvalid={Boolean(verifyProtectWithPinError)}
+                      className="mb-4 mt-2 bg-white"
+                      name="pin"
+                      placeholder="1234"
+                      onBlur={handleProtectSurveyPinBlurEvent}
+                      defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
+                      onKeyDown={handleSurveyPinInputKeyDown}
+                      onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
+                    />
+                    {verifyProtectWithPinError && (
+                      <p className="text-sm text-red-700">{verifyProtectWithPinError}</p>
+                    )}
                   </div>
                 </div>
               </AdvancedOptionToggle>

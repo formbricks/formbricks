@@ -2,9 +2,10 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TResponseNote } from "@formbricks/types/v1/responses";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TResponseNote } from "@formbricks/types/responses";
 import { Prisma } from "@prisma/client";
+import { responseCache } from "../response/cache";
 
 const select = {
   id: true,
@@ -17,6 +18,12 @@ const select = {
     select: {
       id: true,
       name: true,
+    },
+  },
+  response: {
+    select: {
+      id: true,
+      surveyId: true,
     },
   },
 };
@@ -35,10 +42,34 @@ export const createResponseNote = async (
       },
       select,
     });
+
+    responseCache.revalidate({
+      responseId,
+      surveyId: responseNote.response.surveyId,
+    });
+
     return responseNote;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getResponseNote = async (responseNoteId: string): Promise<TResponseNote | null> => {
+  try {
+    const responseNote = await prisma.responseNote.findUnique({
+      where: {
+        id: responseNoteId,
+      },
+      select,
+    });
+    return responseNote;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -58,10 +89,16 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
       },
       select,
     });
+
+    responseCache.revalidate({
+      responseId: updatedResponseNote.response.id,
+      surveyId: updatedResponseNote.response.surveyId,
+    });
+
     return updatedResponseNote;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -80,10 +117,16 @@ export const resolveResponseNote = async (responseNoteId: string): Promise<TResp
       },
       select,
     });
+
+    responseCache.revalidate({
+      responseId: responseNote.response.id,
+      surveyId: responseNote.response.surveyId,
+    });
+
     return responseNote;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

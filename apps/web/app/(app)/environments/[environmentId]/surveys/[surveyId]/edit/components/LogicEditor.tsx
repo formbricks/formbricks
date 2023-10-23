@@ -1,15 +1,20 @@
-import { LogicCondition, QuestionType } from "@formbricks/types/questions";
-import { TSurveyLogic, TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyLogic,
+  TSurveyQuestion,
+  TSurveyQuestionType,
+  TSurveyLogicCondition,
+} from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";
@@ -17,14 +22,14 @@ import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 interface LogicEditorProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   questionIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
 }
 
 type LogicConditions = {
-  [K in LogicCondition]: {
+  [K in TSurveyLogicCondition]: {
     label: string;
     values: string[] | null;
     unique?: boolean;
@@ -43,7 +48,7 @@ export default function LogicEditor({
       return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
-    } else if (question.type === QuestionType.NPS) {
+    } else if (question.type === TSurveyQuestionType.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];

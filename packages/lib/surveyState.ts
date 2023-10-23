@@ -1,4 +1,4 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TResponseUpdate } from "@formbricks/types/responses";
 
 export class SurveyState {
   responseId: string | null = null;

@@ -5,7 +5,7 @@ export class CommandQueue {
   private queue: {
     command: (args: any) => Promise<Result<void, any>> | Result<void, any> | Promise<void>;
     checkInitialized: boolean;
-    commandArgs: any[];
+    commandArgs: any[any];
   }[] = [];
   private running: boolean = false;
   private resolvePromise: (() => void) | null = null;
@@ -47,10 +47,7 @@ export class CommandQueue {
         if (initResult && initResult.ok !== true) errorHandler.handle(initResult.error);
       }
 
-      const result = (await currentItem.command.apply(null, currentItem.commandArgs as [any])) as Result<
-        void,
-        any
-      >;
+      const result = (await currentItem?.command.apply(null, currentItem?.commandArgs)) as Result<void, any>;
 
       if (!result) continue;
 

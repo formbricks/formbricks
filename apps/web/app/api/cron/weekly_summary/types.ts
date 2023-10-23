@@ -1,7 +1,6 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
-import { TUserNotificationSettings } from "@formbricks/types/v1/users";
-import { SurveyStatus } from "@prisma/client";
+import { TResponseData } from "@formbricks/types/responses";
+import { TSurveyQuestion, TSurveyStatus } from "@formbricks/types/surveys";
+import { TUserNotificationSettings } from "@formbricks/types/users";
 
 export interface Insights {
   totalCompletedResponses: number;
@@ -19,7 +18,7 @@ export interface Survey {
   id: string;
   name: string;
   responses: SurveyResponse[];
-  responsesCount: number;
+  responseCount: number;
   status: string;
 }
 
@@ -50,7 +49,7 @@ type SurveyData = {
   id: string;
   name: string;
   questions: TSurveyQuestion[];
-  status: SurveyStatus;
+  status: TSurveyStatus;
   responses: ResponseData[];
   displays: DisplayData[];
 };

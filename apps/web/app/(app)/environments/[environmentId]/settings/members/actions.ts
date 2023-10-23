@@ -2,7 +2,7 @@
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { createInviteToken } from "@formbricks/lib/jwt";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
 import {
   deleteInvite,
   getInvite,
@@ -18,8 +18,8 @@ import {
   updateMembership,
 } from "@formbricks/lib/membership/service";
 import { deleteTeam, updateTeam } from "@formbricks/lib/team/service";
-import { TInviteUpdateInput } from "@formbricks/types/v1/invites";
-import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
+import { TInviteUpdateInput } from "@formbricks/types/invites";
+import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/memberships";
 import { getServerSession } from "next-auth";
 import { hasTeamAccess, hasTeamAuthority, hasTeamOwnership, isOwner } from "@formbricks/lib/auth";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";

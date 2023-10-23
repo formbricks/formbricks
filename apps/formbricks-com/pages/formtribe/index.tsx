@@ -1,8 +1,8 @@
-import LayoutLight from "@/pages/formtribe/LayoutLight";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import Head from "next/head";
 import Image from "next/image";
+import LayoutTribe from "./LayoutTribe";
 
 import Dhru from "@/images/formtribe/dhru.jpeg";
 import Jojo from "@/images/formtribe/jojo.jpeg";
@@ -269,12 +269,12 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "1600",
+    points: "2450",
     link: "https://github.com/gupta-piyush19",
   },
   {
     name: "Suman",
-    points: "700",
+    points: "1000",
   },
   {
     name: "Subhdeep",
@@ -302,7 +302,7 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "1400",
+    points: "2250",
     link: "https://github.com/KapadiaNaitik",
   },
   {
@@ -343,7 +343,7 @@ const Leaderboard = [
   },
   {
     name: "Nafees Nazik",
-    points: "100",
+    points: "600",
   },
   {
     name: "monk",
@@ -359,12 +359,12 @@ const Leaderboard = [
   },
   {
     name: "Aditya Deshlahre",
-    points: "1120",
+    points: "1320",
     link: "https://github.com/adityadeshlahre",
   },
   {
     name: "Rutam",
-    points: "955",
+    points: "1105",
   },
   {
     name: "Sagnik Sahoo",
@@ -388,11 +388,11 @@ const Leaderboard = [
   },
   {
     name: "Rohit Mondal",
-    points: "155",
+    points: "205",
   },
   {
     name: "noobcoder",
-    points: "250",
+    points: "650",
   },
   {
     name: "Rayyan Alam (Rayy)",
@@ -412,7 +412,7 @@ const Leaderboard = [
   },
   {
     name: "Anjaneya Gupta",
-    points: "650",
+    points: "1150",
   },
   {
     name: "Sachin Kuber",
@@ -432,16 +432,12 @@ const Leaderboard = [
   },
   {
     name: "yatharth",
-    points: "600",
+    points: "650",
   },
   {
     name: "Ratish Jain",
-    points: "150",
+    points: "300",
     link: "https://github.com/ratishjain12",
-  },
-  {
-    name: "yatharth",
-    points: "600",
   },
   {
     name: "Subham Raj",
@@ -449,16 +445,16 @@ const Leaderboard = [
   },
   {
     name: "Abhinav Arya",
-    points: "300",
+    points: "850",
     link: "github.com/itzabhinavarya",
   },
   {
     name: "Yash Nirmal",
-    points: "100",
+    points: "200",
   },
   {
     name: "Rohan Gupta",
-    points: "1150",
+    points: "1300",
     link: "https://github.com/rohan9896",
   },
   {
@@ -468,7 +464,7 @@ const Leaderboard = [
   },
   {
     name: "Eduardo Noronha",
-    points: "100",
+    points: "200",
   },
   {
     name: "Joyal",
@@ -497,19 +493,15 @@ const Leaderboard = [
   },
   {
     name: "bitnagar",
-    points: "100",
-  },
-  {
-    name: "bitnagar",
-    points: "400",
+    points: "150",
   },
   {
     name: "United1l",
-    points: "250",
+    points: "350",
   },
   {
     name: "Arya Bhosale",
-    points: "200",
+    points: "300",
   },
   {
     name: "Bhavya",
@@ -517,7 +509,139 @@ const Leaderboard = [
   },
   {
     name: "Bilal Mirza",
+    points: "1025",
+  },
+  {
+    name: "Asharan2511",
+    points: "50",
+  },
+  {
+    name: "bhimanshu",
+    points: "50",
+  },
+  {
+    name: "Digvijay Gupta",
+    points: "300",
+  },
+  {
+    name: "hercules_2401",
+    points: "100",
+  },
+  {
+    name: "iampolska742",
+    points: "50",
+  },
+  {
+    name: "Jonas Hoebenreich",
+    points: "100",
+  },
+  {
+    name: "Markson",
+    points: "100",
+  },
+  {
+    name: "Mohd Zama",
+    points: "50",
+  },
+  {
+    name: "Moheyt",
+    points: "400",
+  },
+  {
+    name: "ortin779",
+    points: "125",
+  },
+  {
+    name: "Piyush Garg",
     points: "150",
+  },
+  {
+    name: "Sachin Mittal",
+    points: "100",
+  },
+  {
+    name: "Sha1kh4",
+    points: "50",
+  },
+  {
+    name: "Soham Tembhurne",
+    points: "50",
+  },
+  {
+    name: "Sundaram2021",
+    points: "50",
+  },
+  {
+    name: "tarunclub",
+    points: "50",
+  },
+  {
+    name: "thevinitgupta",
+    points: "50",
+  },
+  {
+    name: "Vishal Khoje",
+    points: "100",
+  },
+  {
+    name: "Aadish1233",
+    points: "50",
+  },
+  {
+    name: "aashish",
+    points: "650",
+  },
+  {
+    name: "AliYar-Khan",
+    points: "50",
+  },
+  {
+    name: "Hanan Mehmood",
+    points: "50",
+  },
+  {
+    name: "Janumala Akhilendra",
+    points: "50",
+  },
+  {
+    name: "Nilanjan Pramanik",
+    points: "50",
+  },
+  {
+    name: "Vedant-Z",
+    points: "200",
+  },
+  {
+    name: "Vineetjk",
+    points: "50",
+  },
+  {
+    name: "Hemanth Wasthere",
+    points: "100",
+  },
+  {
+    name: "Ola",
+    points: "550",
+  },
+  {
+    name: "Olalaye Blessing",
+    points: "50",
+  },
+  {
+    name: "Raju Gangitla",
+    points: "100",
+  },
+  {
+    name: "Ronit Panda",
+    points: "750",
+  },
+  {
+    name: "Shyam Raghu",
+    points: "300",
+  },
+  {
+    name: "Vikas Patil",
+    points: "100",
   },
 ];
 
@@ -527,7 +651,7 @@ export default function FormTribeHackathon() {
     document.documentElement.classList.remove("dark");
   }, []);
   return (
-    <LayoutLight
+    <LayoutTribe
       title="FormTribe Hackathon"
       description="Can we ship an Open Source Typeform alternative in 30 days?">
       <Head>
@@ -568,7 +692,7 @@ export default function FormTribeHackathon() {
         {/* Right Column: Headline + Ordered List */}
         <div className="flex items-center justify-center sm:pl-12 md:w-1/2">
           <div className="space-y-5">
-            <h1 className="font-kablammo text-3xl font-bold text-slate-800">In a nutshell</h1>
+            <h1 className="font-kablammo text-3xl text-slate-800">In a nutshell</h1>
             <ol className="list-inside list-decimal space-y-3 text-slate-700">
               <li>
                 <strong>As a community,</strong> we will ship all link survey features for a Typeform like
@@ -787,9 +911,7 @@ export default function FormTribeHackathon() {
 
       {/* Side Quests */}
       <div className="mt-16" id="side-quests">
-        <h3 className="font-kablammo my-4 text-4xl font-bold text-slate-800">
-          🏰 Side Quests: Increase your chances
-        </h3>
+        <h3 className="font-kablammo my-4 text-4xl text-slate-800">🏰 Side Quests: Increase your chances</h3>
         <p className="w-3/4 text-slate-600">
           While code contributions are what gives the most points, everyone gets to bump up their chance of
           winning. Here is a list of side quests you can complete:
@@ -924,7 +1046,7 @@ export default function FormTribeHackathon() {
 
       {/* FAQ */}
       <div className="mt-32" id="faq">
-        <h3 className="font-kablammo my-4 text-4xl font-bold text-slate-800">FAQ</h3>
+        <h3 className="font-kablammo my-4 text-4xl text-slate-800">FAQ</h3>
         <p className="w-3/4 text-slate-600">Anything unclear?</p>
         <div className="mt-8">
           {FAQ.map((question) => (
@@ -942,18 +1064,19 @@ export default function FormTribeHackathon() {
       </Button>
       {/* Breaker 3 */}
       <Breaker icon="👋" title="Join the Tribe!" />
-    </LayoutLight>
+    </LayoutTribe>
   );
 }
 
 const SectionHeading = ({ title, subTitle, description, id }) => {
   return (
     <div id={id} className="lg:pt-18 mt-32 px-4 pb-12 text-center sm:px-6 lg:px-8 ">
-      <p className=" text-[3rem] text-slate-500">{subTitle}</p>
-      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-6xl text-transparent">
+      <p className="pb-4 text-xl text-slate-500 lg:text-[3rem]">{subTitle}</p>
+      <h1 className="font-kablammo mb-8 mt-4 bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] bg-clip-text text-4xl text-transparent lg:text-6xl">
         {title}
       </h1>
-      <p className="mx-auto mt-4 text-slate-700 sm:w-3/4">{description}</p>
+      <p className="mx-auto mt-4 text-base text-slate-700 sm:w-3/4">{description}</p>{" "}
+      {/* Reduced text size for description */}
     </div>
   );
 };

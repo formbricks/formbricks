@@ -1,11 +1,24 @@
 "use client";
 
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-export default function UpdateQuestionId({ localSurvey, question, questionIdx, updateQuestion }) {
+interface UpdateQuestionIdProps {
+  localSurvey: TSurvey;
+  question: TSurveyQuestion;
+  questionIdx: number;
+  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+}
+
+export default function UpdateQuestionId({
+  localSurvey,
+  question,
+  questionIdx,
+  updateQuestion,
+}: UpdateQuestionIdProps) {
   const [currentValue, setCurrentValue] = useState(question.id);
   const [prevValue, setPrevValue] = useState(question.id);
   const [isInputInvalid, setIsInputInvalid] = useState(
@@ -44,7 +57,15 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           id="questionId"
           name="questionId"
           value={currentValue}
-          onChange={(e) => setCurrentValue(e.target.value)}
+          onChange={(e) => {
+            setCurrentValue(e.target.value);
+            localSurvey.hiddenFields?.fieldIds?.forEach((field) => {
+              if (field === e.target.value) {
+                setIsInputInvalid(true);
+                toast.error("QuestionID can't be equal to hidden fields");
+              }
+            });
+          }}
           onBlur={saveAction}
           disabled={!(localSurvey.status === "draft" || question.isDraft)}
           className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
