@@ -8,6 +8,12 @@ import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
 import { unstable_cache } from "next/cache";
 
+// Helper function to calculate difference in days between two dates
+const diffInDays = (date1: Date, date2: Date) => {
+  const diffTime = Math.abs(date2.getTime() - date1.getTime());
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+};
+
 export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
   unstable_cache(
     async () => {
@@ -90,29 +96,16 @@ export const getSyncSurveys = async (
   // filter surveys that meet the recontactDays criteria
   surveys = potentialSurveysWithAttributes.filter((survey) => {
     if (!latestDisplay) {
-      // no display yet - always display
       return true;
     } else if (survey.recontactDays !== null) {
-      // if recontactDays is set on survey, use that
       const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
       if (!lastDisplaySurvey) {
-        // no display yet - always display
         return true;
       }
-      const lastDisplayDate = new Date(lastDisplaySurvey.createdAt);
-      const currentDate = new Date();
-      const diffTime = Math.abs(currentDate.getTime() - lastDisplayDate.getTime());
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays >= survey.recontactDays;
+      return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
     } else if (product.recontactDays !== null) {
-      // if recontactDays is not set in survey, use product recontactDays
-      const lastDisplayDate = new Date(latestDisplay.createdAt);
-      const currentDate = new Date();
-      const diffTime = Math.abs(currentDate.getTime() - lastDisplayDate.getTime());
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays >= product.recontactDays;
+      return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
     } else {
-      // if recontactDays is not set in survey or product, always display
       return true;
     }
   });
