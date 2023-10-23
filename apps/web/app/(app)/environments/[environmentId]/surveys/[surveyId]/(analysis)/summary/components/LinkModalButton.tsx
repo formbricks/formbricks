@@ -25,7 +25,6 @@ export default function LinkSurveyShareButton({
   profile,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
-  const isSingleUse = survey.singleUse?.enabled ?? false;
 
   return (
     <>
@@ -40,7 +39,7 @@ export default function LinkSurveyShareButton({
         }}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {showLinkModal && isSingleUse && (
+      {showLinkModal && (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}

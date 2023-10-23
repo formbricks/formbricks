@@ -1,7 +1,10 @@
-import { PutObjectCommand, S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createPresignedPost, PresignedPostOptions } from "@aws-sdk/s3-presigned-post";
 import { access, mkdir, writeFile, readFile } from "fs/promises";
 import mime from "mime";
 import { env } from "@/env.mjs";
+import { MAX_SIZES } from "../constants";
 
 // global variables
 
@@ -39,23 +42,16 @@ type TGetFileResponse = {
   };
 };
 
-export const getFileFromS3 = async (fileKey: string): Promise<TGetFileResponse> => {
+export const getFileFromS3 = async (fileKey: string) => {
   const getObjectCommand = new GetObjectCommand({
     Bucket: AWS_BUCKET_NAME,
     Key: fileKey,
   });
 
   try {
-    const data = await s3Client.send(getObjectCommand);
-    const byteArray = await data.Body?.transformToByteArray();
-    const buffer = Buffer.from(byteArray as Uint8Array);
+    const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 });
 
-    return {
-      fileBuffer: buffer,
-      metaData: {
-        contentType: data.ContentType ?? "",
-      },
-    };
+    return signedUrl;
   } catch (err) {
     throw err;
   }
@@ -83,39 +79,33 @@ export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFil
   }
 };
 
-export const putFileToS3 = async (
+export const getSignedUrlForS3Upload = async (
   fileName: string,
   contentType: string,
-  fileBuffer: Buffer,
   accessType: string,
   environmentId: string,
-  isPublic: boolean = false
+  isPublic: boolean,
+  plan: "free" | "pro" = "free"
 ) => {
+  const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
+  const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
+
   try {
-    const buffer = Buffer.from(fileBuffer);
-
-    if (isPublic) {
-      //check the size of buffer and if it is greater than 10MB, return error
-
-      const bufferBytes = buffer.byteLength;
-      const bufferKB = bufferBytes / 1024;
-
-      if (bufferKB > 10240) {
-        const err = new Error("File size is greater than 10MB");
-        err.name = "FileTooLargeError";
-
-        throw err;
-      }
-    }
-
-    const putObjectCommand = new PutObjectCommand({
+    // @ts-ignore
+    const { fields, url } = await createPresignedPost(s3Client, {
+      Expires: 10 * 60, // 10 minutes
       Bucket: AWS_BUCKET_NAME,
       Key: `${environmentId}/${accessType}/${fileName}`,
-      Body: buffer,
-      ContentType: contentType,
+      Fields: {
+        "Content-Type": contentType,
+      },
+      Conditions: postConditions,
     });
 
-    await s3Client.send(putObjectCommand);
+    return {
+      signedUrl: url,
+      presignedFields: fields,
+    };
   } catch (err) {
     throw err;
   }
@@ -127,7 +117,8 @@ export const putFileToLocalStorage = async (
   accessType: string,
   environmentId: string,
   rootDir: string,
-  isPublic: boolean = false
+  isPublic: boolean = false,
+  plan: "free" | "pro" = "free"
 ) => {
   try {
     await ensureDirectoryExists(`${rootDir}/${environmentId}/${accessType}`);
@@ -135,19 +126,15 @@ export const putFileToLocalStorage = async (
     const uploadPath = `${rootDir}/${environmentId}/${accessType}/${fileName}`;
 
     const buffer = Buffer.from(fileBuffer);
+    const bufferBytes = buffer.byteLength;
 
-    if (isPublic) {
-      //check the size of buffer and if it is greater than 10MB, return error
+    const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
 
-      const bufferBytes = buffer.byteLength;
-      const bufferKB = bufferBytes / 1024;
+    if (bufferBytes > maxSize) {
+      const err = new Error(`File size exceeds the ${maxSize / (1024 * 1024)} MB limit`);
+      err.name = "FileTooLargeError";
 
-      if (bufferKB > 10240) {
-        const err = new Error("File size is greater than 10MB");
-        err.name = "FileTooLargeError";
-
-        throw err;
-      }
+      throw err;
     }
 
     await writeFile(uploadPath, buffer);
