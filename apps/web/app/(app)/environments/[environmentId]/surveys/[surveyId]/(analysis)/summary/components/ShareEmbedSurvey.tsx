@@ -86,11 +86,11 @@ export default function ShareEmbedSurvey({
             </div>
           </div>
           <div className="flex w-full grow flex-col gap-6 bg-gray-50 px-4 py-6 lg:p-6">
-            <div className="flex h-full overflow-y-scroll lg:h-[590px] lg:overflow-y-visible">
+            <div className="flex h-full overflow-y-auto lg:h-[590px] lg:overflow-y-visible">
               {componentMap[activeId]}
             </div>
             <div className="mx-auto flex max-w-max rounded-md bg-slate-100 p-1 lg:hidden">
-              {tabs.slice(0, 2).map((tab) => (
+              {tabs.slice(0, tabs.length).map((tab) => (
                 <Button
                   variant="minimal"
                   key={tab.id}
