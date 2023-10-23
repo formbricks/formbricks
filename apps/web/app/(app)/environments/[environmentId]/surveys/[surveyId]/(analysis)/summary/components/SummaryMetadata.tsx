@@ -1,7 +1,7 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { Button } from "@formbricks/ui/Button";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
@@ -102,7 +102,7 @@ export default function SummaryMetadata({
             value={
               validTtcResponseCount === 0 ? <span>-</span> : `${formatTime(ttcTemp, validTtcResponseCount)}`
             }
-            tooltipText="Average time to complete a survey."
+            tooltipText="Average time to complete the survey."
           />
         </div>
         <div className="flex flex-col justify-between gap-2 lg:col-span-1">
