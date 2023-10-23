@@ -58,6 +58,17 @@ export default function Loading() {
       ),
     },
     {
+      title: "Public Support Email",
+      description: "Add an email we share with respondents who couldn't submit feedback.",
+      skeleton: (
+        <div className="flex flex-col p-4">
+          <Skeleton className="mb-2 h-5 w-32" />
+          <Skeleton className="mb-4 h-12 w-96 rounded-lg" />
+          <Skeleton className="h-12 w-36 rounded-lg" />
+        </div>
+      ),
+    },
+    {
       title: "Delete account",
       description: "Delete your account with all of your personal information and data.",
       skeleton: (
