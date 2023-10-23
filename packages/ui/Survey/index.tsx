@@ -1,6 +1,6 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
-import { TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { useEffect, useMemo } from "react";
 
 const createContainerId = () => `formbricks-survey-container`;

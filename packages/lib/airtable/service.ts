@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
@@ -11,7 +11,7 @@ import {
   ZIntegrationAirtableTables,
   ZIntegrationAirtableTablesWithFields,
   ZIntegrationAirtableTokenSchema,
-} from "@formbricks/types/v1/integration/airtable";
+} from "@formbricks/types/integration/airtable";
 import { Prisma } from "@prisma/client";
 import { AIR_TABLE_CLIENT_ID } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";

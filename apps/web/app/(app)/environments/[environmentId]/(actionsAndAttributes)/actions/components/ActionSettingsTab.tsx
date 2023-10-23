@@ -1,7 +1,7 @@
 "use client";
 
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import type { NoCodeConfig } from "@formbricks/types/events";
+import { TNoCodeConfig } from "@formbricks/types/actionClasses";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -11,7 +11,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "../lib/testURLmatch";
-import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
+import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
@@ -79,7 +79,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
       if (data.name === "") throw new Error("Please give your action a name");
       if (!isPageUrl && !isCssSelector && !isInnerHtml) throw new Error("Please select atleast one selector");
 
-      const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
+      const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
       const updatedData: TActionClassInput = {
         ...data,
         environmentId,

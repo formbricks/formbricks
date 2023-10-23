@@ -2,7 +2,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getTables } from "@formbricks/lib/airtable/service";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
-import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";

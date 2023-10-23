@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { updateDisplay } from "@formbricks/lib/display/service";
-import { TDisplayInput, ZDisplayUpdate } from "@formbricks/types/v1/displays";
+import { TDisplayInput, ZDisplayUpdate } from "@formbricks/types/displays";
 import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 

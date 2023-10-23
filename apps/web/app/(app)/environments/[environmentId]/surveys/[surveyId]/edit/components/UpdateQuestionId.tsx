@@ -1,6 +1,6 @@
 "use client";
 
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";

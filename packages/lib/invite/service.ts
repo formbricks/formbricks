@@ -10,9 +10,9 @@ import {
   ZInviteUpdateInput,
   ZCurrentUser,
   TCurrentUser,
-} from "@formbricks/types/v1/invites";
-import { ResourceNotFoundError, ValidationError, DatabaseError } from "@formbricks/types/v1/errors";
-import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+} from "@formbricks/types/invites";
+import { ResourceNotFoundError, ValidationError, DatabaseError } from "@formbricks/types/errors";
+import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { sendInviteMemberEmail } from "../emails/emails";
 import { validateInputs } from "../utils/validate";
 import { ITEMS_PER_PAGE } from "../constants";
