@@ -80,7 +80,6 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   const formBody = Object.keys(formData)
     .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(formData[key])}`)
     .join("&");
-
   const tokenReq = await fetch("https://airtable.com/oauth2/v1/token", {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -89,10 +88,9 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
     method: "POST",
   });
 
-  const tokenRes: unknown = await tokenReq.json();
-
+  const tokenRes: TIntegrationAirtableCredential = await tokenReq.json();
+  console.log(tokenRes);
   const parsedToken = ZIntegrationAirtableTokenSchema.safeParse(tokenRes);
-
   if (!parsedToken.success) {
     throw new Error("invalid token format");
     return;
