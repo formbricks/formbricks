@@ -64,3 +64,8 @@ export const ITEMS_PER_PAGE = 50;
 
 // Storage constants
 export const UPLOADS_DIR = path.resolve("./uploads");
+export const MAX_SIZES = {
+  public: 1024 * 1024 * 10, // 10MB
+  free: 1024 * 1024 * 10, // 10MB
+  pro: 1024 * 1024 * 1024, // 1GB
+} as const;
