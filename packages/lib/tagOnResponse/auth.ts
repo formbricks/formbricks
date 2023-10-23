@@ -2,7 +2,7 @@ import "server-only";
 
 import { validateInputs } from "../utils/validate";
 import { unstable_cache } from "next/cache";
-import { ZId } from "@formbricks/types/v1/environment";
+import { ZId } from "@formbricks/types/environment";
 import { canUserAccessResponse } from "../response/auth";
 import { canUserAccessTag } from "../tag/auth";
 import { getTagOnResponseCacheTag } from "./service";

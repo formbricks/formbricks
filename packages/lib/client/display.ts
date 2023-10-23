@@ -1,4 +1,4 @@
-import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
+import { TDisplay, TDisplayInput } from "@formbricks/types/displays";
 
 export const createDisplay = async (
   displayCreateRequest: TDisplayInput,

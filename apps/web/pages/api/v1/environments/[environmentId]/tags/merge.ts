@@ -1,6 +1,6 @@
 import { hasEnvironmentAccess, getSessionUser } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TTag } from "@formbricks/types/tags";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {

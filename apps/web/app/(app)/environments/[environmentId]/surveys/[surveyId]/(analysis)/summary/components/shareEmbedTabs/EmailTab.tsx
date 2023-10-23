@@ -3,9 +3,9 @@
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { QuestionType } from "@formbricks/types/questions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { AuthenticationError } from "@formbricks/types/v1/errors";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { sendEmailAction } from "../../actions";
 import CodeBlock from "@formbricks/ui/CodeBlock";
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
@@ -61,8 +61,7 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
 
   return (
     <div className="flex h-full grow flex-col gap-5">
-      <div className="flex items-center gap-4">
-        <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+      <div className="flex items-center justify-end gap-4">
         {showEmbed ? (
           <Button
             variant="darkCTA"
@@ -77,15 +76,18 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
             Copy code
           </Button>
         ) : (
-          <Button
-            variant="secondary"
-            title="send preview email"
-            aria-label="send preview email"
-            onClick={sendPreviewEmail}
-            EndIcon={EnvelopeIcon}
-            className="shrink-0">
-            Send Preview
-          </Button>
+          <>
+            <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+            <Button
+              variant="secondary"
+              title="send preview email"
+              aria-label="send preview email"
+              onClick={sendPreviewEmail}
+              EndIcon={EnvelopeIcon}
+              className="shrink-0">
+              Send Preview
+            </Button>
+          </>
         )}
         <Button
           variant="darkCTA"
@@ -182,7 +184,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
   } else {
     const firstQuestion = survey.questions[0];
     switch (firstQuestion.type) {
-      case QuestionType.OpenText:
+      case TSurveyQuestionType.OpenText:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
             <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
@@ -195,7 +197,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             <EmailFooter />
           </EmailTemplateWrapper>
         );
-      case QuestionType.Consent:
+      case TSurveyQuestionType.Consent:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
             <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
@@ -228,7 +230,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             <EmailFooter />
           </EmailTemplateWrapper>
         );
-      case QuestionType.NPS:
+      case TSurveyQuestionType.NPS:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
             <Section>
@@ -277,7 +279,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             </Section>
           </EmailTemplateWrapper>
         );
-      case QuestionType.CTA:
+      case TSurveyQuestionType.CTA:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
             <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
@@ -307,7 +309,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             <EmailFooter />
           </EmailTemplateWrapper>
         );
-      case QuestionType.Rating:
+      case TSurveyQuestionType.Rating:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
             <Section>
@@ -363,7 +365,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             </Section>
           </EmailTemplateWrapper>
         );
-      case QuestionType.MultipleChoiceMulti:
+      case TSurveyQuestionType.MultipleChoiceMulti:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
             <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
@@ -384,7 +386,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
             <EmailFooter />
           </EmailTemplateWrapper>
         );
-      case QuestionType.MultipleChoiceSingle:
+      case TSurveyQuestionType.MultipleChoiceSingle:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
             <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">

@@ -150,6 +150,11 @@ const nextConfig = {
         destination: "/docs/self-hosting/migration-guide",
         permanent: true,
       },
+        source: "/cla",
+        destination: "https://formbricks.com/clmyhzfrymr4ko00hycsg1tvx",
+        permanent: true,
+      },
+      
     ];
   },
   async rewrites() {

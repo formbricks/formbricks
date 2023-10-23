@@ -22,23 +22,23 @@ x-nextauth-url: &nextauth_url http://localhost:3000
 # You can use: `openssl rand -hex 16` to generate one
 x-encryption-key: &encryption_key 1b3d888592454d23b520040950654669
 
-# Necessary if email verification and password reset are enabled.
-# See further below if you want to disable these features.
 x-mail-from: &mail_from
 x-smtp-host: &smtp_host
-x-smtp-port: &smtp_port
-# Enable SMTP_SECURE_ENABLED for TLS (port 465)
+x-smtp-port: &smtp_port # Enable SMTP_SECURE_ENABLED for TLS (port 465)
+
+
 x-smtp-secure-enabled: &smtp_secure_enabled
 x-smtp-user: &smtp_user
-x-smtp-password: &smtp_password
+x-smtp-password: &smtp_password # Set the below value to your public-facing URL, e.g., https://example.com
 
-# Set the below value to your public-facing URL, e.g., https://example.com
+
 x-survey-base-url: &survey_base_url http://localhost:3000/s
 
 # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
-x-short-survey-base-url: &short_survey_base_url 
+x-short-survey-base-url:
+  &short_survey_base_url # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
 
-# Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
+
 x-email-verification-disabled: &email_verification_disabled 1
 
 # Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
@@ -53,29 +53,29 @@ x-invite-disabled: &invite_disabled 0
 # Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.
 x-privacy-url: &privacy_url
 x-terms-url: &terms_url
-x-imprint-url: &imprint_url
+x-imprint-url: &imprint_url # Configure Github Login
 
 
-# Configure Github Login
 x-github-auth-enabled: &github_auth_enabled 0
 x-github-id: &github_id
-x-github-secret: &github_secret
+x-github-secret: &github_secret # Configure Google Login
 
-# Configure Google Login
+
 x-google-auth-enabled: &google_auth_enabled 0
 x-google-client-id: &google_client_id
-x-google-client-secret: &google_client_secret
+x-google-client-secret: &google_client_secret # Disable Sentry warning
 
-# Disable Sentry warning
-x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error
 
-# Enable Sentry Error Tracking
-x-next-public-sentry-dsn: &next_public_sentry_dsn
+x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Enable Sentry Error Tracking
 
-# Cron Secret
-x-cron-secret: &cron_secret
 
-# Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+x-next-public-sentry-dsn: &next_public_sentry_dsn # Cron Secret
+
+
+x-cron-secret:
+  &cron_secret # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+
+
 x-asset-prefix-url: &asset_prefix_url
 
 services:
@@ -95,7 +95,7 @@ services:
       args:
         DATABASE_URL: *database_url
         NEXTAUTH_SECRET: *nextauth_secret
-    
+
     depends_on:
       - postgres
     ports:

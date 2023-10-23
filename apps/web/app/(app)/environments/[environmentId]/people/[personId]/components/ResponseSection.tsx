@@ -2,9 +2,9 @@ import ResponseTimeline from "@/app/(app)/environments/[environmentId]/people/[p
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import { getServerSession } from "next-auth";
 
 export default async function ResponseSection({

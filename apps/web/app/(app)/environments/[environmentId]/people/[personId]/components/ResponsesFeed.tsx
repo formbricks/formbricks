@@ -1,9 +1,9 @@
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
 export default async function ResponseFeed({

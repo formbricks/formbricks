@@ -1,4 +1,4 @@
-import type { AttributeFilter } from "@formbricks/types/surveys";
+import { TSurveyAttributeFilter } from "@formbricks/types/surveys";
 import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { Prisma as prismaClient } from "@prisma/client/";
@@ -152,10 +152,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       delete body.triggers;
     }
 
-    const attributeFilters: AttributeFilter[] = body.attributeFilters;
+    const attributeFilters: TSurveyAttributeFilter[] = body.attributeFilters;
 
     if (attributeFilters) {
-      const newFilters: AttributeFilter[] = [];
+      const newFilters: TSurveyAttributeFilter[] = [];
       const removedFilterIds: string[] = [];
       // find added attribute filters
       for (const attributeFilter of attributeFilters) {

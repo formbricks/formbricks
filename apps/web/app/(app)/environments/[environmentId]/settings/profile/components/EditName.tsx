@@ -6,7 +6,7 @@ import { Label } from "@formbricks/ui/Label";
 import { useForm, SubmitHandler } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateProfileAction } from "../actions";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProfile } from "@formbricks/types/profile";
 
 type FormData = {
   name: string;
@@ -25,6 +25,7 @@ export function EditName({ profile }: { profile: TProfile }) {
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
+      data.name = data.name.trim();
       if (!isNotEmptySpaces(data.name)) {
         toast.error("Please enter at least one character");
         return;
@@ -33,7 +34,7 @@ export function EditName({ profile }: { profile: TProfile }) {
         toast.success("This is already your name");
         return;
       }
-      await updateProfileAction(data);
+      await updateProfileAction({ name: data.name });
       toast.success("Your name was updated successfully");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

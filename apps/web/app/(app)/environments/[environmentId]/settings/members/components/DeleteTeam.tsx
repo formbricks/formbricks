@@ -2,7 +2,7 @@
 
 import { deleteTeamAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { useRouter } from "next/navigation";
