@@ -1,7 +1,7 @@
 import { capitalizeFirstLetter } from "@/app/lib/utils";
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TWebhook } from "@formbricks/types/v1/webhooks";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TWebhook } from "@formbricks/types/webhooks";
 import { Badge } from "@formbricks/ui/Badge";
 
 const renderSelectedSurveysText = (webhook: TWebhook, allSurveys: TSurvey[]) => {

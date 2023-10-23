@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   constructor(resource: string, id: string) {
@@ -84,6 +86,8 @@ type NetworkError = {
   status: number;
   url: URL;
 };
+
+export const ZErrorHandler = z.function().args(z.any()).returns(z.void());
 
 export {
   ResourceNotFoundError,
