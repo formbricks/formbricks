@@ -503,8 +503,8 @@ export const templates: TTemplate[] = [
           headline: "How do you like {{productName}}?",
           required: true,
           subheader: "",
-          lowerLabel: "",
-          upperLabel: "",
+          lowerLabel: "Not good",
+          upperLabel: "Very satisfied",
         },
         {
           id: createId(),
