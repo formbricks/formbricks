@@ -118,6 +118,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         },
       });
+
+      personCache.revalidate({
+        id: person.id,
+        environmentId: person.environmentId,
+      });
     }
 
     personCache.revalidate({
