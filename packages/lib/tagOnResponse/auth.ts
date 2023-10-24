@@ -25,6 +25,6 @@ export const canUserAccessTagOnResponse = async (
     [`users-${userId}-tagOnResponse-${tagId}-${responseId}`],
     {
       revalidate: SERVICES_REVALIDATION_INTERVAL,
-      tags: [tagOnResponseCache.tag.byResponseIdAndId(responseId, tagId)],
+      tags: [tagOnResponseCache.tag.byResponseIdAndTagId(responseId, tagId)],
     }
   )();

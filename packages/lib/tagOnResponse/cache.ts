@@ -1,23 +1,23 @@
 import { revalidateTag } from "next/cache";
 
 interface RevalidateProps {
-  id?: string;
+  tagId?: string;
   responseId?: string;
   functionName?: string;
 }
 
 export const tagOnResponseCache = {
   tag: {
-    byResponseIdAndId(responseId: string, id: string) {
-      return `responses-${responseId}-tagOnResponses-${id}`;
+    byResponseIdAndTagId(responseId: string, tagId: string) {
+      return `responses-${responseId}-tagOnResponses-${tagId}`;
     },
     byFunctionName(functionName: string) {
       return `tagOnResponses-${functionName}`;
     },
   },
-  revalidate({ id, responseId, functionName }: RevalidateProps): void {
-    if (responseId && id) {
-      revalidateTag(this.tag.byResponseIdAndId(responseId, id));
+  revalidate({ tagId, responseId, functionName }: RevalidateProps): void {
+    if (responseId && tagId) {
+      revalidateTag(this.tag.byResponseIdAndTagId(responseId, tagId));
     }
 
     if (functionName) {
