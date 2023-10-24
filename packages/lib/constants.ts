@@ -2,7 +2,6 @@ import "server-only";
 import path from "path";
 import { env } from "@/env.mjs";
 
-export const RESPONSES_LIMIT_FREE = 100;
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
