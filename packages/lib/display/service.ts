@@ -277,7 +277,7 @@ export const getDisplayCountBySurveyId = async (surveyId: string): Promise<numbe
       validateInputs([surveyId, ZId]);
 
       try {
-        const displayCount = await prisma.response.count({
+        const displayCount = await prisma.display.count({
           where: {
             surveyId: surveyId,
           },
