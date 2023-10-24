@@ -11,6 +11,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/s3-presigned-post": "^3.431.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
