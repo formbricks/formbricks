@@ -25,6 +25,7 @@ import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { PictureSelectionResponse } from "../PictureSelectionResponse";
+import useFindUserMembershipRole from "@formbricks/lib/hooks/membership/useFindUserMembershipRole";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -74,6 +75,7 @@ export default function SingleResponseCard({
   const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
+  const [membershipRole] = useFindUserMembershipRole(environmentId);
 
   function isValidValue(value: any) {
     return (
@@ -340,12 +342,14 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        <ResponseTagsWrapper
-          environmentId={environmentId}
-          responseId={response.id}
-          tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-          environmentTags={environmentTags}
-        />
+        {membershipRole !== "viewer" && (
+          <ResponseTagsWrapper
+            environmentId={environmentId}
+            responseId={response.id}
+            tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+            environmentTags={environmentTags}
+          />
+        )}
 
         <DeleteDialog
           open={deleteDialogOpen}

@@ -31,6 +31,8 @@ export default async function SettingsLayout({ children, params }) {
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const isPricingDisabled =
     currentUserMembership?.role !== "owner" ? currentUserMembership?.role !== "admin" : false;
+  const isAPIKeySettingDisabled = currentUserMembership?.role === "viewer";
+  const isTagSettingDisabled = currentUserMembership?.role === "viewer";
 
   return (
     <>
@@ -41,6 +43,8 @@ export default async function SettingsLayout({ children, params }) {
           team={team}
           product={product}
           isPricingDisabled={isPricingDisabled}
+          isAPIKeySettingDisabled={isAPIKeySettingDisabled}
+          isTagSettingDisabled={isTagSettingDisabled}
         />
         <div className="w-full md:ml-64">
           <div className="max-w-4xl px-6 pb-6 pt-14 md:pt-6">

@@ -30,12 +30,16 @@ export default function SettingsNavbar({
   team,
   product,
   isPricingDisabled,
+  isAPIKeySettingDisabled,
+  isTagSettingDisabled,
 }: {
   environmentId: string;
   isFormbricksCloud: boolean;
   team: TTeam;
   product: TProduct;
   isPricingDisabled: boolean;
+  isAPIKeySettingDisabled: boolean;
+  isTagSettingDisabled: boolean;
 }) {
   const pathname = usePathname();
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
@@ -97,14 +101,14 @@ export default function SettingsNavbar({
             href: `/environments/${environmentId}/settings/api-keys`,
             icon: KeyIcon,
             current: pathname?.includes("/api-keys"),
-            hidden: false,
+            hidden: isAPIKeySettingDisabled,
           },
           {
             name: "Tags",
             href: `/environments/${environmentId}/settings/tags`,
             icon: HashtagIcon,
             current: pathname?.includes("/tags"),
-            hidden: false,
+            hidden: isTagSettingDisabled,
           },
         ],
       },
