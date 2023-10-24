@@ -1,6 +1,6 @@
 import "server-only";
 
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 
 export const formatAttributeClassDateFields = (attributeClass: TAttributeClass): TAttributeClass => {
   if (typeof attributeClass.createdAt === "string") {

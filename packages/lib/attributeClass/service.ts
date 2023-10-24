@@ -8,13 +8,13 @@ import {
   ZAttributeClassUpdateInput,
   TAttributeClassType,
   ZAttributeClassType,
-} from "@formbricks/types/v1/attributeClasses";
-import { ZId } from "@formbricks/types/v1/environment";
+} from "@formbricks/types/attributeClasses";
+import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { attributeClassCache } from "./cache";
 import { formatAttributeClassDateFields } from "./util";
 

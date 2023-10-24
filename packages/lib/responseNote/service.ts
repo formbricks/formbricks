@@ -7,8 +7,8 @@ import { TResponseNote } from "@formbricks/types/responses";
 import { Prisma } from "@prisma/client";
 import { responseCache } from "../response/cache";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
-import { ZString } from "@formbricks/types/v1/common";
+import { ZId } from "@formbricks/types/environment";
+import { ZString } from "@formbricks/types/common";
 
 const select = {
   id: true,
