@@ -20,7 +20,7 @@ interface QuestionConditionalProps {
   isLastQuestion: boolean;
   brandColor: string;
   autoFocus?: boolean;
-  environmentId: string;
+  surveyId?: string;
 }
 
 export default function QuestionConditional({
@@ -33,7 +33,7 @@ export default function QuestionConditional({
   isLastQuestion,
   brandColor,
   autoFocus = true,
-  environmentId,
+  surveyId,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.FileUpload ? (
     <FileUploadQuestion
@@ -45,8 +45,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
-      autoFocus={autoFocus}
-      environmentId={environmentId}
+      surveyId={surveyId}
     />
   ) : question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion

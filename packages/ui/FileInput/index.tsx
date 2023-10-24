@@ -61,7 +61,7 @@ const FileInput: React.FC<FileInputProps> = ({
 
   const handleFileUpload = async (params: {
     file: File;
-    allowedFileExtensions: string[];
+    allowedFileExtensions: string[] | undefined;
     environmentId: string | undefined;
   }) => {
     setIsUploaded(false);

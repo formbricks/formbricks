@@ -119,7 +119,6 @@ export function Survey({
     setQuestionId(prevQuestionId);
     onActiveQuestionChange(prevQuestionId);
   };
-
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
@@ -161,7 +160,7 @@ export function Survey({
                       }
                       isLastQuestion={idx === survey.questions.length - 1}
                       brandColor={brandColor}
-                      environmentId={survey.environmentId}
+                      surveyId={survey.id}
                     />
                   )
               )

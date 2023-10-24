@@ -25,7 +25,7 @@ export const ZSurveyWelcomeCard = z.object({
   html: z.string().optional(),
   fileUrl: z.string().optional(),
   buttonLabel: z.string().optional(),
-  timeToFinish: z.boolean().default(false),
+  timeToFinish: z.boolean(),
 });
 
 export const ZSurveyHiddenFields = z.object({
@@ -203,10 +203,10 @@ const ZSurveyQuestionBase = z.object({
 
 export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.FileUpload),
-  allowMultipleFile: z.boolean().default(false),
-  limitSize: z.boolean().default(false),
+  allowMultipleFile: z.boolean(),
+  limitSize: z.boolean(),
   maxSize: z.number().optional().default(0),
-  limitFileType: z.boolean().default(false),
+  limitFileType: z.boolean(),
   allowedFileTypes: z.array(z.string()).optional(),
   logic: z.array(ZSurveyFileUploadLogic).optional(),
 });

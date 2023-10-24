@@ -27,6 +27,8 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Take file inputs from user",
     icon: ArrowUpTrayIcon,
     preset: {
+      headline: "Upload File",
+      subheader: "Let's Upload!",
       allowMultipleFile: false,
       limitSize: false,
       limitFileType: false,

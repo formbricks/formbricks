@@ -1271,6 +1271,16 @@ export const templates: TTemplate[] = [
           buttonUrl: "https://app.formbricks.com/auth/signup",
           buttonExternal: true,
         },
+        {
+          id: createId(),
+          type: TSurveyQuestionType.FileUpload,
+          headline: "Upload file",
+          required: false,
+          allowMultipleFile: false,
+          limitFileType: false,
+          maxSize: 10,
+          limitSize: false,
+        },
       ],
       thankYouCard: thankYouCardDefault,
       welcomeCard: {

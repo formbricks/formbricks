@@ -1,4 +1,4 @@
-import { TSurveyFileUploadQuestion, TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurveyFileUploadQuestion, TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";

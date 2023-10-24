@@ -25,6 +25,7 @@ import toast from "react-hot-toast";
 import { isLight } from "@/app/lib/utils";
 import { CornerDownLeft } from "lucide-react";
 import Image from "next/image";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -182,6 +183,25 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
   } else {
     const firstQuestion = survey.questions[0];
     switch (firstQuestion.type) {
+      case TSurveyQuestionType.FileUpload:
+        return (
+          <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+            <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+              {firstQuestion.headline}
+            </Text>
+            <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
+              {firstQuestion.subheader}
+            </Text>
+            <div className="mt-4 flex h-52 w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 pb-6 pt-5">
+              <ArrowUpTrayIcon className="h-6 text-slate-500" />
+              <p className={cn("mt-2 text-sm text-slate-500")}>
+                <span className="font-semibold">Click or drag to upload files.</span>
+              </p>
+            </div>
+
+            <EmailFooter />
+          </EmailTemplateWrapper>
+        );
       case TSurveyQuestionType.OpenText:
         return (
           <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
