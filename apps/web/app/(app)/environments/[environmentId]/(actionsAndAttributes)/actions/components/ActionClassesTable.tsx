@@ -6,6 +6,7 @@ import { useState } from "react";
 import AddNoCodeActionModal from "./AddNoCodeActionModal";
 import ActionDetailModal from "./ActionDetailModal";
 import { TActionClass } from "@formbricks/types/actionClasses";
+import useFindUserMembershipRole from "@formbricks/lib/hooks/membership/useFindUserMembershipRole";
 
 export default function ActionClassesTable({
   environmentId,
@@ -18,6 +19,7 @@ export default function ActionClassesTable({
 }) {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
+  const [membershipRole] = useFindUserMembershipRole(environmentId);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>({
     environmentId,
@@ -38,16 +40,18 @@ export default function ActionClassesTable({
 
   return (
     <>
-      <div className="mb-6 text-right">
-        <Button
-          variant="darkCTA"
-          onClick={() => {
-            setAddActionModalOpen(true);
-          }}>
-          <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
-          Add Action
-        </Button>
-      </div>
+      {membershipRole !== "viewer" && (
+        <div className="mb-6 text-right">
+          <Button
+            variant="darkCTA"
+            onClick={() => {
+              setAddActionModalOpen(true);
+            }}>
+            <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+            Add Action
+          </Button>
+        </div>
+      )}
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
         <div className="grid-cols-7">
