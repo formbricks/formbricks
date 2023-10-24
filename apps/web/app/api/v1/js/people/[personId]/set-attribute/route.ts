@@ -2,6 +2,7 @@ import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/attributeClass/service";
+import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
 import { ZJsPeopleAttributeInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
@@ -49,6 +50,11 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     updatePersonAttribute(personId, attributeClass.id, value);
 
     const state = await getUpdatedState(environmentId, personId, sessionId);
+
+    personCache.revalidate({
+      id: state.person.id,
+      environmentId,
+    });
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

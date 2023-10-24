@@ -2,7 +2,6 @@ import "server-only";
 import path from "path";
 import { env } from "@/env.mjs";
 
-export const RESPONSES_LIMIT_FREE = 100;
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
@@ -61,6 +60,8 @@ export const MAIL_FROM = env.MAIL_FROM;
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
+export const RESPONSES_PER_PAGE = 10;
+export const OPEN_TEXT_RESPONSES_PER_PAGE = 5;
 
 // Storage constants
 export const UPLOADS_DIR = path.resolve("./uploads");

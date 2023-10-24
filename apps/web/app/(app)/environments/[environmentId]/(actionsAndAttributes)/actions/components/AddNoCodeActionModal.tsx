@@ -22,6 +22,19 @@ interface AddNoCodeActionModalProps {
   setActionClassArray?;
 }
 
+function isValidCssSelector(selector?: string) {
+  if (!selector || selector.length === 0) {
+    return false;
+  }
+  const element = document.createElement("div");
+  try {
+    element.querySelector(selector);
+  } catch (err) {
+    return false;
+  }
+  return true;
+}
+
 export default function AddNoCodeActionModal({
   environmentId,
   open,
@@ -65,16 +78,21 @@ export default function AddNoCodeActionModal({
   };
 
   const submitEventClass = async (data: Partial<TActionClassInput>): Promise<void> => {
+    const { noCodeConfig } = data;
     try {
       setIsCreatingAction(true);
       if (data.name === "") throw new Error("Please give your action a name");
       if (!isPageUrl && !isCssSelector && !isInnerHtml) throw new Error("Please select atleast one selector");
 
-      if (isPageUrl && data.noCodeConfig?.pageUrl?.rule === undefined) {
+      if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value)) {
+        throw new Error("Please enter a valid CSS Selector");
+      }
+
+      if (isPageUrl && noCodeConfig?.pageUrl?.rule === undefined) {
         throw new Error("Please select a rule for page URL");
       }
 
-      const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
+      const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
       const updatedData: TActionClassInput = {
         ...data,
         environmentId,
