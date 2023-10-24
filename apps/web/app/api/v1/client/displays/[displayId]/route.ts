@@ -30,6 +30,7 @@ export async function PUT(
     const display = await updateDisplay(displayId, inputValidation.data);
     return responses.successResponse(display, true);
   } catch (error) {
+    console.error(error);
     return responses.internalServerErrorResponse(error.message, true);
   }
 }
