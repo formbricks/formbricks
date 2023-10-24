@@ -28,8 +28,6 @@ export async function POST(): Promise<NextResponse> {
     const batchedProducts = await Promise.all(batchedProductsPromises);
     for (const products of batchedProducts) {
       for (const product of products) {
-        // The same logic to process products and send emails
-
         const teamMembers = product.team.memberships;
         const teamMembersWithNotificationEnabled = teamMembers.filter(
           (member) =>
