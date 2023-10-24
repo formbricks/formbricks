@@ -58,7 +58,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const key = await fetchAirtableAuthToken(formData);
-
+    if (!key) {
+      return NextResponse.json({ Error: "Failed to fetch Airtable auth token" }, { status: 500 });
+    }
     const email = await getEmail(key.access_token);
 
     await connectAirtable({

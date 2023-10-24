@@ -2,7 +2,14 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
-import { TDisplay, TDisplayInput, TDisplaysWithSurveyName, ZDisplayInput } from "@formbricks/types/displays";
+import {
+  TDisplay,
+  TDisplayCreateInput,
+  TDisplayUpdateInput,
+  TDisplaysWithSurveyName,
+  ZDisplayCreateInput,
+  ZDisplayUpdateInput,
+} from "@formbricks/types/displays";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
@@ -42,9 +49,9 @@ const selectDisplay = {
 
 export const updateDisplay = async (
   displayId: string,
-  displayInput: Partial<TDisplayInput>
+  displayInput: Partial<TDisplayUpdateInput>
 ): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayInput.partial()]);
+  validateInputs([displayInput, ZDisplayUpdateInput.partial()]);
   try {
     const displayPrisma = await prisma.display.update({
       where: {
@@ -74,9 +81,8 @@ export const updateDisplay = async (
   }
 };
 
-export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayInput]);
-
+export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayCreateInput]);
   try {
     const displayPrisma = await prisma.display.create({
       data: {
@@ -159,10 +165,10 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
   }
 };
 
-export const getDisplaysOfPerson = async (
+export const getDisplaysByPersonId = async (
   personId: string,
   page?: number
-): Promise<TDisplaysWithSurveyName[] | null> => {
+): Promise<TDisplaysWithSurveyName[]> => {
   const displays = await unstable_cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
@@ -187,6 +193,9 @@ export const getDisplaysOfPerson = async (
           },
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            createdAt: "desc",
+          },
         });
 
         if (!displaysPrisma) {
@@ -217,7 +226,7 @@ export const getDisplaysOfPerson = async (
         throw error;
       }
     },
-    [`getDisplaysOfPerson-${personId}-${page}`],
+    [`getDisplaysByPersonId-${personId}-${page}`],
     {
       tags: [displayCache.tag.byPersonId(personId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -268,7 +277,7 @@ export const getDisplayCountBySurveyId = async (surveyId: string): Promise<numbe
       validateInputs([surveyId, ZId]);
 
       try {
-        const displayCount = await prisma.response.count({
+        const displayCount = await prisma.display.count({
           where: {
             surveyId: surveyId,
           },

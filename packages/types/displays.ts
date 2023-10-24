@@ -13,17 +13,19 @@ export const ZDisplay = z.object({
 
 export type TDisplay = z.infer<typeof ZDisplay>;
 
-export const ZDisplayInput = z.object({
+export const ZDisplayCreateInput = z.object({
   surveyId: z.string().cuid2(),
   personId: z.string().cuid2().optional(),
   responseId: z.string().cuid2().optional(),
 });
 
-export const ZDisplayUpdate = z.object({
+export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
+
+export const ZDisplayUpdateInput = z.object({
   responseId: z.string().cuid2().optional(),
 });
 
-export type TDisplayInput = z.infer<typeof ZDisplayInput>;
+export type TDisplayUpdateInput = z.infer<typeof ZDisplayUpdateInput>;
 
 export const ZDisplaysWithSurveyName = ZDisplay.extend({
   surveyName: z.string(),
