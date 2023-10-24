@@ -5,6 +5,7 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { getActionClasses } from "../actionClass/service";
@@ -63,6 +64,10 @@ export const selectSurvey = {
       value: true,
     },
   },
+};
+
+const getActionClassIdFromTrigger = (actionClasses: TActionClass[], trigger: string): string => {
+  return actionClasses.find((actionClass) => actionClass.name === trigger)!.id;
 };
 
 export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
@@ -283,12 +288,13 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       if (currentSurvey.triggers.find((t) => t === trigger)) {
         continue;
       } else {
-        const actionClassId: string = actionClasses.find((actionClass) => actionClass.name === trigger)!.id;
+        const actionClassId: string = getActionClassIdFromTrigger(actionClasses, trigger);
 
         // Revalidate new actionClasseId
         surveyCache.revalidate({
           actionClassId,
         });
+
         newTriggers.push(trigger);
       }
     }
@@ -297,7 +303,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       if (triggers.find((t: any) => t === trigger)) {
         continue;
       } else {
-        const actionClassId: string = actionClasses.find((actionClass) => actionClass.name === trigger)!.id;
+        const actionClassId: string = getActionClassIdFromTrigger(actionClasses, trigger);
 
         // Revalidate deleted actionClasseId
         surveyCache.revalidate({
@@ -311,7 +317,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         create: newTriggers.map((trigger) => ({
-          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
+          eventClassId: getActionClassIdFromTrigger(actionClasses, trigger),
         })),
       };
     }
@@ -321,9 +327,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         ...(data.triggers || []),
         deleteMany: {
           eventClassId: {
-            in: removedTriggers.map(
-              (trigger) => actionClasses.find((actionClass) => actionClass.name === trigger)!.id
-            ),
+            in: removedTriggers.map((trigger) => getActionClassIdFromTrigger(actionClasses, trigger)),
           },
         },
       };
@@ -460,6 +464,19 @@ export async function deleteSurvey(surveyId: string) {
     environmentId: deletedSurvey.environmentId,
   });
 
+  // Revalidate triggers by actionClassId
+  deletedSurvey.triggers.forEach((trigger) => {
+    surveyCache.revalidate({
+      actionClassId: trigger.eventClass.id,
+    });
+  });
+  // Revalidate surveys by attributeClassId
+  deletedSurvey.attributeFilters.forEach((attributeFilter) => {
+    surveyCache.revalidate({
+      attributeClassId: attributeFilter.attributeClassId,
+    });
+  });
+
   return deletedSurvey;
 }
 
@@ -508,6 +525,14 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
   }
 
   const actionClasses = await getActionClasses(environmentId);
+  const newTriggers = existingSurvey.triggers.map((trigger) => ({
+    eventClassId: getActionClassIdFromTrigger(actionClasses, trigger),
+  }));
+  const newAttributeFilters = existingSurvey.attributeFilters.map((attributeFilter) => ({
+    attributeClassId: attributeFilter.attributeClassId,
+    condition: attributeFilter.condition,
+    value: attributeFilter.value,
+  }));
 
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
@@ -520,16 +545,10 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
-        create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
-        })),
+        create: newTriggers,
       },
       attributeFilters: {
-        create: existingSurvey.attributeFilters.map((attributeFilter) => ({
-          attributeClassId: attributeFilter.attributeClassId,
-          condition: attributeFilter.condition,
-          value: attributeFilter.value,
-        })),
+        create: newAttributeFilters,
       },
       environment: {
         connect: {
@@ -554,6 +573,20 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
   surveyCache.revalidate({
     id: newSurvey.id,
     environmentId: newSurvey.environmentId,
+  });
+
+  // Revalidate surveys by actionClassId
+  newTriggers.forEach((trigger) => {
+    surveyCache.revalidate({
+      actionClassId: trigger.eventClassId,
+    });
+  });
+
+  // Revalidate surveys by attributeClassId
+  newAttributeFilters.forEach((attributeFilter) => {
+    surveyCache.revalidate({
+      attributeClassId: attributeFilter.attributeClassId,
+    });
   });
 
   return newSurvey;
