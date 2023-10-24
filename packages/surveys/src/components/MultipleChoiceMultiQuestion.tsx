@@ -110,6 +110,7 @@ export default function MultipleChoiceSingleQuestion({
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
         onChange({ [question.id]: newValue });
+        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
       }}
       className="w-full">
       {question.imageUrl && (
