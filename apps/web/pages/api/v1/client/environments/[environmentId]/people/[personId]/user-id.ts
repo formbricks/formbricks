@@ -1,5 +1,7 @@
 import { getSettings } from "@/app/lib/api/clientSettings";
 import { prisma } from "@formbricks/database";
+import { personCache } from "@formbricks/lib/person/cache";
+import { deletePerson } from "@formbricks/lib/person/service";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -76,11 +78,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
 
       // delete old person
-      await prisma.person.delete({
-        where: {
-          id: personId,
-        },
-      });
+      await deletePerson(personId);
       person = existingPerson;
     } else {
       // update person
@@ -121,6 +119,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
     }
+
+    personCache.revalidate({
+      id: person.id,
+      environmentId: person.environmentId,
+    });
 
     const settings = await getSettings(environmentId, person.id);
 
