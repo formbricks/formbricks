@@ -15,6 +15,7 @@
     "@formbricks/api": "*",
     "@aws-sdk/client-s3": "^3.429.0",
     "@aws-sdk/s3-request-presigner": "^3.429.0",
+    "mime": "3.0.0",
     "@formbricks/database": "*",
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "@types/jsonwebtoken": "^9.0.3",
+    "@types/mime": "3.0.3",
     "eslint-config-formbricks": "workspace:*"
   }
 }
