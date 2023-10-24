@@ -2,7 +2,6 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { responseCache } from "@formbricks/lib/response/cache";
-import { updateResponse } from "@formbricks/lib/response/service";
 import { TPerson } from "@formbricks/types/people";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponse } from "@formbricks/types/responses";

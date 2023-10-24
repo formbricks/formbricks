@@ -93,6 +93,11 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
         },
         select: selectPerson,
       });
+
+      personCache.revalidate({
+        id: returnedPerson.id,
+        environmentId: returnedPerson.environmentId,
+      });
     }
 
     const transformedPerson = transformPrismaPerson(returnedPerson);

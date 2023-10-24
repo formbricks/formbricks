@@ -14,7 +14,6 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { responseCache } from "../response/cache";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 import { formatDisplaysDateFields } from "./util";
@@ -200,10 +199,6 @@ export const deleteDisplayByResponseId = async (responseId: string, surveyId: st
       id: display.id,
       personId: display.personId,
       surveyId,
-    });
-
-    responseCache.revalidate({
-      responseId,
     });
 
     return display;
