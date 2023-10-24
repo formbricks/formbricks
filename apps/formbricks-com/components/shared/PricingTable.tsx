@@ -31,6 +31,11 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
                   Addon
                 </span>
               )}
+              {feature.comingSoon && (
+                <span className=" mx-2 bg-blue-100 p-1 text-xs text-slate-400 dark:bg-slate-700 dark:text-teal-500">
+                  coming soon
+                </span>
+              )}
             </div>
             <div className="flex w-1/3 items-center justify-center text-center text-sm text-slate-800 dark:text-slate-100">
               {feature.addOnText ? (
