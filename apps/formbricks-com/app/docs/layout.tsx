@@ -4,14 +4,7 @@ import { Providers } from "@/app/providers";
 import { Layout } from "@/components/docs/Layout";
 
 import { type Section } from "@/components/docs/SectionProvider";
-import { type Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: {
-    template: "Formbricks – Open Source Experience Management",
-    default: "Formbricks Docs",
-  },
-};
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let pages = await glob("**/*.mdx", { cwd: "app/docs" });
