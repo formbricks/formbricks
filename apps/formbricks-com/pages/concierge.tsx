@@ -56,21 +56,21 @@ const ConciergePage = () => {
         subheading="Let's set up your system for continuous user discovery together."
       />
       <div className="-mt-16 grid grid-cols-1 space-y-4 px-4 md:gap-8 md:px-16 lg:grid-cols-2">
-        <div className="rounded-xl bg-slate-100 p-12">
+        <div className="rounded-xl border bg-slate-100 p-12 dark:border-slate-600 dark:bg-slate-800">
           {XMOffer.map((offer) => (
             <div key={offer.step} className="mb-8 flex items-center gap-x-4">
-              <div className=" flex items-center justify-center rounded-full bg-emerald-50 p-4 text-2xl font-bold text-emerald-700">
+              <div className=" flex items-center justify-center rounded-full border bg-emerald-50 p-4 text-2xl font-bold text-emerald-700 dark:border-slate-600 dark:bg-slate-900">
                 {offer.step}
               </div>
               <div>
-                <h4 className="font-semibold text-slate-700">{offer.header}</h4>
-                <p className="text-sm text-slate-800">{offer.description}</p>
+                <h4 className="font-semibold text-slate-700 dark:text-slate-300">{offer.header}</h4>
+                <p className="text-sm text-slate-800 dark:text-slate-400">{offer.description}</p>
               </div>
             </div>
           ))}
           <div className="px-6">
             <Button
-              className="w-full justify-center bg-gray-800 text-gray-300 hover:text-white"
+              className="w-full justify-center bg-gray-800 text-gray-300 hover:text-white dark:bg-slate-700"
               href="https://cal.com/johannes/kick-off"
               target="_blank">
               Schedule free Kick-Off call
