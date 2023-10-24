@@ -9,15 +9,18 @@ import { TTemplate } from "@formbricks/types/templates";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { TProfile } from "@formbricks/types/profile";
 
 export default function SurveyStarter({
   environmentId,
   environment,
   product,
+  profile,
 }: {
   environmentId: string;
   environment: TEnvironment;
   product: TProduct;
+  profile: TProfile;
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
@@ -56,6 +59,7 @@ export default function SurveyStarter({
             }}
             environment={environment}
             product={product}
+            profile={profile}
           />
         </>
       )}
