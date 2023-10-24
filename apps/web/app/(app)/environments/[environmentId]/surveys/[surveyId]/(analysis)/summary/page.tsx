@@ -4,7 +4,11 @@ import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import {
+  OPEN_TEXT_RESPONSES_PER_PAGE,
+  REVALIDATION_INTERVAL,
+  SURVEY_BASE_URL,
+} from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
@@ -50,6 +54,7 @@ export default async function Page({ params }) {
         profile={profile}
         environmentTags={tags}
         displayCount={displayCount}
+        openTextResponsesPerPage={OPEN_TEXT_RESPONSES_PER_PAGE}
       />
     </>
   );
