@@ -5,6 +5,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
+import { responses } from "@/app/lib/api/response";
 
 async function getEmail(token: string) {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
