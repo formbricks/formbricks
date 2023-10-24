@@ -283,6 +283,12 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       if (currentSurvey.triggers.find((t) => t === trigger)) {
         continue;
       } else {
+        const actionClassId: string = actionClasses.find((actionClass) => actionClass.name === trigger)!.id;
+
+        // Revalidate new actionClasseId
+        surveyCache.revalidate({
+          actionClassId,
+        });
         newTriggers.push(trigger);
       }
     }
@@ -291,6 +297,12 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       if (triggers.find((t: any) => t === trigger)) {
         continue;
       } else {
+        const actionClassId: string = actionClasses.find((actionClass) => actionClass.name === trigger)!.id;
+
+        // Revalidate deleted actionClasseId
+        surveyCache.revalidate({
+          actionClassId,
+        });
         removedTriggers.push(trigger);
       }
     }
@@ -326,6 +338,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       if (!attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
         continue;
       }
+
       if (
         currentSurvey.attributeFilters.find(
           (f) =>
@@ -336,6 +349,11 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       ) {
         continue;
       } else {
+        // Revalidation for newly added attributeClassId
+        surveyCache.revalidate({
+          attributeClassId: attributeFilter.attributeClassId,
+        });
+
         newFilters.push({
           attributeClassId: attributeFilter.attributeClassId,
           condition: attributeFilter.condition,
@@ -355,9 +373,15 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       ) {
         continue;
       } else {
+        // Revalidation for deleted attributeClassId in a survey
+        surveyCache.revalidate({
+          attributeClassId: attributeFilter.attributeClassId,
+        });
+
         removedFilterIds.push(attributeFilter.attributeClassId);
       }
     }
+
     // create new attribute filters
     if (newFilters.length > 0) {
       data.attributeFilters = {
@@ -369,7 +393,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         })),
       };
     }
-    // delete removed triggers
+    // delete removed attribute filter
     if (removedFilterIds.length > 0) {
       // delete all attribute filters that match the removed attribute classes
       await Promise.all(
