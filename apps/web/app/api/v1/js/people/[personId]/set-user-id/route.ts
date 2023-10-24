@@ -2,9 +2,9 @@ import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { prisma } from "@formbricks/database";
+import { personCache } from "@formbricks/lib/person/cache";
 import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/person/service";
 import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -92,12 +92,12 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const transformedPerson = transformPrismaPerson(returnedPerson);
 
-    if (transformedPerson) {
-      // revalidate person
-      revalidateTag(transformedPerson.id);
-    }
-
     const state = await getUpdatedState(environmentId, transformedPerson.id, sessionId);
+
+    personCache.revalidate({
+      id: transformedPerson.id,
+      environmentId: environmentId,
+    });
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
