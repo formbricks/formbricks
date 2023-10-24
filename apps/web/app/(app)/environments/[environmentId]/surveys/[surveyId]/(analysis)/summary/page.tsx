@@ -1,15 +1,18 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import ResponsesLimitReachedBanner from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/ResponsesLimitReachedBanner";
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import {
+  OPEN_TEXT_RESPONSES_PER_PAGE,
+  REVALIDATION_INTERVAL,
+  SURVEY_BASE_URL,
+} from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProfile } from "@formbricks/lib/profile/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
-import { getProfile } from "@formbricks/lib/profile/service";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -39,7 +42,6 @@ export default async function Page({ params }) {
 
   return (
     <>
-      <ResponsesLimitReachedBanner environmentId={params.environmentId} surveyId={params.surveyId} />
       <SummaryPage
         environment={environment}
         responses={responses}
@@ -50,6 +52,7 @@ export default async function Page({ params }) {
         profile={profile}
         environmentTags={tags}
         displayCount={displayCount}
+        openTextResponsesPerPage={OPEN_TEXT_RESPONSES_PER_PAGE}
       />
     </>
   );

@@ -12,6 +12,7 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
   "dependencies": {
+    "@formbricks/api": "*",
     "@aws-sdk/client-s3": "^3.429.0",
     "@aws-sdk/s3-request-presigner": "^3.429.0",
     "mime": "3.0.0",
