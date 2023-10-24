@@ -34,8 +34,12 @@ export function Survey({
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
+      setQuestionId(survey?.questions[0]?.id);
+      return;
+    }
     setQuestionId(activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id));
-  }, [activeQuestionId, survey.questions]);
+  }, [activeQuestionId, survey.questions, survey.welcomeCard.enabled]);
 
   useEffect(() => {
     // scroll to top when question changes
@@ -51,13 +55,12 @@ export function Survey({
       onSubmit(prefillResponseData, true);
     }
   }, []);
+  let currIdx = currentQuestionIndex;
+  let currQues = currentQuestion;
   function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
-    
-    let currIdx = currentQuestionIndex;
-    let currQues = currentQuestion;
-    
+
     if (questionId === "start") {
       if (!isFromPrefilling) {
         return questions[0]?.id || "end";
@@ -65,7 +68,7 @@ export function Survey({
         currIdx = 0;
         currQues = questions[0];
       }
-
+    }
     if (currIdx === -1) throw new Error("Question not found");
 
     if (currQues?.logic && currQues?.logic.length > 0) {
@@ -157,11 +160,11 @@ export function Survey({
             isLastQuestion={currQues.id === survey.questions[survey.questions.length - 1].id}
             brandColor={brandColor}
           />
-         )
         )
-      }
+      );
     }
-  
+  }
+
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
