@@ -36,7 +36,7 @@ export const getEnvironment = (environmentId: string) =>
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 

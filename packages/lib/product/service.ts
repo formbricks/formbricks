@@ -84,7 +84,7 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
         return productPrisma;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
         throw error;
