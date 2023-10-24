@@ -432,9 +432,6 @@ importers:
 
   packages/api:
     devDependencies:
-      '@formbricks/lib':
-        specifier: workspace:*
-        version: link:../lib
       '@formbricks/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -611,6 +608,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.429.0
         version: 3.429.0
+      '@formbricks/api':
+        specifier: '*'
+        version: link:../api
       '@formbricks/database':
         specifier: '*'
         version: link:../database
