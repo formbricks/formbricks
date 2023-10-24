@@ -1,6 +1,6 @@
-import { TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
-import { TIntegrationConfig } from "@formbricks/types/v1/integrations";
-import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/v1/responses";
+import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TIntegrationConfig } from "@formbricks/types/integration";
+import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/responses";
 import {
   TSurveyWelcomeCard,
   TSurveyClosedMessage,
@@ -10,8 +10,8 @@ import {
   TSurveySingleUse,
   TSurveyThankYouCard,
   TSurveyVerifyEmail,
-} from "@formbricks/types/v1/surveys";
-import { TUserNotificationSettings } from "@formbricks/types/v1/users";
+} from "@formbricks/types/surveys";
+import { TUserNotificationSettings } from "@formbricks/types/users";
 
 declare global {
   namespace PrismaJson {

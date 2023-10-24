@@ -5,14 +5,14 @@ import type {
   TEnvironment,
   TEnvironmentCreateInput,
   TEnvironmentUpdateInput,
-} from "@formbricks/types/v1/environment";
+} from "@formbricks/types/environment";
 import {
   ZEnvironment,
   ZEnvironmentCreateInput,
   ZEnvironmentUpdateInput,
   ZId,
-} from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
+} from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import "server-only";

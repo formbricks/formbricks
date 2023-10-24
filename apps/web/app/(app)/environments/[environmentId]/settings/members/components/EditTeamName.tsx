@@ -1,7 +1,7 @@
 "use client";
 
 import { updateTeamNameAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -44,6 +44,7 @@ export default function EditTeamName({ team }: TEditTeamNameProps) {
 
   const handleUpdateTeamName: SubmitHandler<TEditTeamNameForm> = async (data) => {
     try {
+      data.name = data.name.trim();
       setIsUpdatingTeam(true);
       await updateTeamNameAction(team.id, data.name);
 

@@ -1,11 +1,11 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { TActivityFeedItem } from "@formbricks/types/activity";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
+import { ZId } from "@formbricks/types/environment";
 import { unstable_cache } from "next/cache";
-import { ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { personCache } from "../person/cache";
 import { formatActivityFeedItemDateFields } from "./util";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";

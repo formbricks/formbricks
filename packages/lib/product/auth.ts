@@ -1,4 +1,4 @@
-import { ZId } from "@formbricks/types/v1/environment";
+import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
 import { getProduct } from "./service";
 import { unstable_cache } from "next/cache";

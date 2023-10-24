@@ -1,4 +1,4 @@
-import { getSurveysCached } from "@/app/api/v1/js/sync/lib/surveys";
+import { getSyncSurveysCached } from "@/app/api/v1/js/sync/lib/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -6,10 +6,10 @@ import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbrick
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { createSession, extendSession, getSessionCached } from "@formbricks/lib/session/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TJsState } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TSession } from "@formbricks/types/v1/sessions";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TJsState } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
+import { TSession } from "@formbricks/types/sessions";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
@@ -100,7 +100,7 @@ export const getUpdatedState = async (
 
   // get/create rest of the state
   const [surveys, noCodeActionClasses, product] = await Promise.all([
-    getSurveysCached(environmentId, person),
+    getSyncSurveysCached(environmentId, person),
     getActionClasses(environmentId),
     getProductByEnvironmentId(environmentId),
   ]);

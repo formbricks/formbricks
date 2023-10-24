@@ -1,15 +1,15 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TMembership } from "@formbricks/types/v1/memberships";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TMembership } from "@formbricks/types/memberships";
 import {
   TProfile,
   TProfileCreateInput,
   TProfileUpdateInput,
   ZProfileUpdateInput,
-} from "@formbricks/types/v1/profile";
+} from "@formbricks/types/profile";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
@@ -28,6 +28,7 @@ const responseSelection = {
   onboardingCompleted: true,
   twoFactorEnabled: true,
   identityProvider: true,
+  objective: true,
 };
 
 // function to retrive basic information about a user's profile

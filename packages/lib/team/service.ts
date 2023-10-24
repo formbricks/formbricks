@@ -1,13 +1,13 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/v1/teams";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "../environment/cache";
 import { teamCache } from "./cache";

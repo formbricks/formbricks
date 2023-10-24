@@ -2,11 +2,11 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { ZId } from "@formbricks/types/v1/environment";
-import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/v1/integrations";
+import { DatabaseError } from "@formbricks/types/errors";
+import { ZId } from "@formbricks/types/environment";
+import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
 import { validateInputs } from "../utils/validate";
-import { ZString, ZOptionalNumber } from "@formbricks/types/v1/common";
+import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { integrationCache } from "./cache";
 import { unstable_cache } from "next/cache";

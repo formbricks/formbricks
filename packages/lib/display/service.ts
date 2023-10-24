@@ -1,15 +1,10 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
-import {
-  TDisplay,
-  TDisplayInput,
-  TDisplaysWithSurveyName,
-  ZDisplayInput,
-} from "@formbricks/types/v1/displays";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { ZOptionalNumber } from "@formbricks/types/common";
+import { TDisplay, TDisplayInput, TDisplaysWithSurveyName, ZDisplayInput } from "@formbricks/types/displays";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -164,10 +159,10 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
   }
 };
 
-export const getDisplaysOfPerson = async (
+export const getDisplaysByPersonId = async (
   personId: string,
   page?: number
-): Promise<TDisplaysWithSurveyName[] | null> => {
+): Promise<TDisplaysWithSurveyName[]> => {
   const displays = await unstable_cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
@@ -192,6 +187,9 @@ export const getDisplaysOfPerson = async (
           },
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            createdAt: "desc",
+          },
         });
 
         if (!displaysPrisma) {
@@ -222,7 +220,7 @@ export const getDisplaysOfPerson = async (
         throw error;
       }
     },
-    [`getDisplaysOfPerson-${personId}-${page}`],
+    [`getDisplaysByPersonId-${personId}-${page}`],
     {
       tags: [displayCache.tag.byPersonId(personId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

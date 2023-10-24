@@ -1,4 +1,4 @@
-import { TInvite } from "@formbricks/types/v1/invites";
+import { TInvite } from "@formbricks/types/invites";
 
 export function capitalizeFirstLetter(string: string | null = "") {
   if (string === null) {
@@ -27,13 +27,6 @@ export const truncateMiddle = (str: string, length: number) => {
   return str;
 };
 
-export const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
-};
-
 export function isLight(color) {
   let r, g, b;
   if (color.length === 4) {
@@ -47,33 +40,6 @@ export function isLight(color) {
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 }
-
-const shuffle = (array: any[]) => {
-  for (let i = 0; i < array.length; i++) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-};
-
-export const shuffleArray = (array: any[], shuffleOption: string | undefined) => {
-  const arrayCopy = [...array];
-  const otherIndex = arrayCopy.findIndex((element) => element.id === "other");
-  const otherElement = otherIndex !== -1 ? arrayCopy.splice(otherIndex, 1)[0] : null;
-
-  if (shuffleOption === "all") {
-    shuffle(arrayCopy);
-  } else if (shuffleOption === "exceptLast") {
-    const lastElement = arrayCopy.pop();
-    shuffle(arrayCopy);
-    arrayCopy.push(lastElement);
-  }
-
-  if (otherElement) {
-    arrayCopy.push(otherElement);
-  }
-
-  return arrayCopy;
-};
 
 export enum MEMBERSHIP_ROLES {
   OWNER = "owner",

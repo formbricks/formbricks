@@ -7,15 +7,16 @@ import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[s
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import { useEffect, useMemo, useState } from "react";
+import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
 
 interface SummaryPageProps {
   environment: TEnvironment;
@@ -27,6 +28,7 @@ interface SummaryPageProps {
   profile: TProfile;
   environmentTags: TTag[];
   displayCount: number;
+  openTextResponsesPerPage: number;
 }
 
 const SummaryPage = ({
@@ -39,8 +41,10 @@ const SummaryPage = ({
   profile,
   environmentTags,
   displayCount,
+  openTextResponsesPerPage,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -71,8 +75,20 @@ const SummaryPage = ({
         totalResponses={responses}
       />
       <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
-      <SummaryMetadata responses={filterResponses} survey={survey} displayCount={displayCount} />
-      <SummaryList responses={filterResponses} survey={survey} environment={environment} />
+      <SummaryMetadata
+        responses={filterResponses}
+        survey={survey}
+        displayCount={displayCount}
+        showDropOffs={showDropOffs}
+        setShowDropOffs={setShowDropOffs}
+      />
+      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
+      <SummaryList
+        responses={filterResponses}
+        survey={survey}
+        environment={environment}
+        openTextResponsesPerPage={openTextResponsesPerPage}
+      />
     </ContentWrapper>
   );
 };

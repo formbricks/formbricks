@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { NextResponse } from "next/server";
-import { TActionClass, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { TActionClass, ZActionClassInput } from "@formbricks/types/actionClasses";
 import { createActionClass, getActionClasses } from "@formbricks/lib/actionClass/service";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
