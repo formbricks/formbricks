@@ -10,14 +10,18 @@ import { updateProductAction } from "../actions";
 
 interface EditBrandColorProps {
   product: TProduct;
+  isBrandColorDisabled: boolean;
 }
 
-export function EditBrandColor({ product }: EditBrandColorProps) {
+export function EditBrandColor({ product, isBrandColorDisabled }: EditBrandColorProps) {
   const [color, setColor] = useState(product.brandColor);
   const [updatingColor, setUpdatingColor] = useState(false);
 
   const handleUpdateBrandColor = async () => {
     try {
+      if (isBrandColorDisabled) {
+        throw new Error("Only Owners, Admins and Editors can perform this action.");
+      }
       setUpdatingColor(true);
       let inputProduct: Partial<TProductUpdateInput> = {
         brandColor: color,
@@ -31,7 +35,7 @@ export function EditBrandColor({ product }: EditBrandColorProps) {
     }
   };
 
-  return (
+  return !isBrandColorDisabled ? (
     <div className="w-full max-w-sm items-center">
       <Label htmlFor="brandcolor">Color (HEX)</Label>
       <ColorPicker color={color} onChange={setColor} />
@@ -39,5 +43,7 @@ export function EditBrandColor({ product }: EditBrandColorProps) {
         Save
       </Button>
     </div>
+  ) : (
+    <p className="text-sm text-red-700">Only Owners, Admins and Editors can perform this action.</p>
   );
 }

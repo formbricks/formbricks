@@ -9,26 +9,38 @@ import { EditBrandColor } from "./components/EditBrandColor";
 import { EditPlacement } from "./components/EditPlacement";
 import { EditHighlightBorder } from "./components/EditHighlightBorder";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getServerSession } from "next-auth";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const [team, product] = await Promise.all([
+  const [session, team, product] = await Promise.all([
+    getServerSession(authOptions),
     getTeamByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);
-  if (!team) {
-    throw new Error("Team not found");
-  }
+
   if (!product) {
     throw new Error("Product not found");
   }
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const isBrandColorEditDisabled =
+    currentUserMembership?.role === "developer" ? true : currentUserMembership?.role === "viewer";
   const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
 
   return (
     <div>
       <SettingsTitle title="Look & Feel" />
       <SettingsCard title="Brand Color" description="Match the surveys with your user interface.">
-        <EditBrandColor product={product} />
+        <EditBrandColor product={product} isBrandColorDisabled={isBrandColorEditDisabled} />
       </SettingsCard>
       <SettingsCard
         title="In-app Survey Placement"
