@@ -45,7 +45,7 @@ export async function PUT(
       return responses.badRequestResponse(error.message);
     }
     if (error instanceof DatabaseError) {
-      console.error(error.message);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -59,7 +59,7 @@ export async function PUT(
       return responses.badRequestResponse(error.message);
     }
     if (error instanceof DatabaseError) {
-      console.error(error.message);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }

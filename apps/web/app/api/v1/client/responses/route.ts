@@ -35,7 +35,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      console.error(error.message);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -62,7 +62,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      console.error(error.message);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
