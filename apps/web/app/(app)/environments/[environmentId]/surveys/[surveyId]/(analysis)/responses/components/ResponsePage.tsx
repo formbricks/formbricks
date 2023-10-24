@@ -24,6 +24,7 @@ interface ResponsePageProps {
   product: TProduct;
   profile: TProfile;
   environmentTags: TTag[];
+  responsesPerPage: number;
 }
 
 const ResponsePage = ({
@@ -35,6 +36,7 @@ const ResponsePage = ({
   product,
   profile,
   environmentTags,
+  responsesPerPage,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -74,6 +76,7 @@ const ResponsePage = ({
         survey={survey}
         profile={profile}
         environmentTags={environmentTags}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );

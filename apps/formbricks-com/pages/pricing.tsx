@@ -23,8 +23,9 @@ const inProductSurveys = {
     { name: "Third-Party Integrations", free: true, paid: true },
     { name: "Unlimited Team Members", free: true, paid: true },
     { name: "Unlimited Responses per Survey", free: true, paid: true },
-    { name: "Advanced User Targeting", free: false, paid: true },
-    { name: "Multi Language", free: false, paid: true },
+    { name: "Team Role Management", free: false, paid: true },
+    { name: "Advanced User Targeting", free: false, paid: true, comingSoon: true },
+    { name: "Multi Language Surveys", free: false, paid: true, comingSoon: true },
 
     {
       name: "Custom URL for Link Surveys",
