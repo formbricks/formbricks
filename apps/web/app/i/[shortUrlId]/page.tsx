@@ -17,7 +17,7 @@ export default async function ShortUrlPage({ params }) {
   try {
     shortUrl = await getShortUrl(params.shortUrlId);
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
   }
 
   if (shortUrl) {

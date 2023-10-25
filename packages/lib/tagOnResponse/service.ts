@@ -36,7 +36,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     });
 
     responseCache.revalidate({
-      responseId,
+      id: responseId,
     });
 
     tagOnResponseCache.revalidate({
@@ -67,7 +67,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
     });
 
     responseCache.revalidate({
-      responseId,
+      id: responseId,
     });
 
     tagOnResponseCache.revalidate({
