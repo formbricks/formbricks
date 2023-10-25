@@ -1,11 +1,10 @@
 import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
-import { prisma } from "@formbricks/database";
-import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/services/attributeClass";
-import { getPersonCached } from "@formbricks/lib/services/person";
-import { ZJsPeopleAttributeInput } from "@formbricks/types/v1/js";
-import { revalidateTag } from "next/cache";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { createAttributeClass, getAttributeClassByNameCached } from "@formbricks/lib/attributeClass/service";
+import { personCache } from "@formbricks/lib/person/cache";
+import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
+import { ZJsPeopleAttributeInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -30,7 +29,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const { environmentId, sessionId, key, value } = inputValidation.data;
 
-    const existingPerson = await getPersonCached(personId);
+    const existingPerson = await getPerson(personId);
 
     if (!existingPerson) {
       return responses.notFoundResponse("Person", personId, true);
@@ -48,35 +47,14 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     }
 
     // upsert attribute (update or create)
-    await prisma.attribute.upsert({
-      where: {
-        attributeClassId_personId: {
-          attributeClassId: attributeClass.id,
-          personId,
-        },
-      },
-      update: {
-        value,
-      },
-      create: {
-        attributeClass: {
-          connect: {
-            id: attributeClass.id,
-          },
-        },
-        person: {
-          connect: {
-            id: personId,
-          },
-        },
-        value,
-      },
-    });
-
-    // revalidate person
-    revalidateTag(personId);
+    updatePersonAttribute(personId, attributeClass.id, value);
 
     const state = await getUpdatedState(environmentId, personId, sessionId);
+
+    personCache.revalidate({
+      id: state.person.id,
+      environmentId,
+    });
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

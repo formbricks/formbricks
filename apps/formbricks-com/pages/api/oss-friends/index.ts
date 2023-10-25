@@ -35,6 +35,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://documenso.com",
         },
         {
+          name: "dyrector.io",
+          description:
+            "dyrector.io is an open-source continuous delivery & deployment platform with version management.",
+          href: "https://dyrector.io",
+        },
+        {
           name: "Erxes",
           description:
             "The Open-Source HubSpot Alternative. A single XOS enables to create unique and life-changing experiences that work for all types of business.",
@@ -63,6 +69,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Open-source authentication and user management for the passkey era. Integrated in minutes, for web and mobile apps.",
           href: "https://www.hanko.io",
+        },
+        {
+          name: "Hook0",
+          description:
+            "Open-Source Webhooks-as-a-service (WaaS) that makes it easy for developers to send webhooks.",
+          href: "https://www.hook0.com/",
         },
         {
           name: "HTMX",
@@ -100,7 +112,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Papermark",
-          description: "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
+          description:
+            "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
           href: "https://www.papermark.io/",
         },
         {
@@ -113,6 +126,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Rivet",
           description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",
+        },
+        {
+          name: "Shelf.nu",
+          description:
+            "Open Source Asset and Equipment tracking software that lets you create QR asset labels, manage and overview your assets across locations.",
+          href: "https://www.shelf.nu/",
         },
         {
           name: "Sniffnet",
@@ -159,6 +178,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
           href: "https://spark-framework.net",
+        },
+        {
+          name: "Firecamp",
+          description: "vscode for apis, open-source postman/insomnia alternative",
+          href: "https://firecamp.io",
         },
       ],
     });

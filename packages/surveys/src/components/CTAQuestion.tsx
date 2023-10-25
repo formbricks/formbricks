@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyCTAQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
@@ -26,16 +26,23 @@ export default function CTAQuestion({
 }: CTAQuestionProps) {
   return (
     <div>
-      <Headline headline={question.headline} questionId={question.id} />
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
         )}
-        <div className="flex justify-end">
+        <div className="flex w-full justify-end">
           {!question.required && (
             <button
+              tabIndex={0}
               type="button"
               onClick={() => {
                 onSubmit({ [question.id]: "dismissed" });
@@ -45,9 +52,10 @@ export default function CTAQuestion({
             </button>
           )}
           <SubmitButton
-            question={question}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
+            focus={true}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();

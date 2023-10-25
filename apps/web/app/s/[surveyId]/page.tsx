@@ -1,17 +1,82 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
-import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getOrCreatePersonByUserId } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { getSurvey } from "@formbricks/lib/services/survey";
-import { getEmailVerificationStatus } from "./helpers";
-import { checkValidity } from "@/app/s/[surveyId]/prefilling";
+import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
+import { REVALIDATION_INTERVAL, WEBAPP_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { getEmailVerificationStatus } from "./lib/helpers";
+import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import { notFound } from "next/navigation";
+import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
+import { TResponse } from "@formbricks/types/responses";
+import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import type { Metadata } from "next";
+import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 
-export default async function LinkSurveyPage({ params, searchParams }) {
+interface LinkSurveyPageProps {
+  params: {
+    surveyId: string;
+  };
+  searchParams: {
+    suId?: string;
+    userId?: string;
+    verify?: string;
+  };
+}
+
+export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
   const survey = await getSurvey(params.surveyId);
+
+  if (!survey || survey.type !== "link" || survey.status === "draft") {
+    notFound();
+  }
+
+  const product = await getProductByEnvironmentId(survey.environmentId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  function getNameForURL(string) {
+    return string.replace(/ /g, "%20");
+  }
+
+  function getBrandColorForURL(string) {
+    return string.replace(/#/g, "%23");
+  }
+
+  const brandColor = getBrandColorForURL(product.brandColor);
+  const surveyName = getNameForURL(survey.name);
+
+  const ogImgURL = `${WEBAPP_URL}/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
+
+  return {
+    openGraph: {
+      title: survey.name,
+      description: "Create your own survey like this with Formbricks' open source survey suite.",
+      url: `${SURVEY_BASE_URL}/${survey.id}`,
+      siteName: "",
+      images: [ogImgURL],
+      locale: "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: survey.name,
+      description: "Create your own survey like this with Formbricks' open source survey suite.",
+      images: [ogImgURL],
+    },
+  };
+}
+
+export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
+  const survey = await getSurvey(params.surveyId);
+
+  const suId = searchParams.suId;
+  const isSingleUseSurvey = survey?.singleUse?.enabled;
+  const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -30,14 +95,47 @@ export default async function LinkSurveyPage({ params, searchParams }) {
     );
   }
 
+  let singleUseId: string | undefined = undefined;
+  if (isSingleUseSurvey) {
+    // check if the single use id is present for single use surveys
+    if (!suId) {
+      return <SurveyInactive status="link invalid" />;
+    }
+
+    // if encryption is enabled, validate the single use id
+    let validatedSingleUseId: string | undefined = undefined;
+    if (isSingleUseSurveyEncrypted) {
+      validatedSingleUseId = validateSurveySingleUseId(suId);
+      if (!validatedSingleUseId) {
+        return <SurveyInactive status="link invalid" />;
+      }
+    }
+    // if encryption is disabled, use the suId as is
+    singleUseId = validatedSingleUseId ?? suId;
+  }
+
+  let singleUseResponse: TResponse | undefined = undefined;
+  if (isSingleUseSurvey) {
+    try {
+      singleUseResponse = singleUseId
+        ? (await getResponseBySingleUseId(survey.id, singleUseId)) ?? undefined
+        : undefined;
+    } catch (error) {
+      singleUseResponse = undefined;
+    }
+  }
+
   // verify email: Check if the survey requires email verification
-  let emailVerificationStatus;
+  let emailVerificationStatus: string | undefined = undefined;
   if (survey.verifyEmail) {
     const token =
       searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("verify")
         ? searchParams.verify
         : undefined;
-    emailVerificationStatus = await getEmailVerificationStatus(survey.id, token);
+
+    if (token) {
+      emailVerificationStatus = await getEmailVerificationStatus(survey.id, token);
+    }
   }
 
   // get product and person
@@ -52,6 +150,23 @@ export default async function LinkSurveyPage({ params, searchParams }) {
     person = await getOrCreatePersonByUserId(userId, survey.environmentId);
   }
 
+  const isSurveyPinProtected = Boolean(!!survey && survey.pin);
+
+  if (isSurveyPinProtected) {
+    return (
+      <PinScreen
+        surveyId={survey.id}
+        product={product}
+        personId={person?.id}
+        emailVerificationStatus={emailVerificationStatus}
+        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+        singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+        singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+        webAppUrl={WEBAPP_URL}
+      />
+    );
+  }
+
   return (
     <LinkSurvey
       survey={survey}
@@ -59,6 +174,9 @@ export default async function LinkSurveyPage({ params, searchParams }) {
       personId={person?.id}
       emailVerificationStatus={emailVerificationStatus}
       prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      webAppUrl={WEBAPP_URL}
     />
   );
 }

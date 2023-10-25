@@ -1,7 +1,7 @@
-import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
+import { hasEnvironmentAccess, getSessionUser } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TTag } from "@formbricks/types/v1/tags";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TTag } from "@formbricks/types/tags";
 import { Prisma } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -59,7 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           res.status(400).send({ message: "Tag already exists" });
         }
 
-        throw new DatabaseError("Database operation failed");
+        throw new DatabaseError(error.message);
       }
 
       throw error;

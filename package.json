@@ -32,10 +32,10 @@
     "@changesets/cli": "^2.26.2",
     "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
-    "lint-staged": "^14.0.1",
-    "rimraf": "^5.0.1",
-    "tsx": "^3.12.7",
-    "turbo": "latest"
+    "lint-staged": "^15.0.1",
+    "rimraf": "^5.0.5",
+    "tsx": "^3.13.0",
+    "turbo": "^1.10.16"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [

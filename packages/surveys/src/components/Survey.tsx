@@ -1,4 +1,4 @@
-import type { TResponseData } from "@formbricks/types/v1/responses";
+import type { TResponseData } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
@@ -8,6 +8,7 @@ import FormbricksSignature from "./FormbricksSignature";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
+import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
@@ -22,7 +23,9 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
 }: SurveyBaseProps) {
-  const [questionId, setQuestionId] = useState(activeQuestionId || survey.questions[0].id);
+  const [questionId, setQuestionId] = useState(
+    activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
+  );
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -31,7 +34,7 @@ export function Survey({
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setQuestionId(activeQuestionId || survey.questions[0].id);
+    setQuestionId(activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id));
   }, [activeQuestionId, survey.questions]);
 
   useEffect(() => {
@@ -45,18 +48,29 @@ export function Survey({
   useEffect(() => {
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData);
+      onSubmit(prefillResponseData, true);
     }
   }, []);
-
-  function getNextQuestionId(data: TResponseData): string {
+  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
-    if (currentQuestionIndex === -1) throw new Error("Question not found");
+    let currIdx = currentQuestionIndex;
+    let currQues = currentQuestion;
 
-    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
+    if (questionId === "start") {
+      if (!isFromPrefilling) {
+        return questions[0]?.id || "end";
+      } else {
+        currIdx = 0;
+        currQues = questions[0];
+      }
+    }
+
+    if (currIdx === -1) throw new Error("Question not found");
+
+    if (currQues?.logic && currQues?.logic.length > 0) {
+      for (let logic of currQues.logic) {
         if (!logic.destination) continue;
 
         if (evaluateCondition(logic, responseValue)) {
@@ -64,7 +78,7 @@ export function Survey({
         }
       }
     }
-    return questions[currentQuestionIndex + 1]?.id || "end";
+    return questions[currIdx + 1]?.id || "end";
   }
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -72,9 +86,9 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData) => {
+  const onSubmit = (responseData: TResponseData, isFromPrefilling: Boolean = false) => {
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData);
+    const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, finished });
     if (finished) {
@@ -107,9 +121,19 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
-        <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-5">
+        <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
-            {questionId === "end" && survey.thankYouCard.enabled ? (
+            {questionId === "start" && survey.welcomeCard.enabled ? (
+              <WelcomeCard
+                headline={survey.welcomeCard.headline}
+                html={survey.welcomeCard.html}
+                fileUrl={survey.welcomeCard.fileUrl}
+                buttonLabel={survey.welcomeCard.buttonLabel}
+                timeToFinish={survey.welcomeCard.timeToFinish}
+                brandColor={brandColor}
+                onSubmit={onSubmit}
+              />
+            ) : questionId === "end" && survey.thankYouCard.enabled ? (
               <ThankYouCard
                 headline={survey.thankYouCard.headline}
                 subheader={survey.thankYouCard.subheader}

@@ -1,9 +1,9 @@
-import { getQuestionResponseMapping } from "../responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TResponse } from "@formbricks/types/responses";
 import { WEBAPP_URL } from "../constants";
-import { withEmailTemplate } from "./email-template";
 import { createInviteToken, createToken } from "../jwt";
-import { Question } from "@formbricks/types/questions";
-import { TResponse } from "@formbricks/types/v1/responses";
+import { getQuestionResponseMapping } from "../responses";
+import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");
 
@@ -90,9 +90,9 @@ export const sendPasswordResetNotifyEmail = async (user: TEmailUser) => {
 
 export const sendInviteMemberEmail = async (
   inviteId: string,
-  inviterName: string,
-  inviteeName: string,
-  email: string
+  email: string,
+  inviterName: string | null,
+  inviteeName: string | null
 ) => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
@@ -128,7 +128,7 @@ export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: 
 export const sendResponseFinishedEmail = async (
   email: string,
   environmentId: string,
-  survey: { id: string; name: string; questions: Question[] },
+  survey: { id: string; name: string; questions: TSurveyQuestion[] },
   response: TResponse
 ) => {
   const personEmail = response.person?.attributes["email"];
@@ -168,5 +168,16 @@ export const sendResponseFinishedEmail = async (
     }
     </div>
     `),
+  });
+};
+
+export const sendEmbedSurveyPreviewEmail = async (to: string, subject: string, html: string) => {
+  await sendEmail({
+    to: to,
+    subject: subject,
+    html: withEmailTemplate(`
+    <h1>Preview Email Embed</h1>
+    <p>This is how the code snippet looks embedded into an email:</p>
+    ${html}`),
   });
 };

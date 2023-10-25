@@ -1,8 +1,8 @@
 import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
+import { Button } from "@formbricks/ui/Button";
 import {
   BaseballIcon,
-  Button,
   CancelSubscriptionIcon,
   CodeBookIcon,
   DogChaserIcon,
@@ -10,7 +10,7 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -18,7 +18,7 @@ import { usePlausible } from "next-plausible";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
@@ -99,8 +99,32 @@ export default function Header() {
   const [mobileSubOpen, setMobileSubOpen] = useState(false);
   const plausible = usePlausible();
   const router = useRouter();
+  const [stickyNav, setStickyNav] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 250) {
+        setStickyNav(true);
+      } else {
+        setStickyNav(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const stickyNavClass = stickyNav
+    ? `bg-transparent shadow-md backdrop-blur-lg fixed top-0 z-30 w-full`
+    : "relative";
   return (
-    <Popover className="relative" as="header">
+    <Popover className={`${stickyNavClass}`} as="header">
+      <a href="https://www.producthunt.com/products/formbricks" target="_blank">
+        <div className="hidden bg-[#ff6154] px-4 py-2 text-center text-sm text-white md:block lg:py-0">
+          We&apos;re launching soon on Product Hunt - get notified 🚀
+        </div>
+      </a>
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
         <div className="flex w-0 flex-1 justify-start">
           <Link href="/">
@@ -114,18 +138,18 @@ export default function Header() {
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </Popover.Button>
         </div>
-        <Popover.Group as="nav" className="hidden space-x-10 md:flex">
+        <Popover.Group as="nav" className="hidden space-x-6 md:flex lg:space-x-10">
           <Popover className="relative">
             {({ open }) => (
               <>
                 <Popover.Button
                   className={clsx(
                     open
-                      ? "text-slate-600 dark:text-slate-400 "
-                      : "text-slate-400  hover:text-slate-900  dark:hover:text-slate-100",
-                    "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
+                      ? "text-slate-600 focus:px-2 dark:text-slate-400"
+                      : "px-2  text-slate-400  hover:text-slate-900 dark:hover:text-slate-100",
+                    "group inline-flex items-center rounded-md px-2 text-base font-medium hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-50"
                   )}>
-                  <span>Best Practices</span>
+                  <span className="text-sm lg:text-base">Best Practices</span>
                   <ChevronDownIcon
                     className={clsx(
                       open ? "text-slate-600" : "text-slate-400",
@@ -250,18 +274,18 @@ export default function Header() {
           </Link>
  */}
           <Link
-            href="https://formbricks.com/#pricing"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            href="/pricing"
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Pricing
           </Link>
           <Link
             href="/docs"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Docs
           </Link>
           <Link
             href="/blog"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
           {/*           <Link
@@ -272,15 +296,15 @@ export default function Header() {
 
           <Link
             href="/concierge"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Concierge
           </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
-          <ThemeSelector className="relative z-10 mr-5" />
+          <ThemeSelector className="relative z-10 mr-2 lg:mr-5" />
           <Button
             variant="secondary"
-            className="group px-2"
+            className="group hidden px-2 lg:block"
             href="https://formbricks.com/github"
             target="_blank">
             <Image
@@ -303,7 +327,7 @@ export default function Header() {
 
           <Button
             variant="highlight"
-            className="ml-2"
+            className="ml-2 text-xs lg:text-sm"
             onClick={() => {
               router.push("https://app.formbricks.com");
               plausible("NavBar_CTA_Login");
@@ -369,7 +393,7 @@ export default function Header() {
                   </div>
                 )}
                 <Link href="/concierge">Concierge</Link>
-                <Link href="#pricing">Pricing</Link>
+                <Link href="/pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
                 {/*   <Link href="/careers">Careers</Link> */}

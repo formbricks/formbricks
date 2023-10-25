@@ -1,91 +1,90 @@
 "use client";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { createId } from "@paralleldrive/cuid2";
-import { useMemo } from "react";
-import SingleResponse from "./SingleResponse";
+import React, { useState, useEffect, useRef } from "react";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
+import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
 interface ResponseTimelineProps {
-  environmentId: string;
+  environment: TEnvironment;
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
+  profile: TProfile;
+  environmentTags: TTag[];
+  responsesPerPage: number;
 }
 
 export default function ResponseTimeline({
-  environmentId,
-  surveyId,
+  environment,
   responses,
   survey,
+  profile,
+  environmentTags,
+  responsesPerPage,
 }: ResponseTimelineProps) {
-  const matchQandA = useMemo(() => {
-    if (survey && responses) {
-      // Create a mapping of question IDs to their headlines
-      const questionIdToHeadline = {};
-      survey.questions.forEach((question) => {
-        questionIdToHeadline[question.id] = question.headline;
-      });
+  const [displayedResponses, setDisplayedResponses] = useState<TResponse[]>([]);
+  const loadingRef = useRef(null);
 
-      // Replace question IDs with question headlines in response data
-      const updatedResponses = responses.map((response) => {
-        const updatedResponse: Array<{
-          id: string;
-          question: string;
-          answer: string;
-          type: string;
-          scale?: "number" | "star" | "smiley";
-          range?: number;
-        }> = []; // Specify the type of updatedData
-        // iterate over survey questions and build the updated response
-        for (const question of survey.questions) {
-          const answer = response.data[question.id];
-          if (answer !== null && answer !== undefined) {
-            updatedResponse.push({
-              id: createId(),
-              question: question.headline,
-              type: question.type,
-              scale: question.scale,
-              range: question.range,
-              answer: answer as string,
-            });
-          }
+  useEffect(() => {
+    setDisplayedResponses(responses.slice(0, responsesPerPage));
+  }, [responses]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setDisplayedResponses((prevResponses) => [
+            ...prevResponses,
+            ...responses.slice(prevResponses.length, prevResponses.length + responsesPerPage),
+          ]);
         }
-        return { ...response, responses: updatedResponse };
-      });
+      },
+      { threshold: 0.8 }
+    );
 
-      const updatedResponsesWithTags = updatedResponses.map((response) => ({
-        ...response,
-        tags: response.tags?.map((tag) => tag),
-      }));
-
-      return updatedResponsesWithTags;
+    if (loadingRef.current) {
+      observer.observe(loadingRef.current);
     }
-    return [];
-  }, [survey, responses]);
+
+    return () => {
+      if (loadingRef.current) {
+        observer.unobserve(loadingRef.current);
+      }
+    };
+  }, [responses]);
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && responses.length === 0 && <EmptyInAppSurveys environmentId={environmentId} />}
-      {survey.type !== "web" && responses.length === 0 ? (
+      {survey.type === "web" && displayedResponses.length === 0 && !environment.widgetSetupCompleted ? (
+        <EmptyInAppSurveys environment={environment} />
+      ) : displayedResponses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
-          environmentId={environmentId}
+          environment={environment}
           noWidgetRequired={survey.type === "link"}
         />
       ) : (
         <div>
-          {matchQandA.map((updatedResponse) => {
+          {displayedResponses.map((response) => {
             return (
-              <SingleResponse
-                key={updatedResponse.id}
-                data={updatedResponse}
-                surveyId={surveyId}
-                environmentId={environmentId}
-              />
+              <div key={response.id}>
+                <SingleResponseCard
+                  survey={survey}
+                  response={response}
+                  profile={profile}
+                  environmentTags={environmentTags}
+                  pageType="response"
+                  environment={environment}
+                />
+              </div>
             );
           })}
+          <div ref={loadingRef}></div>
         </div>
       )}
     </div>

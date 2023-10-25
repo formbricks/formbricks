@@ -1,5 +1,5 @@
-import type { AttributeFilter } from "@formbricks/types/surveys";
-import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { TSurveyAttributeFilter } from "@formbricks/types/surveys";
+import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { Prisma as prismaClient } from "@prisma/client/";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -98,6 +98,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         body.surveyClosedMessage = prismaClient.JsonNull;
       }
 
+      if (!body.singleUse) {
+        body.singleUse = prismaClient.JsonNull;
+      }
+
       if (!body.verifyEmail) {
         body.verifyEmail = prismaClient.JsonNull;
       }
@@ -148,10 +152,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       delete body.triggers;
     }
 
-    const attributeFilters: AttributeFilter[] = body.attributeFilters;
+    const attributeFilters: TSurveyAttributeFilter[] = body.attributeFilters;
 
     if (attributeFilters) {
-      const newFilters: AttributeFilter[] = [];
+      const newFilters: TSurveyAttributeFilter[] = [];
       const removedFilterIds: string[] = [];
       // find added attribute filters
       for (const attributeFilter of attributeFilters) {
@@ -228,6 +232,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     if (data.surveyClosedMessage === null) {
       data.surveyClosedMessage = prismaClient.JsonNull;
+    }
+
+    if (data.singleUse === null) {
+      data.singleUse = prismaClient.JsonNull;
     }
 
     if (data.verifyEmail === null) {

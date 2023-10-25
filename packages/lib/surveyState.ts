@@ -1,12 +1,23 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TResponseUpdate } from "@formbricks/types/responses";
 
 export class SurveyState {
   responseId: string | null = null;
+  displayId: string | null = null;
+  personId: string | null = null;
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {} };
+  singleUseId: string | null;
 
-  constructor(surveyId: string) {
+  constructor(
+    surveyId: string,
+    singleUseId?: string | null,
+    responseId?: string | null,
+    personId?: string | null
+  ) {
     this.surveyId = surveyId;
+    this.personId = personId ?? null;
+    this.singleUseId = singleUseId ?? null;
+    this.responseId = responseId ?? null;
   }
 
   /**
@@ -21,7 +32,12 @@ export class SurveyState {
    * Get a copy of the current state
    */
   copy() {
-    const copyInstance = new SurveyState(this.surveyId);
+    const copyInstance = new SurveyState(
+      this.surveyId,
+      this.singleUseId ?? undefined,
+      this.responseId ?? undefined,
+      this.personId ?? undefined
+    );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
     return copyInstance;
@@ -33,6 +49,22 @@ export class SurveyState {
    */
   updateResponseId(id: string) {
     this.responseId = id;
+  }
+
+  /**
+   * Update the response ID after a successful response creation
+   * @param id - The response ID
+   */
+  updateDisplayId(id: string) {
+    this.displayId = id;
+  }
+
+  /**
+   * Update the person ID
+   * @param id - The person ID
+   */
+  updatePersonId(id: string) {
+    this.personId = id;
   }
 
   /**

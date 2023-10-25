@@ -1,5 +1,5 @@
-import { createSession } from "@/lib/api/clientSession";
-import { getSettings } from "@/lib/api/clientSettings";
+import { createSession } from "@/app/lib/api/clientSession";
+import { getSettings } from "@/app/lib/api/clientSettings";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {

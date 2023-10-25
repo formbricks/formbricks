@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { useMemo, useRef, useState, useEffect } from "preact/hooks";
 import { cn, shuffleQuestions } from "../lib/utils";
 import { BackButton } from "./BackButton";
@@ -55,7 +55,6 @@ export default function MultipleChoiceSingleQuestion({
       otherSpecify.current?.focus();
     }
   }, [otherSelected]);
-
   return (
     <form
       onSubmit={(e) => {
@@ -63,21 +62,39 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} />
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2">
+          <div
+            className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2"
+            role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
+                tabIndex={idx + 1}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    onChange({ [question.id]: choice.label });
+                    setTimeout(() => {
+                      onSubmit({ [question.id]: choice.label });
+                    }, 350);
+                  }
+                }}
                 className={cn(
                   value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 focus-within:border-slate-400  focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-none "
                 )}>
                 <span className="flex items-center text-sm">
                   <input
+                    tabIndex={-1}
                     type="radio"
                     id={choice.id}
                     name={question.id}
@@ -100,14 +117,22 @@ export default function MultipleChoiceSingleQuestion({
             ))}
             {otherOption && (
               <label
+                tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === otherOption.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 hover:bg-slate-50 focus:outline-none"
-                )}>
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 focus-within:border-slate-400 focus-within:bg-slate-50  hover:bg-slate-50 focus:outline-none"
+                )}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter") {
+                    setOtherSelected(!otherSelected);
+                    if (!otherSelected) onChange({ [question.id]: "" });
+                  }
+                }}>
                 <span className="flex items-center text-sm">
                   <input
                     type="radio"
                     id={otherOption.id}
+                    tabIndex={-1}
                     name={question.id}
                     value={otherOption.label}
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
@@ -126,11 +151,19 @@ export default function MultipleChoiceSingleQuestion({
                 {otherSelected && (
                   <input
                     ref={otherSpecify}
+                    tabIndex={questionChoices.length + 1}
                     id={`${otherOption.id}-label`}
                     name={question.id}
                     value={value}
                     onChange={(e) => {
                       onChange({ [question.id]: e.currentTarget.value });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        setTimeout(() => {
+                          onSubmit({ [question.id]: value });
+                        }, 100);
+                      }
                     }}
                     placeholder="Please specify"
                     className="mt-3 flex h-10 w-full rounded-md border border-slate-300 bg-transparent bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none  focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
@@ -144,10 +177,17 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && <BackButton backButtonLabel={question.backButtonLabel} onClick={onBack} />}
+        {!isFirstQuestion && (
+          <BackButton
+            backButtonLabel={question.backButtonLabel}
+            tabIndex={questionChoices.length + 3}
+            onClick={onBack}
+          />
+        )}
         <div></div>
         <SubmitButton
-          question={question}
+          tabIndex={questionChoices.length + 2}
+          buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}

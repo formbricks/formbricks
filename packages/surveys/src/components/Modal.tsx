@@ -1,18 +1,12 @@
-import type { PlacementType } from "@formbricks/types/js";
+import { TPlacement } from "@formbricks/types/common";
 import { VNode } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
-// CSS classes object
-const mobileClasses = {
-  show: "translate-y-full",
-  hide: "translate-y-0",
-};
-
 interface ModalProps {
   children: VNode;
   isOpen: boolean;
-  placement: PlacementType;
+  placement: TPlacement;
   clickOutside: boolean;
   darkOverlay: boolean;
   highlightBorderColor: string | null;
@@ -29,7 +23,6 @@ export default function Modal({
   onClose,
 }: ModalProps) {
   const [show, setShow] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const isCenter = placement === "center";
   const modalRef = useRef(null);
 
@@ -56,23 +49,8 @@ export default function Modal({
     };
   }, [show, clickOutside, onClose, isCenter]);
 
-  const handleMobileClasses = (isMobile: boolean, show: boolean) => {
-    return isMobile ? (show ? mobileClasses.show : mobileClasses.hide) : "";
-  };
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
   // This classes will be applied only when screen size is greater than sm, hence sm is common prefix for all
-  const getPlacementStyle = (placement: PlacementType) => {
+  const getPlacementStyle = (placement: TPlacement) => {
     switch (placement) {
       case "bottomRight":
         return "sm:bottom-3 sm:right-3";
@@ -114,8 +92,8 @@ export default function Modal({
           "relative h-full w-full",
           isCenter
             ? darkOverlay
-              ? "sm:bg-gray-700/80"
-              : "sm:bg-white/50"
+              ? "bg-gray-700/80"
+              : "bg-white/50"
             : "bg-none transition-all duration-500 ease-in-out"
         )}>
         <div
@@ -123,19 +101,17 @@ export default function Modal({
           className={cn(
             getPlacementStyle(placement),
             show ? "opacity-100" : "opacity-0",
-            "pointer-events-auto absolute h-fit w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm",
-            isMobile ? "top-full" : "",
-            handleMobileClasses(isMobile, show)
+            "pointer-events-auto absolute bottom-0 h-fit w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
           {!isCenter && (
-            <div class="absolute right-0 top-0 block pr-4 pt-4">
+            <div class="absolute right-0 top-0 block pr-[1.4rem] pt-2">
               <button
                 type="button"
                 onClick={onClose}
                 class="relative rounded-md text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
                 <span class="sr-only">Close</span>
                 <svg
-                  class="h-6 w-6"
+                  class="h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke-width="1.5"

@@ -1,21 +1,19 @@
-import type { InitConfig } from "../../types/js";
+import { TJsConfigInput } from "@formbricks/types/js";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
 import { trackAction } from "./lib/actions";
-import { initialize } from "./lib/init";
+import { initialize } from "./lib/initialize";
 import { Logger } from "./lib/logger";
-import { checkPageUrl } from "./lib/noCodeEvents";
+import { checkPageUrl } from "./lib/noCodeActions";
 import { resetPerson, setPersonAttribute, setPersonUserId, getPerson, logoutPerson } from "./lib/person";
-
-export type { EnvironmentId, KeyValueData, PersonId, ResponseId, SurveyId } from "@formbricks/api";
 
 const logger = Logger.getInstance();
 
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-const init = async (initConfig: InitConfig) => {
+const init = async (initConfig: TJsConfigInput) => {
   ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, initialize, initConfig);
   await queue.wait();
@@ -69,4 +67,5 @@ const formbricks = {
   getPerson,
 };
 
-export { formbricks as default };
+export type FormbricksType = typeof formbricks;
+export default formbricks as FormbricksType;

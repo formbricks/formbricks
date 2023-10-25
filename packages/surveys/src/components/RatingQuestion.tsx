@@ -1,5 +1,5 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
@@ -70,7 +70,13 @@ export default function RatingQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} />
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
         <fieldset>
@@ -84,21 +90,35 @@ export default function RatingQuestion({
                 className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
+                    tabIndex={i + 1}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        handleSelect(number);
+                      }
+                    }}
                     className={cn(
                       value === number ? "z-10 border-slate-400 bg-slate-50" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "block h-full w-full border text-slate-800 hover:bg-gray-100 focus:outline-none"
+                      "block h-full w-full border text-slate-800 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
                   </label>
                 ) : question.scale === "star" ? (
                   <label
+                    tabIndex={i + 1}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        handleSelect(number);
+                      }
+                    }}
                     className={cn(
                       number <= hoveredNumber ? "text-yellow-500" : "",
-                      "flex h-full w-full justify-center"
-                    )}>
+                      "flex h-full w-full justify-center focus:text-yellow-500 focus:outline-none"
+                    )}
+                    onFocus={() => setHoveredNumber(number)}
+                    onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
                     {typeof value === "number" && value >= number ? (
                       <span className="text-yellow-300">
@@ -131,7 +151,16 @@ export default function RatingQuestion({
                     )}
                   </label>
                 ) : (
-                  <label className="flex h-full w-full justify-center text-slate-800">
+                  <label
+                    tabIndex={i + 1}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        handleSelect(number);
+                      }
+                    }}
+                    className="flex h-full  w-full justify-center text-slate-800 focus:outline-none"
+                    onFocus={() => setHoveredNumber(number)}
+                    onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
                     <RatingSmiley
                       active={value === number || hoveredNumber === number}
@@ -144,8 +173,8 @@ export default function RatingQuestion({
             ))}
           </div>
           <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
-            <p>{question.lowerLabel}</p>
-            <p>{question.upperLabel}</p>
+            <p className="w-1/2 text-left">{question.lowerLabel}</p>
+            <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>
         </fieldset>
       </div>
@@ -153,6 +182,7 @@ export default function RatingQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
+            tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
               onBack();
@@ -162,7 +192,8 @@ export default function RatingQuestion({
         <div></div>
         {(!question.required || value) && (
           <SubmitButton
-            question={question}
+            tabIndex={question.range + 1}
+            buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             brandColor={brandColor}
             onClick={() => {}}

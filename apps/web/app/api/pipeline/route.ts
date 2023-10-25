@@ -1,15 +1,15 @@
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
-import { sendResponseFinishedEmail } from "@/lib/email";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { sendResponseFinishedEmail } from "@/app/lib/email";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { convertDatesInObject } from "@formbricks/lib/time";
-import { Question } from "@formbricks/types/questions";
-import { NotificationSettings } from "@formbricks/types/users";
-import { ZPipelineInput } from "@formbricks/types/v1/pipelines";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TUserNotificationSettings } from "@formbricks/types/users";
+import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { handleIntegrations } from "../integration/integrations";
+import { handleIntegrations } from "./lib/handleIntegrations";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -60,6 +60,9 @@ export async function POST(request: Request) {
     webhooks.map(async (webhook) => {
       await fetch(webhook.url, {
         method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
         body: JSON.stringify({
           webhookId: webhook.id,
           event,
@@ -102,7 +105,7 @@ export async function POST(request: Request) {
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
-      const notificationSettings: NotificationSettings | null = user.notificationSettings;
+      const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;
       if (notificationSettings?.alert && notificationSettings.alert[surveyId]) {
         return true;
       }
@@ -131,7 +134,7 @@ export async function POST(request: Request) {
       const survey = {
         id: surveyData.id,
         name: surveyData.name,
-        questions: JSON.parse(JSON.stringify(surveyData.questions)) as Question[],
+        questions: JSON.parse(JSON.stringify(surveyData.questions)) as TSurveyQuestion[],
       };
       // send email to all users
       await Promise.all(

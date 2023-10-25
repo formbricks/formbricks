@@ -1,8 +1,11 @@
+import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { QuestionType } from "@formbricks/types/questions";
-import type { QuestionSummary } from "@formbricks/types/responses";
-import { TResponse } from "@formbricks/types/v1/responses";
+import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -13,22 +16,27 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyQuestion,
   TSurveyRatingQuestion,
-} from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/surveys";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 
 interface SummaryListProps {
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
+  openTextResponsesPerPage: number;
 }
 
-export default function SummaryList({ environmentId, survey, responses }: SummaryListProps) {
-  const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
+export default function SummaryList({
+  environment,
+  survey,
+  responses,
+  openTextResponsesPerPage,
+}: SummaryListProps) {
+  const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses
         .filter((response) => question.id in response.data)
@@ -47,79 +55,90 @@ export default function SummaryList({ environmentId, survey, responses }: Summar
   return (
     <>
       <div className="mt-10 space-y-8">
-        {survey.type === "web" && responses.length === 0 && (
-          <EmptyInAppSurveys environmentId={environmentId} />
-        )}
-
-        {survey.type !== "web" && responses.length === 0 ? (
+        {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
+          <EmptyInAppSurveys environment={environment} />
+        ) : responses.length === 0 ? (
           <EmptySpaceFiller
             type="response"
-            environmentId={environmentId}
+            environment={environment}
             noWidgetRequired={survey.type === "link"}
           />
         ) : (
           <>
             {getSummaryData().map((questionSummary) => {
-              if (questionSummary.question.type === QuestionType.OpenText) {
+              if (questionSummary.question.type === TSurveyQuestionType.OpenText) {
                 return (
                   <OpenTextSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyOpenTextQuestion>}
-                    environmentId={environmentId}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
+                    environmentId={environment.id}
+                    openTextResponsesPerPage={openTextResponsesPerPage}
                   />
                 );
               }
               if (
-                questionSummary.question.type === QuestionType.MultipleChoiceSingle ||
-                questionSummary.question.type === QuestionType.MultipleChoiceMulti
+                questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+                questionSummary.question.type === TSurveyQuestionType.MultipleChoiceMulti
               ) {
                 return (
                   <MultipleChoiceSummary
                     key={questionSummary.question.id}
                     questionSummary={
-                      questionSummary as QuestionSummary<
+                      questionSummary as TSurveyQuestionSummary<
                         TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
                       >
                     }
-                    environmentId={environmentId}
+                    environmentId={environment.id}
                     surveyType={survey.type}
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.NPS) {
+              if (questionSummary.question.type === TSurveyQuestionType.NPS) {
                 return (
                   <NPSSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyNPSQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyNPSQuestion>}
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.CTA) {
+              if (questionSummary.question.type === TSurveyQuestionType.CTA) {
                 return (
                   <CTASummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyCTAQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCTAQuestion>}
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.Rating) {
+              if (questionSummary.question.type === TSurveyQuestionType.Rating) {
                 return (
                   <RatingSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyRatingQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyRatingQuestion>}
                   />
                 );
               }
-              if (questionSummary.question.type === QuestionType.Consent) {
+              if (questionSummary.question.type === TSurveyQuestionType.Consent) {
                 return (
                   <ConsentSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<TSurveyConsentQuestion>}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
                   />
                 );
               }
               return null;
             })}
+            {survey.hiddenFields?.enabled &&
+              survey.hiddenFields.fieldIds?.map((question) => {
+                return (
+                  <HiddenFieldsSummary
+                    environment={environment}
+                    question={question}
+                    responses={responses}
+                    survey={survey}
+                    key={question}
+                  />
+                );
+              })}
           </>
         )}
       </div>

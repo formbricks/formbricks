@@ -9,13 +9,13 @@ import {
   addPageUrlEventListeners,
   removeClickEventListener,
   removePageUrlEventListeners,
-} from "./noCodeEvents";
+} from "./noCodeActions";
 import { addSyncEventListener, removeSyncEventListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
 
-export const addEventListeners = (): void => {
-  addSyncEventListener();
+export const addEventListeners = (debug: boolean = false): void => {
+  addSyncEventListener(debug);
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();
@@ -32,4 +32,25 @@ export const addCleanupEventListeners = (): void => {
     removeScrollDepthListener();
   });
   areRemoveEventListenersAdded = true;
+};
+
+export const removeCleanupEventListeners = (): void => {
+  if (!areRemoveEventListenersAdded) return;
+  window.removeEventListener("beforeunload", () => {
+    removeSyncEventListener();
+    removePageUrlEventListeners();
+    removeClickEventListener();
+    removeExitIntentListener();
+    removeScrollDepthListener();
+  });
+  areRemoveEventListenersAdded = false;
+};
+
+export const removeAllEventListeners = (): void => {
+  removeSyncEventListener();
+  removePageUrlEventListeners();
+  removeClickEventListener();
+  removeExitIntentListener();
+  removeScrollDepthListener();
+  removeCleanupEventListeners();
 };

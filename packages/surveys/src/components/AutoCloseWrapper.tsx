@@ -1,9 +1,9 @@
+import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import Progress from "./Progress";
 
 interface AutoCloseProps {
-  survey: TSurvey;
+  survey: TSurveyWithTriggers;
   brandColor: string;
   onClose: () => void;
   children: any;

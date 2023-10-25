@@ -5,16 +5,16 @@ import UncaughtPromise from "./uncaught-promise.webp";
 import Logout from "./logout.webp";
 
 export const meta = {
-  title: "Troubleshooting",
+  title: "Formbricks Troubleshooting Guide: How to Solve & Debug Common Issues",
   description:
-    "Formbricks is a complex application in constant development. Sometimes, things don't go as planned. Here are some tips to help you troubleshoot.",
+    "Facing issues with Formbricks? This troubleshooting guide covers frequently encountered problems, from Prisma migrations to package errors and more. Detailed solutions, accompanied by visual aids, ensure a smoother user experience with Formbricks",
 };
 
 #### Contributing
 
 # Troubleshooting
 
-Here you'll find help with Frequently Recurring Problems
+Here you'll find help with frequently recurring problems
 
 ## "The app doesn't work after doing a prisma migration"
 
@@ -24,7 +24,7 @@ This can happen but fear not, the fix is easy: Delete the application storage of
   src={ClearAppData}
   alt="Demo App Preview"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ## "I ran 'pnpm i' but there seems to be an error with the packages"
@@ -34,7 +34,7 @@ If nothing helps, run `pnpm clean` and then `pnpm i` again. This solves a lot.
 ## "I get a full-screen error with cryptic strings"
 
 This usually happens when the Formbricks Widget wasn't correctly or completely built.
-
+<Col>
 <CodeGroup title="Build js library first and then run again">
 
 ```bash
@@ -45,11 +45,11 @@ pnpm dev
 ```
 
 </CodeGroup>
-
+</Col>
 ## My machine struggles with the repository
 
 Since we're working with a monorepo structure, the repository can get quite big. If you're having trouble working with the repository, try the following:
-
+<Col>
 <CodeGroup title="Only run the required project">
 
 ```bash {{ title: 'Formbricks Web-App' }}
@@ -65,7 +65,7 @@ pnpm dev --filter=demo...
 ```
 
 </CodeGroup>
-
+</Col>
 However, in our experience it's better to run `pnpm dev` than having two terminals open (one with the Formbricks app and one with the demo).
 
 ## Uncaught (in promise) SyntaxError: Unexpected token !DOCTYPE ... is not valid JSON
@@ -74,9 +74,9 @@ However, in our experience it's better to run `pnpm dev` than having two termina
   src={UncaughtPromise}
   alt="Uncaught promise"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 This happens when you're using the Demo App and delete the Person within the Formbricks app which the widget is currently connected with. We're fixing it, but you can also just logout your test person and reload the page to get rid of it.
 
-<Image src={Logout} alt="Logout Person" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={Logout} alt="Logout Person" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />

@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 
@@ -11,9 +11,9 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   const session = await getServerSession(authOptions);
 
   if (session) {
-    const { responsesCount } = await getAnalysisData(params.surveyId, params.environmentId);
+    const { responseCount } = await getAnalysisData(params.surveyId, params.environmentId);
     return {
-      title: `${responsesCount} Responses`,
+      title: `${responseCount} Responses`,
     };
   }
   return {

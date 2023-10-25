@@ -6,7 +6,7 @@ import type { Readable } from "stream";
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
-  apiVersion: "2023-08-16",
+  apiVersion: "2023-10-16",
 });
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;

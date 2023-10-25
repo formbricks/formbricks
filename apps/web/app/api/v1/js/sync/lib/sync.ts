@@ -1,15 +1,15 @@
-import { getSurveysCached } from "@/app/api/v1/js/surveys";
+import { getSyncSurveysCached } from "@/app/api/v1/js/sync/lib/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
-import { getActionClassesCached } from "@formbricks/lib/services/actionClass";
-import { getEnvironmentCached } from "@formbricks/lib/services/environment";
-import { createPerson, getMonthlyActivePeopleCount, getPersonCached } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentIdCached } from "@formbricks/lib/services/product";
-import { createSession, extendSession, getSessionCached } from "@formbricks/lib/services/session";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
+import { getProductByEnvironmentIdCached } from "@formbricks/lib/product/service";
+import { createSession, extendSession, getSessionCached } from "@formbricks/lib/session/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TJsState } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TSession } from "@formbricks/types/v1/sessions";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TJsState } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
+import { TSession } from "@formbricks/types/sessions";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
@@ -26,7 +26,7 @@ export const getUpdatedState = async (
   let session: TSession | null;
 
   // check if environment exists
-  environment = await getEnvironmentCached(environmentId);
+  environment = await getEnvironment(environmentId);
 
   if (!environment) {
     throw new Error("Environment does not exist");
@@ -61,7 +61,7 @@ export const getUpdatedState = async (
     session = await createSession(person.id);
   } else {
     // check if person exists
-    const existingPerson = await getPersonCached(personId);
+    const existingPerson = await getPerson(personId);
     if (!existingPerson) {
       // create a new person
       person = await createPerson(environmentId);
@@ -100,8 +100,8 @@ export const getUpdatedState = async (
 
   // get/create rest of the state
   const [surveys, noCodeActionClasses, product] = await Promise.all([
-    getSurveysCached(environmentId, person),
-    getActionClassesCached(environmentId),
+    getSyncSurveysCached(environmentId, person),
+    getActionClasses(environmentId),
     getProductByEnvironmentIdCached(environmentId),
   ]);
 
