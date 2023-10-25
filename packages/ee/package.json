@@ -15,7 +15,6 @@
     "eslint-config-formbricks": "workspace:*"
   },
   "dependencies": {
-    "@formbricks/database": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "stripe": "^14.0.0"
   }

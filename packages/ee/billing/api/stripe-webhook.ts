@@ -1,4 +1,3 @@
-import { prisma } from "@formbricks/database";
 import { updateTeam } from "@formbricks/lib/team/service";
 
 import Stripe from "stripe";
@@ -45,12 +44,7 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
       console.error("No teamId found in subscription");
       return { status: 400, message: "skipping, no teamId found" };
     }
-    await prisma.team.update({
-      where: { id: teamId },
-      data: {
-        plan: "free",
-      },
-    });
+    await updateTeam(teamId, { plan: "free" });
   } else {
     console.warn(`🤷‍♀️ Unhandled event type: ${event.type}`);
   }
