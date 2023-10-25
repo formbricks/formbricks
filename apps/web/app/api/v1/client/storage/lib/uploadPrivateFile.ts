@@ -1,4 +1,3 @@
-import { env } from "@/env.mjs";
 import { responses } from "@/app/lib/api/response";
 import { getUploadSignedUrl } from "@formbricks/lib/storage/service";
 
