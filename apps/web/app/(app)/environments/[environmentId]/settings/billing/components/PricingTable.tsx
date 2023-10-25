@@ -15,10 +15,14 @@ const stripeURl =
     : "https://billing.formbricks.com/b/test_28o02W1MObwybewfZ1";
 
 const stripeRemoveBrandingUrl =
-  process.env.NODE_ENV === "production" ? "" : "https://billing.formbricks.com/b/test_5kA02WezAgQSdmEbIJ";
+  process.env.NODE_ENV === "production"
+    ? "https://billing.formbricks.com/b/dR6eUV2Sy1AV5ZS001"
+    : "https://billing.formbricks.com/b/test_5kA02WezAgQSdmEbIJ";
 
 const customUrlStripeUrl =
-  process.env.NODE_ENV === "production" ? "" : "https://billing.formbricks.com/b/test_cN22b4gHIdEGciA9AC";
+  process.env.NODE_ENV === "production"
+    ? "https://billing.formbricks.com/b/bIY9ABct893n4VO8wy"
+    : "https://billing.formbricks.com/b/test_cN22b4gHIdEGciA9AC";
 
 interface PricingTableProps {
   team: TTeam;

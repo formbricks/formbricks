@@ -254,6 +254,11 @@ export const authOptions: NextAuthOptions = {
                   team: {
                     create: {
                       name: `${user.name}'s Team`,
+                      subscription: {
+                        plan: "community",
+                        addOns: [],
+                        stripeCustomerId: null,
+                      },
                       products: {
                         create: [
                           {

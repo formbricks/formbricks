@@ -1,7 +1,8 @@
 "use client";
 
-import ContentWrapper from "@/components/shared/ContentWrapper";
-import { Button, Confetti } from "@formbricks/ui";
+import { Confetti } from "@formbricks/ui/Confetti";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { Button } from "@formbricks/ui/Button";
 import { useEffect, useState } from "react";
 
 export default function BrandingRemovalConfirmationPage() {

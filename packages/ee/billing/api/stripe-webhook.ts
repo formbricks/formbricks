@@ -8,6 +8,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
 
+const formbricksProProductId =
+  process.env.NODE_ENV === "production" ? "prod_OI7i1USCQURrvG" : "prod_OsS4o3JBPy7jNp";
+
+const removeBrandingProductId =
+  process.env.NODE_ENV === "production" ? "prod_Ohy0mCNmb16Yux" : "prod_Oi1cMFx8Wqv9VE";
+
+const customUrlProductId =
+  process.env.NODE_ENV === "production" ? "prod_OsqJ86uLmchbSP" : "prod_Oi5E1oqVf07fRu";
+
+const formbricksProProductName =
+  process.env.NODE_ENV === "production" ? "Formbricks Cloud" : "Test Cloud Plan";
+
+const removeBrandingProductName =
+  process.env.NODE_ENV === "production" ? "Remove Formbricks Branding" : "Test Remove Branding";
+
+const customUrlProductName =
+  process.env.NODE_ENV === "production" ? "Custom URL for Link Surveys" : "Test Custom URL";
+
 interface Subscription {
   stripeCustomerId: string | null;
   plan: "community" | "scale";
@@ -38,16 +56,20 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
     });
 
     const stripeCustomerId = checkoutSession.customer as string;
-    const purchasedRemoveBranding = line_items?.data[0].description === "Test Remove Branding";
-    const purchasedFormbricksScale = line_items?.data[0].description === "Test FB Cloud";
-    const purchasedCustomUrl = line_items?.data[0].description === "Test Custom URL";
+    const purchasedRemoveBranding = line_items?.data[0].description === removeBrandingProductName;
+    const purchasedFormbricksScale = line_items?.data[0].description === formbricksProProductName;
+    const purchasedCustomUrl = line_items?.data[0].description === customUrlProductName;
 
-    const existingSubscription: Subscription = (await getTeam(teamId)) as unknown as Subscription;
+    const existingSubscription: Subscription = (await getTeam(teamId))
+      .subscription as unknown as Subscription;
+    if (!existingSubscription) {
+      return { status: 400, message: "skipping, no subscription object found in team" };
+    }
 
     if (purchasedFormbricksScale) {
       await updateTeam(teamId, {
         subscription: {
-          addOns: existingSubscription.addOns,
+          addOns: existingSubscription.addOns || [],
           plan: "scale",
           stripeCustomerId,
         },
@@ -56,7 +78,9 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
 
     if (purchasedRemoveBranding) {
       const addOns = existingSubscription.addOns || [];
-      addOns.includes("removeBranding") ? addOns.push("removeBranding") : addOns;
+      if (!addOns.includes("removeBranding")) {
+        addOns.push("removeBranding");
+      }
 
       await updateTeam(teamId, {
         subscription: {
@@ -69,7 +93,9 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
 
     if (purchasedCustomUrl) {
       const addOns = existingSubscription.addOns || [];
-      addOns.includes("customUrl") ? addOns.push("customUrl") : addOns;
+      if (!addOns.includes("customUrl")) {
+        addOns.push("customUrl");
+      }
 
       await updateTeam(teamId, {
         subscription: {
@@ -87,11 +113,12 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
       },
     });
   } else if (event.type === "customer.subscription.deleted") {
-    const subscription = event.data.object as Stripe.Subscription;
+    const subscription = event.data.object as any;
+    const productId = subscription.plan.product;
 
-    const unsubscribedRemoveBranding = subscription.description === "Test Remove Branding";
-    const unsubscribedFormbricksPro = subscription.description === "Test FB Cloud";
-    const unsubscribedCustomUrl = subscription.description === "Test Custom URL";
+    const unsubscribedRemoveBranding = productId === removeBrandingProductId;
+    const unsubscribedFormbricksPro = productId === formbricksProProductId;
+    const unsubscribedCustomUrl = productId === customUrlProductId;
 
     const teamId = subscription.metadata.teamId;
     if (!teamId) {
@@ -99,12 +126,13 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
       return { status: 400, message: "skipping, no teamId found" };
     }
 
-    const existingSubscription: Subscription = (await getTeam(teamId)) as unknown as Subscription;
+    const existingSubscription: Subscription = (await getTeam(teamId))
+      .subscription as unknown as Subscription;
 
     if (unsubscribedFormbricksPro) {
       await updateTeam(teamId, {
         subscription: {
-          addOns: existingSubscription.addOns,
+          addOns: existingSubscription.addOns || [],
           plan: "community",
           stripeCustomerId: existingSubscription.stripeCustomerId,
         },
