@@ -6,11 +6,11 @@ interface RevalidateProps {
 
 export const storageCache = {
   tag: {
-    byFilekey(filekey: string): string {
+    byFileKey(filekey: string): string {
       return `storage-filekey-${filekey}`;
     },
   },
   revalidate({ fileKey }: RevalidateProps): void {
-    revalidateTag(this.tag.byFilekey(fileKey));
+    revalidateTag(this.tag.byFileKey(fileKey));
   },
 };

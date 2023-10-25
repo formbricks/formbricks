@@ -89,7 +89,7 @@ export const getS3File = (fileKey: string): Promise<string> => {
     [`getFileFromS3-${fileKey}`],
     {
       revalidate: revalidateAfter,
-      tags: [storageCache.tag.byFilekey(fileKey)],
+      tags: [storageCache.tag.byFileKey(fileKey)],
     }
   )();
 };
