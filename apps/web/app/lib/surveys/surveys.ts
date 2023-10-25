@@ -176,6 +176,76 @@ export const generateQuestionAndFilterOptions = (
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
 };
 
+export const generateQuestionAndFilterOptionsForResponseSharing = (
+  survey: TSurvey,
+  responses: TResponse[]
+): {
+  questionOptions: QuestionOptions[];
+  questionFilterOptions: QuestionFilterOptions[];
+} => {
+  let questionOptions: any = [];
+  let questionFilterOptions: any = [];
+
+  let questionsOptions: any = [];
+
+  survey.questions.forEach((q) => {
+    if (Object.keys(conditionOptions).includes(q.type)) {
+      questionsOptions.push({
+        label: q.headline,
+        questionType: q.type,
+        type: OptionsType.QUESTIONS,
+        id: q.id,
+      });
+    }
+  });
+  questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
+  survey.questions.forEach((q) => {
+    if (Object.keys(conditionOptions).includes(q.type)) {
+      if (
+        q.type === TSurveyQuestionType.MultipleChoiceMulti ||
+        q.type === TSurveyQuestionType.MultipleChoiceSingle
+      ) {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: conditionOptions[q.type],
+          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
+          id: q.id,
+        });
+      } else {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: conditionOptions[q.type],
+          filterComboBoxOptions: filterOptions[q.type],
+          id: q.id,
+        });
+      }
+    }
+  });
+
+  const attributes = getPersonAttributes(responses);
+  if (attributes) {
+    questionOptions = [
+      ...questionOptions,
+      {
+        header: OptionsType.ATTRIBUTES,
+        option: Object.keys(attributes).map((a) => {
+          return { label: a, type: OptionsType.ATTRIBUTES, id: a };
+        }),
+      },
+    ];
+    Object.keys(attributes).forEach((a) => {
+      questionFilterOptions.push({
+        type: "Attributes",
+        filterOptions: conditionOptions.userAttributes,
+        filterComboBoxOptions: attributes[a],
+        id: a,
+      });
+    });
+  }
+
+  return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
+};
+
 // get the filtered responses
 export const getFilterResponses = (
   responses: TResponse[],

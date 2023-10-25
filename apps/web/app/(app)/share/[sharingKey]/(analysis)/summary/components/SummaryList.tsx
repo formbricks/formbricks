@@ -1,0 +1,140 @@
+import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
+import HiddenFieldsSummary from "./HiddenFieldsSummary";
+
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
+import {
+  TSurvey,
+  TSurveyCTAQuestion,
+  TSurveyConsentQuestion,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyNPSQuestion,
+  TSurveyOpenTextQuestion,
+  TSurveyQuestion,
+  TSurveyRatingQuestion,
+} from "@formbricks/types/surveys";
+import CTASummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary";
+import MultipleChoiceSummary from "./MultipleChoiceSummary";
+import NPSSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/NPSSummary";
+import OpenTextSummary from "./OpenTextSummary";
+import RatingSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
+
+interface SummaryListProps {
+  survey: TSurvey;
+  responses: TResponse[];
+  openTextResponsesPerPage: number;
+}
+
+export default function SummaryList({ survey, responses, openTextResponsesPerPage }: SummaryListProps) {
+  const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
+    survey.questions.map((question) => {
+      const questionResponses = responses
+        .filter((response) => question.id in response.data)
+        .map((r) => ({
+          id: r.id,
+          value: r.data[question.id],
+          updatedAt: r.updatedAt,
+          person: r.person,
+        }));
+      return {
+        question,
+        responses: questionResponses,
+      };
+    });
+
+  return (
+    <>
+      <div className="mt-10 space-y-8">
+        {/* {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
+          <EmptyInAppSurveys environment={environment} />
+        ) : responses.length === 0 ? (
+          <EmptySpaceFiller
+            type="response"
+            environment={environment}
+            noWidgetRequired={survey.type === "link"}
+          />
+        ) : ( */}
+        <>
+          {getSummaryData().map((questionSummary) => {
+            if (questionSummary.question.type === TSurveyQuestionType.OpenText) {
+              return (
+                <OpenTextSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
+                  openTextResponsesPerPage={openTextResponsesPerPage}
+                />
+              );
+            }
+            if (
+              questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+              questionSummary.question.type === TSurveyQuestionType.MultipleChoiceMulti
+            ) {
+              return (
+                <MultipleChoiceSummary
+                  key={questionSummary.question.id}
+                  questionSummary={
+                    questionSummary as TSurveyQuestionSummary<
+                      TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
+                    >
+                  }
+                  surveyType={survey.type}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.NPS) {
+              return (
+                <NPSSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyNPSQuestion>}
+                />
+              );
+            }
+
+            if (questionSummary.question.type === TSurveyQuestionType.CTA) {
+              return (
+                <CTASummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCTAQuestion>}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.Rating) {
+              return (
+                <RatingSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyRatingQuestion>}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.Consent) {
+              return (
+                <ConsentSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
+                />
+              );
+            }
+
+            return null;
+          })}
+          {survey.hiddenFields?.enabled &&
+            survey.hiddenFields.fieldIds?.map((question) => {
+              return (
+                <HiddenFieldsSummary
+                  question={question}
+                  responses={responses}
+                  survey={survey}
+                  key={question}
+                />
+              );
+            })}
+        </>
+      </div>
+    </>
+  );
+}

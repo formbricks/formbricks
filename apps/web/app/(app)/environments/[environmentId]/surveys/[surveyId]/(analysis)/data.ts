@@ -17,3 +17,16 @@ export const getAnalysisData = async (surveyId: string, environmentId: string) =
 
   return { responses, responseCount, survey, displayCount };
 };
+
+export const getAnalysisDataForSharing = async (surveyId: string) => {
+  const [survey, responses, displayCount] = await Promise.all([
+    getSurvey(surveyId),
+    getResponses(surveyId),
+    getDisplayCountBySurveyId(surveyId),
+  ]);
+  if (!survey) throw new Error(`Survey not found: ${surveyId}`);
+
+  const responseCount = responses.length;
+
+  return { responses, responseCount, survey, displayCount };
+};
