@@ -6,6 +6,24 @@ import { responseCache } from "../response/cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { tagOnResponseCache } from "./cache";
+import { validateInputs } from "../utils/validate";
+import { ZId } from "@formbricks/types/environment";
+
+const selectTagsOnResponse = {
+  response: {
+    select: {
+      survey: {
+        select: {
+          environment: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
+  },
+};
 
 export const addTagToRespone = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
   try {
@@ -14,6 +32,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
         responseId,
         tagId,
       },
+      select: selectTagsOnResponse,
     });
 
     responseCache.revalidate({
@@ -23,10 +42,13 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     tagOnResponseCache.revalidate({
       tagId,
       responseId,
-      functionName: "getTagsOnResponsesCount",
+      environmentId: tagOnResponse.response.survey.environment.id,
     });
 
-    return tagOnResponse;
+    return {
+      responseId,
+      tagId,
+    };
   } catch (error) {
     throw error;
   }
@@ -41,6 +63,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
           tagId,
         },
       },
+      select: selectTagsOnResponse,
     });
 
     responseCache.revalidate({
@@ -50,21 +73,35 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
     tagOnResponseCache.revalidate({
       tagId,
       responseId,
-      functionName: "getTagsOnResponsesCount",
+      environmentId: deletedTag.response.survey.environment.id,
     });
 
-    return deletedTag;
+    return {
+      tagId,
+      responseId,
+    };
   } catch (error) {
     throw error;
   }
 };
 
-export const getTagsOnResponsesCount = async (): Promise<TTagsCount> =>
+export const getTagsOnResponsesCount = async (environmentId: string): Promise<TTagsCount> =>
   unstable_cache(
     async () => {
+      validateInputs([environmentId, ZId]);
+
       try {
         const tagsCount = await prisma.tagsOnResponses.groupBy({
           by: ["tagId"],
+          where: {
+            response: {
+              survey: {
+                environment: {
+                  id: environmentId,
+                },
+              },
+            },
+          },
           _count: {
             _all: true,
           },
@@ -75,9 +112,9 @@ export const getTagsOnResponsesCount = async (): Promise<TTagsCount> =>
         throw error;
       }
     },
-    [`getTagsOnResponsesCount`],
+    [`getTagsOnResponsesCount-${environmentId}`],
     {
-      tags: [tagOnResponseCache.tag.byFunctionName("getTagsOnResponsesCount")],
+      tags: [tagOnResponseCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 interface RevalidateProps {
   tagId?: string;
   responseId?: string;
-  functionName?: string;
+  environmentId?: string;
 }
 
 export const tagOnResponseCache = {
@@ -11,17 +11,17 @@ export const tagOnResponseCache = {
     byResponseIdAndTagId(responseId: string, tagId: string) {
       return `responses-${responseId}-tagOnResponses-${tagId}`;
     },
-    byFunctionName(functionName: string) {
-      return `tagOnResponses-${functionName}`;
+    byEnvironmentId(environmentId: string) {
+      return `environments-${environmentId}-tagOnResponses`;
     },
   },
-  revalidate({ tagId, responseId, functionName }: RevalidateProps): void {
+  revalidate({ tagId, responseId, environmentId }: RevalidateProps): void {
     if (responseId && tagId) {
       revalidateTag(this.tag.byResponseIdAndTagId(responseId, tagId));
     }
 
-    if (functionName) {
-      revalidateTag(this.tag.byFunctionName(functionName));
+    if (environmentId) {
+      revalidateTag(this.tag.byEnvironmentId(environmentId));
     }
   },
 };
