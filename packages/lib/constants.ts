@@ -11,11 +11,7 @@ export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 6000 : 1000000;
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
-export const SURVEY_BASE_URL = env.SURVEY_BASE_URL ? env.SURVEY_BASE_URL + "/" : `${WEBAPP_URL}/s/`;
-
-export const SHORT_SURVEY_BASE_URL = env.SHORT_SURVEY_BASE_URL
-  ? env.SHORT_SURVEY_BASE_URL + "/"
-  : `${WEBAPP_URL}/i/`;
+export const SHORT_URL_BASE = env.SHORT_URL_BASE ? env.SHORT_URL_BASE + "/" : `${WEBAPP_URL}/i/`;
 
 // encryption keys
 export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;

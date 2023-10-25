@@ -35,7 +35,7 @@ interface SurveyDropDownMenuProps {
   survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   singleUseId?: string;
 }
 
@@ -44,14 +44,14 @@ export default function SurveyDropDownMenu({
   survey,
   environment,
   otherEnvironment,
-  surveyBaseUrl,
+  webAppUrl,
   singleUseId,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey.id, surveyBaseUrl]);
+  const surveyUrl = useMemo(() => webAppUrl + "/" + survey.id, [survey.id, webAppUrl]);
 
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);
