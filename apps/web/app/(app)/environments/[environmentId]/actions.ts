@@ -25,7 +25,7 @@ export const createShortUrlAction = async (url: string) => {
   if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
 
   const shortUrl = await createShortUrl(url);
-  const fullShortUrl = SHORT_URL_BASE + shortUrl.id;
+  const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
   return fullShortUrl;
 };
 
