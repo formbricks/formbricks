@@ -3,13 +3,13 @@ import { storageCache } from "@formbricks/lib/storage/cache";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { TAccessType } from "@formbricks/types/storage";
 
-export const handleDeleteFile = async (emvironmentId: string, accessType: TAccessType, fileName: string) => {
+export const handleDeleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
   try {
-    const { message, success, code } = await deleteFile(emvironmentId, accessType, fileName);
+    const { message, success, code } = await deleteFile(environmentId, accessType, fileName);
 
     if (success) {
       // revalidate cache
-      storageCache.revalidate({ fileKey: `${emvironmentId}/${accessType}/${fileName}` });
+      storageCache.revalidate({ fileKey: `${environmentId}/${accessType}/${fileName}` });
       return responses.successResponse(message);
     }
 
