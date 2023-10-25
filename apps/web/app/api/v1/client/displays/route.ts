@@ -5,7 +5,7 @@ import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createDisplay } from "@formbricks/lib/display/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
-import { TDisplay, ZDisplayInput } from "@formbricks/types/displays";
+import { TDisplay, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -14,7 +14,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function POST(request: Request): Promise<NextResponse> {
   const jsonInput: unknown = await request.json();
-  const inputValidation = ZDisplayInput.safeParse(jsonInput);
+  const inputValidation = ZDisplayCreateInput.safeParse(jsonInput);
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -34,6 +34,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -49,6 +50,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
