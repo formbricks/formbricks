@@ -52,7 +52,7 @@ export const calculateElementIdx = (survey: TSurveyWithTriggers, currentQustionI
   const currentQuestion = survey.questions[currentQustionIdx];
   const surveyLength = survey.questions.length;
   const middleIdx = Math.floor(surveyLength / 2);
-  const possibleNextQuestions = currentQuestion.logic?.map((l) => l.destination) || [];
+  const possibleNextQuestions = currentQuestion?.logic?.map((l) => l.destination) || [];
 
   const getLastQuestionIndex = () => {
     const lastQuestion = survey.questions
