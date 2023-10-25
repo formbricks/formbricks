@@ -12,7 +12,7 @@ import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE, IS_S3_CONFIGURED } from
 import { validateInputs } from "../utils/validate";
 import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "../environment/service";
 import { ZOptionalNumber } from "@formbricks/types/common";
-import { deleteLocalFilesWithEnvironmentId, deleteS3FilesWithEnvironmentId } from "../storage/service";
+import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 export const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
@@ -181,7 +181,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
 
     if (IS_S3_CONFIGURED) {
       const s3FilesPromises = product.environments.map(async (environment) => {
-        return deleteS3FilesWithEnvironmentId(environment.id);
+        return deleteS3FilesByEnvironmentId(environment.id);
       });
 
       try {
@@ -192,7 +192,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
       }
     } else {
       const localFilesPromises = product.environments.map(async (environment) => {
-        return deleteLocalFilesWithEnvironmentId(environment.id);
+        return deleteLocalFilesByEnvironmentId(environment.id);
       });
 
       try {

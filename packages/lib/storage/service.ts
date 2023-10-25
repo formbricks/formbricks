@@ -67,8 +67,8 @@ type TGetSignedUrlResponse =
       };
     };
 
-export const getFileFromS3 = (fileKey: string): Promise<string> => {
-  const [environmentId, accessType] = fileKey.split("/");
+export const getS3File = (fileKey: string): Promise<string> => {
+  const [_, accessType] = fileKey.split("/");
   const expiresIn = accessType === "public" ? 60 * 60 : 10 * 60;
 
   const revalidateAfter = accessType === "public" ? expiresIn - 60 * 5 : expiresIn - 60 * 2;
@@ -89,15 +89,12 @@ export const getFileFromS3 = (fileKey: string): Promise<string> => {
     [`getFileFromS3-${fileKey}`],
     {
       revalidate: revalidateAfter,
-      tags: [
-        storageCache.tag.byEnvironmentId(environmentId),
-        storageCache.tag.byAccessType(accessType as TAccessType),
-      ],
+      tags: [storageCache.tag.byFilekey(fileKey)],
     }
   )();
 };
 
-export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFileResponse> => {
+export const getLocalFile = async (filePath: string): Promise<TGetFileResponse> => {
   try {
     const file = await readFile(filePath);
     let contentType = "";
@@ -147,7 +144,7 @@ export const getUploadSignedUrl = async (
   }
 
   try {
-    const { presignedFields, signedUrl } = await getSignedUrlForS3Upload(
+    const { presignedFields, signedUrl } = await getS3UploadSignedUrl(
       fileName,
       fileType,
       accessType,
@@ -166,7 +163,7 @@ export const getUploadSignedUrl = async (
   }
 };
 
-export const getSignedUrlForS3Upload = async (
+export const getS3UploadSignedUrl = async (
   fileName: string,
   contentType: string,
   accessType: string,
@@ -233,7 +230,7 @@ export const putFileToLocalStorage = async (
 export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
   if (!IS_S3_CONFIGURED) {
     try {
-      await deleteFileFromLocalStorage(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
+      await deleteLocalFile(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
       return { success: true, message: "File deleted" };
     } catch (err: any) {
       if (err.code !== "ENOENT") {
@@ -245,7 +242,7 @@ export const deleteFile = async (environmentId: string, accessType: TAccessType,
   }
 
   try {
-    await deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+    await deleteS3File(`${environmentId}/${accessType}/${fileName}`);
     return { success: true, message: "File deleted" };
   } catch (err: any) {
     if (err.name === "NoSuchKey") {
@@ -256,7 +253,7 @@ export const deleteFile = async (environmentId: string, accessType: TAccessType,
   }
 };
 
-export const deleteFileFromLocalStorage = async (filePath: string) => {
+export const deleteLocalFile = async (filePath: string) => {
   try {
     await unlink(filePath);
   } catch (err: any) {
@@ -264,7 +261,7 @@ export const deleteFileFromLocalStorage = async (filePath: string) => {
   }
 };
 
-export const deleteFileFromS3 = async (fileKey: string) => {
+export const deleteS3File = async (fileKey: string) => {
   const deleteObjectCommand = new DeleteObjectCommand({
     Bucket: AWS_BUCKET_NAME,
     Key: fileKey,
@@ -277,7 +274,7 @@ export const deleteFileFromS3 = async (fileKey: string) => {
   }
 };
 
-export const deleteS3FilesWithEnvironmentId = async (environmentId: string) => {
+export const deleteS3FilesByEnvironmentId = async (environmentId: string) => {
   try {
     // List all objects in the bucket with the prefix of environmentId
     const listObjectsOutput = await s3Client.send(
@@ -315,7 +312,7 @@ export const deleteS3FilesWithEnvironmentId = async (environmentId: string) => {
   }
 };
 
-export const deleteLocalFilesWithEnvironmentId = async (environmentId: string) => {
+export const deleteLocalFilesByEnvironmentId = async (environmentId: string) => {
   const dirPath = join(UPLOADS_DIR, environmentId);
 
   try {
