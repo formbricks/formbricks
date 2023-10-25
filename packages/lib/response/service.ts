@@ -397,7 +397,15 @@ export const updateResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
-    const currentResponse = await getResponse(responseId);
+    // const currentResponse = await getResponse(responseId);
+
+    // use direct prisma call to avoid cache issues
+    const currentResponse = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: responseSelection,
+    });
 
     if (!currentResponse) {
       throw new ResourceNotFoundError("Response", responseId);
