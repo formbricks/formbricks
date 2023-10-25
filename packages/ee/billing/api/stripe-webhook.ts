@@ -1,7 +1,4 @@
-//import { buffer } from "micro";
-import { prisma } from "@formbricks/database";
-import { NextApiRequest, NextApiResponse } from "next";
-import type { Readable } from "stream";
+import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -17,182 +14,134 @@ interface Subscription {
   addOns: ("removeBranding" | "customUrl")[];
 }
 
-// Stripe requires the raw body to construct the event.
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+const webhookHandler = async (requestBody: string, stripeSignature: string) => {
+  let event: Stripe.Event;
 
-async function buffer(readable: Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of readable) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  try {
+    event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    // On error, log and return the error message.
+    if (err! instanceof Error) console.log(err);
+    return { status: 400, message: `Webhook Error: ${errorMessage}` };
   }
-  return Buffer.concat(chunks);
-}
 
-const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method === "POST") {
-    const buf = await buffer(req);
-    const sig = req.headers["stripe-signature"]!;
-
-    let event: Stripe.Event;
-
-    try {
-      event = stripe.webhooks.constructEvent(buf.toString(), sig, webhookSecret);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      // On error, log and return the error message.
-      if (err! instanceof Error) console.log(err);
-      console.log(`Error message: ${errorMessage}`);
-      res.status(400).send(`Webhook Error: ${errorMessage}`);
-      return;
+  // Cast event data to Stripe object.
+  if (event.type === "checkout.session.completed") {
+    const checkoutSession = event.data.object as Stripe.Checkout.Session;
+    const teamId = checkoutSession.client_reference_id;
+    if (!teamId) {
+      return { status: 400, message: "skipping, no teamId found" };
     }
+    const { line_items } = await stripe.checkout.sessions.retrieve(checkoutSession.id, {
+      expand: ["line_items"],
+    });
 
-    // Cast event data to Stripe object.
-    if (event.type === "checkout.session.completed") {
-      const checkoutSession = event.data.object as Stripe.Checkout.Session;
-      const { line_items } = await stripe.checkout.sessions.retrieve(checkoutSession.id, {
-        expand: ["line_items"],
-      });
+    const stripeCustomerId = checkoutSession.customer as string;
+    const purchasedRemoveBranding = line_items?.data[0].description === "Test Remove Branding";
+    const purchasedFormbricksScale = line_items?.data[0].description === "Test FB Cloud";
+    const purchasedCustomUrl = line_items?.data[0].description === "Test Custom URL";
 
-      const teamId = checkoutSession.client_reference_id;
-      if (!teamId) {
-        console.error("No teamId found in checkout session");
-        return res.json({ message: "skipping, no teamId found" });
-      }
-      const stripeCustomerId = checkoutSession.customer as string;
+    const existingSubscription: Subscription = (await getTeam(teamId)) as unknown as Subscription;
 
-      const purchasedRemoveBranding = line_items?.data[0].description === "Test Remove Branding";
-      const purchasedFormbricksScale = line_items?.data[0].description === "Test FB Cloud";
-      const purchasedCustomUrl = line_items?.data[0].description === "Test Custom URL";
-
-      const existingSubscription: Subscription = (await prisma.team.findUnique({
-        where: { id: teamId },
-        select: {
-          subscription: true,
-        },
-      })) as unknown as Subscription;
-
-      if (purchasedFormbricksScale) {
-        await prisma.team.update({
-          where: { id: teamId },
-          data: {
-            subscription: {
-              addOns: existingSubscription.addOns,
-              plan: "scale",
-              stripeCustomerId,
-            },
-          },
-        });
-      }
-
-      if (purchasedRemoveBranding) {
-        const addOns = existingSubscription.addOns || [];
-        addOns.includes("removeBranding") ? addOns.push("removeBranding") : addOns;
-        await prisma.team.update({
-          where: { id: teamId },
-          data: {
-            subscription: {
-              plan: existingSubscription.plan,
-              stripeCustomerId,
-              addOns,
-            },
-          },
-        });
-      }
-
-      if (purchasedCustomUrl) {
-        const addOns = existingSubscription.addOns || [];
-        addOns.includes("customUrl") ? addOns.push("customUrl") : addOns;
-        await prisma.team.update({
-          where: { id: teamId },
-          data: {
-            subscription: {
-              plan: existingSubscription.plan,
-              stripeCustomerId,
-              addOns,
-            },
-          },
-        });
-      }
-      // add teamId to subscription metadata in Stripe
-      const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string);
-      await stripe.subscriptions.update(subscription.id, {
-        metadata: {
-          teamId,
+    if (purchasedFormbricksScale) {
+      await updateTeam(teamId, {
+        subscription: {
+          addOns: existingSubscription.addOns,
+          plan: "scale",
+          stripeCustomerId,
         },
       });
-    } else if (event.type === "customer.subscription.deleted") {
-      const subscription = event.data.object as Stripe.Subscription;
-
-      const unsubscribedRemoveBranding = subscription.description === "Test Remove Branding";
-      const unsubscribedFormbricksPro = subscription.description === "Test FB Cloud";
-      const unsubscribedCustomUrl = subscription.description === "Test Custom URL";
-
-      const teamId = subscription.metadata.teamId;
-      if (!teamId) {
-        console.error("No teamId found in subscription");
-        return res.json({ message: "skipping, no teamId found" });
-      }
-
-      const existingSubscription: Subscription = (await prisma.team.findUnique({
-        where: { id: teamId },
-        select: {
-          subscription: true,
-        },
-      })) as unknown as Subscription;
-
-      if (unsubscribedFormbricksPro) {
-        await prisma.team.update({
-          where: { id: teamId },
-          data: {
-            subscription: {
-              ...existingSubscription,
-              plan: "community",
-            },
-          },
-        });
-      }
-
-      if (unsubscribedRemoveBranding) {
-        const currentAddOns = existingSubscription.addOns || [];
-        const updatedAddOns = currentAddOns.filter((addOn) => addOn !== "removeBranding");
-        await prisma.team.update({
-          where: { id: teamId },
-          data: {
-            subscription: {
-              ...existingSubscription,
-              addOns: updatedAddOns,
-            },
-          },
-        });
-      }
-
-      if (unsubscribedCustomUrl) {
-        const currentAddOns = existingSubscription.addOns || [];
-        const updatedAddOns = currentAddOns.filter((addOn) => addOn !== "customUrl");
-        await prisma.team.update({
-          where: { id: teamId },
-          data: {
-            subscription: {
-              ...existingSubscription,
-              addOns: updatedAddOns,
-            },
-          },
-        });
-      }
-    } else {
-      console.warn(`🤷‍♀️ Unhandled event type: ${event.type}`);
     }
 
-    // Return a response to acknowledge receipt of the event.
-    res.json({ received: true });
+    if (purchasedRemoveBranding) {
+      const addOns = existingSubscription.addOns || [];
+      addOns.includes("removeBranding") ? addOns.push("removeBranding") : addOns;
+
+      await updateTeam(teamId, {
+        subscription: {
+          plan: existingSubscription.plan,
+          stripeCustomerId,
+          addOns,
+        },
+      });
+    }
+
+    if (purchasedCustomUrl) {
+      const addOns = existingSubscription.addOns || [];
+      addOns.includes("customUrl") ? addOns.push("customUrl") : addOns;
+
+      await updateTeam(teamId, {
+        subscription: {
+          plan: existingSubscription.plan,
+          stripeCustomerId,
+          addOns,
+        },
+      });
+    }
+
+    const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string);
+    await stripe.subscriptions.update(subscription.id, {
+      metadata: {
+        teamId,
+      },
+    });
+  } else if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription;
+
+    const unsubscribedRemoveBranding = subscription.description === "Test Remove Branding";
+    const unsubscribedFormbricksPro = subscription.description === "Test FB Cloud";
+    const unsubscribedCustomUrl = subscription.description === "Test Custom URL";
+
+    const teamId = subscription.metadata.teamId;
+    if (!teamId) {
+      console.error("No teamId found in subscription");
+      return { status: 400, message: "skipping, no teamId found" };
+    }
+
+    const existingSubscription: Subscription = (await getTeam(teamId)) as unknown as Subscription;
+
+    if (unsubscribedFormbricksPro) {
+      await updateTeam(teamId, {
+        subscription: {
+          addOns: existingSubscription.addOns,
+          plan: "community",
+          stripeCustomerId: existingSubscription.stripeCustomerId,
+        },
+      });
+    }
+
+    if (unsubscribedRemoveBranding) {
+      const currentAddOns = existingSubscription.addOns || [];
+      const updatedAddOns = currentAddOns.filter((addOn) => addOn !== "removeBranding");
+
+      await updateTeam(teamId, {
+        subscription: {
+          plan: existingSubscription.plan,
+          stripeCustomerId: existingSubscription.stripeCustomerId,
+          addOns: updatedAddOns,
+        },
+      });
+    }
+
+    if (unsubscribedCustomUrl) {
+      const currentAddOns = existingSubscription.addOns || [];
+      const updatedAddOns = currentAddOns.filter((addOn) => addOn !== "customUrl");
+
+      await updateTeam(teamId, {
+        subscription: {
+          plan: existingSubscription.plan,
+          stripeCustomerId: existingSubscription.stripeCustomerId,
+          addOns: updatedAddOns,
+        },
+      });
+    }
   } else {
-    res.setHeader("Allow", "POST");
-    res.status(405).end("Method Not Allowed");
+    console.warn(`🤷‍♀️ Unhandled event type: ${event.type}`);
   }
+
+  // Return a response to acknowledge receipt of the event.
+  return { status: 200, message: { received: true } };
 };
 
 export default webhookHandler;

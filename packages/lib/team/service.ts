@@ -19,6 +19,7 @@ export const select = {
   subscription: true,
 };
 
+export const getTeamsTag = (teamId: string) => `teams-${teamId}`;
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
 export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
@@ -93,6 +94,35 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     [`environments-${environmentId}-team`],
     {
       tags: [getTeamByEnvironmentIdCacheTag(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getTeam = async (teamId: string): Promise<TTeam> =>
+  unstable_cache(
+    async () => {
+      validateInputs([teamId, ZString]);
+
+      try {
+        const teams = await prisma.team.findFirstOrThrow({
+          where: {
+            id: teamId,
+          },
+          select,
+        });
+
+        return teams;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`teams-${teamId}`],
+    {
+      tags: [getTeamsTag(teamId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

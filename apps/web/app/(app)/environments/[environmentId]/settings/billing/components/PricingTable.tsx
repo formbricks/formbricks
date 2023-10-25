@@ -12,7 +12,7 @@ import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 const stripeURl =
   process.env.NODE_ENV === "production"
     ? "https://buy.stripe.com/5kA9ABal07ZjgEw3cc"
-    : "https://buy.stripe.com/test_8wMaHA3UWcACfuM3cc";
+    : "https://billing.formbricks.com/b/test_28o02W1MObwybewfZ1";
 
 const stripeRemoveBrandingUrl =
   process.env.NODE_ENV === "production" ? "" : "https://billing.formbricks.com/b/test_5kA02WezAgQSdmEbIJ";
@@ -44,7 +44,9 @@ export default function PricingTable({ team }: PricingTableProps) {
       setLoadingCustomerPortal(false);
       alert("Error loading billing portal");
     }
-    const { sessionUrl } = await res.json();
+    const {
+      data: { sessionUrl },
+    } = await res.json();
     router.push(sessionUrl);
   };
 
