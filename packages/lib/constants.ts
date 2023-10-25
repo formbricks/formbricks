@@ -5,7 +5,7 @@ import { env } from "@/env.mjs";
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
-export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 6000 : 1000000;
+export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
 export const WEBAPP_URL =
@@ -65,4 +65,10 @@ export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
   free: 1024 * 1024 * 10, // 10MB
   pro: 1024 * 1024 * 1024, // 1GB
+} as const;
+export const IS_S3_CONFIGURED: boolean =
+  env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION && env.S3_BUCKET_NAME ? true : false;
+export const LOCAL_UPLOAD_URL = {
+  public: new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
+  private: new URL(`${WEBAPP_URL}/api/v1/client/storage/local`).href,
 } as const;
