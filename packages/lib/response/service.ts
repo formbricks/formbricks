@@ -230,7 +230,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     responseCache.revalidate({
       personId: response.person?.id,
-      responseId: response.id,
+      id: response.id,
       surveyId: response.surveyId,
     });
 
@@ -277,7 +277,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       }
     },
     [`getResponse-${responseId}`],
-    { tags: [responseCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    { tags: [responseCache.tag.byId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
   if (!response) {
@@ -397,7 +397,15 @@ export const updateResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
-    const currentResponse = await getResponse(responseId);
+    // const currentResponse = await getResponse(responseId);
+
+    // use direct prisma call to avoid cache issues
+    const currentResponse = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: responseSelection,
+    });
 
     if (!currentResponse) {
       throw new ResourceNotFoundError("Response", responseId);
@@ -428,7 +436,7 @@ export const updateResponse = async (
 
     responseCache.revalidate({
       personId: response.person?.id,
-      responseId: response.id,
+      id: response.id,
       surveyId: response.surveyId,
     });
 
@@ -461,7 +469,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
 
     responseCache.revalidate({
       personId: response.person?.id,
-      responseId: response.id,
+      id: response.id,
       surveyId: response.surveyId,
     });
 
