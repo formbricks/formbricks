@@ -1,6 +1,9 @@
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
+import { TimerIcon } from "lucide-react";
+import { calculateElementIdx } from "../lib/utils";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
 
 interface WelcomeCardProps {
   headline?: string;
@@ -10,6 +13,7 @@ interface WelcomeCardProps {
   timeToFinish?: boolean;
   brandColor: string;
   onSubmit: (data: { [x: string]: any }) => void;
+  survey: TSurveyWithTriggers;
 }
 
 export default function WelcomeCard({
@@ -20,7 +24,32 @@ export default function WelcomeCard({
   timeToFinish,
   brandColor,
   onSubmit,
+  survey,
 }: WelcomeCardProps) {
+  const calculateTimeToComplete = () => {
+    let idx = calculateElementIdx(survey, 0);
+    if (idx === 0.5) {
+      idx = 1;
+    }
+    const timeInSeconds = (survey.questions.length / idx) * 15; // Assuming base unit is 15 seconds per question.
+
+    if (timeInSeconds > 360) {
+      // 360 seconds is 6 minutes
+      return "6+ minutes";
+    } else if (timeInSeconds > 60) {
+      const minutes = Math.floor(timeInSeconds / 60);
+      const seconds = Math.round(timeInSeconds % 60);
+
+      if (seconds === 0) {
+        return `${minutes} minutes`;
+      }
+
+      return `${minutes} minutes ${seconds} seconds`;
+    }
+
+    return `${Math.round(timeInSeconds)} seconds`;
+  };
+
   return (
     <div>
       {fileUrl && (
@@ -45,7 +74,12 @@ export default function WelcomeCard({
           <div className="flex items-center text-xs text-slate-600">Press Enter ↵</div>
         </div>
       </div>
-      {timeToFinish && <></>}
+      {timeToFinish && (
+        <div className="item-center mt-4 flex text-slate-500">
+          <TimerIcon className="mr-2 h-4 w-4" />
+          <p className="text-xs">Takes {calculateTimeToComplete()}</p>
+        </div>
+      )}
     </div>
   );
 }

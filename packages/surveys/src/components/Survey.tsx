@@ -132,6 +132,7 @@ export function Survey({
                 timeToFinish={survey.welcomeCard.timeToFinish}
                 brandColor={brandColor}
                 onSubmit={onSubmit}
+                survey={survey}
               />
             ) : questionId === "end" && survey.thankYouCard.enabled ? (
               <ThankYouCard
