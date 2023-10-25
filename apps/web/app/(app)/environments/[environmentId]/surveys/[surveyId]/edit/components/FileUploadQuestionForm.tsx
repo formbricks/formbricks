@@ -142,7 +142,7 @@ export default function FileUploadQuestionForm({
                 name="maxSize"
                 type="number"
                 value={question?.maxSize}
-                onChange={(e) => updateQuestion(questionIdx, { maxSize: e.target.value })}
+                onChange={(e) => updateQuestion(questionIdx, { maxSize: parseInt(e.target.value, 10) })}
               />
               MB
             </div>
