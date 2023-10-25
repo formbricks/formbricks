@@ -1,6 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { TPerson } from "@formbricks/types/people";
 import { transformPrismaPerson } from "@formbricks/lib/person/service";
+import { personCache } from "@formbricks/lib/person/cache";
 
 const select = {
   id: true,
@@ -34,5 +35,10 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
   });
 
   const person = transformPrismaPerson(prismaPerson);
+
+  personCache.revalidate({
+    id: person.id,
+    environmentId: person.environmentId,
+  });
   return person;
 };

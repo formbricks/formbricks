@@ -44,7 +44,7 @@ export const createResponseNote = async (
     });
 
     responseCache.revalidate({
-      responseId,
+      id: responseId,
       surveyId: responseNote.response.surveyId,
     });
 
@@ -91,7 +91,7 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
     });
 
     responseCache.revalidate({
-      responseId: updatedResponseNote.response.id,
+      id: updatedResponseNote.response.id,
       surveyId: updatedResponseNote.response.surveyId,
     });
 
@@ -119,7 +119,7 @@ export const resolveResponseNote = async (responseNoteId: string): Promise<TResp
     });
 
     responseCache.revalidate({
-      responseId: responseNote.response.id,
+      id: responseNote.response.id,
       surveyId: responseNote.response.surveyId,
     });
 

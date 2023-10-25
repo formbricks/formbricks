@@ -11,7 +11,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 
-export async function PUT(req: NextRequest): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "private"; // private files are accessible only by authorized users
   const headersList = headers();
 
