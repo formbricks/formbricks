@@ -17,22 +17,22 @@ export async function middleware(request: NextRequest) {
     ip = forwardedFor.split(",").at(0) ?? null;
   }
 
-  if (ip) {
-    try {
-      if (request.nextUrl.pathname === "/api/auth/callback/credentials") {
-        await loginLimiter.check(ip);
-      } else if (request.nextUrl.pathname === "/api/v1/users") {
-        await signUpLimiter.check(ip);
-      }
-      return res;
-    } catch (_e) {
-      console.log("Rate Limiting IP: ", ip);
+  // if (ip) {
+  //   try {
+  //     if (request.nextUrl.pathname === "/api/auth/callback/credentials") {
+  //       await loginLimiter.check(ip);
+  //     } else if (request.nextUrl.pathname === "/api/v1/users") {
+  //       await signUpLimiter.check(ip);
+  //     }
+  //     return res;
+  //   } catch (_e) {
+  //     console.log("Rate Limiting IP: ", ip);
 
-      return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
-    }
-  } else {
-    return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
-  }
+  //     return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
+  //   }
+  // } else {
+  //   return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
+  // }
 }
 
 export const config = {

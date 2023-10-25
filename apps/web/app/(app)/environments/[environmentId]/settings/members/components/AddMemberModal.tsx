@@ -1,18 +1,11 @@
 "use client";
 
 import { Modal } from "@formbricks/ui/Modal";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/Select";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import AddMemberRole from "@formbricks/ee/RoleSwitch/components/AddMemberRole";
 
 enum MembershipRole {
   Admin = "admin",
@@ -65,29 +58,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
                 <Label>Email Adress</Label>
                 <Input type="email" placeholder="hans@wurst.com" {...register("email", { required: true })} />
               </div>
-              <Controller
-                name="role"
-                control={control}
-                render={({ field: { onChange, value } }) => (
-                  <div>
-                    <Label>Role</Label>
-                    <Select value={value} onValueChange={(v) => onChange(v as MembershipRole)}>
-                      <SelectTrigger className="capitalize">
-                        <SelectValue placeholder={<span className="text-slate-400">Select role</span>} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {Object.values(MembershipRole).map((role) => (
-                            <SelectItem className="capitalize" key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              />
+              <AddMemberRole control={control} />
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">
