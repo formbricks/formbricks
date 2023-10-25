@@ -1,5 +1,6 @@
 import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
+import { updateResponse } from "@formbricks/lib/response/service";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -39,11 +40,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Replace a specific response
   else if (req.method === "POST") {
     const data = { ...req.body, updatedAt: new Date() };
-    const prismaRes = await prisma.response.update({
-      where: { id: responseId },
-      data,
-    });
-    return res.json(prismaRes);
+    const response = await updateResponse(responseId, data);
+    return res.json(response);
   }
 
   // Delete /api/environments[environmentId]/surveys/[surveyId]/responses/[responseId]
