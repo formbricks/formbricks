@@ -1,22 +1,18 @@
 "use client";
 
-import TransferOwnershipModal from "@/app/(app)/environments/[environmentId]/settings/members/components/TransferOwnershipModal";
-import {
-  transferOwnershipAction,
-  updateInviteAction,
-  updateMembershipAction,
-} from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "@/app/lib/utils";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import TransferOwnershipModal from "../../../../apps/web/app/(app)/environments/[environmentId]/settings/members/components/TransferOwnershipModal";
+import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
+import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "../../../../apps/web/app/lib/utils";
+import { TMembershipRole } from "../../../types/memberships";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import { Button } from "@formbricks/ui/Button";
-import { Badge } from "@formbricks/ui/Badge";
+} from "../../../ui/DropdownMenu";
+import { Button } from "../../../ui/Button";
+import { Badge } from "../../../ui/Badge";
 import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,7 +30,7 @@ interface Role {
   currentUserRole: string;
 }
 
-export default function MembershipRole({
+export default function EditMembershipRole({
   isAdminOrOwner,
   memberRole,
   teamId,
@@ -82,7 +78,7 @@ export default function MembershipRole({
       setTransferOwnershipModalOpen(false);
       toast.success("Ownership transferred successfully");
       router.refresh();
-    } catch (err) {
+    } catch (err: any) {
       toast.error(`Error: ${err.message}`);
       setLoading(false);
       setTransferOwnershipModalOpen(false);

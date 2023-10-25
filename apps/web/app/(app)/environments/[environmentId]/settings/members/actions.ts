@@ -3,25 +3,16 @@
 import { authOptions } from "@formbricks/lib/authOptions";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
-import {
-  deleteInvite,
-  getInvite,
-  inviteUser,
-  resendInvite,
-  updateInvite,
-} from "@formbricks/lib/invite/service";
+import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import {
   deleteMembership,
   getMembershipsByUserId,
   getMembershipByUserIdTeamId,
-  transferOwnership,
-  updateMembership,
 } from "@formbricks/lib/membership/service";
 import { deleteTeam, updateTeam } from "@formbricks/lib/team/service";
-import { TInviteUpdateInput } from "@formbricks/types/invites";
-import { TMembershipRole, TMembershipUpdateInput } from "@formbricks/types/memberships";
+import { TMembershipRole } from "@formbricks/types/memberships";
 import { getServerSession } from "next-auth";
-import { hasTeamAccess, hasTeamAuthority, hasTeamOwnership, isOwner } from "@formbricks/lib/auth";
+import { hasTeamAuthority, hasTeamOwnership } from "@formbricks/lib/auth";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 
 export const updateTeamNameAction = async (teamId: string, teamName: string) => {
@@ -36,42 +27,6 @@ export const updateTeamNameAction = async (teamId: string, teamName: string) => 
   }
 
   return await updateTeam(teamId, { name: teamName });
-};
-
-export const updateMembershipAction = async (
-  userId: string,
-  teamId: string,
-  data: TMembershipUpdateInput
-) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  return await updateMembership(userId, teamId, data);
-};
-
-export const updateInviteAction = async (inviteId: string, teamId: string, data: TInviteUpdateInput) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
-
-  if (!isUserAuthorized) {
-    throw new AuthenticationError("Not authorized");
-  }
-
-  return await updateInvite(inviteId, data);
 };
 
 export const deleteInviteAction = async (inviteId: string, teamId: string) => {
@@ -182,34 +137,6 @@ export const inviteUserAction = async (
   });
 
   return invite;
-};
-
-export const transferOwnershipAction = async (teamId: string, newOwnerId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
-
-  const hasAccess = await hasTeamAccess(session.user.id, teamId);
-  if (!hasAccess) {
-    throw new AuthorizationError("Not authorized");
-  }
-
-  const isUserOwner = await isOwner(session.user.id, teamId);
-  if (!isUserOwner) {
-    throw new AuthorizationError("Not authorized");
-  }
-
-  if (newOwnerId === session.user.id) {
-    throw new ValidationError("You are already the owner of this team");
-  }
-
-  const membership = await getMembershipByUserIdTeamId(newOwnerId, teamId);
-  if (!membership) {
-    throw new ValidationError("User is not a member of this team");
-  }
-
-  await transferOwnership(session.user.id, newOwnerId, teamId);
 };
 
 export const deleteTeamAction = async (teamId: string) => {
