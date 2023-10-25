@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 interface RevalidateProps {
   id?: string;
   surveyId?: string;
-  personId?: string;
+  personId?: string | null;
 }
 
 export const displayCache = {
