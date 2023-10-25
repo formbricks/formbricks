@@ -6,33 +6,53 @@ export const meta = {
 
 #### Self-Hosting
 
-# Migrating to v1.1
+# Migration Guide
+
+## v1.1 -> v1.2
+
+Formbricks v1.2 ships a lot of features targeting our Link Surveys. We have also improved our security posture to be as robust as ever. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.2 without any hassles or build errors.
+
+### New Environment Variables
+
+| Environment Variable | Required | Recommended Generation         | Comments                                                    |
+| -------------------- | -------- | ------------------------------ | ----------------------------------------------------------- |
+| ENCRYPTION_KEY       | true     | `openssl rand -hex 32`         | Needed for 2 Factor Authentication                          |
+| SHORT_URL_BASE       | false    | `<your-short-base-url>`        | Needed if you want to enable shorter links for Link Surveys |
+| ASSET_PREFIX_URL     | false    | `<your-asset-hosted-base-url>` | Needed if you have a separate URL for hosted assets         |
+
+### Deprecated / Removed Environment Variables
+
+| Environment Variable | Comments                                                                  |
+| -------------------- | ------------------------------------------------------------------------- |
+| SURVEY_BASE_URL      | The WEBAPP_URL is now used to determine the survey base url in all places |
+
+## v1.0 -> v1.1
 
 Formbricks v1.1 includes a lot of new features and improvements. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.1 without losing any data.
 
-## Changes in .env
-
 ### Renamed Environment Variables
+
 This was introduced because we got a lot of requests from our users for the ability to define some common environment variables at runtime itself i.e. without having to rebuild the image for the changes to take effect.
-This is now possible with v1.1. However, due to Next.JS best practices, we had to deprecate the prefix **NEXT_PUBLIC_** in the following environment variables:
+This is now possible with v1.1. However, due to Next.JS best practices, we had to deprecate the prefix **NEXT*PUBLIC*** in the following environment variables:
 
 | till v1.0                                   | v1.1                        |
 | ------------------------------------------- | --------------------------- |
-| **NEXT_PUBLIC_**EMAIL_VERIFICATION_DISABLED | EMAIL_VERIFICATION_DISABLED |
-| **NEXT_PUBLIC_**PASSWORD_RESET_DISABLED     | PASSWORD_RESET_DISABLED     |
-| **NEXT_PUBLIC_**SIGNUP_DISABLED             | SIGNUP_DISABLED             |
-| **NEXT_PUBLIC_**INVITE_DISABLED             | INVITE_DISABLED             |
-| **NEXT_PUBLIC_**PRIVACY_URL                 | PRIVACY_URL                 |
-| **NEXT_PUBLIC_**TERMS_URL                   | TERMS_URL                   |
-| **NEXT_PUBLIC_**IMPRINT_URL                 | IMPRINT_URL                 |
-| **NEXT_PUBLIC_**GITHUB_AUTH_ENABLED         | GITHUB_AUTH_ENABLED         |
-| **NEXT_PUBLIC_**GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
-| **NEXT_PUBLIC_**WEBAPP_URL                  | WEBAPP_URL                  |
-| **NEXT_PUBLIC_**IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
-| **NEXT_PUBLIC_**SURVEY_BASE_URL             | SURVEY_BASE_URL             |
+| **NEXT*PUBLIC***EMAIL_VERIFICATION_DISABLED | EMAIL_VERIFICATION_DISABLED |
+| **NEXT*PUBLIC***PASSWORD_RESET_DISABLED     | PASSWORD_RESET_DISABLED     |
+| **NEXT*PUBLIC***SIGNUP_DISABLED             | SIGNUP_DISABLED             |
+| **NEXT*PUBLIC***INVITE_DISABLED             | INVITE_DISABLED             |
+| **NEXT*PUBLIC***PRIVACY_URL                 | PRIVACY_URL                 |
+| **NEXT*PUBLIC***TERMS_URL                   | TERMS_URL                   |
+| **NEXT*PUBLIC***IMPRINT_URL                 | IMPRINT_URL                 |
+| **NEXT*PUBLIC***GITHUB_AUTH_ENABLED         | GITHUB_AUTH_ENABLED         |
+| **NEXT*PUBLIC***GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
+| **NEXT*PUBLIC***WEBAPP_URL                  | WEBAPP_URL                  |
+| **NEXT*PUBLIC***IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
+| **NEXT*PUBLIC***SURVEY_BASE_URL             | SURVEY_BASE_URL             |
 
 <Note>
-Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated. The other environment variables remain the same as well.
+  Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated.
+  The other environment variables remain the same as well.
 </Note>
 
 ### Deprecated Environment Variables
@@ -44,13 +64,15 @@ Please note that their values and the logic remains exactly the same. Only the p
 - **NEXT_PUBLIC_WEBAPP_URL**: Was used for the same purpose as WEBAPP_URL, but from v1.1, you can just set the WEBAPP_URL environment variable.
 - **PRISMA_GENERATE_DATAPROXY**: Was used to tell Prisma that it should generate the runtime for Dataproxy usage. But its officially deprecated now.
 
-## Helper Shell Script
+### Helper Shell Script
+
 For a seamless migration, below is a shell script for your self-hosted instance that will automatically update your environment variables to be compliant with the new naming conventions.
 
 ### Docker & Single Script Setup
 
 Now that these variables can be defined at runtime, you can append them inside your `x-environment` in the `docker-compose.yml` itself.
 For a more detailed guide on these environment variables, please refer to the [Important Runtime Variables](/docs/self-hosting/docker#important-run-time-variables) section.
+
 <Col>
 <CodeGroup title="docker-compose.yml">
 ```yaml {{ title: 'docker-compose.yml' }}
@@ -65,7 +87,7 @@ x-environment: &environment
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -base64 32` to generate one
+    # You can use: `openssl rand -hex 32` to generate one
     NEXTAUTH_SECRET:
 
     # Set this to your public-facing URL, e.g., https://example.com
@@ -106,7 +128,7 @@ x-environment: &environment
 
     # Uncomment the below and set to 1 if you want to enable GitHub OAuth
     # GITHUB_AUTH_ENABLED:
-    # GITHUB_ID: 
+    # GITHUB_ID:
     # GITHUB_SECRET:
 
     # Uncomment the below and set to 1 if you want to enable Google OAuth
@@ -118,3 +140,4 @@ x-environment: &environment
 </CodeGroup>
 </Col>
 Did we miss something? Are you still facing issues migrating your app? [Join our Discord!](https://formbricks.com/discord) We'd be happy to help!
+```
