@@ -16,8 +16,7 @@ export const select = {
   createdAt: true,
   updatedAt: true,
   name: true,
-  plan: true,
-  stripeCustomerId: true,
+  subscription: true,
 };
 
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
@@ -103,7 +102,10 @@ export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> =>
     validateInputs([teamInput, ZTeamUpdateInput]);
 
     const team = await prisma.team.create({
-      data: teamInput,
+      data: {
+        name: teamInput.name,
+        subscription: teamInput.subscription || { stripeCustomerId: null, plan: "community", addOns: [] },
+      },
       select,
     });
 
