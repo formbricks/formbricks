@@ -72,3 +72,7 @@ export const MAX_SIZES = {
 } as const;
 export const IS_S3_CONFIGURED: boolean =
   env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION && env.S3_BUCKET_NAME;
+export const LOCAL_UPLOAD_URL = {
+  public: new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
+  private: new URL(`${WEBAPP_URL}/api/v1/client/storage/local`).href,
+} as const;

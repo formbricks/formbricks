@@ -6,7 +6,7 @@ import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import getFile from "./lib/getFile";
-import deleteFile from "./lib/deleteFile";
+import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/deleteFile";
 
 export async function GET(
   _: NextRequest,
@@ -79,7 +79,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { fileName: s
     return responses.unauthorizedResponse();
   }
 
-  return await deleteFile(
+  return await handleDeleteFile(
     paramValidation.data.environmentId,
     paramValidation.data.accessType,
     paramValidation.data.fileName

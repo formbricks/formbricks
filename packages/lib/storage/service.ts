@@ -11,10 +11,12 @@ import { access, mkdir, writeFile, readFile, unlink, rmdir } from "fs/promises";
 import { join } from "path";
 import mime from "mime";
 import { env } from "@/env.mjs";
-import { MAX_SIZES, UPLOADS_DIR } from "../constants";
+import { IS_S3_CONFIGURED, LOCAL_UPLOAD_URL, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { storageCache } from "./cache";
 import { TAccessType } from "@formbricks/types/storage";
+import { generateLocalSignedUrl } from "../crypto";
+import path from "path";
 
 // global variables
 
@@ -51,6 +53,19 @@ type TGetFileResponse = {
     contentType: string;
   };
 };
+
+// discriminated union
+type TGetSignedUrlResponse =
+  | { signedUrl: string; fileUrl: string; presignedFields: Object }
+  | {
+      signedUrl: string;
+      fileUrl: string;
+      signingData: {
+        signature: string;
+        timestamp: number;
+        uuid: string;
+      };
+    };
 
 export const getFileFromS3 = (fileKey: string): Promise<string> => {
   const [environmentId, accessType] = fileKey.split("/");
@@ -98,6 +113,53 @@ export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFil
       metaData: {
         contentType: contentType ?? "",
       },
+    };
+  } catch (err) {
+    throw err;
+  }
+};
+
+// a single service for generating a signed url based on user's environment variables
+export const getUploadSignedUrl = async (
+  fileName: string,
+  environmentId: string,
+  fileType: string,
+  accessType: TAccessType,
+  plan: "free" | "pro" = "free"
+): Promise<TGetSignedUrlResponse> => {
+  // handle the local storage case first
+  if (!IS_S3_CONFIGURED) {
+    try {
+      const { signature, timestamp, uuid } = generateLocalSignedUrl(fileName, environmentId, fileType);
+
+      return {
+        signedUrl: LOCAL_UPLOAD_URL[accessType],
+        signingData: {
+          signature,
+          timestamp,
+          uuid,
+        },
+        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  try {
+    const { presignedFields, signedUrl } = await getSignedUrlForS3Upload(
+      fileName,
+      fileType,
+      accessType,
+      environmentId,
+      accessType === "public",
+      plan
+    );
+
+    return {
+      signedUrl,
+      presignedFields,
+      fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
     };
   } catch (err) {
     throw err;
@@ -168,13 +230,37 @@ export const putFileToLocalStorage = async (
   }
 };
 
+export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
+  if (!IS_S3_CONFIGURED) {
+    try {
+      await deleteFileFromLocalStorage(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
+      return { success: true, message: "File deleted" };
+    } catch (err: any) {
+      if (err.code !== "ENOENT") {
+        return { success: false, message: err.message ?? "Something went wrong" };
+      }
+
+      return { success: false, message: "File not found", code: 404 };
+    }
+  }
+
+  try {
+    await deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+    return { success: true, message: "File deleted" };
+  } catch (err: any) {
+    if (err.name === "NoSuchKey") {
+      return { success: false, message: "File not found", code: 404 };
+    } else {
+      return { success: false, message: err.message ?? "Something went wrong" };
+    }
+  }
+};
+
 export const deleteFileFromLocalStorage = async (filePath: string) => {
   try {
     await unlink(filePath);
   } catch (err: any) {
-    if (err.code !== "ENOENT") {
-      throw err;
-    }
+    throw err;
   }
 };
 
