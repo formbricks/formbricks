@@ -9,7 +9,7 @@ x-environment: &environment
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -hex 16` to generate one
+    # You can use: `openssl rand -hex 32` to generate one
     NEXTAUTH_SECRET:
 
     # Set this to your public-facing URL, e.g., https://example.com
@@ -17,7 +17,7 @@ x-environment: &environment
     NEXTAUTH_URL: http://localhost:3000
 
     # Encryption Key is used for 2FA & Single use URLs for Link Surveys
-    # You can use: $(openssl rand -hex 16) to generate one
+    # You can use: $(openssl rand -hex 32) to generate one
     ENCRYPTION_KEY:
 
     # PostgreSQL password
