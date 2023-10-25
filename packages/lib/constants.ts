@@ -5,7 +5,7 @@ import { env } from "@/env.mjs";
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
-export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 6000 : 1000000;
+export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
 export const WEBAPP_URL =
