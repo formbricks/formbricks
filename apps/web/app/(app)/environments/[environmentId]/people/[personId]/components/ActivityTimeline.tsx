@@ -1,17 +1,17 @@
 "use client";
 
 import ActivityFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivityFeed";
-import { TActivityFeedItem } from "@formbricks/types/activity";
+import { TAction } from "@formbricks/types/actions";
 import { TEnvironment } from "@formbricks/types/environment";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
 export default function ActivityTimeline({
   environment,
-  activities,
+  actions,
 }: {
   environment: TEnvironment;
-  activities: TActivityFeedItem[];
+  actions: TAction[];
 }) {
   const [activityAscending, setActivityAscending] = useState(true);
   const toggleSortActivity = () => {
@@ -31,7 +31,7 @@ export default function ActivityTimeline({
         </div>
       </div>
 
-      <ActivityFeed activities={activities} sortByDate={activityAscending} environment={environment} />
+      <ActivityFeed actions={actions} sortByDate={activityAscending} environment={environment} />
     </>
   );
 }
