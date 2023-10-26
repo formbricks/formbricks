@@ -15,6 +15,7 @@ type MembersInfoProps = {
   isUserAdminOrOwner: boolean;
   currentUserId: string;
   currentUserRole: TMembershipRole;
+  isEnterpriseEdition: boolean;
 };
 
 // Type guard to check if member is an invitee
@@ -29,6 +30,7 @@ const MembersInfo = async ({
   members,
   currentUserId,
   currentUserRole,
+  isEnterpriseEdition,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
 
@@ -53,7 +55,7 @@ const MembersInfo = async ({
           </div>
 
           <div className="ph-no-capture col-span-3 flex flex-col items-start justify-center break-all">
-            {allMembers?.length > 0 && (
+            {isEnterpriseEdition && allMembers?.length > 0 && (
               <EditMembershipRole
                 isAdminOrOwner={isUserAdminOrOwner}
                 memberRole={member.role}

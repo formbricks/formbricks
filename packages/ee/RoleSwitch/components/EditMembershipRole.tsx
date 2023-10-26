@@ -109,7 +109,7 @@ export default function EditMembershipRole({
             <Button
               disabled={disableRole}
               variant="secondary"
-              className="flex items-center gap-1 p-1.5 text-xs"
+              className="flex items-center gap-1 p-2 text-xs"
               loading={loading}
               size="sm">
               <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>

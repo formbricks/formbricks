@@ -17,9 +17,10 @@ interface MemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: MembershipRole }) => void;
+  isEnterpriseEdition: boolean;
 }
 
-export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalProps) {
+export default function AddMemberModal({ open, setOpen, onSubmit, isEnterpriseEdition }: MemberModalProps) {
   const { register, getValues, handleSubmit, reset, control } = useForm<{
     name: string;
     email: string;
@@ -58,7 +59,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
                 <Label>Email Adress</Label>
                 <Input type="email" placeholder="hans@wurst.com" {...register("email", { required: true })} />
               </div>
-              <AddMemberRole control={control} />
+              {isEnterpriseEdition && <AddMemberRole control={control} />}
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">

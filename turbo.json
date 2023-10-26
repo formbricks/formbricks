@@ -118,7 +118,8 @@
         "S3_ACCESS_KEY",
         "S3_SECRET_KEY",
         "S3_REGION",
-        "S3_BUCKET_NAME"
+        "S3_BUCKET_NAME",
+        "FORMBRICKS_ENTERPRISE_LICENSE_KEY"
       ]
     },
     "post-install": {
