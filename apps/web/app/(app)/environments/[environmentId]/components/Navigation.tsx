@@ -63,7 +63,6 @@ interface NavigationProps {
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
   webAppUrl: string;
-  surveyBaseUrl: string;
   isPricingDisabled: boolean;
 }
 
@@ -76,7 +75,6 @@ export default function Navigation({
   environments,
   isFormbricksCloud,
   webAppUrl,
-  surveyBaseUrl,
   isPricingDisabled,
 }: NavigationProps) {
   const router = useRouter();

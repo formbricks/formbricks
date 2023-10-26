@@ -49,7 +49,6 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
       session={session}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       webAppUrl={WEBAPP_URL}
-      surveyBaseUrl={SURVEY_BASE_URL}
       isPricingDisabled={isPricingDisabled}
     />
   );
