@@ -10,6 +10,7 @@ import { EditName } from "./components/EditName";
 import { EditAvatar } from "./components/EditAvatar";
 import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/components/AccountSecurity";
 import { getProfile } from "@formbricks/lib/profile/service";
+import SettingsId from "@/app/(app)/environments/[environmentId]/settings/components/SettingsId";
 
 export default async function ProfileSettingsPage() {
   const session = await getServerSession(authOptions);
@@ -37,6 +38,7 @@ export default async function ProfileSettingsPage() {
             description="Delete your account with all of your personal information and data.">
             <DeleteAccount session={session} />
           </SettingsCard>
+          <SettingsId title="Profile" id={profile.id}></SettingsId>
         </div>
       )}
     </>

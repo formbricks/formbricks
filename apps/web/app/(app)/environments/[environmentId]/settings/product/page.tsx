@@ -7,6 +7,7 @@ import EditProductName from "./components/EditProductName";
 import EditWaitingTime from "./components/EditWaitingTime";
 import DeleteProduct from "./components/DeleteProduct";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import SettingsId from "@/app/(app)/environments/[environmentId]/settings/components/SettingsId";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [, product] = await Promise.all([
@@ -34,6 +35,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
         <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
+      <SettingsId title="Product" id={product.id}></SettingsId>
     </div>
   );
 }

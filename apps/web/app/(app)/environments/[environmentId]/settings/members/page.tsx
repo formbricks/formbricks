@@ -11,6 +11,7 @@ import DeleteTeam from "./components/DeleteTeam";
 import { EditMemberships } from "./components/EditMemberships";
 import EditTeamName from "./components/EditTeamName";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import SettingsId from "@/app/(app)/environments/[environmentId]/settings/components/SettingsId";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">
@@ -93,6 +94,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
           isUserOwner={currentUserRole === "owner"}
         />
       </SettingsCard>
+      <SettingsId title="Team" id={team.id}></SettingsId>
     </div>
   );
 }
