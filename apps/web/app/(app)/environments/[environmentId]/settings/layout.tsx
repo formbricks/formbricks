@@ -6,6 +6,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 export const metadata: Metadata = {
   title: "Settings",
@@ -29,10 +30,12 @@ export default async function SettingsLayout({ children, params }) {
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const isPricingDisabled =
-    currentUserMembership?.role !== "owner" ? currentUserMembership?.role !== "admin" : false;
-  const isAPIKeySettingDisabled = currentUserMembership?.role === "viewer";
-  const isTagSettingDisabled = currentUserMembership?.role === "viewer";
+  const { isOwner, isAdmin, isViewer } = getAccessFlags(
+    currentUserMembership?.role ? currentUserMembership?.role : ""
+  );
+  const isPricingDisabled = isOwner ? isAdmin : false;
+  const isAPIKeySettingDisabled = isViewer;
+  const isTagSettingDisabled = isViewer;
 
   return (
     <>

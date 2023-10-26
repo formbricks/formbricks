@@ -11,6 +11,7 @@ import DeleteTeam from "./components/DeleteTeam";
 import { EditMemberships } from "./components/EditMemberships";
 import EditTeamName from "./components/EditTeamName";
 import { INVITE_DISABLED, getIsEnterpriseEdition } from "@formbricks/lib/constants";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">
@@ -50,13 +51,14 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
   const userMemberships = await getMembershipsByUserId(session.user.id);
 
-  const isDeleteDisabled = userMemberships.length <= 1 || currentUserMembership?.role !== "owner";
+  const isDeleteDisabled = userMemberships.length <= 1 || isOwner;
   const currentUserRole = currentUserMembership?.role;
 
   const isLeaveTeamDisabled = userMemberships.length <= 1;
-  const isUserAdminOrOwner = currentUserRole === "admin" || currentUserRole === "owner";
+  const isUserAdminOrOwner = isAdmin || isOwner;
 
   return (
     <div>

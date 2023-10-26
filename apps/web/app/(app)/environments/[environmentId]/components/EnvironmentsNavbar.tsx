@@ -6,6 +6,7 @@ import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/ser
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProducts } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId, getTeamsByUserId } from "@formbricks/lib/team/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import type { Session } from "next-auth";
 
@@ -35,8 +36,8 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
     return <ErrorComponent />;
   }
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const isPricingDisabled =
-    currentUserMembership?.role !== "owner" ? currentUserMembership?.role !== "admin" : false;
+  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const isPricingDisabled = isOwner ? isAdmin : false;
 
   return (
     <Navigation

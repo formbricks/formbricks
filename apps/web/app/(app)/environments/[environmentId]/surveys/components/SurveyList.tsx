@@ -15,6 +15,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const session = await getServerSession(authOptions);
@@ -34,7 +35,8 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const isSurveyCreationDeletionDisabled = currentUserMembership?.role === "viewer";
+  const { isViewer } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const isSurveyCreationDeletionDisabled = isViewer;
 
   const environment = await getEnvironment(environmentId);
   if (!environment) {

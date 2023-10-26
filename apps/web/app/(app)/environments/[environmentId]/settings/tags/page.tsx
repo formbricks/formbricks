@@ -8,6 +8,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 export default async function MembersSettingsPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
@@ -31,7 +32,8 @@ export default async function MembersSettingsPage({ params }) {
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const isTagSettingDisabled = currentUserMembership?.role === "viewer";
+  const { isViewer } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const isTagSettingDisabled = isViewer;
 
   return !isTagSettingDisabled ? (
     <div>

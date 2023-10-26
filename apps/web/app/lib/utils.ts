@@ -1,5 +1,4 @@
 import { TInvite } from "@formbricks/types/invites";
-import { FORMBRICKS_ENTERPRISE_LICENSE_KEY } from "@formbricks/lib/constants";
 
 export function capitalizeFirstLetter(string: string | null = "") {
   if (string === null) {
