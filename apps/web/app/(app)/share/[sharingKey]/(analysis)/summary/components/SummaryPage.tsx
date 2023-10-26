@@ -40,31 +40,30 @@ const SummaryPage = ({
   displayCount,
   openTextResponsesPerPage,
 }: SummaryPageProps) => {
-  // const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
-  // const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
-  // useEffect(() => {
-  //   if (!searchParams?.get("referer")) {
-  //     resetState();
-  //   }
-  // }, [searchParams]);
+  useEffect(() => {
+    if (!searchParams?.get("referer")) {
+      resetState();
+    }
+  }, [searchParams]);
 
-  // // get the filtered array when the selected filter value changes
-  // const filterResponses: TResponse[] = useMemo(() => {
-  //   return getFilterResponses(responses, selectedFilter, survey, dateRange);
-  // }, [selectedFilter, responses, survey, dateRange]);
+  // get the filtered array when the selected filter value changes
+  const filterResponses: TResponse[] = useMemo(() => {
+    return getFilterResponses(responses, selectedFilter, survey, dateRange);
+  }, [selectedFilter, responses, survey, dateRange]);
 
-  const filterResponses = responses;
   return (
     <ContentWrapper>
       <SummaryHeader survey={survey} surveyId={surveyId} product={product} />
-      {/* <CustomFilter
+      <CustomFilter
         environmentTags={environmentTags}
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
-      /> */}
+      />
       <SurveyResultsTabs
         activeId="summary"
         environmentId={environment.id}

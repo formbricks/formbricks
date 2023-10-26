@@ -37,29 +37,29 @@ const ResponsePage = ({
   environmentTags,
   responsesPerPage,
 }: ResponsePageProps) => {
-  // const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
-  // const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
-  // useEffect(() => {
-  //   if (!searchParams?.get("referer")) {
-  //     resetState();
-  //   }
-  // }, [searchParams]);
+  useEffect(() => {
+    if (!searchParams?.get("referer")) {
+      resetState();
+    }
+  }, [searchParams]);
 
   // get the filtered array when the selected filter value changes
-  // const filterResponses: TResponse[] = useMemo(() => {
-  //   return getFilterResponses(responses, selectedFilter, survey, dateRange);
-  // }, [selectedFilter, responses, survey, dateRange]);
+  const filterResponses: TResponse[] = useMemo(() => {
+    return getFilterResponses(responses, selectedFilter, survey, dateRange);
+  }, [selectedFilter, responses, survey, dateRange]);
   return (
     <ContentWrapper>
       <SummaryHeader survey={survey} surveyId={surveyId} product={product} />
-      {/* <CustomFilter
+      <CustomFilter
         environmentTags={environmentTags}
-        responses={responses}
+        responses={filterResponses}
         survey={survey}
         totalResponses={responses}
-      /> */}
+      />
       <SurveyResultsTabs
         activeId="responses"
         environmentId={environment.id}
@@ -69,7 +69,7 @@ const ResponsePage = ({
       <ResponseTimeline
         environment={environment}
         surveyId={surveyId}
-        responses={responses}
+        responses={filterResponses}
         survey={survey}
         environmentTags={environmentTags}
         responsesPerPage={responsesPerPage}
