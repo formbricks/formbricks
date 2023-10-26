@@ -7,16 +7,24 @@ import { TProfile } from "@formbricks/types/profile";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
-import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
+import SingleResponseCard from "./SingleResponseCard";
 
 interface ResponseTimelineProps {
+  environment: TEnvironment;
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
+  environmentTags: TTag[];
   responsesPerPage: number;
 }
 
-export default function ResponseTimeline({ responses, survey, responsesPerPage }: ResponseTimelineProps) {
+export default function ResponseTimeline({
+  environment,
+  responses,
+  survey,
+  environmentTags,
+  responsesPerPage,
+}: ResponseTimelineProps) {
   const [displayedResponses, setDisplayedResponses] = useState<TResponse[]>([]);
   const loadingRef = useRef(null);
 
@@ -50,7 +58,7 @@ export default function ResponseTimeline({ responses, survey, responsesPerPage }
 
   return (
     <div className="space-y-4">
-      {/* {survey.type === "web" && displayedResponses.length === 0 && !environment.widgetSetupCompleted ? (
+      {survey.type === "web" && displayedResponses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
       ) : displayedResponses.length === 0 ? (
         <EmptySpaceFiller
@@ -58,25 +66,24 @@ export default function ResponseTimeline({ responses, survey, responsesPerPage }
           environment={environment}
           noWidgetRequired={survey.type === "link"}
         />
-      ) : ( */}
-      <div>
-        {/* {displayedResponses.map((response) => {
+      ) : (
+        <div>
+          {displayedResponses.map((response) => {
             return (
               <div key={response.id}>
                 <SingleResponseCard
                   survey={survey}
                   response={response}
-                  profile={profile}
                   environmentTags={environmentTags}
                   pageType="response"
                   environment={environment}
                 />
               </div>
             );
-          })} */}
-        <div ref={loadingRef}></div>
-      </div>
-      {/* )} */}
+          })}
+          <div ref={loadingRef}></div>
+        </div>
+      )}
     </div>
   );
 }

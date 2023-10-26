@@ -2,7 +2,7 @@
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/share/[sharingKey]/components/SummaryHeader";
 import SurveyResultsTabs from "@/app/(app)/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
-import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
+import ResponseTimeline from "@/app/(app)/share/[sharingKey]/(analysis)/responses/components/ResponseTimeline";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
@@ -39,7 +39,7 @@ const ResponsePage = ({
 }: ResponsePageProps) => {
   // const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
 
   // useEffect(() => {
   //   if (!searchParams?.get("referer")) {
@@ -47,7 +47,7 @@ const ResponsePage = ({
   //   }
   // }, [searchParams]);
 
-  // // get the filtered array when the selected filter value changes
+  // get the filtered array when the selected filter value changes
   // const filterResponses: TResponse[] = useMemo(() => {
   //   return getFilterResponses(responses, selectedFilter, survey, dateRange);
   // }, [selectedFilter, responses, survey, dateRange]);
@@ -56,7 +56,7 @@ const ResponsePage = ({
       <SummaryHeader survey={survey} surveyId={surveyId} product={product} />
       {/* <CustomFilter
         environmentTags={environmentTags}
-        responses={filterResponses}
+        responses={responses}
         survey={survey}
         totalResponses={responses}
       /> */}
@@ -66,15 +66,14 @@ const ResponsePage = ({
         surveyId={surveyId}
         sharingKey={sharingKey}
       />
-      {/* <ResponseTimeline
+      <ResponseTimeline
         environment={environment}
         surveyId={surveyId}
-        responses={filterResponses}
+        responses={responses}
         survey={survey}
-        profile={profile}
         environmentTags={environmentTags}
         responsesPerPage={responsesPerPage}
-      /> */}
+      />
     </ContentWrapper>
   );
 };

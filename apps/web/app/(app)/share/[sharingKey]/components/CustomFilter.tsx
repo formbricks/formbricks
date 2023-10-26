@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import {
   generateQuestionsAndAttributes,
-  generateQuestionAndFilterOptionsForResponseSharing,
+  generateQuestionAndFilterOptions,
   getTodayDate,
 } from "@/app/lib/surveys/surveys";
 import toast from "react-hot-toast";
@@ -22,7 +22,7 @@ import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
-import ResponseFilter from "../(analysis)/summary/components/ResponseFilter";
+import ResponseFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import {
   DateRange,
   useResponseFilter,
@@ -47,6 +47,7 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
+  environmentTags: TTag[];
   survey: TSurvey;
   responses: TResponse[];
   totalResponses: TResponse[];
@@ -63,7 +64,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ responses, survey, totalResponses }: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -78,12 +79,13 @@ const CustomFilter = ({ responses, survey, totalResponses }: CustomFilterProps) 
 
   // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
   useEffect(() => {
-    const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptionsForResponseSharing(
+    const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
       survey,
-      totalResponses
+      totalResponses,
+      environmentTags
     );
     setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [totalResponses, survey, setSelectedOptions]);
+  }, [totalResponses, survey, setSelectedOptions, environmentTags]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
