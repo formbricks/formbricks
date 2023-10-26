@@ -8,10 +8,11 @@ import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE, IS_S3_CONFIGURED } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { createEnvironment, getEnvironmentCacheTag, getEnvironmentsCacheTag } from "../environment/service";
 import { ZOptionalNumber } from "@formbricks/types/common";
+import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
 
 export const getProductsCacheTag = (teamId: string): string => `teams-${teamId}-products`;
 export const getProductCacheTag = (environmentId: string): string => `environments-${environmentId}-product`;
@@ -176,6 +177,32 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
   });
 
   if (product) {
+    // delete all files from storage related to this product
+
+    if (IS_S3_CONFIGURED) {
+      const s3FilesPromises = product.environments.map(async (environment) => {
+        return deleteS3FilesByEnvironmentId(environment.id);
+      });
+
+      try {
+        await Promise.all(s3FilesPromises);
+      } catch (err) {
+        // fail silently because we don't want to throw an error if the files are not deleted
+        console.error(err);
+      }
+    } else {
+      const localFilesPromises = product.environments.map(async (environment) => {
+        return deleteLocalFilesByEnvironmentId(environment.id);
+      });
+
+      try {
+        await Promise.all(localFilesPromises);
+      } catch (err) {
+        // fail silently because we don't want to throw an error if the files are not deleted
+        console.error(err);
+      }
+    }
+
     revalidateTag(getProductsCacheTag(product.teamId));
     revalidateTag(getEnvironmentsCacheTag(product.id));
     product.environments.forEach((environment) => {

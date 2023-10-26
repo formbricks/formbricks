@@ -108,8 +108,7 @@ export default function LinkSurvey({
   if (!surveyState.isResponseFinished() && hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
-
-  if (emailVerificationStatus && emailVerificationStatus !== "verified") {
+  if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
       return <VerifyEmail survey={survey} isErrorComponent={true} />;
     }
