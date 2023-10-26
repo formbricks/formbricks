@@ -25,7 +25,9 @@ import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { PictureSelectionResponse } from "../PictureSelectionResponse";
-import useFindUserMembershipRole from "@formbricks/lib/hooks/membership/useFindUserMembershipRole";
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { AccessWrapper } from "../AccessWrapper";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -75,7 +77,8 @@ export default function SingleResponseCard({
   const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
-  const [membershipRole] = useFindUserMembershipRole(environmentId);
+  const { membershipRole, loading, error } = useMembershipRole(environmentId);
+  const { isViewer } = getAccessFlags(membershipRole || "");
 
   function isValidValue(value: any) {
     return (
@@ -342,14 +345,16 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        {membershipRole !== "viewer" && (
-          <ResponseTagsWrapper
-            environmentId={environmentId}
-            responseId={response.id}
-            tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-            environmentTags={environmentTags}
-          />
-        )}
+        <AccessWrapper loading={loading} error={error}>
+          {!isViewer && (
+            <ResponseTagsWrapper
+              environmentId={environmentId}
+              responseId={response.id}
+              tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+              environmentTags={environmentTags}
+            />
+          )}
+        </AccessWrapper>
 
         <DeleteDialog
           open={deleteDialogOpen}

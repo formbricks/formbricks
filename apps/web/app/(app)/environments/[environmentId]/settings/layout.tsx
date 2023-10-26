@@ -33,7 +33,7 @@ export default async function SettingsLayout({ children, params }) {
   const { isOwner, isAdmin, isViewer } = getAccessFlags(
     currentUserMembership?.role ? currentUserMembership?.role : ""
   );
-  const isPricingDisabled = isOwner ? isAdmin : false;
+  const isPricingDisabled = !isOwner ? !isAdmin : false;
   const isAPIKeySettingDisabled = isViewer;
   const isTagSettingDisabled = isViewer;
 

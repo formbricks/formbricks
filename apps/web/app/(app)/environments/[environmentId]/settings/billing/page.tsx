@@ -44,7 +44,7 @@ export default async function ProfileSettingsPage({ params }) {
   ]);
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isAdmin, isOwner } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
-  const isPricingDisabled = isOwner ? isAdmin : false;
+  const isPricingDisabled = !isOwner ? !isAdmin : false;
 
   return (
     <>

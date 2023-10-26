@@ -6,7 +6,9 @@ import { useState } from "react";
 import AddNoCodeActionModal from "./AddNoCodeActionModal";
 import ActionDetailModal from "./ActionDetailModal";
 import { TActionClass } from "@formbricks/types/actionClasses";
-import useFindUserMembershipRole from "@formbricks/lib/hooks/membership/useFindUserMembershipRole";
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { AccessWrapper } from "@formbricks/ui/AccessWrapper";
 
 export default function ActionClassesTable({
   environmentId,
@@ -19,7 +21,8 @@ export default function ActionClassesTable({
 }) {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
-  const [membershipRole] = useFindUserMembershipRole(environmentId);
+  const { membershipRole, loading, error } = useMembershipRole(environmentId);
+  const { isViewer } = getAccessFlags(membershipRole || "");
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>({
     environmentId,
@@ -40,18 +43,20 @@ export default function ActionClassesTable({
 
   return (
     <>
-      {membershipRole !== "viewer" && (
-        <div className="mb-6 text-right">
-          <Button
-            variant="darkCTA"
-            onClick={() => {
-              setAddActionModalOpen(true);
-            }}>
-            <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
-            Add Action
-          </Button>
-        </div>
-      )}
+      <AccessWrapper loading={loading} error={error}>
+        {!isViewer && (
+          <div className="mb-6 text-right">
+            <Button
+              variant="darkCTA"
+              onClick={() => {
+                setAddActionModalOpen(true);
+              }}>
+              <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+              Add Action
+            </Button>
+          </div>
+        )}
+      </AccessWrapper>
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
         <div className="grid-cols-7">

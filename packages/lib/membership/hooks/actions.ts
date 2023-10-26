@@ -4,9 +4,9 @@ import "server-only";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../authOptions";
 import { getTeamByEnvironmentId } from "../../team/service";
-import { AuthenticationError } from "../../../types/errors";
-import { getMembershipByUserIdTeamId } from "../../membership/service";
-import { TProfile } from "../../../types/profile";
+import { AuthenticationError } from "@formbricks/types/errors";
+import { getMembershipByUserIdTeamId } from "../service";
+import { TProfile } from "@formbricks/types/profile";
 
 export const findUserMembershipRoleAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
