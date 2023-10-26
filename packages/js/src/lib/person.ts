@@ -1,4 +1,5 @@
 import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/js";
+// import { createPerson } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/people";
 import { Config } from "./config";
 import {
@@ -12,6 +13,8 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
+import { TSession } from "@formbricks/types/sessions";
+import { sync } from "./sync";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -19,13 +22,13 @@ const logger = Logger.getInstance();
 export const updatePersonUserId = async (
   userId: string
 ): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
-  if (!config.get().state.person || !config.get().state.person.id)
+  if (!config.get().state.person || !config.get().state.person?.id)
     return err({
       code: "missing_person",
       message: "Unable to update userId. No person set.",
     });
 
-  const url = `${config.get().apiHost}/api/v1/js/people/${config.get().state.person.id}/set-user-id`;
+  const url = `${config.get().apiHost}/api/v1/js/people/${config.get().state.person?.id}/set-user-id`;
 
   const input: TJsPeopleUserIdInput = {
     environmentId: config.get().environmentId,
@@ -117,6 +120,64 @@ export const hasAttributeKey = (key: string): boolean => {
 export const setPersonUserId = async (
   userId: string | number
 ): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
+  // if person does not exist, create a new person
+
+  const existingPerson = config.get().state.person?.id;
+  let existingSession = config.get().state.session;
+
+  if (!existingPerson) {
+    const personRes = await fetch(`${config.get().apiHost}/api/v1/js/people`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        environmentId: config.get().environmentId,
+      }),
+    });
+
+    const jsonRes = await personRes.json();
+
+    const createdPerson = jsonRes.data.person as TPerson;
+
+    if (!existingSession?.id) {
+      const sessionRes = await fetch(`${config.get().apiHost}/api/v1/js/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personId: createdPerson.id,
+        }),
+      });
+
+      const sessionJsonRes = await sessionRes.json();
+
+      existingSession = sessionJsonRes.data.session as TSession;
+    }
+
+    const updatedState = {
+      ...config.get().state,
+      person: createdPerson,
+      session: existingSession,
+    };
+
+    config.update({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+      state: updatedState,
+    });
+
+    logger.debug("Syncing with backend");
+
+    await sync({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+      personId: updatedState.person.id,
+      sessionId: updatedState.session.id,
+    });
+  }
+
   logger.debug("setting userId: " + userId);
   // check if attribute already exists with this value
   if (hasAttributeValue("userId", userId.toString())) {

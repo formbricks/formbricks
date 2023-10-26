@@ -1,7 +1,7 @@
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
 import { renderSurveyModal } from "@formbricks/surveys";
-import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TJSStateDisplay, TSurveyWithTriggers } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
@@ -58,6 +58,40 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
       highlightBorderColor,
       placement,
       onDisplay: async () => {
+        // if config does not have a person, we store the displays in local storage
+
+        if (!config.get().state.person || !config.get().state.person?.id) {
+          const localDisplay: TJSStateDisplay = {
+            createdAt: new Date(),
+            surveyId: survey.id,
+            responseId: null,
+          };
+
+          const displays = config.get().state.displays;
+          const previousConfig = config.get();
+          if (displays) {
+            config.update({
+              ...previousConfig,
+              state: {
+                ...previousConfig.state,
+                displays: [...displays, localDisplay],
+              },
+            });
+          } else {
+            config.update({
+              ...previousConfig,
+              state: {
+                ...previousConfig.state,
+                displays: [localDisplay],
+              },
+            });
+          }
+
+          // surveyState.updateDisplayId(id);
+          // responseQueue.updateSurveyState(surveyState);
+          return;
+        }
+
         const api = new FormbricksAPI({
           apiHost: config.get().apiHost,
           environmentId: config.get().environmentId,
@@ -75,7 +109,9 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        surveyState.updatePersonId(config.get().state.person.id);
+        if (config.get().state.person) {
+          surveyState.updatePersonId(config.get().state.person.id);
+        }
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,

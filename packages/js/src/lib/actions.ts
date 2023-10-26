@@ -19,7 +19,7 @@ export const trackAction = async (
     properties: properties || {},
   };
 
-  if (!intentsToNotCreateOnApp.includes(name)) {
+  if (config.get().state?.session?.id && !intentsToNotCreateOnApp.includes(name)) {
     const res = await fetch(`${config.get().apiHost}/api/v1/js/actions`, {
       method: "POST",
       headers: {

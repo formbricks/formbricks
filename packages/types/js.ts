@@ -11,20 +11,35 @@ const ZSurveyWithTriggers = ZSurvey.extend({
 
 export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
+export const ZJSStateDisplay = z.object({
+  createdAt: z.date(),
+  surveyId: z.string().cuid2(),
+  responseId: z.string().cuid2().nullable(),
+});
+
+export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
+
 export const ZJsState = z.object({
-  person: ZPerson,
-  session: ZSession,
+  person: ZPerson.nullable(),
+  session: ZSession.nullable(),
   surveys: z.array(ZSurveyWithTriggers),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
+  displays: z.array(ZJSStateDisplay).optional(),
 });
 
 export type TJsState = z.infer<typeof ZJsState>;
 
+export const ZJsPublicSyncInput = z.object({
+  environmentId: z.string().cuid2(),
+});
+
 export const ZJsSyncInput = z.object({
   environmentId: z.string().cuid2(),
-  personId: z.string().cuid2().optional(),
-  sessionId: z.string().cuid2().optional(),
+  // personId: z.string().cuid2().optional(),
+  personId: z.string().cuid2(),
+  // sessionId: z.string().cuid2().optional(),
+  sessionId: z.string().cuid2(),
   jsVersion: z.string().optional(),
 });
 

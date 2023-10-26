@@ -1,19 +1,21 @@
-import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
+import { getPublicUpdatedState } from "@/app/api/v1/js/sync/public/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ZJsSyncInput } from "@formbricks/types/js";
-import { NextResponse } from "next/server";
+import { ZJsPublicSyncInput } from "@formbricks/types/js";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const jsonInput = await req.json();
+    // const jsonInput = await req.json();
+    const searchParams = req.nextUrl.searchParams;
+    const environmentIdParam = searchParams.get("environmentId");
 
     // validate using zod
-    const inputValidation = ZJsSyncInput.safeParse(jsonInput);
+    const inputValidation = ZJsPublicSyncInput.safeParse({ environmentId: environmentIdParam });
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -23,9 +25,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, personId, sessionId, jsVersion } = inputValidation.data;
+    const { environmentId } = inputValidation.data;
 
-    const state = await getUpdatedState(environmentId, personId, sessionId, jsVersion);
+    const state = await getPublicUpdatedState(environmentId);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

@@ -17,13 +17,14 @@ const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => 
 
 export const getUpdatedState = async (
   environmentId: string,
-  personId?: string,
-  sessionId?: string,
+  personId: string,
+  sessionId: string,
   jsVersion?: string
 ): Promise<TJsState> => {
   let environment: TEnvironment | null;
-  let person: TPerson;
-  let session: TSession | null;
+  let session: TSession | null = null;
+  // let person: TPerson | null = null;
+  // let session: TSession | null;
 
   // check if environment exists
   environment = await getEnvironment(environmentId);
@@ -35,6 +36,7 @@ export const getUpdatedState = async (
   // check if Monthly Active Users limit is reached
   const currentMau = await getMonthlyActivePeopleCount(environmentId);
   const isMauLimitReached = currentMau >= MAU_LIMIT;
+
   if (isMauLimitReached) {
     const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
     if (!personId || !sessionId) {
@@ -54,51 +56,82 @@ export const getUpdatedState = async (
     }
   }
 
-  if (!personId) {
-    // create a new person
-    person = await createPerson(environmentId);
-    // create a new session
-    session = await createSession(person.id);
-  } else {
-    // check if person exists
-    const existingPerson = await getPerson(personId);
-    if (!existingPerson) {
-      // create a new person
-      person = await createPerson(environmentId);
-    } else {
-      person = existingPerson;
-    }
+  // const [person, session] = await Promise.all([getPerson(personId), getSessionCached(sessionId)]);
+  const person = await getPerson(personId);
+
+  if (!person) {
+    throw new Error("Person not found");
   }
-  if (!sessionId) {
-    // create a new session
-    session = await createSession(person.id);
-  } else {
-    // check validity of person & session
-    session = await getSessionCached(sessionId);
-    if (!session) {
-      // create a new session
+
+  session = await getSessionCached(sessionId);
+
+  if (!session || session.expiresAt < new Date()) {
+    if (person) {
       session = await createSession(person.id);
       captureNewSessionTelemetry(jsVersion);
-    } else {
-      // check if session is expired
-      if (session.expiresAt < new Date()) {
-        // create a new session
-        session = await createSession(person.id);
-        captureNewSessionTelemetry(jsVersion);
-      } else {
-        // extend session (if about to expire)
-        const isSessionAboutToExpire =
-          new Date(session.expiresAt).getTime() - new Date().getTime() < 1000 * 60 * 10;
-
-        if (isSessionAboutToExpire) {
-          session = await extendSession(sessionId);
-        }
-      }
     }
   }
+
+  // if (personId) {
+  //   person = await getPerson(personId);
+  // }
+
+  // if (sessionId) {
+  //   session = await getSessionCached(sessionId);
+  // if (!session || session.expiresAt < new Date()) {
+  //   if (person) {
+  //     session = await createSession(person.id);
+  //     captureNewSessionTelemetry(jsVersion);
+  //   }
+  // }
+  // }
+
+  // if (!personId) {
+  //   // create a new person
+  //   person = await createPerson(environmentId);
+  //   // create a new session
+  //   session = await createSession(person.id);
+  // } else {
+  //   // check if person exists
+  //   const existingPerson = await getPerson(personId);
+  //   if (!existingPerson) {
+  //     // create a new person
+  //     person = await createPerson(environmentId);
+  //   } else {
+  //     person = existingPerson;
+  //   }
+  // }
+  // if (!sessionId) {
+  //   // create a new session
+  //   session = await createSession(person.id);
+  // } else {
+  //   // check validity of person & session
+  //   session = await getSessionCached(sessionId);
+  //   if (!session) {
+  //     // create a new session
+  //     session = await createSession(person.id);
+  //     captureNewSessionTelemetry(jsVersion);
+  //   } else {
+  //     // check if session is expired
+  //     if (session.expiresAt < new Date()) {
+  //       // create a new session
+  //       session = await createSession(person.id);
+  //       captureNewSessionTelemetry(jsVersion);
+  //     } else {
+  //       // extend session (if about to expire)
+  //       const isSessionAboutToExpire =
+  //         new Date(session.expiresAt).getTime() - new Date().getTime() < 1000 * 60 * 10;
+
+  //       if (isSessionAboutToExpire) {
+  //         session = await extendSession(sessionId);
+  //       }
+  //     }
+  //   }
+  // }
   // we now have a valid person & session
 
   // get/create rest of the state
+
   const [surveys, noCodeActionClasses, product] = await Promise.all([
     getSyncSurveysCached(environmentId, person),
     getActionClasses(environmentId),
@@ -112,7 +145,7 @@ export const getUpdatedState = async (
   // return state
   const state: TJsState = {
     person: person!,
-    session,
+    session: session!,
     surveys,
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
     product,
