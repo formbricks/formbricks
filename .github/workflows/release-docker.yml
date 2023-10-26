@@ -16,12 +16,12 @@ jobs:
     steps:
       - name: Generate Random NEXTAUTH_SECRET
         run: |
-          SECRET=$(openssl rand -hex 16)
+          SECRET=$(openssl rand -hex 32)
           echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
 
       - name: Generate Random NEXTAUTH_SECRET
         run: |
-          SECRET=$(openssl rand -base64 24)
+          SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
 
       - name: Checkout Repo

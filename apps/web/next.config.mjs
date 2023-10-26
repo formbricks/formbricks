@@ -34,13 +34,18 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/api/v1/responses",
-        destination: "/api/v1/management/responses",
-        permanent: true,
+        source: "/i/:path*",
+        destination: "/:path*",
+        permanent: false,
       },
       {
         source: "/api/v1/surveys",
         destination: "/api/v1/management/surveys",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/me",
+        destination: "/api/v1/management/me",
         permanent: true,
       },
       {
