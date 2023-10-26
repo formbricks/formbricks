@@ -82,6 +82,7 @@ export default function ActionClassesTable({
         environmentId={environmentId}
         open={isAddActionModalOpen}
         setOpen={setAddActionModalOpen}
+        isViewer={isViewer}
       />
     </>
   );
