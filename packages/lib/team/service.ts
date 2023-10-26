@@ -189,3 +189,18 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
     throw error;
   }
 };
+
+export const teamExists = async (teamId: string) => {
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamId,
+      },
+      select: select,
+    });
+
+    return team !== null;
+  } catch (error) {
+    throw error;
+  }
+};

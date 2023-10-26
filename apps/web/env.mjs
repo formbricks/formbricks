@@ -65,7 +65,8 @@ export const env = createEnv({
     AZUREAD_CLIENT_SECRET: z.string().optional(),
     AZUREAD_TENANT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
-    DEFAULT_TEAM: z.string().optional(),
+    DEFAULT_TEAM_ID: z.string().optional(),
+    DEFAULT_TEAM_ROLE: z.string().optional(),
     SKIP_ONBOARDING: z.string().optional(),
   },
 
@@ -144,7 +145,8 @@ export const env = createEnv({
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
     AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
-    DEFAULT_TEAM: process.env.DEFAULT_TEAM,
+    DEFAULT_TEAM_ID: process.env.DEFAULT_TEAM_ID,
+    DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
     SKIP_ONBOARDING: process.env.SKIP_ONBOARDING,
   },
 });

@@ -11,6 +11,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import AzureAD from "next-auth/providers/azure-ad";
+import { teamExists } from "@/../../packages/lib/team/service";
+import { createProduct } from "@/../../packages/lib/product/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -289,96 +291,114 @@ export const authOptions: NextAuthOptions = {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        const teamData = env.DEFAULT_TEAM
-          ? { connect: { id: env.DEFAULT_TEAM } }
-          : {
-              create: {
+        let userRole =
+          env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0 ? env.DEFAULT_TEAM_ROLE || "viewer" : "owner";
+        if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+          if (!(await teamExists(env.DEFAULT_TEAM_ID))) {
+            userRole = "owner";
+            await prisma.team.create({
+              data: {
+                id: env.DEFAULT_TEAM_ID,
                 name: `${user.name}'s Team`,
-                products: {
-                  create: [
-                    {
-                      name: "My Product",
-                      environments: {
-                        create: [
-                          {
-                            type: "production",
-                            eventClasses: {
-                              create: [
-                                {
-                                  name: "New Session",
-                                  description: "Gets fired when a new session is created",
-                                  type: "automatic",
-                                },
-                                {
-                                  name: "Exit Intent (Desktop)",
-                                  description: "A user on Desktop leaves the website with the cursor.",
-                                  type: "automatic",
-                                },
-                                {
-                                  name: "50% Scroll",
-                                  description: "A user scrolled 50% of the current page",
-                                  type: "automatic",
-                                },
-                              ],
-                            },
-                            attributeClasses: {
-                              create: [
-                                {
-                                  name: "userId",
-                                  description: "The internal ID of the person",
-                                  type: "automatic",
-                                },
-                                {
-                                  name: "email",
-                                  description: "The email of the person",
-                                  type: "automatic",
-                                },
-                              ],
-                            },
-                          },
-                          {
-                            type: "development",
-                            eventClasses: {
-                              create: [
-                                {
-                                  name: "New Session",
-                                  description: "Gets fired when a new session is created",
-                                  type: "automatic",
-                                },
-                                {
-                                  name: "Exit Intent (Desktop)",
-                                  description: "A user on Desktop leaves the website with the cursor.",
-                                  type: "automatic",
-                                },
-                                {
-                                  name: "50% Scroll",
-                                  description: "A user scrolled 50% of the current page",
-                                  type: "automatic",
-                                },
-                              ],
-                            },
-                            attributeClasses: {
-                              create: [
-                                {
-                                  name: "userId",
-                                  description: "The internal ID of the person",
-                                  type: "automatic",
-                                },
-                                {
-                                  name: "email",
-                                  description: "The email of the person",
-                                  type: "automatic",
-                                },
-                              ],
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
               },
-            };
+            });
+            await createProduct(env.DEFAULT_TEAM_ID, {
+              name: "My Product",
+            });
+          }
+        }
+
+        const teamData =
+          env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0
+            ? { connect: { id: env.DEFAULT_TEAM_ID } }
+            : {
+                create: {
+                  name: `${user.name}'s Team`,
+                  products: {
+                    create: [
+                      {
+                        name: "My Product",
+                        environments: {
+                          create: [
+                            {
+                              type: "production",
+                              eventClasses: {
+                                create: [
+                                  {
+                                    name: "New Session",
+                                    description: "Gets fired when a new session is created",
+                                    type: "automatic",
+                                  },
+                                  {
+                                    name: "Exit Intent (Desktop)",
+                                    description: "A user on Desktop leaves the website with the cursor.",
+                                    type: "automatic",
+                                  },
+                                  {
+                                    name: "50% Scroll",
+                                    description: "A user scrolled 50% of the current page",
+                                    type: "automatic",
+                                  },
+                                ],
+                              },
+                              attributeClasses: {
+                                create: [
+                                  {
+                                    name: "userId",
+                                    description: "The internal ID of the person",
+                                    type: "automatic",
+                                  },
+                                  {
+                                    name: "email",
+                                    description: "The email of the person",
+                                    type: "automatic",
+                                  },
+                                ],
+                              },
+                            },
+                            {
+                              type: "development",
+                              eventClasses: {
+                                create: [
+                                  {
+                                    name: "New Session",
+                                    description: "Gets fired when a new session is created",
+                                    type: "automatic",
+                                  },
+                                  {
+                                    name: "Exit Intent (Desktop)",
+                                    description: "A user on Desktop leaves the website with the cursor.",
+                                    type: "automatic",
+                                  },
+                                  {
+                                    name: "50% Scroll",
+                                    description: "A user scrolled 50% of the current page",
+                                    type: "automatic",
+                                  },
+                                ],
+                              },
+                              attributeClasses: {
+                                create: [
+                                  {
+                                    name: "userId",
+                                    description: "The internal ID of the person",
+                                    type: "automatic",
+                                  },
+                                  {
+                                    name: "email",
+                                    description: "The email of the person",
+                                    type: "automatic",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              };
 
         await prisma.user.create({
           data: {
@@ -395,7 +415,7 @@ export const authOptions: NextAuthOptions = {
               create: [
                 {
                   accepted: true,
-                  role: env.DEFAULT_TEAM ? "viewer" : "owner",
+                  role: userRole,
                   team: teamData,
                 },
               ],
