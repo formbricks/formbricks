@@ -21,6 +21,7 @@ interface SurveyEditorProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   responseCount: number;
+  membershipRole: string;
 }
 
 export default function SurveyEditor({
@@ -30,6 +31,7 @@ export default function SurveyEditor({
   actionClasses,
   attributeClasses,
   responseCount,
+  membershipRole,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -94,6 +96,7 @@ export default function SurveyEditor({
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
                 responseCount={responseCount}
+                membershipRole={membershipRole}
               />
             )}
           </main>

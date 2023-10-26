@@ -59,6 +59,7 @@ export default async function SurveysEditPage({ params }) {
         actionClasses={actionClasses}
         attributeClasses={attributeClasses}
         responseCount={responseCount}
+        membershipRole={currentUserMembership?.role || ""}
       />
     </>
   );

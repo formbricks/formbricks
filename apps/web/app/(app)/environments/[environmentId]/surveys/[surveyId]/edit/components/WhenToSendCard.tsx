@@ -19,11 +19,13 @@ import {
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useCallback, useEffect, useState } from "react";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environmentId: string;
   actionClasses: TActionClass[];
+  membershipRole: string;
 }
 
 export default function WhenToSendCard({
@@ -31,11 +33,13 @@ export default function WhenToSendCard({
   localSurvey,
   setLocalSurvey,
   actionClasses,
+  membershipRole,
 }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClassArray, setActionClassArray] = useState<TActionClass[]>(actionClasses);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
 
@@ -272,6 +276,7 @@ export default function WhenToSendCard({
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
         setActionClassArray={setActionClassArray}
+        isViewer={isViewer}
       />
     </>
   );
