@@ -9,39 +9,36 @@ x-environment: &environment
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -base64 32` to generate one
+    # You can use: `openssl rand -hex 32` to generate one
     NEXTAUTH_SECRET:
 
     # Set this to your public-facing URL, e.g., https://example.com
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: http://localhost:3000
 
-    # Formbricks Encryption Key is used to generate encrypted single use URLs for Link Surveys
-    # You can use: $(openssl rand -base64 16) to generate one
-    # FORMBRICKS_ENCRYPTION_KEY:
+    # Encryption Key is used for 2FA & Single use URLs for Link Surveys
+    # You can use: $(openssl rand -hex 32) to generate one
+    ENCRYPTION_KEY:
 
     # PostgreSQL password
     POSTGRES_PASSWORD: postgres
 
     # Email Configuration
-    MAIL_FROM:
-    SMTP_HOST:
-    SMTP_PORT:
-    SMTP_SECURE_ENABLED:
-    SMTP_USER:
-    SMTP_PASSWORD:
-
-    # Set the below value if you want to have another base URL apart from your Domain Name
-    # SURVEY_BASE_URL:
+    # MAIL_FROM:
+    # SMTP_HOST:
+    # SMTP_PORT:
+    # SMTP_SECURE_ENABLED:
+    # SMTP_USER:
+    # SMTP_PASSWORD:
 
     # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
-    # SHORT_SURVEY_BASE_URL:
+    # SHORT_URL_BASE:
 
-    # Uncomment the below and set it to 1 to disable Email Verification for new signups
-    # EMAIL_VERIFICATION_DISABLED:
+    # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
+    EMAIL_VERIFICATION_DISABLED: 1
 
-    # Uncomment the below and set it to 1 to disable Password Reset
-    # PASSWORD_RESET_DISABLED:
+    # Set the below to 0 to enable Password Reset (will required Email Configuration)
+    PASSWORD_RESET_DISABLED: 1
 
     # Uncomment the below and set it to 1 to disable Signups
     # SIGNUP_DISABLED:

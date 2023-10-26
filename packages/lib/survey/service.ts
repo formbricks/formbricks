@@ -85,7 +85,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -199,7 +199,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -382,7 +382,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error.message);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
 

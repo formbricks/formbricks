@@ -38,7 +38,10 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
             <div className="w-full space-y-4">
               <div>
                 <Label>API Key Label</Label>
-                <Input placeholder="e.g. GitHub, PostHog, Slack" {...register("label", { required: true })} />
+                <Input
+                  placeholder="e.g. GitHub, PostHog, Slack"
+                  {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
+                />
               </div>
 
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">

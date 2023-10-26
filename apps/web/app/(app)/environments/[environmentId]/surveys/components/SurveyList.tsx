@@ -2,7 +2,7 @@ import { UsageAttributesUpdater } from "@/app/(app)/components/FormbricksClient"
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
-import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
@@ -119,7 +119,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                         environmentId={environmentId}
                         environment={environment}
                         otherEnvironment={otherEnvironment!}
-                        surveyBaseUrl={SURVEY_BASE_URL}
+                        webAppUrl={WEBAPP_URL}
                         singleUseId={singleUseId}
                       />
                     </div>

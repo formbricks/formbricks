@@ -12,14 +12,14 @@ import { createShortUrlAction } from "../actions";
 type UrlShortenerModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
-  surveyBaseUrl: string;
+  webAppUrl: string;
 };
 type UrlShortenerFormDataProps = {
   url: string;
 };
 type UrlValidationState = "default" | "valid" | "invalid";
 
-export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlShortenerModalProps) {
+export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShortenerModalProps) {
   const [urlValidationState, setUrlValidationState] = useState<UrlValidationState>("default");
   const [shortUrl, setShortUrl] = useState("");
   const {
@@ -41,7 +41,7 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
       return;
     }
 
-    const regexPattern = new RegExp("^" + surveyBaseUrl);
+    const regexPattern = new RegExp("^" + webAppUrl);
     const isValid = regexPattern.test(value);
     if (!isValid) {
       setUrlValidationState("invalid");
@@ -99,7 +99,7 @@ export default function UrlShortenerModal({ open, setOpen, surveyBaseUrl }: UrlS
             <div className="grid grid-cols-6 gap-3">
               <Input
                 autoFocus
-                placeholder={`${surveyBaseUrl}...`}
+                placeholder={`${webAppUrl}...`}
                 className={clsx(
                   "col-span-5",
                   urlValidationState === "valid"
