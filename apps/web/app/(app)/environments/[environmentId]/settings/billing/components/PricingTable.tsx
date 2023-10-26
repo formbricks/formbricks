@@ -7,69 +7,58 @@ import { CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import {
+  manageSubscriptionAction,
+  upgradePlanAction,
+} from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
-// upated on 20th of July 2023
-const stripeURl =
-  process.env.NODE_ENV === "production"
-    ? "https://buy.stripe.com/5kA9ABal07ZjgEw3cc"
-    : "https://billing.formbricks.com/b/test_28o02W1MObwybewfZ1";
-
-const stripeRemoveBrandingUrl =
-  process.env.NODE_ENV === "production"
-    ? "https://billing.formbricks.com/b/dR6eUV2Sy1AV5ZS001"
-    : "https://billing.formbricks.com/b/test_5kA02WezAgQSdmEbIJ";
-
-const customUrlStripeUrl =
-  process.env.NODE_ENV === "production"
-    ? "https://billing.formbricks.com/b/bIY9ABct893n4VO8wy"
-    : "https://billing.formbricks.com/b/test_cN22b4gHIdEGciA9AC";
+interface BillingDetails {
+  mtuUsage: number;
+  displayUsage: number;
+  amountLeft: number;
+  dueDate: number;
+}
 
 interface PricingTableProps {
   team: TTeam;
+  environmentId: string;
+  billingDetails: BillingDetails;
 }
 
-export default function PricingTable({ team }: PricingTableProps) {
+export default function PricingTableComponent({ team, environmentId, billingDetails }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
+  const { displayUsage, mtuUsage, amountLeft, dueDate } = billingDetails;
 
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);
-    const res = await fetch("/api/billing/create-customer-portal-session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        stripeCustomerId: team.subscription?.stripeCustomerId,
-        returnUrl: `${window.location}`,
-      }),
-    });
-    if (!res.ok) {
-      setLoadingCustomerPortal(false);
-      alert("Error loading billing portal");
-    }
-    const {
-      data: { sessionUrl },
-    } = await res.json();
+    const sessionUrl = await manageSubscriptionAction(team.id, environmentId);
     router.push(sessionUrl);
+    setLoadingCustomerPortal(true);
+  };
+
+  const upgradePlan = async () => {
+    setLoadingCustomerPortal(true);
+    const paymentUrl = await upgradePlanAction(team, environmentId);
+    setLoadingCustomerPortal(false);
+    router.push(paymentUrl);
   };
 
   const freeFeatures = [
     "Unlimited surveys",
-    "Unlimited team members",
-    "Remove branding",
-    "Unlimited link survey responses",
-    "100 responses per web-app survey",
     "Granular targeting",
-    "In-product surveys",
-    "Link surveys",
     "30+ templates",
     "API access",
-    "Webhooks",
-    "Integrations (Zapier)",
+    "Third Party Integrations",
+    "Unlimited Responses per Survey",
   ];
 
-  const proFeatures = ["All features of Free plan", "Unlimited responses"];
+  const proFeatures = [
+    "All features of Free plan",
+    "Team Role Management",
+    "Advanced User Targeting",
+    "Multi Language Surveys",
+  ];
 
   return (
     <div className="relative">
@@ -107,11 +96,8 @@ export default function PricingTable({ team }: PricingTableProps) {
                   Your current plan
                 </Button>
               ) : (
-                <Button
-                  variant="secondary"
-                  className="mt-6 w-full justify-center py-4 shadow-sm"
-                  onClick={() => openCustomerPortal()}>
-                  Change Plan
+                <Button variant="secondary" className="mt-6 w-full justify-center py-4 shadow-sm">
+                  Free Plan
                 </Button>
               )}
             </div>
@@ -143,69 +129,34 @@ export default function PricingTable({ team }: PricingTableProps) {
                 <span className="text-base font-medium text-slate-400">/ month</span>
               </p>
               {team.subscription?.plan === "scale" ? (
-                <Button
-                  variant="secondary"
-                  className="mt-6 w-full justify-center py-4 shadow-sm"
-                  onClick={() => openCustomerPortal()}>
-                  Manage Subscription
-                </Button>
+                <div>
+                  <Button
+                    variant="secondary"
+                    className="mt-6 w-full justify-center py-4 shadow-sm"
+                    onClick={() => openCustomerPortal()}>
+                    Manage Subscription
+                  </Button>
+                  <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
+                    MTU Tracked: {`${mtuUsage}`}
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
+                    Displays Tracked: {`${displayUsage}`}
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
+                    Amount Due: ${`${amountLeft}`}
+                  </p>
+                  {dueDate != null && (
+                    <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
+                      Due Date: {`${dueDate}`}
+                    </p>
+                  )}
+                </div>
               ) : (
                 <Button
                   variant="darkCTA"
                   className="mt-6 w-full justify-center py-4 text-white shadow-sm"
-                  onClick={() => router.push(`${stripeURl}?client_reference_id=${team.id}`)}>
+                  onClick={() => upgradePlan()}>
                   Upgrade
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-1">
-          <div className="rounded-lg border border-slate-100  shadow-sm">
-            <div className="p-8">
-              <h2 className="inline-flex text-2xl font-bold text-slate-700">Remove Formbricks Branding</h2>
-              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Remove Formbricks branding from web-app surveys across all your products.
-              </p>
-              {team.subscription?.addOns.includes("removeBranding") ? (
-                <Button
-                  variant="secondary"
-                  className="mt-6 w-full justify-center py-4 shadow-sm"
-                  onClick={() => openCustomerPortal()}>
-                  Manage Subscription
-                </Button>
-              ) : (
-                <Button
-                  variant="darkCTA"
-                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
-                  onClick={() => router.push(`${stripeRemoveBrandingUrl}?client_reference_id=${team.id}`)}>
-                  Buy for 10$ /month
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="col-span-1">
-          <div className="rounded-lg border border-slate-100 shadow-sm">
-            <div className="p-8">
-              <h2 className="inline-flex text-2xl font-bold text-slate-700">Custom URL for Link Surveys</h2>
-              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Use your own custom URL for link surveys.
-              </p>
-              {team.subscription?.addOns.includes("customUrl") ? (
-                <Button
-                  variant="secondary"
-                  className="mt-6 w-full justify-center py-4 shadow-sm"
-                  onClick={() => openCustomerPortal()}>
-                  Manage Subscription
-                </Button>
-              ) : (
-                <Button
-                  variant="darkCTA"
-                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
-                  onClick={() => router.push(`${customUrlStripeUrl}?client_reference_id=${team.id}`)}>
-                  Buy for 10$ /month
                 </Button>
               )}
             </div>
