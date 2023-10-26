@@ -16,14 +16,14 @@ To get the project running locally on your machine you need to have the followin
 
 1. Clone the project:
 
-   <Col>
+<Col>
    <CodeGroup title="Git clone Formbricks monorepo">
 
    ```bash
    git clone https://github.com/formbricks/formbricks
    ```
 
-      </CodeGroup>
+   </CodeGroup>
 </Col>
    and move into the directory
 <Col>
@@ -33,55 +33,55 @@ To get the project running locally on your machine you need to have the followin
    cd formbricks
    ```
 
-      </CodeGroup>
+   </CodeGroup>
 </Col>
 
 1. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
 
-   <Col>
+<Col>
    <CodeGroup title="Install dependencies via pnpm">
 
    ```bash
    pnpm install
    ```
 
-      </CodeGroup>
+   </CodeGroup>
 </Col>
 
 1. Create a `.env` file based on `.env.example`. It's already preset to work with the docker-compose setup but you can also change values if needed.
 
-   <Col>
+<Col>
    <CodeGroup title="Define environment variables">
 
    ```bash
    cp .env.example .env
    ```
 
-      </CodeGroup>
+   </CodeGroup>
 </Col>
 
 1. Generate a secret value mandatory to be set for the key ENCRYPTION_KEY in the .env file. You can use the following command to generate the random string of required length:
 
-   <Col>
+<Col>
    <CodeGroup title="Set value of ENCRYPTION_KEY">
 
    ```bash
    openssl rand -hex 32
    ```
 
-      </CodeGroup>
+   </CodeGroup>
 </Col>
 
 1. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the formbricks dev setup:
 
-   <Col>
+<Col>
    <CodeGroup title="Start Formbricks Dev Setup">
 
    ```bash
    pnpm go
    ```
 
-      </CodeGroup>
+   </CodeGroup>
 </Col>
    This starts the Formbricks main app (plus all its dependencies) as well as the following services using Docker:
 
