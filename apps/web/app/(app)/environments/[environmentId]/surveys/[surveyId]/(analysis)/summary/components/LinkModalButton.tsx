@@ -42,7 +42,6 @@ export default function LinkSurveyShareButton({
 
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [surveyUrl, setSurveyUrl] = useState("");
-  // console.log("+++++",generateResponseSharingKeyAction(survey.id))
 
   const handlePublish = async () => {
     const key = await generateResponseSharingKeyAction(survey.id);
