@@ -6,6 +6,11 @@ import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { getServerSession } from "next-auth";
+import {
+  createResponseSharingkey,
+  getResponseKeyBySurveyId,
+  deleteResponseSharingKeyBySurveyId,
+} from "@formbricks/lib/responseSharing/service";
 
 type TSendEmailActionArgs = {
   to: string;
@@ -32,3 +37,36 @@ export const sendEmailAction = async ({ html, subject, to }: TSendEmailActionArg
   }
   return await sendEmbedSurveyPreviewEmail(to, subject, html);
 };
+
+export async function generateResponseSharingKeyAction(surveyId: string): Promise<string> {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
+
+  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+
+  return createResponseSharingkey(surveyId);
+}
+
+export async function getResponseSharingKeyAction(surveyId: string): Promise<string | null> {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
+
+  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+
+  return getResponseKeyBySurveyId(surveyId);
+}
+
+export async function deleteResponseSharingKeyAction(surveyId: string): Promise<boolean> {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
+
+  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+
+  return await deleteResponseSharingKeyBySurveyId(surveyId);
+}

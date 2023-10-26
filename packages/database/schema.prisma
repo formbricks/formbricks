@@ -544,7 +544,6 @@ model ShortUrl {
 model ResponseSharingKey {
   id        String   @id @unique // generate nanoId in service
   createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
   surveyId  String
   survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 }

@@ -19,7 +19,7 @@ interface ResponsePageProps {
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   sharingKey: string;
   environmentTags: TTag[];
@@ -31,7 +31,7 @@ const ResponsePage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   sharingKey,
   environmentTags,

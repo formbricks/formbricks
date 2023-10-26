@@ -2,14 +2,22 @@ export const revalidate = REVALIDATION_INTERVAL;
 
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import ResponsePage from "@/app/(app)/share/[sharingKey]/(analysis)/responses/components/ResponsePage";
-import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { getResponseSharingKeySurveyAction } from "@/app/(app)/share/[sharingKey]/action";
+import { redirect } from "next/navigation";
 
 export default async function Page({ params }) {
-  const survey = await getSurvey(params.sharingKey);
+  const surveyId = await getResponseSharingKeySurveyAction(params.sharingKey);
+
+  if (!surveyId) {
+    return redirect(`/`);
+  }
+
+  const survey = await getSurvey(surveyId);
 
   if (!survey) {
     throw new Error("Survey not found");
@@ -37,7 +45,7 @@ export default async function Page({ params }) {
         responses={responses}
         survey={survey}
         surveyId={params.surveyId}
-        surveyBaseUrl={SURVEY_BASE_URL}
+        webAppUrl={WEBAPP_URL}
         product={product}
         sharingKey={params.sharingKey}
         environmentTags={tags}

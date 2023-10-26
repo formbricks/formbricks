@@ -14,6 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 import { DownloadIcon } from "lucide-react";
+import {
+  generateResponseSharingKeyAction,
+  getResponseSharingKeyAction,
+  deleteResponseSharingKeyAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
@@ -32,6 +39,40 @@ export default function LinkSurveyShareButton({
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
+
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [surveyUrl, setSurveyUrl] = useState("");
+  // console.log("+++++",generateResponseSharingKeyAction(survey.id))
+
+  const handlePublish = async () => {
+    const key = await generateResponseSharingKeyAction(survey.id);
+    setSurveyUrl(webAppUrl + "/share/" + key);
+    setShowPublishModal(true);
+  };
+
+  const handleUnpublish = () => {
+    deleteResponseSharingKeyAction(survey.id)
+      .then(() => {
+        toast.success("Survey Unpublished successfully");
+        setShowPublishModal(false);
+      })
+      .catch((error) => {
+        toast.error(`Error: ${error.message}`);
+      });
+  };
+
+  useEffect(() => {
+    async function fetchSharingKey() {
+      const sharingKey = await getResponseSharingKeyAction(survey.id);
+      if (sharingKey) {
+        setSurveyUrl(webAppUrl + "/share/" + sharingKey);
+        setShowPublishModal(true);
+      }
+    }
+
+    fetchSharingKey();
+  }, [survey.id, webAppUrl]);
+
   return (
     <>
       <DropdownMenu>
@@ -75,12 +116,12 @@ export default function LinkSurveyShareButton({
       )}
       {showResultsLinkModal && (
         <ShareSurveyResults
-          survey={survey}
           open={showResultsLinkModal}
           setOpen={setShowResultsLinkModal}
-          product={product}
-          surveyBaseUrl={surveyBaseUrl}
-          profile={profile}
+          surveyUrl={surveyUrl}
+          handlePublish={handlePublish}
+          handleUnpublish={handleUnpublish}
+          showPublishModal={showPublishModal}
         />
       )}
     </>
