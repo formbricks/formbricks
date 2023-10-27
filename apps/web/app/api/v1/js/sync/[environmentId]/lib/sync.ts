@@ -1,4 +1,4 @@
-import { getSyncSurveysCached } from "@/app/api/v1/js/sync/lib/surveys";
+import { getSyncSurveysCached } from "@/app/api/v1/js/sync/[environmentId]/lib/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -9,6 +9,7 @@ import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState } from "@formbricks/types/js";
 import { TSession } from "@formbricks/types/sessions";
+import { getSurveys } from "@formbricks/lib/survey/service";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
@@ -148,6 +149,37 @@ export const getUpdatedState = async (
     surveys,
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
     product,
+  };
+
+  return state;
+};
+
+export const getPublicUpdatedState = async (environmentId: string) => {
+  // check if environment exists
+  const environment = await getEnvironment(environmentId);
+
+  if (!environment) {
+    throw new Error("Environment does not exist");
+  }
+
+  // TODO: check if Monthly Active Users limit is reached
+
+  const [surveys, noCodeActionClasses, product] = await Promise.all([
+    getSurveys(environmentId),
+    getActionClasses(environmentId),
+    getProductByEnvironmentIdCached(environmentId),
+  ]);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const state: TJsState = {
+    surveys,
+    noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+    product,
+    person: null,
+    session: null,
   };
 
   return state;

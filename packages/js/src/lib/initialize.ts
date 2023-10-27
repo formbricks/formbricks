@@ -77,6 +77,10 @@ export const initialize = async (
     logger.debug("Found existing configuration. Checking session.");
     const existingSession = state.session;
 
+    // conditions in which the local storage is valid?
+    // public -> no person, existing surveys, existing displays
+    // identified users -> existing person, existing surveys
+
     if (!existingSession || !state.person?.id) {
       logger.debug("No session or person found. This is an unidentified user, checking for displays");
       if (state.displays && state.displays?.length > 0) {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/js";
 // import { createPerson } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/people";

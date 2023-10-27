@@ -1,4 +1,4 @@
-import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
+import { getUpdatedState } from "@/app/api/v1/js/sync/[environmentId]/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { ZJsSyncInput } from "@formbricks/types/js";

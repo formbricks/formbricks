@@ -32,6 +32,9 @@ export type TJsState = z.infer<typeof ZJsState>;
 
 export const ZJsPublicSyncInput = z.object({
   environmentId: z.string().cuid2(),
+  personId: z.string().cuid2().nullable(),
+  sessionId: z.string().cuid2().nullable(),
+  jsVersion: z.string().nullable(),
 });
 
 export const ZJsSyncInput = z.object({

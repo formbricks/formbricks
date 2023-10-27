@@ -20,10 +20,9 @@ const syncWithBackend = async ({
   environmentId,
   personId,
   sessionId,
-}: // localDisplays,
-TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
-  const url = `${apiHost}/api/v1/js/sync`;
-  const publicUrl = `${apiHost}/api/v1/js/sync/public?environmentId=${environmentId}`;
+}: TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
+  const url = `${apiHost}/api/v1/js/sync/${environmentId}?personId=${personId}&sessionId=${sessionId}&jsVersion=${packageJson.version}`;
+  const publicUrl = `${apiHost}/api/v1/js/sync/${environmentId}`;
 
   if (!personId || !sessionId) {
     // public survey
@@ -44,18 +43,8 @@ TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
     return ok((await response.json()).data as TJsState);
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      environmentId,
-      personId,
-      sessionId,
-      jsVersion: packageJson.version,
-    }),
-  });
+  const response = await fetch(url);
+
   if (!response.ok) {
     const jsonRes = await response.json();
 
