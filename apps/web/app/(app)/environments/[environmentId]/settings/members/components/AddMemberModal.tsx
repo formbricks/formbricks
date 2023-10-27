@@ -4,6 +4,7 @@ import { Modal } from "@formbricks/ui/Modal";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 import { useForm } from "react-hook-form";
 import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
 
@@ -45,6 +46,11 @@ export default function AddMemberModal({ open, setOpen, onSubmit, isEnterpriseEd
             </div>
           </div>
         </div>
+        {!isEnterpriseEdition && (
+          <div className="mx-6 mt-2">
+            <UpgradePlanNotice message="Upgrade to Enterprise Plan to manage access roles for your team" />
+          </div>
+        )}
         <form onSubmit={handleSubmit(submitEventClass)}>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
