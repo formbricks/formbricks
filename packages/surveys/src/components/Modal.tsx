@@ -1,4 +1,4 @@
-import type { PlacementType } from "@formbricks/types/js";
+import { TPlacement } from "@formbricks/types/common";
 import { VNode } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
@@ -6,7 +6,7 @@ import { cn } from "../lib/utils";
 interface ModalProps {
   children: VNode;
   isOpen: boolean;
-  placement: PlacementType;
+  placement: TPlacement;
   clickOutside: boolean;
   darkOverlay: boolean;
   highlightBorderColor: string | null;
@@ -50,7 +50,7 @@ export default function Modal({
   }, [show, clickOutside, onClose, isCenter]);
 
   // This classes will be applied only when screen size is greater than sm, hence sm is common prefix for all
-  const getPlacementStyle = (placement: PlacementType) => {
+  const getPlacementStyle = (placement: TPlacement) => {
     switch (placement) {
       case "bottomRight":
         return "sm:bottom-3 sm:right-3";

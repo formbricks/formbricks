@@ -1,11 +1,11 @@
 "use server";
 
 import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { getServerSession } from "next-auth";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TEnvironment } from "@formbricks/types/environment";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";

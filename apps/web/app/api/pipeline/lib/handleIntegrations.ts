@@ -1,11 +1,12 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
+import { TIntegration } from "@formbricks/types/integration";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { TIntegration, TNotionConfigData, TNotionIntegration } from "@formbricks/types/v1/integrations";
-import { TPipelineInput } from "@formbricks/types/v1/pipelines";
-import { TIntegrationGoogleSheets } from "@formbricks/types/v1/integration/googleSheet";
-import { TIntegrationAirtable } from "@formbricks/types/v1/integration/airtable";
+import { TPipelineInput } from "@formbricks/types/pipelines";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
+import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 
 export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {
   for (const integration of integrations) {
@@ -17,7 +18,7 @@ export async function handleIntegrations(integrations: TIntegration[], data: TPi
         await handleAirtableIntegration(integration as TIntegrationAirtable, data);
         break;
       case "notion":
-        await handleNotionIntegration(integration as TNotionIntegration, data);
+        await handleNotionIntegration(integration as TIntegrationNotion, data);
         break;
     }
   }
@@ -27,7 +28,7 @@ async function handleAirtableIntegration(integration: TIntegrationAirtable, data
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds);
+        const values = await extractResponses(data, element.questionIds as string[]);
 
         await airtableWriteData(integration.config.key, element, values);
       }
@@ -39,7 +40,7 @@ async function handleGoogleSheetsIntegration(integration: TIntegrationGoogleShee
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds);
+        const values = await extractResponses(data, element.questionIds as string[]);
         await writeData(integration.config.key, element.spreadsheetId, values);
       }
     }
@@ -67,7 +68,7 @@ async function extractResponses(data: TPipelineInput, questionIds: string[]): Pr
   return [responses, questions];
 }
 
-async function handleNotionIntegration(integration: TNotionIntegration, data: TPipelineInput) {
+async function handleNotionIntegration(integration: TIntegrationNotion, data: TPipelineInput) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
@@ -78,7 +79,10 @@ async function handleNotionIntegration(integration: TNotionIntegration, data: TP
   }
 }
 
-function buildNotionPayloadProperties(mapping: TNotionConfigData["mapping"], data: TPipelineInput) {
+function buildNotionPayloadProperties(
+  mapping: TIntegrationNotionConfigData["mapping"],
+  data: TPipelineInput
+) {
   const properties: any = {};
   const responses = data.response.data;
 

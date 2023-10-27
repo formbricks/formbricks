@@ -2,7 +2,7 @@
 
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
-import { TIntegrationInput } from "@formbricks/types/v1/integrations";
+import { TIntegrationInput } from "@formbricks/types/integration";
 
 export async function deleteIntegrationAction(integrationId: string) {
   return await deleteIntegration(integrationId);

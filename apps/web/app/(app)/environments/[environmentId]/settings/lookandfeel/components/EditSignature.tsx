@@ -1,7 +1,7 @@
 "use client";
 
 import { updateProductAction } from "../actions";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { useState } from "react";

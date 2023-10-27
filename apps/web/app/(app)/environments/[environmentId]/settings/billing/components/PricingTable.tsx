@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
 import { Badge } from "@formbricks/ui/Badge";
 import { CheckIcon } from "@heroicons/react/24/outline";
@@ -12,8 +12,7 @@ import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 const stripeURl =
   process.env.NODE_ENV === "production"
     ? "https://buy.stripe.com/5kA9ABal07ZjgEw3cc"
-    : "https://buy.stripe.com/test_8wMaHA3UWcACfuM3cc";
-
+    : "https://billing.formbricks.com/b/test_28o02W1MObwybewfZ1";
 interface PricingTableProps {
   team: TTeam;
 }
@@ -38,7 +37,9 @@ export default function PricingTable({ team }: PricingTableProps) {
       setLoadingCustomerPortal(false);
       alert("Error loading billing portal");
     }
-    const { sessionUrl } = await res.json();
+    const {
+      data: { sessionUrl },
+    } = await res.json();
     router.push(sessionUrl);
   };
 

@@ -1,4 +1,4 @@
-import NotionWrapper from "@/app/(app)/environments/[environmentId]/integrations/notion/NotionWrapper";
+import NotionWrapper from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
 import GoBackButton from "@formbricks/ui/GoBackButton";
 import {
   NOTION_AUTH_URL,
@@ -11,7 +11,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TNotionDatabase, TNotionIntegration } from "@formbricks/types/v1/integrations";
+import { TIntegrationNotion, TNotionDatabase } from "@formbricks/types/integration/notion";
 
 export default async function Notion({ params }) {
   const enabled = !!(
@@ -30,8 +30,8 @@ export default async function Notion({ params }) {
     throw new Error("Environment not found");
   }
 
-  const notionIntegration: TNotionIntegration | undefined = integrations?.find(
-    (integration): integration is TNotionIntegration => integration.type === "notion"
+  const notionIntegration: TIntegrationNotion | undefined = integrations?.find(
+    (integration): integration is TIntegrationNotion => integration.type === "notion"
   );
 
   let databasesArray: TNotionDatabase[] = [];

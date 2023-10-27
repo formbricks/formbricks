@@ -1,15 +1,15 @@
-import { getSurveysCached } from "@/app/api/v1/js/sync/lib/surveys";
+import { getSyncSurveysCached } from "@/app/api/v1/js/sync/lib/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
-import { getProductByEnvironmentIdCached } from "@formbricks/lib/product/service";
-import { createSession, extendSession, getSessionCached } from "@formbricks/lib/session/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { createSession, extendSession, getSession } from "@formbricks/lib/session/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TJsState } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TSession } from "@formbricks/types/v1/sessions";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TJsState } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
+import { TSession } from "@formbricks/types/sessions";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
@@ -41,7 +41,7 @@ export const getUpdatedState = async (
       // don't allow new people or sessions
       throw new Error(errorMessage);
     }
-    const session = await getSessionCached(sessionId);
+    const session = await getSession(sessionId);
     if (!session) {
       // don't allow new sessions
       throw new Error(errorMessage);
@@ -74,7 +74,7 @@ export const getUpdatedState = async (
     session = await createSession(person.id);
   } else {
     // check validity of person & session
-    session = await getSessionCached(sessionId);
+    session = await getSession(sessionId);
     if (!session) {
       // create a new session
       session = await createSession(person.id);
@@ -100,9 +100,9 @@ export const getUpdatedState = async (
 
   // get/create rest of the state
   const [surveys, noCodeActionClasses, product] = await Promise.all([
-    getSurveysCached(environmentId, person),
+    getSyncSurveysCached(environmentId, person),
     getActionClasses(environmentId),
-    getProductByEnvironmentIdCached(environmentId),
+    getProductByEnvironmentId(environmentId),
   ]);
 
   if (!product) {

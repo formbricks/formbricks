@@ -58,7 +58,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const key = await fetchAirtableAuthToken(formData);
-
+    if (!key) {
+      return NextResponse.json({ Error: "Failed to fetch Airtable auth token" }, { status: 500 });
+    }
     const email = await getEmail(key.access_token);
 
     await connectAirtable({
@@ -67,7 +69,10 @@ export async function GET(req: NextRequest) {
       key,
     });
     return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+    NextResponse.json({ Error: error }, { status: 500 });
+  }
 
   NextResponse.json({ Error: "unknown error occurred" }, { status: 400 });
 }

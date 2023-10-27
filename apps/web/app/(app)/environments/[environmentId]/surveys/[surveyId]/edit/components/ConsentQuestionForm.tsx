@@ -1,7 +1,8 @@
 "use client";
 
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { md } from "@formbricks/lib/markdownIt";
-import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -20,22 +21,20 @@ export default function ConsentQuestionForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  localSurvey,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
+  const environmentId = localSurvey.environmentId;
+
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
 
       <div className="mt-3">
         <Label htmlFor="subheader">Description</Label>

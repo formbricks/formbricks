@@ -22,9 +22,9 @@ import { formbricksLogout } from "@/app/lib/formbricks";
 import { capitalizeFirstLetter, truncate } from "@/app/lib/utils";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TTeam } from "@formbricks/types/teams";
 import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
@@ -62,7 +62,7 @@ interface NavigationProps {
   products: TProduct[];
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
-  surveyBaseUrl: string;
+  webAppUrl: string;
 }
 
 export default function Navigation({
@@ -73,7 +73,7 @@ export default function Navigation({
   products,
   environments,
   isFormbricksCloud,
-  surveyBaseUrl,
+  webAppUrl,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -495,7 +495,7 @@ export default function Navigation({
           <UrlShortenerModal
             open={showLinkShortenerModal}
             setOpen={(val) => setShowLinkShortenerModal(val)}
-            surveyBaseUrl={surveyBaseUrl}
+            webAppUrl={webAppUrl}
           />
         </nav>
       )}

@@ -116,7 +116,7 @@ export default function Header() {
   }, []);
 
   const stickyNavClass = stickyNav
-    ? `bg-transparent shadow-md backdrop-blur-lg fixed top-0 z-30 w-full`
+    ? `bg-transparent dark:bg-slate-900/[0.8] shadow-md backdrop-blur-lg fixed top-0 z-30 w-full`
     : "relative";
   return (
     <Popover className={`${stickyNavClass}`} as="header">

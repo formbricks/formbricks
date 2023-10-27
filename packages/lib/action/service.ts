@@ -1,16 +1,16 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TActionClassType } from "@formbricks/types/v1/actionClasses";
-import { TAction, TActionInput, ZActionInput } from "@formbricks/types/v1/actions";
-import { ZOptionalNumber } from "@formbricks/types/v1/common";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { TActionClassType } from "@formbricks/types/actionClasses";
+import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
+import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getSessionCached } from "../session/service";
+import { getSession } from "../session/service";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
@@ -136,7 +136,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     eventType = "automatic";
   }
 
-  const session = await getSessionCached(sessionId);
+  const session = await getSession(sessionId);
 
   if (!session) {
     throw new ResourceNotFoundError("Session", sessionId);

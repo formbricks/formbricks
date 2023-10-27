@@ -2,8 +2,8 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TResponseNote } from "@formbricks/types/v1/responses";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponseNote } from "@formbricks/types/responses";
 import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
