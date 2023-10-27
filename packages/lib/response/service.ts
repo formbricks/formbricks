@@ -22,6 +22,8 @@ import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "./cache";
 import { formatResponseDateFields } from "../response/util";
+import { getResponseNotes } from "../responseNote/service";
+import { responseNoteCache } from "../responseNote/cache";
 
 const responseSelection = {
   id: true,
@@ -49,22 +51,6 @@ const responseSelection = {
           },
         },
       },
-    },
-  },
-  notes: {
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      text: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      isResolved: true,
-      isEdited: true,
     },
   },
   tags: {
@@ -106,9 +92,11 @@ export const getResponsesByPersonId = async (
 
         let responses: Array<TResponse> = [];
 
-        responsePrisma.forEach((response) => {
+        responsePrisma.forEach(async (response) => {
+          const responseNotes = await getResponseNotes(response.id);
           responses.push({
             ...response,
+            notes: responseNotes,
             person: response.person ? transformPrismaPerson(response.person) : null,
             tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           });
@@ -156,8 +144,10 @@ export const getResponseBySingleUseId = async (
           return null;
         }
 
+        const responseNotes = await getResponseNotes(responsePrisma.id);
         const response: TResponse = {
           ...responsePrisma,
+          notes: responseNotes,
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -222,16 +212,22 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       select: responseSelection,
     });
 
+    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
+      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     responseCache.revalidate({
+      id: response.id,
       personId: response.person?.id,
-      responseId: response.id,
       surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
     });
 
     return response;
@@ -261,8 +257,10 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
           throw new ResourceNotFoundError("Response", responseId);
         }
 
+        const responseNotes = await getResponseNotes(responsePrisma.id);
         const response: TResponse = {
           ...responsePrisma,
+          notes: responseNotes,
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -277,7 +275,10 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       }
     },
     [`getResponse-${responseId}`],
-    { tags: [responseCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
   )();
 
   if (!response) {
@@ -310,11 +311,18 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
-          ...responsePrisma,
-          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-        }));
+        const transformedResponses: TResponse[] = await Promise.all(
+          responses.map(async (responsePrisma) => {
+            const responseNotes = await getResponseNotes(responsePrisma.id);
+
+            return {
+              ...responsePrisma,
+              notes: responseNotes,
+              person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+              tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            };
+          })
+        );
 
         return transformedResponses;
       } catch (error) {
@@ -363,11 +371,18 @@ export const getResponsesByEnvironmentId = async (
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
-          ...responsePrisma,
-          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-        }));
+        const transformedResponses: TResponse[] = await Promise.all(
+          responses.map(async (responsePrisma) => {
+            const responseNotes = await getResponseNotes(responsePrisma.id);
+
+            return {
+              ...responsePrisma,
+              notes: responseNotes,
+              person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+              tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            };
+          })
+        );
 
         return transformedResponses;
       } catch (error) {
@@ -397,7 +412,15 @@ export const updateResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
-    const currentResponse = await getResponse(responseId);
+    // const currentResponse = await getResponse(responseId);
+
+    // use direct prisma call to avoid cache issues
+    const currentResponse = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: responseSelection,
+    });
 
     if (!currentResponse) {
       throw new ResourceNotFoundError("Response", responseId);
@@ -420,16 +443,22 @@ export const updateResponse = async (
       select: responseSelection,
     });
 
+    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
+      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     responseCache.revalidate({
+      id: response.id,
       personId: response.person?.id,
-      responseId: response.id,
       surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
     });
 
     return response;
@@ -452,17 +481,24 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       select: responseSelection,
     });
 
+    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
+      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
+
     deleteDisplayByResponseId(responseId, response.surveyId);
 
     responseCache.revalidate({
+      id: response.id,
       personId: response.person?.id,
-      responseId: response.id,
       surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
     });
 
     return response;
