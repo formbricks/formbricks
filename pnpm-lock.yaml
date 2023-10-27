@@ -486,9 +486,9 @@ importers:
 
   packages/ee:
     dependencies:
-      '@formbricks/database':
+      '@formbricks/lib':
         specifier: workspace:*
-        version: link:../database
+        version: link:../lib
       stripe:
         specifier: ^14.0.0
         version: 14.0.0
@@ -3686,6 +3686,7 @@ packages:
 
   /@emotion/memoize@0.7.4:
     resolution: {integrity: sha512-Ja/Vfqe3HpuzRsG1oBtWTHk2PGZ7GR+2Vz5iYGelAw8dx32K0y7PjVuxK6z1nMpZOqAFsRUPCkK1YjJ56qJlgw==}
+    requiresBuild: true
     dev: false
     optional: true
 

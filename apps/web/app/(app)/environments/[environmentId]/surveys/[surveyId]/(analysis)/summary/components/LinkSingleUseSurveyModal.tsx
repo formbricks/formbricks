@@ -36,7 +36,7 @@ export default function LinkSingleUseSurveyModal({ survey, surveyBaseUrl }: Link
     return await Promise.all(promises);
   };
 
-  const defaultSurveyUrl = `${surveyBaseUrl}/${survey.id}`;
+  const defaultSurveyUrl = `${surveyBaseUrl}/s/${survey.id}`;
   const [selectedSingleUseIds, setSelectedSingleIds] = useState<number[]>([]);
 
   const linkTextRef = useRef<HTMLDivElement>(null);

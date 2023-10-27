@@ -2,7 +2,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
-import { REVALIDATION_INTERVAL, WEBAPP_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
     openGraph: {
       title: survey.name,
       description: "Create your own survey like this with Formbricks' open source survey suite.",
-      url: `${SURVEY_BASE_URL}/${survey.id}`,
+      url: `${WEBAPP_URL}/${survey.id}`,
       siteName: "",
       images: [ogImgURL],
       locale: "en_US",
