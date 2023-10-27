@@ -32,15 +32,15 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's profile
-export const getProfile = async (userId: string): Promise<TProfile | null> =>
+export const getProfile = async (id: string): Promise<TProfile | null> =>
   unstable_cache(
     async () => {
-      validateInputs([userId, ZId]);
+      validateInputs([id, ZId]);
 
       try {
         const profile = await prisma.user.findUnique({
           where: {
-            id: userId,
+            id,
           },
           select: responseSelection,
         });
@@ -58,9 +58,9 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
         throw error;
       }
     },
-    [`getProfile-${userId}`],
+    [`getProfile-${id}`],
     {
-      tags: [profileCache.tag.byUserId(userId)],
+      tags: [profileCache.tag.byId(id)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -119,7 +119,7 @@ export const updateProfile = async (
 
     profileCache.revalidate({
       email: updatedProfile.email,
-      userId: updatedProfile.id,
+      id: updatedProfile.id,
     });
 
     return updatedProfile;
@@ -132,19 +132,19 @@ export const updateProfile = async (
   }
 };
 
-const deleteUser = async (userId: string): Promise<TProfile> => {
-  validateInputs([userId, ZId]);
+const deleteUser = async (id: string): Promise<TProfile> => {
+  validateInputs([id, ZId]);
 
   const profile = await prisma.user.delete({
     where: {
-      id: userId,
+      id,
     },
     select: responseSelection,
   });
 
   profileCache.revalidate({
     email: profile.email,
-    userId,
+    id,
   });
 
   return profile;
@@ -160,7 +160,7 @@ export const createProfile = async (data: TProfileCreateInput): Promise<TProfile
 
   profileCache.revalidate({
     email: profile.email,
-    userId: profile.id,
+    id: profile.id,
   });
 
   return profile;
@@ -173,7 +173,7 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
   try {
     const currentUserMemberships = await prisma.membership.findMany({
       where: {
-        userId: userId,
+        userId,
       },
       include: {
         team: {
