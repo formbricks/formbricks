@@ -8,11 +8,12 @@ import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
+import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE, IS_S3_CONFIGURED } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { createEnvironment } from "../environment/service";
 import { environmentCache } from "../environment/cache";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
 import { productCache } from "./cache";
 
 const selectProduct = {
@@ -184,6 +185,32 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
   });
 
   if (product) {
+    // delete all files from storage related to this product
+
+    if (IS_S3_CONFIGURED) {
+      const s3FilesPromises = product.environments.map(async (environment) => {
+        return deleteS3FilesByEnvironmentId(environment.id);
+      });
+
+      try {
+        await Promise.all(s3FilesPromises);
+      } catch (err) {
+        // fail silently because we don't want to throw an error if the files are not deleted
+        console.error(err);
+      }
+    } else {
+      const localFilesPromises = product.environments.map(async (environment) => {
+        return deleteLocalFilesByEnvironmentId(environment.id);
+      });
+
+      try {
+        await Promise.all(localFilesPromises);
+      } catch (err) {
+        // fail silently because we don't want to throw an error if the files are not deleted
+        console.error(err);
+      }
+    }
+
     productCache.revalidate({
       id: product.id,
       teamId: product.teamId,

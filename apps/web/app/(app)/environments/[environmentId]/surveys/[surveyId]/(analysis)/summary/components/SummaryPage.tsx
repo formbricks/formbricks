@@ -23,7 +23,7 @@ interface SummaryPageProps {
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
   environmentTags: TTag[];
@@ -36,7 +36,7 @@ const SummaryPage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
   environmentTags,
@@ -64,7 +64,7 @@ const SummaryPage = ({
         environment={environment}
         survey={survey}
         surveyId={surveyId}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
       />
