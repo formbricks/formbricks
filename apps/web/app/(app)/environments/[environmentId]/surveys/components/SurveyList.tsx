@@ -119,17 +119,16 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                           <span className="text-xs italic text-slate-400">Draft</span>
                         )}
                       </div>
-                      {!isSurveyCreationDeletionDisabled && (
-                        <SurveyDropDownMenu
-                          survey={survey}
-                          key={`surveys-${survey.id}`}
-                          environmentId={environmentId}
-                          environment={environment}
-                          otherEnvironment={otherEnvironment!}
-                          webAppUrl={WEBAPP_URL}
-                          singleUseId={singleUseId}
-                        />
-                      )}
+                      <SurveyDropDownMenu
+                        survey={survey}
+                        key={`surveys-${survey.id}`}
+                        environmentId={environmentId}
+                        environment={environment}
+                        otherEnvironment={otherEnvironment!}
+                        webAppUrl={WEBAPP_URL}
+                        singleUseId={singleUseId}
+                        isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
+                      />
                     </div>
                   </div>
                 </div>

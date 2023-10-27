@@ -133,6 +133,9 @@ export default function SingleResponseCard({
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
     try {
+      if (isViewer) {
+        throw new Error("You are not authorized to perform this action.");
+      }
       await deleteResponseAction(response.id);
       router.refresh();
       toast.success("Submission deleted successfully.");
@@ -251,22 +254,24 @@ export default function SingleResponseCard({
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
-              <TooltipRenderer
-                shouldRender={isSubmissionFresh || !response.finished}
-                tooltipContent={deleteSubmissionToolTip}>
-                <TrashIcon
-                  onClick={() => {
-                    if (!isSubmissionFresh || !response.finished) {
-                      setDeleteDialogOpen(true);
-                    }
-                  }}
-                  className={`h-4 w-4 ${
-                    isSubmissionFresh || !response.finished
-                      ? "cursor-not-allowed text-gray-400"
-                      : "text-slate-500 hover:text-red-700"
-                  } `}
-                />
-              </TooltipRenderer>
+              {!isViewer && (
+                <TooltipRenderer
+                  shouldRender={isSubmissionFresh || !response.finished}
+                  tooltipContent={deleteSubmissionToolTip}>
+                  <TrashIcon
+                    onClick={() => {
+                      if (!isSubmissionFresh || !response.finished) {
+                        setDeleteDialogOpen(true);
+                      }
+                    }}
+                    className={`h-4 w-4 ${
+                      isSubmissionFresh || !response.finished
+                        ? "cursor-not-allowed text-gray-400"
+                        : "text-slate-500 hover:text-red-700"
+                    } `}
+                  />
+                </TooltipRenderer>
+              )}
             </div>
           </div>
         </div>

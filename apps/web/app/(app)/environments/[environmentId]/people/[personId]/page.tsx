@@ -7,10 +7,12 @@ import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[per
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 
 export default async function PersonPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
   const environmentTags = await getTagsByEnvironmentId(params.environmentId);
+  const isEnterpriseEdition = await getIsEnterpriseEdition();
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -18,7 +20,11 @@ export default async function PersonPage({ params }) {
     <div>
       <main className="mx-auto px-4 sm:px-6 lg:px-8">
         <>
-          <HeadingSection environmentId={params.environmentId} personId={params.personId} />
+          <HeadingSection
+            environmentId={params.environmentId}
+            personId={params.personId}
+            isEnterpriseEdition={isEnterpriseEdition}
+          />
           <section className="pb-24 pt-6">
             <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
               <AttributesSection personId={params.personId} />
