@@ -3,7 +3,8 @@ import { SERVICES_REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { getDisplaysByPersonId } from "@formbricks/lib/display/service";
 import { getProductByEnvironmentIdCached, getProductCacheTag } from "@formbricks/lib/product/service";
-import { getSurveyCacheTag, getSurveys } from "@formbricks/lib/survey/service";
+import { getSurveys } from "@formbricks/lib/survey/service";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
 import { unstable_cache } from "next/cache";
@@ -23,7 +24,7 @@ export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
     {
       tags: [
         displayCache.tag.byPersonId(person.id),
-        getSurveyCacheTag(environmentId),
+        surveyCache.tag.byEnvironmentId(environmentId),
         getProductCacheTag(environmentId),
       ],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
