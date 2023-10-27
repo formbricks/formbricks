@@ -167,13 +167,13 @@ export const createProfile = async (data: TProfileCreateInput): Promise<TProfile
 };
 
 // function to delete a user's profile including teams
-export const deleteProfile = async (userId: string): Promise<TProfile> => {
-  validateInputs([userId, ZId]);
+export const deleteProfile = async (id: string): Promise<TProfile> => {
+  validateInputs([id, ZId]);
 
   try {
     const currentUserMemberships = await prisma.membership.findMany({
       where: {
-        userId,
+        userId: id,
       },
       include: {
         team: {
@@ -206,7 +206,7 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
       }
     }
 
-    const deletedProfile = await deleteUser(userId);
+    const deletedProfile = await deleteUser(id);
 
     return deletedProfile;
   } catch (error) {
