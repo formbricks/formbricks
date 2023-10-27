@@ -1,7 +1,6 @@
 import "server-only";
 import path from "path";
 import { env } from "@/env.mjs";
-import { unstable_cache } from "next/cache";
 
 export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
