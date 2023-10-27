@@ -1,4 +1,3 @@
-"use server";
 import "server-only";
 
 import { env } from "../../../apps/web/env.mjs";
@@ -15,6 +14,6 @@ export const getIsEnterpriseEdition = () =>
       }
       return false;
     },
-    ["isEE"],
+    ["getIsEnterpriseEdition"],
     { revalidate: 60 * 60 * 24 }
   )();
