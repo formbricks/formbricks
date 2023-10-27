@@ -3,12 +3,14 @@ import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/r
 import EventActivityTab from "./ActionActivityTab";
 import ActionSettingsTab from "./ActionSettingsTab";
 import { TActionClass } from "@formbricks/types/actionClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface ActionDetailModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
+  membershipRole?: TMembershipRole;
 }
 
 export default function ActionDetailModal({
@@ -16,6 +18,7 @@ export default function ActionDetailModal({
   open,
   setOpen,
   actionClass,
+  membershipRole,
 }: ActionDetailModalProps) {
   const tabs = [
     {
@@ -25,7 +28,12 @@ export default function ActionDetailModal({
     {
       title: "Settings",
       children: (
-        <ActionSettingsTab environmentId={environmentId} actionClass={actionClass} setOpen={setOpen} />
+        <ActionSettingsTab
+          environmentId={environmentId}
+          actionClass={actionClass}
+          setOpen={setOpen}
+          membershipRole={membershipRole}
+        />
       ),
     },
   ];

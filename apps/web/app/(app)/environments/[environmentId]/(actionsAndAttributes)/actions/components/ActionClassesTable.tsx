@@ -77,6 +77,7 @@ export default function ActionClassesTable({
         open={isActionDetailModalOpen}
         setOpen={setActionDetailModalOpen}
         actionClass={activeActionClass}
+        membershipRole={membershipRole}
       />
       <AddNoCodeActionModal
         environmentId={environmentId}
