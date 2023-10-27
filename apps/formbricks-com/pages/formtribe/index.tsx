@@ -51,19 +51,9 @@ const HowTo = [
 
 const SideQuests = [
   {
-    points: "Join the Tribe Tweet (100 Points)",
-    quest: "Tweet a single “🧱” emoji before the 7th of October EOD to join the #FormTribe.",
-    proof: "Share the link to the tweet in the “side-quest” channel.",
-  },
-  {
     points: "Spread the Word Tweet (100 Points)",
     quest: "Tweet “🧱🚀” on the day of the ProductHunt launch to spread the word.",
     proof: "Share the link to the tweet in the “side-quest” channel.",
-  },
-  {
-    points: "Setup Insights (200 Points)",
-    quest: "Screen record yourself setting up the Formbricks dev environment.",
-    proof: "Upload to WeTransfer and send to johannes@formbricks.com",
   },
   {
     points: "Meme Magic (50 Points + up to 100 Points)",
@@ -83,24 +73,14 @@ const SideQuests = [
     proof: "Share the design in the “side-quest” channel.",
   },
   {
-    points: "Transform Animation to CSS (350 Points per background)",
-    quest: "Animate an existing background to CSS versions (more infos on Notion).",
-    proof: "Share the animated background.",
-  },
-  {
-    points: "Enhance Docs (50-250 Points)",
-    quest:
-      "Add a new section to our docs where you see gaps. Follow the current style of documentation incl. code snippets and screenshots. Pls no spam.",
-    proof: "Open a PR with “docs” in the title",
-  },
-  {
     points: "Starry-eyed Supporter (250 Points)",
     quest: "Get five friends to star our repository.",
     proof: "Share 5 screenshots of the chats where you asked them and they confirmed + their GitHub names",
   },
   {
-    points: "Bug Hunter (50-250 Points)",
-    quest: "Find and report any functionality bugs.",
+    points: "Bug Hunter (100 Points)",
+    quest:
+      "Find and report any bugs in our core product. We will close all bugs on the landing page bc we don't have time for that before the launch :)",
     proof: "Open a bug issue in our repository.",
   },
   {
@@ -108,11 +88,6 @@ const SideQuests = [
     quest:
       "Find someone whose name would be funny as a play on words with “brick”. Then, with the help of AI, create a brick version of this person like Brick Astley, Brickj Minaj, etc. For extra points, tweet it, tag us and score +5 for each like.",
     proof: "Share your art or link to the tweet in the “side-quest” channel.",
-  },
-  {
-    points: "SEO Sage (50-250 Points)",
-    quest: "Provide detailed SEO recommendations or improvements for our main website.",
-    proof: "Share your insights.",
   },
   {
     points: "Community Connector (50 points each, up to 250 points)",
