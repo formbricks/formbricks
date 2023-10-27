@@ -106,20 +106,36 @@ export default function PictureSelectionQuestion({
                 onClick={() => handleChange(choice.id)}
                 className={cn(
                   Array.isArray(value) && value.includes(choice.id)
-                    ? `z-10 border-4 shadow-xl grayscale-0`
+                    ? `z-10 border-4 shadow-xl grayscale-0 focus:border-4`
                     : "grayscale",
-                  "box-border inline-block max-h-28 w-full overflow-hidden rounded-xl border focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
+                  "box-border inline-block max-h-28 w-full overflow-hidden rounded-xl focus:border focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
                 )}>
                 <img src={choice.imageUrl} id={choice.id} alt="choice-image" className="h-full w-full" />
-                {Array.isArray(value) && value.includes(choice.id) && (
+                {question.allowMulti ? (
                   <input
                     id={`${choice.id}-checked`}
                     name={`${choice.id}-checkbox`}
                     type="checkbox"
                     tabindex={-1}
-                    checked={true}
+                    checked={Array.isArray(value) && value.includes(choice.id)}
                     style={{ borderColor: brandColor, color: brandColor }}
                     className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded"
+                    required={
+                      question.required && Array.isArray(value) && value.length ? false : question.required
+                    }
+                  />
+                ) : (
+                  <input
+                    id={`${choice.id}-radio`}
+                    name={`${choice.id}-radio`}
+                    type="radio"
+                    tabindex={-1}
+                    checked={Array.isArray(value) && value.includes(choice.id)}
+                    style={{ borderColor: brandColor, color: brandColor }}
+                    className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5"
+                    required={
+                      question.required && Array.isArray(value) && value.length ? false : question.required
+                    }
                   />
                 )}
               </label>
