@@ -1,6 +1,6 @@
 import "server-only";
 
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TEnvironment } from "@formbricks/types/environment";
 
 export const formatEnvironmentDateFields = (environemt: TEnvironment): TEnvironment => {
   if (typeof environemt.createdAt === "string") {

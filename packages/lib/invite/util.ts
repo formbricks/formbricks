@@ -1,6 +1,6 @@
 import "server-only";
 
-import { TInvite } from "@formbricks/types/v1/invites";
+import { TInvite } from "@formbricks/types/invites";
 
 export const formatInviteDateFields = (invite: TInvite): TInvite => {
   if (typeof invite.createdAt === "string") {
