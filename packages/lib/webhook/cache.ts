@@ -1,9 +1,10 @@
 import { revalidateTag } from "next/cache";
+import { TWebhookInput } from "@formbricks/types/webhooks";
 
 interface RevalidateProps {
   id?: string;
   environmentId?: string;
-  source?: string;
+  source?: TWebhookInput["source"];
 }
 
 export const webhookCache = {
@@ -14,7 +15,7 @@ export const webhookCache = {
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-webhooks`;
     },
-    byEnvironmentIdAndSource(environmentId: string, source: string) {
+    byEnvironmentIdAndSource(environmentId: string, source: TWebhookInput["source"]) {
       return `environments-${environmentId}-sources-${source}-webhooks`;
     },
   },

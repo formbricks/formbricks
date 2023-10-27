@@ -96,7 +96,7 @@ export async function createApiKey(environmentId: string, apiKeyData: TApiKeyCre
 
     apiKeyCache.revalidate({
       id: result.id,
-      apiKey: result.hashedKey,
+      hashedKey: result.hashedKey,
       environmentId: result.environmentId,
     });
 
@@ -138,7 +138,7 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
     },
     [`getApiKeyFromKey-${apiKey}`],
     {
-      tags: [apiKeyCache.tag.byApiKey(hashedKey)],
+      tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -156,7 +156,7 @@ export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {
 
     apiKeyCache.revalidate({
       id: deletedApiKeyData.id,
-      apiKey: deletedApiKeyData.hashedKey,
+      hashedKey: deletedApiKeyData.hashedKey,
       environmentId: deletedApiKeyData.environmentId,
     });
 

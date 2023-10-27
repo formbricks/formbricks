@@ -10,17 +10,9 @@ import { validateInputs } from "../utils/validate";
 import { ZId } from "@formbricks/types/environment";
 
 const selectTagsOnResponse = {
-  response: {
+  tag: {
     select: {
-      survey: {
-        select: {
-          environment: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      },
+      environmentId: true,
     },
   },
 };
@@ -42,7 +34,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     tagOnResponseCache.revalidate({
       tagId,
       responseId,
-      environmentId: tagOnResponse.response.survey.environment.id,
+      environmentId: tagOnResponse.tag.environmentId,
     });
 
     return {
@@ -73,7 +65,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
     tagOnResponseCache.revalidate({
       tagId,
       responseId,
-      environmentId: deletedTag.response.survey.environment.id,
+      environmentId: deletedTag.tag.environmentId,
     });
 
     return {

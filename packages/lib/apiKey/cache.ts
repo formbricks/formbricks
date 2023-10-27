@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 interface RevalidateProps {
   id?: string;
   environmentId?: string;
-  apiKey?: string;
+  hashedKey?: string;
 }
 
 export const apiKeyCache = {
@@ -14,11 +14,11 @@ export const apiKeyCache = {
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-apiKeys`;
     },
-    byApiKey(apiKey: string) {
-      return `apiKeys-${apiKey}-apiKey`;
+    byHashedKey(hashedKey: string) {
+      return `apiKeys-${hashedKey}-apiKey`;
     },
   },
-  revalidate({ id, environmentId, apiKey }: RevalidateProps): void {
+  revalidate({ id, environmentId, hashedKey }: RevalidateProps): void {
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
@@ -27,8 +27,8 @@ export const apiKeyCache = {
       revalidateTag(this.tag.byEnvironmentId(environmentId));
     }
 
-    if (apiKey) {
-      revalidateTag(this.tag.byApiKey(apiKey));
+    if (hashedKey) {
+      revalidateTag(this.tag.byHashedKey(hashedKey));
     }
   },
 };

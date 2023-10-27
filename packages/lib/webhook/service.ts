@@ -58,7 +58,7 @@ export const getCountOfWebhooksBasedOnSource = async (
     },
     [`getCountOfWebhooksBasedOnSource-${environmentId}-${source}`],
     {
-      tags: [webhookCache.tag.byEnvironmentIdAndSource(environmentId, `${source}`)],
+      tags: [webhookCache.tag.byEnvironmentIdAndSource(environmentId, source)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -104,7 +104,7 @@ export const createWebhook = async (
     webhookCache.revalidate({
       id: createdWebhook.id,
       environmentId: createdWebhook.environmentId,
-      source: `${createdWebhook.source}`,
+      source: createdWebhook.source,
     });
 
     return createdWebhook;
@@ -138,7 +138,7 @@ export const updateWebhook = async (
     webhookCache.revalidate({
       id: updatedWebhook.id,
       environmentId: updatedWebhook.environmentId,
-      source: `${updatedWebhook.source}`,
+      source: updatedWebhook.source,
     });
 
     return updatedWebhook;
@@ -162,7 +162,7 @@ export const deleteWebhook = async (id: string): Promise<TWebhook> => {
     webhookCache.revalidate({
       id: deletedWebhook.id,
       environmentId: deletedWebhook.environmentId,
-      source: `${deletedWebhook.source}`,
+      source: deletedWebhook.source,
     });
 
     return deletedWebhook;

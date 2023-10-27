@@ -66,8 +66,25 @@ export const selectSurvey = {
   },
 };
 
-const getActionClassIdFromTrigger = (actionClasses: TActionClass[], trigger: string): string => {
-  return actionClasses.find((actionClass) => actionClass.name === trigger)!.id;
+const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName: string): string => {
+  return actionClasses.find((actionClass) => actionClass.name === actionClassName)!.id;
+};
+
+const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionClassNames: string[]): void => {
+  for (const actionClassName of actionClassNames) {
+    const actionClassId: string = getActionClassIdFromName(actionClasses, actionClassName);
+    surveyCache.revalidate({
+      actionClassId,
+    });
+  }
+};
+
+const revalidateSurveyByAttributeClassId = (attributeFilters: TSurveyAttributeFilter[]): void => {
+  for (const attributeFilter of attributeFilters) {
+    surveyCache.revalidate({
+      attributeClassId: attributeFilter.attributeClassId,
+    });
+  }
 };
 
 export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
@@ -280,6 +297,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   if (triggers) {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
+
     // find added triggers
     for (const trigger of triggers) {
       if (!trigger) {
@@ -288,27 +306,15 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       if (currentSurvey.triggers.find((t) => t === trigger)) {
         continue;
       } else {
-        const actionClassId: string = getActionClassIdFromTrigger(actionClasses, trigger);
-
-        // Revalidate new actionClasseId
-        surveyCache.revalidate({
-          actionClassId,
-        });
-
         newTriggers.push(trigger);
       }
     }
+
     // find removed triggers
     for (const trigger of currentSurvey.triggers) {
       if (triggers.find((t: any) => t === trigger)) {
         continue;
       } else {
-        const actionClassId: string = getActionClassIdFromTrigger(actionClasses, trigger);
-
-        // Revalidate deleted actionClasseId
-        surveyCache.revalidate({
-          actionClassId,
-        });
         removedTriggers.push(trigger);
       }
     }
@@ -317,7 +323,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         create: newTriggers.map((trigger) => ({
-          eventClassId: getActionClassIdFromTrigger(actionClasses, trigger),
+          eventClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       };
     }
@@ -327,16 +333,20 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         ...(data.triggers || []),
         deleteMany: {
           eventClassId: {
-            in: removedTriggers.map((trigger) => getActionClassIdFromTrigger(actionClasses, trigger)),
+            in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
           },
         },
       };
     }
+
+    // Revalidation for newly added/removed actionClassId
+    revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
   }
 
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
-    const removedFilterIds: string[] = [];
+    const removedFilters: TSurveyAttributeFilter[] = [];
+
     // find added attribute filters
     for (const attributeFilter of attributeFilters) {
       if (!attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
@@ -353,11 +363,6 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       ) {
         continue;
       } else {
-        // Revalidation for newly added attributeClassId
-        surveyCache.revalidate({
-          attributeClassId: attributeFilter.attributeClassId,
-        });
-
         newFilters.push({
           attributeClassId: attributeFilter.attributeClassId,
           condition: attributeFilter.condition,
@@ -377,12 +382,11 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       ) {
         continue;
       } else {
-        // Revalidation for deleted attributeClassId in a survey
-        surveyCache.revalidate({
+        removedFilters.push({
           attributeClassId: attributeFilter.attributeClassId,
+          condition: attributeFilter.condition,
+          value: attributeFilter.value,
         });
-
-        removedFilterIds.push(attributeFilter.attributeClassId);
       }
     }
 
@@ -398,18 +402,20 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       };
     }
     // delete removed attribute filter
-    if (removedFilterIds.length > 0) {
+    if (removedFilters.length > 0) {
       // delete all attribute filters that match the removed attribute classes
       await Promise.all(
-        removedFilterIds.map(async (attributeClassId) => {
+        removedFilters.map(async (attributeFilter) => {
           await prisma.surveyAttributeFilter.deleteMany({
             where: {
-              attributeClassId,
+              attributeClassId: attributeFilter.attributeClassId,
             },
           });
         })
       );
     }
+
+    revalidateSurveyByAttributeClassId([...newFilters, ...removedFilters]);
   }
 
   data = {
@@ -483,6 +489,15 @@ export async function deleteSurvey(surveyId: string) {
 export async function createSurvey(environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> {
   validateInputs([environmentId, ZId]);
 
+  if (surveyBody.attributeFilters) {
+    revalidateSurveyByAttributeClassId(surveyBody.attributeFilters);
+  }
+
+  if (surveyBody.triggers) {
+    const actionClasses = await getActionClasses(environmentId);
+    revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
+  }
+
   // TODO: Create with triggers & attributeFilters
   delete surveyBody.triggers;
   delete surveyBody.attributeFilters;
@@ -525,9 +540,6 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
   }
 
   const actionClasses = await getActionClasses(environmentId);
-  const newTriggers = existingSurvey.triggers.map((trigger) => ({
-    eventClassId: getActionClassIdFromTrigger(actionClasses, trigger),
-  }));
   const newAttributeFilters = existingSurvey.attributeFilters.map((attributeFilter) => ({
     attributeClassId: attributeFilter.attributeClassId,
     condition: attributeFilter.condition,
@@ -545,7 +557,9 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
-        create: newTriggers,
+        create: existingSurvey.triggers.map((trigger) => ({
+          eventClassId: getActionClassIdFromName(actionClasses, trigger),
+        })),
       },
       attributeFilters: {
         create: newAttributeFilters,
@@ -576,18 +590,10 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
   });
 
   // Revalidate surveys by actionClassId
-  newTriggers.forEach((trigger) => {
-    surveyCache.revalidate({
-      actionClassId: trigger.eventClassId,
-    });
-  });
+  revalidateSurveyByActionClassId(actionClasses, existingSurvey.triggers);
 
   // Revalidate surveys by attributeClassId
-  newAttributeFilters.forEach((attributeFilter) => {
-    surveyCache.revalidate({
-      attributeClassId: attributeFilter.attributeClassId,
-    });
-  });
+  revalidateSurveyByAttributeClassId(newAttributeFilters);
 
   return newSurvey;
 }
