@@ -11,32 +11,32 @@ x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formb
 
 # NextJS Auth
 # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-# You can use: `openssl rand -base64 32` to generate one
-x-nextauth-secret: &nextauth_secret luJthrnoDpVgGakjVYlccsZ1FdlwxIWogWIsrxzoQ6E=
+# You can use: `openssl rand -hex 32` to generate one
+x-nextauth-secret: &nextauth_secret 10ee8bc17d40a457544cf373affbab16
 
 # Set this to your public-facing URL, e.g., https://example.com
 # You do not need the NEXTAUTH_URL environment variable in Vercel.
 x-nextauth-url: &nextauth_url http://localhost:3000
 
 # Encryption key
-# You can use: `openssl rand -base64 16` to generate one
-x-formbricks-encryption-key: &formbricks_encryption_key
-  # Necessary if email verification and password reset are enabled.
-  # See further below if you want to disable these features.
+# You can use: `openssl rand -hex 32` to generate one
+x-encryption-key: &encryption_key 1b3d888592454d23b520040950654669
 
 x-mail-from: &mail_from
 x-smtp-host: &smtp_host
 x-smtp-port: &smtp_port # Enable SMTP_SECURE_ENABLED for TLS (port 465)
 
+
 x-smtp-secure-enabled: &smtp_secure_enabled
 x-smtp-user: &smtp_user
-x-smtp-password: &smtp_password # Set the below value to your public-facing URL, e.g., https://example.com
+x-smtp-password: &smtp_password
+  # Set the below value to your public-facing URL, e.g., https://example.com
 
-x-survey-base-url: &survey_base_url http://localhost:3000/s
+  # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 
-# Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
-x-short-survey-base-url:
-  &short_survey_base_url # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
+x-short-url-base:
+  &short_url_base # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
+
 
 x-email-verification-disabled: &email_verification_disabled 1
 
@@ -54,20 +54,26 @@ x-privacy-url: &privacy_url
 x-terms-url: &terms_url
 x-imprint-url: &imprint_url # Configure Github Login
 
+
 x-github-auth-enabled: &github_auth_enabled 0
 x-github-id: &github_id
 x-github-secret: &github_secret # Configure Google Login
+
 
 x-google-auth-enabled: &google_auth_enabled 0
 x-google-client-id: &google_client_id
 x-google-client-secret: &google_client_secret # Disable Sentry warning
 
+
 x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Enable Sentry Error Tracking
+
 
 x-next-public-sentry-dsn: &next_public_sentry_dsn # Cron Secret
 
+
 x-cron-secret:
   &cron_secret # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+
 
 x-asset-prefix-url: &asset_prefix_url
 
@@ -105,9 +111,8 @@ services:
       SMTP_SECURE_ENABLED: *smtp_secure_enabled
       SMTP_USER: *smtp_user
       SMTP_PASSWORD: *smtp_password
-      FORMBRICKS_ENCRYPTION_KEY: *formbricks_encryption_key
-      SURVEY_BASE_URL: *survey_base_url
-      SHORT_SURVEY_BASE_URL: *short_survey_base_url
+      ENCRYPTION_KEY: *encryption_key
+      SHORT_URL_BASE: *short_url_base
       PRIVACY_URL: *privacy_url
       TERMS_URL: *terms_url
       IMPRINT_URL: *imprint_url

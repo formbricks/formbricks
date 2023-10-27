@@ -32,7 +32,6 @@
   },
   "devDependencies": {
     "@formbricks/types": "workspace:*",
-    "@formbricks/lib": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "eslint-config-formbricks": "workspace:*",
     "terser": "^5.22.0",
