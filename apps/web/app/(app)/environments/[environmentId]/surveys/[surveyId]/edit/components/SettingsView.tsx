@@ -8,6 +8,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SettingsViewProps {
   environment: TEnvironment;
@@ -16,7 +17,7 @@ interface SettingsViewProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   responseCount: number;
-  membershipRole: string;
+  membershipRole?: TMembershipRole;
 }
 
 export default function SettingsView({

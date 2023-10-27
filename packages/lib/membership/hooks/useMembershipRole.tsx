@@ -11,16 +11,16 @@ enum MembershipRole {
 
 export const useMembershipRole = (environmentId: string) => {
   const [membershipRole, setMembershipRole] = useState<MembershipRole>();
-  const [loading, setLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const getRole = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         const role = await findUserMembershipRoleAction(environmentId);
         setMembershipRole(role as MembershipRole);
-        setLoading(false);
+        setIsLoading(false);
       } catch (err: any) {
         const error = err?.message || "Something went wrong";
         setError(error);
@@ -29,5 +29,5 @@ export const useMembershipRole = (environmentId: string) => {
     getRole();
   }, [environmentId]);
 
-  return { membershipRole, loading, error };
+  return { membershipRole, isLoading, error };
 };

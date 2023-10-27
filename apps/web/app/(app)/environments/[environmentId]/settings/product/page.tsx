@@ -32,9 +32,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isDeveloper, isViewer } = getAccessFlags(
-    currentUserMembership?.role ? currentUserMembership?.role : ""
-  );
+  const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isProductNameEditDisabled = isDeveloper ? true : isViewer;
 
   return (

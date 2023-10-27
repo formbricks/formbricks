@@ -29,7 +29,7 @@ export default async function ProfileSettingsPage({ params }) {
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isAPIKeySettingDisabled = isViewer;
 
   return !isAPIKeySettingDisabled ? (

@@ -27,7 +27,7 @@ import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { PictureSelectionResponse } from "../PictureSelectionResponse";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { AccessWrapper } from "../AccessWrapper";
+import { LoadingWrapper } from "../LoadingWrapper";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -77,8 +77,8 @@ export default function SingleResponseCard({
   const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
-  const { membershipRole, loading, error } = useMembershipRole(environmentId);
-  const { isViewer } = getAccessFlags(membershipRole || "");
+  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   function isValidValue(value: any) {
     return (
@@ -345,7 +345,7 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        <AccessWrapper loading={loading} error={error}>
+        <LoadingWrapper isLoading={isLoading} error={error}>
           {!isViewer && (
             <ResponseTagsWrapper
               environmentId={environmentId}
@@ -354,7 +354,7 @@ export default function SingleResponseCard({
               environmentTags={environmentTags}
             />
           )}
-        </AccessWrapper>
+        </LoadingWrapper>
 
         <DeleteDialog
           open={deleteDialogOpen}

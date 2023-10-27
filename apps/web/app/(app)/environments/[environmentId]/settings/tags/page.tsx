@@ -32,7 +32,7 @@ export default async function MembersSettingsPage({ params }) {
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isTagSettingDisabled = isViewer;
 
   return !isTagSettingDisabled ? (

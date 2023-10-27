@@ -8,7 +8,7 @@ import ActionDetailModal from "./ActionDetailModal";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { AccessWrapper } from "@formbricks/ui/AccessWrapper";
+import { LoadingWrapper } from "@formbricks/ui/LoadingWrapper";
 
 export default function ActionClassesTable({
   environmentId,
@@ -21,8 +21,8 @@ export default function ActionClassesTable({
 }) {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
-  const { membershipRole, loading, error } = useMembershipRole(environmentId);
-  const { isViewer } = getAccessFlags(membershipRole || "");
+  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>({
     environmentId,
@@ -43,7 +43,7 @@ export default function ActionClassesTable({
 
   return (
     <>
-      <AccessWrapper loading={loading} error={error}>
+      <LoadingWrapper isLoading={isLoading} error={error}>
         {!isViewer && (
           <div className="mb-6 text-right">
             <Button
@@ -56,7 +56,7 @@ export default function ActionClassesTable({
             </Button>
           </div>
         )}
-      </AccessWrapper>
+      </LoadingWrapper>
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
         <div className="grid-cols-7">

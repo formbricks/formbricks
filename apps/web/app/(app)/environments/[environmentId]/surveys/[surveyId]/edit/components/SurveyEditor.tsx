@@ -13,6 +13,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -21,7 +22,7 @@ interface SurveyEditorProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   responseCount: number;
-  membershipRole: string;
+  membershipRole?: TMembershipRole;
 }
 
 export default function SurveyEditor({

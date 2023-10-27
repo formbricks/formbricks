@@ -36,7 +36,7 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
     return <ErrorComponent />;
   }
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
   const isPricingDisabled = !isOwner ? !isAdmin : false;
 
   return (

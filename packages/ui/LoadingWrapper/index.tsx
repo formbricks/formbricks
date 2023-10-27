@@ -3,13 +3,13 @@ import { ErrorComponent } from "../ErrorComponent";
 import LoadingSpinner from "../LoadingSpinner";
 
 type AccessWrapperProps = {
-  loading: boolean;
+  isLoading: boolean;
   children: ReactNode;
   error: string;
 };
 
-export const AccessWrapper = ({ loading, children, error }: AccessWrapperProps) => {
-  if (loading) return <LoadingSpinner />;
+export const LoadingWrapper = ({ isLoading, children, error }: AccessWrapperProps) => {
+  if (isLoading) return <LoadingSpinner />;
 
   if (error.length > 0) {
     console.error(error);

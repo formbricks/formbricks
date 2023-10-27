@@ -36,7 +36,7 @@ export default async function SurveysEditPage({ params }) {
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isSurveyCreationDeletionDisabled = isViewer;
 
   if (
@@ -59,7 +59,7 @@ export default async function SurveysEditPage({ params }) {
         actionClasses={actionClasses}
         attributeClasses={attributeClasses}
         responseCount={responseCount}
-        membershipRole={currentUserMembership?.role || ""}
+        membershipRole={currentUserMembership?.role}
       />
     </>
   );

@@ -34,9 +34,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
-  const { isDeveloper, isViewer } = getAccessFlags(
-    currentUserMembership?.role ? currentUserMembership?.role : ""
-  );
+  const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
 
   return (

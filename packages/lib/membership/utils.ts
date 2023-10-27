@@ -1,17 +1,11 @@
-enum MEMBERSHIP_ROLES {
-  OWNER = "owner",
-  ADMIN = "admin",
-  EDITOR = "editor",
-  DEVELOPER = "developer",
-  VIEWER = "viewer",
-}
+import { TMembershipRole } from "@formbricks/types/memberships";
 
-export const getAccessFlags = (role: string) => {
-  const isAdmin = role === MEMBERSHIP_ROLES.ADMIN;
-  const isEditor = role === MEMBERSHIP_ROLES.EDITOR;
-  const isOwner = role === MEMBERSHIP_ROLES.OWNER;
-  const isDeveloper = role === MEMBERSHIP_ROLES.DEVELOPER;
-  const isViewer = role === MEMBERSHIP_ROLES.VIEWER;
+export const getAccessFlags = (role?: TMembershipRole) => {
+  const isAdmin = role === "admin";
+  const isEditor = role === "editor";
+  const isOwner = role === "owner";
+  const isDeveloper = role === "developer";
+  const isViewer = role === "viewer";
 
   return {
     isAdmin,

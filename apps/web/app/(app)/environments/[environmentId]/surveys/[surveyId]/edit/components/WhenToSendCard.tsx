@@ -20,12 +20,13 @@ import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid"
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useCallback, useEffect, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TMembershipRole } from "@formbricks/types/memberships";
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environmentId: string;
   actionClasses: TActionClass[];
-  membershipRole: string;
+  membershipRole?: TMembershipRole;
 }
 
 export default function WhenToSendCard({

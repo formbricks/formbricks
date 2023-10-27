@@ -51,7 +51,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
   const userMemberships = await getMembershipsByUserId(session.user.id);
 
   const isDeleteDisabled = userMemberships.length <= 1 || !isOwner;

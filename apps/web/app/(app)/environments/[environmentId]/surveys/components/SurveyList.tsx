@@ -35,7 +35,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role ? currentUserMembership?.role : "");
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isSurveyCreationDeletionDisabled = isViewer;
 
   const environment = await getEnvironment(environmentId);
