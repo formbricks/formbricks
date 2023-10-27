@@ -31,10 +31,6 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
         },
       });
 
-      teamCache.revalidate({
-        userId,
-      });
-
       const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
       return environmentUsers.includes(userId);
     },

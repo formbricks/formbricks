@@ -119,7 +119,7 @@ export const updateProfile = async (
 
     profileCache.revalidate({
       email: updatedProfile.email,
-      id: updatedProfile.id,
+      userId: updatedProfile.id,
     });
 
     return updatedProfile;
@@ -160,7 +160,7 @@ export const createProfile = async (data: TProfileCreateInput): Promise<TProfile
 
   profileCache.revalidate({
     email: profile.email,
-    id: profile.id,
+    userId: profile.id,
   });
 
   return profile;

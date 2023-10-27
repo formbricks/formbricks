@@ -81,7 +81,7 @@ export const getMembershipByUserIdTeamId = async (
     },
     [`getMembershipByUserIdTeamId-${userId}-${teamId}`],
     {
-      tags: [membershipCache.tag.byUserIdTeamId(userId, teamId)],
+      tags: [membershipCache.tag.byUserId(userId), membershipCache.tag.byTeamId(teamId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -126,7 +126,6 @@ export const createMembership = async (
     });
     teamCache.revalidate({
       userId,
-      id: teamId,
     });
 
     membershipCache.revalidate({
@@ -160,7 +159,6 @@ export const updateMembership = async (
 
     teamCache.revalidate({
       userId,
-      id: teamId,
     });
 
     membershipCache.revalidate({
@@ -192,7 +190,6 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
 
   teamCache.revalidate({
     userId,
-    id: teamId,
   });
 
   membershipCache.revalidate({
@@ -236,13 +233,8 @@ export const transferOwnership = async (
       }),
     ]);
 
-    teamCache.revalidate({
-      id: teamId,
-    });
-
     memberships.forEach((membership) => {
       teamCache.revalidate({
-        id: membership.teamId,
         userId: membership.userId,
       });
 

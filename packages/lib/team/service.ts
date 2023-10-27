@@ -40,10 +40,6 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        teamCache.revalidate({
-          userId,
-        });
-
         return teams;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -79,10 +75,6 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
             },
           },
           select: { ...select, memberships: true }, // include memberships
-        });
-
-        teamCache.revalidate({
-          environmentId,
         });
 
         return team;
