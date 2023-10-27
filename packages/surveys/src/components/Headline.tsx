@@ -7,7 +7,9 @@ interface HeadlineProps {
 
 export default function Headline({ headline, questionId, style, required = true }: HeadlineProps) {
   return (
-    <label htmlFor={questionId} className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+    <label
+      htmlFor={questionId}
+      className="mb-1.5 block text-base font-semibold leading-6 text-slate-900 focus:text-red-600">
       <div className={"flex justify-between gap-4"} style={style}>
         {headline}
         {!required && (

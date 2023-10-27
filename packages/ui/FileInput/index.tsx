@@ -70,7 +70,7 @@ const FileInput: React.FC<FileInputProps> = ({
       );
 
       setIsUploaded(true);
-      onFileUpload(uploadedFiles.map((file) => file.data.url));
+      onFileUpload(uploadedFiles.map((file) => file.url));
     } else {
       toast.error("Files not supported");
     }
@@ -121,7 +121,7 @@ const FileInput: React.FC<FileInputProps> = ({
       );
 
       setIsUploaded(true);
-      onFileUpload([...(fileUrl || []), ...uploadedFiles.map((file) => file.data.url)]);
+      onFileUpload([...(fileUrl || []), ...uploadedFiles.map((file) => file.url)]);
     } else {
       toast.error("Files not supported");
     }
