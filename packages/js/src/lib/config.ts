@@ -16,9 +16,13 @@ export class Config {
 
   public update(newConfig: TJsConfig): void {
     if (newConfig) {
+      const expirationTime = new Date();
+      expirationTime.setHours(expirationTime.getHours() + 1);
+
       this.config = {
         ...this.config,
         ...newConfig,
+        expirationTime,
       };
 
       this.saveToLocalStorage();
@@ -39,6 +43,13 @@ export class Config {
         // TODO: validate config
         // This is a hack to get around the fact that we don't have a proper
         // way to validate the config yet.
+        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
+
+        // check if the config has expired
+        if (parsedConfig.expirationTime && new Date(parsedConfig.expirationTime) <= new Date()) {
+          return err(new Error("Config in local storage has expired"));
+        }
+
         return ok(JSON.parse(savedConfig) as TJsConfig);
       }
     }

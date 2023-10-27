@@ -49,6 +49,7 @@ export const ZJsConfig = z.object({
   environmentId: z.string().cuid2(),
   apiHost: z.string(),
   state: ZJsState,
+  expirationTime: z.date().optional(),
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;

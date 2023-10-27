@@ -8,7 +8,6 @@ import { createSession, extendSession, getSessionCached } from "@formbricks/lib/
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState } from "@formbricks/types/js";
-import { TPerson } from "@formbricks/types/people";
 import { TSession } from "@formbricks/types/sessions";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {

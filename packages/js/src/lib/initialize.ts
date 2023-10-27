@@ -113,7 +113,7 @@ export const initialize = async (
       }
     }
   } else {
-    logger.debug("No valid configuration found. Creating new config.");
+    logger.debug("No valid configuration found or it has been expired. Creating new config.");
 
     logger.debug("Syncing.");
     await sync({
