@@ -70,10 +70,10 @@ export const setupTwoFactorAuth = async (
   return { secret, keyUri, dataUri, backupCodes };
 };
 
-export const enableTwoFactorAuth = async (userId: string, code: string) => {
+export const enableTwoFactorAuth = async (id: string, code: string) => {
   const user = await prisma.user.findUnique({
     where: {
-      id: userId,
+      id,
     },
   });
 
@@ -113,7 +113,7 @@ export const enableTwoFactorAuth = async (userId: string, code: string) => {
 
   await prisma.user.update({
     where: {
-      id: userId,
+      id,
     },
     data: {
       twoFactorEnabled: true,
@@ -121,7 +121,7 @@ export const enableTwoFactorAuth = async (userId: string, code: string) => {
   });
 
   profileCache.revalidate({
-    userId,
+    id,
   });
 
   return {
@@ -135,10 +135,10 @@ type TDisableTwoFactorAuthParams = {
   backupCode?: string;
 };
 
-export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFactorAuthParams) => {
+export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactorAuthParams) => {
   const user = await prisma.user.findUnique({
     where: {
-      id: userId,
+      id,
     },
   });
 
@@ -212,7 +212,7 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
 
   await prisma.user.update({
     where: {
-      id: userId,
+      id,
     },
     data: {
       backupCodes: null,
@@ -222,7 +222,7 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
   });
 
   profileCache.revalidate({
-    userId,
+    id,
   });
 
   return {
