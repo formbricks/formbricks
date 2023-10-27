@@ -10,7 +10,7 @@ import { TSurvey } from "@formbricks/types/v1/surveys";
 import Image from "next/image";
 import NotionLogo from "@/images/notion.png";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, PlusIcon, XMarkIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/notion/actions";
@@ -368,7 +368,12 @@ export default function AddIntegrationModal({
               />
             </div>
           </div>
-          <button type="button" className="rounded-md p-1 hover:bg-slate-300" onClick={addRow}>
+          <button
+            type="button"
+            className={`rounded-md p-1 hover:bg-slate-300 ${
+              idx === mapping.length - 1 ? "visible" : "invisible"
+            }`}
+            onClick={addRow}>
             <PlusIcon className="h-5 w-5 font-bold text-gray-500" />
           </button>
           <button
@@ -477,7 +482,11 @@ export default function AddIntegrationModal({
                   Cancel
                 </Button>
               )}
-              <Button variant="darkCTA" type="submit" loading={isLinkingDatabase}>
+              <Button
+                variant="darkCTA"
+                type="submit"
+                loading={isLinkingDatabase}
+                disabled={mapping.filter((m) => m.error).length > 0}>
                 {selectedIntegration ? "Update" : "Link Database"}
               </Button>
             </div>
@@ -495,6 +504,7 @@ interface DropdownSelectorProps {
   setSelectedItem: React.Dispatch<React.SetStateAction<any>>;
   disabled: boolean;
   placeholder?: string;
+  refetch?: () => void;
 }
 
 const DropdownSelector = ({
@@ -504,11 +514,12 @@ const DropdownSelector = ({
   setSelectedItem,
   disabled,
   placeholder,
+  refetch,
 }: DropdownSelectorProps) => {
   return (
     <div className="col-span-1">
       {label && <Label htmlFor={label}>{label}</Label>}
-      <div className="mt-1 flex">
+      <div className="mt-1 flex items-center gap-3">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild placeholder={placeholder}>
             <button
@@ -544,6 +555,16 @@ const DropdownSelector = ({
             </DropdownMenu.Portal>
           )}
         </DropdownMenu.Root>
+        {refetch && (
+          <button
+            type="button"
+            className="rounded-md p-1 hover:bg-slate-300"
+            onClick={() => {
+              refetch();
+            }}>
+            <ArrowPathIcon className="h-5 w-5 font-bold text-gray-500" />
+          </button>
+        )}
       </div>
     </div>
   );
