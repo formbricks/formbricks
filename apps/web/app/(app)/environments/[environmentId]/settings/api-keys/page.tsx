@@ -30,9 +30,8 @@ export default async function ProfileSettingsPage({ params }) {
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isAPIKeySettingDisabled = isViewer;
 
-  return !isAPIKeySettingDisabled ? (
+  return !isViewer ? (
     <div>
       <SettingsTitle title="API Keys" />
       <EnvironmentNotice environmentId={environment.id} />

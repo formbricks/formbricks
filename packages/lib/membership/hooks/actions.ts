@@ -8,7 +8,7 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { getMembershipByUserIdTeamId } from "../service";
 import { TProfile } from "@formbricks/types/profile";
 
-export const findUserMembershipRoleAction = async (environmentId: string) => {
+export const getMembershipByUserIdTeamIdAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
   const team = await getTeamByEnvironmentId(environmentId);
   const user = session?.user as TProfile;

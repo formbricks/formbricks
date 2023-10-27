@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { findUserMembershipRoleAction } from "./actions";
+import { getMembershipByUserIdTeamIdAction } from "./actions";
 
 enum MembershipRole {
   Owner = "owner",
@@ -18,7 +18,7 @@ export const useMembershipRole = (environmentId: string) => {
     const getRole = async () => {
       try {
         setIsLoading(true);
-        const role = await findUserMembershipRoleAction(environmentId);
+        const role = await getMembershipByUserIdTeamIdAction(environmentId);
         setMembershipRole(role as MembershipRole);
         setIsLoading(false);
       } catch (err: any) {

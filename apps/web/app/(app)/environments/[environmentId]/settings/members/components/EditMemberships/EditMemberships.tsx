@@ -4,7 +4,7 @@ import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/membe
 import { getMembersByTeamId } from "@formbricks/lib/membership/service";
 import { getInvitesByTeamId } from "@formbricks/lib/invite/service";
 import { TMembership } from "@formbricks/types/memberships";
-import { getIsEnterpriseEdition } from "@formbricks/lib/constants";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 
 type EditMembershipsProps = {
   team: TTeam;

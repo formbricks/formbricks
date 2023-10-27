@@ -7,7 +7,7 @@
     ".next/types/**/*.ts",
     "../../packages/types/*.d.ts",
     "../../packages/lib/jwt.ts",
-    "../../packages/ee/RoleSwitch/components/EditMembershipRole.tsx"
+    "../../packages/ee/RoleManagement/components/EditMembershipRole.tsx"
   ],
   "exclude": ["../../.env"],
   "compilerOptions": {

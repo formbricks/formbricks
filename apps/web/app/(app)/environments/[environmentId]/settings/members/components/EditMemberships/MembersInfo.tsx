@@ -1,5 +1,5 @@
 import MemberActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MemberActions";
-import EditMembershipRole from "@formbricks/ee/RoleSwitch/components/EditMembershipRole";
+import { EditMembershipRole } from "@formbricks/ee/RoleManagement/components/EditMembershipRole";
 import { isInviteExpired } from "@/app/lib/utils";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember, TMembershipRole } from "@formbricks/types/memberships";

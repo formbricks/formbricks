@@ -20,7 +20,7 @@ type AddMemberRole = {
   control: Control<{ name: string; email: string; role: MembershipRole }, any>;
 };
 
-export default function AddMemberRole({ control }: AddMemberRole) {
+export const AddMemberRole = ({ control }: AddMemberRole) => {
   return (
     <Controller
       name="role"
@@ -46,4 +46,4 @@ export default function AddMemberRole({ control }: AddMemberRole) {
       )}
     />
   );
-}
+};

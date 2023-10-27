@@ -30,7 +30,7 @@ interface Role {
   currentUserRole: string;
 }
 
-export default function EditMembershipRole({
+export const EditMembershipRole = ({
   isAdminOrOwner,
   memberRole,
   teamId,
@@ -40,7 +40,7 @@ export default function EditMembershipRole({
   memberAccepted,
   inviteId,
   currentUserRole,
-}: Role) {
+}: Role) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
@@ -142,4 +142,4 @@ export default function EditMembershipRole({
   }
 
   return <Badge text={capitalizeFirstLetter(memberRole)} type="gray" size="tiny" />;
-}
+};

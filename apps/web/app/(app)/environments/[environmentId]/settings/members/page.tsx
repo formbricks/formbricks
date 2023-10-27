@@ -10,7 +10,8 @@ import SettingsTitle from "../components/SettingsTitle";
 import DeleteTeam from "./components/DeleteTeam";
 import { EditMemberships } from "./components/EditMemberships";
 import EditTeamName from "./components/EditTeamName";
-import { INVITE_DISABLED, getIsEnterpriseEdition } from "@formbricks/lib/constants";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 const MembersLoading = () => (
