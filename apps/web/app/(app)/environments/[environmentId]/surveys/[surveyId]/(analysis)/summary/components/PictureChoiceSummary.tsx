@@ -89,13 +89,10 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
         </div>
       </div>
       <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        {results.map((result, resultsIdx) => (
+        {results.map((result) => (
           <div key={result.id}>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
               <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal ">
-                {/* <p className="font-semibold text-slate-700">
-                  {results.length - resultsIdx} - {result.}
-                </p> */}
                 <div className="max-h-28 w-[220px]">
                   <img src={result.imageUrl} alt="choice-image" className="h-full w-full rounded-md" />
                 </div>
