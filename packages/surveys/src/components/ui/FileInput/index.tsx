@@ -123,8 +123,8 @@ export default function FileInput({
         "relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-600 dark:hover:bg-slate-800",
         isError && "border-red-500"
       )}
-      onDragOver={(e) => handleDragOver(e)}
-      onDrop={(e) => handleDrop(e)}>
+      onDragOver={(e) => handleDragOver(e as any)}
+      onDrop={(e) => handleDrop(e as any)}>
       {isUploaded && fileUrl ? (
         <>
           <div className="absolute inset-0 mr-4 mt-2 flex items-start justify-end gap-4">
@@ -187,13 +187,7 @@ export default function FileInput({
             </div>
           </div>
 
-          {selectedFile?.type.startsWith("image/") ? (
-            <img
-              src={URL.createObjectURL(selectedFile)}
-              alt="Company Logo"
-              className="max-h-full max-w-full rounded-lg object-contain"
-            />
-          ) : (
+          {
             <div className="flex flex-col items-center justify-center pb-6 pt-5">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -211,10 +205,10 @@ export default function FileInput({
                 <polyline points="14 2 14 8 20 8" />
               </svg>
               <p className="mt-2 text-sm text-slate-500">
-                <span className="font-semibold">{selectedFile?.name}</span>
+                <span className="font-semibold">{fileUrl.split("/").pop()}</span>
               </p>
             </div>
-          )}
+          }
         </>
       ) : !isUploaded && selectedFile ? (
         <>
