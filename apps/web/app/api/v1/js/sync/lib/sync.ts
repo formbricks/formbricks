@@ -3,7 +3,7 @@ import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
-import { getProductByEnvironmentIdCached } from "@formbricks/lib/product/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { createSession, extendSession, getSession } from "@formbricks/lib/session/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -102,7 +102,7 @@ export const getUpdatedState = async (
   const [surveys, noCodeActionClasses, product] = await Promise.all([
     getSyncSurveysCached(environmentId, person),
     getActionClasses(environmentId),
-    getProductByEnvironmentIdCached(environmentId),
+    getProductByEnvironmentId(environmentId),
   ]);
 
   if (!product) {
