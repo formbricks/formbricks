@@ -16,12 +16,7 @@ function getFirstOfNextMonthTimestamp() {
   return Math.floor(nextMonth.getTime() / 1000);
 }
 
-const createSubscription = async (
-  teamId: string,
-  teamName: string,
-  environmentId: string,
-  failureUrl: string
-) => {
+const createSubscription = async (teamId: string, teamName: string, failureUrl: string) => {
   try {
     const customer = await stripe.customers.create({
       name: teamName,
@@ -33,7 +28,8 @@ const createSubscription = async (
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "subscription",
-      line_items: [{ price: "price_1O5QTnEKZSoSMIBYLmg9Utt1" }, { price: "price_1O5QUwEKZSoSMIBYdj2iBayh" }],
+      // first item is display and second is people
+      line_items: [{ price: "price_1O5m71EKZSoSMIBYwLJVZiyX" }, { price: "price_1O5m97EKZSoSMIBYH8NRolbG" }],
       customer: customer.id,
       success_url: successUrl,
       cancel_url: failureUrl,
@@ -42,14 +38,13 @@ const createSubscription = async (
         billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
         metadata: {
           teamId,
-          environmentId,
         },
       },
     });
 
     await updateTeam(teamId, {
       subscription: {
-        plan: "community",
+        plan: "free",
         addOns: [],
         stripeCustomerId: customer.id,
       },

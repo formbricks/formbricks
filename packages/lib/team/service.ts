@@ -104,14 +104,14 @@ export const getTeam = async (teamId: string): Promise<TTeam> =>
       validateInputs([teamId, ZString]);
 
       try {
-        const teams = await prisma.team.findFirstOrThrow({
+        const team = await prisma.team.findFirstOrThrow({
           where: {
             id: teamId,
           },
-          select,
+          select: { ...select, products: { select: { environments: true } } }, // include environments
         });
 
-        return teams;
+        return team;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -134,7 +134,7 @@ export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> =>
     const team = await prisma.team.create({
       data: {
         name: teamInput.name,
-        subscription: teamInput.subscription || { stripeCustomerId: null, plan: "community", addOns: [] },
+        subscription: teamInput.subscription || { stripeCustomerId: null, plan: "free", addOns: [] },
       },
       select,
     });
@@ -218,6 +218,34 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
       throw new DatabaseError(error.message);
     }
 
+    throw error;
+  }
+};
+
+export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
+  try {
+    const teams = await prisma.team.findMany({
+      where: {
+        AND: [
+          {
+            subscription: {
+              path: ["plan"],
+              equals: "paid",
+            },
+          },
+          {
+            subscription: {
+              path: ["stripeCustomerId"],
+              not: Prisma.AnyNull,
+            },
+          },
+        ],
+      },
+      select: { ...select, products: { select: { environments: true } } }, // include environments
+    });
+
+    return teams;
+  } catch (error) {
     throw error;
   }
 };

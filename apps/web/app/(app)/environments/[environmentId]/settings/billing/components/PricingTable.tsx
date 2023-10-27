@@ -13,10 +13,8 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
 interface BillingDetails {
-  mtuUsage: number;
-  displayUsage: number;
-  amountLeft: number;
-  dueDate: number;
+  people: number;
+  display: number;
 }
 
 interface PricingTableProps {
@@ -28,7 +26,7 @@ interface PricingTableProps {
 export default function PricingTableComponent({ team, environmentId, billingDetails }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
-  const { displayUsage, mtuUsage, amountLeft, dueDate } = billingDetails;
+  const { people, display } = billingDetails;
 
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);
@@ -72,7 +70,7 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
           <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
             <div className="p-8">
               <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Free</h2>
-              {team.subscription?.plan === "community" && (
+              {team.subscription?.plan === "free" && (
                 <Badge text="Current Plan" size="normal" type="success" />
               )}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
@@ -91,7 +89,7 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
               <p className="mt-6 text-3xl">
                 <span className="text-slate-800font-light">Always free</span>
               </p>
-              {team.subscription?.plan === "community" ? (
+              {team.subscription?.plan === "free" ? (
                 <Button variant="minimal" disabled className="mt-6 w-full justify-center py-4 shadow-sm">
                   Your current plan
                 </Button>
@@ -107,7 +105,7 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="p-8">
               <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Pro</h2>
-              {team.subscription?.plan === "scale" && (
+              {team.subscription?.plan === "paid" && (
                 <Badge text="Current Plan" size="normal" type="success" />
               )}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
@@ -128,7 +126,7 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
 
                 <span className="text-base font-medium text-slate-400">/ month</span>
               </p>
-              {team.subscription?.plan === "scale" ? (
+              {team.subscription?.plan === "paid" ? (
                 <div>
                   <Button
                     variant="secondary"
@@ -137,19 +135,11 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
                     Manage Subscription
                   </Button>
                   <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
-                    MTU Tracked: {`${mtuUsage}`}
+                    People Tracked: {`${people}`}
                   </p>
                   <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
-                    Displays Tracked: {`${displayUsage}`}
+                    Displays Tracked: {`${display}`}
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
-                    Amount Due: ${`${amountLeft}`}
-                  </p>
-                  {dueDate != null && (
-                    <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
-                      Due Date: {`${dueDate}`}
-                    </p>
-                  )}
                 </div>
               ) : (
                 <Button

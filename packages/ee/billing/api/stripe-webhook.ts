@@ -1,5 +1,6 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
+import { getMonthlyDisplayCount } from "@formbricks/lib/display/service";
 
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -9,9 +10,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
 
+export enum Metric {
+  display,
+  people,
+}
+
 interface Subscription {
   stripeCustomerId: string | null;
-  plan: "community" | "scale";
+  plan: "free" | "paid";
   addOns: ("removeBranding" | "customUrl")[];
 }
 
@@ -36,7 +42,19 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
     const customerId = customerDetails.id;
     const teamId = customerDetails.metadata.team;
 
-    const team = await getTeam(teamId);
+    const team: any = await getTeam(teamId);
+    let peopleForTeam = 0;
+    let displaysForTeam = 0;
+
+    for (const product of team.products) {
+      for (const environment of product.environments) {
+        const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
+        const displaysInThisEnvironment = await getMonthlyDisplayCount(environment.id);
+
+        peopleForTeam += peopleInThisEnvironment;
+        displaysForTeam += displaysInThisEnvironment;
+      }
+    }
 
     const existingSubscription: Subscription = team.subscription as unknown as Subscription;
     if (!existingSubscription) {
@@ -47,20 +65,34 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
       customer: customerId,
     });
 
-    const people = await getMonthlyActivePeopleCount(subscription.data[0].metadata.environmentId);
+    const peopleSubscriptionItem = subscription.data[0].items.data.filter(
+      (subItem) => subItem.plan.nickname === Metric[Metric.people]
+    );
 
-    const subItemId = subscription.data[0].items.data.filter((item) => item.plan.nickname === "MTU")[0].id;
+    const displaySubscriptionItem = subscription.data[0].items.data.filter(
+      (subItem) => subItem.plan.nickname === Metric[Metric.display]
+    );
 
-    await stripe.subscriptionItems.createUsageRecord(subItemId, {
-      quantity: people,
+    if (!peopleSubscriptionItem || !displaySubscriptionItem) {
+      return { status: 400, data: "No such metric found" };
+    }
+
+    await stripe.subscriptionItems.createUsageRecord(peopleSubscriptionItem[0].id, {
       action: "set",
+      quantity: peopleForTeam,
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    await stripe.subscriptionItems.createUsageRecord(displaySubscriptionItem[0].id, {
+      action: "set",
+      quantity: displaysForTeam,
       timestamp: Math.floor(Date.now() / 1000),
     });
 
     await updateTeam(teamId, {
       subscription: {
         addOns: existingSubscription.addOns || [],
-        plan: "scale",
+        plan: "paid",
         stripeCustomerId: customerId,
       },
     });
@@ -78,7 +110,7 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
     await updateTeam(teamId, {
       subscription: {
         addOns: existingSubscription.addOns,
-        plan: "community",
+        plan: "free",
         stripeCustomerId: existingSubscription.stripeCustomerId,
       },
     });

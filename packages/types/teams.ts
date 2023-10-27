@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const ZTeamSubscription = z.object({
   stripeCustomerId: z.string().nullable(),
-  plan: z.enum(["community", "scale"]),
+  plan: z.enum(["free", "paid"]),
   addOns: z.array(z.enum(["removeBranding", "customUrl"])),
 });
 

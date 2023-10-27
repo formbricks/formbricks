@@ -232,3 +232,35 @@ export const getDisplayCountBySurveyId = async (surveyId: string): Promise<numbe
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
+export const getMonthlyDisplayCount = async (environmentId: string): Promise<number> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      return (
+        await prisma.display.aggregate({
+          _count: {
+            id: true,
+          },
+          where: {
+            survey: {
+              environmentId: environmentId,
+              type: "web",
+            },
+            createdAt: {
+              gte: firstDayOfMonth,
+            },
+          },
+        })
+      )._count.id;
+    },
+    [`getMonthlyDisplayCount-${environmentId}`],
+    {
+      tags: [displayCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();

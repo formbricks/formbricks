@@ -7,6 +7,8 @@ import { TTeam } from "@formbricks/types/teams";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { canUserAccessTeam } from "@formbricks/lib/team/auth";
 import { getTeam } from "@formbricks/lib/team/service";
+import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
+import { getMonthlyDisplayCount } from "@formbricks/lib/display/service";
 
 export async function getBillingDetails(teamId: string) {
   const session = await getServerSession(authOptions);
@@ -15,32 +17,33 @@ export async function getBillingDetails(teamId: string) {
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const team = await getTeam(teamId);
+  const team: any = await getTeam(teamId);
 
-  const res = await fetch(WEBAPP_URL + "/api/billing/get-usage", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      stripeCustomerId: team.subscription?.stripeCustomerId,
-    }),
-  });
-  if (!res.ok) {
-    alert("Error loading billing portal");
+  const stripeCustomerId = team.subscription?.stripeCustomerId;
+
+  if (!stripeCustomerId) {
     return {
-      mtuUsage: -1,
-      displayUsage: -1,
-      amountLeft: -1,
-      dueDate: -1,
+      people: -1,
+      display: -1,
     };
   }
-  const { data } = await res.json();
+
+  let peopleForTeam = 0;
+  let displaysForTeam = 0;
+
+  for (const product of team.products) {
+    for (const environment of product.environments) {
+      const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
+      const displaysInThisEnvironment = await getMonthlyDisplayCount(environment.id);
+
+      peopleForTeam += peopleInThisEnvironment;
+      displaysForTeam += displaysInThisEnvironment;
+    }
+  }
+
   return {
-    mtuUsage: data.data.mtuUsage,
-    displayUsage: data.data.displayUsage,
-    amountLeft: data.data.amountLeft,
-    dueDate: data.data.dueDate,
+    people: peopleForTeam,
+    display: displaysForTeam,
   };
 }
 
@@ -59,7 +62,6 @@ export async function upgradePlanAction(team: TTeam, environmentId: string) {
     body: JSON.stringify({
       teamId: team.id,
       teamName: team.name,
-      environmentId,
       failureUrl: `${WEBAPP_URL}/environtments/${environmentId}/settings/billing`,
     }),
   });

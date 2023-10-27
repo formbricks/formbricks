@@ -5,13 +5,8 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const responseInput = await request.json();
-    const { teamId, teamName, environmentId, failureUrl } = responseInput;
-    const { status, data, newPlan, url } = await createSubscription(
-      teamId,
-      teamName,
-      environmentId,
-      failureUrl
-    );
+    const { teamId, teamName, failureUrl } = responseInput;
+    const { status, data, newPlan, url } = await createSubscription(teamId, teamName, failureUrl);
 
     return responses.successResponse({ status, data, newPlan, url }, true);
   } catch (error) {
