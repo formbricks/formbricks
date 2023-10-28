@@ -10,7 +10,7 @@ const successUrl =
     ? "https://app.formbricks.com/billing-confirmation"
     : "http://localhost:3000/billing-confirmation";
 
-const getFirstOfNextMonthTimestamp = (): number => {
+export const getFirstOfNextMonthTimestamp = (): number => {
   const nextMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
   return Math.floor(nextMonth.getTime() / 1000);
 };
@@ -29,7 +29,7 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
 
     if (!firstPrice) throw new Error("Price not found.");
 
-    const lineItems = [
+    let lineItems = [
       {
         price: firstPrice.id,
         ...(firstPrice.billing_scheme === "per_unit" && { quantity: 1 }),
@@ -73,7 +73,80 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
     ).subscriptions.data[0] as Stripe.Subscription;
 
     if (existingSubscription) {
-      await stripe.subscriptions.update(existingSubscription.id, { items: lineItems });
+      if (existingSubscription.cancel_at_period_end) {
+        const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
+          customer: team.billing.stripeCustomerId as string,
+        });
+        const scheduledSubscriptions = allScheduledSubscriptions.data.filter(
+          (scheduledSub) => scheduledSub.status === "not_started"
+        );
+        if (scheduledSubscriptions.length) {
+          const existingItemsInScheduledSubscription = scheduledSubscriptions[0].phases[0].items.map(
+            (item) => {
+              return {
+                ...(item.quantity && { quantity: item.quantity }), // Only include quantity if it's defined
+                price: item.price as string,
+              };
+            }
+          );
+
+          const combinedLineItems = [...lineItems, ...existingItemsInScheduledSubscription];
+
+          const uniqueItemsMap = combinedLineItems.reduce((acc, item) => {
+            acc[item.price] = item; // This will overwrite duplicate items based on price
+            return acc;
+          }, {} as { [key: string]: { price: string; quantity?: number } });
+
+          const lineItemsForScheduledSubscription = Object.values(uniqueItemsMap);
+
+          await stripe.subscriptionSchedules.update(scheduledSubscriptions[0].id, {
+            end_behavior: "release",
+            phases: [
+              {
+                start_date: getFirstOfNextMonthTimestamp(),
+                items: lineItemsForScheduledSubscription,
+                iterations: 1,
+                metadata: { teamId },
+              },
+            ],
+            metadata: { teamId },
+          });
+        } else {
+          await stripe.subscriptionSchedules.create({
+            customer: team.billing.stripeCustomerId as string,
+            start_date: getFirstOfNextMonthTimestamp(),
+            end_behavior: "release",
+            phases: [
+              {
+                items: lineItems,
+                iterations: 1,
+                metadata: { teamId },
+              },
+            ],
+            metadata: { teamId },
+          });
+        }
+      }
+
+      if (
+        !(
+          existingSubscription.cancel_at_period_end &&
+          team.billing.features[subscribeToNickname as keyof typeof team.billing.features].status ===
+            "canceled"
+        )
+      ) {
+        let alreadyInSubscription = false;
+
+        existingSubscription.items.data.forEach((item) => {
+          if (item.price.lookup_key === subscribeToNickname) {
+            alreadyInSubscription = true;
+          }
+        });
+
+        if (!alreadyInSubscription) {
+          await stripe.subscriptions.update(existingSubscription.id, { items: lineItems });
+        }
+      }
     } else {
       await stripe.subscriptions.create({
         customer: team.billing.stripeCustomerId as string,

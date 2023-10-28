@@ -5,12 +5,8 @@ import { headers } from "next/headers";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
 import { getTeamsWithPaidPlan } from "@formbricks/lib/team/service";
-import { getMonthlyDisplayCount } from "@formbricks/lib/display/service";
-
-enum Metric {
-  display,
-  people,
-}
+import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
+import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
 
 export async function GET(): Promise<NextResponse> {
   const headersList = headers();
@@ -20,28 +16,51 @@ export async function GET(): Promise<NextResponse> {
     return responses.notAuthenticatedResponse();
   }
   try {
-    const teamsWithPaidPlan: any = await getTeamsWithPaidPlan();
+    const teamsWithPaidPlan = await getTeamsWithPaidPlan();
     for (const team of teamsWithPaidPlan) {
-      const stripeCustomerId = team.subscription.stripeCustomerId;
+      const stripeCustomerId = team.billing.stripeCustomerId;
       if (!stripeCustomerId) {
         continue;
       }
 
+      let calculateResponses = team.billing.features.appSurvey.status !== "inactive";
+      let calculatePeople = team.billing.features.userTargeting.status !== "inactive";
+
+      if (!calculatePeople && !calculateResponses) {
+        continue;
+      }
       let people = 0;
-      let displaysForTeam = 0;
+      let responses = 0;
 
       for (const product of team.products) {
         for (const environment of product.environments) {
-          const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
-          const displaysInThisEnvironment = await getMonthlyDisplayCount(environment.id);
-
-          people += peopleInThisEnvironment;
-          displaysForTeam += displaysInThisEnvironment;
+          if (calculateResponses) {
+            const responsesInThisEnvironment = await getMonthlyResponseCount(environment.id);
+            responses += responsesInThisEnvironment;
+          }
+          if (calculatePeople) {
+            const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
+            people += peopleInThisEnvironment;
+          }
         }
       }
 
-      await reportUsage(stripeCustomerId, people, Metric.people, Math.floor(Date.now() / 1000));
-      await reportUsage(stripeCustomerId, displaysForTeam, Metric.display, Math.floor(Date.now() / 1000));
+      if (calculatePeople) {
+        await reportUsage(
+          stripeCustomerId,
+          people,
+          priceLookupKeys.userTargeting,
+          Math.floor(Date.now() / 1000)
+        );
+      }
+      if (calculateResponses) {
+        await reportUsage(
+          stripeCustomerId,
+          responses + 1000,
+          priceLookupKeys.appSurvey,
+          Math.floor(Date.now() / 1000)
+        );
+      }
     }
 
     return responses.successResponse({}, true);

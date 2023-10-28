@@ -224,22 +224,22 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
 export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
   try {
     const teams = await prisma.team.findMany({
-      // where: {
-      //   AND: [
-      //     {
-      //       subscription: {
-      //         path: ["plan"],
-      //         equals: "paid",
-      //       },
-      //     },
-      //     {
-      //       subscription: {
-      //         path: ["stripeCustomerId"],
-      //         not: Prisma.AnyNull,
-      //       },
-      //     },
-      //   ],
-      // },
+      where: {
+        OR: [
+          {
+            billing: {
+              path: ["features", "appSurvey", "status"],
+              not: "inactive",
+            },
+          },
+          {
+            billing: {
+              path: ["features", "userTargeting", "status"],
+              not: "inactive",
+            },
+          },
+        ],
+      },
       select: { ...select, products: { select: { environments: true } } }, // include environments
     });
 

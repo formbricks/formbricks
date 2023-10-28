@@ -13,7 +13,7 @@ import {
   upgradePlanAction,
 } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
-import { priceLookupKeys } from "@formbricks/ee/billing/api/products";
+import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
 
 interface BillingDetails {
   people: number;
@@ -30,8 +30,6 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const { people, display } = billingDetails;
-
-  console.log("team", team.billing);
 
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);
