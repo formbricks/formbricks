@@ -38,7 +38,7 @@
 
 ## 🔥 The FormTribe Hackathon is on!
 
-To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
+To celebrate Hacktoberfest, we've launched our FormTribe hackathon. You can participate by writing code or engaging in non-code side quests to collect points and increase your chances of winning a MacBook Air M2!
 
 **Join the lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
 
@@ -52,7 +52,7 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 
 ## 💪 Mission: Make customer-centric decisions based on data.
 
-Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
+Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product and leverage a significantly higher conversion rate. Gather all insights you can, including partial submissions, and build conviction for the next product decision. Better data, better business.
 
 ### Features
 
@@ -76,11 +76,13 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ## 🚀 Getting started
 
-We've got several options depending on your need to help you quickly get started with Formbricks.
+We've got several options depending on your needs to help you quickly get started with Formbricks.
 
 ### ☁️ Cloud Version
 
 Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com).
+
+
 
 ### 🐳 Self-hosted version
 
