@@ -13,6 +13,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import _ from "lodash";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -38,10 +39,12 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
-      setLocalSurvey(survey);
+      // Create a deep copy of the survey object
+      const surveyCopy = _.cloneDeep(survey);
+      setLocalSurvey(surveyCopy);
 
-      if (survey.questions.length > 0) {
-        setActiveQuestionId(survey.questions[0].id);
+      if (surveyCopy.questions.length > 0) {
+        setActiveQuestionId(surveyCopy.questions[0].id);
       }
     }
   }, [survey]);
