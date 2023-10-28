@@ -58,14 +58,14 @@ Formbricks is a powerful tool for creating in-product micro-surveys. It allows y
 
 ### Table of Contents
 - [Features](#features)
-- [Getting Started](#🚀-getting-started)
-  - [Cloud Version](#☁️-cloud-version)
-  - [Self-hosted Version](#🐳-self-hosted-version)
-  - [Development](#👨‍💻-development)
-- [Contribution](#✍️-contribution)
-- [Contact](#📆-contact-us)
-- [License](#⚖️-license)
-- [Security](#🔒-security)
+- [Getting Started](#-getting-started)
+  - [Cloud Version](#-cloud-version)
+  - [Self-hosted Version](#-self-hosted-version)
+  - [Development](#-development)
+- [Contribution](#-contribution)
+- [Contact](#-contact-us)
+- [License](#-license)
+- [Security](#-security)
 
 ### Features
 
