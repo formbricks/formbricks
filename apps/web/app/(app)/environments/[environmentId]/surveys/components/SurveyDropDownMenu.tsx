@@ -103,125 +103,122 @@ export default function SurveyDropDownMenu({
     );
   }
   return (
-    isSurveyCreationDeletionDisabled &&
-    survey.type === "link" && (
-      <>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-            <div>
-              <span className="sr-only">Open options</span>
-              <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-40">
-            <DropdownMenuGroup>
-              {!isSurveyCreationDeletionDisabled && (
-                <>
-                  <DropdownMenuItem>
-                    <Link
-                      className="flex w-full items-center"
-                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                      <PencilSquareIcon className="mr-2 h-4 w-4" />
-                      Edit
-                    </Link>
-                  </DropdownMenuItem>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
+          <div>
+            <span className="sr-only">Open options</span>
+            <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-40">
+          <DropdownMenuGroup>
+            {!isSurveyCreationDeletionDisabled && (
+              <>
+                <DropdownMenuItem>
+                  <Link
+                    className="flex w-full items-center"
+                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                    <PencilSquareIcon className="mr-2 h-4 w-4" />
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
 
-                  <DropdownMenuItem>
-                    <button
-                      className="flex w-full items-center"
-                      onClick={async () => {
-                        duplicateSurveyAndRefresh(survey.id);
-                      }}>
-                      <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
-                      Duplicate
-                    </button>
-                  </DropdownMenuItem>
-                </>
-              )}
-              {!isSurveyCreationDeletionDisabled && (
-                <>
-                  {environment.type === "development" ? (
-                    <DropdownMenuItem>
-                      <button
-                        className="flex w-full items-center"
-                        onClick={() => {
-                          copyToOtherEnvironment(survey.id);
-                        }}>
-                        <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
-                        Copy to Prod
-                      </button>
-                    </DropdownMenuItem>
-                  ) : environment.type === "production" ? (
-                    <DropdownMenuItem>
-                      <button
-                        className="flex w-full items-center"
-                        onClick={() => {
-                          copyToOtherEnvironment(survey.id);
-                        }}>
-                        <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
-                        Copy to Dev
-                      </button>
-                    </DropdownMenuItem>
-                  ) : null}
-                </>
-              )}
-              {survey.type === "link" && survey.status !== "draft" && (
-                <>
-                  <DropdownMenuItem>
-                    <Link
-                      className="flex w-full items-center"
-                      href={
-                        singleUseId
-                          ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
-                          : `/s/${survey.id}?preview=true`
-                      }
-                      target="_blank">
-                      <EyeIcon className="mr-2 h-4 w-4" />
-                      Preview Survey
-                    </Link>
-                  </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <button
+                    className="flex w-full items-center"
+                    onClick={async () => {
+                      duplicateSurveyAndRefresh(survey.id);
+                    }}>
+                    <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </button>
+                </DropdownMenuItem>
+              </>
+            )}
+            {!isSurveyCreationDeletionDisabled && (
+              <>
+                {environment.type === "development" ? (
                   <DropdownMenuItem>
                     <button
                       className="flex w-full items-center"
                       onClick={() => {
-                        navigator.clipboard.writeText(
-                          singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
-                        );
-                        toast.success("Copied link to clipboard");
-                        router.refresh();
+                        copyToOtherEnvironment(survey.id);
                       }}>
-                      <LinkIcon className="mr-2 h-4 w-4" />
-                      Copy Link
+                      <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                      Copy to Prod
                     </button>
                   </DropdownMenuItem>
-                </>
-              )}
-              {!isSurveyCreationDeletionDisabled && (
+                ) : environment.type === "production" ? (
+                  <DropdownMenuItem>
+                    <button
+                      className="flex w-full items-center"
+                      onClick={() => {
+                        copyToOtherEnvironment(survey.id);
+                      }}>
+                      <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                      Copy to Dev
+                    </button>
+                  </DropdownMenuItem>
+                ) : null}
+              </>
+            )}
+            {survey.type === "link" && survey.status !== "draft" && (
+              <>
+                <DropdownMenuItem>
+                  <Link
+                    className="flex w-full items-center"
+                    href={
+                      singleUseId
+                        ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
+                        : `/s/${survey.id}?preview=true`
+                    }
+                    target="_blank">
+                    <EyeIcon className="mr-2 h-4 w-4" />
+                    Preview Survey
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button
-                    className="flex w-full  items-center"
+                    className="flex w-full items-center"
                     onClick={() => {
-                      setDeleteDialogOpen(true);
+                      navigator.clipboard.writeText(
+                        singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
+                      );
+                      toast.success("Copied link to clipboard");
+                      router.refresh();
                     }}>
-                    <TrashIcon className="mr-2 h-4 w-4" />
-                    Delete
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    Copy Link
                   </button>
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              </>
+            )}
+            {!isSurveyCreationDeletionDisabled && (
+              <DropdownMenuItem>
+                <button
+                  className="flex w-full  items-center"
+                  onClick={() => {
+                    setDeleteDialogOpen(true);
+                  }}>
+                  <TrashIcon className="mr-2 h-4 w-4" />
+                  Delete
+                </button>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        {!isSurveyCreationDeletionDisabled && (
-          <DeleteDialog
-            deleteWhat="Survey"
-            open={isDeleteDialogOpen}
-            setOpen={setDeleteDialogOpen}
-            onDelete={() => handleDeleteSurvey(survey)}
-            text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
-          />
-        )}
-      </>
-    )
+      {!isSurveyCreationDeletionDisabled && (
+        <DeleteDialog
+          deleteWhat="Survey"
+          open={isDeleteDialogOpen}
+          setOpen={setDeleteDialogOpen}
+          onDelete={() => handleDeleteSurvey(survey)}
+          text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
+        />
+      )}
+    </>
   );
 }
