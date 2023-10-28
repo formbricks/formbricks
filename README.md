@@ -6,7 +6,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Survey & Experience Management solution for fast growing companies
+    The Open Source Survey & Experience Management solution for fast-growing companies
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
@@ -40,7 +40,7 @@
 
 To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
 
-**Join lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
+**Join the lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
 
 ## ✨ About Formbricks
 
@@ -56,7 +56,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ### Features
 
-- 📲 Create **in-product surveys** with our no code editor with multiple question types.
+- 📲 Create **in-product surveys** with our no-code editor with multiple question types.
 - 📚 Choose from a variety of best-practice **templates**.
 - 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code.
 - 🔗 Create shareable **link surveys**.
@@ -94,7 +94,7 @@ If you opt for self-hosting Formbricks, here are a few options to consider:
 
 To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
 
-#### Community managed One Click Hosting
+#### Community-managed One Click Hosting
 
 ##### Railway
 
@@ -132,7 +132,7 @@ Here are a few options:
 
 - Star this repo.
 - Create issues every time you feel something is missing or goes wrong.
-- Upvote issues with 👍 reaction so we know what's the demand for a particular issue to prioritize it within the roadmap.
+- Upvote issues with 👍 reaction so we know what the demand for a particular issue is to prioritize it within the roadmap.
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
 
