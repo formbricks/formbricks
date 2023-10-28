@@ -88,7 +88,7 @@ Formbricks is a powerful tool for creating in-product micro-surveys. It allows y
 - 🔒 [Auth.js](https://authjs.dev/)
 - 🧘‍♂️ [Zod](https://zod.dev/)
 
-<a id="features"></a>
+<a id="getting-started"></a>
 ## 🚀 Getting started
 
 We've got several options depending on your need to help you quickly get started with Formbricks.
