@@ -12,7 +12,7 @@ import { TProfile } from "@formbricks/types/profile";
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
 }
@@ -20,7 +20,7 @@ interface LinkSurveyShareButtonProps {
 export default function LinkSurveyShareButton({
   survey,
   className,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
 }: LinkSurveyShareButtonProps) {
@@ -45,7 +45,7 @@ export default function LinkSurveyShareButton({
           open={showLinkModal}
           setOpen={setShowLinkModal}
           product={product}
-          surveyBaseUrl={surveyBaseUrl}
+          webAppUrl={webAppUrl}
           profile={profile}
         />
       )}
