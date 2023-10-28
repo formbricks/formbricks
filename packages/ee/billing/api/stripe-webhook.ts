@@ -1,8 +1,9 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getMonthlyDisplayCount } from "@formbricks/lib/display/service";
+import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 
 import Stripe from "stripe";
+import { priceLookupKeys } from "./products";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
@@ -10,16 +11,23 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
 
-export enum Metric {
-  display,
-  people,
-}
+const reportUsage = async (
+  items: Stripe.SubscriptionItem[],
+  lookupKey: priceLookupKeys,
+  quantity: number
+) => {
+  const subscriptionItem = items.find((subItem) => subItem.price.lookup_key === priceLookupKeys[lookupKey]);
 
-interface Subscription {
-  stripeCustomerId: string | null;
-  plan: "free" | "paid";
-  addOns: ("removeBranding" | "customUrl")[];
-}
+  if (!subscriptionItem) {
+    throw new Error(`No such metric found: ${priceLookupKeys[lookupKey]}`);
+  }
+
+  await stripe.subscriptionItems.createUsageRecord(subscriptionItem.id, {
+    action: "set",
+    quantity: quantity,
+    timestamp: Math.floor(Date.now() / 1000),
+  });
+};
 
 const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;
@@ -34,84 +42,154 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
 
   if (event.type === "checkout.session.completed") {
     const checkoutSession = event.data.object as Stripe.Checkout.Session;
-    const checkoutSessionWithCustomer = await stripe.checkout.sessions.retrieve(checkoutSession.id, {
+    const stripeSubscriptionObject = await stripe.subscriptions.retrieve(
+      checkoutSession.subscription as string
+    );
+
+    const { customer: stripeCustomer } = (await stripe.checkout.sessions.retrieve(checkoutSession.id, {
       expand: ["customer"],
-    });
-    const customerDetails = checkoutSessionWithCustomer.customer as Stripe.Customer;
+    })) as { customer: Stripe.Customer };
 
-    const customerId = customerDetails.id;
-    const teamId = customerDetails.metadata.team;
+    const team = await getTeam(stripeCustomer.metadata.team);
+    let updatedFeatures = team.billing.features;
+    let countForTeam = 0;
+    let priceLookupKey: string | null = null;
 
-    const team: any = await getTeam(teamId);
-    let peopleForTeam = 0;
-    let displaysForTeam = 0;
-
-    for (const product of team.products) {
-      for (const environment of product.environments) {
-        const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
-        const displaysInThisEnvironment = await getMonthlyDisplayCount(environment.id);
-
-        peopleForTeam += peopleInThisEnvironment;
-        displaysForTeam += displaysInThisEnvironment;
+    for (const item of stripeSubscriptionObject.items.data) {
+      switch (item.price.lookup_key) {
+        case priceLookupKeys[priceLookupKeys.appSurvey]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.appSurvey];
+          break;
+        case priceLookupKeys[priceLookupKeys.linkSurvey]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.linkSurvey];
+          break;
+        case priceLookupKeys[priceLookupKeys.userTargeting]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.userTargeting];
+          break;
       }
     }
 
-    const existingSubscription: Subscription = team.subscription as unknown as Subscription;
-    if (!existingSubscription) {
-      return { status: 400, data: "skipping, no subscription object found in team", newPlan: true };
+    updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "active";
+
+    if (priceLookupKey && priceLookupKey !== priceLookupKeys[priceLookupKeys.linkSurvey]) {
+      for (const product of team.products) {
+        for (const environment of product.environments) {
+          countForTeam +=
+            priceLookupKey === priceLookupKeys[priceLookupKeys.userTargeting]
+              ? await getMonthlyActivePeopleCount(environment.id)
+              : await getMonthlyResponseCount(environment.id);
+        }
+      }
+
+      await reportUsage(
+        stripeSubscriptionObject.items.data,
+        priceLookupKey === priceLookupKeys[priceLookupKeys.userTargeting]
+          ? priceLookupKeys.userTargeting
+          : priceLookupKeys.appSurvey,
+        countForTeam
+      );
     }
 
-    const subscription = await stripe.subscriptions.list({
-      customer: customerId,
-    });
-
-    const peopleSubscriptionItem = subscription.data[0].items.data.filter(
-      (subItem) => subItem.plan.nickname === Metric[Metric.people]
-    );
-
-    const displaySubscriptionItem = subscription.data[0].items.data.filter(
-      (subItem) => subItem.plan.nickname === Metric[Metric.display]
-    );
-
-    if (!peopleSubscriptionItem || !displaySubscriptionItem) {
-      return { status: 400, data: "No such metric found" };
-    }
-
-    await stripe.subscriptionItems.createUsageRecord(peopleSubscriptionItem[0].id, {
-      action: "set",
-      quantity: peopleForTeam,
-      timestamp: Math.floor(Date.now() / 1000),
-    });
-
-    await stripe.subscriptionItems.createUsageRecord(displaySubscriptionItem[0].id, {
-      action: "set",
-      quantity: displaysForTeam,
-      timestamp: Math.floor(Date.now() / 1000),
-    });
-
-    await updateTeam(teamId, {
-      subscription: {
-        addOns: existingSubscription.addOns || [],
-        plan: "paid",
-        stripeCustomerId: customerId,
+    await updateTeam(stripeCustomer.metadata.team, {
+      billing: {
+        stripeCustomerId: stripeCustomer.id,
+        features: updatedFeatures,
       },
     });
-  } else if (event.type === "customer.subscription.deleted") {
-    const subscription = event.data.object as Stripe.Subscription;
-    const teamId = subscription.metadata.teamId;
+  } else if (
+    event.type === "customer.subscription.updated" ||
+    event.type === "customer.subscription.created"
+  ) {
+    const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
+    if (stripeSubscriptionObject.cancel_at_period_end) {
+      return { status: 200, message: "skipping, subscription to be cancelled at month end" };
+    }
+    const teamId = stripeSubscriptionObject.metadata.teamId;
     if (!teamId) {
       console.error("No teamId found in subscription");
       return { status: 400, message: "skipping, no teamId found" };
     }
 
-    const existingSubscription: Subscription = (await getTeam(teamId))
-      .subscription as unknown as Subscription;
+    const team = await getTeam(teamId);
+    let updatedFeatures = team.billing.features;
+    let countForTeam = 0;
+    let priceLookupKey: string | null = null;
+
+    for (const item of stripeSubscriptionObject.items.data) {
+      switch (item.price.lookup_key) {
+        case priceLookupKeys[priceLookupKeys.appSurvey]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.appSurvey];
+          break;
+        case priceLookupKeys[priceLookupKeys.linkSurvey]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.linkSurvey];
+          break;
+        case priceLookupKeys[priceLookupKeys.userTargeting]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.userTargeting];
+          break;
+      }
+    }
+
+    updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "active";
+
+    if (priceLookupKey && priceLookupKey !== priceLookupKeys[priceLookupKeys.linkSurvey]) {
+      for (const product of team.products) {
+        for (const environment of product.environments) {
+          countForTeam +=
+            priceLookupKey === priceLookupKeys[priceLookupKeys.userTargeting]
+              ? await getMonthlyActivePeopleCount(environment.id)
+              : await getMonthlyResponseCount(environment.id);
+        }
+      }
+
+      await reportUsage(
+        stripeSubscriptionObject.items.data,
+        priceLookupKey === priceLookupKeys[priceLookupKeys.userTargeting]
+          ? priceLookupKeys.userTargeting
+          : priceLookupKeys.appSurvey,
+        countForTeam
+      );
+    }
 
     await updateTeam(teamId, {
-      subscription: {
-        addOns: existingSubscription.addOns,
-        plan: "free",
-        stripeCustomerId: existingSubscription.stripeCustomerId,
+      billing: {
+        stripeCustomerId: team.billing.stripeCustomerId,
+        features: updatedFeatures,
+      },
+    });
+  } else if (event.type === "customer.subscription.deleted") {
+    const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
+    const teamId = stripeSubscriptionObject.metadata.teamId;
+    if (!teamId) {
+      console.error("No teamId found in subscription");
+      return { status: 400, message: "skipping, no teamId found" };
+    }
+
+    const team = await getTeam(teamId);
+
+    let priceLookupKey: string | null = null;
+    let updatedFeatures = team.billing.features;
+
+    for (const item of stripeSubscriptionObject.items.data) {
+      switch (item.price.lookup_key) {
+        case priceLookupKeys[priceLookupKeys.appSurvey]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.appSurvey];
+          updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "inactive";
+          break;
+        case priceLookupKeys[priceLookupKeys.linkSurvey]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.linkSurvey];
+          updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "inactive";
+          break;
+        case priceLookupKeys[priceLookupKeys.userTargeting]:
+          priceLookupKey = priceLookupKeys[priceLookupKeys.userTargeting];
+          updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "inactive";
+          break;
+      }
+    }
+
+    await updateTeam(teamId, {
+      billing: {
+        stripeCustomerId: team.billing.stripeCustomerId,
+        features: updatedFeatures,
       },
     });
   } else {

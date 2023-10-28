@@ -1,24 +1,33 @@
 import { z } from "zod";
 
-export const ZTeamSubscription = z.object({
-  stripeCustomerId: z.string().nullable(),
-  plan: z.enum(["free", "paid"]),
-  addOns: z.array(z.enum(["removeBranding", "customUrl"])),
+export const ZSubscription = z.object({
+  status: z.enum(["active", "canceled", "inactive"]).default("inactive"),
 });
 
-export type TTeamSubscription = z.infer<typeof ZTeamSubscription>;
+export type TSubscription = z.infer<typeof ZSubscription>;
+
+export const ZTeamBilling = z.object({
+  stripeCustomerId: z.string().nullable(),
+  features: z.object({
+    appSurvey: ZSubscription,
+    linkSurvey: ZSubscription,
+    userTargeting: ZSubscription,
+  }),
+});
+
+export type TTeamBilling = z.infer<typeof ZTeamBilling>;
 
 export const ZTeam = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  subscription: ZTeamSubscription,
+  billing: ZTeamBilling,
 });
 
 export const ZTeamUpdateInput = z.object({
   name: z.string(),
-  subscription: ZTeamSubscription.optional(),
+  billing: ZTeamBilling.optional(),
 });
 
 export type TTeamUpdateInput = z.infer<typeof ZTeamUpdateInput>;

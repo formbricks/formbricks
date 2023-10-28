@@ -12,9 +12,9 @@ import PricingTable from "./components/PricingTable";
 import { getBillingDetails } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
 export default async function ProfileSettingsPage({ params }) {
-  if (!IS_FORMBRICKS_CLOUD) {
-    notFound();
-  }
+  // if (!IS_FORMBRICKS_CLOUD) {
+  //   notFound();
+  // }
 
   const session = await getServerSession(authOptions);
   const team = await getTeamByEnvironmentId(params.environmentId);

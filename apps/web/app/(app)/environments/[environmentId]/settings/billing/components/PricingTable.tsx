@@ -9,8 +9,11 @@ import { useState } from "react";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import {
   manageSubscriptionAction,
+  removeSubscriptionAction,
   upgradePlanAction,
 } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
+
+import { priceLookupKeys } from "@formbricks/ee/billing/api/products";
 
 interface BillingDetails {
   people: number;
@@ -28,6 +31,8 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const { people, display } = billingDetails;
 
+  console.log("team", team.billing);
+
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);
     const sessionUrl = await manageSubscriptionAction(team.id, environmentId);
@@ -35,9 +40,9 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
     setLoadingCustomerPortal(true);
   };
 
-  const upgradePlan = async () => {
+  const upgradePlan = async (priceNickname: string) => {
     setLoadingCustomerPortal(true);
-    const paymentUrl = await upgradePlanAction(team, environmentId);
+    const paymentUrl = await upgradePlanAction(team.id, environmentId, priceNickname);
     setLoadingCustomerPortal(false);
     router.push(paymentUrl);
   };
@@ -69,10 +74,7 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
         <div className="">
           <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
             <div className="p-8">
-              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Free</h2>
-              {team.subscription?.plan === "free" && (
-                <Badge text="Current Plan" size="normal" type="success" />
-              )}
+              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Base Plan</h2>
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 Always free. Giving back to the community.
               </p>
@@ -89,23 +91,26 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
               <p className="mt-6 text-3xl">
                 <span className="text-slate-800font-light">Always free</span>
               </p>
-              {team.subscription?.plan === "free" ? (
-                <Button variant="minimal" disabled className="mt-6 w-full justify-center py-4 shadow-sm">
-                  Your current plan
-                </Button>
-              ) : (
-                <Button variant="secondary" className="mt-6 w-full justify-center py-4 shadow-sm">
-                  Free Plan
-                </Button>
-              )}
+              <Button
+                variant="secondary"
+                className="mt-6 w-full justify-center py-4 shadow-sm"
+                disabled={true}>
+                Free Plan
+              </Button>
+              <Button
+                variant="secondary"
+                className="mt-6 w-full justify-center py-4 shadow-sm"
+                onClick={() => openCustomerPortal()}>
+                Open Customer Portal
+              </Button>
             </div>
           </div>
         </div>
         <div className="">
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="p-8">
-              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Pro</h2>
-              {team.subscription?.plan === "paid" && (
+              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">App Surveys</h2>
+              {team.billing.features.appSurvey.status === "active" && (
                 <Badge text="Current Plan" size="normal" type="success" />
               )}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
@@ -126,12 +131,18 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
 
                 <span className="text-base font-medium text-slate-400">/ month</span>
               </p>
-              {team.subscription?.plan === "paid" ? (
+              {team.billing.features.appSurvey.status === "active" ? (
                 <div>
                   <Button
                     variant="secondary"
                     className="mt-6 w-full justify-center py-4 shadow-sm"
-                    onClick={() => openCustomerPortal()}>
+                    onClick={() =>
+                      removeSubscriptionAction(
+                        team.id,
+                        environmentId,
+                        priceLookupKeys[priceLookupKeys.appSurvey]
+                      )
+                    }>
                     Manage Subscription
                   </Button>
                   <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
@@ -145,8 +156,70 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
                 <Button
                   variant="darkCTA"
                   className="mt-6 w-full justify-center py-4 text-white shadow-sm"
-                  onClick={() => upgradePlan()}>
+                  onClick={() => upgradePlan(priceLookupKeys[priceLookupKeys.appSurvey])}>
                   Upgrade
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-span-1">
+          <div className="rounded-lg border border-slate-100  shadow-sm">
+            <div className="p-8">
+              <h2 className="inline-flex text-2xl font-bold text-slate-700">Link Surveys</h2>
+              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
+                Remove Formbricks branding from web-app surveys across all your products.
+              </p>
+              {team.billing.features.linkSurvey.status === "active" ? (
+                <Button
+                  variant="secondary"
+                  className="mt-6 w-full justify-center py-4 shadow-sm"
+                  onClick={() =>
+                    removeSubscriptionAction(
+                      team.id,
+                      environmentId,
+                      priceLookupKeys[priceLookupKeys.linkSurvey]
+                    )
+                  }>
+                  Manage Subscription
+                </Button>
+              ) : (
+                <Button
+                  variant="darkCTA"
+                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
+                  onClick={() => upgradePlan(priceLookupKeys[priceLookupKeys.linkSurvey])}>
+                  Buy for 10$ /month
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-span-1">
+          <div className="rounded-lg border border-slate-100 shadow-sm">
+            <div className="p-8">
+              <h2 className="inline-flex text-2xl font-bold text-slate-700">User Targeting</h2>
+              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
+                Use your own custom URL for link surveys.
+              </p>
+              {team.billing.features.userTargeting.status === "active" ? (
+                <Button
+                  variant="secondary"
+                  className="mt-6 w-full justify-center py-4 shadow-sm"
+                  onClick={() =>
+                    removeSubscriptionAction(
+                      team.id,
+                      environmentId,
+                      priceLookupKeys[priceLookupKeys.userTargeting]
+                    )
+                  }>
+                  Manage Subscription
+                </Button>
+              ) : (
+                <Button
+                  variant="darkCTA"
+                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
+                  onClick={() => upgradePlan(priceLookupKeys[priceLookupKeys.userTargeting])}>
+                  Buy for 10$ /month
                 </Button>
               )}
             </div>

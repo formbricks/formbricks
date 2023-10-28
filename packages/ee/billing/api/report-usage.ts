@@ -14,8 +14,11 @@ const reportUsageToStripe = async (
   timestamp: number
 ) => {
   const subscription = await stripe.subscriptions.list({
-    customer: stripeCustomerId,
+    customer: "cus_OtvITcqjGW8k8V",
   });
+
+  console.log("subscription", subscription);
+
   const subscriptionItem = subscription.data[0].items.data.filter(
     (subItem) => subItem.plan.nickname === Metric[metric]
   );
@@ -27,7 +30,7 @@ const reportUsageToStripe = async (
 
   const usageRecord = await stripe.subscriptionItems.createUsageRecord(subId, {
     action: "set",
-    quantity: usage,
+    quantity: usage + 100000,
     timestamp: timestamp,
   });
 

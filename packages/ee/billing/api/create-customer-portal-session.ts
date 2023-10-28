@@ -5,7 +5,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const createCustomerPortalSession = async (stripeCustomerId: string, returnUrl: string) => {
-  // Authenticate your user.
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: returnUrl,

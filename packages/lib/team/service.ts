@@ -16,7 +16,7 @@ export const select = {
   createdAt: true,
   updatedAt: true,
   name: true,
-  subscription: true,
+  billing: true,
 };
 
 export const getTeamsTag = (teamId: string) => `teams-${teamId}`;
@@ -134,7 +134,6 @@ export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> =>
     const team = await prisma.team.create({
       data: {
         name: teamInput.name,
-        subscription: teamInput.subscription || { stripeCustomerId: null, plan: "free", addOns: [] },
       },
       select,
     });
@@ -225,22 +224,22 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
 export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
   try {
     const teams = await prisma.team.findMany({
-      where: {
-        AND: [
-          {
-            subscription: {
-              path: ["plan"],
-              equals: "paid",
-            },
-          },
-          {
-            subscription: {
-              path: ["stripeCustomerId"],
-              not: Prisma.AnyNull,
-            },
-          },
-        ],
-      },
+      // where: {
+      //   AND: [
+      //     {
+      //       subscription: {
+      //         path: ["plan"],
+      //         equals: "paid",
+      //       },
+      //     },
+      //     {
+      //       subscription: {
+      //         path: ["stripeCustomerId"],
+      //         not: Prisma.AnyNull,
+      //       },
+      //     },
+      //   ],
+      // },
       select: { ...select, products: { select: { environments: true } } }, // include environments
     });
 

@@ -389,16 +389,17 @@ model Product {
 }
 
 model Team {
-  id           String       @id @default(cuid())
-  createdAt    DateTime     @default(now()) @map(name: "created_at")
-  updatedAt    DateTime     @updatedAt @map(name: "updated_at")
-  name         String
-  memberships  Membership[]
-  products     Product[]
-  /// @zod.custom(imports.ZTeamSubscription)
-  /// [TeamSubscription]
-  subscription Json
-  invites      Invite[]
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now()) @map(name: "created_at")
+  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  name        String
+  memberships Membership[]
+  products    Product[]
+  /// @zod.custom(imports.ZTeamBilling)
+  /// [TeamBilling]
+  billing     Json         @default("{\"stripeCustomerId\": null, \"features\": {\"appSurvey\": {\"status\": \"inactive\"}, \"linkSurvey\": {\"status\": \"inactive\"}, \"userTargeting\": {\"status\": \"inactive\"}}}")
+
+  invites Invite[]
 }
 
 enum MembershipRole {
