@@ -1,9 +1,10 @@
 import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
-import { getProduct, getProductCacheTag } from "./service";
+import { getProduct } from "./service";
 import { unstable_cache } from "next/cache";
 import { getTeamsByUserId } from "../team/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { productCache } from "./cache";
 
 export const canUserAccessProduct = async (userId: string, productId: string): Promise<boolean> =>
   await unstable_cache(
@@ -18,6 +19,9 @@ export const canUserAccessProduct = async (userId: string, productId: string): P
       const teamIds = (await getTeamsByUserId(userId)).map((team) => team.id);
       return teamIds.includes(product.teamId);
     },
-    [`users-${userId}-products-${productId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [getProductCacheTag(productId)] }
+    [`canUserAccessProduct-${userId}-${productId}`],
+    {
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      tags: [productCache.tag.byId(productId), productCache.tag.byUserId(userId)],
+    }
   )();
