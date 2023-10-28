@@ -8,6 +8,8 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
+import { integrationCache } from "@formbricks/lib/integration/cache";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -81,6 +83,8 @@ export async function GET(req: NextRequest) {
         environment: { connect: { id: environmentId } },
       },
     });
+
+    revalidateTag(integrationCache.tag.byEnvironmentIdAndType(environmentId, "notion"));
 
     if (result) {
       return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`);
