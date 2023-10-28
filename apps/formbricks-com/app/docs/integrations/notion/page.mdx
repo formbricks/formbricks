@@ -98,8 +98,8 @@ Enabling the Notion Integration in a self-hosted environment requires a setup us
 3. Fill up the basic information like **Name**, **Logo** and click on **Submit**.
 4. Now, click on **Distribution** tab on the sidebar. A text will appear which will ask you to make the integration public. Click on that toggle button. A form will appear below the text.
 5. Now provide it the details such as requested. Under **Redirect URIs** field:
-   - If you are running formbricks locally, you can enter `http://localhost:3000/api/notion/callback`.
-   - Or, you can enter `https://<your-public-facing-url>/api/notion/callback`
+   - If you are running formbricks locally, you can enter `http://localhost:3000/api/v1/integrations/notion/callback`.
+   - Or, you can enter `https://<your-public-facing-url>/api/v1/integrations/notion/callback`
 6. Once you've filled all the necessary details, click on **Submit**.
 7. A screen will appear which will have **Client ID**, **Client secret** and **Authorization URL**. Copy them and set them as the environment variables in your Formbricks instance as:
    - `NOTION_OAUTH_CLIENT_ID` - OAuth Client ID

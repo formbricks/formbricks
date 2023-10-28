@@ -7,7 +7,7 @@ import {
   TNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { DatabaseError } from "@formbricks/types/errors";
-import { getIntegrationByType } from "integration/service";
+import { getIntegrationByType } from "../integration/service";
 
 async function fetchPages(config: TIntegrationNotionConfig) {
   try {

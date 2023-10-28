@@ -1,5 +1,5 @@
 export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
-  const res = await fetch(`${apiHost}/api/notion`, {
+  const res = await fetch(`${apiHost}/api/v1/integrations/notion`, {
     method: "GET",
     headers: { environmentId: environmentId },
   });

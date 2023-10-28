@@ -8,7 +8,7 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationNotion, TNotionDatabase } from "@formbricks/types/integration/notion";
@@ -20,9 +20,9 @@ export default async function Notion({ params }) {
     NOTION_AUTH_URL &&
     NOTION_REDIRECT_URI
   );
-  const [surveys, integrations, environment] = await Promise.all([
+  const [surveys, notionIntegration, environment] = await Promise.all([
     getSurveys(params.environmentId),
-    getIntegrations(params.environmentId),
+    getIntegrationByType(params.environmentId, "notion"),
     getEnvironment(params.environmentId),
   ]);
 
@@ -30,12 +30,12 @@ export default async function Notion({ params }) {
     throw new Error("Environment not found");
   }
 
-  const notionIntegration: TIntegrationNotion | undefined = integrations?.find(
-    (integration): integration is TIntegrationNotion => integration.type === "notion"
-  );
+  // const notionIntegration: TIntegrationNotion | undefined = integrations?.find(
+  //   (integration): integration is TIntegrationNotion => integration.type === "notion"
+  // );
 
   let databasesArray: TNotionDatabase[] = [];
-  if (notionIntegration && notionIntegration.config.key?.bot_id) {
+  if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
     databasesArray = await getNotionDatabases(environment.id);
   }
 
@@ -46,7 +46,7 @@ export default async function Notion({ params }) {
         enabled={enabled}
         surveys={surveys}
         environment={environment}
-        notionIntegration={notionIntegration}
+        notionIntegration={notionIntegration as TIntegrationNotion}
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
       />

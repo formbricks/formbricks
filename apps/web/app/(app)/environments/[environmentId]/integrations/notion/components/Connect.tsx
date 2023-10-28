@@ -4,7 +4,7 @@ import NotionLogo from "@/images/notion.png";
 import Link from "next/link";
 import { Button } from "@formbricks/ui/Button";
 import { useEffect, useState } from "react";
-import { authorize } from "@formbricks/lib/client/notion";
+import { authorize } from "../lib/notion";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
