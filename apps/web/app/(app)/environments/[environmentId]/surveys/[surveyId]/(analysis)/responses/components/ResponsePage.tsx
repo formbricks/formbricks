@@ -20,10 +20,11 @@ interface ResponsePageProps {
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
   environmentTags: TTag[];
+  responsesPerPage: number;
 }
 
 const ResponsePage = ({
@@ -31,10 +32,11 @@ const ResponsePage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
   environmentTags,
+  responsesPerPage,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -56,7 +58,7 @@ const ResponsePage = ({
         environment={environment}
         survey={survey}
         surveyId={surveyId}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
       />
@@ -74,6 +76,7 @@ const ResponsePage = ({
         survey={survey}
         profile={profile}
         environmentTags={environmentTags}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );

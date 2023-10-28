@@ -25,6 +25,7 @@ export function EditName({ profile }: { profile: TProfile }) {
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
+      data.name = data.name.trim();
       if (!isNotEmptySpaces(data.name)) {
         toast.error("Please enter at least one character");
         return;
@@ -33,7 +34,7 @@ export function EditName({ profile }: { profile: TProfile }) {
         toast.success("This is already your name");
         return;
       }
-      await updateProfileAction(data);
+      await updateProfileAction({ name: data.name });
       toast.success("Your name was updated successfully");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

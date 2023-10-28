@@ -2,8 +2,10 @@ import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { getDisplaysByPersonId } from "@formbricks/lib/display/service";
-import { getProductByEnvironmentIdCached, getProductCacheTag } from "@formbricks/lib/product/service";
-import { getSurveyCacheTag, getSurveys } from "@formbricks/lib/survey/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { productCache } from "@formbricks/lib/product/cache";
+import { getSurveys } from "@formbricks/lib/survey/service";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
 import { unstable_cache } from "next/cache";
@@ -23,8 +25,8 @@ export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
     {
       tags: [
         displayCache.tag.byPersonId(person.id),
-        getSurveyCacheTag(environmentId),
-        getProductCacheTag(environmentId),
+        surveyCache.tag.byEnvironmentId(environmentId),
+        productCache.tag.byEnvironmentId(environmentId),
       ],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
@@ -35,7 +37,7 @@ export const getSyncSurveys = async (
   person: TPerson
 ): Promise<TSurveyWithTriggers[]> => {
   // get recontactDays from product
-  const product = await getProductByEnvironmentIdCached(environmentId);
+  const product = await getProductByEnvironmentId(environmentId);
 
   if (!product) {
     throw new Error("Product not found");

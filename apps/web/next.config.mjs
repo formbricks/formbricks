@@ -7,9 +7,6 @@ import { createId } from "@paralleldrive/cuid2";
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
-  experimental: {
-    serverActions: true,
-  },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -34,13 +31,18 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/api/v1/responses",
-        destination: "/api/v1/management/responses",
-        permanent: true,
+        source: "/i/:path*",
+        destination: "/:path*",
+        permanent: false,
       },
       {
         source: "/api/v1/surveys",
         destination: "/api/v1/management/surveys",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/me",
+        destination: "/api/v1/management/me",
         permanent: true,
       },
       {
