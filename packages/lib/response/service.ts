@@ -1,6 +1,10 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseInput,
@@ -8,20 +12,18 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
 import { TTag } from "@formbricks/types/tags";
 import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { deleteDisplayByResponseId } from "../display/service";
 import { getPerson, transformPrismaPerson } from "../person/service";
+import { formatResponseDateFields } from "../response/util";
+import { responseNoteCache } from "../responseNote/cache";
+import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/environment";
-import { unstable_cache } from "next/cache";
-import { deleteDisplayByResponseId } from "../display/service";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "./cache";
-import { formatResponseDateFields } from "../response/util";
 
 const responseSelection = {
   id: true,
@@ -51,6 +53,19 @@ const responseSelection = {
       },
     },
   },
+  tags: {
+    select: {
+      tag: {
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          name: true,
+          environmentId: true,
+        },
+      },
+    },
+  },
   notes: {
     select: {
       id: true,
@@ -65,19 +80,6 @@ const responseSelection = {
       },
       isResolved: true,
       isEdited: true,
-    },
-  },
-  tags: {
-    select: {
-      tag: {
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          name: true,
-          environmentId: true,
-        },
-      },
     },
   },
 };
@@ -229,9 +231,13 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     };
 
     responseCache.revalidate({
-      personId: response.person?.id,
       id: response.id,
+      personId: response.person?.id,
       surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
     });
 
     return response;
@@ -277,7 +283,10 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       }
     },
     [`getResponse-${responseId}`],
-    { tags: [responseCache.tag.byId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+    {
+      tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
   )();
 
   if (!response) {
@@ -310,11 +319,15 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
-          ...responsePrisma,
-          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-        }));
+        const transformedResponses: TResponse[] = await Promise.all(
+          responses.map(async (responsePrisma) => {
+            return {
+              ...responsePrisma,
+              person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+              tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            };
+          })
+        );
 
         return transformedResponses;
       } catch (error) {
@@ -363,11 +376,15 @@ export const getResponsesByEnvironmentId = async (
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
-          ...responsePrisma,
-          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-        }));
+        const transformedResponses: TResponse[] = await Promise.all(
+          responses.map(async (responsePrisma) => {
+            return {
+              ...responsePrisma,
+              person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+              tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            };
+          })
+        );
 
         return transformedResponses;
       } catch (error) {
@@ -435,9 +452,13 @@ export const updateResponse = async (
     };
 
     responseCache.revalidate({
-      personId: response.person?.id,
       id: response.id,
+      personId: response.person?.id,
       surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
     });
 
     return response;
@@ -460,17 +481,24 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       select: responseSelection,
     });
 
+    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
+      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
+
     deleteDisplayByResponseId(responseId, response.surveyId);
 
     responseCache.revalidate({
-      personId: response.person?.id,
       id: response.id,
+      personId: response.person?.id,
       surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
     });
 
     return response;
