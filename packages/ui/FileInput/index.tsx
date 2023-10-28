@@ -182,7 +182,8 @@ const FileInput: React.FC<FileInputProps> = ({
       }
     });
 
-    onFileUpload([...(fileUrl || []), ...uploadedUrls]);
+    const prevUrls = Array.isArray(fileUrl) ? fileUrl : fileUrl ? [fileUrl] : [];
+    onFileUpload([...prevUrls, ...uploadedUrls]);
   };
 
   useEffect(() => {
