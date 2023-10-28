@@ -23,8 +23,6 @@ import {
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isLight } from "@/app/lib/utils";
-import { CornerDownLeft } from "lucide-react";
-import Image from "next/image";
 
 interface EmailTabProps {
   survey: TSurvey;
