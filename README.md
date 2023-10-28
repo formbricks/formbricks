@@ -58,8 +58,8 @@ Formbricks is a powerful tool for creating in-product micro-surveys. It allows y
 
 ### Table of Contents
 - [Features](#features)
-- [Getting Started](#-getting-started)
-  - [Cloud Version](#-cloud-version)
+- [Getting Started](#getting-started)
+  - [Cloud Version](#cloud-version)
   - [Self-hosted Version](#-self-hosted-version)
   - [Development](#-development)
 - [Contribution](#-contribution)
@@ -67,6 +67,7 @@ Formbricks is a powerful tool for creating in-product micro-surveys. It allows y
 - [License](#-license)
 - [Security](#-security)
 
+<a id="features"></a>
 ### Features
 
 - 📲 Create **in-product surveys** with our no-code editor with multiple question types.
@@ -87,14 +88,17 @@ Formbricks is a powerful tool for creating in-product micro-surveys. It allows y
 - 🔒 [Auth.js](https://authjs.dev/)
 - 🧘‍♂️ [Zod](https://zod.dev/)
 
+<a id="features"></a>
 ## 🚀 Getting started
 
 We've got several options depending on your need to help you quickly get started with Formbricks.
 
+<a id="cloud-version"></a>
 ### ☁️ Cloud Version
 
 Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com).
 
+<a id="self-hosted-version"></a>
 ### 🐳 Self-hosted version
 
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription.
@@ -115,6 +119,7 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
 
+<a id="development"></a>
 ### 👨‍💻 Development
 
 #### Prerequisites
@@ -137,6 +142,7 @@ To get started locally, we've got a [guide to help you](https://formbricks.com/d
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
 
+<a id="contribution"></a>
 ## ✍️ Contribution
 
 We are very happy if you are interested in contributing to Formbricks 🤗
@@ -155,16 +161,19 @@ Please check out [our contribution guide](https://formbricks.com/docs/contributi
   <img src="https://contrib.rocks/image?repo=formbricks/formbricks" />
 </a>
 
+<a id="contact-us"></a>
 ## 📆 Contact us
 
 Let's have a chat about your survey needs and get you started.
 
 <a href="https://cal.com/johannes/onboarding?utm_source=banner&utm_campaign=oss"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
+<a id="license"></a>
 ## ⚖️ License
 
 Distributed under the AGPLv3 License. See [`LICENSE`](./LICENSE) for more information.
 
+<a id="security"></a>
 ## 🔒 Security
 
 We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See [`SECURITY.md`](./SECURITY.md) for more information.
