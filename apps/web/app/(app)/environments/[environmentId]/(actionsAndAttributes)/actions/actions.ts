@@ -3,7 +3,7 @@
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createActionClass, deleteActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
-import { canUserAccessActionClass } from "@formbricks/lib/actionClass/auth";
+import { canUserUpdateActionClass } from "@formbricks/lib/actionClass/auth";
 import { getServerSession } from "next-auth";
 import { TActionClassInput } from "@formbricks/types/actionClasses";
 
@@ -14,12 +14,19 @@ import {
 } from "@formbricks/lib/action/service";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 export async function deleteActionClassAction(environmentId, actionClassId: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  const team = await getTeamByEnvironmentId(environmentId);
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId, team.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   await deleteActionClass(environmentId, actionClassId);
@@ -33,7 +40,13 @@ export async function updateActionClassAction(
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  const team = await getTeamByEnvironmentId(environmentId);
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId, team.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await updateActionClass(environmentId, actionClassId, updatedAction);
@@ -49,43 +62,68 @@ export async function createActionClassAction(action: TActionClassInput) {
   return await createActionClass(action.environmentId, action);
 }
 
-export const getActionCountInLastHourAction = async (actionClassId: string) => {
+export const getActionCountInLastHourAction = async (actionClassId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  const team = await getTeamByEnvironmentId(environmentId);
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId, team.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getActionCountInLastHour(actionClassId);
 };
 
-export const getActionCountInLast24HoursAction = async (actionClassId: string) => {
+export const getActionCountInLast24HoursAction = async (actionClassId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  const team = await getTeamByEnvironmentId(environmentId);
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId, team.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getActionCountInLast24Hours(actionClassId);
 };
 
-export const getActionCountInLast7DaysAction = async (actionClassId: string) => {
+export const getActionCountInLast7DaysAction = async (actionClassId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  const team = await getTeamByEnvironmentId(environmentId);
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId, team.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getActionCountInLast7Days(actionClassId);
 };
 
 export const GetActiveInactiveSurveysAction = async (
-  actionClassId: string
+  actionClassId: string,
+  environmentId: string
 ): Promise<{ activeSurveys: string[]; inactiveSurveys: string[] }> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await canUserAccessActionClass(session.user.id, actionClassId);
+  const team = await getTeamByEnvironmentId(environmentId);
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const isAuthorized = await canUserUpdateActionClass(session.user.id, actionClassId, team.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const surveys = await getSurveysByActionClassId(actionClassId);

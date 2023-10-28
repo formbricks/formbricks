@@ -23,7 +23,7 @@ export default function ActionDetailModal({
   const tabs = [
     {
       title: "Activity",
-      children: <EventActivityTab actionClass={actionClass} />,
+      children: <EventActivityTab actionClass={actionClass} environmentId={environmentId} />,
     },
     {
       title: "Settings",

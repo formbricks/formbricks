@@ -7,10 +7,23 @@ import { getActionClass } from "./service";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { actionClassCache } from "./cache";
+import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
+import { getAccessFlags } from "../../lib/membership/utils";
 
-export const canUserAccessActionClass = async (userId: string, actionClassId: string): Promise<boolean> =>
+export const canUserUpdateActionClass = async (
+  userId: string,
+  actionClassId: string,
+  teamId: string
+): Promise<boolean> =>
   await unstable_cache(
     async () => {
+      const currentUserMembership = await getMembershipByUserIdTeamId(userId, teamId);
+      const { isViewer } = getAccessFlags(currentUserMembership?.role);
+
+      if (isViewer) {
+        return false;
+      }
+
       validateInputs([userId, ZId], [actionClassId, ZId]);
       if (!userId) return false;
 
