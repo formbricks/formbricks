@@ -37,7 +37,7 @@ const QuestionFormInput = ({
             onFileUpload={(url: string[]) => {
               updateQuestion(questionIdx, { imageUrl: url[0] });
             }}
-            fileUrl={[question.imageUrl || ""]}
+            fileUrl={question.imageUrl}
           />
         )}
         <div className="flex items-center space-x-2">

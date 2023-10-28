@@ -105,7 +105,7 @@ export default function EditWelcomeCard({
                 onFileUpload={(url: string[]) => {
                   updateSurvey({ fileUrl: url[0] });
                 }}
-                fileUrl={localSurvey?.welcomeCard?.fileUrl ? [localSurvey?.welcomeCard?.fileUrl] : undefined}
+                fileUrl={localSurvey?.welcomeCard?.fileUrl}
               />
             </div>
             <div className="mt-3">
