@@ -1,4 +1,4 @@
-import { getSyncSurveysCached } from "@/app/api/v1/js/sync/[environmentId]/lib/surveys";
+import { getSyncSurveysCached } from "@/app/api/v1/js/lib/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
