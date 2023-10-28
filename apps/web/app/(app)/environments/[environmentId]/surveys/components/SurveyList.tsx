@@ -2,7 +2,7 @@ import { UsageAttributesUpdater } from "@/app/(app)/components/FormbricksClient"
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
-import { SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
@@ -11,9 +11,17 @@ import { Badge } from "@formbricks/ui/Badge";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@formbricks/lib/authOptions";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
+  const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(environmentId);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
   if (!product) {
     throw new Error("Product not found");
   }
@@ -28,7 +36,14 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   if (surveys.length === 0) {
-    return <SurveyStarter environmentId={environmentId} environment={environment} product={product} />;
+    return (
+      <SurveyStarter
+        environmentId={environmentId}
+        environment={environment}
+        product={product}
+        profile={session.user}
+      />
+    );
   }
 
   return (
@@ -96,7 +111,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                         environmentId={environmentId}
                         environment={environment}
                         otherEnvironment={otherEnvironment!}
-                        surveyBaseUrl={SURVEY_BASE_URL}
+                        webAppUrl={WEBAPP_URL}
                         singleUseId={singleUseId}
                       />
                     </div>

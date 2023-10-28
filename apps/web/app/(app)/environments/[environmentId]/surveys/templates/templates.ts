@@ -15,7 +15,7 @@ const hiddenFieldsDefault: TSurveyHiddenFields = {
 };
 
 const welcomeCardDefault: TSurveyWelcomeCard = {
-  enabled: true,
+  enabled: false,
   headline: "Welcome!",
   html: "Thanks for providing your feedback - let's go!",
   timeToFinish: false,
@@ -503,8 +503,8 @@ export const templates: TTemplate[] = [
           headline: "How do you like {{productName}}?",
           required: true,
           subheader: "",
-          lowerLabel: "",
-          upperLabel: "",
+          lowerLabel: "Not good",
+          upperLabel: "Very satisfied",
         },
         {
           id: createId(),

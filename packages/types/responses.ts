@@ -31,8 +31,8 @@ const ZResponseNote = z.object({
 export type TResponseNote = z.infer<typeof ZResponseNote>;
 
 export const ZResponseMeta = z.object({
-  source: z.string(),
-  url: z.string(),
+  source: z.string().optional(),
+  url: z.string().optional(),
   userAgent: z.object({
     browser: z.string().optional(),
     os: z.string().optional(),
