@@ -73,3 +73,5 @@ If you have followed the instructions above, we will **not** take any legal acti
 We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission, We will keep you informed of the progress towards resolving the problem, In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise).
 
 We, at Formbricks, wish to express our gratitude towards all individuals who assist us in fortifying our security posture. Your responsible disclosure and cooperation enable us to elevate our security protocols, safeguarding our platform and data therein.
+
+<p align="right"><a href="#top"><img src="https://cdn-icons-png.flaticon.com/512/892/892692.png" height="50px"></a></p>
