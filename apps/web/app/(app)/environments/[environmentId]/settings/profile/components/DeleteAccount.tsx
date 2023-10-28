@@ -9,7 +9,7 @@ import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { deleteProfileAction } from "../actions";
 
@@ -62,6 +62,11 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps)
       setOpen(false);
     }
   };
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+  };
 
   return (
     <DeleteDialog
@@ -91,6 +96,8 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps)
             confirm the definitive deletion of your account:
           </label>
           <Input
+            ref={inputRef}
+            onPaste={handlePaste}
             value={inputValue}
             onChange={handleInputChange}
             placeholder={session.user.email}
