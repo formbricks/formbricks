@@ -159,6 +159,7 @@ export function Survey({
             }
             isLastQuestion={currQues.id === survey.questions[survey.questions.length - 1].id}
             brandColor={brandColor}
+            surveyId={survey.id}
           />
         )
       );
