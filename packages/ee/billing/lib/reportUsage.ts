@@ -1,11 +1,29 @@
-import { priceLookupKeys } from "../utils/products";
+import { priceLookupKeys } from "./products";
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
 });
 
-const reportUsageToStripe = async (
+export const reportUsage = async (
+  items: Stripe.SubscriptionItem[],
+  lookupKey: priceLookupKeys,
+  quantity: number
+) => {
+  const subscriptionItem = items.find((subItem) => subItem.price.lookup_key === priceLookupKeys[lookupKey]);
+
+  if (!subscriptionItem) {
+    throw new Error(`No such product found: ${priceLookupKeys[lookupKey]}`);
+  }
+
+  await stripe.subscriptionItems.createUsageRecord(subscriptionItem.id, {
+    action: "set",
+    quantity: quantity,
+    timestamp: Math.floor(Date.now() / 1000),
+  });
+};
+
+export const reportUsageToStripe = async (
   stripeCustomerId: string,
   usage: number,
   lookupKey: priceLookupKeys,

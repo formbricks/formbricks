@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
-import reportUsage from "@formbricks/ee/billing/api/report-usage";
-import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
+import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
+import { priceLookupKeys } from "@formbricks/ee/billing/lib/products";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import {
   getMonthlyActiveTeamPeopleCount,
@@ -27,10 +27,15 @@ async function reportTeamUsage(team: TTeam) {
   let responses = await getMonthlyTeamResponseCount(team.id);
 
   if (calculatePeople) {
-    await reportUsage(stripeCustomerId, people, priceLookupKeys.userTargeting, Math.floor(Date.now() / 1000));
+    await reportUsageToStripe(
+      stripeCustomerId,
+      people,
+      priceLookupKeys.userTargeting,
+      Math.floor(Date.now() / 1000)
+    );
   }
   if (calculateResponses) {
-    await reportUsage(
+    await reportUsageToStripe(
       stripeCustomerId,
       responses + 1000,
       priceLookupKeys.appSurvey,

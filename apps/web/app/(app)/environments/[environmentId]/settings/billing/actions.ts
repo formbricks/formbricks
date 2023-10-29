@@ -10,9 +10,9 @@ import {
 } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { getServerSession } from "next-auth";
-import { createSubscription } from "@formbricks/ee/billing/api/create-subscription";
-import { createCustomerPortalSession } from "@formbricks/ee/billing/api/create-customer-portal-session";
-import { removeSubscription } from "@formbricks/ee/billing/api/remove-subscription";
+import { createSubscription } from "@formbricks/ee/billing/lib/createSubscription";
+import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/createCustomerPortalSession";
+import { removeSubscription } from "@formbricks/ee/billing/lib/removeSubscription";
 
 export async function getMonthlyCounts(teamId: string) {
   const session = await getServerSession(authOptions);
