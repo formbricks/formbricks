@@ -1,11 +1,11 @@
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
+import { useEffect } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { useEffect } from "preact/hooks";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -122,7 +122,7 @@ export default function PictureSelectionQuestion({
                   src={choice.imageUrl}
                   id={choice.id}
                   alt={choice.imageUrl.split("/").pop()}
-                  className="h-full w-full object-fill"
+                  className="h-full w-full object-cover"
                 />
                 {question.allowMulti ? (
                   <input
@@ -132,7 +132,7 @@ export default function PictureSelectionQuestion({
                     tabindex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     style={{ borderColor: brandColor, color: brandColor }}
-                    className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded"
+                    className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border border-slate-400"
                     required={
                       question.required && Array.isArray(value) && value.length ? false : question.required
                     }
@@ -145,7 +145,7 @@ export default function PictureSelectionQuestion({
                     tabindex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     style={{ borderColor: brandColor, color: brandColor }}
-                    className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5"
+                    className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 "
                     required={
                       question.required && Array.isArray(value) && value.length ? false : question.required
                     }

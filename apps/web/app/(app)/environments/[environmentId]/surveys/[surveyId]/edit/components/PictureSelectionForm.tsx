@@ -1,15 +1,15 @@
+import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
-import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { Switch } from "@formbricks/ui/Switch";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
-import { useState } from "react";
-import { Input } from "@formbricks/ui/Input";
 import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { createId } from "@paralleldrive/cuid2";
+import { useState } from "react";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
@@ -74,7 +74,7 @@ export default function PictureSelectionForm({
             className={cn("text-slate-400", {
               "text-red-600": isInValid && question.choices?.length < 2,
             })}>
-            (Upload atleast 2 images)
+            (Upload at least 2 images)
           </span>
         </Label>
         <div className="mt-3 flex w-full items-center justify-center">

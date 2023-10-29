@@ -1,12 +1,13 @@
 "use client";
-import toast from "react-hot-toast";
+import { cn } from "@formbricks/lib/cn";
+import { TAllowedFileExtensions } from "@formbricks/types/common";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { FileIcon } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { uploadFile } from "./lib/fileUpload";
-import { cn } from "@formbricks/lib/cn";
-import { TAllowedFileExtensions } from "@formbricks/types/common";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) =>
@@ -189,12 +190,14 @@ const FileInput: React.FC<FileInputProps> = ({
             {selectedFiles.map((file, idx) => (
               <>
                 {isImage(file.name) ? (
-                  <div className="relative h-24 w-40 rounded-lg">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                  <div className="relative h-24 w-40 overflow-hidden rounded-lg">
+                    <Image
                       src={file.url}
                       alt={file.name}
-                      className={cn("h-full w-full rounded-lg object-fill", !file.uploaded && "opacity-50")}
+                      layout="fill"
+                      objectFit="cover"
+                      quality={100}
+                      className={!file.uploaded ? "opacity-50" : ""}
                     />
                     {file.uploaded ? (
                       <div
@@ -241,12 +244,14 @@ const FileInput: React.FC<FileInputProps> = ({
         ) : (
           <div className="h-52">
             {isImage(selectedFiles[0].name) ? (
-              <div className="relative mx-auto h-full w-max max-w-full rounded-lg">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="relative mx-auto h-52 w-max overflow-hidden rounded-lg">
+                <Image
                   src={selectedFiles[0].url}
                   alt={selectedFiles[0].name}
-                  className={cn("h-full rounded-lg object-fill", !selectedFiles[0].uploaded && "opacity-50")}
+                  layout="fill"
+                  objectFit="cover"
+                  quality={100}
+                  className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
                 />
                 {selectedFiles[0].uploaded ? (
                   <div
