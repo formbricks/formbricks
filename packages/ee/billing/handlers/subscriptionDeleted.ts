@@ -1,6 +1,6 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import Stripe from "stripe";
-import { priceLookupKeys } from "../utils/products";
+import { priceLookupKeys } from "../lib/products";
 
 export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;

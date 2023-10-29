@@ -1,5 +1,5 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
-import { getFirstOfNextMonthTimestamp } from "./create-subscription";
+import { getFirstOfNextMonthTimestamp } from "./createSubscription";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {

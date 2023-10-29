@@ -3,8 +3,8 @@ import { getProducts } from "@formbricks/lib/product/service";
 import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import Stripe from "stripe";
-import { priceLookupKeys } from "../utils/products";
-import { reportUsage } from "../utils/report-usage";
+import { priceLookupKeys } from "../lib/products";
+import { reportUsage } from "../lib/reportUsage";
 
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;

@@ -4,8 +4,8 @@ import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 import { getProducts } from "@formbricks/lib/product/service";
 
 import Stripe from "stripe";
-import { priceLookupKeys } from "../utils/products";
-import { reportUsage } from "../utils/report-usage";
+import { priceLookupKeys } from "../lib/products";
+import { reportUsage } from "../lib/reportUsage";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",

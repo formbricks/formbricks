@@ -13,7 +13,7 @@ import {
   upgradePlanAction,
 } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
-import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
+import { priceLookupKeys } from "@formbricks/ee/billing/lib/products";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import toast from "react-hot-toast";
 
