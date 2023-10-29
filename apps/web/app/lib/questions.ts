@@ -69,18 +69,18 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Select one or more pictures",
     icon: PhotoIcon,
     preset: {
-      headline: "Which is the cutest puppie?",
-      subheader: "They are all so cute!",
+      headline: "Which is the cutest puppy?",
+      subheader: "You can also pick both.",
       allowMulti: true,
       choices: [
-        // {
-        //   id: createId(),
-        //   imageUrl:
-        // },
-        // {
-        //   id: createId(),
-        //   imageUrl:
-        // },
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
+        },
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
+        },
       ],
     },
   },
