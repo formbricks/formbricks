@@ -61,7 +61,7 @@ export default function PricingTableComponent({
     }
   };
 
-  const handleClickingCancelButton = async (e, lookupKey) => {
+  const handleUnsubscribe = async (e, lookupKey) => {
     try {
       e.preventDefault();
       setActiveLookupKey(lookupKey);
@@ -162,10 +162,8 @@ export default function PricingTableComponent({
           paidFeatures={coreAndWebAppSurveyPaid}
           perMetricCharge={0.15}
           loading={upgradingPlan}
-          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.appSurvey])}
-          cancelPlanFunction={(e) =>
-            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.appSurvey])
-          }
+          onUpgrade={() => upgradePlan(priceLookupKeys[priceLookupKeys.appSurvey])}
+          onUbsubscribe={(e) => handleUnsubscribe(e, priceLookupKeys[priceLookupKeys.appSurvey])}
         />
 
         <PricingCard
@@ -177,10 +175,8 @@ export default function PricingTableComponent({
           team={team}
           paidFeatures={linkSurveysPaid}
           loading={upgradingPlan}
-          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.linkSurvey])}
-          cancelPlanFunction={(e) =>
-            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.linkSurvey])
-          }
+          onUpgrade={() => upgradePlan(priceLookupKeys[priceLookupKeys.linkSurvey])}
+          onUbsubscribe={(e) => handleUnsubscribe(e, priceLookupKeys[priceLookupKeys.linkSurvey])}
         />
 
         <PricingCard
@@ -197,10 +193,8 @@ export default function PricingTableComponent({
           paidFeatures={userTargetingPaid}
           perMetricCharge={0.01}
           loading={upgradingPlan}
-          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.userTargeting])}
-          cancelPlanFunction={(e) =>
-            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.userTargeting])
-          }
+          onUpgrade={() => upgradePlan(priceLookupKeys[priceLookupKeys.userTargeting])}
+          onUbsubscribe={(e) => handleUnsubscribe(e, priceLookupKeys[priceLookupKeys.userTargeting])}
         />
       </div>
       <DeleteDialog
