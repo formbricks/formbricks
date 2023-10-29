@@ -31,16 +31,15 @@ export const PricingCard = ({
   sliderValue?: number;
   sliderLimit?: number;
   freeTierLimit?: number;
-  paidFeatures: string[];
+  paidFeatures: {
+    title: string;
+    comingSoon: boolean;
+  }[];
   perMetricCharge?: number;
   loading: boolean;
   onUpgrade: any;
   onUbsubscribe: any;
 }) => {
-  const currentDate = new Date();
-  const daysInCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-  const daysPassed = currentDate.getDate();
-
   const featureNameKey = featureName as keyof typeof team.billing.features;
   return (
     <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
@@ -91,11 +90,16 @@ export const PricingCard = ({
 
             <ul className="mt-4 space-y-4">
               {paidFeatures.map((feature, index) => (
-                <li key={index} className="flex items-start">
+                <li key={index} className="flex items-center">
                   <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
                     <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
                   </div>
-                  <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
+                  <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature.title}</span>
+                  {feature.comingSoon && (
+                    <span className=" mx-2 bg-blue-100 p-1 text-xs text-slate-400 dark:bg-slate-700 dark:text-teal-500">
+                      coming soon
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
