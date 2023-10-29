@@ -28,6 +28,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     icon: PhotoIcon,
     preset: {
       headline: "",
+      subheader: "",
       allowMulti: true,
       choices: [],
     },
