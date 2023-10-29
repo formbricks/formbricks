@@ -106,9 +106,9 @@ export default function PictureSelectionQuestion({
                 onClick={() => handleChange(choice.id)}
                 className={cn(
                   Array.isArray(value) && value.includes(choice.id)
-                    ? `z-10 border-4 shadow-xl grayscale-0 focus:border-4`
-                    : "grayscale",
-                  "box-border inline-block h-28 w-full overflow-hidden rounded-xl border border-slate-400 focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
+                    ? `z-10 border-4 shadow-xl focus:border-4`
+                    : "",
+                  "relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border border-slate-400 focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
                 )}>
                 <img
                   src={choice.imageUrl}
