@@ -5,6 +5,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { useEffect } from "preact/hooks";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -66,6 +67,12 @@ export default function PictureSelectionQuestion({
       addItem(id);
     }
   };
+
+  useEffect(() => {
+    if (!question.allowMulti && Array.isArray(value) && value.length > 1) {
+      onChange({ [question.id]: [] });
+    }
+  }, [question.allowMulti]);
 
   const questionChoices = question.choices;
 
