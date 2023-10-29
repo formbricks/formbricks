@@ -59,8 +59,8 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
 
       await updateTeam(teamId, {
         billing: {
+          ...team.billing,
           stripeCustomerId: customer.id,
-          features: team.billing.features,
         },
       });
 

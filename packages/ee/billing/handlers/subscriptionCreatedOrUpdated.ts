@@ -66,7 +66,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
 
   await updateTeam(teamId, {
     billing: {
-      stripeCustomerId: team.billing.stripeCustomerId,
+      ...team.billing,
       features: updatedFeatures,
     },
   });
