@@ -94,7 +94,7 @@ export default function PictureSelectionQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-scroll rounded-md bg-white">
+          <div className="relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-auto rounded-md bg-white">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
