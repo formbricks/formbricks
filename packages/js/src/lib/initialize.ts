@@ -72,50 +72,54 @@ export const initialize = async (
     localConfigResult.value.environmentId === c.environmentId &&
     localConfigResult.value.apiHost === c.apiHost
   ) {
-    const { state, apiHost, environmentId } = localConfigResult.value;
+    // const { state, apiHost, environmentId } = localConfigResult.value;
 
-    logger.debug("Found existing configuration. Checking session.");
-    const existingSession = state.session;
+    logger.debug("Found existing configuration.");
 
-    // conditions in which the local storage is valid?
-    // public -> no person, existing surveys, existing displays
-    // identified users -> existing person, existing surveys
+    config.update(localConfigResult.value);
 
-    if (!existingSession || !state.person?.id) {
-      logger.debug("No session or person found. This is an unidentified user, checking for displays");
-      if (state.displays && state.displays?.length > 0) {
-        logger.debug("Found existing displays.");
-        config.update(localConfigResult.value);
-      } else {
-        logger.debug("No existing displays found. Syncing.");
-        await sync({
-          apiHost,
-          environmentId,
-        });
-      }
-    } else {
-      config.update(localConfigResult.value);
+    // logger.debug("Found existing configuration. Checking session.");
+    // const existingSession = state.session;
 
-      if (isExpired(existingSession)) {
-        logger.debug("Session expired. Resyncing.");
+    // // conditions in which the local storage is valid?
+    // // public -> no person, existing surveys, existing displays
+    // // identified users -> existing person, existing surveys
 
-        try {
-          await sync({
-            apiHost,
-            environmentId,
-            personId: state.person.id,
-            sessionId: existingSession.id,
-          });
-        } catch (e) {
-          logger.debug("Sync failed. Clearing config and starting from scratch.");
-          await resetPerson();
-          return await initialize(c);
-        }
-      } else {
-        logger.debug("Session valid. Continuing.");
-        // continue for now - next sync will check complete state
-      }
-    }
+    // if (!existingSession || !state.person?.id) {
+    //   logger.debug("No session or person found. This is an unidentified user, checking for displays");
+    //   if (state.displays && state.displays?.length > 0) {
+    //     logger.debug("Found existing displays.");
+    //     config.update(localConfigResult.value);
+    //   } else {
+    //     logger.debug("No existing displays found. Syncing.");
+    //     await sync({
+    //       apiHost,
+    //       environmentId,
+    //     });
+    //   }
+    // } else {
+    //   config.update(localConfigResult.value);
+
+    //   if (isExpired(existingSession)) {
+    //     logger.debug("Session expired. Resyncing.");
+
+    //     try {
+    //       await sync({
+    //         apiHost,
+    //         environmentId,
+    //         personId: state.person.id,
+    //         sessionId: existingSession.id,
+    //       });
+    //     } catch (e) {
+    //       logger.debug("Sync failed. Clearing config and starting from scratch.");
+    //       await resetPerson();
+    //       return await initialize(c);
+    //     }
+    //   } else {
+    //     logger.debug("Session valid. Continuing.");
+    //     // continue for now - next sync will check complete state
+    //   }
+    // }
   } else {
     logger.debug("No valid configuration found or it has been expired. Creating new config.");
 

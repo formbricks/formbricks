@@ -2,7 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { createPerson } from "@formbricks/lib/person/service";
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
-import { getSurveysCacheTag } from "@formbricks/lib/survey/service";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 
 export async function OPTIONS() {
   // cors headers
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
     if (person) {
       // revalidate the cache
-      revalidateTag(getSurveysCacheTag(environmentId));
+      revalidateTag(surveyCache.tag.byEnvironmentId(environmentId));
     }
 
     return responses.successResponse({ status: "success", person }, true);

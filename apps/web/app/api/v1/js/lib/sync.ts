@@ -2,9 +2,9 @@ import { getSyncSurveysCached } from "@/app/api/v1/js/lib/surveys";
 import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
-import { getProductByEnvironmentIdCached } from "@formbricks/lib/product/service";
-import { createSession, extendSession, getSessionCached } from "@formbricks/lib/session/service";
+import { getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { createSession, getSession } from "@formbricks/lib/session/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState } from "@formbricks/types/js";
@@ -43,7 +43,7 @@ export const getUpdatedState = async (
       // don't allow new people or sessions
       throw new Error(errorMessage);
     }
-    const session = await getSessionCached(sessionId);
+    const session = await getSession(sessionId);
     if (!session) {
       // don't allow new sessions
       throw new Error(errorMessage);
@@ -56,14 +56,14 @@ export const getUpdatedState = async (
     }
   }
 
-  // const [person, session] = await Promise.all([getPerson(personId), getSessionCached(sessionId)]);
+  // const [person, session] = await Promise.all([getPerson(personId), getSession(sessionId)]);
   const person = await getPerson(personId);
 
   if (!person) {
     throw new Error("Person not found");
   }
 
-  session = await getSessionCached(sessionId);
+  session = await getSession(sessionId);
 
   if (!session || session.expiresAt < new Date()) {
     if (person) {
@@ -77,7 +77,7 @@ export const getUpdatedState = async (
   // }
 
   // if (sessionId) {
-  //   session = await getSessionCached(sessionId);
+  //   session = await getSession(sessionId);
   // if (!session || session.expiresAt < new Date()) {
   //   if (person) {
   //     session = await createSession(person.id);
@@ -106,7 +106,7 @@ export const getUpdatedState = async (
   //   session = await createSession(person.id);
   // } else {
   //   // check validity of person & session
-  //   session = await getSessionCached(sessionId);
+  //   session = await getSession(sessionId);
   //   if (!session) {
   //     // create a new session
   //     session = await createSession(person.id);
@@ -135,7 +135,7 @@ export const getUpdatedState = async (
   const [surveys, noCodeActionClasses, product] = await Promise.all([
     getSyncSurveysCached(environmentId, person),
     getActionClasses(environmentId),
-    getProductByEnvironmentIdCached(environmentId),
+    getProductByEnvironmentId(environmentId),
   ]);
 
   if (!product) {
@@ -167,7 +167,7 @@ export const getPublicUpdatedState = async (environmentId: string) => {
   const [surveys, noCodeActionClasses, product] = await Promise.all([
     getSurveys(environmentId),
     getActionClasses(environmentId),
-    getProductByEnvironmentIdCached(environmentId),
+    getProductByEnvironmentId(environmentId),
   ]);
 
   if (!product) {
