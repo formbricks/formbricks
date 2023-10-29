@@ -94,7 +94,7 @@ export default function PictureSelectionQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-auto rounded-md bg-white">
+          <div className="relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-auto rounded-md bg-white pr-2.5">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
@@ -117,11 +117,12 @@ export default function PictureSelectionQuestion({
                     : "",
                   "relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border border-slate-400 focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
                 )}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={choice.imageUrl}
                   id={choice.id}
                   alt={choice.imageUrl.split("/").pop()}
-                  className="h-full w-full"
+                  className="h-full w-full object-fill"
                 />
                 {question.allowMulti ? (
                   <input

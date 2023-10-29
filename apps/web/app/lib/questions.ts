@@ -69,10 +69,19 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Select one or more pictures",
     icon: PhotoIcon,
     preset: {
-      headline: "",
-      subheader: "",
+      headline: "Which is the cutest puppie?",
+      subheader: "They are all so cute!",
       allowMulti: true,
-      choices: [],
+      choices: [
+        // {
+        //   id: createId(),
+        //   imageUrl:
+        // },
+        // {
+        //   id: createId(),
+        //   imageUrl:
+        // },
+      ],
     },
   },
   {

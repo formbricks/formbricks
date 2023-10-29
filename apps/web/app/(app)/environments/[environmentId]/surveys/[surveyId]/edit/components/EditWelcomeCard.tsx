@@ -100,6 +100,7 @@ export default function EditWelcomeCard({
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
+                id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg"]}
                 environmentId={environmentId}
                 onFileUpload={(url: string[]) => {

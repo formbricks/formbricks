@@ -79,6 +79,7 @@ export default function PictureSelectionForm({
         </Label>
         <div className="mt-3 flex w-full items-center justify-center">
           <FileInput
+            id="choices-file-input"
             allowedFileExtensions={["png", "jpeg", "jpg"]}
             environmentId={environmentId}
             onFileUpload={(urls: string[]) => {

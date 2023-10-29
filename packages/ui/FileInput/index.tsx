@@ -6,35 +6,18 @@ import { FileIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { uploadFile } from "./lib/fileUpload";
 import { cn } from "@formbricks/lib/cn";
+import { TAllowedFileExtensions } from "@formbricks/types/common";
 
-type AllowedFileExtensions =
-  | "png"
-  | "jpeg"
-  | "jpg"
-  | "pdf"
-  | "doc"
-  | "docx"
-  | "xls"
-  | "xlsx"
-  | "ppt"
-  | "pptx"
-  | "plain"
-  | "csv"
-  | "mp4"
-  | "mov"
-  | "avi"
-  | "mkv"
-  | "webm"
-  | "zip"
-  | "rar"
-  | "7z"
-  | "tar";
+const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
+const isImage = (name: string) =>
+  allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtensions);
 
 interface FileInputProps {
-  allowedFileExtensions: Partial<AllowedFileExtensions>[];
+  id: string;
+  allowedFileExtensions: TAllowedFileExtensions[];
   environmentId: string | undefined;
   onFileUpload: (uploadedUrl: string[] | undefined) => void;
-  fileUrl: string | string[] | undefined;
+  fileUrl?: string | string[];
   multiple?: boolean;
 }
 
@@ -45,30 +28,29 @@ interface SelectedFile {
 }
 
 const FileInput: React.FC<FileInputProps> = ({
+  id,
   allowedFileExtensions,
   environmentId,
   onFileUpload,
   fileUrl,
   multiple = false,
 }) => {
-  const [files, setFiles] = useState<SelectedFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
 
   const handleUpload = async (files: File[]) => {
-    let filesToUpload: File[] = files;
-
     if (!multiple && files.length > 1) {
-      filesToUpload = [files[0]];
+      files = [files[0]];
       toast.error("Only one file is allowed");
     }
 
-    const allowedFiles = filesToUpload.filter(
+    const allowedFiles = files.filter(
       (file) =>
         file &&
         file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as AllowedFileExtensions)
+        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtensions)
     );
 
-    if (allowedFiles.length < filesToUpload.length) {
+    if (allowedFiles.length < files.length) {
       if (allowedFiles.length === 0) {
         toast.error("No files are supported");
         return;
@@ -76,7 +58,7 @@ const FileInput: React.FC<FileInputProps> = ({
       toast.error("Some files are not supported");
     }
 
-    setFiles(
+    setSelectedFiles(
       allowedFiles.map((file) => ({ url: URL.createObjectURL(file), name: file.name, uploaded: false }))
     );
 
@@ -95,7 +77,7 @@ const FileInput: React.FC<FileInputProps> = ({
       }
     }
 
-    let uploadedUrls: string[] = [];
+    const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
       if (file.status === "fulfilled") {
         uploadedUrls.push(file.value.url);
@@ -103,7 +85,7 @@ const FileInput: React.FC<FileInputProps> = ({
     });
 
     if (uploadedUrls.length === 0) {
-      setFiles([]);
+      setSelectedFiles([]);
       return;
     }
 
@@ -125,7 +107,7 @@ const FileInput: React.FC<FileInputProps> = ({
   };
 
   const handleRemove = async (idx: number) => {
-    const newFileUrl = files.filter((_, i) => i !== idx).map((file) => file.url);
+    const newFileUrl = selectedFiles.filter((_, i) => i !== idx).map((file) => file.url);
     onFileUpload(newFileUrl);
   };
 
@@ -144,7 +126,7 @@ const FileInput: React.FC<FileInputProps> = ({
       (file) =>
         file &&
         file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as AllowedFileExtensions)
+        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtensions)
     );
 
     if (allowedFiles.length < filesToUpload.length) {
@@ -155,7 +137,7 @@ const FileInput: React.FC<FileInputProps> = ({
       toast.error("Some files are not supported");
     }
 
-    setFiles((prevFiles) => [
+    setSelectedFiles((prevFiles) => [
       ...prevFiles,
       ...allowedFiles.map((file) => ({ url: URL.createObjectURL(file), name: file.name, uploaded: false })),
     ]);
@@ -175,7 +157,7 @@ const FileInput: React.FC<FileInputProps> = ({
       }
     }
 
-    let uploadedUrls: string[] = [];
+    const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
       if (file.status === "fulfilled") {
         uploadedUrls.push(file.value.url);
@@ -187,7 +169,7 @@ const FileInput: React.FC<FileInputProps> = ({
   };
 
   useEffect(() => {
-    const fs = () => {
+    const getSelectedFiles = () => {
       if (fileUrl && typeof fileUrl === "string") {
         return [{ url: fileUrl, name: fileUrl.split("/").pop() || "", uploaded: true }];
       } else if (fileUrl && Array.isArray(fileUrl)) {
@@ -196,22 +178,23 @@ const FileInput: React.FC<FileInputProps> = ({
         return [];
       }
     };
-    setFiles(fs());
+    setSelectedFiles(getSelectedFiles());
   }, [fileUrl]);
 
   return (
     <div className="w-full cursor-default">
-      {files.length > 0 ? (
+      {selectedFiles.length > 0 ? (
         multiple ? (
           <div className="flex flex-wrap gap-2">
-            {files.map((file, idx) => (
+            {selectedFiles.map((file, idx) => (
               <>
-                {file.name.endsWith("jpg") || file.name.endsWith("jpeg") || file.name.endsWith("png") ? (
+                {isImage(file.name) ? (
                   <div className="relative h-24 w-40 rounded-lg">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={file.url}
                       alt={file.name}
-                      className={cn("h-full w-full rounded-lg", !file.uploaded && "opacity-50")}
+                      className={cn("h-full w-full rounded-lg object-fill", !file.uploaded && "opacity-50")}
                     />
                     {file.uploaded ? (
                       <div
@@ -244,6 +227,7 @@ const FileInput: React.FC<FileInputProps> = ({
             ))}
 
             <Uploader
+              id={id}
               name="uploadMore"
               handleDragOver={handleDragOver}
               uploaderClassName="h-24 w-40"
@@ -256,16 +240,15 @@ const FileInput: React.FC<FileInputProps> = ({
           </div>
         ) : (
           <div className="h-52">
-            {files[0].name.endsWith("jpg") ||
-            files[0].name.endsWith("jpeg") ||
-            files[0].name.endsWith("png") ? (
+            {isImage(selectedFiles[0].name) ? (
               <div className="relative mx-auto h-full w-max max-w-full rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={files[0].url}
-                  alt={files[0].name}
-                  className={cn("h-full rounded-lg", !files[0].uploaded && "opacity-50")}
+                  src={selectedFiles[0].url}
+                  alt={selectedFiles[0].name}
+                  className={cn("h-full rounded-lg object-fill", !selectedFiles[0].uploaded && "opacity-50")}
                 />
-                {files[0].uploaded ? (
+                {selectedFiles[0].uploaded ? (
                   <div
                     className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                     onClick={() => handleRemove(0)}>
@@ -279,9 +262,9 @@ const FileInput: React.FC<FileInputProps> = ({
               <div className="relative flex h-full w-full flex-col items-center justify-center border border-slate-300">
                 <FileIcon className="h-6 text-slate-500" />
                 <p className="mt-2 text-sm text-slate-500">
-                  <span className="font-semibold">{files[0].name}</span>
+                  <span className="font-semibold">{selectedFiles[0].name}</span>
                 </p>
-                {files[0].uploaded ? (
+                {selectedFiles[0].uploaded ? (
                   <div
                     className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                     onClick={() => handleRemove(0)}>
@@ -296,7 +279,8 @@ const FileInput: React.FC<FileInputProps> = ({
         )
       ) : (
         <Uploader
-          name="selectedFile"
+          id={id}
+          name="selected-file"
           handleDragOver={handleDragOver}
           handleDrop={handleDrop}
           uploaderClassName="h-52 w-full"
@@ -312,6 +296,7 @@ const FileInput: React.FC<FileInputProps> = ({
 export default FileInput;
 
 const Uploader = ({
+  id,
   name,
   handleDragOver,
   uploaderClassName,
@@ -321,18 +306,19 @@ const Uploader = ({
   handleUpload,
   uploadMore = false,
 }: {
+  id: string;
   name: string;
   handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
   uploaderClassName: string;
   handleDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
-  allowedFileExtensions: Partial<AllowedFileExtensions>[];
+  allowedFileExtensions: TAllowedFileExtensions[];
   multiple: boolean;
   handleUpload: (files: File[]) => void;
   uploadMore?: boolean;
 }) => {
   return (
     <label
-      htmlFor={name}
+      htmlFor={`${id}-${name}`}
       className={cn(
         "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800",
         uploaderClassName
@@ -346,8 +332,8 @@ const Uploader = ({
         </p>
         <input
           type="file"
-          id={name}
-          name={name}
+          id={`${id}-${name}`}
+          name={`${id}-${name}`}
           accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
           className="hidden"
           multiple={multiple}

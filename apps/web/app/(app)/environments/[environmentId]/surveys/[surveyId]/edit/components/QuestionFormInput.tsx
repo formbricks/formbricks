@@ -32,6 +32,7 @@ const QuestionFormInput = ({
       <div className="mt-2 flex flex-col gap-6">
         {showImageUploader && (
           <FileInput
+            id="question-image"
             allowedFileExtensions={["png", "jpeg", "jpg"]}
             environmentId={environmentId}
             onFileUpload={(url: string[]) => {
