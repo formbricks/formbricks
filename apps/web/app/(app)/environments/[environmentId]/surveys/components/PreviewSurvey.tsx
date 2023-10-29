@@ -18,6 +18,8 @@ import {
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import SurveyBg from "@/app/s/[surveyId]/components/SurveyBg";
+import { useRouter } from "next/navigation";
+import PreviewSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBg";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -76,9 +78,10 @@ export default function PreviewSurvey({
 
   const { productOverwrites } = survey || {};
 
-  const bgColour = survey.surveyBackground?.bgColor || "#001524";
-  console.log(bgColour);
+  const bgColour = survey.surveyBackground?.bgColor;
 
+  const [bgVideoUrl, setBgVideoUrl] = useState(bgColour);
+  const router = useRouter();
   const previewScreenVariants: Variants = {
     expanded: {
       right: "5%",
@@ -123,6 +126,18 @@ export default function PreviewSurvey({
   const brandColor = surveyBrandColor || product.brandColor;
   const placement = surveyPlacement || product.placement;
   const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
+
+  function getSourceVid(sourceVidName) {
+    return sourceVidName;
+  }
+
+  const sourceVid = getSourceVid(bgColour);
+  // useEffect(() => {
+  //   setBgVideoUrl(bgColour)
+
+  // }, [bgColour]);
+
+  console.log(sourceVid);
 
   useEffect(() => {
     // close modal if there are no questions left
@@ -195,48 +210,39 @@ export default function PreviewSurvey({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
-            <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
+            <PreviewSurveyBg survey={survey} ContentRef={ContentRef}>
+              {/* <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500"> */}
+
               {/* below element is use to create notch for the mobile device mockup   */}
-              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
+              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md "></div>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
                   placement={placement}
                   highlightBorderColor={highlightBorderColor}
                   previewMode="mobile">
-                  <SurveyBg survey={survey}>
-                    <SurveyInline
-                      survey={survey}
-                      brandColor={"#ffff"}
-                      activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
-                      onActiveQuestionChange={setActiveQuestionId}
-                      isRedirectDisabled={true}
-                    />
-                  </SurveyBg>
+                  <SurveyInline
+                    survey={survey}
+                    brandColor={brandColor}
+                    activeQuestionId={activeQuestionId || undefined}
+                    formbricksSignature={product.formbricksSignature}
+                    onActiveQuestionChange={setActiveQuestionId}
+                    isRedirectDisabled={true}
+                  />
                 </Modal>
               ) : (
-                <div
-                  className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
-                  ref={ContentRef}>
-                  {/* <SurveyBg survey={survey}> */}
-                  <div
-                    className="flex w-full flex-grow flex-col items-center justify-center  py-6"
-                    style={{ backgroundImage: `${bgColour}` }}>
-                    <div className="w-full max-w-md px-4">
-                      <SurveyInline
-                        survey={survey}
-                        brandColor={"#64748b"}
-                        activeQuestionId={activeQuestionId || undefined}
-                        formbricksSignature={product.formbricksSignature}
-                        onActiveQuestionChange={setActiveQuestionId}
-                      />
-                    </div>
-                  </div>
-                  {/* </SurveyBg> */}
+                <div className="relative z-10 w-full max-w-md px-4">
+                  <SurveyInline
+                    survey={survey}
+                    brandColor={brandColor}
+                    activeQuestionId={activeQuestionId || undefined}
+                    formbricksSignature={product.formbricksSignature}
+                    onActiveQuestionChange={setActiveQuestionId}
+                  />
                 </div>
               )}
-            </div>
+            </PreviewSurveyBg>
+            {/* </div> */}
           </>
         )}
         {previewMode === "desktop" && (
@@ -292,11 +298,16 @@ export default function PreviewSurvey({
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
                 <div
-                  className="flex w-full flex-grow flex-col items-center justify-center p-4 py-6"
+                  className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6"
                   style={{
-                    backgroundImage: `url(${bgColour})`,
+                    background: `url(${sourceVid}) no-repeat center center fixed`,
+                    // backgroundSize: 'cover',
                   }}>
-                  <div className="w-full max-w-md">
+                  <video muted loop autoPlay className="absolute inset-0 h-full w-full object-cover">
+                    <source src={sourceVid} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  <div className="z-0 w-full  max-w-md rounded-lg p-4">
                     <SurveyInline
                       survey={survey}
                       brandColor={brandColor}

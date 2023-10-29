@@ -376,7 +376,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
     };
 
-    console.log("++++m", modifiedSurvey);
+    // console.log("++++m", modifiedSurvey);
 
     revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
     revalidateTag(getSurveyCacheTag(modifiedSurvey.id));

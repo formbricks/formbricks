@@ -12,7 +12,7 @@ import Placement from "./Placement";
 import BgColour from "./BgColour";
 import ImageSurveyBg from "./ImageSurveyBg";
 import AnimatedSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AnimatedSurveyBg";
-
+import { useRouter } from "next/navigation";
 interface StylingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
@@ -21,7 +21,7 @@ interface StylingCardProps {
 export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("image");
-
+  const router = useRouter();
   const { type, productOverwrites, surveyBackground } = localSurvey;
   // console.log(productOverwrites)
   const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
@@ -52,9 +52,10 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
       ...localSurvey,
       surveyBackground: {
         ...localSurvey.surveyBackground,
-        bgColor: !!bgColor ? null : "#ffff",
+        bgColor: !!bgColor ? undefined : "#ffff",
       },
     });
+    console.log("++++", localSurvey);
   };
 
   const toggleHighlightBorderColor = () => {
@@ -77,14 +78,17 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
-  const handleBgColorChange = (color: string) => {
+  const handleBgChange = (color: string, type: string) => {
     setLocalSurvey({
       ...localSurvey,
       surveyBackground: {
         ...localSurvey.surveyBackground,
         bgColor: color,
+        bgType: type,
       },
     });
+
+    console.log("++++++", localSurvey);
   };
 
   const handleBorderColorChange = (color: string) => {
@@ -189,11 +193,11 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                   <button onClick={() => setTab("color")}>Color</button>
                 </div>
                 {tab == "image" ? (
-                  <ImageSurveyBg localSurvey={localSurvey} handleBgColorChange={handleBgColorChange} />
+                  <ImageSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 ) : tab == "animated" ? (
-                  <AnimatedSurveyBg localSurvey={localSurvey} handleBgColorChange={handleBgColorChange} />
+                  <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 ) : (
-                  <BgColour localSurvey={localSurvey} handleBgColorChange={handleBgColorChange} />
+                  <BgColour localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 )}
               </div>
             )}

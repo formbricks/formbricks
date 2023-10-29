@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 
-export default function BgColour({ localSurvey, handleBgColorChange }) {
+export default function BgColour({ localSurvey, handleBgChange }) {
   const colours = [
     "#FFF2D8",
     "#EAD7BB",
@@ -34,7 +34,7 @@ export default function BgColour({ localSurvey, handleBgColorChange }) {
 
   const handleBg = (x: string) => {
     setColor(x);
-    handleBgColorChange(x);
+    handleBgChange(x, "color");
   };
   return (
     <div>

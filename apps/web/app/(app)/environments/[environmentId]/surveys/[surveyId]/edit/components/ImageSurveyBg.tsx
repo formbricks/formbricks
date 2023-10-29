@@ -3,7 +3,7 @@ import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import FileInput from "@formbricks/ui/FileInput";
 
-export default function ImageSurveyBg({ localSurvey, handleBgColorChange }) {
+export default function ImageSurveyBg({ localSurvey, handleBgChange }) {
   const colours = [
     "#FFF2D8",
     "#EAD7BB",
@@ -33,10 +33,10 @@ export default function ImageSurveyBg({ localSurvey, handleBgColorChange }) {
 
   const [color, setColor] = useState(localSurvey.surveyBackground?.bgColor || "#ffff");
 
-  const handleBg = (x: string) => {
-    setColor(x);
-    handleBgColorChange(x);
-  };
+  // const handleBg = (x: string) => {
+  //   setColor(x);
+  //   handleBgChange(x,"image");
+  // };
   return (
     <div className="mb-2 mt-4 w-full rounded-lg border bg-slate-50 p-4">
       <div className="mt-3 flex w-full items-center justify-center">
@@ -44,8 +44,7 @@ export default function ImageSurveyBg({ localSurvey, handleBgColorChange }) {
           allowedFileExtensions={["png", "jpeg", "jpg"]}
           environmentId={localSurvey.environmentId}
           onFileUpload={(url: string) => {
-            handleBgColorChange(url);
-            console.log("kk");
+            handleBgChange(url, "image");
           }}
           fileUrl={localSurvey?.welcomeCard?.fileUrl}
         />
