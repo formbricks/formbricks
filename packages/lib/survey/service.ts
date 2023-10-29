@@ -41,6 +41,7 @@ export const selectSurvey = {
   verifyEmail: true,
   redirectUrl: true,
   productOverwrites: true,
+  surveyBackground: true,
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
@@ -375,6 +376,8 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
     };
 
+    console.log("++++m", modifiedSurvey);
+
     revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
     revalidateTag(getSurveyCacheTag(modifiedSurvey.id));
 
@@ -489,6 +492,9 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
         : Prisma.JsonNull,
       productOverwrites: existingSurvey.productOverwrites
         ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
+        : Prisma.JsonNull,
+      surveyBackground: existingSurvey.surveyBackground
+        ? JSON.parse(JSON.stringify(existingSurvey.surveyBackground))
         : Prisma.JsonNull,
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))

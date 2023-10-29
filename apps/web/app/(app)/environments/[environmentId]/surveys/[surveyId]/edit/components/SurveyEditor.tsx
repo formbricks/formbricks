@@ -59,6 +59,7 @@ export default function SurveyEditor({
     return <ErrorComponent />;
   }
 
+  // console.log(localSurvey)
   return (
     <>
       <div className="flex h-full flex-col">

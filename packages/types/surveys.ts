@@ -40,6 +40,11 @@ export const ZSurveyProductOverwrites = z.object({
   darkOverlay: z.boolean().nullish(),
 });
 
+export const ZSurveyBackground = z.object({
+  bgColor: ZColor.nullish(),
+  // darkOverlay: z.boolean().nullish(),
+});
+
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
 export const ZSurveyClosedMessage = z
@@ -337,6 +342,7 @@ export const ZSurvey = z.object({
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
   productOverwrites: ZSurveyProductOverwrites.nullable(),
+  surveyBackground: ZSurveyBackground.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),

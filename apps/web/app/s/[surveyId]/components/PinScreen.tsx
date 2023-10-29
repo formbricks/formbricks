@@ -100,16 +100,18 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   }
 
   return (
-    <LinkSurvey
-      survey={survey}
-      product={product}
-      personId={personId}
-      emailVerificationStatus={emailVerificationStatus}
-      prefillAnswer={prefillAnswer}
-      singleUseId={singleUseId}
-      singleUseResponse={singleUseResponse}
-      webAppUrl={webAppUrl}
-    />
+    <div className="flex h-full  items-center bg-red-500">
+      <LinkSurvey
+        survey={survey}
+        product={product}
+        personId={personId}
+        emailVerificationStatus={emailVerificationStatus}
+        prefillAnswer={prefillAnswer}
+        singleUseId={singleUseId}
+        singleUseResponse={singleUseResponse}
+        webAppUrl={webAppUrl}
+      />
+    </div>
   );
 };
 

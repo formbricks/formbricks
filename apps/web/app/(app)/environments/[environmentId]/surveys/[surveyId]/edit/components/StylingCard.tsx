@@ -9,6 +9,9 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import Placement from "./Placement";
+import BgColour from "./BgColour";
+import ImageSurveyBg from "./ImageSurveyBg";
+import AnimatedSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AnimatedSurveyBg";
 
 interface StylingCardProps {
   localSurvey: TSurvey;
@@ -17,9 +20,12 @@ interface StylingCardProps {
 
 export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("image");
 
-  const { type, productOverwrites } = localSurvey;
+  const { type, productOverwrites, surveyBackground } = localSurvey;
+  // console.log(productOverwrites)
   const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
+  const { bgColor } = surveyBackground ?? {};
 
   const togglePlacement = () => {
     setLocalSurvey({
@@ -41,6 +47,16 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
+  const toggleBackgroundColor = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      surveyBackground: {
+        ...localSurvey.surveyBackground,
+        bgColor: !!bgColor ? null : "#ffff",
+      },
+    });
+  };
+
   const toggleHighlightBorderColor = () => {
     setLocalSurvey({
       ...localSurvey,
@@ -57,6 +73,16 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
       productOverwrites: {
         ...localSurvey.productOverwrites,
         brandColor: color,
+      },
+    });
+  };
+
+  const handleBgColorChange = (color: string) => {
+    setLocalSurvey({
+      ...localSurvey,
+      surveyBackground: {
+        ...localSurvey.surveyBackground,
+        bgColor: color,
       },
     });
   };
@@ -139,6 +165,36 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                   <Label htmlFor="brandcolor">Color (HEX)</Label>
                   <ColorPicker color={brandColor} onChange={handleColorChange} />
                 </div>
+              </div>
+            )}
+          </div>
+          {/* Background */}
+          <div className="p-3">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="autoComplete" checked={!!bgColor} onCheckedChange={toggleBackgroundColor} />
+              <Label htmlFor="autoComplete" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Change Background</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Pick a background from our library or upload your own.
+                  </p>
+                </div>
+              </Label>
+            </div>
+            {bgColor && (
+              <div className=" mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4 px-8">
+                <div className=" flex w-full items-center justify-between border bg-slate-50 px-6">
+                  <button onClick={() => setTab("image")}>Image</button>
+                  <button onClick={() => setTab("animated")}>Animated</button>
+                  <button onClick={() => setTab("color")}>Color</button>
+                </div>
+                {tab == "image" ? (
+                  <ImageSurveyBg localSurvey={localSurvey} handleBgColorChange={handleBgColorChange} />
+                ) : tab == "animated" ? (
+                  <AnimatedSurveyBg localSurvey={localSurvey} handleBgColorChange={handleBgColorChange} />
+                ) : (
+                  <BgColour localSurvey={localSurvey} handleBgColorChange={handleBgColorChange} />
+                )}
               </div>
             )}
           </div>

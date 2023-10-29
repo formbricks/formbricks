@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import SurveyBg from "@/app/s/[surveyId]/components/SurveyBg";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -74,6 +75,9 @@ export default function PreviewSurvey({
   const [shrink, setshrink] = useState(false);
 
   const { productOverwrites } = survey || {};
+
+  const bgColour = survey.surveyBackground?.bgColor || "#001524";
+  console.log(bgColour);
 
   const previewScreenVariants: Variants = {
     expanded: {
@@ -200,30 +204,36 @@ export default function PreviewSurvey({
                   placement={placement}
                   highlightBorderColor={highlightBorderColor}
                   previewMode="mobile">
-                  <SurveyInline
-                    survey={survey}
-                    brandColor={brandColor}
-                    activeQuestionId={activeQuestionId || undefined}
-                    formbricksSignature={product.formbricksSignature}
-                    onActiveQuestionChange={setActiveQuestionId}
-                    isRedirectDisabled={true}
-                  />
+                  <SurveyBg survey={survey}>
+                    <SurveyInline
+                      survey={survey}
+                      brandColor={"#ffff"}
+                      activeQuestionId={activeQuestionId || undefined}
+                      formbricksSignature={product.formbricksSignature}
+                      onActiveQuestionChange={setActiveQuestionId}
+                      isRedirectDisabled={true}
+                    />
+                  </SurveyBg>
                 </Modal>
               ) : (
                 <div
                   className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
                   ref={ContentRef}>
-                  <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                  {/* <SurveyBg survey={survey}> */}
+                  <div
+                    className="flex w-full flex-grow flex-col items-center justify-center  py-6"
+                    style={{ backgroundImage: `${bgColour}` }}>
                     <div className="w-full max-w-md px-4">
                       <SurveyInline
                         survey={survey}
-                        brandColor={brandColor}
+                        brandColor={"#64748b"}
                         activeQuestionId={activeQuestionId || undefined}
                         formbricksSignature={product.formbricksSignature}
                         onActiveQuestionChange={setActiveQuestionId}
                       />
                     </div>
                   </div>
+                  {/* </SurveyBg> */}
                 </div>
               )}
             </div>
@@ -281,7 +291,11 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
-                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
+                <div
+                  className="flex w-full flex-grow flex-col items-center justify-center p-4 py-6"
+                  style={{
+                    backgroundImage: `url(${bgColour})`,
+                  }}>
                   <div className="w-full max-w-md">
                     <SurveyInline
                       survey={survey}

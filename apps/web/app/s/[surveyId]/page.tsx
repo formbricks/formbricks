@@ -14,6 +14,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import type { Metadata } from "next";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
+import SurveyBg from "@/app/s/[surveyId]/components/SurveyBg";
 
 interface LinkSurveyPageProps {
   params: {
@@ -167,16 +168,18 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     );
   }
 
-  return (
-    <LinkSurvey
-      survey={survey}
-      product={product}
-      personId={person?.id}
-      emailVerificationStatus={emailVerificationStatus}
-      prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
-      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-      webAppUrl={WEBAPP_URL}
-    />
-  );
+  return survey ? (
+    <SurveyBg survey={survey}>
+      <LinkSurvey
+        survey={survey}
+        product={product}
+        personId={person?.id}
+        emailVerificationStatus={emailVerificationStatus}
+        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+        singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+        singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+        webAppUrl={WEBAPP_URL}
+      />
+    </SurveyBg>
+  ) : null;
 }
