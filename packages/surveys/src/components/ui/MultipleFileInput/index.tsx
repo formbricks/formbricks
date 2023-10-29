@@ -94,7 +94,7 @@ export default function MultipleFileInput({
       className="items-left relative flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-600 dark:hover:bg-slate-800"
       onDragOver={(e) => handleDragOver(e as any)}
       onDrop={(e) => handleDrop(e as any)}>
-      <div className="m-2 grid-cols-1 grid-cols-3 gap-2 md:grid">
+      <div className="m-2 grid grid-cols-1  gap-2">
         {fileUrls &&
           fileUrls?.map((file, index) => (
             <div key={index} className="relative m-2 rounded-lg bg-slate-300">

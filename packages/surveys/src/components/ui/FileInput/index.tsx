@@ -1,4 +1,3 @@
-"use client";
 import { useRef, useState } from "react";
 import { uploadFile } from "./lib/fileUpload";
 import { cn } from "@formbricks/lib/cn";

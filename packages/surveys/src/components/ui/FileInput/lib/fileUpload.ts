@@ -1,5 +1,3 @@
-"use client";
-
 const uploadFile = async (
   file: File | Blob,
   allowedFileExtensions: string[] | undefined,
