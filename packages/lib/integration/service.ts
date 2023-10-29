@@ -37,6 +37,7 @@ export async function createOrUpdateIntegration(
 
     integrationCache.revalidate({
       environmentId,
+      type: "notion",
     });
     return integration;
   } catch (error) {

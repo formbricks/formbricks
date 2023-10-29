@@ -538,7 +538,7 @@ const DropdownSelector = ({
           {!disabled && (
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className="z-50 min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md"
+                className="z-50 max-h-64 min-w-[220px] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
                 align="start">
                 {items &&
                   items.map((item) => (
