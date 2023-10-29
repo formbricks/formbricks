@@ -5,17 +5,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
 });
 
-const successUrl =
-  process.env.NODE_ENV === "production"
-    ? "https://app.formbricks.com/billing-confirmation"
-    : "http://localhost:3000/billing-confirmation";
+const baseUrl =
+  process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000";
 
 export const getFirstOfNextMonthTimestamp = (): number => {
   const nextMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
   return Math.floor(nextMonth.getTime() / 1000);
 };
 
-export const createSubscription = async (teamId: string, failureUrl: string, subscribeToNickname: string) => {
+export const createSubscription = async (
+  teamId: string,
+  environmentId: string,
+  subscribeToNickname: string
+) => {
   try {
     const team = await getTeam(teamId);
     if (!team) throw new Error("Team not found.");
@@ -48,8 +50,8 @@ export const createSubscription = async (teamId: string, failureUrl: string, sub
         mode: "subscription",
         line_items: lineItems,
         customer: customer.id,
-        success_url: successUrl,
-        cancel_url: failureUrl,
+        success_url: `${baseUrl}/billing-confirmation?environmentId=${environmentId}`,
+        cancel_url: `${baseUrl}/environments/${environmentId}/settings/billing`,
         allow_promotion_codes: true,
         subscription_data: {
           billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
@@ -178,6 +180,11 @@ export const createSubscription = async (teamId: string, failureUrl: string, sub
     };
   } catch (err) {
     console.error(err);
-    return { status: 500, data: "Something went wrong!", newPlan: true, url: failureUrl };
+    return {
+      status: 500,
+      data: "Something went wrong!",
+      newPlan: true,
+      url: `${baseUrl}/environments/${environmentId}/settings/billing`,
+    };
   }
 };

@@ -37,11 +37,7 @@ export async function upgradePlanAction(teamId: string, environmentId: string, p
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const subscriptionSession = await createSubscription(
-    teamId,
-    `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
-    priceNickname
-  );
+  const subscriptionSession = await createSubscription(teamId, environmentId, priceNickname);
 
   return subscriptionSession.url;
 }
