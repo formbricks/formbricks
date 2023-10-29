@@ -42,9 +42,9 @@ export function EditFormbricksSignature({ product, canRemoveSignature }: EditSig
           id="signature"
           checked={formbricksSignature}
           onCheckedChange={toggleSignature}
-          disabled={!canRemoveSignature || updatingSignature} // Modified this line
+          disabled={!canRemoveSignature || updatingSignature}
         />
-        <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
+        <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature in Link Surveys</Label>
       </div>
     </div>
   );

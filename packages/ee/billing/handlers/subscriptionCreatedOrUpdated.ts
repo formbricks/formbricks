@@ -1,11 +1,10 @@
-import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
+import { getProducts } from "@formbricks/lib/product/service";
 import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
-
+import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import Stripe from "stripe";
 import { priceLookupKeys } from "../utils/products";
 import { reportUsage } from "../utils/report-usage";
-import { getProducts } from "@formbricks/lib/product/service";
 
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
@@ -16,6 +15,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
   }
 
   const team = await getTeam(teamId);
+  if (!team) throw new Error("Team not found.");
   let updatedFeatures = team.billing.features;
   let countForTeam = 0;
   let priceLookupKey: string | null = null;
@@ -42,9 +42,8 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
       updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "active";
     }
 
-    const products = await getProducts(teamId);
-
     if (priceLookupKey && priceLookupKey !== priceLookupKeys[priceLookupKeys.linkSurvey]) {
+      const products = await getProducts(team.id);
       for (const product of products) {
         for (const environment of product.environments) {
           countForTeam +=
@@ -66,7 +65,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
 
   await updateTeam(teamId, {
     billing: {
-      stripeCustomerId: team.billing.stripeCustomerId,
+      ...team.billing,
       features: updatedFeatures,
     },
   });

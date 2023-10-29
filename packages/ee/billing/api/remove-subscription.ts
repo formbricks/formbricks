@@ -8,9 +8,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const retrievePriceLookup = async (priceId: string) => (await stripe.prices.retrieve(priceId)).lookup_key;
 
-const removeSubscription = async (teamId: string, failureUrl: string, itemToBeRemoved: string) => {
+export const removeSubscription = async (teamId: string, failureUrl: string, itemToBeRemoved: string) => {
   try {
     const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found.");
     if (!team.billing.stripeCustomerId) {
       return { status: 400, data: "No subscription exists for given team!", newPlan: false, url: "" };
     }
@@ -99,5 +100,3 @@ const removeSubscription = async (teamId: string, failureUrl: string, itemToBeRe
     return { status: 500, data: "Something went wrong!", newPlan: true, url: failureUrl };
   }
 };
-
-export default removeSubscription;

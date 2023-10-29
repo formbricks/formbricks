@@ -52,7 +52,7 @@ export default function PricingTableComponent({
       setUpgradingPlan(true);
       const paymentUrl = await upgradePlanAction(team.id, environmentId, priceNickname);
       setUpgradingPlan(false);
-      if (paymentUrl === "") {
+      if (!paymentUrl || paymentUrl === "") {
         toast.success("Plan upgraded successfully");
         router.refresh();
       } else {
@@ -88,18 +88,53 @@ export default function PricingTableComponent({
   };
 
   const coreAndWebAppSurveyPaid = [
-    "Team Roles",
-    "250 responses / month free",
-    "$0.15 / responses afterwards",
+    {
+      title: "Team Roles",
+      comingSoon: false,
+    },
+    {
+      title: "250 responses / month free",
+      comingSoon: false,
+    },
+    {
+      title: "$0.15 / responses afterwards",
+      comingSoon: false,
+    },
+    {
+      title: "Multi Language Surveys",
+      comingSoon: true,
+    },
   ];
 
   const userTargetingPaid = [
-    "Advanced Targeting",
-    "2.500 identified users / month free",
-    "$0.01 / identified user afterwards",
+    {
+      title: "2.500 identified users / month free",
+      comingSoon: false,
+    },
+    {
+      title: "$0.01 / identified user afterwards",
+      comingSoon: false,
+    },
+    {
+      title: "Advanced Targeting",
+      comingSoon: true,
+    },
   ];
 
-  const linkSurveysPaid = ["Remove Formbricks Branding", "File Uploads upto 1 GB"];
+  const linkSurveysPaid = [
+    {
+      title: "Remove Formbricks Branding",
+      comingSoon: false,
+    },
+    {
+      title: "File Uploads upto 1 GB",
+      comingSoon: false,
+    },
+    {
+      title: "Multi Language Surveys",
+      comingSoon: true,
+    },
+  ];
 
   return (
     <div className="relative">

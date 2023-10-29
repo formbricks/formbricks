@@ -10,6 +10,9 @@ import {
 } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { getServerSession } from "next-auth";
+import { createSubscription } from "@formbricks/ee/billing/api/create-subscription";
+import { createCustomerPortalSession } from "@formbricks/ee/billing/api/create-customer-portal-session";
+import { removeSubscription } from "@formbricks/ee/billing/api/remove-subscription";
 
 export async function getMonthlyCounts(teamId: string) {
   const session = await getServerSession(authOptions);
@@ -34,23 +37,13 @@ export async function upgradePlanAction(teamId: string, environmentId: string, p
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const res = await fetch(WEBAPP_URL + "/api/billing/create-subscription", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      teamId: teamId,
-      failureUrl: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
-      priceNickname,
-    }),
-  });
-  if (!res.ok) {
-    console.log("Error loading billing portal");
-    return;
-  }
-  const data = await res.json();
-  return data.data.url;
+  const subscriptionSession = await createSubscription(
+    teamId,
+    `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
+    priceNickname
+  );
+
+  return subscriptionSession.url;
 }
 
 export async function manageSubscriptionAction(teamId: string, environmentId: string) {
@@ -61,26 +54,13 @@ export async function manageSubscriptionAction(teamId: string, environmentId: st
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const team = await getTeam(teamId);
+  if (!team || !team.billing.stripeCustomerId)
+    throw new AuthorizationError("You do not have an associated Stripe CustomerId");
 
-  const res = await fetch(WEBAPP_URL + "/api/billing/create-customer-portal-session", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      stripeCustomerId: team.billing.stripeCustomerId,
-      returnUrl: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
-    }),
-  });
-  if (!res.ok) {
-    console.log("Error loading billing portal");
-    return;
-  }
-  console.log("res", res);
-
-  const {
-    data: { sessionUrl },
-  } = await res.json();
+  const sessionUrl = await createCustomerPortalSession(
+    team.billing.stripeCustomerId,
+    `${WEBAPP_URL}/environments/${environmentId}/settings/billing`
+  );
   return sessionUrl;
 }
 
@@ -91,23 +71,11 @@ export async function removeSubscriptionAction(teamId: string, environmentId: st
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const team = await getTeam(teamId);
+  const removedSubscription = await removeSubscription(
+    teamId,
+    `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
+    itemNickname
+  );
 
-  const res = await fetch(WEBAPP_URL + "/api/billing/remove-subscription", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      teamId: team.id,
-      failureUrl: `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
-      itemNickname,
-    }),
-  });
-  if (!res.ok) {
-    console.log("Error loading billing portal");
-    return;
-  }
-  const data = await res.json();
-  return data.data.url;
+  return removedSubscription.url;
 }

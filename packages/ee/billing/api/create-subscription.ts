@@ -15,9 +15,10 @@ export const getFirstOfNextMonthTimestamp = (): number => {
   return Math.floor(nextMonth.getTime() / 1000);
 };
 
-const createSubscription = async (teamId: string, failureUrl: string, subscribeToNickname: string) => {
+export const createSubscription = async (teamId: string, failureUrl: string, subscribeToNickname: string) => {
   try {
     const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found.");
     let isNewTeam =
       !team.billing.stripeCustomerId || !(await stripe.customers.retrieve(team.billing.stripeCustomerId));
 
@@ -36,6 +37,7 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
       },
     ];
 
+    // if the team has never purchased a plan then we just create a new session and store their stripe customer id
     if (isNewTeam) {
       const customer = await stripe.customers.create({
         name: team.name,
@@ -57,8 +59,8 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
 
       await updateTeam(teamId, {
         billing: {
+          ...team.billing,
           stripeCustomerId: customer.id,
-          features: team.billing.features,
         },
       });
 
@@ -71,7 +73,10 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
       })) as any
     ).subscriptions.data[0] as Stripe.Subscription;
 
+    // the team has an active subscription
     if (existingSubscription) {
+      // now we see if the team's current subscription is scheduled to cancel at the month end
+      // this is a case where the team cancelled an already puchased product
       if (existingSubscription.cancel_at_period_end) {
         const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
           customer: team.billing.stripeCustomerId as string,
@@ -79,6 +84,9 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
         const scheduledSubscriptions = allScheduledSubscriptions.data.filter(
           (scheduledSub) => scheduledSub.status === "not_started"
         );
+
+        // if a team has a scheduled subscritpion upcoming, then we update that as well with their
+        // newly purchased product since the current one is ending this month end
         if (scheduledSubscriptions.length) {
           const existingItemsInScheduledSubscription = scheduledSubscriptions[0].phases[0].items.map(
             (item) => {
@@ -111,6 +119,9 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
             metadata: { teamId },
           });
         } else {
+          // if they do not have an upcoming new subscription schedule,
+          // we create one since the current one with other products is expiring
+          // so the new schedule only has the new product the team has subscribed to
           await stripe.subscriptionSchedules.create({
             customer: team.billing.stripeCustomerId as string,
             start_date: getFirstOfNextMonthTimestamp(),
@@ -127,6 +138,8 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
         }
       }
 
+      // the below check is to make sure that if a product is about to be cancelled but is still a part
+      // of the current subscription then we do not update its status back to active
       if (
         !(
           existingSubscription.cancel_at_period_end &&
@@ -147,6 +160,8 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
         }
       }
     } else {
+      // case where team does not have a subscription but has a stripe customer id
+      // so we just attach that to a new subscription
       await stripe.subscriptions.create({
         customer: team.billing.stripeCustomerId as string,
         items: lineItems,
@@ -166,5 +181,3 @@ const createSubscription = async (teamId: string, failureUrl: string, subscribeT
     return { status: 500, data: "Something went wrong!", newPlan: true, url: failureUrl };
   }
 };
-
-export default createSubscription;

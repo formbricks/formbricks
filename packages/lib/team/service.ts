@@ -100,17 +100,17 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     }
   )();
 
-export const getTeam = async (teamId: string): Promise<TTeam> =>
+export const getTeam = async (teamId: string): Promise<TTeam | null> =>
   unstable_cache(
     async () => {
       validateInputs([teamId, ZString]);
 
       try {
-        const team = await prisma.team.findFirstOrThrow({
+        const team = await prisma.team.findUnique({
           where: {
             id: teamId,
           },
-          select: { ...select, products: { select: { environments: true } } }, // include environments
+          select,
         });
 
         return team;
@@ -122,9 +122,9 @@ export const getTeam = async (teamId: string): Promise<TTeam> =>
         throw error;
       }
     },
-    [`teams-${teamId}`],
+    [`getTeam-${teamId}`],
     {
-      tags: [getTeamsTag(teamId)],
+      tags: [teamCache.tag.byId(teamId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -247,31 +247,45 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
 };
 
 export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
-  try {
-    const teams = await prisma.team.findMany({
-      where: {
-        OR: [
-          {
-            billing: {
-              path: ["features", "appSurvey", "status"],
-              not: "inactive",
-            },
+  const teams = await unstable_cache(
+    async () => {
+      try {
+        const fetchedTeams = await prisma.team.findMany({
+          where: {
+            OR: [
+              {
+                billing: {
+                  path: ["features", "appSurvey", "status"],
+                  not: "inactive",
+                },
+              },
+              {
+                billing: {
+                  path: ["features", "userTargeting", "status"],
+                  not: "inactive",
+                },
+              },
+            ],
           },
-          {
-            billing: {
-              path: ["features", "userTargeting", "status"],
-              not: "inactive",
-            },
-          },
-        ],
-      },
-      select: { ...select, products: { select: { environments: true } } }, // include environments
-    });
+          select,
+        });
 
-    return teams;
-  } catch (error) {
-    throw error;
-  }
+        return fetchedTeams;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+    ["getTeamsWithPaidPlan"],
+    {
+      tags: ["teamWithPaidPlan"],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return teams;
 };
 
 export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<number> =>

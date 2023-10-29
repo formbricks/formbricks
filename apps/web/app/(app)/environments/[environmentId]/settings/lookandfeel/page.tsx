@@ -46,7 +46,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
             "We love your support but understand if you toggle it off."
           ) : (
             <>
-              To remove the Formbricks branding from the web-app surveys, please buy the add-on for 10$/month{" "}
+              To remove the Formbricks branding from the link surveys, please upgrade your plan for $30/month{" "}
               <a href={`/environments/${params.environmentId}/settings/billing`}>here</a>.
             </>
           )
