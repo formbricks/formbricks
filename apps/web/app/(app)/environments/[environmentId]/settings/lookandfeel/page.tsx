@@ -16,7 +16,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   if (!team) {
     throw new Error("Team not found");
   }
-  const canRemoveSignature = team.billing.features.removeBranding.status === "active";
+  const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
   const product = await getProductByEnvironmentId(params.environmentId);
   if (!product) {
     throw new Error("Product not found");

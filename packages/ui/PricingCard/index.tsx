@@ -1,8 +1,8 @@
 import { TTeam } from "@formbricks/types/teams";
+import { CheckIcon } from "@heroicons/react/24/outline";
 import { Badge } from "../Badge";
-import { CheckIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Slider } from "../Slider";
 import { Button } from "../Button";
+import { Slider } from "../Slider";
 
 export const PricingCard = ({
   title,
@@ -18,8 +18,8 @@ export const PricingCard = ({
   paidFeatures,
   perMetricCharge,
   loading,
-  upgradePlanFunction,
-  cancelPlanFunction,
+  onUpgrade,
+  onUbsubscribe,
 }: {
   title: string;
   subtitle: string;
@@ -34,14 +34,12 @@ export const PricingCard = ({
   paidFeatures: string[];
   perMetricCharge?: number;
   loading: boolean;
-  upgradePlanFunction: any;
-  cancelPlanFunction: any;
+  onUpgrade: any;
+  onUbsubscribe: any;
 }) => {
   const currentDate = new Date();
   const daysInCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const daysPassed = currentDate.getDate();
-  const daysLeft = daysInCurrentMonth - daysPassed;
-  const proratedFlatCharge = monthlyPrice ? (monthlyPrice / daysInCurrentMonth) * daysLeft : 0;
 
   const featureNameKey = featureName as keyof typeof team.billing.features;
   return (
@@ -50,11 +48,13 @@ export const PricingCard = ({
         <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">{title}</h2>
         {team.billing.features[featureNameKey].status === "active" ? (
           <>
-            <Badge text="Purchased" size="normal" type="success" />
-            <TrashIcon
-              className="absolute right-12 top-12 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={(e) => cancelPlanFunction(e)}
-            />
+            <Badge text="Subscribed" size="normal" type="success" />
+            <Button
+              variant="secondary"
+              onClick={(e) => onUbsubscribe(e)}
+              className="absolute right-12 top-10">
+              Unsubscribe
+            </Button>
           </>
         ) : team.billing.features[featureNameKey].status === "canceled" ? (
           <Badge text="Cancelling at End of this Month" size="normal" type="warning" />
@@ -106,20 +106,28 @@ export const PricingCard = ({
             <div className="my-2">
               {team.billing.features[featureNameKey].status !== "inactive" ? (
                 <div className="mt-8">
-                  <span className="text-sm font-medium text-slate-400">Approximately</span>
-                  <br />
+                  {perMetricCharge ? (
+                    <>
+                      <span className="text-sm font-medium text-slate-400">Approximately</span>
+                      <br />
 
-                  <span className="text-3xl font-bold text-slate-800">$</span>
-                  <span className="text-3xl font-bold text-slate-800">
-                    {perMetricCharge
-                      ? (sliderValue! > freeTierLimit!
+                      <span className="text-3xl font-bold text-slate-800">$</span>
+                      <span className="text-3xl font-bold text-slate-800">
+                        {(sliderValue! > freeTierLimit!
                           ? (sliderValue! - freeTierLimit!) * perMetricCharge
                           : 0
-                        ).toFixed(2)
-                      : proratedFlatCharge.toFixed(2)}
-                  </span>
-                  <br />
-                  <span className="text-sm font-medium text-slate-400">Month-to-Date</span>
+                        ).toFixed(2)}
+                      </span>
+                      <br />
+                      <span className="text-sm font-medium text-slate-400">Month-to-Date</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold text-slate-800">${monthlyPrice}</span>
+
+                      <span className="text-base font-medium text-slate-400">/ month</span>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -137,7 +145,7 @@ export const PricingCard = ({
                 variant="darkCTA"
                 className="w-full justify-center py-2 text-white shadow-sm"
                 loading={loading}
-                onClick={() => upgradePlanFunction()}>
+                onClick={() => onUpgrade()}>
                 Upgrade
               </Button>
             )}
