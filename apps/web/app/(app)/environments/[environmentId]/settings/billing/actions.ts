@@ -1,13 +1,15 @@
 "use server";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { canUserAccessTeam } from "@formbricks/lib/team/auth";
-import { getTeam } from "@formbricks/lib/team/service";
-import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeam,
+} from "@formbricks/lib/team/service";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { getServerSession } from "next-auth";
 
 export async function getMonthlyCounts(teamId: string) {
   const session = await getServerSession(authOptions);
@@ -16,20 +18,8 @@ export async function getMonthlyCounts(teamId: string) {
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const team = await getTeam(teamId);
-
-  let peopleCount = 0;
-  let responseCount = 0;
-
-  for (const product of team.products) {
-    for (const environment of product.environments) {
-      const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
-      const responsesInThisEnvironment = await getMonthlyResponseCount(environment.id);
-
-      peopleCount += peopleInThisEnvironment;
-      responseCount += responsesInThisEnvironment;
-    }
-  }
+  let peopleCount = await getMonthlyActiveTeamPeopleCount(teamId);
+  let responseCount = await getMonthlyTeamResponseCount(teamId);
 
   return {
     people: peopleCount,

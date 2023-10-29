@@ -5,6 +5,7 @@ import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 import Stripe from "stripe";
 import { priceLookupKeys } from "../utils/products";
 import { reportUsage } from "../utils/report-usage";
+import { getProducts } from "@formbricks/lib/product/service";
 
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
@@ -41,8 +42,10 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
       updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "active";
     }
 
+    const products = await getProducts(teamId);
+
     if (priceLookupKey && priceLookupKey !== priceLookupKeys[priceLookupKeys.linkSurvey]) {
-      for (const product of team.products) {
+      for (const product of products) {
         for (const environment of product.environments) {
           countForTeam +=
             priceLookupKey === priceLookupKeys[priceLookupKeys.userTargeting]

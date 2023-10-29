@@ -1,15 +1,18 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { validateInputs } from "../utils/validate";
+import { getMonthlyActivePeopleCount } from "../person/service";
+import { getProducts } from "../product/service";
+import { getMonthlyResponseCount } from "../response/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { environmentCache } from "../environment/cache";
+import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
 
 export const select = {
@@ -270,3 +273,55 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
     throw error;
   }
 };
+
+export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<number> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+
+      const products = await getProducts(teamId);
+
+      let peopleCount = 0;
+
+      for (const product of products) {
+        for (const environment of product.environments) {
+          const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
+
+          peopleCount += peopleInThisEnvironment;
+        }
+      }
+
+      return peopleCount;
+    },
+    [`getMonthlyActiveTeamPeopleCount-${teamId}`],
+    {
+      tags: [],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getMonthlyTeamResponseCount = async (teamId: string): Promise<number> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+
+      const products = await getProducts(teamId);
+
+      let peopleCount = 0;
+
+      for (const product of products) {
+        for (const environment of product.environments) {
+          const peopleInThisEnvironment = await getMonthlyResponseCount(environment.id);
+
+          peopleCount += peopleInThisEnvironment;
+        }
+      }
+
+      return peopleCount;
+    },
+    [`getMonthlyActiveTeamPeopleCount-${teamId}`],
+    {
+      tags: [],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();

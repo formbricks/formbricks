@@ -37,10 +37,6 @@ export const PricingCard = ({
   onUpgrade: any;
   onUbsubscribe: any;
 }) => {
-  const currentDate = new Date();
-  const daysInCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-  const daysPassed = currentDate.getDate();
-
   const featureNameKey = featureName as keyof typeof team.billing.features;
   return (
     <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">

@@ -1,12 +1,14 @@
 import { responses } from "@/app/lib/api/response";
 import reportUsage from "@formbricks/ee/billing/api/report-usage";
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { CRON_SECRET } from "@formbricks/lib/constants";
-import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getTeamsWithPaidPlan } from "@formbricks/lib/team/service";
-import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
+import { CRON_SECRET } from "@formbricks/lib/constants";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeamsWithPaidPlan,
+} from "@formbricks/lib/team/service";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET(): Promise<NextResponse> {
   const headersList = headers();
@@ -29,21 +31,8 @@ export async function GET(): Promise<NextResponse> {
       if (!calculatePeople && !calculateResponses) {
         continue;
       }
-      let people = 0;
-      let responses = 0;
-
-      for (const product of team.products) {
-        for (const environment of product.environments) {
-          if (calculateResponses) {
-            const responsesInThisEnvironment = await getMonthlyResponseCount(environment.id);
-            responses += responsesInThisEnvironment;
-          }
-          if (calculatePeople) {
-            const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
-            people += peopleInThisEnvironment;
-          }
-        }
-      }
+      let people = await getMonthlyActiveTeamPeopleCount(team.id);
+      let responses = await getMonthlyTeamResponseCount(team.id);
 
       if (calculatePeople) {
         await reportUsage(

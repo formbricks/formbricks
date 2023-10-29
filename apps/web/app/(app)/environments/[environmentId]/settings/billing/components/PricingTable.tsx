@@ -22,6 +22,8 @@ interface PricingTableProps {
   environmentId: string;
   peopleCount: number;
   responseCount: number;
+  userTargetingFreeMtu: number;
+  appSurveyFreeResponses: number;
 }
 
 export default function PricingTableComponent({
@@ -29,6 +31,8 @@ export default function PricingTableComponent({
   environmentId,
   peopleCount,
   responseCount,
+  userTargetingFreeMtu,
+  appSurveyFreeResponses,
 }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
@@ -88,14 +92,12 @@ export default function PricingTableComponent({
     "250 responses / month free",
     "$0.15 / responses afterwards",
   ];
-  const coreAndWebAppSurveysFreeTierLimit = 250;
 
   const userTargetingPaid = [
     "Advanced Targeting",
     "2.500 identified users / month free",
     "$0.01 / identified user afterwards",
   ];
-  const userTargetingFreeTierLimit = 2500;
 
   const linkSurveysPaid = ["Remove Formbricks Branding", "File Uploads upto 1 GB"];
 
@@ -158,7 +160,7 @@ export default function PricingTableComponent({
           metric="responses"
           sliderValue={responseCount}
           sliderLimit={350}
-          freeTierLimit={coreAndWebAppSurveysFreeTierLimit}
+          freeTierLimit={appSurveyFreeResponses}
           paidFeatures={coreAndWebAppSurveyPaid}
           perMetricCharge={0.15}
           loading={upgradingPlan}
@@ -189,7 +191,7 @@ export default function PricingTableComponent({
           metric="people"
           sliderValue={peopleCount}
           sliderLimit={3500}
-          freeTierLimit={userTargetingFreeTierLimit}
+          freeTierLimit={userTargetingFreeMtu}
           paidFeatures={userTargetingPaid}
           perMetricCharge={0.01}
           loading={upgradingPlan}

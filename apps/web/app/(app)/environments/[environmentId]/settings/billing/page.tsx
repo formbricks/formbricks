@@ -1,6 +1,10 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import { IS_FORMBRICKS_CLOUD, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import {
+  IS_FORMBRICKS_CLOUD,
+  PRICING_APPSURVEYS_FREE_RESPONSES,
+  REVALIDATION_INTERVAL,
+} from "@formbricks/lib/constants";
 
 import { getTeamUsage } from "@/app/(app)/environments/[environmentId]/settings/billing/lib/getCurrentUsage";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -9,6 +13,7 @@ import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import SettingsTitle from "../components/SettingsTitle";
 import PricingTable from "./components/PricingTable";
+import { PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 
 export default async function ProfileSettingsPage({ params }) {
   if (!IS_FORMBRICKS_CLOUD) {
@@ -38,6 +43,8 @@ export default async function ProfileSettingsPage({ params }) {
           environmentId={params.environmentId}
           peopleCount={peopleCount}
           responseCount={responseCount}
+          userTargetingFreeMtu={PRICING_USERTARGETING_FREE_MTU}
+          appSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
         />
       </div>
     </>
