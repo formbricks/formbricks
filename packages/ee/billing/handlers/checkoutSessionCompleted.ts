@@ -1,6 +1,7 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
 import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
+import { getProducts } from "@formbricks/lib/product/service";
 
 import Stripe from "stripe";
 import { priceLookupKeys } from "../utils/products";
@@ -20,7 +21,8 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     expand: ["customer"],
   })) as { customer: Stripe.Customer };
 
-  const team: any = await getTeam(stripeCustomer.metadata.team);
+  const team = await getTeam(stripeCustomer.metadata.team);
+  if (!team) throw new Error("Team not found.");
   let updatedFeatures = team.billing.features;
   let countForTeam = 0;
   let priceLookupKey: string | null = null;
@@ -42,7 +44,8 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
   updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "active";
 
   if (priceLookupKey && priceLookupKey !== priceLookupKeys[priceLookupKeys.linkSurvey]) {
-    for (const product of team.products) {
+    const products = await getProducts(team.id);
+    for (const product of products) {
       for (const environment of product.environments) {
         countForTeam +=
           priceLookupKey === priceLookupKeys[priceLookupKeys.userTargeting]

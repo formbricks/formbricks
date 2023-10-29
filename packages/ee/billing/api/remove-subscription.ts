@@ -11,6 +11,7 @@ const retrievePriceLookup = async (priceId: string) => (await stripe.prices.retr
 const removeSubscription = async (teamId: string, failureUrl: string, itemToBeRemoved: string) => {
   try {
     const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found.");
     if (!team.billing.stripeCustomerId) {
       return { status: 400, data: "No subscription exists for given team!", newPlan: false, url: "" };
     }

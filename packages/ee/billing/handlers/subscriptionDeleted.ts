@@ -11,6 +11,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   }
 
   const team = await getTeam(teamId);
+  if (!team) throw new Error("Team not found.");
 
   let priceLookupKey: string | null = null;
   let updatedFeatures = team.billing.features;
