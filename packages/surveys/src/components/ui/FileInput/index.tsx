@@ -49,6 +49,9 @@ export default function FileInput({
         const bufferBytes = fileBuffer.byteLength;
         const bufferKB = bufferBytes / 1024;
         if (bufferKB > maxSize * 1024) {
+          setSelectedFile(null);
+          setIsUploaded(false);
+          setIsError(true);
           alert(`File should be less than ${maxSize} MB`);
         } else {
           setIsUploaded(false);
@@ -87,6 +90,8 @@ export default function FileInput({
       const bufferBytes = fileBuffer.byteLength;
       const bufferKB = bufferBytes / 1024;
       if (bufferKB > maxSize * 1024) {
+        setSelectedFile(null);
+        setIsUploaded(false);
         alert(`File should be less than ${maxSize} MB`);
       } else {
         try {
