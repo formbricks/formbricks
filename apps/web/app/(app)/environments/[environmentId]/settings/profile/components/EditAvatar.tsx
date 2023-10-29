@@ -13,7 +13,20 @@ export function EditAvatar({ session }: { session: Session | null }) {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        alert("Only .jpg and .png files are supported.");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        // 2MB
+        alert("The file size should be less than 2MB.");
+        return;
+      }
       const reader = new FileReader();
+      reader.onerror = () => {
+        alert("Failed to read the file. Please try again.");
+        reader.abort();
+      };
       reader.onload = function (e) {
         if (e.target) {
           setUploadedImage(e.target.result as string);
@@ -22,6 +35,14 @@ export function EditAvatar({ session }: { session: Session | null }) {
       reader.readAsDataURL(file);
     }
   };
+
+  <input
+    type="file"
+    accept=".jpg,.png"
+    ref={fileInputRef}
+    style={{ display: "none" }}
+    onChange={handleImageUpload}
+  />;
 
   const openFileUploader = () => {
     fileInputRef.current?.click();
