@@ -24,6 +24,7 @@ import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { PictureSelectionResponse } from "../PictureSelectionResponse";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -306,6 +307,11 @@ export default function SingleResponseCard({
                       {response.data[question.id]}
                     </p>
                   )
+                ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                  <PictureSelectionResponse
+                    choices={question.choices}
+                    selected={response.data[question.id]}
+                  />
                 ) : (
                   <p className="ph-no-capture my-1 font-semibold text-slate-700">
                     {handleArray(response.data[question.id])}

@@ -5,6 +5,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { useEffect } from "preact/hooks";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -67,6 +68,12 @@ export default function PictureSelectionQuestion({
     }
   };
 
+  useEffect(() => {
+    if (!question.allowMulti && Array.isArray(value) && value.length > 1) {
+      onChange({ [question.id]: [] });
+    }
+  }, [question.allowMulti]);
+
   const questionChoices = question.choices;
 
   return (
@@ -87,7 +94,7 @@ export default function PictureSelectionQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-scroll rounded-md bg-white">
+          <div className="relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-auto rounded-md bg-white">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
@@ -106,9 +113,9 @@ export default function PictureSelectionQuestion({
                 onClick={() => handleChange(choice.id)}
                 className={cn(
                   Array.isArray(value) && value.includes(choice.id)
-                    ? `z-10 border-4 shadow-xl grayscale-0 focus:border-4`
-                    : "grayscale",
-                  "box-border inline-block h-28 w-full overflow-hidden rounded-xl border border-slate-400 focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
+                    ? `z-10 border-4 shadow-xl focus:border-4`
+                    : "",
+                  "relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border border-slate-400 focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
                 )}>
                 <img
                   src={choice.imageUrl}

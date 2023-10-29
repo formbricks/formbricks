@@ -251,6 +251,7 @@ const FileInput: React.FC<FileInputProps> = ({
               allowedFileExtensions={allowedFileExtensions}
               multiple={multiple}
               handleUpload={handleUploadMore}
+              uploadMore={true}
             />
           </div>
         ) : (
@@ -318,6 +319,7 @@ const Uploader = ({
   allowedFileExtensions,
   multiple,
   handleUpload,
+  uploadMore = false,
 }: {
   name: string;
   handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
@@ -326,6 +328,7 @@ const Uploader = ({
   allowedFileExtensions: Partial<AllowedFileExtensions>[];
   multiple: boolean;
   handleUpload: (files: File[]) => void;
+  uploadMore?: boolean;
 }) => {
   return (
     <label
@@ -338,7 +341,7 @@ const Uploader = ({
       onDrop={(e) => handleDrop(e)}>
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
         <ArrowUpTrayIcon className="h-6 text-slate-500" />
-        <p className="mt-2 text-center text-sm text-slate-500">
+        <p className={cn("mt-2 text-center text-sm text-slate-500", uploadMore && "text-xs")}>
           <span className="font-semibold">Click or drag to upload files.</span>
         </p>
         <input
