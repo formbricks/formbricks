@@ -35,7 +35,7 @@ export const meta = {
         3. Installing Docker images by extracting them from the `packages/database/docker-compose.yml` file.
         4. Building the @formbricks/js component.
      - When the workspace starts:
-        1. Waiting for web and demo apps to start and openening the `apps/demo/.env` file automatically such that users can start playing around with the demo app by configuring `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID` straight away!
+        1. Wait for the web and demo apps to launch on Gitpod. This automatically opens the `apps/demo/.env` file. Utilize dynamic localhost URLs (e.g., `localhost:3000` for signup and `localhost:8025` for email confirmation) to configure `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID`. After creating your account and finding the `ID` in the URL at `localhost:3000`, replace `YOUR_ENVIRONMENT_ID` in the `.env` file located in `app/demo`. 
 
     **Web Component Initialization:** 
      - we initialize the @formbricks/web component during prebuilds. This involves:
