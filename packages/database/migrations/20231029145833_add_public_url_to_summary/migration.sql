@@ -2,7 +2,6 @@
 CREATE TABLE "ResponseSharingKey" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
     "surveyId" TEXT NOT NULL,
 
     CONSTRAINT "ResponseSharingKey_pkey" PRIMARY KEY ("id")

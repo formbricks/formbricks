@@ -28,7 +28,7 @@ export default function ShareSurveyResults({
       }}>
       {showPublishModal && surveyUrl ? (
         <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[40%]">
-          <div className="mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
+          <div className="no-scrollbar mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
             <CheckCircleIcon className="mt-4 h-20 w-20 text-slate-300" />
             <div className=" mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
               Page is live on the web.
@@ -49,13 +49,13 @@ export default function ShareSurveyResults({
             <div className="my-6 flex gap-2">
               <Button
                 type="submit"
-                variant="highlight"
+                variant="secondary"
                 className=" text-center"
                 onClick={() => handleUnpublish()}>
                 Unpublish
               </Button>
 
-              <Button variant="darkCTA" className=" text-center" href={surveyUrl}>
+              <Button variant="darkCTA" className=" text-center" href={surveyUrl} target="_blank">
                 View Site
               </Button>
             </div>
@@ -63,7 +63,7 @@ export default function ShareSurveyResults({
         </DialogContent>
       ) : (
         <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[40%]">
-          <div className="mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
+          <div className="no-scrollbar mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
             <GlobeEuropeAfricaIcon className="mt-4 h-20 w-20 text-slate-300" />
             <div className=" mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
               Publish Results to web
