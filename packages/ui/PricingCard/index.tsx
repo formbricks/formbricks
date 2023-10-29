@@ -27,7 +27,7 @@ export const PricingCard = ({
   monthlyPrice: number;
   actionText: string;
   team: TTeam;
-  metric: string;
+  metric?: string;
   sliderValue?: number;
   sliderLimit?: number;
   freeTierLimit?: number;
@@ -62,9 +62,9 @@ export const PricingCard = ({
 
         <p className=" whitespace-pre-wrap text-sm text-slate-600">{subtitle}</p>
 
-        {perMetricCharge && (
+        {metric && perMetricCharge && (
           <div className="rounded-xl bg-slate-100 py-4 dark:bg-slate-800">
-            <div className="rounded-xl px-4">
+            <div className="rounded-xl">
               <div className="mb-2 flex items-center gap-x-4"></div>
               <div className="relative my-2">
                 <Slider
@@ -80,11 +80,11 @@ export const PricingCard = ({
           </div>
         )}
 
-        <div className="flex p-2">
+        <div className="flex py-3">
           <div className="w-3/5">
             {team.billing.features[featureNameKey].status === "inactive" && (
               <p className=" whitespace-pre-wrap text-sm text-slate-600">
-                Youre on the <b>Free plan</b> in {title}. <br />
+                You&apos;re on the <b>Free plan</b> in {title}.<br />
                 Upgrade now to unlock the below features:
               </p>
             )}
@@ -103,7 +103,7 @@ export const PricingCard = ({
 
           <div className="w-1/5"></div>
           <div className="w-1/5">
-            <p className="my-2">
+            <div className="my-2">
               {team.billing.features[featureNameKey].status !== "inactive" ? (
                 <div className="mt-8">
                   <span className="text-sm font-medium text-slate-400">Approximately</span>
@@ -131,7 +131,7 @@ export const PricingCard = ({
                   <span className="text-base font-medium text-slate-400">/ month</span>
                 </div>
               )}
-            </p>
+            </div>
             {team.billing.features[featureNameKey].status === "inactive" && (
               <Button
                 variant="darkCTA"

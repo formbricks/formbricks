@@ -2,10 +2,10 @@
 
 import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { PricingCard } from "@formbricks/ui/PricingCard";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import {
   manageSubscriptionAction,
@@ -17,21 +17,21 @@ import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import toast from "react-hot-toast";
 
-interface BillingDetails {
-  people: number;
-  response: number;
-}
-
 interface PricingTableProps {
   team: TTeam;
   environmentId: string;
-  billingDetails: BillingDetails;
+  peopleCount: number;
+  responseCount: number;
 }
 
-export default function PricingTableComponent({ team, environmentId, billingDetails }: PricingTableProps) {
+export default function PricingTableComponent({
+  team,
+  environmentId,
+  peopleCount,
+  responseCount,
+}: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
-  const { people, response } = billingDetails;
   const [upgradingPlan, setUpgradingPlan] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [activeLookupKey, setActiveLookupKey] = useState("");
@@ -85,15 +85,19 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
 
   const coreAndWebAppSurveyPaid = [
     "Team Roles",
-    "Multi Language Surveys",
-    "0.15$ / submission after 250 submissions",
+    "250 responses / month free",
+    "$0.15 / responses afterwards",
   ];
   const coreAndWebAppSurveysFreeTierLimit = 250;
 
-  const userTargetingPaid = ["Advanced Targeting", "0.01$ / identified user after 2500 people"];
+  const userTargetingPaid = [
+    "Advanced Targeting",
+    "2.500 identified users / month free",
+    "$0.01 / identified user afterwards",
+  ];
   const userTargetingFreeTierLimit = 2500;
 
-  const linkSurveysPaid = ["Remove Formbricks Branding", "Custom URL", "File Uploads upto 1 GB"];
+  const linkSurveysPaid = ["Remove Formbricks Branding", "File Uploads upto 1 GB"];
 
   return (
     <div className="relative">
@@ -102,9 +106,9 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
           <LoadingSpinner />
         </div>
       )}
-      <div className="justify-between gap-4 rounded-lg bg-white p-8">
-        {team.billing.stripeCustomerId && (
-          <div className="absolute right-8 top-4 pb-4">
+      <div className="justify-between gap-4 rounded-lg">
+        {team.billing.stripeCustomerId ? (
+          <div className="flex w-full justify-end">
             <Button
               variant="secondary"
               className="justify-center py-2 shadow-sm"
@@ -113,17 +117,46 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
               Manage Card Details
             </Button>
           </div>
+        ) : (
+          <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-gray-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
+            <svg
+              viewBox="0 0 1024 1024"
+              className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+              aria-hidden="true">
+              <circle
+                cx={512}
+                cy={512}
+                r={512}
+                fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                fillOpacity="0.7"
+              />
+              <defs>
+                <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                  <stop stopColor="#00E6CA" />
+                  <stop offset={0} stopColor="#00C4B8" />
+                </radialGradient>
+              </defs>
+            </svg>
+            <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl">Get the most out of Formbricks</h2>
+              <p className="text-md mt-6 leading-8 text-gray-300">
+                Get access to all features by upgrading to a paid plan.
+                <br />
+                With our metered billing you will not be charged until you exceed the free tier limits.
+              </p>
+            </div>
+          </div>
         )}
 
         <PricingCard
           title={"Core & App Surveys"}
-          subtitle={"Get upto 250 free responses every month"}
+          subtitle={"Get up to 250 free responses every month"}
           featureName={priceLookupKeys[priceLookupKeys.appSurvey]}
           monthlyPrice={0}
           actionText={"Starting at"}
           team={team}
           metric="responses"
-          sliderValue={response}
+          sliderValue={responseCount}
           sliderLimit={350}
           freeTierLimit={coreAndWebAppSurveysFreeTierLimit}
           paidFeatures={coreAndWebAppSurveyPaid}
@@ -136,14 +169,29 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
         />
 
         <PricingCard
-          title={"User Identification"}
-          subtitle={"Target upto 2500 users every month"}
+          title={"Link Survey"}
+          subtitle={"Link Surveys include unlimited surveys and responses for free."}
+          featureName={priceLookupKeys[priceLookupKeys.linkSurvey]}
+          monthlyPrice={30}
+          actionText={""}
+          team={team}
+          paidFeatures={linkSurveysPaid}
+          loading={upgradingPlan}
+          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.linkSurvey])}
+          cancelPlanFunction={(e) =>
+            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.linkSurvey])
+          }
+        />
+
+        <PricingCard
+          title={"User Targeting"}
+          subtitle={"Target up to 2500 users every month"}
           featureName={priceLookupKeys[priceLookupKeys.userTargeting]}
           monthlyPrice={0}
           actionText={"Starting at"}
           team={team}
           metric="people"
-          sliderValue={people}
+          sliderValue={peopleCount}
           sliderLimit={3500}
           freeTierLimit={userTargetingFreeTierLimit}
           paidFeatures={userTargetingPaid}
@@ -152,22 +200,6 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
           upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.userTargeting])}
           cancelPlanFunction={(e) =>
             handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.userTargeting])
-          }
-        />
-
-        <PricingCard
-          title={"Link Survey"}
-          subtitle={"Run unlimited surveys and responses for free"}
-          featureName={priceLookupKeys[priceLookupKeys.linkSurvey]}
-          monthlyPrice={30}
-          actionText={"At"}
-          team={team}
-          metric="people"
-          paidFeatures={linkSurveysPaid}
-          loading={upgradingPlan}
-          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.linkSurvey])}
-          cancelPlanFunction={(e) =>
-            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.linkSurvey])
           }
         />
       </div>
