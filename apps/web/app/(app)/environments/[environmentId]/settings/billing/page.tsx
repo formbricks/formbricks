@@ -9,19 +9,19 @@ import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import SettingsTitle from "../components/SettingsTitle";
 import PricingTable from "./components/PricingTable";
-import { getBillingDetails } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
+import { getMonthlyCounts } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
 export default async function ProfileSettingsPage({ params }) {
-  // if (!IS_FORMBRICKS_CLOUD) {
-  //   notFound();
-  // }
+  if (!IS_FORMBRICKS_CLOUD) {
+    notFound();
+  }
 
   const session = await getServerSession(authOptions);
   const team = await getTeamByEnvironmentId(params.environmentId);
   if (!team) {
     throw new Error("Team not found");
   }
-  const billingDetails = await getBillingDetails(team.id);
+  const billingDetails = await getMonthlyCounts(team.id);
 
   if (!session) {
     throw new Error("Unauthorized");

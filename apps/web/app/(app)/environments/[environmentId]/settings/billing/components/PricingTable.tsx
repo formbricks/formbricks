@@ -2,11 +2,11 @@
 
 import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
-import { Badge } from "@formbricks/ui/Badge";
-import { CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { PricingCard } from "@formbricks/ui/PricingCard";
+
 import {
   manageSubscriptionAction,
   removeSubscriptionAction,
@@ -14,10 +14,12 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
 import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import toast from "react-hot-toast";
 
 interface BillingDetails {
   people: number;
-  display: number;
+  response: number;
 }
 
 interface PricingTableProps {
@@ -29,7 +31,10 @@ interface PricingTableProps {
 export default function PricingTableComponent({ team, environmentId, billingDetails }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
-  const { people, display } = billingDetails;
+  const { people, response } = billingDetails;
+  const [upgradingPlan, setUpgradingPlan] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [activeLookupKey, setActiveLookupKey] = useState("");
 
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);
@@ -39,27 +44,56 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
   };
 
   const upgradePlan = async (priceNickname: string) => {
-    setLoadingCustomerPortal(true);
-    const paymentUrl = await upgradePlanAction(team.id, environmentId, priceNickname);
-    setLoadingCustomerPortal(false);
-    router.push(paymentUrl);
+    try {
+      setUpgradingPlan(true);
+      const paymentUrl = await upgradePlanAction(team.id, environmentId, priceNickname);
+      setUpgradingPlan(false);
+      if (paymentUrl === "") {
+        toast.success("Plan upgraded successfully");
+        router.refresh();
+      } else {
+        router.push(paymentUrl);
+      }
+    } catch (err) {
+      toast.error("Unable to upgrade plan");
+    } finally {
+      setUpgradingPlan(false);
+    }
   };
 
-  const freeFeatures = [
-    "Unlimited surveys",
-    "Granular targeting",
-    "30+ templates",
-    "API access",
-    "Third Party Integrations",
-    "Unlimited Responses per Survey",
-  ];
+  const handleClickingCancelButton = async (e, lookupKey) => {
+    try {
+      e.preventDefault();
+      setActiveLookupKey(lookupKey);
+      setOpenDeleteModal(true);
+    } catch (err) {
+      toast.error("Unable to open delete modal");
+    }
+  };
 
-  const proFeatures = [
-    "All features of Free plan",
-    "Team Role Management",
-    "Advanced User Targeting",
+  const handleDeleteSubscription = async () => {
+    try {
+      await removeSubscriptionAction(team.id, environmentId, activeLookupKey);
+      router.refresh();
+      toast.success("Subscription deleted successfully");
+    } catch (err) {
+      toast.error("Unable to delete subscription");
+    } finally {
+      setOpenDeleteModal(false);
+    }
+  };
+
+  const coreAndWebAppSurveyPaid = [
+    "Team Roles",
     "Multi Language Surveys",
+    "0.15$ / submission after 250 submissions",
   ];
+  const coreAndWebAppSurveysFreeTierLimit = 250;
+
+  const userTargetingPaid = ["Advanced Targeting", "0.01$ / identified user after 2500 people"];
+  const userTargetingFreeTierLimit = 2500;
+
+  const linkSurveysPaid = ["Remove Formbricks Branding", "Custom URL", "File Uploads upto 1 GB"];
 
   return (
     <div className="relative">
@@ -68,179 +102,83 @@ export default function PricingTableComponent({ team, environmentId, billingDeta
           <LoadingSpinner />
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4 rounded-lg bg-white p-8">
-        <div className="">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-            <div className="p-8">
-              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Base Plan</h2>
-              <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Always free. Giving back to the community.
-              </p>
-              <ul className="mt-4 space-y-4">
-                {freeFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                      <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                    </div>
-                    <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-6 text-3xl">
-                <span className="text-slate-800font-light">Always free</span>
-              </p>
-              <Button
-                variant="secondary"
-                className="mt-6 w-full justify-center py-4 shadow-sm"
-                disabled={true}>
-                Free Plan
-              </Button>
-              <Button
-                variant="secondary"
-                className="mt-6 w-full justify-center py-4 shadow-sm"
-                onClick={() => openCustomerPortal()}>
-                Open Customer Portal
-              </Button>
-            </div>
+      <div className="justify-between gap-4 rounded-lg bg-white p-8">
+        {team.billing.stripeCustomerId && (
+          <div className="absolute right-8 top-4 pb-4">
+            <Button
+              variant="secondary"
+              className="justify-center py-2 shadow-sm"
+              loading={loadingCustomerPortal}
+              onClick={openCustomerPortal}>
+              Manage Card Details
+            </Button>
           </div>
-        </div>
-        <div className="">
-          <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
-            <div className="p-8">
-              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">App Surveys</h2>
-              {team.billing.features.appSurvey.status === "active" && (
-                <Badge text="Current Plan" size="normal" type="success" />
-              )}
-              <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                All features included. Unlimited usage.
-              </p>
-              <ul className="mt-4 space-y-4">
-                {proFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                      <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
-                    </div>
-                    <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-6">
-                <span className="text-3xl font-bold text-slate-800">$99</span>
+        )}
 
-                <span className="text-base font-medium text-slate-400">/ month</span>
-              </p>
-              {team.billing.features.appSurvey.status === "active" ? (
-                <div>
-                  <Button
-                    variant="secondary"
-                    className="mt-6 w-full justify-center py-4 shadow-sm"
-                    onClick={() =>
-                      removeSubscriptionAction(
-                        team.id,
-                        environmentId,
-                        priceLookupKeys[priceLookupKeys.appSurvey]
-                      )
-                    }>
-                    Manage Subscription
-                  </Button>
-                  <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
-                    People Tracked: {`${people}`}
-                  </p>
-                  <p className="mt-2 whitespace-pre-wrap text-center text-sm text-slate-600">
-                    Displays Tracked: {`${display}`}
-                  </p>
-                </div>
-              ) : (
-                <Button
-                  variant="darkCTA"
-                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
-                  onClick={() => upgradePlan(priceLookupKeys[priceLookupKeys.appSurvey])}>
-                  Upgrade
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="col-span-1">
-          <div className="rounded-lg border border-slate-100  shadow-sm">
-            <div className="p-8">
-              <h2 className="inline-flex text-2xl font-bold text-slate-700">Link Surveys</h2>
-              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Remove Formbricks branding from web-app surveys across all your products.
-              </p>
-              {team.billing.features.linkSurvey.status === "active" ? (
-                <Button
-                  variant="secondary"
-                  className="mt-6 w-full justify-center py-4 shadow-sm"
-                  onClick={() =>
-                    removeSubscriptionAction(
-                      team.id,
-                      environmentId,
-                      priceLookupKeys[priceLookupKeys.linkSurvey]
-                    )
-                  }>
-                  Manage Subscription
-                </Button>
-              ) : (
-                <Button
-                  variant="darkCTA"
-                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
-                  onClick={() => upgradePlan(priceLookupKeys[priceLookupKeys.linkSurvey])}>
-                  Buy for 10$ /month
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="col-span-1">
-          <div className="rounded-lg border border-slate-100 shadow-sm">
-            <div className="p-8">
-              <h2 className="inline-flex text-2xl font-bold text-slate-700">User Targeting</h2>
-              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Use your own custom URL for link surveys.
-              </p>
-              {team.billing.features.userTargeting.status === "active" ? (
-                <Button
-                  variant="secondary"
-                  className="mt-6 w-full justify-center py-4 shadow-sm"
-                  onClick={() =>
-                    removeSubscriptionAction(
-                      team.id,
-                      environmentId,
-                      priceLookupKeys[priceLookupKeys.userTargeting]
-                    )
-                  }>
-                  Manage Subscription
-                </Button>
-              ) : (
-                <Button
-                  variant="darkCTA"
-                  className="mt-6 w-full justify-center py-4 text-white shadow-sm"
-                  onClick={() => upgradePlan(priceLookupKeys[priceLookupKeys.userTargeting])}>
-                  Buy for 10$ /month
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="col-span-2">
-          <div className="rounded-lg border border-slate-100  shadow-sm">
-            <div className="p-8">
-              <h2 className="inline-flex text-2xl font-bold text-slate-700">Open-source</h2>
-              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Self-host Formbricks with all perks: Data ownership, customizability, limitless use.
-              </p>
-              <Button
-                variant="secondary"
-                className="mt-6 justify-center py-4 shadow-sm"
-                href="https://formbricks.com/docs/self-hosting/deployment"
-                target="_blank">
-                Read Deployment Docs
-              </Button>
-            </div>
-          </div>
-        </div>
+        <PricingCard
+          title={"Core & App Surveys"}
+          subtitle={"Get upto 250 free responses every month"}
+          featureName={priceLookupKeys[priceLookupKeys.appSurvey]}
+          monthlyPrice={0}
+          actionText={"Starting at"}
+          team={team}
+          metric="responses"
+          sliderValue={response}
+          sliderLimit={350}
+          freeTierLimit={coreAndWebAppSurveysFreeTierLimit}
+          paidFeatures={coreAndWebAppSurveyPaid}
+          perMetricCharge={0.15}
+          loading={upgradingPlan}
+          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.appSurvey])}
+          cancelPlanFunction={(e) =>
+            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.appSurvey])
+          }
+        />
+
+        <PricingCard
+          title={"User Identification"}
+          subtitle={"Target upto 2500 users every month"}
+          featureName={priceLookupKeys[priceLookupKeys.userTargeting]}
+          monthlyPrice={0}
+          actionText={"Starting at"}
+          team={team}
+          metric="people"
+          sliderValue={people}
+          sliderLimit={3500}
+          freeTierLimit={userTargetingFreeTierLimit}
+          paidFeatures={userTargetingPaid}
+          perMetricCharge={0.01}
+          loading={upgradingPlan}
+          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.userTargeting])}
+          cancelPlanFunction={(e) =>
+            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.userTargeting])
+          }
+        />
+
+        <PricingCard
+          title={"Link Survey"}
+          subtitle={"Run unlimited surveys and responses for free"}
+          featureName={priceLookupKeys[priceLookupKeys.linkSurvey]}
+          monthlyPrice={30}
+          actionText={"At"}
+          team={team}
+          metric="people"
+          paidFeatures={linkSurveysPaid}
+          loading={upgradingPlan}
+          upgradePlanFunction={() => upgradePlan(priceLookupKeys[priceLookupKeys.linkSurvey])}
+          cancelPlanFunction={(e) =>
+            handleClickingCancelButton(e, priceLookupKeys[priceLookupKeys.linkSurvey])
+          }
+        />
       </div>
+      <DeleteDialog
+        open={openDeleteModal}
+        setOpen={setOpenDeleteModal}
+        deleteWhat="App & Core Surveys"
+        onDelete={() => {
+          handleDeleteSubscription();
+        }}
+      />
     </div>
   );
 }

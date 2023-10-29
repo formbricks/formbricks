@@ -7,42 +7,33 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { canUserAccessTeam } from "@formbricks/lib/team/auth";
 import { getTeam } from "@formbricks/lib/team/service";
 import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getMonthlyDisplayCount } from "@formbricks/lib/display/service";
+import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 
-export async function getBillingDetails(teamId: string) {
+export async function getMonthlyCounts(teamId: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const team: any = await getTeam(teamId);
+  const team = await getTeam(teamId);
 
-  const stripeCustomerId = team.subscription?.stripeCustomerId;
-
-  if (!stripeCustomerId) {
-    return {
-      people: -1,
-      display: -1,
-    };
-  }
-
-  let peopleForTeam = 0;
-  let displaysForTeam = 0;
+  let peopleCount = 0;
+  let responseCount = 0;
 
   for (const product of team.products) {
     for (const environment of product.environments) {
       const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
-      const displaysInThisEnvironment = await getMonthlyDisplayCount(environment.id);
+      const responsesInThisEnvironment = await getMonthlyResponseCount(environment.id);
 
-      peopleForTeam += peopleInThisEnvironment;
-      displaysForTeam += displaysInThisEnvironment;
+      peopleCount += peopleInThisEnvironment;
+      responseCount += responsesInThisEnvironment;
     }
   }
 
   return {
-    people: peopleForTeam,
-    display: displaysForTeam,
+    people: peopleCount,
+    response: responseCount,
   };
 }
 
