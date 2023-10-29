@@ -6,6 +6,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { updateProfile, deleteProfile } from "@formbricks/lib/profile/service";
 import { TProfileUpdateInput } from "@formbricks/types/profile";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { deleteIntegrationsByEnvironmentId } from "@formbricks/lib/integration/service";
 
 export async function updateProfileAction(data: Partial<TProfileUpdateInput>) {
   const session = await getServerSession(authOptions);
@@ -19,6 +20,13 @@ export async function deleteProfileAction() {
   if (!session) throw new AuthorizationError("Not authorized");
 
   return await deleteProfile(session.user.id);
+}
+
+export async function deleteIntegrations(environmentId) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  return await deleteIntegrationsByEnvironmentId(environmentId);
 }
 
 export async function setupTwoFactorAuthAction(password: string) {
