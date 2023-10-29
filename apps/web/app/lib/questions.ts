@@ -1,16 +1,16 @@
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 import {
-  CursorArrowRippleIcon,
   ChatBubbleBottomCenterTextIcon,
+  CheckIcon,
+  CursorArrowRippleIcon,
   ListBulletIcon,
+  PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
-  CheckIcon,
-  PhotoIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
 export type TSurveyQuestionType = {
   id: string;
@@ -21,17 +21,6 @@ export type TSurveyQuestionType = {
 };
 
 export const questionTypes: TSurveyQuestionType[] = [
-  {
-    id: QuestionId.PictureSelection,
-    label: "Picture Selection",
-    description: "Select one or more pictures",
-    icon: PhotoIcon,
-    preset: {
-      headline: "",
-      allowMulti: true,
-      choices: [],
-    },
-  },
   {
     id: QuestionId.OpenText,
     label: "Free text",
@@ -75,8 +64,33 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
+    id: QuestionId.PictureSelection,
+    label: "Picture Selection",
+    description: "Select one or more pictures",
+    icon: PhotoIcon,
+    preset: {
+      headline: "",
+      allowMulti: true,
+      choices: [],
+    },
+  },
+  {
+    id: QuestionId.Rating,
+    label: "Rating",
+    description: "Ask your users to rate something",
+    icon: StarIcon,
+    preset: {
+      headline: "How would you rate {{productName}}",
+      subheader: "Don't worry, be honest.",
+      scale: "star",
+      range: 5,
+      lowerLabel: "Not good",
+      upperLabel: "Very good",
+    },
+  },
+  {
     id: QuestionId.NPS,
-    label: "Net Promoter Score® (NPS)",
+    label: "Net Promoter Score (NPS)",
     description: "Rate satisfaction on a 0-10 scale",
     icon: PresentationChartBarIcon,
     preset: {
@@ -95,20 +109,6 @@ export const questionTypes: TSurveyQuestionType[] = [
       buttonLabel: "Book interview",
       buttonExternal: false,
       dismissButtonLabel: "Skip",
-    },
-  },
-  {
-    id: QuestionId.Rating,
-    label: "Rating",
-    description: "Ask your users to rate something",
-    icon: StarIcon,
-    preset: {
-      headline: "How would you rate {{productName}}",
-      subheader: "Don't worry, be honest.",
-      scale: "star",
-      range: 5,
-      lowerLabel: "Not good",
-      upperLabel: "Very good",
     },
   },
   {
