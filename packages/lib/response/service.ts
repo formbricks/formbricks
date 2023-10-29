@@ -1,6 +1,10 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseInput,
@@ -8,22 +12,18 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
 import { TTag } from "@formbricks/types/tags";
 import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { deleteDisplayByResponseId } from "../display/service";
 import { getPerson, transformPrismaPerson } from "../person/service";
+import { formatResponseDateFields } from "../response/util";
+import { responseNoteCache } from "../responseNote/cache";
+import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/environment";
-import { unstable_cache } from "next/cache";
-import { deleteDisplayByResponseId } from "../display/service";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "./cache";
-import { formatResponseDateFields } from "../response/util";
-import { getResponseNotes } from "../responseNote/service";
-import { responseNoteCache } from "../responseNote/cache";
 
 const responseSelection = {
   id: true,
@@ -66,6 +66,22 @@ const responseSelection = {
       },
     },
   },
+  notes: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      text: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      isResolved: true,
+      isEdited: true,
+    },
+  },
 };
 
 export const getResponsesByPersonId = async (
@@ -92,11 +108,9 @@ export const getResponsesByPersonId = async (
 
         let responses: Array<TResponse> = [];
 
-        responsePrisma.forEach(async (response) => {
-          const responseNotes = await getResponseNotes(response.id);
+        responsePrisma.forEach((response) => {
           responses.push({
             ...response,
-            notes: responseNotes,
             person: response.person ? transformPrismaPerson(response.person) : null,
             tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           });
@@ -144,10 +158,8 @@ export const getResponseBySingleUseId = async (
           return null;
         }
 
-        const responseNotes = await getResponseNotes(responsePrisma.id);
         const response: TResponse = {
           ...responsePrisma,
-          notes: responseNotes,
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -212,10 +224,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       select: responseSelection,
     });
 
-    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
-      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
@@ -257,10 +267,8 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
           throw new ResourceNotFoundError("Response", responseId);
         }
 
-        const responseNotes = await getResponseNotes(responsePrisma.id);
         const response: TResponse = {
           ...responsePrisma,
-          notes: responseNotes,
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -313,11 +321,8 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
 
         const transformedResponses: TResponse[] = await Promise.all(
           responses.map(async (responsePrisma) => {
-            const responseNotes = await getResponseNotes(responsePrisma.id);
-
             return {
               ...responsePrisma,
-              notes: responseNotes,
               person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
@@ -373,11 +378,8 @@ export const getResponsesByEnvironmentId = async (
 
         const transformedResponses: TResponse[] = await Promise.all(
           responses.map(async (responsePrisma) => {
-            const responseNotes = await getResponseNotes(responsePrisma.id);
-
             return {
               ...responsePrisma,
-              notes: responseNotes,
               person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
@@ -443,10 +445,8 @@ export const updateResponse = async (
       select: responseSelection,
     });
 
-    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
-      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
