@@ -22,6 +22,8 @@ interface PricingTableProps {
   environmentId: string;
   peopleCount: number;
   responseCount: number;
+  userTargetingFreeMtu: number;
+  appSurveyFreeResponses: number;
 }
 
 export default function PricingTableComponent({
@@ -29,6 +31,8 @@ export default function PricingTableComponent({
   environmentId,
   peopleCount,
   responseCount,
+  userTargetingFreeMtu,
+  appSurveyFreeResponses,
 }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
@@ -101,7 +105,6 @@ export default function PricingTableComponent({
       comingSoon: true,
     },
   ];
-  const coreAndWebAppSurveysFreeTierLimit = 250;
 
   const userTargetingPaid = [
     {
@@ -117,8 +120,6 @@ export default function PricingTableComponent({
       comingSoon: true,
     },
   ];
-
-  const userTargetingFreeTierLimit = 2500;
 
   const linkSurveysPaid = [
     {
@@ -194,7 +195,7 @@ export default function PricingTableComponent({
           metric="responses"
           sliderValue={responseCount}
           sliderLimit={350}
-          freeTierLimit={coreAndWebAppSurveysFreeTierLimit}
+          freeTierLimit={appSurveyFreeResponses}
           paidFeatures={coreAndWebAppSurveyPaid}
           perMetricCharge={0.15}
           loading={upgradingPlan}
@@ -225,7 +226,7 @@ export default function PricingTableComponent({
           metric="people"
           sliderValue={peopleCount}
           sliderLimit={3500}
-          freeTierLimit={userTargetingFreeTierLimit}
+          freeTierLimit={userTargetingFreeMtu}
           paidFeatures={userTargetingPaid}
           perMetricCharge={0.01}
           loading={upgradingPlan}

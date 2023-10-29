@@ -1,17 +1,18 @@
 "use server";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { canUserAccessTeam } from "@formbricks/lib/team/auth";
-import { getTeam } from "@formbricks/lib/team/service";
-import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
-import createSubscription from "@formbricks/ee/billing/api/create-subscription";
-import createCustomerPortalSession from "@formbricks/ee/billing/api/create-customer-portal-session";
-import removeSubscription from "@formbricks/ee/billing/api/remove-subscription";
-import { getProducts } from "@formbricks/lib/product/service";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeam,
+} from "@formbricks/lib/team/service";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { getServerSession } from "next-auth";
+import { createSubscription } from "@formbricks/ee/billing/api/create-subscription";
+import { createCustomerPortalSession } from "@formbricks/ee/billing/api/create-customer-portal-session";
+import { removeSubscription } from "@formbricks/ee/billing/api/remove-subscription";
 
 export async function getMonthlyCounts(teamId: string) {
   const session = await getServerSession(authOptions);
@@ -20,19 +21,8 @@ export async function getMonthlyCounts(teamId: string) {
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  let peopleCount = 0;
-  let responseCount = 0;
-
-  const products = await getProducts(teamId);
-  for (const product of products) {
-    for (const environment of product.environments) {
-      const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
-      const responsesInThisEnvironment = await getMonthlyResponseCount(environment.id);
-
-      peopleCount += peopleInThisEnvironment;
-      responseCount += responsesInThisEnvironment;
-    }
-  }
+  let peopleCount = await getMonthlyActiveTeamPeopleCount(teamId);
+  let responseCount = await getMonthlyTeamResponseCount(teamId);
 
   return {
     people: peopleCount,

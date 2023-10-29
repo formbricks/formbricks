@@ -1,8 +1,7 @@
-import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 import { getProducts } from "@formbricks/lib/product/service";
-
+import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
+import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import Stripe from "stripe";
 import { priceLookupKeys } from "../utils/products";
 import { reportUsage } from "../utils/report-usage";

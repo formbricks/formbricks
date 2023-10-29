@@ -13,7 +13,11 @@ export const getFirstOfNextMonthTimestamp = (): number => {
   return Math.floor(nextMonth.getTime() / 1000);
 };
 
-const createSubscription = async (teamId: string, environmentId: string, subscribeToNickname: string) => {
+export const createSubscription = async (
+  teamId: string,
+  environmentId: string,
+  subscribeToNickname: string
+) => {
   try {
     const team = await getTeam(teamId);
     if (!team) throw new Error("Team not found.");
@@ -184,5 +188,3 @@ const createSubscription = async (teamId: string, environmentId: string, subscri
     };
   }
 };
-
-export default createSubscription;

@@ -1,14 +1,15 @@
 import { responses } from "@/app/lib/api/response";
 import reportUsage from "@formbricks/ee/billing/api/report-usage";
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { CRON_SECRET } from "@formbricks/lib/constants";
-import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getTeamsWithPaidPlan } from "@formbricks/lib/team/service";
-import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
 import { priceLookupKeys } from "@formbricks/ee/billing/utils/products";
-import { getProducts } from "@formbricks/lib/product/service";
+import { CRON_SECRET } from "@formbricks/lib/constants";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeamsWithPaidPlan,
+} from "@formbricks/lib/team/service";
 import { TTeam } from "@formbricks/types/teams";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 async function reportTeamUsage(team: TTeam) {
   const stripeCustomerId = team.billing.stripeCustomerId;
@@ -22,22 +23,8 @@ async function reportTeamUsage(team: TTeam) {
   if (!calculatePeople && !calculateResponses) {
     return;
   }
-  let people = 0;
-  let responses = 0;
-
-  const products = await getProducts(team.id);
-  for (const product of products) {
-    for (const environment of product.environments) {
-      if (calculateResponses) {
-        const responsesInThisEnvironment = await getMonthlyResponseCount(environment.id);
-        responses += responsesInThisEnvironment;
-      }
-      if (calculatePeople) {
-        const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
-        people += peopleInThisEnvironment;
-      }
-    }
-  }
+  let people = await getMonthlyActiveTeamPeopleCount(team.id);
+  let responses = await getMonthlyTeamResponseCount(team.id);
 
   if (calculatePeople) {
     await reportUsage(stripeCustomerId, people, priceLookupKeys.userTargeting, Math.floor(Date.now() / 1000));
