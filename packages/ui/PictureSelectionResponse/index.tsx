@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 interface PictureSelectionResponseProps {
   choices: { id: string; imageUrl: string }[];
@@ -16,11 +17,15 @@ export const PictureSelectionResponse = ({ choices, selected }: PictureSelection
   return (
     <div className="my-1 flex flex-wrap gap-x-5 gap-y-4">
       {selected.map((id) => (
-        <img
-          src={choiceImageMapping[id]}
-          alt={choiceImageMapping[id].split("/").pop()}
-          className="h-28 w-56 rounded-lg object-fill"
-        />
+        <div className="relative h-32 w-56">
+          <Image
+            src={choiceImageMapping[id]}
+            alt={choiceImageMapping[id].split("/").pop() || "Image"}
+            layout="fill"
+            objectFit="cover"
+            className="rounded-lg"
+          />
+        </div>
       ))}
     </div>
   );

@@ -1,9 +1,10 @@
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
 import type { TSurveyPictureSelectionQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
 import { useMemo } from "react";
-import { questionTypes } from "@/app/lib/questions";
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 
 interface PictureChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>;
@@ -93,8 +94,14 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
           <div key={result.id}>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
               <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal ">
-                <div className="max-h-28 w-[220px]">
-                  <img src={result.imageUrl} alt="choice-image" className="h-full w-full rounded-md" />
+                <div className="relative h-32 w-[220px]">
+                  <Image
+                    src={result.imageUrl}
+                    alt="choice-image"
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-md"
+                  />
                 </div>
                 <div className="self-end">
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
