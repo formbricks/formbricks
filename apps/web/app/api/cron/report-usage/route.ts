@@ -37,7 +37,7 @@ async function reportTeamUsage(team: TTeam) {
   if (calculateResponses) {
     await reportUsageToStripe(
       stripeCustomerId,
-      responses + 1000,
+      responses,
       priceLookupKeys.appSurvey,
       Math.floor(Date.now() / 1000)
     );
