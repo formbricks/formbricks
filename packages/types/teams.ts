@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ZSubscription = z.object({
-  status: z.enum(["active", "canceled", "inactive"]).default("inactive"),
+  status: z.enum(["active", "cancelled", "inactive"]).default("inactive"),
 });
 
 export type TSubscription = z.infer<typeof ZSubscription>;

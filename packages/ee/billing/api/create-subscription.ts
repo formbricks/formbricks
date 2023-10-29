@@ -142,7 +142,7 @@ const createSubscription = async (teamId: string, environmentId: string, subscri
         !(
           existingSubscription.cancel_at_period_end &&
           team.billing.features[subscribeToNickname as keyof typeof team.billing.features].status ===
-            "canceled"
+            "cancelled"
         )
       ) {
         let alreadyInSubscription = false;

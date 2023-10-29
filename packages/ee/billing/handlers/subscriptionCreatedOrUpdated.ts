@@ -37,7 +37,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
     if (
       !(
         stripeSubscriptionObject.cancel_at_period_end &&
-        team.billing.features[priceLookupKey as keyof typeof team.billing.features].status === "canceled"
+        team.billing.features[priceLookupKey as keyof typeof team.billing.features].status === "cancelled"
       )
     ) {
       updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "active";

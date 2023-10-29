@@ -55,7 +55,7 @@ export const PricingCard = ({
               Unsubscribe
             </Button>
           </>
-        ) : team.billing.features[featureNameKey].status === "canceled" ? (
+        ) : team.billing.features[featureNameKey].status === "cancelled" ? (
           <Badge text="Cancelling at End of this Month" size="normal" type="warning" />
         ) : null}
 

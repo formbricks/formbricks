@@ -83,7 +83,7 @@ const removeSubscription = async (teamId: string, failureUrl: string, itemToBeRe
         ...team.billing,
         features: {
           ...team.billing.features,
-          [itemToBeRemoved]: { status: "canceled" },
+          [itemToBeRemoved]: { status: "cancelled" },
         },
       },
     });
