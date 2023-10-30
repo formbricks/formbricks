@@ -4,6 +4,7 @@ import { getWebhook } from "./service";
 import { unstable_cache } from "next/cache";
 import { ZId } from "@formbricks/types/environment";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { webhookCache } from "./cache";
 
 export const canUserAccessWebhook = async (userId: string, webhookId: string): Promise<boolean> =>
   await unstable_cache(
@@ -18,8 +19,9 @@ export const canUserAccessWebhook = async (userId: string, webhookId: string): P
 
       return true;
     },
-    [`${userId}-${webhookId}`],
+    [`canUserAccessWebhook-${userId}-${webhookId}`],
     {
+      tags: [webhookCache.tag.byId(webhookId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

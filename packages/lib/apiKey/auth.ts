@@ -6,6 +6,7 @@ import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getApiKey } from "./service";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { apiKeyCache } from "./cache";
 
 export const canUserAccessApiKey = async (userId: string, apiKeyId: string): Promise<boolean> =>
   await unstable_cache(
@@ -21,6 +22,6 @@ export const canUserAccessApiKey = async (userId: string, apiKeyId: string): Pro
       return true;
     },
 
-    [`users-${userId}-apiKeys-${apiKeyId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`apiKeys-${apiKeyId}`] }
+    [`canUserAccessApiKey-${userId}-${apiKeyId}`],
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [apiKeyCache.tag.byId(apiKeyId)] }
   )();
