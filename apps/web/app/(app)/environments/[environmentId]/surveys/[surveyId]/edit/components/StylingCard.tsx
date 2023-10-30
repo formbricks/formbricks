@@ -16,9 +16,10 @@ import { useRouter } from "next/navigation";
 interface StylingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  animationsFiles: string[];
 }
 
-export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
+export default function StylingCard({ localSurvey, setLocalSurvey, animationsFiles }: StylingCardProps) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("image");
   const router = useRouter();
@@ -195,7 +196,11 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 {tab == "image" ? (
                   <ImageSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 ) : tab == "animated" ? (
-                  <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
+                  <AnimatedSurveyBg
+                    localSurvey={localSurvey}
+                    animationsFiles={animationsFiles}
+                    handleBgChange={handleBgChange}
+                  />
                 ) : (
                   <BgColour localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 )}

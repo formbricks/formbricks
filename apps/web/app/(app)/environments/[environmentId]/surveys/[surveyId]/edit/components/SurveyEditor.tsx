@@ -21,12 +21,14 @@ interface SurveyEditorProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   responseCount: number;
+  animationsFiles: string[];
 }
 
 export default function SurveyEditor({
   survey,
   product,
   environment,
+  animationsFiles,
   actionClasses,
   attributeClasses,
   responseCount,
@@ -89,6 +91,7 @@ export default function SurveyEditor({
               />
             ) : (
               <SettingsView
+                animationsFiles={animationsFiles}
                 environment={environment}
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
@@ -100,6 +103,7 @@ export default function SurveyEditor({
           </main>
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
             <PreviewSurvey
+              animationsFiles={animationsFiles}
               survey={localSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}

@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from "react";
 import SurveyBg from "@/app/s/[surveyId]/components/SurveyBg";
 import { useRouter } from "next/navigation";
 import PreviewSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBg";
+import PreviewSurveyBgDeskstop from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgDeskstop";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -29,6 +30,7 @@ interface PreviewSurveyProps {
   activeQuestionId?: string | null;
   previewType?: TPreviewType;
   product: TProduct;
+  animationsFiles: string[];
   environment: TEnvironment;
 }
 
@@ -66,6 +68,7 @@ export default function PreviewSurvey({
   survey,
   previewType,
   product,
+  animationsFiles,
   environment,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -132,10 +135,9 @@ export default function PreviewSurvey({
   }
 
   const sourceVid = getSourceVid(bgColour);
-  // useEffect(() => {
-  //   setBgVideoUrl(bgColour)
-
-  // }, [bgColour]);
+  useEffect(() => {
+    setBgVideoUrl(bgColour);
+  }, [bgColour]);
 
   console.log(sourceVid);
 
@@ -211,8 +213,6 @@ export default function PreviewSurvey({
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
             <PreviewSurveyBg survey={survey} ContentRef={ContentRef}>
-              {/* <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500"> */}
-
               {/* below element is use to create notch for the mobile device mockup   */}
               <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md "></div>
               {previewType === "modal" ? (
@@ -242,7 +242,6 @@ export default function PreviewSurvey({
                 </div>
               )}
             </PreviewSurveyBg>
-            {/* </div> */}
           </>
         )}
         {previewMode === "desktop" && (
@@ -296,29 +295,18 @@ export default function PreviewSurvey({
                 />
               </Modal>
             ) : (
-              <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
-                <div
-                  className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6"
-                  style={{
-                    background: `url(${sourceVid}) no-repeat center center fixed`,
-                    // backgroundSize: 'cover',
-                  }}>
-                  <video muted loop autoPlay className="absolute inset-0 h-full w-full object-cover">
-                    <source src={sourceVid} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                  <div className="z-0 w-full  max-w-md rounded-lg p-4">
-                    <SurveyInline
-                      survey={survey}
-                      brandColor={brandColor}
-                      activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
-                      onActiveQuestionChange={setActiveQuestionId}
-                      isRedirectDisabled={true}
-                    />
-                  </div>
+              <PreviewSurveyBgDeskstop survey={survey} ContentRef={ContentRef}>
+                <div className="z-0 w-full  max-w-md rounded-lg p-4">
+                  <SurveyInline
+                    survey={survey}
+                    brandColor={brandColor}
+                    activeQuestionId={activeQuestionId || undefined}
+                    formbricksSignature={product.formbricksSignature}
+                    onActiveQuestionChange={setActiveQuestionId}
+                    isRedirectDisabled={true}
+                  />
                 </div>
-              </div>
+              </PreviewSurveyBgDeskstop>
             )}
           </div>
         )}
