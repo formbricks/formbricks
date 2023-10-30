@@ -7,6 +7,9 @@ import "./env.mjs";
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
+  experimental: {
+    serverActions: true,
+  },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
