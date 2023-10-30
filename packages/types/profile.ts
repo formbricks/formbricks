@@ -1,4 +1,5 @@
 import z from "zod";
+import { ZUserNotificationSettings } from "./users";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
@@ -23,6 +24,7 @@ export const ZProfile = z.object({
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
   objective: ZProfileObjective.nullable(),
+  notificationSettings: ZUserNotificationSettings,
 });
 
 export type TProfile = z.infer<typeof ZProfile>;

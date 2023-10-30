@@ -29,6 +29,7 @@ const responseSelection = {
   twoFactorEnabled: true,
   identityProvider: true,
   objective: true,
+  notificationSettings: true,
 };
 
 // function to retrive basic information about a user's profile
@@ -64,6 +65,37 @@ export const getProfile = async (id: string): Promise<TProfile | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
+export const getTeamMembershipUsers = async (environmentId: string): Promise<TProfile[]> => {
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            team: {
+              products: {
+                some: {
+                  environments: {
+                    some: {
+                      id: environmentId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    return users;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
 
 export const getProfileByEmail = async (email: string): Promise<TProfile | null> =>
   unstable_cache(

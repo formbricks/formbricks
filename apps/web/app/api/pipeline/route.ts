@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendResponseFinishedEmail } from "@/app/lib/email";
-import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
@@ -10,8 +9,10 @@ import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handleIntegrations } from "./lib/handleIntegrations";
-import { revalidateTag } from "next/cache";
-import { getSurveyCacheTag, getSurveysCacheTag } from "@formbricks/lib/survey/service";
+import { getWebhooksWithEvent } from "@formbricks/lib/webhook/service";
+import { getIntegrations } from "@formbricks/lib/integration/service";
+import { updateSurveyStatus, getSurvey } from "@formbricks/lib/survey/service";
+import { getTeamMembershipUsers } from "@formbricks/lib/profile/service";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -36,26 +37,7 @@ export async function POST(request: Request) {
   const { environmentId, surveyId, event, response } = inputValidation.data;
 
   // get all webhooks of this environment where event in triggers
-  const webhooks = await prisma.webhook.findMany({
-    where: {
-      environmentId,
-      triggers: {
-        has: event,
-      },
-      OR: [
-        {
-          surveyIds: {
-            has: surveyId,
-          },
-        },
-        {
-          surveyIds: {
-            isEmpty: true,
-          },
-        },
-      ],
-    },
-  });
+  const webhooks = await getWebhooksWithEvent(environmentId, surveyId, event);
 
   // send request to all webhooks
   await Promise.all(
@@ -77,31 +59,9 @@ export async function POST(request: Request) {
   if (event === "responseFinished") {
     // check for email notifications
     // get all users that have a membership of this environment's team
-    const users = await prisma.user.findMany({
-      where: {
-        memberships: {
-          some: {
-            team: {
-              products: {
-                some: {
-                  environments: {
-                    some: {
-                      id: environmentId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const users = await getTeamMembershipUsers(environmentId);
 
-    const integrations = await prisma.integration.findMany({
-      where: {
-        environmentId,
-      },
-    });
+    const integrations = await getIntegrations(environmentId);
     if (integrations.length > 0) {
       handleIntegrations(integrations, inputValidation.data);
     }
@@ -116,16 +76,7 @@ export async function POST(request: Request) {
 
     if (usersWithNotifications.length > 0) {
       // get survey
-      const surveyData = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-        },
-        select: {
-          id: true,
-          name: true,
-          questions: true,
-        },
-      });
+      const surveyData = await getSurvey(surveyId);
       if (!surveyData) {
         console.error(`Pipeline: Survey with id ${surveyId} not found`);
         return new Response("Survey not found", {
@@ -146,38 +97,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const updateSurveyStatus = async (surveyId: string) => {
-      // Get the survey instance by surveyId
-      const survey = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-        },
-        select: {
-          autoComplete: true,
-        },
-      });
-
-      if (survey?.autoComplete) {
-        // Get the number of responses to a survey
-        const responseCount = await prisma.response.count({
-          where: {
-            surveyId: surveyId,
-          },
-        });
-        if (responseCount === survey.autoComplete) {
-          const updatedSurvey = await prisma.survey.update({
-            where: {
-              id: surveyId,
-            },
-            data: {
-              status: "completed",
-            },
-          });
-          revalidateTag(getSurveysCacheTag(updatedSurvey.environmentId));
-          revalidateTag(getSurveyCacheTag(updatedSurvey.id));
-        }
-      }
-    };
     await updateSurveyStatus(surveyId);
   }
 

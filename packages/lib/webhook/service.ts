@@ -10,6 +10,7 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { webhookCache } from "./cache";
 import { unstable_cache } from "next/cache";
+import { TPipelineTrigger } from "@formbricks/types/pipelines";
 
 export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> =>
   unstable_cache(
@@ -35,6 +36,34 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
+export const getWebhooksWithEvent = async (
+  environmentId: string,
+  surveyId: string,
+  event: TPipelineTrigger
+): Promise<TWebhook[]> => {
+  const webhooks = await prisma.webhook.findMany({
+    where: {
+      environmentId,
+      triggers: {
+        has: event,
+      },
+      OR: [
+        {
+          surveyIds: {
+            has: surveyId,
+          },
+        },
+        {
+          surveyIds: {
+            isEmpty: true,
+          },
+        },
+      ],
+    },
+  });
+  return webhooks;
+};
 
 export const getCountOfWebhooksBasedOnSource = async (
   environmentId: string,

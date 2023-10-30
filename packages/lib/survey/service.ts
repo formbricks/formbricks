@@ -85,6 +85,41 @@ const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionCl
   }
 };
 
+export const updateSurveyStatus = async (surveyId: string) => {
+  // Get the survey instance by surveyId
+  const survey = await prisma.survey.findUnique({
+    where: {
+      id: surveyId,
+    },
+    select: {
+      autoComplete: true,
+    },
+  });
+
+  if (survey?.autoComplete) {
+    // Get the number of responses to a survey
+    const responseCount = await prisma.response.count({
+      where: {
+        surveyId: surveyId,
+      },
+    });
+    if (responseCount === survey.autoComplete) {
+      const updatedSurvey = await prisma.survey.update({
+        where: {
+          id: surveyId,
+        },
+        data: {
+          status: "completed",
+        },
+      });
+      surveyCache.revalidate({
+        environmentId: updatedSurvey.environmentId,
+        id: updatedSurvey.id,
+      });
+    }
+  }
+};
+
 const revalidateSurveyByAttributeClassId = (attributeFilters: TSurveyAttributeFilter[]): void => {
   for (const attributeFilter of attributeFilters) {
     surveyCache.revalidate({
