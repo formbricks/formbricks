@@ -453,11 +453,8 @@ export default function ToolbarPlugin(props: TextEditorProps) {
               StartIcon={Bold}
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-                if (isItalic) {
-                  editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-                }
               }}
-              className={isBold ? "bg-subtle" : ""}
+              className={isBold ? "bg-subtle active-button" : "inactive-button"}
             />
           )}
           {!props.excludedToolbarItems?.includes("italic") && (
@@ -468,11 +465,8 @@ export default function ToolbarPlugin(props: TextEditorProps) {
               StartIcon={Italic}
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-                if (isItalic) {
-                  editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-                }
               }}
-              className={isItalic ? "bg-subtle" : ""}
+              className={isItalic ? "bg-subtle active-button" : "inactive-button"}
             />
           )}
           {!props.excludedToolbarItems?.includes("link") && (
@@ -483,7 +477,7 @@ export default function ToolbarPlugin(props: TextEditorProps) {
                 type="button"
                 StartIcon={Link}
                 onClick={insertLink}
-                className={isLink ? "bg-subtle" : ""}
+                className={isLink ? "bg-subtle active-button" : "inactive-button"}
               />
               {isLink && createPortal(<FloatingLinkEditor editor={editor} />, document.body)}{" "}
             </>

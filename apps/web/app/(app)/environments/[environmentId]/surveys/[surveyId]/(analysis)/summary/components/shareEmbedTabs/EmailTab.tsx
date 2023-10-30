@@ -19,6 +19,7 @@ import {
   Tailwind,
   Text,
   render,
+  Img,
 } from "@react-email/components";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -364,6 +365,35 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
                 </Link>
               ))}
           </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case TSurveyQuestionType.PictureSelection:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {firstQuestion.subheader}
+          </Text>
+          <Section className="mx-0">
+            {firstQuestion.choices.map((choice) =>
+              firstQuestion.allowMulti ? (
+                <Img
+                  src={choice.imageUrl}
+                  className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg"
+                />
+              ) : (
+                <Link
+                  href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
+                  target="_blank"
+                  className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg">
+                  <Img src={choice.imageUrl} className="h-full w-full rounded-lg" />
+                </Link>
+              )
+            )}
+          </Section>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
