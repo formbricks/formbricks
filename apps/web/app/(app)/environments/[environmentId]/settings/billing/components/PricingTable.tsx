@@ -92,20 +92,20 @@ export default function PricingTableComponent({
     {
       title: "Team Roles",
       comingSoon: false,
-      unlimited: true,
     },
     {
       title: "250 responses / month free",
       comingSoon: false,
+      unlimited: false,
     },
     {
       title: "$0.15 / responses afterwards",
       comingSoon: false,
+      unlimited: false,
     },
     {
       title: "Multi Language Surveys",
       comingSoon: true,
-      unlimited: true,
     },
     {
       title: "Unlimited Responses",
@@ -117,15 +117,16 @@ export default function PricingTableComponent({
     {
       title: "2.500 identified users / month free",
       comingSoon: false,
+      unlimited: false,
     },
     {
       title: "$0.01 / identified user afterwards",
       comingSoon: false,
+      unlimited: false,
     },
     {
       title: "Advanced Targeting",
       comingSoon: true,
-      unlimited: true,
     },
     {
       title: "Unlimited User Identification",
@@ -137,17 +138,14 @@ export default function PricingTableComponent({
     {
       title: "Remove Formbricks Branding",
       comingSoon: false,
-      unlimited: true,
     },
     {
       title: "File Uploads upto 1 GB",
       comingSoon: false,
-      unlimited: true,
     },
     {
       title: "Multi Language Surveys",
       comingSoon: true,
-      unlimited: true,
     },
   ];
 
@@ -226,9 +224,13 @@ export default function PricingTableComponent({
           sliderValue={responseCount}
           sliderLimit={350}
           freeTierLimit={appSurveyFreeResponses}
-          paidFeatures={coreAndWebAppSurveyFeatures.filter(
-            (feature) => team.billing.features.inAppSurvey.unlimited && feature.unlimited
-          )}
+          paidFeatures={coreAndWebAppSurveyFeatures.filter((feature) => {
+            if (team.billing.features.inAppSurvey.unlimited) {
+              return feature.unlimited !== false;
+            } else {
+              return feature.unlimited !== true;
+            }
+          })}
           perMetricCharge={0.15}
           loading={upgradingPlan}
           onUpgrade={() => upgradePlan([StripePriceLookupKeys.inAppSurvey])}
@@ -242,9 +244,7 @@ export default function PricingTableComponent({
           monthlyPrice={30}
           actionText={""}
           team={team}
-          paidFeatures={linkSurveysFeatures.filter(
-            (feature) => team.billing.features.linkSurvey.unlimited && feature.unlimited
-          )}
+          paidFeatures={linkSurveysFeatures}
           loading={upgradingPlan}
           onUpgrade={() => upgradePlan([StripePriceLookupKeys.linkSurvey])}
           onUbsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.linkSurvey])}
@@ -261,9 +261,13 @@ export default function PricingTableComponent({
           sliderValue={peopleCount}
           sliderLimit={3500}
           freeTierLimit={userTargetingFreeMtu}
-          paidFeatures={userTargetingFeatures.filter(
-            (feature) => team.billing.features.userTargeting.unlimited && feature.unlimited
-          )}
+          paidFeatures={userTargetingFeatures.filter((feature) => {
+            if (team.billing.features.userTargeting.unlimited) {
+              return feature.unlimited !== false;
+            } else {
+              return feature.unlimited !== true;
+            }
+          })}
           perMetricCharge={0.01}
           loading={upgradingPlan}
           onUpgrade={() => upgradePlan([StripePriceLookupKeys.userTargeting])}

@@ -70,17 +70,15 @@ export const PricingCard = ({
           <div className="rounded-xl bg-slate-100 py-4 dark:bg-slate-800">
             <div className="rounded-xl">
               <div className="mb-2 flex items-center gap-x-4"></div>
-              {team.billing.features[featureNameKey].unlimited && (
-                <div className="relative my-2">
-                  <BillingSlider
-                    className="slider-class"
-                    value={sliderValue || 0}
-                    max={sliderLimit || 100}
-                    freeTierLimit={freeTierLimit || 0}
-                    metric={metric}
-                  />
-                </div>
-              )}
+              <div className="relative my-2">
+                <BillingSlider
+                  className="slider-class"
+                  value={sliderValue || 0}
+                  max={sliderLimit || 100}
+                  freeTierLimit={freeTierLimit || 0}
+                  metric={metric}
+                />
+              </div>
               <hr className="mt-12" />
             </div>
           </div>
