@@ -14,3 +14,29 @@ export const ZBgColor =
 
 export const ZPlacement = z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]);
 export type TPlacement = z.infer<typeof ZPlacement>;
+
+export const ZAllowedFileExtensions = z.enum([
+  "png",
+  "jpeg",
+  "jpg",
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "plain",
+  "csv",
+  "mp4",
+  "mov",
+  "avi",
+  "mkv",
+  "webm",
+  "zip",
+  "rar",
+  "7z",
+  "tar",
+]);
+
+export type TAllowedFileExtensions = z.infer<typeof ZAllowedFileExtensions>;
