@@ -12,6 +12,7 @@ import { getServerSession } from "next-auth";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [, product, session, team] = await Promise.all([
@@ -34,6 +35,10 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isProductNameEditDisabled = isDeveloper ? true : isViewer;
+
+  if (isViewer) {
+    return <ErrorComponent />;
+  }
 
   return (
     <div>

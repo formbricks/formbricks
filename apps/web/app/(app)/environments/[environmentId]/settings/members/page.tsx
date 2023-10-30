@@ -88,7 +88,11 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
         )}
       </SettingsCard>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">
-        <EditTeamName team={team} environmentId={params.environmentId} />
+        <EditTeamName
+          team={team}
+          environmentId={params.environmentId}
+          membershipRole={currentUserMembership?.role}
+        />
       </SettingsCard>
       <SettingsCard
         title="Delete Team"

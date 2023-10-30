@@ -156,11 +156,13 @@ export default function Navigation({
           icon: AdjustmentsVerticalIcon,
           label: "Product Settings",
           href: `/environments/${environment.id}/settings/product`,
+          hidden: false,
         },
         {
           icon: PaintBrushIcon,
           label: "Look & Feel",
           href: `/environments/${environment.id}/settings/lookandfeel`,
+          hidden: isViewer,
         },
       ],
     },

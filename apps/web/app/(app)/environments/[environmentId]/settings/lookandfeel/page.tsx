@@ -14,6 +14,7 @@ import { getServerSession } from "next-auth";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([
@@ -36,6 +37,10 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
+
+  if (isViewer) {
+    return <ErrorComponent />;
+  }
 
   return (
     <div>
