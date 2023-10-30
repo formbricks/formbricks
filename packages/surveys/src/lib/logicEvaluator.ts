@@ -56,11 +56,12 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
         return !!responseValue;
       }
     case "notUploaded":
-      if (Array.isArray(responseValue)) {
-        return responseValue.length === 0;
-      } else {
-        return !responseValue;
-      }
+      return (
+        (Array.isArray(responseValue) && responseValue.length === 0) ||
+        responseValue === "" ||
+        responseValue === null ||
+        responseValue === "skipped"
+      );
     default:
       return false;
   }

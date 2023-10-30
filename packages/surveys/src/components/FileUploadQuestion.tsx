@@ -44,7 +44,7 @@ export default function FileUploadQuestion({
           if (value) {
             onSubmit({ [question.id]: value });
           } else {
-            onSubmit({ [question.id]: [] });
+            onSubmit({ [question.id]: "skipped" });
           }
         }
       }}
@@ -52,17 +52,15 @@ export default function FileUploadQuestion({
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
 
-      {question.allowMultipleFile ? (
+      {question.allowMultipleFiles ? (
         <MultipleFileInput
           surveyId={surveyId}
           onFileUpload={(url: string[]) => {
             onChange({ [question.id]: url });
           }}
           fileUrls={value as string[]}
-          {...(question.limitFileType && question.allowedFileTypes !== undefined
-            ? { allowedFileExtensions: question.allowedFileTypes }
-            : {})}
-          {...(question.limitSize && question.maxSize !== undefined ? { maxSize: question.maxSize } : {})}
+          {...(!!question.allowedFileTypes ? { allowedFileExtensions: question.allowedFileTypes } : {})}
+          {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
         />
       ) : (
         <FileInput
@@ -75,10 +73,8 @@ export default function FileUploadQuestion({
             }
           }}
           fileUrl={value as string}
-          {...(question.limitFileType && question.allowedFileTypes !== undefined
-            ? { allowedFileExtensions: question.allowedFileTypes }
-            : {})}
-          {...(question.limitSize && question.maxSize !== undefined ? { maxSize: question.maxSize } : {})}
+          {...(!!question.allowedFileTypes ? { allowedFileExtensions: question.allowedFileTypes } : {})}
+          {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
         />
       )}
 

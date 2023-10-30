@@ -140,9 +140,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     icon: ArrowUpTrayIcon,
     preset: {
       headline: "File Upload",
-      allowMultipleFile: false,
-      limitSize: false,
-      limitFileType: false,
+      allowMultipleFiles: false,
     },
   },
 ];

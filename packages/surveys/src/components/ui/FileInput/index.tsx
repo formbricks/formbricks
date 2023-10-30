@@ -7,14 +7,14 @@ interface FileInputProps {
   surveyId: string | undefined;
   onFileUpload: (uploadedUrls: string | undefined) => void;
   fileUrl: string | undefined;
-  maxSize?: number;
+  maxSizeInMB?: number;
 }
 export default function FileInput({
   allowedFileExtensions,
   surveyId,
   onFileUpload,
   fileUrl,
-  maxSize,
+  maxSizeInMB: maxSize,
 }: FileInputProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploaded, setIsUploaded] = useState<boolean>(!!fileUrl);

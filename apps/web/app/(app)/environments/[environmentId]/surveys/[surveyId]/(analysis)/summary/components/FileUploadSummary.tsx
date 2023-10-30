@@ -40,7 +40,8 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
           <div className="px-4 md:px-6">Time</div>
         </div>
         {questionSummary.responses.map((response) => {
-          const displayIdentifier = getPersonIdentifier(response.person!);
+          const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
+
           return (
             <div
               key={response.id}
@@ -75,7 +76,7 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
                   {Array.isArray(response.value) ? (
                     response.value.map((fileUrl, index) => (
                       <div className="relative m-2 rounded-lg bg-slate-300">
-                        <a href={fileUrl as string} key={index} download>
+                        <a href={fileUrl as string} key={index} download target="_blank">
                           <div className="absolute right-0 top-0 m-2">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 bg-opacity-50 hover:bg-slate-200/50">
                               <svg
@@ -105,7 +106,7 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
                     ))
                   ) : (
                     <div className="relative m-2 rounded-lg bg-slate-300">
-                      <a href={response.value as string} download>
+                      <a href={response.value as string} download target="_blank">
                         <div className="absolute right-0 top-0 m-2">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 bg-opacity-50 hover:bg-slate-200/50">
                             <svg

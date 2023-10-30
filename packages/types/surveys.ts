@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZColor, ZPlacement } from "./common";
+import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 
 export const ZSurveyThankYouCard = z.object({
@@ -217,11 +217,9 @@ const ZSurveyQuestionBase = z.object({
 
 export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.FileUpload),
-  allowMultipleFile: z.boolean(),
-  limitSize: z.boolean(),
-  maxSize: z.number().optional().default(0),
-  limitFileType: z.boolean(),
-  allowedFileTypes: z.array(z.string()).optional(),
+  allowMultipleFiles: z.boolean(),
+  maxSizeInMB: z.number().optional(),
+  allowedFileTypes: z.array(ZAllowedFileExtension).optional(),
   logic: z.array(ZSurveyFileUploadLogic).optional(),
 });
 

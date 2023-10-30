@@ -1,3 +1,4 @@
+import { cn } from "@formbricks/lib/cn";
 import { Label } from "../Label";
 import { Switch } from "../Switch";
 
@@ -9,6 +10,7 @@ interface AdvancedOptionToggleProps {
   description: any;
   children: React.ReactNode;
   childBorder?: boolean;
+  customContainerClass?: string;
 }
 
 export function AdvancedOptionToggle({
@@ -19,9 +21,10 @@ export function AdvancedOptionToggle({
   description,
   children,
   childBorder,
+  customContainerClass,
 }: AdvancedOptionToggleProps) {
   return (
-    <div className="px-4 py-2">
+    <div className={cn("px-4 py-2", customContainerClass)}>
       <div className="flex items-center space-x-1">
         <Switch id={htmlId} checked={isChecked} onCheckedChange={onToggle} />
         <Label htmlFor={htmlId} className="cursor-pointer">

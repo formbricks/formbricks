@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { uploadFile } from "../FileInput/lib/fileUpload";
+import { TAllowedFileExtension } from "@formbricks/types/common";
 
 interface MultipleFileInputProps {
-  allowedFileExtensions?: string[];
+  allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
   onFileUpload: (uploadedUrls: string[]) => void;
   fileUrls: string[] | undefined;
-  maxSize?: number;
+  maxSizeInMB?: number;
 }
 
 export default function MultipleFileInput({
@@ -14,7 +15,7 @@ export default function MultipleFileInput({
   surveyId,
   onFileUpload,
   fileUrls,
-  maxSize,
+  maxSizeInMB,
 }: MultipleFileInputProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -34,7 +35,9 @@ export default function MultipleFileInput({
     if (files.length > 0) {
       const validFiles = files.filter((file) =>
         allowedFileExtensions && allowedFileExtensions.length > 0
-          ? allowedFileExtensions.includes(file.type.substring(file.type.lastIndexOf("/") + 1))
+          ? allowedFileExtensions.includes(
+              file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension
+            )
           : true
       );
 
@@ -42,13 +45,13 @@ export default function MultipleFileInput({
         const uploadedUrls: string[] = [];
 
         for (const file of validFiles) {
-          if (maxSize) {
+          if (maxSizeInMB) {
             const fileBuffer = await file.arrayBuffer();
 
             const bufferBytes = fileBuffer.byteLength;
             const bufferKB = bufferBytes / 1024;
-            if (bufferKB > maxSize * 1024) {
-              alert(`File should be less than ${maxSize} MB`);
+            if (bufferKB > maxSizeInMB * 1024) {
+              alert(`File should be less than ${maxSizeInMB} MB`);
             } else {
               setIsUploading(true);
               const response = await uploadFile(file, allowedFileExtensions, surveyId);
@@ -179,13 +182,13 @@ export default function MultipleFileInput({
 
               const selectedFile = inputElement?.files?.[0];
               if (selectedFile) {
-                if (maxSize) {
+                if (maxSizeInMB) {
                   const fileBuffer = await selectedFile.arrayBuffer();
 
                   const bufferBytes = fileBuffer.byteLength;
                   const bufferKB = bufferBytes / 1024;
-                  if (bufferKB > maxSize * 1024) {
-                    alert(`File should be less than ${maxSize} MB`);
+                  if (bufferKB > maxSizeInMB * 1024) {
+                    alert(`File should be less than ${maxSizeInMB} MB`);
                   } else {
                     setIsUploading(true);
                     const response = await uploadFile(selectedFile, allowedFileExtensions, surveyId);

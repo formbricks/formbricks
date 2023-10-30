@@ -6,6 +6,8 @@ import { Switch } from "@formbricks/ui/Switch";
 import { toast } from "react-hot-toast";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
+import { TAllowedFileExtension } from "@formbricks/types/common";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -42,8 +44,10 @@ export default function FileUploadQuestionForm({
         toast.error("Extension should contain only small letters and must be at most 4 digit long");
       } else {
         if (question.allowedFileTypes) {
-          if (!question.allowedFileTypes.includes(extension)) {
-            updateQuestion(questionIdx, { allowedFileTypes: [...question.allowedFileTypes, extension] });
+          if (!question.allowedFileTypes.includes(extension as TAllowedFileExtension)) {
+            updateQuestion(questionIdx, {
+              allowedFileTypes: [...question.allowedFileTypes, extension],
+            });
             setExtension("");
           } else {
             toast.error("This extension is already added");
@@ -112,9 +116,9 @@ export default function FileUploadQuestionForm({
           <Switch
             id="m"
             name="allowMultipleFile"
-            checked={question.allowMultipleFile}
+            checked={question.allowMultipleFiles}
             onCheckedChange={() =>
-              updateQuestion(questionIdx, { allowMultipleFile: !question.allowMultipleFile })
+              updateQuestion(questionIdx, { allowMultipleFiles: !question.allowMultipleFiles })
             }
           />
         </div>
@@ -127,70 +131,52 @@ export default function FileUploadQuestionForm({
           </div>
         </div>
       </div>
-      <div className="mt-8 flex items-center">
-        <div className="mr-2">
-          <Switch
-            id="m"
-            name="limitSize"
-            checked={question.limitSize}
-            onCheckedChange={() => updateQuestion(questionIdx, { limitSize: !question.limitSize })}
-          />
-        </div>
-        <div className="flex-column">
-          <Label htmlFor="limitSize" className="">
-            Max file size
-          </Label>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Limit the maximum file size.</div>
-        </div>
+
+      <div className="mt-8">
+        <AdvancedOptionToggle
+          isChecked={!!question.maxSizeInMB}
+          onToggle={(checked) => updateQuestion(questionIdx, { maxSizeInMB: checked ? 10 : null })}
+          htmlId="limitFileType"
+          title="Max file size"
+          description="Limit the maximum file size."
+          childBorder
+          customContainerClass="p-0">
+          <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-700">
+              Limit upload file size to
+              <Input
+                autoFocus
+                type="number"
+                id="fileSizeLimit"
+                value={question.maxSizeInMB}
+                onChange={(e) => updateQuestion(questionIdx, { maxSizeInMB: parseInt(e.target.value, 10) })}
+                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+              />
+              MB
+            </p>
+          </label>
+        </AdvancedOptionToggle>
       </div>
-      {question.limitSize && (
-        // <div className="mt-3">
-        //   <div className="mt-2 flex w-full items-center justify-between rounded-md border bg-slate-50 p-5">
-        //     <div className="rounded-md  bg-white p-2">
-        //       <input
-        //         className="rounded-md border [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-        //         id="maxSize"
-        //         name="maxSize"
-        //         type="number"
-        //         value={question?.maxSize}
-        //         onChange={(e) => updateQuestion(questionIdx, { maxSize: parseInt(e.target.value, 10) })}
-        //       />
-        //       MB
-        //     </div>
-        //   </div>
-        // </div>
-        <p className="text-sm font-semibold text-slate-700">
-          Limit upload file size to
-          <Input
-            autoFocus
-            type="number"
-            id="maxSize"
-            value={question?.maxSize || 10}
-            onChange={(e) => updateQuestion(questionIdx, { maxSize: parseInt(e.target.value, 10) })}
-            className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
-          />
-          MB.
-        </p>
-      )}
+
       <div className="mt-8 flex items-center">
         <div className="mr-2">
           <Switch
             id="m"
             name="limitFileType"
-            checked={question.limitFileType}
-            onCheckedChange={() => updateQuestion(questionIdx, { limitFileType: !question.limitFileType })}
+            checked={!!question.allowedFileTypes}
+            onCheckedChange={(checked) =>
+              updateQuestion(questionIdx, { allowedFileTypes: checked ? [] : null })
+            }
           />
         </div>
         <div className="flex-column">
-          <Label htmlFor="limitFileType" className="">
-            Allowed file types
-          </Label>
+          <Label htmlFor="limitFileType">Allowed file types</Label>
           <div className="text-sm text-gray-500 dark:text-gray-400">
             Control which file types can be uploaded.
           </div>
         </div>
       </div>
-      {question.limitFileType && (
+      {!!question.allowedFileTypes && (
         <div className="mt-3">
           <div className="mt-2 flex w-full items-center justify-start rounded-md border bg-slate-50 p-5">
             {question.allowedFileTypes &&
