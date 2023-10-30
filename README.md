@@ -6,7 +6,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Survey & Experience Management solution for fast growing companies
+    The Open Source Survey & Experience Management solution for fast-growing companies
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
@@ -40,7 +40,7 @@
 
 To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
 
-**Join lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
+**Join the lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
 
 ## ✨ About Formbricks
 
@@ -52,11 +52,25 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 
 ## 💪 Mission: Make customer-centric decisions based on data.
 
-Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
+Formbricks is a powerful tool for creating in-product micro-surveys - and leverage a significantly higher conversion rate. It allows you to gather valuable insights from your users, enabling you to make data-driven decisions that enhance your product's user experience. With Formbricks, you can create surveys with our no-code editor, choose from a variety of templates, target specific user groups, and much more.
+
+### Table of Contents
+
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Cloud Version](#cloud-version)
+  - [Self-hosted Version](#self-hosted-version)
+  - [Development](#development)
+- [Contribution](#contribution)
+- [Contact](#contact-us)
+- [License](#license)
+- [Security](#security)
+
+<a id="features"></a>
 
 ### Features
 
-- 📲 Create **in-product surveys** with our no code editor with multiple question types.
+- 📲 Create **in-product surveys** with our no-code editor with multiple question types.
 - 📚 Choose from a variety of best-practice **templates**.
 - 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code.
 - 🔗 Create shareable **link surveys**.
@@ -74,13 +88,19 @@ Formbricks helps you apply best practices from data-driven work and experience m
 - 🔒 [Auth.js](https://authjs.dev/)
 - 🧘‍♂️ [Zod](https://zod.dev/)
 
+<a id="getting-started"></a>
+
 ## 🚀 Getting started
 
 We've got several options depending on your need to help you quickly get started with Formbricks.
 
+<a id="cloud-version"></a>
+
 ### ☁️ Cloud Version
 
 Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com).
+
+<a id="self-hosted-version"></a>
 
 ### 🐳 Self-hosted version
 
@@ -94,13 +114,15 @@ If you opt for self-hosting Formbricks, here are a few options to consider:
 
 To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
 
-#### Community managed One Click Hosting
+#### Community-managed One Click Hosting
 
 ##### Railway
 
 You can deploy Formbricks on [Railway](https://railway.app) using the button below.
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
+
+<a id="development"></a>
 
 ### 👨‍💻 Development
 
@@ -124,6 +146,8 @@ To get started locally, we've got a [guide to help you](https://formbricks.com/d
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
 
+<a id="contribution"></a>
+
 ## ✍️ Contribution
 
 We are very happy if you are interested in contributing to Formbricks 🤗
@@ -132,7 +156,7 @@ Here are a few options:
 
 - Star this repo.
 - Create issues every time you feel something is missing or goes wrong.
-- Upvote issues with 👍 reaction so we know what's the demand for a particular issue to prioritize it within the roadmap.
+- Upvote issues with 👍 reaction so we know what the demand for a particular issue is to prioritize it within the roadmap.
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
 
@@ -142,15 +166,21 @@ Please check out [our contribution guide](https://formbricks.com/docs/contributi
   <img src="https://contrib.rocks/image?repo=formbricks/formbricks" />
 </a>
 
+<a id="contact-us"></a>
+
 ## 📆 Contact us
 
 Let's have a chat about your survey needs and get you started.
 
 <a href="https://cal.com/johannes/onboarding?utm_source=banner&utm_campaign=oss"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
+<a id="license"></a>
+
 ## ⚖️ License
 
 Distributed under the AGPLv3 License. See [`LICENSE`](./LICENSE) for more information.
+
+<a id="security"></a>
 
 ## 🔒 Security
 

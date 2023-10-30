@@ -32,12 +32,13 @@ const QuestionFormInput = ({
       <div className="mt-2 flex flex-col gap-6">
         {showImageUploader && (
           <FileInput
+            id="question-image"
             allowedFileExtensions={["png", "jpeg", "jpg"]}
             environmentId={environmentId}
-            onFileUpload={(url: string) => {
-              updateQuestion(questionIdx, { imageUrl: url });
+            onFileUpload={(url: string[]) => {
+              updateQuestion(questionIdx, { imageUrl: url[0] });
             }}
-            fileUrl={question.imageUrl || ""}
+            fileUrl={question.imageUrl}
           />
         )}
         <div className="flex items-center space-x-2">

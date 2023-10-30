@@ -1,6 +1,6 @@
+import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import "./env.mjs";
-import { createId } from "@paralleldrive/cuid2";
 
 /** @type {import('next').NextConfig} */
 
@@ -28,6 +28,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "app.formbricks.com",
+      },
+      {
+        protocol: "https",
+        hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
       },
     ],
   },

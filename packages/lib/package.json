@@ -14,8 +14,8 @@
     "test:ci": "jest --ci"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.429.0",
-    "@aws-sdk/s3-request-presigner": "^3.429.0",
+    "@aws-sdk/client-s3": "3.433.0",
+    "@aws-sdk/s3-request-presigner": "3.433.0",
     "@formbricks/api": "*",
     "@formbricks/database": "*",
     "@formbricks/surveys": "*",

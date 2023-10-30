@@ -61,6 +61,7 @@ export const createResponseNote = async (
 
     return responseNote;
   } catch (error) {
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -81,6 +82,7 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
         });
         return responseNote;
       } catch (error) {
+        console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
         }
@@ -106,6 +108,7 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
         });
         return responseNotes;
       } catch (error) {
+        console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
         }
@@ -145,6 +148,7 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
 
     return updatedResponseNote;
   } catch (error) {
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -180,6 +184,7 @@ export const resolveResponseNote = async (responseNoteId: string): Promise<TResp
 
     return responseNote;
   } catch (error) {
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

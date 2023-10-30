@@ -26,6 +26,7 @@ export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShort
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { isSubmitting },
   } = useForm<UrlShortenerFormDataProps>({
     mode: "onSubmit",
@@ -60,6 +61,7 @@ export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShort
 
   const resetForm = () => {
     setUrlValidationState("default");
+    reset(); // resets the long url field
     setShortUrl("");
   };
 

@@ -84,6 +84,12 @@ export const checkValidity = (question: TSurveyQuestion, answer: any): boolean =
         if (answerNumber < 1 || answerNumber > question.range) return false;
         return true;
       }
+      case TSurveyQuestionType.PictureSelection: {
+        answer = answer.split(",");
+        if (!answer.every((ans: string) => question.choices.find((choice) => choice.id === ans)))
+          return false;
+        return true;
+      }
       default:
         return false;
     }
@@ -105,6 +111,10 @@ export const transformAnswer = (question: TSurveyQuestion, answer: string): stri
     case TSurveyQuestionType.NPS: {
       answer = answer.replace(/&/g, ";");
       return Number(JSON.parse(answer));
+    }
+
+    case TSurveyQuestionType.PictureSelection: {
+      return answer.split(",");
     }
 
     case TSurveyQuestionType.MultipleChoiceMulti: {
