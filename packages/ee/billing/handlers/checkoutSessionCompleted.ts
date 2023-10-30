@@ -23,7 +23,7 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     expand: ["customer"],
   })) as { customer: Stripe.Customer };
 
-  const team = await getTeam(stripeCustomer.metadata.team);
+  const team = await getTeam(stripeSubscriptionObject.metadata.teamId);
   if (!team) throw new Error("Team not found.");
   let updatedFeatures = team.billing.features;
 
@@ -69,7 +69,12 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     }
   }
 
-  await updateTeam(stripeCustomer.metadata.team, {
+  await stripe.customers.update(stripeCustomer.id, {
+    name: team.name,
+    metadata: { team: team.id },
+  });
+
+  await updateTeam(team.id, {
     billing: {
       stripeCustomerId: stripeCustomer.id,
       features: updatedFeatures,
