@@ -10,7 +10,7 @@ export default function SettingsCard({
   beta,
 }: {
   title: string;
-  description: string | JSX.Element;
+  description: string;
   children: any;
   soon?: boolean;
   noPadding?: boolean;

@@ -12,15 +12,17 @@ import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const team = await getTeamByEnvironmentId(params.environmentId);
+  const [team, product] = await Promise.all([
+    getTeamByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
   if (!team) {
     throw new Error("Team not found");
   }
-  const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
-  const product = await getProductByEnvironmentId(params.environmentId);
   if (!product) {
     throw new Error("Product not found");
   }
+  const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
 
   return (
     <div>
@@ -41,17 +43,12 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       </SettingsCard>
       <SettingsCard
         title="Formbricks Signature"
-        description={
-          canRemoveSignature ? (
-            "We love your support but understand if you toggle it off."
-          ) : (
-            <>
-              To remove the Formbricks branding from the link surveys, please upgrade your plan for $30/month{" "}
-              <a href={`/environments/${params.environmentId}/settings/billing`}>here</a>.
-            </>
-          )
-        }>
-        <EditFormbricksSignature product={product} canRemoveSignature={canRemoveSignature} />
+        description="We love your support but understand if you toggle it off.">
+        <EditFormbricksSignature
+          product={product}
+          canRemoveSignature={canRemoveSignature}
+          environmentId={params.environmentId}
+        />
       </SettingsCard>
     </div>
   );

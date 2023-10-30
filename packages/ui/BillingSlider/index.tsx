@@ -11,7 +11,7 @@ interface SliderProps {
   metric: string;
 }
 
-export const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
+export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
   ({ className, value, max, freeTierLimit, metric, ...props }, ref) => (
     <SliderPrimitive.Root
       ref={ref}
@@ -54,4 +54,4 @@ export const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.R
     </SliderPrimitive.Root>
   )
 );
-Slider.displayName = SliderPrimitive.Root.displayName;
+BillingSlider.displayName = SliderPrimitive.Root.displayName;

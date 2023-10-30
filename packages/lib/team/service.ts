@@ -134,9 +134,7 @@ export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> =>
     validateInputs([teamInput, ZTeamUpdateInput]);
 
     const team = await prisma.team.create({
-      data: {
-        name: teamInput.name,
-      },
+      data: teamInput,
       select,
     });
 
@@ -255,7 +253,7 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
             OR: [
               {
                 billing: {
-                  path: ["features", "appSurvey", "status"],
+                  path: ["features", "inAppSurvey", "status"],
                   not: "inactive",
                 },
               },
@@ -280,7 +278,7 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
     },
     ["getTeamsWithPaidPlan"],
     {
-      tags: ["teamWithPaidPlan"],
+      tags: [],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -333,7 +331,7 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
 
       return peopleCount;
     },
-    [`getMonthlyActiveTeamPeopleCount-${teamId}`],
+    [`getMonthlyTeamResponseCount-${teamId}`],
     {
       tags: [],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

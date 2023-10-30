@@ -2,7 +2,7 @@ import { TTeam } from "@formbricks/types/teams";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { Slider } from "../Slider";
+import { BillingSlider } from "../BillingSlider";
 
 export const PricingCard = ({
   title,
@@ -72,7 +72,7 @@ export const PricingCard = ({
               <div className="mb-2 flex items-center gap-x-4"></div>
               {team.billing.features[featureNameKey].unlimited && (
                 <div className="relative my-2">
-                  <Slider
+                  <BillingSlider
                     className="slider-class"
                     value={sliderValue || 0}
                     max={sliderLimit || 100}

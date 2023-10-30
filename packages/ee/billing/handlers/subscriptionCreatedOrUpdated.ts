@@ -1,9 +1,11 @@
-import { getMonthlyActivePeopleCount } from "@formbricks/lib/person/service";
-import { getProducts } from "@formbricks/lib/product/service";
-import { getMonthlyResponseCount } from "@formbricks/lib/response/service";
-import { getTeam, updateTeam } from "@formbricks/lib/team/service";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeam,
+  updateTeam,
+} from "@formbricks/lib/team/service";
 import Stripe from "stripe";
-import { PriceLookupKeysInStripe, ProductFeatureKeysInDb, ProductNamesInStripe } from "../lib/constants";
+import { StripePriceLookupKeys, ProductFeatureKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
@@ -21,40 +23,34 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
   const team = await getTeam(teamId);
   if (!team) throw new Error("Team not found.");
   let updatedFeatures = team.billing.features;
-  let countForTeam = 0;
 
   for (const item of stripeSubscriptionObject.items.data) {
     const product = await stripe.products.retrieve(item.price.product as string);
 
     switch (product.name) {
-      case ProductNamesInStripe.appSurvey:
+      case StripeProductNames.inAppSurvey:
         if (
           !(
             stripeSubscriptionObject.cancel_at_period_end &&
-            team.billing.features.appSurvey.status === "cancelled"
+            team.billing.features.inAppSurvey.status === "cancelled"
           )
         ) {
-          updatedFeatures.appSurvey.status = "active";
+          updatedFeatures.inAppSurvey.status = "active";
         }
-        if (item.price.lookup_key === PriceLookupKeysInStripe.appSurveyUnlimited) {
-          updatedFeatures.appSurvey.unlimited = true;
+        if (item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited) {
+          updatedFeatures.inAppSurvey.unlimited = true;
         } else {
-          const products = await getProducts(team.id);
-          for (const product of products) {
-            for (const environment of product.environments) {
-              countForTeam += await getMonthlyResponseCount(environment.id);
-            }
-          }
+          const countForTeam = await getMonthlyTeamResponseCount(team.id);
 
           await reportUsage(
             stripeSubscriptionObject.items.data,
-            ProductFeatureKeysInDb.appSurvey,
+            ProductFeatureKeys.inAppSurvey,
             countForTeam
           );
         }
         break;
 
-      case ProductNamesInStripe.linkSurvey:
+      case StripeProductNames.linkSurvey:
         if (
           !(
             stripeSubscriptionObject.cancel_at_period_end &&
@@ -63,11 +59,11 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.linkSurvey.status = "active";
         }
-        if (item.price.lookup_key === PriceLookupKeysInStripe.linkSurveyUnlimited) {
+        if (item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited) {
           updatedFeatures.linkSurvey.unlimited = true;
         }
         break;
-      case ProductNamesInStripe.userTargeting:
+      case StripeProductNames.userTargeting:
         if (
           !(
             stripeSubscriptionObject.cancel_at_period_end &&
@@ -76,19 +72,14 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.userTargeting.status = "active";
         }
-        if (item.price.lookup_key === PriceLookupKeysInStripe.userTargetingUnlimited) {
+        if (item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited) {
           updatedFeatures.userTargeting.unlimited = true;
         } else {
-          const products = await getProducts(team.id);
-          for (const product of products) {
-            for (const environment of product.environments) {
-              countForTeam += await getMonthlyActivePeopleCount(environment.id);
-            }
-          }
+          const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);
 
           await reportUsage(
             stripeSubscriptionObject.items.data,
-            ProductFeatureKeysInDb.userTargeting,
+            ProductFeatureKeys.userTargeting,
             countForTeam
           );
         }

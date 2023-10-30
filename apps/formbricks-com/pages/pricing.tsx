@@ -3,7 +3,7 @@ import Layout from "@/components/shared/Layout";
 import { OpenSourceInfo } from "@/components/shared/OpenSourceInfo";
 import { GetStartedWithPricing } from "@/components/shared/PricingGetStarted";
 import { PricingCalculator } from "../components/shared/PricingCalculator";
-import { PricingTable } from "@formbricks/ui/PricingTable";
+import { PricingTable } from "../components/shared/PricingTable";
 
 const inProductSurveys = {
   leadRow: {

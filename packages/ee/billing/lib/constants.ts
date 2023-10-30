@@ -1,19 +1,19 @@
-export enum ProductFeatureKeysInDb {
-  appSurvey = "appSurvey",
+export enum ProductFeatureKeys {
+  inAppSurvey = "inAppSurvey",
   linkSurvey = "linkSurvey",
   userTargeting = "userTargeting",
 }
 
-export enum ProductNamesInStripe {
-  appSurvey = "Formbricks Survey",
+export enum StripeProductNames {
+  inAppSurvey = "Formbricks In App Survey",
   linkSurvey = "Formbricks Link Survey",
   userTargeting = "Formbricks User Identification",
 }
-export enum PriceLookupKeysInStripe {
-  appSurvey = "appSurvey",
+export enum StripePriceLookupKeys {
+  inAppSurvey = "inAppSurvey",
   linkSurvey = "linkSurvey",
   userTargeting = "userTargeting",
-  appSurveyUnlimited = "survey-unlimited-3010",
-  linkSurveyUnlimited = "linkSurvey-unlimited-3010",
-  userTargetingUnlimited = "userTargeting-unlimited-3010",
+  inAppSurveyUnlimited = "survey-unlimited-30102023",
+  linkSurveyUnlimited = "linkSurvey-unlimited-30102023",
+  userTargetingUnlimited = "userTargeting-unlimited-30102023",
 }

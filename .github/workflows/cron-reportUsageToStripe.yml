@@ -3,9 +3,11 @@ name: Cron - reportUsageToStripe
 on:
   # "Scheduled workflows run on the latest commit on the default or base branch."
   # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
-  schedule:
-    # Runs once a week at a specific time (e.g., 08:00 on Monday). Adjust the time as needed.
-    - cron: "0 8 * * 1"
+schedule:
+  # This will run the job at 23:00 UTC on days 28, 29, 30, and 31 of every month. However, not every month has 31 days,
+  # and February can have either 28 or 29 days. GitHub Actions will simply ignore the invalid dates, so the job will only
+  # run once on the last day of the month.
+  - cron: "0 21 28-31 * *"
 jobs:
   cron-reportUsageToStripe:
     env:

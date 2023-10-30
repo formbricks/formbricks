@@ -10,7 +10,7 @@ export type TSubscription = z.infer<typeof ZSubscription>;
 export const ZTeamBilling = z.object({
   stripeCustomerId: z.string().nullable(),
   features: z.object({
-    appSurvey: ZSubscription,
+    inAppSurvey: ZSubscription,
     linkSurvey: ZSubscription,
     userTargeting: ZSubscription,
   }),

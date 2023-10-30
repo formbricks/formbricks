@@ -122,8 +122,8 @@ export const getUpdatedState = async (
   let isAppSurveyLimitReached = false;
   if (IS_FORMBRICKS_CLOUD) {
     const hasAppSurveySubscription =
-      team?.billing?.features.appSurvey.status &&
-      team?.billing?.features.appSurvey.status in ["active", "canceled"];
+      team?.billing?.features.inAppSurvey.status &&
+      team?.billing?.features.inAppSurvey.status in ["active", "canceled"];
     const monthlyResponsesCount = await getMonthlyTeamResponseCount(team.id);
     isAppSurveyLimitReached =
       IS_FORMBRICKS_CLOUD &&

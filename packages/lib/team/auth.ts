@@ -5,6 +5,7 @@ import { validateInputs } from "../utils/validate";
 import { getTeamsByUserId } from "./service";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { teamCache } from "../team/cache";
 
 export const canUserAccessTeam = async (userId: string, teamId: string): Promise<boolean> =>
   await unstable_cache(
@@ -19,7 +20,6 @@ export const canUserAccessTeam = async (userId: string, teamId: string): Promise
       }
       return true;
     },
-
-    [`users-${userId}-teams-${teamId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`teams-${teamId}`] }
+    [`canUserAccessTeam-${userId}-${teamId}`],
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [teamCache.tag.byId(teamId)] }
   )();

@@ -9,7 +9,7 @@ interface AlertDialogProps {
   confirmWhat: string;
   onDiscard: () => void;
   text?: string;
-  useSaveInsteadOfCancel?: boolean;
+  confirmButtonLabel: string;
   onSave?: () => void;
 }
 
@@ -19,7 +19,7 @@ export default function AlertDialog({
   confirmWhat,
   onDiscard,
   text,
-  useSaveInsteadOfCancel = false,
+  confirmButtonLabel,
   onSave,
 }: AlertDialogProps) {
   return (
@@ -32,12 +32,12 @@ export default function AlertDialog({
         <Button
           variant="darkCTA"
           onClick={() => {
-            if (useSaveInsteadOfCancel && onSave) {
+            if (onSave) {
               onSave();
             }
             setOpen(false);
           }}>
-          {useSaveInsteadOfCancel ? "Save" : "Cancel"}
+          {confirmButtonLabel}
         </Button>
       </div>
     </Modal>

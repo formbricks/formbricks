@@ -1,13 +1,13 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
-import { PriceLookupKeysInStripe } from "./constants";
+import { StripePriceLookupKeys } from "./constants";
 import Stripe from "stripe";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
 });
 
-const baseUrl =
-  process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000";
+const baseUrl = process.env.NODE_ENV === "production" ? WEBAPP_URL : "http://localhost:3000";
 
 export const getFirstOfNextMonthTimestamp = (): number => {
   const nextMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
@@ -17,7 +17,7 @@ export const getFirstOfNextMonthTimestamp = (): number => {
 export const createSubscription = async (
   teamId: string,
   environmentId: string,
-  priceLookupKeysToSubscribeTo: PriceLookupKeysInStripe[]
+  priceLookupKeys: StripePriceLookupKeys[]
 ) => {
   try {
     const team = await getTeam(teamId);
@@ -29,7 +29,7 @@ export const createSubscription = async (
 
     const prices = (
       await stripe.prices.list({
-        lookup_keys: priceLookupKeysToSubscribeTo,
+        lookup_keys: priceLookupKeys,
       })
     ).data;
     if (!prices) throw new Error("Price not found.");
@@ -144,7 +144,7 @@ export const createSubscription = async (
 
       // the below check is to make sure that if a product is about to be cancelled but is still a part
       // of the current subscription then we do not update its status back to active
-      for (const priceLookupKey of priceLookupKeysToSubscribeTo) {
+      for (const priceLookupKey of priceLookupKeys) {
         if (priceLookupKey.includes("unlimited")) continue;
         if (
           !(

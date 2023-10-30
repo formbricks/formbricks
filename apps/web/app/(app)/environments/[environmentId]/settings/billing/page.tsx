@@ -6,9 +6,12 @@ import {
   REVALIDATION_INTERVAL,
 } from "@formbricks/lib/constants";
 
-import { getTeamUsage } from "@/app/(app)/environments/[environmentId]/settings/billing/lib/getCurrentUsage";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeamByEnvironmentId,
+} from "@formbricks/lib/team/service";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import SettingsTitle from "../components/SettingsTitle";
@@ -32,7 +35,10 @@ export default async function ProfileSettingsPage({ params }) {
     throw new Error("Team not found");
   }
 
-  const { peopleCount, responseCount } = await getTeamUsage(team.id);
+  const [peopleCount, responseCount] = await Promise.all([
+    getMonthlyActiveTeamPeopleCount(team.id),
+    getMonthlyTeamResponseCount(team.id),
+  ]);
 
   return (
     <>
@@ -44,7 +50,7 @@ export default async function ProfileSettingsPage({ params }) {
           peopleCount={peopleCount}
           responseCount={responseCount}
           userTargetingFreeMtu={PRICING_USERTARGETING_FREE_MTU}
-          appSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
+          inAppSurveyFreeResponses={PRICING_APPSURVEYS_FREE_RESPONSES}
         />
       </div>
     </>

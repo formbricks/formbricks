@@ -1,7 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
-import { ProductFeatureKeysInDb } from "@formbricks/ee/billing/lib/constants";
-import { CRON_SECRET } from "@formbricks/lib/constants";
+import { ProductFeatureKeys } from "@formbricks/ee/billing/lib/constants";
+import { CRON_SECRET, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
@@ -17,8 +17,15 @@ async function reportTeamUsage(team: TTeam) {
     return;
   }
 
-  let calculateResponses = team.billing.features.appSurvey.status !== "inactive";
-  let calculatePeople = team.billing.features.userTargeting.status !== "inactive";
+  if (!IS_FORMBRICKS_CLOUD) {
+    return;
+  }
+
+  let calculateResponses =
+    team.billing.features.inAppSurvey.status !== "inactive" && !team.billing.features.inAppSurvey.unlimited;
+  let calculatePeople =
+    team.billing.features.userTargeting.status !== "inactive" &&
+    !team.billing.features.userTargeting.unlimited;
 
   if (!calculatePeople && !calculateResponses) {
     return;
@@ -30,7 +37,7 @@ async function reportTeamUsage(team: TTeam) {
     await reportUsageToStripe(
       stripeCustomerId,
       people,
-      ProductFeatureKeysInDb.userTargeting,
+      ProductFeatureKeys.userTargeting,
       Math.floor(Date.now() / 1000)
     );
   }
@@ -38,7 +45,7 @@ async function reportTeamUsage(team: TTeam) {
     await reportUsageToStripe(
       stripeCustomerId,
       responses,
-      ProductFeatureKeysInDb.appSurvey,
+      ProductFeatureKeys.inAppSurvey,
       Math.floor(Date.now() / 1000)
     );
   }

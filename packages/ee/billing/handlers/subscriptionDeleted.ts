@@ -1,6 +1,6 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import Stripe from "stripe";
-import { ProductFeatureKeysInDb, ProductNamesInStripe } from "../lib/constants";
+import { ProductFeatureKeys, StripeProductNames } from "../lib/constants";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
@@ -23,24 +23,23 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
     const product = await stripe.products.retrieve(item.price.product as string);
 
     switch (product.name) {
-      case ProductNamesInStripe.appSurvey:
-        updatedFeatures[ProductFeatureKeysInDb.appSurvey as keyof typeof team.billing.features].status =
+      case StripeProductNames.inAppSurvey:
+        updatedFeatures[ProductFeatureKeys.inAppSurvey as keyof typeof team.billing.features].status =
           "inactive";
-        updatedFeatures[ProductFeatureKeysInDb.appSurvey as keyof typeof team.billing.features].unlimited =
+        updatedFeatures[ProductFeatureKeys.inAppSurvey as keyof typeof team.billing.features].unlimited =
           false;
         break;
-      case ProductNamesInStripe.linkSurvey:
-        updatedFeatures[ProductFeatureKeysInDb.linkSurvey as keyof typeof team.billing.features].status =
+      case StripeProductNames.linkSurvey:
+        updatedFeatures[ProductFeatureKeys.linkSurvey as keyof typeof team.billing.features].status =
           "inactive";
-        updatedFeatures[ProductFeatureKeysInDb.linkSurvey as keyof typeof team.billing.features].unlimited =
+        updatedFeatures[ProductFeatureKeys.linkSurvey as keyof typeof team.billing.features].unlimited =
           false;
         break;
-      case ProductNamesInStripe.userTargeting:
-        updatedFeatures[ProductFeatureKeysInDb.userTargeting as keyof typeof team.billing.features].status =
+      case StripeProductNames.userTargeting:
+        updatedFeatures[ProductFeatureKeys.userTargeting as keyof typeof team.billing.features].status =
           "inactive";
-        updatedFeatures[
-          ProductFeatureKeysInDb.userTargeting as keyof typeof team.billing.features
-        ].unlimited = false;
+        updatedFeatures[ProductFeatureKeys.userTargeting as keyof typeof team.billing.features].unlimited =
+          false;
         break;
     }
   }

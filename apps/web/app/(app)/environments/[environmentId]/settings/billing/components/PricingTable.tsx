@@ -13,9 +13,9 @@ import {
   upgradePlanAction,
 } from "@/app/(app)/environments/[environmentId]/settings/billing/actions";
 
-import { PriceLookupKeysInStripe, ProductFeatureKeysInDb } from "@formbricks/ee/billing/lib/constants";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { StripePriceLookupKeys, ProductFeatureKeys } from "@formbricks/ee/billing/lib/constants";
 import toast from "react-hot-toast";
+import AlertDialog from "@formbricks/ui/AlertDialog";
 
 interface PricingTableProps {
   team: TTeam;
@@ -23,7 +23,7 @@ interface PricingTableProps {
   peopleCount: number;
   responseCount: number;
   userTargetingFreeMtu: number;
-  appSurveyFreeResponses: number;
+  inAppSurveyFreeResponses: number;
 }
 
 export default function PricingTableComponent({
@@ -32,13 +32,13 @@ export default function PricingTableComponent({
   peopleCount,
   responseCount,
   userTargetingFreeMtu,
-  appSurveyFreeResponses,
+  inAppSurveyFreeResponses: appSurveyFreeResponses,
 }: PricingTableProps) {
   const router = useRouter();
   const [loadingCustomerPortal, setLoadingCustomerPortal] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [activeLookupKey, setActiveLookupKey] = useState<PriceLookupKeysInStripe>();
+  const [activeLookupKey, setActiveLookupKey] = useState<StripePriceLookupKeys>();
 
   const openCustomerPortal = async () => {
     setLoadingCustomerPortal(true);
@@ -47,10 +47,10 @@ export default function PricingTableComponent({
     setLoadingCustomerPortal(true);
   };
 
-  const upgradePlan = async (priceLookupKeysToSubscribeTo: PriceLookupKeysInStripe[]) => {
+  const upgradePlan = async (priceLookupKeys: StripePriceLookupKeys[]) => {
     try {
       setUpgradingPlan(true);
-      const paymentUrl = await upgradePlanAction(team.id, environmentId, priceLookupKeysToSubscribeTo);
+      const paymentUrl = await upgradePlanAction(team.id, environmentId, priceLookupKeys);
       setUpgradingPlan(false);
       if (!paymentUrl || paymentUrl === "") {
         toast.success("Plan upgraded successfully");
@@ -151,14 +151,6 @@ export default function PricingTableComponent({
     },
   ];
 
-  const unlimitedPaid = [
-    "Unlimited Responses",
-    "Unlimited User Targeting",
-    "Core & App Surveys Plan",
-    "Link Surveys Plan",
-    "User Targeting Plan",
-  ];
-
   return (
     <div className="relative">
       {loadingCustomerPortal && (
@@ -197,33 +189,24 @@ export default function PricingTableComponent({
                 </radialGradient>
               </defs>
             </svg>
-            <div className="flex-3 mx-auto max-w-md text-center lg:mx-0 lg:py-16 lg:text-left">
-              <h2 className="text-2xl font-bold text-white sm:text-3xl">Exclusive Unlimited Plan</h2>
+            <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl">Get the most out of Formbricks</h2>
               <p className="text-md mt-6 leading-8 text-gray-300">
-                With the unlimited plan, get the most out of Formbricks with every feature included, no
-                limiting, and no additional costs. <br />
-                <br /> We also have our metered billing below where you will not be charged until you exceed
-                the free tier limits.
+                Get access to all features by upgrading to a paid plan.
+                <br />
+                With our metered billing you will not be charged until you exceed the free tier limits.{" "}
               </p>
             </div>
             <div className="flex flex-1 flex-col items-center justify-center lg:pr-8">
-              <ul className="mb-4 mt-8 text-gray-300">
-                {unlimitedPaid.map((feature, index) => (
-                  <li key={index} className="mb-1">
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
               <Button
                 variant="darkCTA"
                 className="w-full justify-center py-2 text-white shadow-sm"
                 loading={upgradingPlan}
                 onClick={() =>
                   upgradePlan([
-                    PriceLookupKeysInStripe.appSurveyUnlimited,
-                    PriceLookupKeysInStripe.linkSurveyUnlimited,
-                    PriceLookupKeysInStripe.userTargetingUnlimited,
+                    StripePriceLookupKeys.inAppSurveyUnlimited,
+                    StripePriceLookupKeys.linkSurveyUnlimited,
+                    StripePriceLookupKeys.userTargetingUnlimited,
                   ])
                 }>
                 Upgrade now at $99/month
@@ -235,7 +218,7 @@ export default function PricingTableComponent({
         <PricingCard
           title={"Core & App Surveys"}
           subtitle={"Get up to 250 free responses every month"}
-          featureName={ProductFeatureKeysInDb[ProductFeatureKeysInDb.appSurvey]}
+          featureName={ProductFeatureKeys[ProductFeatureKeys.inAppSurvey]}
           monthlyPrice={0}
           actionText={"Starting at"}
           team={team}
@@ -244,20 +227,18 @@ export default function PricingTableComponent({
           sliderLimit={350}
           freeTierLimit={appSurveyFreeResponses}
           paidFeatures={coreAndWebAppSurveyFeatures.filter(
-            (feature) => team.billing.features.appSurvey.unlimited && feature.unlimited
+            (feature) => team.billing.features.inAppSurvey.unlimited && feature.unlimited
           )}
           perMetricCharge={0.15}
           loading={upgradingPlan}
-          onUpgrade={() => upgradePlan([PriceLookupKeysInStripe.appSurvey])}
-          onUbsubscribe={(e) =>
-            handleUnsubscribe(e, ProductFeatureKeysInDb[ProductFeatureKeysInDb.appSurvey])
-          }
+          onUpgrade={() => upgradePlan([StripePriceLookupKeys.inAppSurvey])}
+          onUbsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.inAppSurvey])}
         />
 
         <PricingCard
           title={"Link Survey"}
           subtitle={"Link Surveys include unlimited surveys and responses for free."}
-          featureName={ProductFeatureKeysInDb[ProductFeatureKeysInDb.linkSurvey]}
+          featureName={ProductFeatureKeys[ProductFeatureKeys.linkSurvey]}
           monthlyPrice={30}
           actionText={""}
           team={team}
@@ -265,16 +246,14 @@ export default function PricingTableComponent({
             (feature) => team.billing.features.linkSurvey.unlimited && feature.unlimited
           )}
           loading={upgradingPlan}
-          onUpgrade={() => upgradePlan([PriceLookupKeysInStripe.linkSurvey])}
-          onUbsubscribe={(e) =>
-            handleUnsubscribe(e, ProductFeatureKeysInDb[ProductFeatureKeysInDb.linkSurvey])
-          }
+          onUpgrade={() => upgradePlan([StripePriceLookupKeys.linkSurvey])}
+          onUbsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.linkSurvey])}
         />
 
         <PricingCard
           title={"User Targeting"}
           subtitle={"Target up to 2500 users every month"}
-          featureName={ProductFeatureKeysInDb[ProductFeatureKeysInDb.userTargeting]}
+          featureName={ProductFeatureKeys[ProductFeatureKeys.userTargeting]}
           monthlyPrice={0}
           actionText={"Starting at"}
           team={team}
@@ -287,19 +266,21 @@ export default function PricingTableComponent({
           )}
           perMetricCharge={0.01}
           loading={upgradingPlan}
-          onUpgrade={() => upgradePlan([PriceLookupKeysInStripe.userTargeting])}
-          onUbsubscribe={(e) =>
-            handleUnsubscribe(e, ProductFeatureKeysInDb[ProductFeatureKeysInDb.userTargeting])
-          }
+          onUpgrade={() => upgradePlan([StripePriceLookupKeys.userTargeting])}
+          onUbsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.userTargeting])}
         />
       </div>
-      <DeleteDialog
+
+      <AlertDialog
+        confirmWhat="that you want to unsubscribe?"
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
-        deleteWhat="Subscription"
-        onDelete={() => {
-          handleDeleteSubscription();
+        onDiscard={() => {
+          setOpenDeleteModal(false);
         }}
+        text="Your subscription for this product will be canceled at the end of the month. After that, you won't have access to the pro features anymore"
+        onSave={() => handleDeleteSubscription()}
+        confirmButtonLabel="Unsubscribe"
       />
     </div>
   );
