@@ -1,6 +1,7 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import { getFirstOfNextMonthTimestamp } from "./createSubscription";
 import Stripe from "stripe";
+import { PriceLookupKeysInStripe } from "./constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -8,7 +9,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const retrievePriceLookup = async (priceId: string) => (await stripe.prices.retrieve(priceId)).lookup_key;
 
-export const removeSubscription = async (teamId: string, failureUrl: string, itemToBeRemoved: string) => {
+export const removeSubscription = async (
+  teamId: string,
+  failureUrl: string,
+  priceLookupKeysToUnsubscribeFrom: PriceLookupKeysInStripe[]
+) => {
   try {
     const team = await getTeam(teamId);
     if (!team) throw new Error("Team not found.");
@@ -32,7 +37,9 @@ export const removeSubscription = async (teamId: string, failureUrl: string, ite
     if (scheduledSubscriptions.length) {
       const priceIds = scheduledSubscriptions[0].phases[0].items.map((item) => item.price);
       for (const priceId of priceIds) {
-        if ((await retrievePriceLookup(priceId as string)) !== itemToBeRemoved) {
+        const priceLookUpKey = await retrievePriceLookup(priceId as string);
+        if (!priceLookUpKey) continue;
+        if (!priceLookupKeysToUnsubscribeFrom.includes(priceLookUpKey as PriceLookupKeysInStripe)) {
           newPriceIds.push(priceId as string);
         }
       }
@@ -55,7 +62,9 @@ export const removeSubscription = async (teamId: string, failureUrl: string, ite
       }
     } else {
       const validSubItems = existingSubscription.items.data.filter(
-        (subItem) => subItem.price.lookup_key !== itemToBeRemoved
+        (subItem) =>
+          subItem.price.lookup_key &&
+          !priceLookupKeysToUnsubscribeFrom.includes(subItem.price.lookup_key as PriceLookupKeysInStripe)
       );
       newPriceIds.push(...validSubItems.map((subItem) => subItem.price.id));
 
@@ -78,13 +87,15 @@ export const removeSubscription = async (teamId: string, failureUrl: string, ite
 
     await stripe.subscriptions.update(existingSubscription.id, { cancel_at_period_end: true });
 
+    let updatedFeatures = team.billing.features;
+    for (const priceLookupKey of priceLookupKeysToUnsubscribeFrom) {
+      updatedFeatures[priceLookupKey as keyof typeof updatedFeatures].status = "cancelled";
+    }
+
     await updateTeam(teamId, {
       billing: {
         ...team.billing,
-        features: {
-          ...team.billing.features,
-          [itemToBeRemoved]: { status: "cancelled" },
-        },
+        features: updatedFeatures,
       },
     });
 
@@ -95,7 +106,7 @@ export const removeSubscription = async (teamId: string, failureUrl: string, ite
       url: "",
     };
   } catch (err) {
-    console.log(err);
+    console.log("Error in removing subscription:", err);
 
     return { status: 500, data: "Something went wrong!", newPlan: true, url: failureUrl };
   }

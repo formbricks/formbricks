@@ -1,6 +1,10 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 import Stripe from "stripe";
-import { priceLookupKeys } from "../lib/products";
+import { ProductFeatureKeysInDb, ProductNamesInStripe } from "../lib/constants";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  // https://github.com/stripe/stripe-node#configuration
+  apiVersion: "2023-10-16",
+});
 
 export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
@@ -13,22 +17,30 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const team = await getTeam(teamId);
   if (!team) throw new Error("Team not found.");
 
-  let priceLookupKey: string | null = null;
   let updatedFeatures = team.billing.features;
 
   for (const item of stripeSubscriptionObject.items.data) {
-    switch (item.price.lookup_key) {
-      case priceLookupKeys[priceLookupKeys.appSurvey]:
-        priceLookupKey = priceLookupKeys[priceLookupKeys.appSurvey];
-        updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "inactive";
+    const product = await stripe.products.retrieve(item.price.product as string);
+
+    switch (product.name) {
+      case ProductNamesInStripe.appSurvey:
+        updatedFeatures[ProductFeatureKeysInDb.appSurvey as keyof typeof team.billing.features].status =
+          "inactive";
+        updatedFeatures[ProductFeatureKeysInDb.appSurvey as keyof typeof team.billing.features].unlimited =
+          false;
         break;
-      case priceLookupKeys[priceLookupKeys.linkSurvey]:
-        priceLookupKey = priceLookupKeys[priceLookupKeys.linkSurvey];
-        updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "inactive";
+      case ProductNamesInStripe.linkSurvey:
+        updatedFeatures[ProductFeatureKeysInDb.linkSurvey as keyof typeof team.billing.features].status =
+          "inactive";
+        updatedFeatures[ProductFeatureKeysInDb.linkSurvey as keyof typeof team.billing.features].unlimited =
+          false;
         break;
-      case priceLookupKeys[priceLookupKeys.userTargeting]:
-        priceLookupKey = priceLookupKeys[priceLookupKeys.userTargeting];
-        updatedFeatures[priceLookupKey as keyof typeof team.billing.features].status = "inactive";
+      case ProductNamesInStripe.userTargeting:
+        updatedFeatures[ProductFeatureKeysInDb.userTargeting as keyof typeof team.billing.features].status =
+          "inactive";
+        updatedFeatures[
+          ProductFeatureKeysInDb.userTargeting as keyof typeof team.billing.features
+        ].unlimited = false;
         break;
     }
   }

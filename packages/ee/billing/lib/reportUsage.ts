@@ -1,4 +1,4 @@
-import { priceLookupKeys } from "./products";
+import { ProductFeatureKeysInDb } from "./constants";
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
@@ -7,13 +7,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export const reportUsage = async (
   items: Stripe.SubscriptionItem[],
-  lookupKey: priceLookupKeys,
+  lookupKey: ProductFeatureKeysInDb,
   quantity: number
 ) => {
-  const subscriptionItem = items.find((subItem) => subItem.price.lookup_key === priceLookupKeys[lookupKey]);
+  const subscriptionItem = items.find(
+    (subItem) => subItem.price.lookup_key === ProductFeatureKeysInDb[lookupKey]
+  );
 
   if (!subscriptionItem) {
-    throw new Error(`No such product found: ${priceLookupKeys[lookupKey]}`);
+    throw new Error(`No such product found: ${ProductFeatureKeysInDb[lookupKey]}`);
   }
 
   await stripe.subscriptionItems.createUsageRecord(subscriptionItem.id, {
@@ -26,7 +28,7 @@ export const reportUsage = async (
 export const reportUsageToStripe = async (
   stripeCustomerId: string,
   usage: number,
-  lookupKey: priceLookupKeys,
+  lookupKey: ProductFeatureKeysInDb,
   timestamp: number
 ) => {
   try {
@@ -35,7 +37,7 @@ export const reportUsageToStripe = async (
     });
 
     const subscriptionItem = subscription.data[0].items.data.filter(
-      (subItem) => subItem.price.lookup_key === priceLookupKeys[lookupKey]
+      (subItem) => subItem.price.lookup_key === ProductFeatureKeysInDb[lookupKey]
     );
 
     if (!subscriptionItem) {

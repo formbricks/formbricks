@@ -1,4 +1,5 @@
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
+import { PriceLookupKeysInStripe } from "./constants";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -16,7 +17,7 @@ export const getFirstOfNextMonthTimestamp = (): number => {
 export const createSubscription = async (
   teamId: string,
   environmentId: string,
-  subscribeToNickname: string
+  priceLookupKeysToSubscribeTo: PriceLookupKeysInStripe[]
 ) => {
   try {
     const team = await getTeam(teamId);
@@ -24,20 +25,21 @@ export const createSubscription = async (
     let isNewTeam =
       !team.billing.stripeCustomerId || !(await stripe.customers.retrieve(team.billing.stripeCustomerId));
 
-    const [firstPrice] = (
+    let lineItems: { price: string; quantity?: number }[] = [];
+
+    const prices = (
       await stripe.prices.list({
-        lookup_keys: [subscribeToNickname],
+        lookup_keys: priceLookupKeysToSubscribeTo,
       })
     ).data;
+    if (!prices) throw new Error("Price not found.");
 
-    if (!firstPrice) throw new Error("Price not found.");
-
-    let lineItems = [
-      {
-        price: firstPrice.id,
-        ...(firstPrice.billing_scheme === "per_unit" && { quantity: 1 }),
-      },
-    ];
+    prices.forEach((price) => {
+      lineItems.push({
+        price: price.id,
+        ...(price.billing_scheme === "per_unit" && { quantity: 1 }),
+      });
+    });
 
     // if the team has never purchased a plan then we just create a new session and store their stripe customer id
     if (isNewTeam) {
@@ -78,7 +80,7 @@ export const createSubscription = async (
     // the team has an active subscription
     if (existingSubscription) {
       // now we see if the team's current subscription is scheduled to cancel at the month end
-      // this is a case where the team cancelled an already puchased product
+      // this is a case where the team cancelled an already purchased product
       if (existingSubscription.cancel_at_period_end) {
         const allScheduledSubscriptions = await stripe.subscriptionSchedules.list({
           customer: team.billing.stripeCustomerId as string,
@@ -142,23 +144,25 @@ export const createSubscription = async (
 
       // the below check is to make sure that if a product is about to be cancelled but is still a part
       // of the current subscription then we do not update its status back to active
-      if (
-        !(
-          existingSubscription.cancel_at_period_end &&
-          team.billing.features[subscribeToNickname as keyof typeof team.billing.features].status ===
-            "cancelled"
-        )
-      ) {
-        let alreadyInSubscription = false;
+      for (const priceLookupKey of priceLookupKeysToSubscribeTo) {
+        if (priceLookupKey.includes("unlimited")) continue;
+        if (
+          !(
+            existingSubscription.cancel_at_period_end &&
+            team.billing.features[priceLookupKey as keyof typeof team.billing.features].status === "cancelled"
+          )
+        ) {
+          let alreadyInSubscription = false;
 
-        existingSubscription.items.data.forEach((item) => {
-          if (item.price.lookup_key === subscribeToNickname) {
-            alreadyInSubscription = true;
+          existingSubscription.items.data.forEach((item) => {
+            if (item.price.lookup_key === priceLookupKey) {
+              alreadyInSubscription = true;
+            }
+          });
+
+          if (!alreadyInSubscription) {
+            await stripe.subscriptions.update(existingSubscription.id, { items: lineItems });
           }
-        });
-
-        if (!alreadyInSubscription) {
-          await stripe.subscriptions.update(existingSubscription.id, { items: lineItems });
         }
       }
     } else {

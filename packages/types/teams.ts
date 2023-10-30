@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const ZSubscription = z.object({
   status: z.enum(["active", "cancelled", "inactive"]).default("inactive"),
+  unlimited: z.boolean().default(false),
 });
 
 export type TSubscription = z.infer<typeof ZSubscription>;

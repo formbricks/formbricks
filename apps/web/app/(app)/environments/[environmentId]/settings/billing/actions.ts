@@ -13,6 +13,7 @@ import { getServerSession } from "next-auth";
 import { createSubscription } from "@formbricks/ee/billing/lib/createSubscription";
 import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/createCustomerPortalSession";
 import { removeSubscription } from "@formbricks/ee/billing/lib/removeSubscription";
+import { PriceLookupKeysInStripe } from "@formbricks/ee/billing/lib/constants";
 
 export async function getMonthlyCounts(teamId: string) {
   const session = await getServerSession(authOptions);
@@ -30,14 +31,18 @@ export async function getMonthlyCounts(teamId: string) {
   };
 }
 
-export async function upgradePlanAction(teamId: string, environmentId: string, priceNickname: string) {
+export async function upgradePlanAction(
+  teamId: string,
+  environmentId: string,
+  priceLookupKeysToSubscribeTo: PriceLookupKeysInStripe[]
+) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessTeam(session.user.id, teamId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const subscriptionSession = await createSubscription(teamId, environmentId, priceNickname);
+  const subscriptionSession = await createSubscription(teamId, environmentId, priceLookupKeysToSubscribeTo);
 
   return subscriptionSession.url;
 }
@@ -60,7 +65,11 @@ export async function manageSubscriptionAction(teamId: string, environmentId: st
   return sessionUrl;
 }
 
-export async function removeSubscriptionAction(teamId: string, environmentId: string, itemNickname: string) {
+export async function removeSubscriptionAction(
+  teamId: string,
+  environmentId: string,
+  priceLookupKeysToUnsubscribeFrom: PriceLookupKeysInStripe[]
+) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -70,7 +79,7 @@ export async function removeSubscriptionAction(teamId: string, environmentId: st
   const removedSubscription = await removeSubscription(
     teamId,
     `${WEBAPP_URL}/environments/${environmentId}/settings/billing`,
-    itemNickname
+    priceLookupKeysToUnsubscribeFrom
   );
 
   return removedSubscription.url;

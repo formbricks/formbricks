@@ -33,7 +33,8 @@ export const PricingCard = ({
   freeTierLimit?: number;
   paidFeatures: {
     title: string;
-    comingSoon: boolean;
+    comingSoon?: boolean;
+    unlimited?: boolean;
   }[];
   perMetricCharge?: number;
   loading: boolean;
@@ -46,15 +47,19 @@ export const PricingCard = ({
       <div className="relative p-8">
         <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">{title}</h2>
         {team.billing.features[featureNameKey].status === "active" ? (
-          <>
-            <Badge text="Subscribed" size="normal" type="success" />
-            <Button
-              variant="secondary"
-              onClick={(e) => onUbsubscribe(e)}
-              className="absolute right-12 top-10">
-              Unsubscribe
-            </Button>
-          </>
+          team.billing.features[featureNameKey].unlimited ? (
+            <Badge text="Unlimited" size="normal" type="success" />
+          ) : (
+            <>
+              <Badge text="Subscribed" size="normal" type="success" />
+              <Button
+                variant="secondary"
+                onClick={(e) => onUbsubscribe(e)}
+                className="absolute right-12 top-10">
+                Unsubscribe
+              </Button>
+            </>
+          )
         ) : team.billing.features[featureNameKey].status === "cancelled" ? (
           <Badge text="Cancelling at End of this Month" size="normal" type="warning" />
         ) : null}
@@ -65,15 +70,17 @@ export const PricingCard = ({
           <div className="rounded-xl bg-slate-100 py-4 dark:bg-slate-800">
             <div className="rounded-xl">
               <div className="mb-2 flex items-center gap-x-4"></div>
-              <div className="relative my-2">
-                <Slider
-                  className="slider-class"
-                  value={sliderValue || 0}
-                  max={sliderLimit || 100}
-                  freeTierLimit={freeTierLimit || 0}
-                  metric={metric}
-                />
-              </div>
+              {team.billing.features[featureNameKey].unlimited && (
+                <div className="relative my-2">
+                  <Slider
+                    className="slider-class"
+                    value={sliderValue || 0}
+                    max={sliderLimit || 100}
+                    freeTierLimit={freeTierLimit || 0}
+                    metric={metric}
+                  />
+                </div>
+              )}
               <hr className="mt-12" />
             </div>
           </div>
