@@ -80,6 +80,7 @@ export default function LogicEditor({
     ],
     cta: ["clicked", "skipped"],
     consent: ["skipped", "accepted"],
+    pictureSelection: ["submitted", "skipped"],
   };
 
   const logicConditions: LogicConditions = {
