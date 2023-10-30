@@ -74,17 +74,20 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
 
   const onSubmit = async (data) => {
     try {
+      const isCodeAction = actionClass.type === "code";
       setIsUpdatingAction(true);
       if (data.name === "") throw new Error("Please give your action a name");
-      if (!isPageUrl && !isCssSelector && !isInnerHtml)
+      if (!isPageUrl && !isCssSelector && !isInnerHtml && !isCodeAction)
         throw new Error("Please select at least one selector");
-
-      const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
+      let filteredNoCodeConfig = data.noCodeConfig;
+      if (!isCodeAction) {
+        filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
+      }
       const updatedData: TActionClassInput = {
         ...data,
         environmentId,
         noCodeConfig: filteredNoCodeConfig,
-        type: "noCode",
+        type: isCodeAction ? "code" : "noCode",
       } as TActionClassInput;
       await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
