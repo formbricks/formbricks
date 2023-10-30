@@ -6,7 +6,7 @@ import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Controller, SubmitHandler, useForm, FormProvider } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
@@ -88,9 +88,15 @@ export const SigninForm = ({
   const [totpBackup, setTotpBackup] = useState(false);
   const [signInError, setSignInError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
-
+  const error = searchParams?.get("error");
   const callbackUrl = searchParams?.get("callbackUrl");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
+
+  useEffect(() => {
+    if (error) {
+      setSignInError(error);
+    }
+  }, []);
 
   const formLabel = useMemo(() => {
     if (totpBackup) {
