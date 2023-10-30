@@ -14,10 +14,10 @@ export default function ImageSurveyBg({ localSurvey, handleBgChange }: ImageSurv
           id="choices-file-input"
           allowedFileExtensions={["png", "jpeg", "jpg"]}
           environmentId={localSurvey?.environmentId}
-          onFileUpload={(url: string) => {
-            handleBgChange(url, "image");
+          onFileUpload={(url: string[]) => {
+            handleBgChange(url[0], "image");
           }}
-          fileUrl={localSurvey?.welcomeCard?.fileUrl}
+          // fileUrl={localSurvey?.surveyBackground?.bg}
         />
       </div>
     </div>

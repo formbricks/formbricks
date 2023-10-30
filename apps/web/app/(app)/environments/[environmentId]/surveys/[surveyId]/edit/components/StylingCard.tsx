@@ -23,9 +23,16 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
 
   const { type, productOverwrites, surveyBackground } = localSurvey;
   const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
-  const { bg, bgType } = surveyBackground ?? {};
+  const { bg, bgType, brightness } = surveyBackground ?? {};
 
   const [tab, setTab] = useState(bgType || "image");
+
+  const [inputValue, setInputValue] = useState(100);
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+    handleBrightnessChange(parseInt(e.target.value));
+  };
 
   const togglePlacement = () => {
     setLocalSurvey({
@@ -58,6 +65,17 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
+  const toggleBrightness = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      surveyBackground: {
+        ...localSurvey.surveyBackground,
+        brightness: !!brightness ? undefined : 100,
+      },
+    });
+    setInputValue(100);
+  };
+
   const toggleHighlightBorderColor = () => {
     setLocalSurvey({
       ...localSurvey,
@@ -79,12 +97,23 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
   };
 
   const handleBgChange = (color: string, type: string) => {
+    setInputValue(100);
     setLocalSurvey({
       ...localSurvey,
       surveyBackground: {
         ...localSurvey.surveyBackground,
         bg: color,
         bgType: type,
+      },
+    });
+  };
+
+  const handleBrightnessChange = (percent: number) => {
+    setLocalSurvey({
+      ...localSurvey,
+      surveyBackground: {
+        ...localSurvey.surveyBackground,
+        brightness: percent,
       },
     });
   };
@@ -173,8 +202,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
           {/* Background */}
           <div className="p-3">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoComplete" checked={!!bg} onCheckedChange={toggleBackgroundColor} />
-              <Label htmlFor="autoComplete" className="cursor-pointer">
+              <Switch id="autoCompleteBg" checked={!!bg} onCheckedChange={toggleBackgroundColor} />
+              <Label htmlFor="autoCompleteBg" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Change Background</h3>
                   <p className="text-xs font-normal text-slate-500">
@@ -209,6 +238,36 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 ) : (
                   <ColorSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 )}
+              </div>
+            )}
+          </div>
+          {/* Overlay */}
+          <div className="p-3">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="autoCompleteOverlay" checked={!!brightness} onCheckedChange={toggleBrightness} />
+              <Label htmlFor="autoCompleteOverlay" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Background Overlay</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Darken or lighten background of your choice.
+                  </p>
+                </div>
+              </Label>
+            </div>
+            {brightness && (
+              <div>
+                <div className="mt-4 flex flex-col justify-center rounded-lg border bg-slate-50 p-4 px-8">
+                  <h3 className="mb-4 text-sm font-semibold text-slate-700">Transparency</h3>
+                  <input
+                    id="small-range"
+                    type="range"
+                    min="1"
+                    max="200"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"
+                  />
+                </div>
               </div>
             )}
           </div>

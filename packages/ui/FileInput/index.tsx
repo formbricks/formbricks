@@ -17,7 +17,7 @@ interface FileInputProps {
   id: string;
   allowedFileExtensions: TAllowedFileExtensions[];
   environmentId: string | undefined;
-  onFileUpload: (uploadedUrl: string[] | string | undefined) => void;
+  onFileUpload: (uploadedUrl: string[] | undefined) => void;
   fileUrl?: string | string[];
   multiple?: boolean;
 }

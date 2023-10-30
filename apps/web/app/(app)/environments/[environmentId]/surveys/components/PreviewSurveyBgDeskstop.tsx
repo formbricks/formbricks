@@ -3,9 +3,13 @@ export default function PreviewSurveyBgDeskstop({ children, survey, ContentRef }
     <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
       <div
         className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6"
-        style={{ backgroundColor: survey.surveyBackground.bg || "#ffff" }}>
-        {children}
-      </div>
+        style={{
+          backgroundColor: survey.surveyBackground.bg || "#ffff",
+          filter: survey.surveyBackground.brightness
+            ? `brightness(${survey.surveyBackground.brightness}%)`
+            : "none",
+        }}></div>
+      <div className="absolute flex h-full w-full items-center justify-center">{children}</div>
     </div>
   ) : survey.surveyBackground && survey.surveyBackground.bgType === "animation" ? (
     <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
@@ -13,22 +17,34 @@ export default function PreviewSurveyBgDeskstop({ children, survey, ContentRef }
         className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6"
         style={{
           background: `url(${survey.surveyBackground.bg}) no-repeat center center fixed`,
-          // backgroundSize: 'cover',
         }}>
-        <video muted loop autoPlay className="absolute inset-0 h-full w-full object-cover">
+        <video
+          muted
+          loop
+          autoPlay
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{
+            filter: survey.surveyBackground.brightness
+              ? `brightness(${survey.surveyBackground.brightness}%)`
+              : "none",
+          }}>
           <source src={survey.surveyBackground.bg} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        {children}
+        <div className="flex h-full w-full items-center justify-center">{children}</div>
       </div>
     </div>
   ) : survey.surveyBackground && survey.surveyBackground.bgType === "image" ? (
     <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
       <div
         className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6"
-        style={{ backgroundImage: `url(${survey.surveyBackground.bg})` }}>
-        {children}
-      </div>
+        style={{
+          backgroundImage: `url(${survey.surveyBackground.bg})`,
+          filter: survey.surveyBackground.brightness
+            ? `brightness(${survey.surveyBackground.brightness}%)`
+            : "none",
+        }}></div>
+      <div className="absolute flex h-full w-full items-center justify-center">{children}</div>
     </div>
   ) : (
     <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>

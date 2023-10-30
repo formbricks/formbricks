@@ -44,6 +44,7 @@ export const ZSurveyProductOverwrites = z.object({
 export const ZSurveyBackground = z.object({
   bg: z.string().nullish(),
   bgType: z.string().nullish(),
+  brightness: z.number().nullish(),
   // darkOverlay: z.boolean().nullish(),
 });
 

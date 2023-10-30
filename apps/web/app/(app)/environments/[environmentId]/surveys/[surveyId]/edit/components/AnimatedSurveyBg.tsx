@@ -95,6 +95,7 @@ export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: Animat
                 className="absolute right-2 top-2 h-4 w-4 rounded-sm bg-white "
                 type="checkbox"
                 checked={color === value}
+                onChange={() => handleBg(value)}
               />
             </div>
           );
