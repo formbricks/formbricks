@@ -17,7 +17,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import PreviewSurveyBgMobile from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgMobile";
 import PreviewSurveyBgDeskstop from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgDeskstop";
 
