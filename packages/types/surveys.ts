@@ -106,6 +106,8 @@ export const ZSurveyLogicCondition = z.enum([
   "greaterEqual",
   "includesAll",
   "includesOne",
+  "uploaded",
+  "notUploaded",
 ]);
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
@@ -117,8 +119,8 @@ export const ZSurveyLogicBase = z.object({
 });
 
 export const ZSurveyFileUploadLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.array(z.string()).optional(),
+  condition: z.enum(["uploaded", "notUploaded"]).optional(),
+  value: z.undefined(),
 });
 
 export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
@@ -185,7 +187,6 @@ const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
 });
 
 export const ZSurveyLogic = z.union([
-  ZSurveyFileUploadLogic,
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
   ZSurveyMultipleChoiceSingleLogic,
@@ -194,6 +195,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyCTALogic,
   ZSurveyRatingLogic,
   ZSurveyPictureSelectionLogic,
+  ZSurveyFileUploadLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -319,9 +321,6 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
 
 export const ZSurveyQuestion = z.union([
-  ZSurveyFileUploadQuestion,
-
-  // ZSurveyWelcomeQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
   ZSurveyMultipleChoiceSingleQuestion,
@@ -330,6 +329,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
   ZSurveyPictureSelectionQuestion,
+  ZSurveyFileUploadQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
