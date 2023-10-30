@@ -1,5 +1,3 @@
-import "server-only";
-
 import { prisma } from "@formbricks/database";
 
 import { DatabaseError } from "@formbricks/types/errors";
@@ -13,7 +11,7 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { responseNoteCache } from "./cache";
 
-const select = {
+export const responseNoteSelect = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -48,7 +46,7 @@ export const createResponseNote = async (
         userId: userId,
         text: text,
       },
-      select,
+      select: responseNoteSelect,
     });
 
     responseCache.revalidate({
@@ -79,7 +77,7 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
           where: {
             id: responseNoteId,
           },
-          select,
+          select: responseNoteSelect,
         });
         return responseNote;
       } catch (error) {
@@ -104,7 +102,7 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
           where: {
             responseId,
           },
-          select,
+          select: responseNoteSelect,
         });
         return responseNotes;
       } catch (error) {
@@ -132,7 +130,7 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
         updatedAt: new Date(),
         isEdited: true,
       },
-      select,
+      select: responseNoteSelect,
     });
 
     responseCache.revalidate({
@@ -167,7 +165,7 @@ export const resolveResponseNote = async (responseNoteId: string): Promise<TResp
         updatedAt: new Date(),
         isResolved: true,
       },
-      select,
+      select: responseNoteSelect,
     });
 
     responseCache.revalidate({

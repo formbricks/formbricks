@@ -9,20 +9,23 @@
     "clean": "rimraf .turbo node_modules .next",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
+    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+    "test": "jest --watch",
+    "test:ci": "jest --ci"
   },
   "dependencies": {
-    "@formbricks/api": "*",
     "@aws-sdk/client-s3": "^3.429.0",
     "@aws-sdk/s3-request-presigner": "^3.429.0",
-    "mime": "3.0.0",
+    "@formbricks/api": "*",
     "@formbricks/database": "*",
+    "@formbricks/surveys": "*",
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
     "aws-crt": "^1.18.1",
     "date-fns": "^2.30.0",
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^13.0.2",
+    "mime": "3.0.0",
     "nanoid": "^5.0.2",
     "next-auth": "^4.23.2",
     "nodemailer": "^6.9.6",
@@ -32,8 +35,15 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
+    "@ngneat/falso": "^7.1.1",
+    "@types/jest": "^29.5.5",
     "@types/jsonwebtoken": "^9.0.3",
     "@types/mime": "3.0.3",
-    "eslint-config-formbricks": "workspace:*"
+    "babel-jest": "^29.7.0",
+    "eslint-config-formbricks": "workspace:*",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-mock-extended": "^3.0.5",
+    "ts-jest": "^29.1.1"
   }
 }

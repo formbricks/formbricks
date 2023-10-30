@@ -1,5 +1,3 @@
-import "server-only";
-
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";

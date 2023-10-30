@@ -1,5 +1,3 @@
-import "server-only";
-
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import {
@@ -184,7 +182,10 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
   return formatDisplaysDateFields(displays);
 };
 
-export const deleteDisplayByResponseId = async (responseId: string, surveyId: string): Promise<TDisplay> => {
+export const deleteDisplayByResponseId = async (
+  responseId: string,
+  surveyId: string
+): Promise<TDisplay | null> => {
   validateInputs([responseId, ZId], [surveyId, ZId]);
 
   try {
@@ -194,6 +195,10 @@ export const deleteDisplayByResponseId = async (responseId: string, surveyId: st
       },
       select: selectDisplay,
     });
+
+    if (!display) {
+      return null;
+    }
 
     displayCache.revalidate({
       id: display.id,

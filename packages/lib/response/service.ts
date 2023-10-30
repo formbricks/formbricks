@@ -1,5 +1,3 @@
-import "server-only";
-
 import { prisma } from "@formbricks/database";
 import {
   TResponse,
@@ -25,7 +23,7 @@ import { formatResponseDateFields } from "../response/util";
 import { getResponseNotes } from "../responseNote/service";
 import { responseNoteCache } from "../responseNote/cache";
 
-const responseSelection = {
+export const responseSelection = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -92,15 +90,17 @@ export const getResponsesByPersonId = async (
 
         let responses: Array<TResponse> = [];
 
-        responsePrisma.forEach(async (response) => {
-          const responseNotes = await getResponseNotes(response.id);
-          responses.push({
-            ...response,
-            notes: responseNotes,
-            person: response.person ? transformPrismaPerson(response.person) : null,
-            tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          });
-        });
+        await Promise.all(
+          responsePrisma.map(async (response) => {
+            const responseNotes = await getResponseNotes(response.id);
+            responses.push({
+              ...response,
+              notes: responseNotes,
+              person: response.person ? transformPrismaPerson(response.person) : null,
+              tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            });
+          })
+        );
 
         return responses;
       } catch (error) {

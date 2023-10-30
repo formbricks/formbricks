@@ -1,6 +1,6 @@
-import "server-only";
 import path from "path";
-import { env } from "@/env.mjs";
+
+const env = process.env;
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
@@ -15,7 +15,7 @@ export const SHORT_URL_BASE = env.SHORT_URL_BASE ? env.SHORT_URL_BASE : WEBAPP_U
 
 // encryption keys
 export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
-export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
+export const ENCRYPTION_KEY = env.ENCRYPTION_KEY!;
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";

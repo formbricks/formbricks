@@ -1,5 +1,3 @@
-import "server-only";
-
 import { TResponseDates } from "@formbricks/types/responses";
 
 export const formatResponseDateFields = (response: TResponseDates): TResponseDates => {

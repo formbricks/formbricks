@@ -1,5 +1,3 @@
-import "server-only";
-
 import { ZId } from "@formbricks/types/environment";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
