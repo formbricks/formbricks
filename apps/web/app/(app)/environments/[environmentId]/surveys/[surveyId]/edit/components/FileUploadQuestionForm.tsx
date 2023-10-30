@@ -1,7 +1,7 @@
-import { TSurveyFileUploadQuestion, TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { toast } from "react-hot-toast";
 
@@ -137,7 +137,7 @@ export default function FileUploadQuestionForm({
           <div className="mt-2 flex w-full items-center justify-between rounded-md border bg-slate-50 p-5">
             <div className="rounded-md  bg-white p-2">
               <input
-                className="rounded-md border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="rounded-md border [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 id="maxSize"
                 name="maxSize"
                 type="number"

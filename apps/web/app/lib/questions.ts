@@ -1,16 +1,16 @@
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 import {
-  CursorArrowRippleIcon,
+  ArrowUpTrayIcon,
   ChatBubbleBottomCenterTextIcon,
+  CheckIcon,
+  CursorArrowRippleIcon,
   ListBulletIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
-  CheckIcon,
-  ArrowUpTrayIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
 export type TSurveyQuestionType = {
   id: string;
@@ -21,19 +21,6 @@ export type TSurveyQuestionType = {
 };
 
 export const questionTypes: TSurveyQuestionType[] = [
-  {
-    id: QuestionId.FileUpload,
-    label: "File Upload",
-    description: "Take file inputs from user",
-    icon: ArrowUpTrayIcon,
-    preset: {
-      headline: "Upload File",
-      subheader: "Let's Upload!",
-      allowMultipleFile: false,
-      limitSize: false,
-      limitFileType: false,
-    },
-  },
   {
     id: QuestionId.OpenText,
     label: "Free text",
@@ -122,6 +109,18 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: "Terms and Conditions",
       label: "I agree to the terms and conditions",
       dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: QuestionId.FileUpload,
+    label: "File Upload",
+    description: "Take file inputs from user",
+    icon: ArrowUpTrayIcon,
+    preset: {
+      headline: "File Upload",
+      allowMultipleFile: false,
+      limitSize: false,
+      limitFileType: false,
     },
   },
 ];
