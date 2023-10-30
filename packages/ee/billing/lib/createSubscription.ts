@@ -1,4 +1,4 @@
-import { getTeam, updateTeam } from "@formbricks/lib/team/service";
+import { getTeam } from "@formbricks/lib/team/service";
 import { StripePriceLookupKeys } from "./constants";
 import Stripe from "stripe";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
@@ -43,28 +43,15 @@ export const createSubscription = async (
 
     // if the team has never purchased a plan then we just create a new session and store their stripe customer id
     if (isNewTeam) {
-      const customer = await stripe.customers.create({
-        name: team.name,
-        metadata: { team: teamId },
-      });
-
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         line_items: lineItems,
-        customer: customer.id,
         success_url: `${baseUrl}/billing-confirmation?environmentId=${environmentId}`,
         cancel_url: `${baseUrl}/environments/${environmentId}/settings/billing`,
         allow_promotion_codes: true,
         subscription_data: {
           billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
           metadata: { teamId },
-        },
-      });
-
-      await updateTeam(teamId, {
-        billing: {
-          ...team.billing,
-          stripeCustomerId: customer.id,
         },
       });
 
