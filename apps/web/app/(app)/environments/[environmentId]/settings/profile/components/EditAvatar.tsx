@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Session } from "next-auth";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 export function EditAvatar({ session }: { session: Session | null }) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -14,17 +15,17 @@ export function EditAvatar({ session }: { session: Session | null }) {
     const file = event.target.files?.[0];
     if (file) {
       if (!["image/jpeg", "image/png"].includes(file.type)) {
-        alert("Only .jpg and .png files are supported.");
+        toast("Only .jpg and .png files are supported.");
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
         // 2MB
-        alert("The file size should be less than 2MB.");
+        toast("The file size should be less than 2MB.");
         return;
       }
       const reader = new FileReader();
       reader.onerror = () => {
-        alert("Failed to read the file. Please try again.");
+        toast("Failed to read the file. Please try again.");
         reader.abort();
       };
       reader.onload = function (e) {
