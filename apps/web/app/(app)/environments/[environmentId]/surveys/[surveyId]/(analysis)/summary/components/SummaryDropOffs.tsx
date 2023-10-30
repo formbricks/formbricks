@@ -20,6 +20,7 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
 
       while (currQuesIdx < survey.questions.length) {
         const currQues = survey.questions[currQuesIdx];
+        if (!currQues) break;
 
         if (!currQues.required) {
           if (!response.data[currQues.id]) {

@@ -12,7 +12,7 @@ import { TProfile } from "@formbricks/types/profile";
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
 }
@@ -20,12 +20,11 @@ interface LinkSurveyShareButtonProps {
 export default function LinkSurveyShareButton({
   survey,
   className,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
-  const isSingleUse = survey.singleUse?.enabled ?? false;
 
   return (
     <>
@@ -40,13 +39,13 @@ export default function LinkSurveyShareButton({
         }}>
         <ShareIcon className="h-5 w-5" />
       </Button>
-      {showLinkModal && isSingleUse && (
+      {showLinkModal && (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
           product={product}
-          surveyBaseUrl={surveyBaseUrl}
+          webAppUrl={webAppUrl}
           profile={profile}
         />
       )}

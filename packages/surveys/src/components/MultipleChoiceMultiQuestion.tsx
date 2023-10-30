@@ -7,7 +7,7 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
-interface MultipleChoiceSingleProps {
+interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
@@ -18,7 +18,7 @@ interface MultipleChoiceSingleProps {
   brandColor: string;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export default function MultipleChoiceMultiQuestion({
   question,
   value,
   onChange,
@@ -27,7 +27,7 @@ export default function MultipleChoiceSingleQuestion({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
-}: MultipleChoiceSingleProps) {
+}: MultipleChoiceMultiProps) {
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
     [question]
@@ -35,7 +35,7 @@ export default function MultipleChoiceSingleQuestion({
 
   const [otherSelected, setOtherSelected] = useState(
     !!value &&
-      (value as string[]).some((item) => {
+      ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
         return getChoicesWithoutOtherLabels().includes(item) === false;
       })
   ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true

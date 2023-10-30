@@ -18,6 +18,7 @@ import {
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
@@ -30,6 +31,7 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
+import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -133,8 +135,10 @@ export default function QuestionCard({
                       <CursorArrowRippleIcon />
                     ) : question.type === TSurveyQuestionType.Rating ? (
                       <StarIcon />
-                    ) : question.type === "consent" ? (
+                    ) : question.type === TSurveyQuestionType.Consent ? (
                       <CheckIcon />
+                    ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                      <PhotoIcon />
                     ) : null}
                   </div>
                   <div>
@@ -215,12 +219,21 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
-              ) : question.type === "consent" ? (
+              ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                <PictureSelectionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
               ) : null}

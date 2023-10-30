@@ -1,127 +1,88 @@
-import { prisma } from "@formbricks/database";
-import { selectSurvey } from "@formbricks/lib/survey/service";
+import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+import { SERVICES_REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { displayCache } from "@formbricks/lib/display/cache";
+import { getDisplaysByPersonId } from "@formbricks/lib/display/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { productCache } from "@formbricks/lib/product/cache";
+import { getSurveys } from "@formbricks/lib/survey/service";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
 import { unstable_cache } from "next/cache";
 
-const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
-  `environments-${environmentId}-surveys`,
-  `environments-${environmentId}-product`,
-  personId,
-];
+// Helper function to calculate difference in days between two dates
+const diffInDays = (date1: Date, date2: Date) => {
+  const diffTime = Math.abs(date2.getTime() - date1.getTime());
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+};
 
-const getSurveysCacheKey = (environmentId: string, personId: string): string[] => [
-  `environments-${environmentId}-person-${personId}-syncSurveys`,
-];
-
-export const getSurveysCached = (environmentId: string, person: TPerson) =>
+export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
   unstable_cache(
     async () => {
-      return await getSurveys(environmentId, person);
+      return await getSyncSurveys(environmentId, person);
     },
-    getSurveysCacheKey(environmentId, person.id),
+    [`getSyncSurveysCached-${environmentId}-${person.id}`],
     {
-      tags: getSurveysCacheTags(environmentId, person.id),
-      revalidate: 30 * 60,
+      tags: [
+        displayCache.tag.byPersonId(person.id),
+        surveyCache.tag.byEnvironmentId(environmentId),
+        productCache.tag.byEnvironmentId(environmentId),
+      ],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getSurveys = async (environmentId: string, person: TPerson): Promise<TSurveyWithTriggers[]> => {
+export const getSyncSurveys = async (
+  environmentId: string,
+  person: TPerson
+): Promise<TSurveyWithTriggers[]> => {
   // get recontactDays from product
-  const product = await prisma.product.findFirst({
-    where: {
-      environments: {
-        some: {
-          id: environmentId,
-        },
-      },
-    },
-    select: {
-      recontactDays: true,
-    },
-  });
+  const product = await getProductByEnvironmentId(environmentId);
 
   if (!product) {
     throw new Error("Product not found");
   }
-  // get all surveys that meet the displayOption criteria
-  const potentialSurveys = await prisma.survey.findMany({
-    where: {
-      OR: [
-        {
-          environmentId,
-          type: "web",
-          status: "inProgress",
-          displayOption: "respondMultiple",
-        },
-        {
-          environmentId,
-          type: "web",
-          status: "inProgress",
-          displayOption: "displayOnce",
-          displays: { none: { personId: person.id } },
-        },
-        {
-          environmentId,
-          type: "web",
-          status: "inProgress",
-          displayOption: "displayMultiple",
-          displays: { none: { personId: person.id, status: "responded" } },
-        },
-      ],
-    },
-    select: {
-      ...selectSurvey,
-      attributeFilters: {
-        select: {
-          id: true,
-          condition: true,
-          value: true,
-          attributeClass: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
-      displays: {
-        where: {
-          personId: person.id,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: 1,
-        select: {
-          createdAt: true,
-        },
-      },
-    },
+
+  let surveys = await getSurveys(environmentId);
+
+  // filtered surveys for running and web
+  surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+
+  const displays = await getDisplaysByPersonId(person.id);
+
+  // filter surveys that meet the displayOption criteria
+  surveys = surveys.filter((survey) => {
+    if (survey.displayOption === "respondMultiple") {
+      return true;
+    } else if (survey.displayOption === "displayOnce") {
+      return displays.filter((display) => display.surveyId === survey.id).length === 0;
+    } else if (survey.displayOption === "displayMultiple") {
+      return (
+        displays.filter((display) => display.surveyId === survey.id && display.responseId !== null).length ===
+        0
+      );
+    } else {
+      throw Error("Invalid displayOption");
+    }
   });
 
-  // get last display for this person
-  const lastDisplayPerson = await prisma.display.findFirst({
-    where: {
-      personId: person.id,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    select: {
-      createdAt: true,
-    },
-  });
+  const attributeClasses = await getAttributeClasses(environmentId);
 
   // filter surveys that meet the attributeFilters criteria
-  const potentialSurveysWithAttributes = potentialSurveys.filter((survey) => {
+  const potentialSurveysWithAttributes = surveys.filter((survey) => {
     const attributeFilters = survey.attributeFilters;
     if (attributeFilters.length === 0) {
       return true;
     }
     // check if meets all attribute filters criterias
     return attributeFilters.every((attributeFilter) => {
-      const personAttributeValue = person.attributes[attributeFilter.attributeClass.name];
+      const attributeClassName = attributeClasses.find(
+        (attributeClass) => attributeClass.id === attributeFilter.attributeClassId
+      )?.name;
+      if (!attributeClassName) {
+        throw Error("Invalid attribute filter class");
+      }
+      const personAttributeValue = person.attributes[attributeClassName];
       if (attributeFilter.condition === "equals") {
         return personAttributeValue === attributeFilter.value;
       } else if (attributeFilter.condition === "notEquals") {
@@ -132,46 +93,24 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
     });
   });
 
+  const latestDisplay = displays[0];
+
   // filter surveys that meet the recontactDays criteria
-  const surveys: TSurveyWithTriggers[] = potentialSurveysWithAttributes
-    .filter((survey) => {
-      if (!lastDisplayPerson) {
-        // no display yet - always display
-        return true;
-      } else if (survey.recontactDays !== null) {
-        // if recontactDays is set on survey, use that
-        const lastDisplaySurvey = survey.displays[0];
-        if (!lastDisplaySurvey) {
-          // no display yet - always display
-          return true;
-        }
-        const lastDisplayDate = new Date(lastDisplaySurvey.createdAt);
-        const currentDate = new Date();
-        const diffTime = Math.abs(currentDate.getTime() - lastDisplayDate.getTime());
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= survey.recontactDays;
-      } else if (product.recontactDays !== null) {
-        // if recontactDays is not set in survey, use product recontactDays
-        const lastDisplayDate = new Date(lastDisplayPerson.createdAt);
-        const currentDate = new Date();
-        const diffTime = Math.abs(currentDate.getTime() - lastDisplayDate.getTime());
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= product.recontactDays;
-      } else {
-        // if recontactDays is not set in survey or product, always display
+  surveys = potentialSurveysWithAttributes.filter((survey) => {
+    if (!latestDisplay) {
+      return true;
+    } else if (survey.recontactDays !== null) {
+      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+      if (!lastDisplaySurvey) {
         return true;
       }
-    })
-    .map((survey) => ({
-      ...survey,
-      singleUse: survey.singleUse ? JSON.parse(JSON.stringify(survey.singleUse)) : null,
-      triggers: survey.triggers.map((trigger) => trigger.eventClass),
-      attributeFilters: survey.attributeFilters.map((af) => ({
-        ...af,
-        attributeClassId: af.attributeClass.id,
-        attributeClass: undefined,
-      })),
-    }));
+      return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+    } else if (product.recontactDays !== null) {
+      return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+    } else {
+      return true;
+    }
+  });
 
   return surveys;
 };

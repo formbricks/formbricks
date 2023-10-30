@@ -22,6 +22,7 @@ export const ZProfile = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
+  objective: ZProfileObjective.nullable(),
 });
 
 export type TProfile = z.infer<typeof ZProfile>;
@@ -31,7 +32,7 @@ export const ZProfileUpdateInput = z.object({
   email: z.string().optional(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZProfileObjective.optional(),
+  objective: ZProfileObjective.nullish(),
 });
 
 export type TProfileUpdateInput = z.infer<typeof ZProfileUpdateInput>;
@@ -41,7 +42,7 @@ export const ZProfileCreateInput = z.object({
   email: z.string(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZProfileObjective.optional(),
+  objective: ZProfileObjective.nullish(),
 });
 
 export type TProfileCreateInput = z.infer<typeof ZProfileCreateInput>;

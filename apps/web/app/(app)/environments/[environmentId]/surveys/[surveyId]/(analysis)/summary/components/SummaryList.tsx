@@ -3,7 +3,7 @@ import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[su
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import type { TSurveyPictureSelectionQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import {
@@ -22,14 +22,21 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
+import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
+  openTextResponsesPerPage: number;
 }
 
-export default function SummaryList({ environment, survey, responses }: SummaryListProps) {
+export default function SummaryList({
+  environment,
+  survey,
+  responses,
+  openTextResponsesPerPage,
+}: SummaryListProps) {
   const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses
@@ -66,6 +73,7 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
                     environmentId={environment.id}
+                    openTextResponsesPerPage={openTextResponsesPerPage}
                   />
                 );
               }
@@ -115,6 +123,16 @@ export default function SummaryList({ environment, survey, responses }: SummaryL
                   <ConsentSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
+                  />
+                );
+              }
+              if (questionSummary.question.type === TSurveyQuestionType.PictureSelection) {
+                return (
+                  <PictureChoiceSummary
+                    key={questionSummary.question.id}
+                    questionSummary={
+                      questionSummary as TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>
+                    }
                   />
                 );
               }

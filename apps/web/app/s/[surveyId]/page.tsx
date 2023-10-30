@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { TResponse } from "@formbricks/types/responses";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import type { Metadata } from "next";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 
 interface LinkSurveyPageProps {
@@ -25,8 +26,55 @@ interface LinkSurveyPageProps {
   };
 }
 
+export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
+  const survey = await getSurvey(params.surveyId);
+
+  if (!survey || survey.type !== "link" || survey.status === "draft") {
+    notFound();
+  }
+
+  const product = await getProductByEnvironmentId(survey.environmentId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  function getNameForURL(string) {
+    return string.replace(/ /g, "%20");
+  }
+
+  function getBrandColorForURL(string) {
+    return string.replace(/#/g, "%23");
+  }
+
+  const brandColor = getBrandColorForURL(product.brandColor);
+  const surveyName = getNameForURL(survey.name);
+
+  const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
+
+  return {
+    metadataBase: new URL(WEBAPP_URL),
+    openGraph: {
+      title: survey.name,
+      description: "Create your own survey like this with Formbricks' open source survey suite.",
+      url: `/s/${survey.id}`,
+      siteName: "",
+      images: [ogImgURL],
+      locale: "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: survey.name,
+      description: "Create your own survey like this with Formbricks' open source survey suite.",
+      images: [ogImgURL],
+    },
+  };
+}
+
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
   const survey = await getSurvey(params.surveyId);
+
   const suId = searchParams.suId;
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;

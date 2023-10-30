@@ -19,6 +19,7 @@ import {
   Tailwind,
   Text,
   render,
+  Img,
 } from "@react-email/components";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -61,8 +62,7 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
 
   return (
     <div className="flex h-full grow flex-col gap-5">
-      <div className="flex items-center gap-4">
-        <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+      <div className="flex items-center justify-end gap-4">
         {showEmbed ? (
           <Button
             variant="darkCTA"
@@ -77,15 +77,18 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
             Copy code
           </Button>
         ) : (
-          <Button
-            variant="secondary"
-            title="send preview email"
-            aria-label="send preview email"
-            onClick={sendPreviewEmail}
-            EndIcon={EnvelopeIcon}
-            className="shrink-0">
-            Send Preview
-          </Button>
+          <>
+            <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+            <Button
+              variant="secondary"
+              title="send preview email"
+              aria-label="send preview email"
+              onClick={sendPreviewEmail}
+              EndIcon={EnvelopeIcon}
+              className="shrink-0">
+              Send Preview
+            </Button>
+          </>
         )}
         <Button
           variant="darkCTA"
@@ -405,6 +408,35 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
                   </Link>
                 ))}
             </Container>
+            <EmailFooter />
+          </EmailTemplateWrapper>
+        );
+      case TSurveyQuestionType.PictureSelection:
+        return (
+          <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+            <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+              {firstQuestion.headline}
+            </Text>
+            <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+              {firstQuestion.subheader}
+            </Text>
+            <Section className="mx-0">
+              {firstQuestion.choices.map((choice) =>
+                firstQuestion.allowMulti ? (
+                  <Img
+                    src={choice.imageUrl}
+                    className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg"
+                  />
+                ) : (
+                  <Link
+                    href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
+                    target="_blank"
+                    className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg">
+                    <Img src={choice.imageUrl} className="h-full w-full rounded-lg" />
+                  </Link>
+                )
+              )}
+            </Section>
             <EmailFooter />
           </EmailTemplateWrapper>
         );

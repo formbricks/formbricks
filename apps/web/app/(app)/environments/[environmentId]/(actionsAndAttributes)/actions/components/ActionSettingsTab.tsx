@@ -1,8 +1,15 @@
 "use client";
 
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { TNoCodeConfig } from "@formbricks/types/actionClasses";
+import {
+  deleteActionClassAction,
+  updateActionClassAction,
+} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
+import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
+import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
+import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
 import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -11,14 +18,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "../lib/testURLmatch";
-import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
-import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
-import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
-import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
-import {
-  deleteActionClassAction,
-  updateActionClassAction,
-} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -75,16 +74,20 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
 
   const onSubmit = async (data) => {
     try {
+      const isCodeAction = actionClass.type === "code";
       setIsUpdatingAction(true);
       if (data.name === "") throw new Error("Please give your action a name");
-      if (!isPageUrl && !isCssSelector && !isInnerHtml) throw new Error("Please select atleast one selector");
-
-      const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
+      if (!isPageUrl && !isCssSelector && !isInnerHtml && !isCodeAction)
+        throw new Error("Please select at least one selector");
+      let filteredNoCodeConfig = data.noCodeConfig;
+      if (!isCodeAction) {
+        filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
+      }
       const updatedData: TActionClassInput = {
         ...data,
         environmentId,
         noCodeConfig: filteredNoCodeConfig,
-        type: "noCode",
+        type: isCodeAction ? "code" : "noCode",
       } as TActionClassInput;
       await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);

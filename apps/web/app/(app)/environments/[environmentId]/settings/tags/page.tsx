@@ -10,7 +10,7 @@ export default async function MembersSettingsPage({ params }) {
     throw new Error("Environment not found");
   }
   const tags = await getTagsByEnvironmentId(params.environmentId);
-  const environmentTagsCount = await getTagsOnResponsesCount();
+  const environmentTagsCount = await getTagsOnResponsesCount(params.environmentId);
 
   return (
     <div>
