@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
+import { TSurvey } from "@formbricks/types/surveys";
 
-export default function ColorSurveyBg({ localSurvey, handleBgChange }) {
+interface ColorSurveyBgBgProps {
+  localSurvey?: TSurvey;
+  handleBgChange: (bg: string, bgType: string) => void;
+}
+
+export default function ColorSurveyBg({ localSurvey, handleBgChange }: ColorSurveyBgBgProps) {
   const colours = [
     "#FFF2D8",
     "#EAD7BB",
@@ -30,7 +36,7 @@ export default function ColorSurveyBg({ localSurvey, handleBgChange }) {
     "#CDFAD5",
   ];
 
-  const [color, setColor] = useState(localSurvey.surveyBackground?.bg || "#ffff");
+  const [color, setColor] = useState(localSurvey?.surveyBackground?.bg || "#ffff");
 
   const handleBg = (x: string) => {
     setColor(x);

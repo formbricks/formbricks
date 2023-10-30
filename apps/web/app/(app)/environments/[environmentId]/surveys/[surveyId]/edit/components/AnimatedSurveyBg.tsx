@@ -1,7 +1,13 @@
 import { useState } from "react";
+import { TSurvey } from "@formbricks/types/surveys";
 
-export default function AnimatedSurveyBg({ localSurvey, handleBgChange }) {
-  const [color, setColor] = useState(localSurvey.surveyBackground?.bg || "#ffff");
+interface AnimatedSurveyBgProps {
+  localSurvey?: TSurvey;
+  handleBgChange: (bg: string, bgType: string) => void;
+}
+
+export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: AnimatedSurveyBgProps) {
+  const [color, setColor] = useState(localSurvey?.surveyBackground?.bg || "#ffff");
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
   const animationFiles = {
