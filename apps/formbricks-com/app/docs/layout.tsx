@@ -8,7 +8,7 @@ import { type Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: "Formbricks – Open Source Experience Management",
+    template: "%s - Formbricks Docs",
     default: "Formbricks Docs",
   },
 };
