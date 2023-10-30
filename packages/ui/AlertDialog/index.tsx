@@ -24,7 +24,7 @@ export default function AlertDialog({
 }: AlertDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={`Confirm ${confirmWhat}`}>
-      <p>{text || "Are you sure? This action cannot be undone."}</p>
+      <p className="mb-6 text-sm">{text || "Are you sure? This action cannot be undone."}</p>
       <div className="space-x-2 text-right">
         <Button variant="warn" onClick={onDiscard}>
           Discard
