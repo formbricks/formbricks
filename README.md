@@ -1,5 +1,5 @@
 <div id="top"></div>
-<a href="https://www.producthunt.com/products/formbricks" target="_blank">
+<a href="https://www.producthunt.com/posts/formbricks" target="_blank">
 <img width="1527" alt="live on product hunt" src="https://github.com/formbricks/formbricks/assets/72809645/47bd75f2-631f-44f0-b14f-380be11158b7">
 </a>
 <p align="center">

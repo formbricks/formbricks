@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export const GitHubSponsorship: React.FC = () => {
   return (
-    <Link href="https://www.producthunt.com/products/formbricks" target="_blank">
+    <Link href="https://www.producthunt.com/posts/formbricks" target="_blank">
       <div className="my-12 grid w-full grid-cols-3 rounded-2xl border border-[#ff6154] bg-gradient-to-br from-slate-100 to-slate-200 p-12 transition-all hover:scale-105 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700">
         {/*         <Image
           src={GitHubMarkDark}
@@ -29,7 +29,7 @@ export const GitHubSponsorship: React.FC = () => {
             Support our open source project with an upvote and comment.
             <span>
               <Link
-                href="https://www.producthunt.com/products/formbricks"
+                href="https://www.producthunt.com/posts/formbricks"
                 className="ml-2 underline decoration-[#ff6154] underline-offset-4"
                 target="_blank">
                 View launch post.

@@ -132,7 +132,7 @@ const nextConfig = {
       },
       {
         source: "/launch",
-        destination: "https://www.producthunt.com/products/formbricks",
+        destination: "https://www.producthunt.com/posts/formbricks",
         permanent: true,
       },
       {
