@@ -1,19 +1,19 @@
 "use client";
 
-import { Modal } from "@formbricks/ui/Modal";
+import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
+import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
+import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
+import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "../lib/testURLmatch";
-import { TActionClassInput, TActionClassNoCodeConfig, TActionClass } from "@formbricks/types/actionClasses";
-import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
-import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
-import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
-import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface AddNoCodeActionModalProps {
   environmentId: string;
@@ -82,7 +82,8 @@ export default function AddNoCodeActionModal({
     try {
       setIsCreatingAction(true);
       if (data.name === "") throw new Error("Please give your action a name");
-      if (!isPageUrl && !isCssSelector && !isInnerHtml) throw new Error("Please select atleast one selector");
+      if (!isPageUrl && !isCssSelector && !isInnerHtml)
+        throw new Error("Please select at least one selector");
 
       if (isCssSelector && !isValidCssSelector(noCodeConfig?.cssSelector?.value)) {
         throw new Error("Please enter a valid CSS Selector");

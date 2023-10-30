@@ -5,6 +5,7 @@ import {
   CheckIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
+  PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
@@ -24,7 +25,7 @@ export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.OpenText,
     label: "Free text",
-    description: "A single line of text",
+    description: "Ask for a text-based answer",
     icon: ChatBubbleBottomCenterTextIcon,
     preset: {
       headline: "Who let the dogs out?",
@@ -64,32 +65,30 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
-    id: QuestionId.NPS,
-    label: "Net Promoter Score® (NPS)",
-    description: "Rate satisfaction on a 0-10 scale",
-    icon: PresentationChartBarIcon,
+    id: QuestionId.PictureSelection,
+    label: "Picture Selection",
+    description: "Ask respondents to select one or more pictures",
+    icon: PhotoIcon,
     preset: {
-      headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
-      lowerLabel: "Not at all likely",
-      upperLabel: "Extremely likely",
-    },
-  },
-  {
-    id: QuestionId.CTA,
-    label: "Call-to-Action",
-    description: "Ask your users to perform an action",
-    icon: CursorArrowRippleIcon,
-    preset: {
-      headline: "You are one of our power users!",
-      buttonLabel: "Book interview",
-      buttonExternal: false,
-      dismissButtonLabel: "Skip",
+      headline: "Which is the cutest puppy?",
+      subheader: "You can also pick both.",
+      allowMulti: true,
+      choices: [
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
+        },
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
+        },
+      ],
     },
   },
   {
     id: QuestionId.Rating,
     label: "Rating",
-    description: "Ask your users to rate something",
+    description: "Ask respondents for a rating",
     icon: StarIcon,
     preset: {
       headline: "How would you rate {{productName}}",
@@ -101,9 +100,32 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
-    id: "consent",
+    id: QuestionId.NPS,
+    label: "Net Promoter Score (NPS)",
+    description: "Rate satisfaction on a 0-10 scale",
+    icon: PresentationChartBarIcon,
+    preset: {
+      headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
+      lowerLabel: "Not at all likely",
+      upperLabel: "Extremely likely",
+    },
+  },
+  {
+    id: QuestionId.CTA,
+    label: "Call-to-Action",
+    description: "Prompt respondents to perform an action",
+    icon: CursorArrowRippleIcon,
+    preset: {
+      headline: "You are one of our power users!",
+      buttonLabel: "Book interview",
+      buttonExternal: false,
+      dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: QuestionId.Consent,
     label: "Consent",
-    description: "Ask your users to accept something",
+    description: "Ask respondents for consent",
     icon: CheckIcon,
     preset: {
       headline: "Terms and Conditions",
@@ -114,7 +136,7 @@ export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.FileUpload,
     label: "File Upload",
-    description: "Take file inputs from user",
+    description: "Allow respondents to upload a file",
     icon: ArrowUpTrayIcon,
     preset: {
       headline: "File Upload",

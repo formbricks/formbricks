@@ -9,6 +9,7 @@ import NPSQuestion from "./NPSQuestion";
 import OpenTextQuestion from "./OpenTextQuestion";
 import RatingQuestion from "./RatingQuestion";
 import FileUploadQuestion from "./FileUploadQuestion";
+import PictureSelectionQuestion from "./PictureSelectionQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -35,19 +36,7 @@ export default function QuestionConditional({
   autoFocus = true,
   surveyId,
 }: QuestionConditionalProps) {
-  return question.type === TSurveyQuestionType.FileUpload ? (
-    <FileUploadQuestion
-      question={question}
-      value={value}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      onBack={onBack}
-      isFirstQuestion={isFirstQuestion}
-      isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
-      surveyId={surveyId}
-    />
-  ) : question.type === TSurveyQuestionType.OpenText ? (
+  return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
       value={value}
@@ -114,8 +103,31 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "consent" ? (
+  ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === TSurveyQuestionType.FileUpload ? (
+    <FileUploadQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      brandColor={brandColor}
+      surveyId={surveyId}
+    />
+  ) : question.type === TSurveyQuestionType.PictureSelection ? (
+    <PictureSelectionQuestion
       question={question}
       value={value}
       onChange={onChange}
