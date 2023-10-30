@@ -7,7 +7,6 @@ interface QueueConfig {
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
   setSurveyState?: (state: SurveyState) => void;
-  personId?: string;
 }
 
 export class ResponseQueue {
@@ -78,7 +77,7 @@ export class ResponseQueue {
         const response = await this.api.client.response.create({
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,
-          personId: this.config.personId || null,
+          personId: this.surveyState.personId || null,
           singleUseId: this.surveyState.singleUseId || null,
         });
         if (!response.ok) {

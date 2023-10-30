@@ -13,7 +13,7 @@ import { TProfile } from "@formbricks/types/profile";
 interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
   singleUseIds?: string[];
@@ -22,7 +22,7 @@ interface SummaryMetadataProps {
 export default function SuccessMessage({
   environment,
   survey,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
 }: SummaryMetadataProps) {
@@ -60,7 +60,7 @@ export default function SuccessMessage({
         survey={survey}
         open={showLinkModal}
         setOpen={setShowLinkModal}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
       />

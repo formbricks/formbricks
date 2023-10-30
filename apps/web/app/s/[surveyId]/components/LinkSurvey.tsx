@@ -41,7 +41,9 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
-  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
+  const [surveyState, setSurveyState] = useState(
+    new SurveyState(survey.id, singleUseId, responseId, personId)
+  );
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
@@ -61,11 +63,10 @@ export default function LinkSurvey({
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
           },
           setSurveyState: setSurveyState,
-          personId,
         },
         surveyState
       ),
-    [personId, webAppUrl]
+    [webAppUrl]
   );
   const [autoFocus, setAutofocus] = useState(false);
   const hasFinishedSingleUseResponse = useMemo(() => {
@@ -107,8 +108,7 @@ export default function LinkSurvey({
   if (!surveyState.isResponseFinished() && hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
-
-  if (emailVerificationStatus && emailVerificationStatus !== "verified") {
+  if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
       return <VerifyEmail survey={survey} isErrorComponent={true} />;
     }

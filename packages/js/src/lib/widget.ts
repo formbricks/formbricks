@@ -28,7 +28,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
 
   const product = config.get().state.product;
 
-  const surveyState = new SurveyState(survey.id);
+  const surveyState = new SurveyState(survey.id, null, null, config.get().state.person?.id);
 
   const responseQueue = new ResponseQueue(
     {
@@ -37,7 +37,6 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
       onResponseSendingFailed: (response) => {
         alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
       },
-      personId: config.get().state.person.id,
     },
     surveyState
   );
@@ -76,6 +75,8 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
+        surveyState.updatePersonId(config.get().state.person.id);
+        responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
           finished: responseUpdate.finished,
