@@ -34,11 +34,14 @@ export default function OpenTextQuestion({
     // setIsValid(isValidInput);
     onChange({ [question.id]: inputValue });
   };
-  const openTextRef = useCallback((currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-    if (currentElement && autoFocus) {
-      currentElement.focus();
-    }
-  }, []);
+  const openTextRef = useCallback(
+    (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
+      if (currentElement && autoFocus) {
+        currentElement.focus();
+      }
+    },
+    [autoFocus]
+  );
 
   return (
     <form

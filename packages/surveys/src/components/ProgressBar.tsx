@@ -16,7 +16,7 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
 
   useEffect(() => {
     // calculate progress
-    setProgress(calculateProgress(questionId, survey, progress));
+    setProgress((currentProgress) => calculateProgress(questionId, survey, currentProgress));
 
     function calculateProgress(questionId: string, survey: TSurveyWithTriggers, progress: number) {
       if (survey.questions.length === 0) return 0;
@@ -59,7 +59,9 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
         updatedProgress = progress + PROGRESS_INCREMENT;
       }
 
-      setPrevQuestionIdx(currentQustionIdx);
+      if (currentQustionIdx !== prevQuestionIdx) {
+        setPrevQuestionIdx(currentQustionIdx);
+      }
       return updatedProgress;
     }
   }, [questionId, survey, setPrevQuestionIdx]);
