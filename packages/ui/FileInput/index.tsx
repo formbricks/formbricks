@@ -10,9 +10,9 @@ import toast from "react-hot-toast";
 import { uploadFile } from "./lib/fileUpload";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
-const isImage = (name: string) =>
-  allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtensions);
-
+const isImage = (name: string) => {
+  return allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtensions);
+};
 interface FileInputProps {
   id: string;
   allowedFileExtensions: TAllowedFileExtensions[];
@@ -194,8 +194,8 @@ const FileInput: React.FC<FileInputProps> = ({
                     <Image
                       src={file.url}
                       alt={file.name}
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      style={{ objectFit: "cover" }}
                       quality={100}
                       className={!file.uploaded ? "opacity-50" : ""}
                     />
@@ -244,12 +244,12 @@ const FileInput: React.FC<FileInputProps> = ({
         ) : (
           <div className="h-52">
             {isImage(selectedFiles[0].name) ? (
-              <div className="relative mx-auto h-52 w-max overflow-hidden rounded-lg">
+              <div className="relative mx-auto h-full w-full overflow-hidden rounded-lg">
                 <Image
                   src={selectedFiles[0].url}
                   alt={selectedFiles[0].name}
-                  layout="fill"
-                  objectFit="cover"
+                  fill
+                  style={{ objectFit: "cover" }}
                   quality={100}
                   className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
                 />

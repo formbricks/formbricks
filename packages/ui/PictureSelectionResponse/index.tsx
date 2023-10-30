@@ -21,8 +21,8 @@ export const PictureSelectionResponse = ({ choices, selected }: PictureSelection
           <Image
             src={choiceImageMapping[id]}
             alt={choiceImageMapping[id].split("/").pop() || "Image"}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: "cover" }}
             className="rounded-lg"
           />
         </div>
