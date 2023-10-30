@@ -170,49 +170,100 @@ export default function PricingTableComponent({
             </Button>
           </div>
         ) : (
-          <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-gray-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
-            <svg
-              viewBox="0 0 1024 1024"
-              className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-              aria-hidden="true">
-              <circle
-                cx={512}
-                cy={512}
-                r={512}
-                fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                fillOpacity="0.7"
-              />
-              <defs>
-                <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                  <stop stopColor="#00E6CA" />
-                  <stop offset={0} stopColor="#00C4B8" />
-                </radialGradient>
-              </defs>
-            </svg>
-            <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
-              <h2 className="text-2xl font-bold text-white sm:text-3xl">Get the most out of Formbricks</h2>
-              <p className="text-md mt-6 leading-8 text-gray-300">
-                Get access to all features by upgrading to a paid plan.
-                <br />
-                With our metered billing you will not be charged until you exceed the free tier limits.{" "}
-              </p>
+          <>
+            <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-gray-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
+              <svg
+                viewBox="0 0 1024 1024"
+                className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+                aria-hidden="true">
+                <circle
+                  cx={512}
+                  cy={512}
+                  r={512}
+                  fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                  fillOpacity="0.7"
+                />
+                <defs>
+                  <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                    <stop stopColor="#00E6CA" />
+                    <stop offset={0} stopColor="#00C4B8" />
+                  </radialGradient>
+                </defs>
+              </svg>
+              <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
+                <h2 className="text-2xl font-bold text-white sm:text-3xl">
+                  Launch Special:
+                  <br /> Go Unlimited! Forever!
+                </h2>
+                <p className="text-md mt-6 leading-8 text-gray-300">
+                  Get access to all pro features and unlimited responses + identified users for a flat rate of
+                  $99/month.
+                  <br /> <br />
+                  <span className="text-gray-400">
+                    This deal ends on 31st of Octiber 2023 at 11:59 PM PST.
+                  </span>
+                </p>
+              </div>
+              <div className="flex flex-1 flex-col items-center justify-center lg:pr-8">
+                <Button
+                  variant="minimal"
+                  className="w-full justify-center bg-white py-2 text-gray-800 shadow-sm"
+                  loading={upgradingPlan}
+                  onClick={() =>
+                    upgradePlan([
+                      StripePriceLookupKeys.inAppSurveyUnlimited,
+                      StripePriceLookupKeys.linkSurveyUnlimited,
+                      StripePriceLookupKeys.userTargetingUnlimited,
+                    ])
+                  }>
+                  Upgrade now at $99/month
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-1 flex-col items-center justify-center lg:pr-8">
-              <Button
-                variant="darkCTA"
-                className="w-full justify-center py-2 text-white shadow-sm"
-                loading={upgradingPlan}
-                onClick={() =>
-                  upgradePlan([
-                    StripePriceLookupKeys.inAppSurveyUnlimited,
-                    StripePriceLookupKeys.linkSurveyUnlimited,
-                    StripePriceLookupKeys.userTargetingUnlimited,
-                  ])
-                }>
-                Upgrade now at $99/month
-              </Button>
-            </div>
+            {/* <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-gray-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
+          <svg
+            viewBox="0 0 1024 1024"
+            className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+            aria-hidden="true">
+            <circle
+              cx={512}
+              cy={512}
+              r={512}
+              fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+              fillOpacity="0.7"
+            />
+            <defs>
+              <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                <stop stopColor="#00E6CA" />
+                <stop offset={0} stopColor="#00C4B8" />
+              </radialGradient>
+            </defs>
+          </svg>
+          <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">Get the most out of Formbricks</h2>
+            <p className="text-md mt-6 leading-8 text-gray-300">
+              Get access to all features by upgrading to a paid plan.
+              <br />
+              With our metered billing you will not be charged until you exceed the free tier limits.{" "}
+            </p>
           </div>
+          <div className="flex flex-1 flex-col items-center justify-center lg:pr-8">
+            <Button
+              variant="darkCTA"
+              className="w-full justify-center py-2 text-white shadow-sm"
+              loading={upgradingPlan}
+              onClick={() =>
+                upgradePlan([
+                  StripePriceLookupKeys.inAppSurveyUnlimited,
+                  StripePriceLookupKeys.linkSurveyUnlimited,
+                  StripePriceLookupKeys.userTargetingUnlimited,
+                ])
+              }>
+              Upgrade now at $99/month
+            </Button>
+          </div>
+        </div> */}
+          </>
         )}
 
         <PricingCard
