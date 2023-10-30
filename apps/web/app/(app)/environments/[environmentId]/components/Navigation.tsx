@@ -393,10 +393,12 @@ export default function Navigation({
                           </DropdownMenuRadioGroup>
 
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
-                            <PlusIcon className="mr-2 h-4 w-4" />
-                            <span>Add product</span>
-                          </DropdownMenuItem>
+                          {!isViewer && (
+                            <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
+                              <PlusIcon className="mr-2 h-4 w-4" />
+                              <span>Add product</span>
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
