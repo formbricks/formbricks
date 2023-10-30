@@ -1,7 +1,9 @@
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 import {
-  CursorArrowRippleIcon,
   ChatBubbleBottomCenterTextIcon,
+  CursorArrowRippleIcon,
   ListBulletIcon,
+  PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
@@ -10,7 +12,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
 export type TSurveyQuestionType = {
   id: string;
@@ -21,19 +22,6 @@ export type TSurveyQuestionType = {
 };
 
 export const questionTypes: TSurveyQuestionType[] = [
-  {
-    id: QuestionId.FileUpload,
-    label: "File Upload",
-    description: "Take file inputs from user",
-    icon: ArrowUpTrayIcon,
-    preset: {
-      headline: "Upload File",
-      subheader: "Let's Upload!",
-      allowMultipleFile: false,
-      limitSize: false,
-      limitFileType: false,
-    },
-  },
   {
     id: QuestionId.OpenText,
     label: "Free text",
@@ -77,8 +65,56 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
+    id: QuestionId.FileUpload,
+    label: "File Upload",
+    description: "Take file inputs from user",
+    icon: ArrowUpTrayIcon,
+    preset: {
+      headline: "Upload File",
+      subheader: "Let's Upload!",
+      allowMultipleFile: false,
+      limitSize: false,
+      limitFileType: false,
+    },
+  },
+  {
+    id: QuestionId.PictureSelection,
+    label: "Picture Selection",
+    description: "Select one or more pictures",
+    icon: PhotoIcon,
+    preset: {
+      headline: "Which is the cutest puppy?",
+      subheader: "You can also pick both.",
+      allowMulti: true,
+      choices: [
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
+        },
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
+        },
+      ],
+    },
+  },
+  {
+    id: QuestionId.Rating,
+    label: "Rating",
+    description: "Ask your users to rate something",
+    icon: StarIcon,
+    preset: {
+      headline: "How would you rate {{productName}}",
+      subheader: "Don't worry, be honest.",
+      scale: "star",
+      range: 5,
+      lowerLabel: "Not good",
+      upperLabel: "Very good",
+    },
+  },
+  {
     id: QuestionId.NPS,
-    label: "Net Promoter Score® (NPS)",
+    label: "Net Promoter Score (NPS)",
     description: "Rate satisfaction on a 0-10 scale",
     icon: PresentationChartBarIcon,
     preset: {
@@ -100,21 +136,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
-    id: QuestionId.Rating,
-    label: "Rating",
-    description: "Ask your users to rate something",
-    icon: StarIcon,
-    preset: {
-      headline: "How would you rate {{productName}}",
-      subheader: "Don't worry, be honest.",
-      scale: "star",
-      range: 5,
-      lowerLabel: "Not good",
-      upperLabel: "Very good",
-    },
-  },
-  {
-    id: "consent",
+    id: QuestionId.Consent,
     label: "Consent",
     description: "Ask your users to accept something",
     icon: CheckIcon,
