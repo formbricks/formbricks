@@ -155,21 +155,3 @@ export const deleteIntegration = async (integrationId: string): Promise<TIntegra
     throw error;
   }
 };
-
-export const deleteIntegrationsByEnvironmentId = async (environmentId: string): Promise<void> => {
-  validateInputs([environmentId, ZId]);
-
-  try {
-    await prisma.integration.deleteMany({
-      where: {
-        environmentId,
-      },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};

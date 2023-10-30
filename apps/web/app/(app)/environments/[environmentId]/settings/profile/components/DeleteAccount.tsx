@@ -11,7 +11,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
-import { deleteIntegrations, deleteProfileAction } from "../actions";
+import { deleteProfileAction } from "../actions";
 
 export function EditAvatar({ session }) {
   return (
@@ -39,10 +39,9 @@ interface DeleteAccountModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   session: Session;
-  environmentId: string;
 }
 
-function DeleteAccountModal({ setOpen, open, session, environmentId }: DeleteAccountModalProps) {
+function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
@@ -53,7 +52,6 @@ function DeleteAccountModal({ setOpen, open, session, environmentId }: DeleteAcc
   const deleteAccount = async () => {
     try {
       setDeleting(true);
-      await deleteIntegrations(environmentId);
       await deleteProfileAction();
       await signOut();
       await formbricksLogout();
@@ -107,13 +105,7 @@ function DeleteAccountModal({ setOpen, open, session, environmentId }: DeleteAcc
   );
 }
 
-export function DeleteAccount({
-  session,
-  environmentId,
-}: {
-  session: Session | null;
-  environmentId: string;
-}) {
+export function DeleteAccount({ session }: { session: Session | null }) {
   const [isModalOpen, setModalOpen] = useState(false);
 
   if (!session) {
@@ -122,12 +114,7 @@ export function DeleteAccount({
 
   return (
     <div>
-      <DeleteAccountModal
-        open={isModalOpen}
-        setOpen={setModalOpen}
-        session={session}
-        environmentId={environmentId}
-      />
+      <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} session={session} />
       <p className="text-sm text-slate-700">
         Delete your account with all personal data. <strong>This cannot be undone!</strong>
       </p>
