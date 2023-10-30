@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 
-export default function BgColour({ localSurvey, handleBgChange }) {
+export default function ColorSurveyBg({ localSurvey, handleBgChange }) {
   const colours = [
     "#FFF2D8",
     "#EAD7BB",
@@ -30,7 +30,7 @@ export default function BgColour({ localSurvey, handleBgChange }) {
     "#CDFAD5",
   ];
 
-  const [color, setColor] = useState(localSurvey.surveyBackground?.bgColor || "#ffff");
+  const [color, setColor] = useState(localSurvey.surveyBackground?.bg || "#ffff");
 
   const handleBg = (x: string) => {
     setColor(x);
@@ -48,7 +48,7 @@ export default function BgColour({ localSurvey, handleBgChange }) {
         {colours.map((x) => {
           return (
             <div
-              className={`h-16 w-16 cursor-pointer ${color === x ? "border-2 border-slate-500" : ""}`}
+              className={`h-16 w-16 cursor-pointer ${color === x ? "border-4 border-slate-500" : ""}`}
               key={x}
               style={{ backgroundColor: `${x}` }}
               onClick={() => handleBg(x)}></div>

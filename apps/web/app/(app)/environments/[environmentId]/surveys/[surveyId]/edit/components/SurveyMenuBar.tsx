@@ -229,7 +229,6 @@ export default function SurveyMenuBar({
       return;
     }
 
-    console.log("++++s", strippedSurvey);
     try {
       await updateSurveyAction({ ...strippedSurvey });
       router.refresh();

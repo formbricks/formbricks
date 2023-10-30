@@ -17,9 +17,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import SurveyBg from "@/app/s/[surveyId]/components/SurveyBg";
 import { useRouter } from "next/navigation";
-import PreviewSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBg";
+import PreviewSurveyBgMobile from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgMobile";
 import PreviewSurveyBgDeskstop from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgDeskstop";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -30,7 +29,6 @@ interface PreviewSurveyProps {
   activeQuestionId?: string | null;
   previewType?: TPreviewType;
   product: TProduct;
-  animationsFiles: string[];
   environment: TEnvironment;
 }
 
@@ -68,7 +66,6 @@ export default function PreviewSurvey({
   survey,
   previewType,
   product,
-  animationsFiles,
   environment,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -81,10 +78,6 @@ export default function PreviewSurvey({
 
   const { productOverwrites } = survey || {};
 
-  const bgColour = survey.surveyBackground?.bgColor;
-
-  const [bgVideoUrl, setBgVideoUrl] = useState(bgColour);
-  const router = useRouter();
   const previewScreenVariants: Variants = {
     expanded: {
       right: "5%",
@@ -130,17 +123,6 @@ export default function PreviewSurvey({
   const placement = surveyPlacement || product.placement;
   const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
 
-  function getSourceVid(sourceVidName) {
-    return sourceVidName;
-  }
-
-  const sourceVid = getSourceVid(bgColour);
-  useEffect(() => {
-    setBgVideoUrl(bgColour);
-  }, [bgColour]);
-
-  console.log(sourceVid);
-
   useEffect(() => {
     // close modal if there are no questions left
     if (survey.type === "web" && !survey.thankYouCard.enabled) {
@@ -172,6 +154,20 @@ export default function PreviewSurvey({
 
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   }
+
+  function animationTrigger() {
+    let storePreviewMode = previewMode;
+    setPreviewMode("null");
+    setTimeout(() => {
+      setPreviewMode(storePreviewMode);
+    }, 10);
+  }
+
+  useEffect(() => {
+    if (survey.surveyBackground?.bgType === "animation") {
+      animationTrigger();
+    }
+  }, [survey.surveyBackground?.bg]);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -212,9 +208,9 @@ export default function PreviewSurvey({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
-            <PreviewSurveyBg survey={survey} ContentRef={ContentRef}>
+            <PreviewSurveyBgMobile survey={survey} ContentRef={ContentRef}>
               {/* below element is use to create notch for the mobile device mockup   */}
-              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md "></div>
+              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -241,7 +237,7 @@ export default function PreviewSurvey({
                   />
                 </div>
               )}
-            </PreviewSurveyBg>
+            </PreviewSurveyBgMobile>
           </>
         )}
         {previewMode === "desktop" && (

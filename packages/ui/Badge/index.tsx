@@ -19,7 +19,7 @@ export const Badge: React.FC<BadgeProps> = ({
   startIconClassName,
   className,
 }) => {
-  const bgColor = {
+  const bg = {
     warning: "bg-amber-100",
     success: "bg-green-100",
     error: "bg-red-100",
@@ -45,7 +45,7 @@ export const Badge: React.FC<BadgeProps> = ({
     <span
       className={cn(
         "inline-flex cursor-default items-center rounded-full font-medium",
-        bgColor[type],
+        bg[type],
         textColor[type],
         padding[size],
         textSize,

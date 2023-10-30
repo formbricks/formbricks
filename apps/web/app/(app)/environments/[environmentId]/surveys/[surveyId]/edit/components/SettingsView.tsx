@@ -15,7 +15,6 @@ interface SettingsViewProps {
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  animationsFiles: string[];
   responseCount: number;
 }
 
@@ -24,7 +23,6 @@ export default function SettingsView({
   localSurvey,
   setLocalSurvey,
   actionClasses,
-  animationsFiles,
   attributeClasses,
   responseCount,
 }: SettingsViewProps) {
@@ -58,11 +56,7 @@ export default function SettingsView({
         environmentId={environment.id}
       />
 
-      <StylingCard
-        animationsFiles={animationsFiles}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-      />
+      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
     </div>
   );
 }

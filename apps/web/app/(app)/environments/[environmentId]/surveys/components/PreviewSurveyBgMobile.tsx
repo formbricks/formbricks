@@ -1,8 +1,10 @@
-export default function PreviewSurveyBg({ children, survey, ContentRef }) {
+export default function PreviewSurveyBgMobile({ children, survey, ContentRef }) {
+  console.log(survey.surveyBackground);
+
   return survey.surveyBackground && survey.surveyBackground.bgType === "color" ? (
     <div
       className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500"
-      style={{ backgroundColor: survey.surveyBackground.bgColor }}>
+      style={{ backgroundColor: survey.surveyBackground.bg }}>
       <div
         className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
         ref={ContentRef}>
@@ -23,7 +25,7 @@ export default function PreviewSurveyBg({ children, survey, ContentRef }) {
               autoPlay
               className="h-full w-full object-cover"
               style={{ width: "100%", height: "100%" }}>
-              <source src={survey.surveyBackground.bgColor} type="video/mp4" />
+              <source src={survey.surveyBackground.bg} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </div>
@@ -34,7 +36,7 @@ export default function PreviewSurveyBg({ children, survey, ContentRef }) {
   ) : survey.surveyBackground && survey.surveyBackground.bgType === "image" ? (
     <div
       className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500"
-      style={{ backgroundImage: `url(${survey.surveyBackground.bgColor})` }}>
+      style={{ backgroundImage: `url(${survey.surveyBackground.bg})` }}>
       <div
         className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
         ref={ContentRef}>

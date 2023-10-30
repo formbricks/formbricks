@@ -9,24 +9,23 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import Placement from "./Placement";
-import BgColour from "./BgColour";
+import ColorSurveyBg from "./ColorSurveyBg";
 import ImageSurveyBg from "./ImageSurveyBg";
 import AnimatedSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AnimatedSurveyBg";
-import { useRouter } from "next/navigation";
+
 interface StylingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  animationsFiles: string[];
 }
 
-export default function StylingCard({ localSurvey, setLocalSurvey, animationsFiles }: StylingCardProps) {
+export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState("image");
-  const router = useRouter();
+
   const { type, productOverwrites, surveyBackground } = localSurvey;
-  // console.log(productOverwrites)
   const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
-  const { bgColor } = surveyBackground ?? {};
+  const { bg, bgType } = surveyBackground ?? {};
+
+  const [tab, setTab] = useState(bgType || "image");
 
   const togglePlacement = () => {
     setLocalSurvey({
@@ -53,10 +52,10 @@ export default function StylingCard({ localSurvey, setLocalSurvey, animationsFil
       ...localSurvey,
       surveyBackground: {
         ...localSurvey.surveyBackground,
-        bgColor: !!bgColor ? undefined : "#ffff",
+        bg: !!bg ? undefined : "#ffff",
+        bgType: !!bg ? undefined : "color",
       },
     });
-    console.log("++++", localSurvey);
   };
 
   const toggleHighlightBorderColor = () => {
@@ -84,12 +83,10 @@ export default function StylingCard({ localSurvey, setLocalSurvey, animationsFil
       ...localSurvey,
       surveyBackground: {
         ...localSurvey.surveyBackground,
-        bgColor: color,
+        bg: color,
         bgType: type,
       },
     });
-
-    console.log("++++++", localSurvey);
   };
 
   const handleBorderColorChange = (color: string) => {
@@ -176,7 +173,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey, animationsFil
           {/* Background */}
           <div className="p-3">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoComplete" checked={!!bgColor} onCheckedChange={toggleBackgroundColor} />
+              <Switch id="autoComplete" checked={!!bg} onCheckedChange={toggleBackgroundColor} />
               <Label htmlFor="autoComplete" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Change Background</h3>
@@ -186,23 +183,31 @@ export default function StylingCard({ localSurvey, setLocalSurvey, animationsFil
                 </div>
               </Label>
             </div>
-            {bgColor && (
-              <div className=" mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4 px-8">
-                <div className=" flex w-full items-center justify-between border bg-slate-50 px-6">
-                  <button onClick={() => setTab("image")}>Image</button>
-                  <button onClick={() => setTab("animated")}>Animated</button>
-                  <button onClick={() => setTab("color")}>Color</button>
+            {bg && (
+              <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4 px-8">
+                <div className="flex w-full items-center justify-between border bg-slate-50 px-6">
+                  <button
+                    className={tab === "image" ? "rounded-md bg-white p-2" : "rounded-md p-2"}
+                    onClick={() => setTab("image")}>
+                    Image
+                  </button>
+                  <button
+                    className={tab === "animation" ? "rounded-md bg-white p-2" : "rounded-md p-2"}
+                    onClick={() => setTab("animation")}>
+                    Animation
+                  </button>
+                  <button
+                    className={tab === "color" ? "rounded-md bg-white p-2" : "rounded-md p-2"}
+                    onClick={() => setTab("color")}>
+                    Color
+                  </button>
                 </div>
                 {tab == "image" ? (
                   <ImageSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
-                ) : tab == "animated" ? (
-                  <AnimatedSurveyBg
-                    localSurvey={localSurvey}
-                    animationsFiles={animationsFiles}
-                    handleBgChange={handleBgChange}
-                  />
+                ) : tab == "animation" ? (
+                  <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 ) : (
-                  <BgColour localSurvey={localSurvey} handleBgChange={handleBgChange} />
+                  <ColorSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 )}
               </div>
             )}
