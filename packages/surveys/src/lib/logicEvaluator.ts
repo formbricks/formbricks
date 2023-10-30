@@ -49,6 +49,18 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
         responseValue === null ||
         responseValue === "dismissed"
       );
+    case "uploaded":
+      if (Array.isArray(responseValue)) {
+        return responseValue.length > 0;
+      } else {
+        return !!responseValue;
+      }
+    case "notUploaded":
+      if (Array.isArray(responseValue)) {
+        return responseValue.length === 0;
+      } else {
+        return !responseValue;
+      }
     default:
       return false;
   }

@@ -44,7 +44,7 @@ export default function FileUploadQuestion({
           if (value) {
             onSubmit({ [question.id]: value });
           } else {
-            onSubmit({ [question.id]: "skipped" });
+            onSubmit({ [question.id]: [] });
           }
         }
       }}
