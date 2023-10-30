@@ -4,7 +4,6 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { toast } from "react-hot-toast";
-
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
@@ -29,18 +28,30 @@ export default function FileUploadQuestionForm({
   const handleInputChange = (event) => {
     setExtension(event.target.value);
   };
+  function validExtension(extension) {
+    for (let i = 0; i < extension.length; i++) {
+      if (!/[a-z]/.test(extension[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
   const addExtension = () => {
     if (extension && extension.trim() !== "") {
-      if (question.allowedFileTypes) {
-        if (!question.allowedFileTypes.includes(extension)) {
-          updateQuestion(questionIdx, { allowedFileTypes: [...question.allowedFileTypes, extension] });
-          setExtension("");
-        } else {
-          toast.error("This extension is already added");
-        }
+      if (extension.length > 4 || !validExtension(extension)) {
+        toast.error("Extension should contain only small letters and must be at most 4 digit long");
       } else {
-        updateQuestion(questionIdx, { allowedFileTypes: [extension] });
-        setExtension("");
+        if (question.allowedFileTypes) {
+          if (!question.allowedFileTypes.includes(extension)) {
+            updateQuestion(questionIdx, { allowedFileTypes: [...question.allowedFileTypes, extension] });
+            setExtension("");
+          } else {
+            toast.error("This extension is already added");
+          }
+        } else {
+          updateQuestion(questionIdx, { allowedFileTypes: [extension] });
+          setExtension("");
+        }
       }
     }
   };
@@ -133,21 +144,33 @@ export default function FileUploadQuestionForm({
         </div>
       </div>
       {question.limitSize && (
-        <div className="mt-3">
-          <div className="mt-2 flex w-full items-center justify-between rounded-md border bg-slate-50 p-5">
-            <div className="rounded-md  bg-white p-2">
-              <input
-                className="rounded-md border [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                id="maxSize"
-                name="maxSize"
-                type="number"
-                value={question?.maxSize}
-                onChange={(e) => updateQuestion(questionIdx, { maxSize: parseInt(e.target.value, 10) })}
-              />
-              MB
-            </div>
-          </div>
-        </div>
+        // <div className="mt-3">
+        //   <div className="mt-2 flex w-full items-center justify-between rounded-md border bg-slate-50 p-5">
+        //     <div className="rounded-md  bg-white p-2">
+        //       <input
+        //         className="rounded-md border [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        //         id="maxSize"
+        //         name="maxSize"
+        //         type="number"
+        //         value={question?.maxSize}
+        //         onChange={(e) => updateQuestion(questionIdx, { maxSize: parseInt(e.target.value, 10) })}
+        //       />
+        //       MB
+        //     </div>
+        //   </div>
+        // </div>
+        <p className="text-sm font-semibold text-slate-700">
+          Limit upload file size to
+          <Input
+            autoFocus
+            type="number"
+            id="maxSize"
+            value={question?.maxSize || 10}
+            onChange={(e) => updateQuestion(questionIdx, { maxSize: parseInt(e.target.value, 10) })}
+            className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+          />
+          MB.
+        </p>
       )}
       <div className="mt-8 flex items-center">
         <div className="mr-2">

@@ -124,7 +124,7 @@ export default function FileInput({
     <label
       htmlFor="selectedFile"
       className={cn(
-        "relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-600 dark:hover:bg-slate-800",
+        "relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-600 dark:hover:bg-slate-800",
         isError && "border-red-500"
       )}
       onDragOver={(e) => handleDragOver(e as any)}
@@ -251,7 +251,7 @@ export default function FileInput({
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center pb-6 pt-5">
+        <div className="flex flex-col items-center justify-center pb-6 pt-8">
           {!isError && (
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -25,6 +25,7 @@ import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { PictureSelectionResponse } from "../PictureSelectionResponse";
+import { FileUploadResponse } from "../FileUploadResponse";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -312,6 +313,8 @@ export default function SingleResponseCard({
                     choices={question.choices}
                     selected={response.data[question.id]}
                   />
+                ) : question.type === TSurveyQuestionType.FileUpload ? (
+                  <FileUploadResponse selected={response.data[question.id]} />
                 ) : (
                   <p className="ph-no-capture my-1 font-semibold text-slate-700">
                     {handleArray(response.data[question.id])}
