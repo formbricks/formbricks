@@ -11,7 +11,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TIntegrationNotion, TNotionDatabase } from "@formbricks/types/integration/notion";
+import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
 
 export default async function Notion({ params }) {
   const enabled = !!(
@@ -30,11 +30,7 @@ export default async function Notion({ params }) {
     throw new Error("Environment not found");
   }
 
-  // const notionIntegration: TIntegrationNotion | undefined = integrations?.find(
-  //   (integration): integration is TIntegrationNotion => integration.type === "notion"
-  // );
-
-  let databasesArray: TNotionDatabase[] = [];
+  let databasesArray: TIntegrationNotionDatabase[] = [];
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
     databasesArray = await getNotionDatabases(environment.id);
   }

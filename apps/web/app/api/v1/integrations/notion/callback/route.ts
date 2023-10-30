@@ -1,4 +1,3 @@
-import { prisma } from "@formbricks/database";
 import {
   ENCRYPTION_KEY,
   NOTION_AUTH_URL,
@@ -8,8 +7,7 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
-import { integrationCache } from "@formbricks/lib/integration/cache";
-import { revalidateTag } from "next/cache";
+import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -67,24 +65,7 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    const result = await prisma.integration.upsert({
-      where: {
-        type_environmentId: {
-          environmentId,
-          type: "notion",
-        },
-      },
-      update: {
-        ...notionIntegration,
-        environment: { connect: { id: environmentId } },
-      },
-      create: {
-        ...notionIntegration,
-        environment: { connect: { id: environmentId } },
-      },
-    });
-
-    revalidateTag(integrationCache.tag.byEnvironmentIdAndType(environmentId, "notion"));
+    const result = await createOrUpdateIntegration(environmentId, notionIntegration);
 
     if (result) {
       return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`);

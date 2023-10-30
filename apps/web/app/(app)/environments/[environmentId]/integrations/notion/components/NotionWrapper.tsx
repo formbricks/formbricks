@@ -7,7 +7,7 @@ import { useState } from "react";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
-  TNotionDatabase,
+  TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -18,7 +18,7 @@ interface NotionWrapperProps {
   environment: TEnvironment;
   webAppUrl: string;
   surveys: TSurvey[];
-  databasesArray: TNotionDatabase[];
+  databasesArray: TIntegrationNotionDatabase[];
 }
 
 export default function NotionWrapper({

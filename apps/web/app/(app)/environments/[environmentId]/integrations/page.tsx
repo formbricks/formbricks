@@ -25,11 +25,11 @@ export default async function IntegrationsPage({ params }) {
   const isIntegrationConnected = (type: "googleSheets" | "notion") =>
     integrations.some((integration) => integration.type === type);
 
-  const containsGoogleSheetIntegration = isIntegrationConnected("googleSheets");
+  const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
 
-  const containsNotionIntegration = isIntegrationConnected("notion");
+  const isNotionIntegrationConnected = isIntegrationConnected("notion");
 
-  const containsAirtableIntegration = integrations.some((integration) => integration.type === "airtable");
+  const isAirtableIntegrationConnected = integrations.some((integration) => integration.type === "airtable");
 
   const integrationCards = [
     {
@@ -72,7 +72,7 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
-      connectText: `${containsGoogleSheetIntegration ? "Manage Sheets" : "Connect"}`,
+      connectText: `${isGoogleSheetsIntegrationConnected ? "Manage Sheets" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/google-sheets",
       docsText: "Docs",
@@ -80,12 +80,12 @@ export default async function IntegrationsPage({ params }) {
       label: "Google Sheets",
       description: "Instantly populate your spreadsheets with survey data",
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
-      connected: containsGoogleSheetIntegration ? true : false,
-      statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
+      connected: isGoogleSheetsIntegrationConnected,
+      statusText: isGoogleSheetsIntegrationConnected ? "Connected" : "Not Connected",
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/airtable`,
-      connectText: `${containsAirtableIntegration ? "Manage Table" : "Connect"}`,
+      connectText: `${isAirtableIntegrationConnected ? "Manage Table" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/airtable",
       docsText: "Docs",
@@ -93,8 +93,8 @@ export default async function IntegrationsPage({ params }) {
       label: "Airtable",
       description: "Instantly populate your airtable table with survey data",
       icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
-      connected: containsAirtableIntegration ? true : false,
-      statusText: containsAirtableIntegration ? "Connected" : "Not Connected",
+      connected: isAirtableIntegrationConnected,
+      statusText: isAirtableIntegrationConnected ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
@@ -120,7 +120,7 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/notion`,
-      connectText: `${containsNotionIntegration ? "Manage" : "Connect"}`,
+      connectText: `${isNotionIntegrationConnected ? "Manage" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/notion",
       docsText: "Docs",
@@ -128,8 +128,8 @@ export default async function IntegrationsPage({ params }) {
       label: "Notion",
       description: "Send data to your Notion database",
       icon: <Image src={notionLogo} alt="Notion Logo" />,
-      connected: containsNotionIntegration ? true : false,
-      statusText: containsNotionIntegration ? "Connected" : "Not Connected",
+      connected: isNotionIntegrationConnected,
+      statusText: isNotionIntegrationConnected ? "Connected" : "Not Connected",
     },
   ];
 

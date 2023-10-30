@@ -46,8 +46,8 @@ export const GOOGLE_SHEETS_REDIRECT_URL = env.GOOGLE_SHEETS_REDIRECT_URL;
 
 export const NOTION_OAUTH_CLIENT_ID = env.NOTION_OAUTH_CLIENT_ID;
 export const NOTION_OAUTH_CLIENT_SECRET = env.NOTION_OAUTH_CLIENT_SECRET;
-// export const NOTION_AUTH_URL = env.NOTION_AUTH_URL;
-// export const NOTION_REDIRECT_URI = env.NOTION_REDIRECT_URI;
+export const NOTION_REDIRECT_URI = `${WEBAPP_URL}/api/v1/integrations/notion/callback`;
+export const NOTION_AUTH_URL = `https://api.notion.com/v1/oauth/authorize?client_id=${env.NOTION_OAUTH_CLIENT_ID}&response_type=code&owner=user&redirect_uri=${NOTION_REDIRECT_URI}`;
 
 export const AIR_TABLE_CLIENT_ID = env.AIR_TABLE_CLIENT_ID;
 
@@ -77,7 +77,3 @@ export const LOCAL_UPLOAD_URL = {
   public: new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
   private: new URL(`${WEBAPP_URL}/api/v1/client/storage/local`).href,
 } as const;
-
-// Notion constants
-export const NOTION_REDIRECT_URI = `${WEBAPP_URL}/api/v1/integrations/notion/callback`;
-export const NOTION_AUTH_URL = `https://api.notion.com/v1/oauth/authorize?client_id=${env.NOTION_OAUTH_CLIENT_ID}&response_type=code&owner=user&redirect_uri=${NOTION_REDIRECT_URI}`;

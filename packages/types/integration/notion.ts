@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./sharedTypes";
 
-export const ZNotionCredential = z.object({
+export const ZIntegrationNotionCredential = z.object({
   access_token: z.string(),
   bot_id: z.string(),
   token_type: z.string(),
@@ -27,7 +27,7 @@ export const ZNotionCredential = z.object({
   workspace_name: z.string().nullable(),
 });
 
-export type TNotionCredential = z.infer<typeof ZNotionCredential>;
+export type TIntegrationNotionCredential = z.infer<typeof ZIntegrationNotionCredential>;
 
 export const ZIntegrationNotionConfigData = z
   .object({
@@ -54,18 +54,11 @@ export const ZIntegrationNotionConfigData = z
 export type TIntegrationNotionConfigData = z.infer<typeof ZIntegrationNotionConfigData>;
 
 export const ZIntegrationNotionConfig = z.object({
-  key: ZNotionCredential,
+  key: ZIntegrationNotionCredential,
   data: z.array(ZIntegrationNotionConfigData),
 });
 
 export type TIntegrationNotionConfig = z.infer<typeof ZIntegrationNotionConfig>;
-
-export const ZNotionIntegration = z.object({
-  id: z.string(),
-  type: z.literal("notion"),
-  environmentId: z.string(),
-  config: ZIntegrationNotionConfig,
-});
 
 export const ZIntegrationNotion = ZIntegrationBase.extend({
   type: z.literal("notion"),
@@ -81,10 +74,10 @@ export const ZIntegrationNotionInput = z.object({
 
 export type TIntegrationNotionInput = z.infer<typeof ZIntegrationNotionInput>;
 
-export const ZNotionDatabase = z.object({
+export const ZIntegrationNotionDatabase = z.object({
   id: z.string(),
   name: z.string(),
   properties: z.object({}),
 });
 
-export type TNotionDatabase = z.infer<typeof ZNotionDatabase>;
+export type TIntegrationNotionDatabase = z.infer<typeof ZIntegrationNotionDatabase>;

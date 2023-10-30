@@ -19,7 +19,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
-  TNotionDatabase,
+  TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 
 interface AddIntegrationModalProps {
@@ -28,7 +28,7 @@ interface AddIntegrationModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   notionIntegration: TIntegrationNotion;
-  databases: TNotionDatabase[];
+  databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
 }
 
@@ -42,7 +42,7 @@ export default function AddIntegrationModal({
   selectedIntegration,
 }: AddIntegrationModalProps) {
   const { handleSubmit } = useForm();
-  const [selectedDatabase, setSelectedDatabase] = useState<TNotionDatabase | null>();
+  const [selectedDatabase, setSelectedDatabase] = useState<TIntegrationNotionDatabase | null>();
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [mapping, setMapping] = useState<
     {

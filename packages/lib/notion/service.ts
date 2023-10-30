@@ -1,12 +1,10 @@
-import { Prisma } from "@prisma/client";
 import { symmetricDecrypt } from "../crypto";
 import { ENCRYPTION_KEY } from "../constants";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfig,
-  TNotionDatabase,
+  TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { DatabaseError } from "@formbricks/types/errors";
 import { getIntegrationByType } from "../integration/service";
 
 async function fetchPages(config: TIntegrationNotionConfig) {
@@ -28,8 +26,8 @@ async function fetchPages(config: TIntegrationNotionConfig) {
   }
 }
 
-export const getNotionDatabases = async (environmentId: string): Promise<TNotionDatabase[]> => {
-  let results: TNotionDatabase[] = [];
+export const getNotionDatabases = async (environmentId: string): Promise<TIntegrationNotionDatabase[]> => {
+  let results: TIntegrationNotionDatabase[] = [];
   try {
     const notionIntegration = (await getIntegrationByType(environmentId, "notion")) as TIntegrationNotion;
     if (notionIntegration && notionIntegration.config?.key.bot_id) {
@@ -37,9 +35,6 @@ export const getNotionDatabases = async (environmentId: string): Promise<TNotion
     }
     return results;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
     throw error;
   }
 };
@@ -61,9 +56,6 @@ export async function writeData(
       }),
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
     throw error;
   }
 }
