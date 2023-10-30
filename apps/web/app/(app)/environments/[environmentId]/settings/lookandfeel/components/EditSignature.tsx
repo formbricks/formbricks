@@ -40,17 +40,19 @@ export function EditFormbricksSignature({ product, canRemoveSignature, environme
 
   return (
     <div className="w-full items-center">
-      <div className="mb-4">
-        <Alert>
-          <AlertDescription>
-            To remove the Formbricks branding from the link surveys, please{" "}
-            <span className="underline">
-              <Link href={`/environments/${environmentId}/settings/billing`}>upgrade</Link>
-            </span>{" "}
-            your plan.
-          </AlertDescription>
-        </Alert>
-      </div>
+      {!canRemoveSignature && (
+        <div className="mb-4">
+          <Alert>
+            <AlertDescription>
+              To remove the Formbricks branding from the link surveys, please{" "}
+              <span className="underline">
+                <Link href={`/environments/${environmentId}/settings/billing`}>upgrade</Link>
+              </span>{" "}
+              your plan.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       <div className="flex items-center space-x-2">
         <Switch
           id="signature"
