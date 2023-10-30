@@ -6,6 +6,7 @@ import {
   TSurveyClosedMessage,
   TSurveyHiddenFields,
   TSurveyProductOverwrites,
+  TSurveyBackground,
   TSurveyQuestions,
   TSurveySingleUse,
   TSurveyThankYouCard,
@@ -26,6 +27,7 @@ declare global {
     export type SurveyThankYouCard = TSurveyThankYouCard;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyProductOverwrites = TSurveyProductOverwrites;
+    export type SurveyBackground = TSurveyBackground;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyVerifyEmail = TSurveyVerifyEmail;

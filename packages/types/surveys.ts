@@ -49,6 +49,8 @@ export const ZSurveyBackground = z.object({
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
+export type TSurveyBackground = z.infer<typeof ZSurveyBackground>;
+
 export const ZSurveyClosedMessage = z
   .object({
     enabled: z.boolean().optional(),

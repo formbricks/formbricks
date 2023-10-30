@@ -265,6 +265,8 @@ model Survey {
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
   productOverwrites Json?
+  /// @zod.custom(imports.ZSurveyBackground)
+  /// [SurveyBackground]
   surveyBackground  Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
