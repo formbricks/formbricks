@@ -68,9 +68,15 @@ export const PricingCard = ({
 
         {metric && perMetricCharge && (
           <div className="rounded-xl bg-slate-100 py-4 dark:bg-slate-800">
-            <div className="rounded-xl">
-              <div className="mb-2 flex items-center gap-x-4"></div>
-              <div className="relative my-2">
+            <div className="mb-2 flex items-center gap-x-4"></div>
+            {team.billing.features[featureNameKey].unlimited ? (
+              <p>
+                <span className="text-sm font-medium text-slate-400">
+                  Usage this month: {sliderValue} {metric}
+                </span>
+              </p>
+            ) : (
+              <div className="relative mb-16 mt-4">
                 <BillingSlider
                   className="slider-class"
                   value={sliderValue || 0}
@@ -79,8 +85,8 @@ export const PricingCard = ({
                   metric={metric}
                 />
               </div>
-              <hr className="mt-12" />
-            </div>
+            )}
+            <hr className="mt-6" />
           </div>
         )}
 
@@ -112,43 +118,45 @@ export const PricingCard = ({
 
           <div className="w-1/5"></div>
           <div className="w-1/5">
-            <div className="my-2">
-              {team.billing.features[featureNameKey].status !== "inactive" ? (
-                <div className="mt-8">
-                  {perMetricCharge ? (
-                    <>
-                      <span className="text-sm font-medium text-slate-400">Approximately</span>
-                      <br />
+            {!team.billing.features[featureNameKey].unlimited && (
+              <div className="my-2">
+                {team.billing.features[featureNameKey].status !== "inactive" ? (
+                  <div className="mt-8">
+                    {perMetricCharge ? (
+                      <>
+                        <span className="text-sm font-medium text-slate-400">Approximately</span>
+                        <br />
 
-                      <span className="text-3xl font-bold text-slate-800">$</span>
-                      <span className="text-3xl font-bold text-slate-800">
-                        {(sliderValue! > freeTierLimit!
-                          ? (sliderValue! - freeTierLimit!) * perMetricCharge
-                          : 0
-                        ).toFixed(2)}
-                      </span>
-                      <br />
-                      <span className="text-sm font-medium text-slate-400">Month-to-Date</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-3xl font-bold text-slate-800">${monthlyPrice}</span>
+                        <span className="text-3xl font-bold text-slate-800">$</span>
+                        <span className="text-3xl font-bold text-slate-800">
+                          {(sliderValue! > freeTierLimit!
+                            ? (sliderValue! - freeTierLimit!) * perMetricCharge
+                            : 0
+                          ).toFixed(2)}
+                        </span>
+                        <br />
+                        <span className="text-sm font-medium text-slate-400">Month-to-Date</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-3xl font-bold text-slate-800">${monthlyPrice}</span>
 
-                      <span className="text-base font-medium text-slate-400">/ month</span>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <span className="text-sm font-medium text-slate-400">{actionText}</span>
-                  <br />
+                        <span className="text-base font-medium text-slate-400">/ month</span>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <span className="text-sm font-medium text-slate-400">{actionText}</span>
+                    <br />
 
-                  <span className="text-3xl font-bold text-slate-800">${monthlyPrice}</span>
+                    <span className="text-3xl font-bold text-slate-800">${monthlyPrice}</span>
 
-                  <span className="text-base font-medium text-slate-400">/ month</span>
-                </div>
-              )}
-            </div>
+                    <span className="text-base font-medium text-slate-400">/ month</span>
+                  </div>
+                )}
+              </div>
+            )}
             {team.billing.features[featureNameKey].status === "inactive" && (
               <Button
                 variant="darkCTA"

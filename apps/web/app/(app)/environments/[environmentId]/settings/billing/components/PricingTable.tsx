@@ -164,7 +164,7 @@ export default function PricingTableComponent({
               className="justify-center py-2 shadow-sm"
               loading={loadingCustomerPortal}
               onClick={openCustomerPortal}>
-              Manage Card Details
+              {team.billing.features.inAppSurvey.unlimited ? "Manage Subscription" : "Manage Card details"}
             </Button>
           </div>
         ) : (
@@ -194,8 +194,8 @@ export default function PricingTableComponent({
                   <br /> Go Unlimited! Forever!
                 </h2>
                 <p className="text-md mt-6 leading-8 text-gray-300">
-                  Get access to all pro features and unlimited responses + identified users for a flat rate of
-                  $99/month.
+                  Get access to all pro features and unlimited responses + identified users for a flat fee of
+                  only $99/month.
                   <br /> <br />
                   <span className="text-gray-400">
                     This deal ends on 31st of October 2023 at 11:59 PM PST.
