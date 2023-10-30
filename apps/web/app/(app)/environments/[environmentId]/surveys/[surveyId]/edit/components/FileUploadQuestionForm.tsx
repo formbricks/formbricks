@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -30,33 +30,27 @@ export default function FileUploadQuestionForm({
   const handleInputChange = (event) => {
     setExtension(event.target.value);
   };
-  function validExtension(extension) {
-    for (let i = 0; i < extension.length; i++) {
-      if (!/[a-z]/.test(extension[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
+
   const addExtension = () => {
-    if (extension && extension.trim() !== "") {
-      if (extension.length > 4 || !validExtension(extension)) {
-        toast.error("Extension should contain only small letters and must be at most 4 digit long");
+    const parsedExtensionResult = ZAllowedFileExtension.safeParse(extension);
+
+    if (!parsedExtensionResult.success) {
+      toast.error("This extension is not supported");
+      return;
+    }
+
+    if (question.allowedFileTypes) {
+      if (!question.allowedFileTypes.includes(extension as TAllowedFileExtension)) {
+        updateQuestion(questionIdx, {
+          allowedFileTypes: [...question.allowedFileTypes, extension],
+        });
+        setExtension("");
       } else {
-        if (question.allowedFileTypes) {
-          if (!question.allowedFileTypes.includes(extension as TAllowedFileExtension)) {
-            updateQuestion(questionIdx, {
-              allowedFileTypes: [...question.allowedFileTypes, extension],
-            });
-            setExtension("");
-          } else {
-            toast.error("This extension is already added");
-          }
-        } else {
-          updateQuestion(questionIdx, { allowedFileTypes: [extension] });
-          setExtension("");
-        }
+        toast.error("This extension is already added");
       }
+    } else {
+      updateQuestion(questionIdx, { allowedFileTypes: [extension] });
+      setExtension("");
     }
   };
 
@@ -178,11 +172,11 @@ export default function FileUploadQuestionForm({
       </div>
       {!!question.allowedFileTypes && (
         <div className="mt-3">
-          <div className="mt-2 flex w-full items-center justify-start rounded-md border bg-slate-50 p-5">
+          <div className="mt-2 flex w-full items-center justify-start gap-2 rounded-md border bg-slate-50 p-4">
             {question.allowedFileTypes &&
               question?.allowedFileTypes.map((item, index) => {
                 return (
-                  <div className="m-2 flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-4">
+                  <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-2">
                     <p>{item}</p>
                     <div
                       className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-50"
@@ -192,9 +186,9 @@ export default function FileUploadQuestionForm({
                   </div>
                 );
               })}
-            <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-4">
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-2">
               <input
-                className="w-16 rounded-md border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="w-16 rounded-md border-none py-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 placeholder="pdf"
                 value={extension}
                 onChange={handleInputChange}
