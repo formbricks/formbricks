@@ -11,7 +11,7 @@ export default async function ActivitySection({
 }) {
   const [environment, actions] = await Promise.all([
     getEnvironment(environmentId),
-    getActionsByPersonId(personId),
+    getActionsByPersonId(personId, 1),
   ]);
 
   if (!environment) {
@@ -20,7 +20,7 @@ export default async function ActivitySection({
 
   return (
     <div className="md:col-span-1">
-      <ActivityTimeline environment={environment} actions={actions} />
+      <ActivityTimeline environment={environment} actions={actions.slice(0, 10)} />
     </div>
   );
 }

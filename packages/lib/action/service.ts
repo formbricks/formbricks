@@ -84,8 +84,8 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
         orderBy: {
           createdAt: "desc",
         },
-        take: page ? 5 : undefined,
-        skip: page ? 5 * (page - 1) : undefined,
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         include: {
           eventClass: true,
         },
