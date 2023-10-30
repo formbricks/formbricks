@@ -44,9 +44,9 @@ export function EditFormbricksSignature({ product, canRemoveSignature, environme
         <Alert>
           <AlertDescription>
             To remove the Formbricks branding from the link surveys, please{" "}
-            <b>
+            <span className="underline">
               <Link href={`/environments/${environmentId}/settings/billing`}>upgrade</Link>
-            </b>{" "}
+            </span>{" "}
             your plan.
           </AlertDescription>
         </Alert>

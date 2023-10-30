@@ -200,7 +200,7 @@ export default function PricingTableComponent({
                   $99/month.
                   <br /> <br />
                   <span className="text-gray-400">
-                    This deal ends on 31st of Octiber 2023 at 11:59 PM PST.
+                    This deal ends on 31st of October 2023 at 11:59 PM PST.
                   </span>
                 </p>
               </div>
