@@ -11,9 +11,10 @@ import { updateProductAction } from "../actions";
 interface EditBrandColorProps {
   product: TProduct;
   isBrandColorDisabled: boolean;
+  environmentId: string;
 }
 
-export function EditBrandColor({ product, isBrandColorDisabled }: EditBrandColorProps) {
+export function EditBrandColor({ product, isBrandColorDisabled, environmentId }: EditBrandColorProps) {
   const [color, setColor] = useState(product.brandColor);
   const [updatingColor, setUpdatingColor] = useState(false);
 
@@ -26,7 +27,7 @@ export function EditBrandColor({ product, isBrandColorDisabled }: EditBrandColor
       let inputProduct: Partial<TProductUpdateInput> = {
         brandColor: color,
       };
-      await updateProductAction(product.id, inputProduct);
+      await updateProductAction(product.id, inputProduct, environmentId);
       toast.success("Brand color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

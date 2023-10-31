@@ -5,6 +5,9 @@ import { unstable_cache } from "next/cache";
 import { getTeamsByUserId } from "../team/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { productCache } from "./cache";
+import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
+import { getAccessFlags } from "../../lib/membership/utils";
+import { getTeamByEnvironmentId } from "../../lib/team/service";
 
 export const canUserAccessProduct = async (userId: string, productId: string): Promise<boolean> =>
   await unstable_cache(
@@ -23,5 +26,40 @@ export const canUserAccessProduct = async (userId: string, productId: string): P
     {
       revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [productCache.tag.byId(productId), productCache.tag.byUserId(userId)],
+    }
+  )();
+
+export const verifyUserRoleAccess = async (
+  environmentId: string,
+  userId: string
+): Promise<{
+  hasCreateOrUpdateAccess: boolean;
+  hasDeleteAccess: boolean;
+}> =>
+  await unstable_cache(
+    async () => {
+      const accessObject = {
+        hasCreateOrUpdateAccess: true,
+        hasDeleteAccess: true,
+      };
+
+      const team = await getTeamByEnvironmentId(environmentId);
+      if (!team) {
+        throw new Error("Team not found");
+      }
+
+      const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+      const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
+
+      if (isDeveloper || isViewer) {
+        accessObject.hasCreateOrUpdateAccess = false;
+        accessObject.hasDeleteAccess = false;
+      }
+
+      return accessObject;
+    },
+    [`users-${userId}-verifyUserRoleAccessOnProduct-${new Date().getTime()}`],
+    {
+      revalidate: 60 * 60 * 24,
     }
   )();

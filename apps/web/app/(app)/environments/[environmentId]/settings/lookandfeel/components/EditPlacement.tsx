@@ -21,9 +21,10 @@ const placements = [
 
 interface EditPlacementProps {
   product: TProduct;
+  environmentId: string;
 }
 
-export function EditPlacement({ product }: EditPlacementProps) {
+export function EditPlacement({ product, environmentId }: EditPlacementProps) {
   const [currentPlacement, setCurrentPlacement] = useState<TPlacement>(product.placement);
   const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
   const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
@@ -38,7 +39,7 @@ export function EditPlacement({ product }: EditPlacementProps) {
         clickOutsideClose: clickOutside === "allow",
       };
 
-      await updateProductAction(product.id, inputProduct);
+      await updateProductAction(product.id, inputProduct, environmentId);
 
       toast.success("Placement updated successfully.");
     } catch (error) {

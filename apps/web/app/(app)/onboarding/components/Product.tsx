@@ -53,7 +53,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
     }
 
     try {
-      await updateProductAction(product.id, { name, brandColor: color });
+      await updateProductAction(product.id, { name, brandColor: color }, environmentId);
     } catch (e) {
       toast.error("An error occured saving your settings");
       console.error(e);

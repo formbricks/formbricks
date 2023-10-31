@@ -13,9 +13,14 @@ import { updateProductAction } from "../actions";
 interface EditHighlightBorderProps {
   product: TProduct;
   defaultBrandColor: string;
+  environmentId: string;
 }
 
-export const EditHighlightBorder = ({ product, defaultBrandColor }: EditHighlightBorderProps) => {
+export const EditHighlightBorder = ({
+  product,
+  defaultBrandColor,
+  environmentId,
+}: EditHighlightBorderProps) => {
   const [showHighlightBorder, setShowHighlightBorder] = useState(product.highlightBorderColor ? true : false);
   const [color, setColor] = useState<string | null>(product.highlightBorderColor || defaultBrandColor);
   const [updatingBorder, setUpdatingBorder] = useState(false);
@@ -23,7 +28,7 @@ export const EditHighlightBorder = ({ product, defaultBrandColor }: EditHighligh
   const handleUpdateHighlightBorder = async () => {
     try {
       setUpdatingBorder(true);
-      await updateProductAction(product.id, { highlightBorderColor: color });
+      await updateProductAction(product.id, { highlightBorderColor: color }, environmentId);
       toast.success("Border color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);
