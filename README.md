@@ -1,5 +1,7 @@
 <div id="top"></div>
+
 [<img src="ph.png">](https://www.producthunt.com/posts/formbricks)
+
 <p align="center">
 <a href="https://formbricks.com">
     <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
