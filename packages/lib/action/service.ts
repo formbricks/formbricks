@@ -14,6 +14,7 @@ import { getSession } from "../session/service";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
+import { updateEnvironment } from "../environment/service";
 
 export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
   const action = await unstable_cache(
@@ -176,7 +177,6 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
-
   const { environmentId, name, properties, sessionId } = data;
 
   let eventType: TActionClassType = "code";
@@ -215,6 +215,15 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
       },
     },
   });
+  const environmentPrisma = await prisma.environment.findUnique({
+    where: {
+      id: environmentId,
+    },
+    select: { widgetSetupCompleted: true },
+  });
+  if (!environmentPrisma?.widgetSetupCompleted) {
+    updateEnvironment(environmentId, { widgetSetupCompleted: true });
+  }
 
   revalidateTag(sessionId);
   actionCache.revalidate({
