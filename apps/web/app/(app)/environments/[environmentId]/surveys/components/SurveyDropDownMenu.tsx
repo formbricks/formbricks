@@ -58,7 +58,7 @@ export default function SurveyDropDownMenu({
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);
     try {
-      await deleteSurveyAction(survey.id);
+      await deleteSurveyAction(survey.id, environment.id);
       router.refresh();
       setDeleteDialogOpen(false);
       toast.success("Survey deleted successfully.");

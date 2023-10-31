@@ -1,7 +1,7 @@
 "use server";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
+import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthorizationError } from "@formbricks/types/errors";
@@ -15,6 +15,9 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const isAuthorized = await canUserAccessSurvey(session.user.id, survey.id);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(survey.environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
+
   const _survey = {
     ...survey,
     ...formatSurveyDateFields(survey),
@@ -23,12 +26,15 @@ export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   return await updateSurvey(_survey);
 }
 
-export const deleteSurveyAction = async (surveyId: string) => {
+export const deleteSurveyAction = async (surveyId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasDeleteAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deleteSurvey(surveyId);
 };
