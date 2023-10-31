@@ -2,8 +2,8 @@
 
 <div align="center">  
 <a href="https://www.producthunt.com/posts/formbricks" target="_blank">🔥 Go to Product Hunt 🔥</a>
-</div> 
-<img width="1527" alt="live on product hunt" src="https://github.com/formbricks/formbricks/assets/72809645/47bd75f2-631f-44f0-b14f-380be11158b7">
+</div>
+[<img src="https://github.com/formbricks/formbricks/assets/72809645/47bd75f2-631f-44f0-b14f-380be11158b7">](https://www.producthunt.com/posts/formbricks)
 
 <p align="center">
 <a href="https://formbricks.com">
