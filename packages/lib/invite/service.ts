@@ -186,7 +186,6 @@ export const inviteUser = async ({
   invitee: TInvitee;
   currentUser: TCurrentUser;
 }): Promise<TInvite> => {
-  console.log("======================================================>", teamId, currentUser, invitee);
   validateInputs([teamId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
 
   const { name, email, role } = invitee;
