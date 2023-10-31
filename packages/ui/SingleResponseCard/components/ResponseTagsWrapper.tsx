@@ -34,7 +34,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const onDelete = async (tagId: string) => {
     try {
-      await deleteTagOnResponseAction(responseId, tagId);
+      await deleteTagOnResponseAction(responseId, tagId, environmentId);
 
       router.refresh();
     } catch (e) {
@@ -85,7 +85,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                     tagName: tag.name,
                   },
                 ]);
-                createTagToResponeAction(responseId, tag.id).then(() => {
+                createTagToResponeAction(responseId, tag.id, environmentId).then(() => {
                   setSearchValue("");
                   setOpen(false);
                   router.refresh();
@@ -117,7 +117,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
               },
             ]);
 
-            createTagToResponeAction(responseId, tagId).then(() => {
+            createTagToResponeAction(responseId, tagId, environmentId).then(() => {
               setSearchValue("");
               setOpen(false);
               router.refresh();
