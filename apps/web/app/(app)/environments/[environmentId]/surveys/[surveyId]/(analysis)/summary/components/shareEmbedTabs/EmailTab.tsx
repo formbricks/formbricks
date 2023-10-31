@@ -24,6 +24,7 @@ import {
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isLight } from "@/app/lib/utils";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -393,6 +394,38 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
                 </Link>
               )
             )}
+          </Section>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case TSurveyQuestionType.FileUpload:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {firstQuestion.subheader}
+          </Text>
+          <Section className="mx-0">
+            <Section className="mt-4 flex h-20 w-full items-center justify-center rounded-lg border border-solid border-gray-200 bg-slate-50">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-6 text-center text-slate-500">
+                  <path
+                    fillRule="evenodd"
+                    d="M11.47 2.47a.75.75 0 011.06 0l4.5 4.5a.75.75 0 01-1.06 1.06l-3.22-3.22V16.5a.75.75 0 01-1.5 0V4.81L8.03 8.03a.75.75 0 01-1.06-1.06l4.5-4.5zM3 15.75a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
+                  Click or drag to upload files.
+                </Text>
+              </div>
+            </Section>
           </Section>
           <EmailFooter />
         </EmailTemplateWrapper>
