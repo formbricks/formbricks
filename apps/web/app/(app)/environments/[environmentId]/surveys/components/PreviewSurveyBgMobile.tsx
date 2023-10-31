@@ -6,7 +6,7 @@ export default function PreviewSurveyBgMobile({ children, survey, ContentRef }) 
         ref={ContentRef}
         style={{
           backgroundColor: survey.surveyBackground.bg,
-          filter: survey.surveyBackground.brightness
+          filter: survey.surveyBackground?.brightness
             ? `brightness(${survey.surveyBackground.brightness}%)`
             : "none",
         }}></div>
@@ -29,7 +29,7 @@ export default function PreviewSurveyBgMobile({ children, survey, ContentRef }) 
               style={{
                 width: "100%",
                 height: "100%",
-                filter: survey.surveyBackground.brightness
+                filter: survey.surveyBackground?.brightness
                   ? `brightness(${survey.surveyBackground.brightness}%)`
                   : "none",
               }}>
@@ -48,7 +48,7 @@ export default function PreviewSurveyBgMobile({ children, survey, ContentRef }) 
         ref={ContentRef}
         style={{
           backgroundImage: `url(${survey.surveyBackground.bg})`,
-          filter: survey.surveyBackground.brightness
+          filter: survey.surveyBackground?.brightness
             ? `brightness(${survey.surveyBackground.brightness}%)`
             : "none",
         }}></div>
@@ -63,7 +63,7 @@ export default function PreviewSurveyBgMobile({ children, survey, ContentRef }) 
         ref={ContentRef}
         style={{
           backgroundColor: "#ffff",
-          filter: survey.surveyBackground.brightness
+          filter: survey.surveyBackground?.brightness
             ? `brightness(${survey.surveyBackground.brightness}%)`
             : "none",
         }}></div>
