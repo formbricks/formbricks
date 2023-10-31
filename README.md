@@ -1,4 +1,7 @@
 <div id="top"></div>
+<a href="https://www.producthunt.com/posts/formbricks" target="_blank">
+<img width="1527" alt="live on product hunt" src="https://github.com/formbricks/formbricks/assets/72809645/47bd75f2-631f-44f0-b14f-380be11158b7">
+</a>
 <p align="center">
 <a href="https://formbricks.com">
     <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
@@ -6,7 +9,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Survey & Experience Management solution for fast-growing companies
+    The Open Source Survey Toolbox
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
@@ -33,14 +36,6 @@
 <p align="center">
   <a href="https://trendshift.io/repositories/2570" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2570" alt="Trendshift Badge for formbricks/formbricks" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </p>
-
-<img width="1527" alt="formtribe hackathon" src="https://github.com/formbricks/formbricks/assets/72809645/addc3a5b-421c-4c8d-8be2-eedf087100ed">
-
-## 🔥 The FormTribe Hackathon is on!
-
-To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
-
-**Join the lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
 
 ## ✨ About Formbricks
 

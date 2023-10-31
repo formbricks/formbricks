@@ -663,7 +663,7 @@ export default function FormTribeHackathon() {
 
       <div className="px-4 pb-16 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
         <a
-          href="https://www.producthunt.com/products/formbricks"
+          href="https://www.producthunt.com/posts/formbricks"
           target="_blank"
           className=" rounded-full border bg-slate-100 px-4 py-1.5 text-sm text-slate-500 hover:scale-105">
           Don&apos;t miss the launch! Get notified 🚀
@@ -1126,7 +1126,7 @@ const Breaker = ({ icon, title }) => {
       <div className="mt-4 flex items-center justify-center">
         <Image src={PHLogo} alt="ph-logo" className="mr-2 h-8 w-8" />
         <a
-          href="https://www.producthunt.com/products/formbricks"
+          href="https://www.producthunt.com/posts/formbricks"
           target="_blank"
           className="text-sm font-semibold text-[#ff6154]">
           Get notified on Product Hunt.
