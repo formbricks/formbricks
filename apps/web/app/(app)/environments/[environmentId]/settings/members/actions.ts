@@ -53,14 +53,14 @@ export const deleteMembershipAction = async (userId: string, teamId: string) => 
     throw new AuthenticationError("Not authenticated");
   }
 
-  const { hasDeleteMembersAccess } = await verifyUserRoleAccess(teamId, session.user.id);
-  if (!hasDeleteMembersAccess) {
-    throw new AuthenticationError("Not authorized");
-  }
-
   const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
 
   if (!isUserAuthorized) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  const { hasDeleteMembersAccess } = await verifyUserRoleAccess(teamId, session.user.id);
+  if (!hasDeleteMembersAccess) {
     throw new AuthenticationError("Not authorized");
   }
 
@@ -122,11 +122,6 @@ export const inviteUserAction = async (
     throw new AuthenticationError("Not authenticated");
   }
 
-  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(teamId, session.user.id);
-  if (!hasCreateOrUpdateMembersAccess) {
-    throw new AuthenticationError("Not authorized");
-  }
-
   const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
 
   if (INVITE_DISABLED) {
@@ -134,6 +129,11 @@ export const inviteUserAction = async (
   }
 
   if (!isUserAuthorized) {
+    throw new AuthenticationError("Not authorized");
+  }
+
+  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(teamId, session.user.id);
+  if (!hasCreateOrUpdateMembersAccess) {
     throw new AuthenticationError("Not authorized");
   }
 

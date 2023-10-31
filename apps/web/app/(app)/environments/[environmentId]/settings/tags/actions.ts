@@ -10,11 +10,11 @@ export const deleteTagAction = async (tagId: string, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const { hasDeleteAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
-  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
-
   const isAuthorized = await canUserAccessTag(session.user.id, tagId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasDeleteAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   return await deleteTag(tagId);
 };
@@ -23,11 +23,11 @@ export const updateTagNameAction = async (tagId: string, name: string, environme
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
   const isAuthorized = await canUserAccessTag(session.user.id, tagId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateTagName(tagId, name);
 };
@@ -36,12 +36,12 @@ export const mergeTagsAction = async (originalTagId: string, newTagId: string, e
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
   const isAuthorizedForOld = await canUserAccessTag(session.user.id, originalTagId);
   const isAuthorizedForNew = await canUserAccessTag(session.user.id, newTagId);
   if (!isAuthorizedForOld || !isAuthorizedForNew) throw new AuthorizationError("Not authorized");
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await mergeTags(originalTagId, newTagId);
 };
