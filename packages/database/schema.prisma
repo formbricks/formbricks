@@ -389,21 +389,18 @@ model Product {
   @@unique([teamId, name])
 }
 
-enum Plan {
-  free
-  pro
-}
-
 model Team {
-  id               String       @id @default(cuid())
-  createdAt        DateTime     @default(now()) @map(name: "created_at")
-  updatedAt        DateTime     @updatedAt @map(name: "updated_at")
-  name             String
-  memberships      Membership[]
-  products         Product[]
-  plan             Plan         @default(free)
-  stripeCustomerId String?
-  invites          Invite[]
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now()) @map(name: "created_at")
+  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  name        String
+  memberships Membership[]
+  products    Product[]
+  /// @zod.custom(imports.ZTeamBilling)
+  /// [TeamBilling]
+  billing     Json         @default("{\"stripeCustomerId\": null, \"features\": {\"inAppSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"linkSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"userTargeting\": {\"status\": \"inactive\", \"unlimited\": false}}}")
+
+  invites Invite[]
 }
 
 enum MembershipRole {

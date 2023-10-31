@@ -1,8 +1,9 @@
-import { updateTeam } from "@formbricks/lib/team/service";
-
 import Stripe from "stripe";
+import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompleted";
+import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscriptionCreatedOrUpdated";
+import { handleSubscriptionDeleted } from "../handlers/subscriptionDeleted";
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
 });
 
@@ -15,41 +16,20 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    // On error, log and return the error message.
     if (err! instanceof Error) console.log(err);
     return { status: 400, message: `Webhook Error: ${errorMessage}` };
   }
 
-  // Cast event data to Stripe object.
   if (event.type === "checkout.session.completed") {
-    const checkoutSession = event.data.object as Stripe.Checkout.Session;
-    const teamId = checkoutSession.client_reference_id;
-    if (!teamId) {
-      return { status: 400, message: "skipping, no teamId found" };
-    }
-    const stripeCustomerId = checkoutSession.customer as string;
-    const plan = "pro";
-    await updateTeam(teamId, { stripeCustomerId, plan });
-
-    const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string);
-    await stripe.subscriptions.update(subscription.id, {
-      metadata: {
-        teamId,
-      },
-    });
+    await handleCheckoutSessionCompleted(event);
+  } else if (
+    event.type === "customer.subscription.updated" ||
+    event.type === "customer.subscription.created"
+  ) {
+    await handleSubscriptionUpdatedOrCreated(event);
   } else if (event.type === "customer.subscription.deleted") {
-    const subscription = event.data.object as Stripe.Subscription;
-    const teamId = subscription.metadata.teamId;
-    if (!teamId) {
-      console.error("No teamId found in subscription");
-      return { status: 400, message: "skipping, no teamId found" };
-    }
-    await updateTeam(teamId, { plan: "free" });
-  } else {
-    console.warn(`🤷‍♀️ Unhandled event type: ${event.type}`);
+    await handleSubscriptionDeleted(event);
   }
-
-  // Return a response to acknowledge receipt of the event.
   return { status: 200, message: { received: true } };
 };
 
