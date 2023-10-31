@@ -8,7 +8,7 @@ import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import AddIntegrationModal, {
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/airtable/actions";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
