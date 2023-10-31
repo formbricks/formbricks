@@ -4,13 +4,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
 });
 
-const createCustomerPortalSession = async (stripeCustomerId: string, returnUrl: string) => {
-  // Authenticate your user.
+export const createCustomerPortalSession = async (stripeCustomerId: string, returnUrl: string) => {
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: returnUrl,
   });
   return session.url;
 };
-
-export default createCustomerPortalSession;

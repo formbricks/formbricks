@@ -175,7 +175,6 @@ export const getS3UploadSignedUrl = async (
   const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
 
   try {
-    // @ts-ignore
     const { fields, url } = await createPresignedPost(s3Client, {
       Expires: 10 * 60, // 10 minutes
       Bucket: AWS_BUCKET_NAME,

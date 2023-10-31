@@ -334,7 +334,7 @@ const Leaderboard = [
   },
   {
     name: "Aditya Deshlahre",
-    points: "1320",
+    points: "1370",
     link: "https://github.com/adityadeshlahre",
   },
   {
@@ -367,7 +367,7 @@ const Leaderboard = [
   },
   {
     name: "thanmaisai",
-    points: "860",
+    points: "1900",
   },
   {
     name: "Rayyan Alam (Rayy)",
@@ -387,7 +387,7 @@ const Leaderboard = [
   },
   {
     name: "Anjaneya Gupta",
-    points: "1650",
+    points: "2150",
   },
   {
     name: "Sachin Kuber",
@@ -484,7 +484,7 @@ const Leaderboard = [
   },
   {
     name: "Bilal Mirza",
-    points: "1025",
+    points: "1395",
   },
   {
     name: "Asharan2511",
@@ -532,7 +532,7 @@ const Leaderboard = [
   },
   {
     name: "Sachin Mittal",
-    points: "100",
+    points: "450",
   },
   {
     name: "Sha1kh4",
@@ -612,7 +612,7 @@ const Leaderboard = [
   },
   {
     name: "Shyam Raghu",
-    points: "300",
+    points: "400",
   },
   {
     name: "Vikas Patil",
@@ -624,6 +624,22 @@ const Leaderboard = [
   },
   {
     name: "mandharet",
+    points: "100",
+  },
+  {
+    name: "Harshit Vashisht",
+    points: "200",
+  },
+  {
+    name: "JiyaGupta-cs",
+    points: "50",
+  },
+  {
+    name: "Kurayami",
+    points: "100",
+  },
+  {
+    name: "Sandy-1711",
     points: "50",
   },
 ];

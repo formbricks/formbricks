@@ -9,12 +9,20 @@ import { EditBrandColor } from "./components/EditBrandColor";
 import { EditPlacement } from "./components/EditPlacement";
 import { EditHighlightBorder } from "./components/EditHighlightBorder";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const product = await getProductByEnvironmentId(params.environmentId);
+  const [team, product] = await Promise.all([
+    getTeamByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
+  if (!team) {
+    throw new Error("Team not found");
+  }
   if (!product) {
     throw new Error("Product not found");
   }
+  const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
 
   return (
     <div>
@@ -36,7 +44,11 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       <SettingsCard
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
-        <EditFormbricksSignature product={product} />
+        <EditFormbricksSignature
+          product={product}
+          canRemoveSignature={canRemoveSignature}
+          environmentId={params.environmentId}
+        />
       </SettingsCard>
     </div>
   );
