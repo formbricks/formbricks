@@ -7,5 +7,5 @@ module.exports = {
   semi: true,
   printWidth: 110,
   arrowParens: "always",
-  plugins: [require("./merged-prettier-plugin")],
+  plugins: [require("./merged-prettier-plugin.js")],
 };

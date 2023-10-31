@@ -1,13 +1,16 @@
+import { verifyPassword } from "@/app/lib/auth";
 import { env } from "@/env.mjs";
-import { verifyPassword } from "@/lib/auth";
-import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, ENCRYPTION_KEY } from "@formbricks/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
+import { verifyToken } from "@formbricks/lib/jwt";
+import { getProfileByEmail } from "@formbricks/lib/profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import AzureAD from "next-auth/providers/azure-ad";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -30,6 +33,8 @@ export const authOptions: NextAuthOptions = {
           type: "password",
           placeholder: "Your password",
         },
+        totpCode: { label: "Two-factor Code", type: "input", placeholder: "Code from authenticator app" },
+        backupCode: { label: "Backup Code", type: "input", placeholder: "Two-factor backup code" },
       },
       async authorize(credentials, _req) {
         let user;
@@ -44,20 +49,68 @@ export const authOptions: NextAuthOptions = {
           throw Error("Internal server error. Please try again later");
         }
 
-        if (!user) {
-          throw new Error("User not found");
-        }
-        if (!credentials) {
-          throw new Error("No credentials");
+        if (!user || !credentials) {
+          throw new Error("No user matches the provided credentials");
         }
         if (!user.password) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error("Incorrect password");
+          throw new Error("No user matches the provided credentials");
+        }
+
+        if (user.twoFactorEnabled && credentials.backupCode) {
+          if (!ENCRYPTION_KEY) {
+            console.error("Missing encryption key; cannot proceed with backup code login.");
+            throw new Error("Internal Server Error");
+          }
+
+          if (!user.backupCodes) throw new Error("No backup codes found");
+
+          const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, ENCRYPTION_KEY));
+
+          // check if user-supplied code matches one
+          const index = backupCodes.indexOf(credentials.backupCode.replaceAll("-", ""));
+          if (index === -1) throw new Error("Invalid backup code");
+
+          // delete verified backup code and re-encrypt remaining
+          backupCodes[index] = null;
+          await prisma.user.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              backupCodes: symmetricEncrypt(JSON.stringify(backupCodes), ENCRYPTION_KEY),
+            },
+          });
+        } else if (user.twoFactorEnabled) {
+          if (!credentials.totpCode) {
+            throw new Error("second factor required");
+          }
+
+          if (!user.twoFactorSecret) {
+            throw new Error("Internal Server Error");
+          }
+
+          if (!ENCRYPTION_KEY) {
+            throw new Error("Internal Server Error");
+          }
+
+          const secret = symmetricDecrypt(user.twoFactorSecret, ENCRYPTION_KEY);
+          if (secret.length !== 32) {
+            throw new Error("Internal Server Error");
+          }
+
+          const isValidToken = (await import("@formbricks/lib/totp")).totpAuthenticatorCheck(
+            credentials.totpCode,
+            secret
+          );
+          if (!isValidToken) {
+            throw new Error("Invalid second factor code");
+          }
         }
 
         return {
@@ -86,6 +139,9 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials, _req) {
         let user;
         try {
+          if (!credentials?.token) {
+            throw new Error("Token not found");
+          }
           const { id } = await verifyToken(credentials?.token);
           user = await prisma.user.findUnique({
             where: {
@@ -94,11 +150,11 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (e) {
           console.error(e);
-          throw new Error("Token is not valid or expired");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (!user) {
-          throw new Error("User not found");
+          throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
         if (user.emailVerified) {
@@ -130,45 +186,24 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
+    AzureAD({
+      clientId: env.AZUREAD_CLIENT_ID || "",
+      clientSecret: env.AZUREAD_CLIENT_SECRET || "",
+      tenantId: env.AZUREAD_TENANT_ID || "",
+    }),
   ],
   callbacks: {
     async jwt({ token }) {
-      const existingUser = await prisma.user.findFirst({
-        where: { email: token.email! },
-        select: {
-          id: true,
-          createdAt: true,
-          onboardingCompleted: true,
-          memberships: {
-            select: {
-              teamId: true,
-              role: true,
-              team: {
-                select: {
-                  plan: true,
-                },
-              },
-            },
-          },
-          name: true,
-        },
-      });
+      const existingUser = await getProfileByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
       }
 
-      const teams = existingUser.memberships.map((membership) => ({
-        id: membership.teamId,
-        role: membership.role,
-        plan: membership.team.plan,
-      }));
-
       const additionalAttributs = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
-        teams,
         name: existingUser.name,
       };
 
@@ -185,14 +220,13 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
-      session.user.teams = token?.teams;
       session.user.name = token.name || "";
 
       return session;
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
-        if (!user.emailVerified && env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+        if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
         }
         return true;
@@ -203,7 +237,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account.provider) {
-        const provider = account.provider.toLowerCase() as IdentityProvider;
+        const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
         // check if accounts for this provider / account Id already exists
         const existingUserWithAccount = await prisma.user.findFirst({
           include: {
@@ -255,7 +289,7 @@ export const authOptions: NextAuthOptions = {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        const createdUser = await prisma.user.create({
+        await prisma.user.create({
           data: {
             name: user.name,
             email: user.email,
@@ -367,16 +401,6 @@ export const authOptions: NextAuthOptions = {
             memberships: true,
           },
         });
-
-        const teamId = createdUser.memberships?.[0]?.teamId;
-        if (teamId) {
-          fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
-            method: "POST",
-            headers: {
-              "x-api-key": INTERNAL_SECRET,
-            },
-          });
-        }
 
         return true;
       }

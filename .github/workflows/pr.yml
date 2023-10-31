@@ -1,0 +1,37 @@
+name: PR Update
+
+on:
+  pull_request_target:
+    branches:
+      - main
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run Tests
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  lint:
+    name: Run Linters
+    uses: ./.github/workflows/lint.yml
+    secrets: inherit
+
+  build:
+    name: Build Formbricks-web
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  required:
+    needs: [lint, test, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: fail if conditional jobs failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled')
+        run: exit 1

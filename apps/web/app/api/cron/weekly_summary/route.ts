@@ -1,4 +1,4 @@
-import { responses } from "@/lib/api/response";
+import { responses } from "@/app/lib/api/response";
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { headers } from "next/headers";
@@ -73,7 +73,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
       id: survey.id,
       name: survey.name,
       status: survey.status,
-      responsesCount: survey.responses.length,
+      responseCount: survey.responses.length,
       responses: [],
     };
     // iterate through the responses and calculate the survey insights
@@ -180,82 +180,7 @@ const getProducts = async (): Promise<ProductData[]> => {
                   },
                 },
                 select: {
-                  status: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      team: {
-        select: {
-          memberships: {
-            select: {
-              user: {
-                select: {
-                  email: true,
-                  notificationSettings: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-};
-
-/* const getProducts = async (): Promise<ProductData[]> => {
-  // gets all products together with team members, surveys, responses, and displays for the last 7 days
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  return await prisma.product.findMany({
-    select: {
-      id: true,
-      name: true,
-      environments: {
-        where: {
-          type: "production",
-        },
-        select: {
-          id: true,
-          surveys: {
-            where: {
-              status: {
-                not: "draft",
-              },
-            },
-            select: {
-              id: true,
-              name: true,
-              questions: true,
-              status: true,
-              responses: {
-                where: {
-                  createdAt: {
-                    gte: sevenDaysAgo,
-                  },
-                },
-                select: {
                   id: true,
-                  createdAt: true,
-                  updatedAt: true,
-                  finished: true,
-                  data: true,
-                },
-                orderBy: {
-                  createdAt: "desc",
-                },
-              },
-              displays: {
-                where: {
-                  createdAt: {
-                    gte: sevenDaysAgo,
-                  },
-                },
-                select: {
-                  status: true,
                 },
               },
             },
@@ -279,4 +204,3 @@ const getProducts = async (): Promise<ProductData[]> => {
     },
   });
 };
- */

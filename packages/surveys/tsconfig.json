@@ -1,0 +1,11 @@
+{
+  "extends": "@formbricks/tsconfig/js-library.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

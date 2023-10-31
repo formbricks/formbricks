@@ -1,11 +1,11 @@
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
-import { InvalidInputError } from "@formbricks/errors";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { createDisplay } from "@formbricks/lib/services/displays";
-import { getSurvey } from "@formbricks/lib/services/survey";
-import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
-import { TDisplay, ZDisplayInput } from "@formbricks/types/v1/displays";
+import { createDisplay } from "@formbricks/lib/display/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
+import { TDisplay, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -14,7 +14,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function POST(request: Request): Promise<NextResponse> {
   const jsonInput: unknown = await request.json();
-  const inputValidation = ZDisplayInput.safeParse(jsonInput);
+  const inputValidation = ZDisplayCreateInput.safeParse(jsonInput);
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -25,7 +25,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const displayInput = inputValidation.data;
-
   // find environmentId from surveyId
   let survey;
 
@@ -35,6 +34,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -50,6 +50,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }

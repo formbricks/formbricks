@@ -1,5 +1,5 @@
-import { sendEmail } from "@/lib/email";
-import { withEmailTemplate } from "@/lib/email-template";
+import { sendEmail } from "@/app/lib/email";
+import { withEmailTemplate } from "@/app/lib/email-template";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Insights, NotificationResponse, Survey, SurveyResponse } from "./types";
 
@@ -109,7 +109,7 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
           </a>
           <span style="display: inline; margin-left: 10px; background-color: ${
             isLive ? "#34D399" : "#cbd5e1"
-          }; color: ${isLive ? "#F3F4F6" : "#15803d"}; border-radius:99px; padding: 2px 8px; font-size:0.9em">
+          }; color: ${isLive ? "#F3F4F6" : "#1e293b"}; border-radius:99px; padding: 2px 8px; font-size:0.9em">
             ${displayStatus}
           </span>
           ${
@@ -118,11 +118,11 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
               : createSurveyFields(survey.responses)
           }
           ${
-            survey.responsesCount >= 0
+            survey.responseCount >= 0
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
                 }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
-                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responsesCount)}
+                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
               </a>`
               : ""
           }
@@ -131,11 +131,11 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
     .join("");
 };
 
-const createSurveyFields = (surveryResponses: SurveyResponse[]) => {
+const createSurveyFields = (surveyResponses: SurveyResponse[]) => {
   let surveyFields = "";
-  const responseCount = surveryResponses.length;
+  const responseCount = surveyResponses.length;
 
-  surveryResponses.forEach((response, index) => {
+  surveyResponses.forEach((response, index) => {
     if (!response) {
       return;
     }

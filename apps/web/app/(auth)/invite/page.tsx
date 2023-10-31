@@ -1,8 +1,7 @@
-import { sendInviteAcceptedEmail } from "@/lib/email";
-import { verifyInviteToken } from "@/lib/jwt";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { sendInviteAcceptedEmail } from "@/app/lib/email";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
-import { env } from "process";
 import { prisma } from "@formbricks/database";
 import {
   NotLoggedInContent,
@@ -10,7 +9,8 @@ import {
   ExpiredContent,
   UsedContent,
   RightAccountContent,
-} from "./InviteContentComponents";
+} from "./components/InviteContentComponents";
+import { env } from "@/env.mjs";
 
 export default async function JoinTeam({ searchParams }) {
   const currentUser = await getServerSession(authOptions);

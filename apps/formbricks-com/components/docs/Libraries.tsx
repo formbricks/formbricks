@@ -1,10 +1,10 @@
 import Image from "next/image";
 
-import { Button } from "./Button";
 import logoHtml from "@/images/logos/html5.svg";
 import logoNextjs from "@/images/logos/nextjs.svg";
 import logoReactJs from "@/images/logos/reactjs.svg";
 import logoVueJs from "@/images/logos/vuejs.svg";
+import { Button } from "./Button";
 
 const libraries = [
   {
@@ -39,7 +39,10 @@ export function Libraries() {
     <div className="my-16 xl:max-w-none">
       <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-slate-900/5 dark:border-white/5 sm:grid-cols-2 xl:max-w-none xl:grid-cols-3">
         {libraries.map((library) => (
-          <div key={library.name} className="flex flex-row-reverse gap-6">
+          <a
+            key={library.name}
+            href={library.href}
+            className="flex flex-row-reverse gap-6 rounded-2xl p-6 transition-all duration-100 ease-in-out hover:cursor-pointer hover:bg-slate-100/50">
             <div className="flex-auto">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{library.name}</h3>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{library.description}</p>
@@ -50,7 +53,7 @@ export function Libraries() {
               </p>
             </div>
             <Image src={library.logo} alt="" className="h-12 w-12" unoptimized />
-          </div>
+          </a>
         ))}
       </div>
     </div>

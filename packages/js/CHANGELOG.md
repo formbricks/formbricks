@@ -1,5 +1,35 @@
 # @formbricks/js
 
+## 1.1.4
+
+### Patch Changes
+
+- 24f5796c: various improvements & bugfixes
+
+## 1.1.3
+
+### Patch Changes
+
+- d1172831: Multiple bugfixes and performance improvements
+
+## 1.1.0
+
+### Minor Changes
+
+- e46b0588: Multiple bugfixes and performance improvements
+
+## 1.0.6
+
+### Patch Changes
+
+- 8efb1054: Introduce response queue for instant question transitions
+
+## 1.0.5
+
+### Patch Changes
+
+- bea1f993: Fix submit error in multiple choice questions
+
 ## 1.0.4
 
 ### Patch Changes

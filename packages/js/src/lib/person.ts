@@ -1,6 +1,5 @@
-import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/v1/js";
-import type { Person } from "../../../types/js";
-import type { Session, Settings } from "../../../types/js";
+import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
@@ -8,13 +7,11 @@ import {
   NetworkError,
   Result,
   err,
-  match,
   ok,
   okVoid,
 } from "./errors";
+import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-import { sync } from "./sync";
-import { TPerson } from "@formbricks/types/v1/people";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -138,7 +135,11 @@ export const setPersonUserId = async (
 
   const state = result.value;
 
-  config.update({ state });
+  config.update({
+    apiHost: config.get().apiHost,
+    environmentId: config.get().environmentId,
+    state,
+  });
 
   return okVoid();
 };
@@ -156,39 +157,37 @@ export const setPersonAttribute = async (
 
   const result = await updatePersonAttribute(key, value.toString());
 
-  let error: NetworkError | MissingPersonError;
+  if (result.ok) {
+    const state = result.value;
 
-  match(
-    result,
-    (state) => {
-      config.update({ state });
-    },
-    (err) => {
-      // pass error to outer scope
-      error = err;
-    }
-  );
+    config.update({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+      state,
+    });
 
-  if (error) {
-    return err(error);
+    return okVoid();
   }
 
-  return okVoid();
+  return err(result.error);
 };
 
 export const logoutPerson = async (): Promise<void> => {
-  logger.debug("Resetting state");
-  config.update({ state: undefined });
+  deinitalize();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
+  const syncParams = {
+    environmentId: config.get().environmentId,
+    apiHost: config.get().apiHost,
+  };
   await logoutPerson();
   try {
-    await sync();
+    await initialize(syncParams);
     return okVoid();
   } catch (e) {
-    return err(e);
+    return err(e as NetworkError);
   }
 };
 

@@ -1,5 +1,6 @@
-import { getSettings } from "@/lib/api/clientSettings";
+import { getSettings } from "@/app/lib/api/clientSettings";
 import { prisma } from "@formbricks/database";
+import { personCache } from "@formbricks/lib/person/cache";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -127,6 +128,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
 
     const person = attribute.person;
+
+    personCache.revalidate({
+      id: person.id,
+      environmentId: person.environmentId,
+    });
 
     const settings = await getSettings(environmentId, person.id);
 

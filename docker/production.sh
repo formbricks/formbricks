@@ -100,86 +100,109 @@ touch acme.json
 chmod 600 acme.json
 echo "💡 Created acme.json file with correct permissions."
 
-# Ask the user for their email address
+# Ask the user for their domain name
 echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
 read domain_name
 
-cat <<EOT >docker-compose.yml
-version: "3.3"
-x-environment: &environment
-  environment:
-    # The url of your Formbricks instance used in the admin panel
-    WEBAPP_URL: "https://$domain_name"
+# Prompt for email service setup
+read -p "Do you want to set up the email service? (yes/no) You will need SMTP credentials for the same! " email_service
+if [[ $email_service == "yes" ]]; then
+  echo "Please provide the following email service details: "
 
-    # PostgreSQL DB for Formbricks to connect to
-    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+  echo -n "Enter your SMTP configured Email ID: "
+  read mail_from
 
-    # Uncomment to enable a dedicated connection pool for Prisma using Prisma Data Proxy
-    # Cold boots will be faster and you'll be able to scale your DB independently of your app.
-    # @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
-    # PRISMA_GENERATE_DATAPROXY: true
-    PRISMA_GENERATE_DATAPROXY:
+  echo -n "Enter your SMTP Host URL: "
+  read smtp_host
 
-    # NextJS Auth
-    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: $(openssl rand -base64 32) to generate one
-    NEXTAUTH_SECRET:
+  echo -n "Enter your SMTP Host Port: "
+  read smtp_port
 
-    # Set this to your public-facing URL, e.g., https://example.com
-    # You do not need the NEXTAUTH_URL environment variable in Vercel.
-    NEXTAUTH_URL: "https://$domain_name"
+  echo -n "Enter your SMTP username: "
+  read smtp_user
 
-    # PostgreSQL password
-    POSTGRES_PASSWORD: postgres
+  echo -n "Enter your SMTP password: "
+  read smtp_password
 
-services:
-  postgres:
-    restart: always
-    image: postgres:15-alpine
-    volumes:
-      - postgres:/var/lib/postgresql/data
-    <<: *environment
+  echo -n "Enable Secure SMTP (use SSL)? Enter 1 for yes and 0 for no: "
+  read smtp_secure_enabled
 
-  formbricks:
-    restart: always
-    image: formbricks/formbricks:latest
-    depends_on:
-      - postgres
-    labels:
-      - "traefik.enable=true"  # Enable Traefik for this service
-      - "traefik.http.routers.formbricks.rule=Host(\`$domain_name\`)"  # Replace your_domain_name with your actual domain or IP
-      - "traefik.http.routers.formbricks.entrypoints=websecure"  # Use the websecure entrypoint (port 443 with TLS)
-      - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
-    <<: *environment
+else
+  mail_from=""
+  smtp_host=""
+  smtp_port=""
+  smtp_user=""
+  smtp_password=""
+  smtp_secure_enabled=0
+fi
 
-  traefik:
-    image: "traefik:v2.7"
-    restart: always
-    container_name: "traefik"
-    depends_on:
-      - formbricks
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - ./traefik.yaml:/traefik.yaml
-      - ./acme.json:/acme.json
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
+curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
 
-volumes:
-  postgres:
-    driver: local
-EOT
+echo "🚙 Updating docker-compose.yml with your custom inputs..."
+sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
+sed -i "/NEXTAUTH_URL:/s|NEXTAUTH_URL:.*|NEXTAUTH_URL: \"https://$domain_name\"|" docker-compose.yml
 
-echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
-nextauth_secret=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
+nextauth_secret=$(openssl rand -hex 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
 echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
-newgrp docker << END
+encryption_key=$(openssl rand -hex 32) && sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $encryption_key/" docker-compose.yml
+echo "🚗 ENCRYPTION_KEY updated successfully!"
 
-docker compose up -d
+
+if [[ -n $mail_from ]]; then
+  sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
+  sed -i "s|# SMTP_HOST:|SMTP_HOST: \"$smtp_host\"|" docker-compose.yml
+  sed -i "s|# SMTP_PORT:|SMTP_PORT: \"$smtp_port\"|" docker-compose.yml
+  sed -i "s|# SMTP_SECURE_ENABLED:|SMTP_SECURE_ENABLED: $smtp_secure_enabled|" docker-compose.yml
+  sed -i "s|# SMTP_USER:|SMTP_USER: \"$smtp_user\"|" docker-compose.yml
+  sed -i "s|# SMTP_PASSWORD:|SMTP_PASSWORD: \"$smtp_password\"|" docker-compose.yml
+fi
+
+awk -v domain_name="$domain_name" '
+/formbricks:/,/^ *$/ {
+    if ($0 ~ /depends_on:/) {
+        inserting_labels=1
+    }
+    if (inserting_labels && ($0 ~ /ports:/)) {
+        print "    labels:"
+        print "      - \"traefik.enable=true\"  # Enable Traefik for this service"
+        print "      - \"traefik.http.routers.formbricks.rule=Host(\`" domain_name "\`)\"  # Use your actual domain or IP"
+        print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\"  # Use the websecure entrypoint (port 443 with TLS)"
+        print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\"  # Forward traffic to Formbricks on port 3000"
+        inserting_labels=0
+    }
+    print
+    next
+}
+/^volumes:/ {
+    print "  traefik:"
+    print "    image: \"traefik:v2.7\""
+    print "    restart: always"
+    print "    container_name: \"traefik\""
+    print "    depends_on:"
+    print "      - formbricks"
+    print "    ports:"
+    print "      - \"80:80\""
+    print "      - \"443:443\""
+    print "      - \"8080:8080\""
+    print "    volumes:"
+    print "      - ./traefik.yaml:/traefik.yaml"
+    print "      - ./acme.json:/acme.json"
+    print "      - /var/run/docker.sock:/var/run/docker.sock:ro"
+    print ""
+}
+1
+' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
+
+newgrp docker <<END
+
+docker compose up
+
+echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
 echo "🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
+
+END

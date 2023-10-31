@@ -15,7 +15,7 @@ export default function AppPage({}) {
   }, [darkMode]);
 
   return (
-    <div className="h-full bg-white px-12 py-6 dark:bg-slate-800">
+    <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -29,7 +29,7 @@ export default function AppPage({}) {
         <button
           className="mt-2 rounded-lg bg-slate-200 px-6 py-1 dark:bg-slate-700 dark:text-slate-100"
           onClick={() => setDarkMode(!darkMode)}>
-          Toggle Dark Mode
+          {darkMode ? "Toggle Light Mode" : "Toggle Dark Mode"}
         </button>
       </div>
 

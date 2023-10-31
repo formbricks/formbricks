@@ -1,5 +1,5 @@
-import BackToLoginButton from "@/components/auth/BackToLoginButton";
-import FormWrapper from "@/components/auth/FormWrapper";
+import BackToLoginButton from "@/app/(auth)/auth/components/BackToLoginButton";
+import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 
 export default function SignupWithoutVerificationSuccess() {
   return (

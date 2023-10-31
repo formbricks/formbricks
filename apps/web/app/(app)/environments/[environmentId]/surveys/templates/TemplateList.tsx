@@ -1,31 +1,26 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile } from "@/lib/profile";
-import { replacePresetPlaceholders } from "@/lib/templates";
+import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { cn } from "@formbricks/lib/cn";
-import type { Template } from "@formbricks/types/templates";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TProduct } from "@formbricks/types/v1/product";
-import {
-  Button,
-  ErrorComponent,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TProfile } from "@formbricks/types/profile";
+import { TSurveyInput } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
+import { Button } from "@formbricks/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createSurveyAction } from "./actions";
+import { createSurveyAction } from "../actions";
 import { customSurvey, templates } from "./templates";
 
 type TemplateList = {
   environmentId: string;
-  onTemplateClick: (template: Template) => void;
+  profile: TProfile;
+  onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
@@ -35,16 +30,16 @@ const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
 export default function TemplateList({
   environmentId,
+  profile,
   onTemplateClick,
   product,
   environment,
   templateSearch,
 }: TemplateList) {
   const router = useRouter();
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(RECOMMENDED_CATEGORY_NAME);
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
 
   const [categories, setCategories] = useState<Array<string>>([]);
 
@@ -77,19 +72,18 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-    };
+    } as TSurveyInput;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
-
-  if (isLoadingProfile) return <LoadingSpinner />;
-  if (isErrorProfile) return <ErrorComponent />;
 
   const filteredTemplates = templates.filter((template) => {
     const matchesCategory =
       selectedFilter === ALL_CATEGORY_NAME ||
       template.category === selectedFilter ||
-      (selectedFilter === RECOMMENDED_CATEGORY_NAME && template.objectives?.includes(profile.objective));
+      (profile.objective &&
+        selectedFilter === RECOMMENDED_CATEGORY_NAME &&
+        template.objectives?.includes(profile.objective));
 
     const templateName = template.name?.toLowerCase();
     const templateDescription = template.description?.toLowerCase();
@@ -153,7 +147,7 @@ export default function TemplateList({
             </div>
           )}
         </button>
-        {filteredTemplates.map((template: Template) => (
+        {filteredTemplates.map((template: TTemplate) => (
           <div
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);

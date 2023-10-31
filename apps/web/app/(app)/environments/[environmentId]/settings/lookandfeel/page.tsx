@@ -1,16 +1,29 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import { EditFormbricksSignature } from "./EditSignature";
-import { EditBrandColor } from "./EditBrandColor";
-import { EditPlacement } from "./EditPlacement";
-import { EditHighlightBorder } from "./EditHighlightBorder";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import { EditFormbricksSignature } from "./components/EditSignature";
+import { EditBrandColor } from "./components/EditBrandColor";
+import { EditPlacement } from "./components/EditPlacement";
+import { EditHighlightBorder } from "./components/EditHighlightBorder";
+import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
-  const product = await getProductByEnvironmentId(params.environmentId);
+  const [team, product] = await Promise.all([
+    getTeamByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+  ]);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
+
   return (
     <div>
       <SettingsTitle title="Look & Feel" />
@@ -26,12 +39,16 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         noPadding
         title="Highlight Border"
         description="Make sure your users notice the survey you display">
-        <EditHighlightBorder product={product} />
+        <EditHighlightBorder product={product} defaultBrandColor={DEFAULT_BRAND_COLOR} />
       </SettingsCard>
       <SettingsCard
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
-        <EditFormbricksSignature product={product} />
+        <EditFormbricksSignature
+          product={product}
+          canRemoveSignature={canRemoveSignature}
+          environmentId={params.environmentId}
+        />
       </SettingsCard>
     </div>
   );

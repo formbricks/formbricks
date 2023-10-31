@@ -1,24 +1,34 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import ApiKeyList from "./ApiKeyList";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import ApiKeyList from "./components/ApiKeyList";
+import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 export default async function ProfileSettingsPage({ params }) {
+  const environment = await getEnvironment(params.environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
   return (
     <div>
       <SettingsTitle title="API Keys" />
-      <SettingsCard
-        title="Development Env Keys"
-        description="Add and remove API keys for your Development environment.">
-        <ApiKeyList environmentId={params.environmentId} environmentType="development" />
-      </SettingsCard>
-      <SettingsCard
-        title="Production Env Keys"
-        description="Add and remove API keys for your Production environment.">
-        <ApiKeyList environmentId={params.environmentId} environmentType="production" />
-      </SettingsCard>
+      <EnvironmentNotice environmentId={environment.id} />
+      {environment.type === "development" ? (
+        <SettingsCard
+          title="Development Env Keys"
+          description="Add and remove API keys for your Development environment.">
+          <ApiKeyList environmentId={params.environmentId} environmentType="development" />
+        </SettingsCard>
+      ) : (
+        <SettingsCard
+          title="Production Env Keys"
+          description="Add and remove API keys for your Production environment.">
+          <ApiKeyList environmentId={params.environmentId} environmentType="production" />
+        </SettingsCard>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
-export const meta = {
-  title: "Setting attributes with code",
+export const metadata = {
+  title: "Guide for Setting Custom Attributes | Formbricks Documentation",
   description:
-    "Set attributes in code using setAttribute function. Enhance user segmentation, target surveys effectively, and gather valuable insights for better decisions. All open-source.",
+    "Learn how to set attributes in code using setAttribute function. Enhance user segmentation, target surveys effectively, and gather valuable insights for better decisions. Easily send user-specific details for better survey segmentation and gain deeper insights.",
 };
 
 #### Attributes
@@ -13,7 +13,7 @@ One way to send attributes to Formbricks is in your code. In Formbricks, there a
 ## Setting Custom User Attributes
 
 You can use the setAttribute function to set any custom attribute for the user (e.g. name, plan, etc.):
-
+<Col>
 <CodeGroup title="Setting Plan to Pro">
 
 ```javascript
@@ -21,9 +21,9 @@ formbricks.setAttribute("Plan", "Pro");
 ```
 
 </CodeGroup>
-
+</Col>
 Generally speaking, the setAttribute function works like this:
-
+<Col>
 <CodeGroup title="Setting Custom Attributes">
 
 ```javascript
@@ -31,5 +31,5 @@ formbricks.setAttribute("attribute_key", "attribute_value");
 ```
 
 </CodeGroup>
-
+</Col>
 Where `attributeName` is the name of the attribute you want to set, and `attributeValue` is the value of the attribute you want to set.

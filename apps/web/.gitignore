@@ -37,3 +37,9 @@ next-env.d.ts
 
 # Sentry Auth Token
 .sentryclirc
+
+# Google Sheets Token File
+token.json
+
+# Local Uploads
+uploads/

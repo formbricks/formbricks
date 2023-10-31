@@ -1,12 +1,12 @@
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
-import { sendToPipeline } from "@/lib/pipelines";
-import { InvalidInputError } from "@formbricks/errors";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { sendToPipeline } from "@/app/lib/pipelines";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { createResponse } from "@formbricks/lib/services/response";
-import { getSurvey } from "@formbricks/lib/services/survey";
-import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
-import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { createResponse } from "@formbricks/lib/response/service";
+import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
+import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
@@ -35,6 +35,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -44,7 +45,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   let response: TResponse;
   try {
     const meta = {
-      url: responseInput?.meta?.url ?? "",
+      source: responseInput?.meta?.source,
+      url: responseInput?.meta?.url,
       userAgent: {
         browser: agent?.browser.name,
         device: agent?.device.type,
@@ -60,6 +62,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }

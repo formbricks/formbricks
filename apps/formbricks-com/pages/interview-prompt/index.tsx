@@ -7,8 +7,8 @@ import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 export default function InterviewPromptPage() {
   return (
     <Layout
-      title="Interview Prompt"
-      description="Ask only power users users to book a time in your calendar. Get those juicy details.">
+      title="Interview Prompt with Formbricks"
+      description="Ask only power users to book a time in your calendar. Get those juicy details.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
           <UseCaseHeader title="Interview Prompt" difficulty="Easy" setupMinutes="15" />

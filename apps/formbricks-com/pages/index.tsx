@@ -1,12 +1,13 @@
-import Layout from "@/components/shared/Layout";
-import Hero from "@/components/home/Hero";
+import Faq from "@/components/home/Faq";
 import Features from "@/components/home/Features";
-import Highlights from "@/components/home/Highlights";
-import BreakerCTA from "@/components/shared/BreakerCTA";
-import Steps from "@/components/home/Steps";
-import Pricing from "@/components/shared/Pricing";
 import GitHubSponsorship from "@/components/home/GitHubSponsorship";
+import Hero from "@/components/home/Hero";
+import Highlights from "@/components/home/Highlights";
+import ScrollToTopButton from "@/components/home/ScrollToTop";
+import Steps from "@/components/home/Steps";
 import BestPractices from "@/components/shared/BestPractices";
+import BreakerCTA from "@/components/shared/BreakerCTA";
+import Layout from "@/components/shared/Layout";
 
 const IndexPage = () => (
   <Layout
@@ -19,6 +20,7 @@ const IndexPage = () => (
     <BestPractices />
     <Features />
     <Highlights />
+    <ScrollToTopButton />
     <div className="block lg:hidden">
       <GitHubSponsorship />
     </div>
@@ -42,7 +44,8 @@ const IndexPage = () => (
       href="https://app.formbricks.com/auth/signup"
       inverted
     />
-    <Pricing />
+
+    <Faq />
   </Layout>
 );
 

@@ -1,12 +1,11 @@
-import { getSurveys } from "@/app/api/v1/js/surveys";
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { prisma } from "@formbricks/database";
-import { getActionClasses } from "@formbricks/lib/services/actionClass";
-import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/services/person";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
-import { extendSession } from "@formbricks/lib/services/session";
-import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
+import { getDisplaysByPersonId, updateDisplay } from "@formbricks/lib/display/service";
+import { personCache } from "@formbricks/lib/person/cache";
+import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/person/service";
+import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -33,7 +32,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     let returnedPerson;
     // check if person with this userId exists
-    const existingPerson = await prisma.person.findFirst({
+    const person = await prisma.person.findFirst({
       where: {
         environmentId,
         attributes: {
@@ -47,8 +46,12 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       },
       select: selectPerson,
     });
-    // if person exists, reconnect session and delete old user
-    if (existingPerson) {
+    // if person exists, reconnect displays, session and delete old user
+    if (person) {
+      const displays = await getDisplaysByPersonId(personId);
+
+      await Promise.all(displays.map((display) => updateDisplay(display.id, { personId: person.id })));
+
       // reconnect session to new person
       await prisma.session.update({
         where: {
@@ -57,7 +60,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
         data: {
           person: {
             connect: {
-              id: existingPerson.id,
+              id: person.id,
             },
           },
         },
@@ -65,7 +68,8 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
       // delete old person
       await deletePerson(personId);
-      returnedPerson = existingPerson;
+
+      returnedPerson = person;
     } else {
       // update person with userId
       returnedPerson = await prisma.person.update({
@@ -89,26 +93,22 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
         },
         select: selectPerson,
       });
+
+      personCache.revalidate({
+        id: returnedPerson.id,
+        environmentId: returnedPerson.environmentId,
+      });
     }
 
-    const person = transformPrismaPerson(returnedPerson);
+    const transformedPerson = transformPrismaPerson(returnedPerson);
 
-    // get/create rest of the state
-    const [session, surveys, noCodeActionClasses, product] = await Promise.all([
-      extendSession(sessionId),
-      getSurveys(environmentId, person),
-      getActionClasses(environmentId),
-      getProductByEnvironmentId(environmentId),
-    ]);
+    const state = await getUpdatedState(environmentId, transformedPerson.id, sessionId);
 
-    // return state
-    const state: TJsState = {
-      person,
-      session,
-      surveys,
-      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-      product,
-    };
+    personCache.revalidate({
+      id: transformedPerson.id,
+      environmentId: environmentId,
+    });
+
     return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);

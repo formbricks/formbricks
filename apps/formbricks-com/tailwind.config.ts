@@ -1,12 +1,22 @@
 import headlessuiPlugin from "@headlessui/tailwindcss";
-import typographyPlugin from "@tailwindcss/typography";
 import forms from "@tailwindcss/forms";
+import typographyPlugin from "@tailwindcss/typography";
 import { type Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 import typographyStyles from "./typography";
 
 export default {
-  content: ["./**/*.{js,mjs,jsx,ts,tsx,mdx}"],
+  trailingSlash: true,
+  content: [
+    // app content
+    "./app/**/*.{js,mjs,jsx,ts,tsx,mdx}", // Note the addition of the `app` directory.
+    "./pages/**/*.{js,mjs,jsx,ts,tsx,mdx}",
+    "./components/**/*.{js,mjs,jsx,ts,tsx,mdx}",
+    "./lib/**/*.{js,mjs,jsx,ts,tsx,mdx}",
+    "./mdx/**/*.{js,mjs,jsx,ts,tsx,mdx}",
+    // include packages if not transpiling
+    "../../packages/ui/components/**/*.{js,ts,jsx,tsx}",
+  ],
   darkMode: "class",
   theme: {
     fontSize: {
@@ -54,6 +64,7 @@ export default {
       fontFamily: {
         sans: ["Poppins", ...defaultTheme.fontFamily.sans],
         display: ["Lexend", ...defaultTheme.fontFamily.sans],
+        kablammo: ["Kablammo", "sans"],
       },
       screens: {
         xs: "430px",

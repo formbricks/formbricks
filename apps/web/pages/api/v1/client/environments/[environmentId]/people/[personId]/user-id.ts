@@ -1,5 +1,7 @@
-import { getSettings } from "@/lib/api/clientSettings";
+import { getSettings } from "@/app/lib/api/clientSettings";
 import { prisma } from "@formbricks/database";
+import { personCache } from "@formbricks/lib/person/cache";
+import { deletePerson } from "@formbricks/lib/person/service";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -28,7 +30,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (!sessionId) {
       return res.status(400).json({ message: "Missing sessionId" });
     }
-    let returnedPerson;
+    let person;
     // check if person exists
     const existingPerson = await prisma.person.findFirst({
       where: {
@@ -76,15 +78,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
 
       // delete old person
-      await prisma.person.delete({
-        where: {
-          id: personId,
-        },
-      });
-      returnedPerson = existingPerson;
+      await deletePerson(personId);
+      person = existingPerson;
     } else {
       // update person
-      returnedPerson = await prisma.person.update({
+      person = await prisma.person.update({
         where: {
           id: personId,
         },
@@ -120,12 +118,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         },
       });
+
+      personCache.revalidate({
+        id: person.id,
+        environmentId: person.environmentId,
+      });
     }
 
-    const settings = await getSettings(environmentId, returnedPerson.id);
+    personCache.revalidate({
+      id: person.id,
+      environmentId: person.environmentId,
+    });
+
+    const settings = await getSettings(environmentId, person.id);
 
     // return updated person and settings
-    return res.json({ person: returnedPerson, settings });
+    return res.json({ person, settings });
   }
 
   // Unknown HTTP Method

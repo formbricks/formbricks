@@ -1,5 +1,6 @@
-import { QuestionType } from "@formbricks/types/questions";
-import type { Template } from "@formbricks/types/templates";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyHiddenFields, TSurveyWelcomeCard } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
@@ -8,7 +9,19 @@ const thankYouCardDefault = {
   subheader: "We appreciate your feedback.",
 };
 
-export const templates: Template[] = [
+const hiddenFieldsDefault: TSurveyHiddenFields = {
+  enabled: true,
+  fieldIds: [],
+};
+
+const welcomeCardDefault: TSurveyWelcomeCard = {
+  enabled: false,
+  headline: "Welcome!",
+  html: "Thanks for providing your feedback - let's go!",
+  timeToFinish: false,
+};
+
+export const templates: TTemplate[] = [
   {
     name: "Product Market Fit (Superhuman)",
     category: "Product Experience",
@@ -16,11 +29,12 @@ export const templates: Template[] = [
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       name: "Product Market Fit (Superhuman)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot!</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
           headline: "You are one of our power users! Do you have 5 minutes?",
           required: false,
@@ -30,7 +44,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use {{productName}}?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -52,7 +66,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -82,25 +96,29 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What type of people do you think would most benefit from {{productName}}?",
           required: true,
+          inputType: "text",
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What is the main benefit your receive from {{productName}}?",
           required: true,
+          inputType: "text",
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "How can we improve {{productName}} for you?",
           subheader: "Please be as specific as possible.",
           required: true,
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -110,10 +128,11 @@ export const templates: Template[] = [
     description: "Learn more about who signed up to your product and why.",
     preset: {
       name: "Onboarding Segmentation",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -143,7 +162,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What's your company size?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -173,7 +192,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -203,6 +222,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -213,10 +233,11 @@ export const templates: Template[] = [
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
       name: "Churn Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "sxwpskjgzzpmkgfxzi15inif" },
@@ -246,17 +267,18 @@ export const templates: Template[] = [
         },
         {
           id: "sxwpskjgzzpmkgfxzi15inif",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What would have made {{productName}} easier to use?",
           required: true,
           subheader: "",
           buttonLabel: "Send",
+          inputType: "text",
         },
         {
           id: "mao94214zoo6c1at5rpuz7io",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We\'d love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: "Get 30% off for the next year!",
           required: true,
@@ -267,17 +289,18 @@ export const templates: Template[] = [
         },
         {
           id: "l054desub14syoie7n202vq4",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
 
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What features are you missing?",
           required: true,
           subheader: "",
+          inputType: "text",
         },
         {
           id: "hdftsos1odzjllr7flj4m3j9",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: "So sorry to hear 😔 Talk to our CEO directly!",
           required: true,
@@ -288,6 +311,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -298,10 +322,11 @@ export const templates: Template[] = [
       "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
     preset: {
       name: "Earned Advocacy Score (EAS)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
           shuffleOption: "none",
           choices: [
@@ -314,22 +339,24 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "yhfew1j3ng6luy7t7qynwj79" }],
           headline: "Great to hear! Why did you recommend us?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "duz2qp8eftix9wty1l221x1h",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "So sad. Why not?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "yhfew1j3ng6luy7t7qynwj79",
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "end" }],
           shuffleOption: "none",
           choices: [
@@ -342,13 +369,15 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What made you discourage them?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -358,10 +387,11 @@ export const templates: Template[] = [
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
       name: "Improve Trial Conversion",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             {
@@ -399,24 +429,26 @@ export const templates: Template[] = [
         },
         {
           id: "aew2ymg51mffnt9db7duz9t3",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: "Sorry to hear. What was the biggest problem using {{productName}}?",
           required: true,
           buttonLabel: "Next",
+          inputType: "text",
         },
         {
           id: "rnrfydttavtsf2t2nfx1df7m",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: "What did you expect {{productName}} would do for you?",
           required: true,
           buttonLabel: "Next",
+          inputType: "text",
         },
         {
           id: "x760wga1fhtr1i80cpssr7af",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We\'re happy to offer you a 20% discount on a yearly plan.</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: "Sorry to hear! Get 20% off the first year.",
           required: true,
@@ -427,16 +459,17 @@ export const templates: Template[] = [
         },
         {
           id: "rbhww1pix03r6sl4xc511wqg",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: "Which features are you missing?",
           required: true,
           subheader: "What would you like to achieve?",
           buttonLabel: "Next",
+          inputType: "text",
         },
         {
           id: "bqiyml1ym74ggx6htwdo7rlu",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -444,9 +477,11 @@ export const templates: Template[] = [
           headline: "How are you solving your problem now?",
           required: false,
           subheader: "Please name alternative solutions:",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -457,23 +492,24 @@ export const templates: Template[] = [
     description: "Invite users who love your product to review it publicly.",
     preset: {
       name: "Review Prompt",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: 3, condition: "lessEqual", destination: "tk9wpw2gxgb8fa6pbpp3qq5l" }],
           range: 5,
           scale: "star",
           headline: "How do you like {{productName}}?",
           required: true,
           subheader: "",
-          lowerLabel: "",
-          upperLabel: "",
+          lowerLabel: "Not good",
+          upperLabel: "Very satisfied",
         },
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           logic: [{ condition: "clicked", destination: "end" }],
           headline: "Happy to hear 🙏 Please write a review for us!",
           required: true,
@@ -483,15 +519,17 @@ export const templates: Template[] = [
         },
         {
           id: "tk9wpw2gxgb8fa6pbpp3qq5l",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Sorry to hear! What is ONE thing we can do better?",
           required: true,
           subheader: "Help us improve your experience.",
           buttonLabel: "Send",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -502,10 +540,11 @@ export const templates: Template[] = [
     description: "Invite a specific subset of your users to schedule an interview with your product team.",
     preset: {
       name: "Interview Prompt",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "Do you have 15 min to talk to us? 🙏",
           html: "You're one of our power users. We would love to interview you briefly!",
           buttonLabel: "Book slot",
@@ -515,6 +554,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -524,10 +564,11 @@ export const templates: Template[] = [
     description: "Identify weaknesses in your onboarding flow to increase user activation.",
     preset: {
       name: "Onboarding Drop-Off Reasons",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             {
@@ -560,51 +601,57 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What made you think {{productName}} wouldn't be useful?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "r0zvi3vburf4hm7qewimzjux",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What was difficult about setting up or using {{productName}}?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What features or functionality were missing?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "gn6298zogd2ipdz7js17qy5i",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "How could we make it easier for you to get started?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "c0exdyri3erugrv0ezkyseh6",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [],
           headline: "What was it? Please explain:",
           required: false,
           subheader: "We're eager to fix it asap.",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -614,10 +661,11 @@ export const templates: Template[] = [
     description: "Find out what users like and don't like about your product or offering.",
     preset: {
       name: "Uncover Strengths & Weaknesses",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
             { id: createId(), label: "Ease of use" },
@@ -632,7 +680,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
             { id: createId(), label: "Documentation" },
@@ -646,13 +694,15 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Would you like to add something?",
           required: false,
           subheader: "Feel free to speak your mind, we do too.",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -661,10 +711,11 @@ export const templates: Template[] = [
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       name: "Product Market Fit Survey (Short)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use {{productName}}?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -686,13 +737,15 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "How can we improve {{productName}} for you?",
           subheader: "Please be as specific as possible.",
           required: true,
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -703,10 +756,11 @@ export const templates: Template[] = [
     description: "How did you first hear about us?",
     preset: {
       name: "Marketing Attribution",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -736,6 +790,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -746,10 +801,11 @@ export const templates: Template[] = [
     description: "Find out what goes through peoples minds when changing their subscriptions.",
     preset: {
       name: "Changing subscription experience",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How easy was it to change your plan?",
           required: true,
           shuffleOption: "none",
@@ -778,7 +834,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Is the pricing information easy to understand?",
           required: true,
           shuffleOption: "none",
@@ -799,6 +855,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -811,10 +868,11 @@ export const templates: Template[] = [
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
       name: "Identify Customer Goals",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What's your primary goal for using {{productName}}?",
           required: true,
           shuffleOption: "none",
@@ -839,6 +897,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -849,10 +908,11 @@ export const templates: Template[] = [
     description: "Follow up with users who just used a specific feature.",
     preset: {
       name: "Feature Chaser",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           range: 5,
           scale: "number",
           headline: "How important is [ADD FEATURE] for you?",
@@ -862,7 +922,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
             { id: createId(), label: "Aspect 1" },
@@ -876,6 +936,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -886,10 +947,11 @@ export const templates: Template[] = [
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       name: "Fake Door Follow-Up",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           headline: "How important is this feature for you?",
           required: true,
           lowerLabel: "Not important",
@@ -899,7 +961,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceMulti,
+          type: TSurveyQuestionType.MultipleChoiceMulti,
           headline: "What should be definitely include building this?",
           required: false,
           shuffleOption: "none",
@@ -924,6 +986,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -934,10 +997,11 @@ export const templates: Template[] = [
     description: "Give your users the chance to seamlessly share what's on their minds.",
     preset: {
       name: "Feedback Box",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Bug report 🐞", condition: "equals", destination: "dnbiuq4l33l7jypcf2cg6vhh" },
@@ -953,16 +1017,17 @@ export const templates: Template[] = [
         },
         {
           id: "dnbiuq4l33l7jypcf2cg6vhh",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "a6c76m5oocw6xp9agf3d2tam" }],
           headline: "What's broken?",
           required: true,
           subheader: "The more detail, the better :)",
+          inputType: "text",
         },
         {
           id: "a6c76m5oocw6xp9agf3d2tam",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We will fix this as soon as possible. Do you want to be notified when we did?</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           logic: [
             { condition: "clicked", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -975,15 +1040,17 @@ export const templates: Template[] = [
         },
         {
           id: "en9nuuevbf7g9oa9rzcs1l50",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Lovely, tell us more!",
           required: true,
           subheader: "What problem do you want us to solve?",
           buttonLabel: "Request feature",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -994,10 +1061,11 @@ export const templates: Template[] = [
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       name: "Integration Usage Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: "s6ss6znzxdwjod1hv16fow4w",
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "ef0qo3l8iisd517ikp078u1p" }],
           range: 5,
           scale: "number",
@@ -1009,20 +1077,23 @@ export const templates: Template[] = [
         },
         {
           id: "mko13ptjj6tpi5u2pl7a5drz",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Why was it hard?",
           required: false,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "ef0qo3l8iisd517ikp078u1p",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What other tools would you like to use with {{productName}}?",
           required: false,
           subheader: "We keep building integrations, yours can be next:",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1033,10 +1104,11 @@ export const templates: Template[] = [
     description: "Find out which integrations your users would like to see next.",
     preset: {
       name: "New Integration Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Which other tools are you using?",
           required: true,
           shuffleOption: "none",
@@ -1062,6 +1134,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1072,10 +1145,11 @@ export const templates: Template[] = [
     description: "Measure how clear each page of your developer documentation is.",
     preset: {
       name: "{{productName}} Docs Feedback",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Was this page helpful?",
           required: true,
           shuffleOption: "none",
@@ -1092,18 +1166,21 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Please elaborate:",
           required: false,
+          inputType: "text",
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Page URL",
           required: false,
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1114,10 +1191,11 @@ export const templates: Template[] = [
     description: "Measure the Net Promoter Score of your product.",
     preset: {
       name: "{{productName}} NPS",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.NPS,
+          type: TSurveyQuestionType.NPS,
           headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
           required: false,
           lowerLabel: "Not likely",
@@ -1125,12 +1203,14 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What made you give that rating?",
           required: false,
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1141,10 +1221,11 @@ export const templates: Template[] = [
     description: "Measure the Customer Satisfaction Score of your product.",
     preset: {
       name: "{{productName}} CSAT",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: 3, condition: "lessEqual", destination: "vyo4mkw4ln95ts4ya7qp2tth" }],
           range: 5,
           scale: "smiley",
@@ -1156,21 +1237,24 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Lovely! Is there anything we can do to improve your experience?",
           required: false,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "vyo4mkw4ln95ts4ya7qp2tth",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Ugh, sorry! Is there anything we can do to improve your experience?",
           required: false,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1181,10 +1265,11 @@ export const templates: Template[] = [
     description: "Find out how much time your product saves your user. Use it to upsell.",
     preset: {
       name: "Identify upsell opportunities",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How many hours does your team save per week by using {{productName}}?",
           required: true,
           shuffleOption: "none",
@@ -1209,6 +1294,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -1220,10 +1306,11 @@ export const templates: Template[] = [
     description: "Identify features your users need most and least.",
     preset: {
       name: "Feature Prioritization",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           logic: [],
           shuffleOption: "none",
           choices: [
@@ -1238,7 +1325,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           logic: [],
           shuffleOption: "none",
           choices: [
@@ -1252,13 +1339,15 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "How else could we improve you experience with {{productName}}?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1269,10 +1358,11 @@ export const templates: Template[] = [
     description: "Evaluate the satisfaction of specific features of your product.",
     preset: {
       name: "Gauge Feature Satisfaction",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           headline: "How easy was it to achieve ... ?",
           required: true,
           lowerLabel: "Not easy",
@@ -1282,12 +1372,14 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What is one thing we could do better?",
           required: false,
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1298,10 +1390,11 @@ export const templates: Template[] = [
     description: "Identify users dropping off your marketing site. Improve your messaging.",
     preset: {
       name: "Marketing Site Clarity",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Do you have all the info you need to give {{productName}} a try?",
           required: true,
           shuffleOption: "none",
@@ -1322,13 +1415,14 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What’s missing or unclear to you about {{productName}}?",
           required: false,
+          inputType: "text",
         },
         {
           id: createId(),
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "Thanks for your answer! Get 25% off your first 6 months:",
           required: false,
           buttonLabel: "Get discount",
@@ -1337,6 +1431,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1347,10 +1442,11 @@ export const templates: Template[] = [
     description: "Determine how easy it is to use a feature.",
     preset: {
       name: "Customer Effort Score (CES)",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           range: 5,
           scale: "number",
           headline: "{{productName}} makes it easy for me to [ADD GOAL]",
@@ -1361,13 +1457,15 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Thanks! How could we make it easier for you to [ADD GOAL]?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -1379,10 +1477,11 @@ export const templates: Template[] = [
     description: "Let customers rate the checkout experience to tweak conversion.",
     preset: {
       name: "Rate Checkout Experience",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "lpof3d9t9hmnqvyjlpksmxd7" }],
           range: 5,
           scale: "number",
@@ -1394,21 +1493,24 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Sorry about that! What would have made it easier for you?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "lpof3d9t9hmnqvyjlpksmxd7",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Lovely! Is there anything we can do to improve your experience?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1419,10 +1521,11 @@ export const templates: Template[] = [
     description: "Measure how relevant your search results are.",
     preset: {
       name: "Measure Search Experience",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpksmxd7" }],
           range: 5,
           scale: "number",
@@ -1434,21 +1537,24 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Ugh! What makes the results irrelevant for you?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "adcs3d9t9hmnqvyjlpksmxd7",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Lovely! Is there anything we can do to improve your experience?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1459,10 +1565,11 @@ export const templates: Template[] = [
     description: "Measure if your content marketing pieces hit right.",
     preset: {
       name: "Evaluate Content Quality",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpkswi38" }],
           range: 5,
           scale: "number",
@@ -1474,21 +1581,24 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Hmpft! What were you hoping for?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "adcs3d9t9hmnqvyjlpkswi38",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Lovely! Is there anything else you would like us to cover?",
           required: true,
           placeholder: "Topics, trends, tutorials...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1499,10 +1609,11 @@ export const templates: Template[] = [
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       name: "Measure Task Accomplishment",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Working on it, boss", condition: "equals", destination: "nq88udm0jjtylr16ax87xlyc" },
@@ -1519,7 +1630,7 @@ export const templates: Template[] = [
         },
         {
           id: "rjeac33gd13h3nnbrbid1fb2",
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "nq88udm0jjtylr16ax87xlyc" }],
           range: 5,
           scale: "number",
@@ -1530,7 +1641,7 @@ export const templates: Template[] = [
         },
         {
           id: "s0999bhpaz8vgf7ps264piek",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -1538,10 +1649,11 @@ export const templates: Template[] = [
           headline: "What made it hard?",
           required: false,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "nq88udm0jjtylr16ax87xlyc",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [
             { condition: "skipped", destination: "end" },
             { condition: "submitted", destination: "end" },
@@ -1549,17 +1661,20 @@ export const templates: Template[] = [
           headline: "Great! What did you come here to do today?",
           required: false,
           buttonLabel: "Send",
+          inputType: "text",
         },
         {
           id: "u83zhr66knyfozccoqojx7bc",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What stopped you?",
           required: true,
           buttonLabel: "Send",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1570,11 +1685,12 @@ export const templates: Template[] = [
     description: "Offer a discount to gather insights about sign up barriers.",
     preset: {
       name: "{{productName}} Sign Up Barriers",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>You seem to be considering signing up. Answer four questions and get 10% on any plan.</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
           headline: "Answer this short survey, get 10% off!",
           required: false,
@@ -1584,7 +1700,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [{ value: "5", condition: "equals", destination: "end" }],
           range: 5,
           scale: "number",
@@ -1596,7 +1712,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             {
@@ -1626,47 +1742,52 @@ export const templates: Template[] = [
         },
         {
           id: "atiw0j1oykb77zr0b7q4tixu",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What do you need but {{productName}} does not offer?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "j7jkpolm5xl7u0zt3g0e4z7d",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What options are you looking at?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "t5gvag2d7kq311szz5iyiy79",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What seems complicated to you?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "or0yhhrof753sq9ug4mdavgz",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What are you concerned about regarding pricing?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "v0pq1qcnm6ohiry5ywcd91qq",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Please explain:",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "k3q0vt1ko0bzbsq076p7lnys",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>Thanks a lot for taking the time to share feedback 🙏</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "Thanks! Here is your code: SIGNUPNOW10",
           required: false,
           buttonUrl: "https://app.formbricks.com/auth/signup",
@@ -1676,6 +1797,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1686,10 +1808,11 @@ export const templates: Template[] = [
     description: "Identify the ONE thing your users want the most and build it.",
     preset: {
       name: "{{productName}} Roadmap Input",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           range: 5,
           scale: "number",
           headline: "How satisfied are you with the features and functionality of {{productName}}?",
@@ -1700,14 +1823,16 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What's ONE change we could make to improve your {{productName}} experience most?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1718,10 +1843,11 @@ export const templates: Template[] = [
     description: "Find out how close your visitors are to buy or subscribe.",
     preset: {
       name: "Purchase Intention Survey",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [
             { value: "2", condition: "lessEqual", destination: "y19mwcmstlc7pi7s4izxk1ll" },
             { value: "3", condition: "equals", destination: "zm1hs8qkeuidh3qm0hx8pnw7" },
@@ -1738,7 +1864,7 @@ export const templates: Template[] = [
         },
         {
           id: "y19mwcmstlc7pi7s4izxk1ll",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -1746,16 +1872,19 @@ export const templates: Template[] = [
           headline: "Got it. What's your primary reason for visiting today?",
           required: false,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "zm1hs8qkeuidh3qm0hx8pnw7",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What, if anything, is holding you back from making a purchase today?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1766,10 +1895,11 @@ export const templates: Template[] = [
     description: "Find out how your subscribers like your newsletter content.",
     preset: {
       name: "Improve Newsletter Content",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [
             { value: "5", condition: "equals", destination: "l2q1chqssong8n0xwaagyl8g" },
             { value: "5", condition: "lessThan", destination: "k3s6gm5ivkc5crpycdbpzkpa" },
@@ -1784,7 +1914,7 @@ export const templates: Template[] = [
         },
         {
           id: "k3s6gm5ivkc5crpycdbpzkpa",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -1792,11 +1922,12 @@ export const templates: Template[] = [
           headline: "What would have made this weeks newsletter more helpful?",
           required: false,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "l2q1chqssong8n0xwaagyl8g",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>Who thinks like you? You\'d do us a huge favor if you\'d share this weeks episode with your brain friend!</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "Thanks! ❤️ Spread the love with ONE friend.",
           required: false,
           buttonUrl: "https://formbricks.com",
@@ -1806,6 +1937,7 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1816,11 +1948,12 @@ export const templates: Template[] = [
     description: "Survey users about product or feature ideas. Get feedback rapidly.",
     preset: {
       name: "Evaluate a Product Idea",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We respect your time and kept it short 🤸</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline:
             "We love how you use {{productName}}! We'd love to pick your brain on a feature idea. Got a minute?",
           required: true,
@@ -1830,7 +1963,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [
             { value: "3", condition: "lessEqual", destination: "ndacjg9lqf5jcpq9w8ote666" },
             { value: "4", condition: "greaterEqual", destination: "jmzgbo73cfjswlvhoynn7o0q" },
@@ -1845,16 +1978,17 @@ export const templates: Template[] = [
         },
         {
           id: "ndacjg9lqf5jcpq9w8ote666",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What's most difficult for you when it comes to [PROBLEM AREA]?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "jmzgbo73cfjswlvhoynn7o0q",
           html: '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add neccessary details but keep it concise and easy to understand.</span></p>',
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "We're working on an idea to help with [PROBLEM AREA].",
           required: true,
           buttonLabel: "Next",
@@ -1863,7 +1997,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           logic: [
             { value: "3", condition: "lessEqual", destination: "mmiuun3z4e7gk4ufuwh8lq8q" },
             { value: "4", condition: "greaterEqual", destination: "gvzevzw4hkqd6dmlkcly6kd1" },
@@ -1878,28 +2012,32 @@ export const templates: Template[] = [
         },
         {
           id: "mmiuun3z4e7gk4ufuwh8lq8q",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqmnpyku9etsgbtb322luzb2" }],
           headline: "Got it. Why wouldn't this feature be valuable to you?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "gvzevzw4hkqd6dmlkcly6kd1",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Got it. What would be most valuable to you in this feature?",
           required: true,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "bqmnpyku9etsgbtb322luzb2",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Anything else we should keep in mind?",
           required: false,
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
   {
@@ -1910,10 +2048,11 @@ export const templates: Template[] = [
     description: "Identify reasons for low engagement to improve user adoption.",
     preset: {
       name: "Reasons for Low Engagement",
+      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: "aq9dafe9nxe0kpm67b1os2z9",
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           shuffleOption: "none",
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "r0zvi3vburf4hm7qewimzjux" },
@@ -1947,51 +2086,57 @@ export const templates: Template[] = [
         },
         {
           id: "r0zvi3vburf4hm7qewimzjux",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What's difficult about using {{productName}}?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "g92s5wetp51ps6afmc6y7609",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Got it. Which alternative are you using instead?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "gn6298zogd2ipdz7js17qy5i",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Got it. How could we make it easier for you to get started?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Got it. What features or functionality were missing?",
           required: true,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
         {
           id: "c0exdyri3erugrv0ezkyseh6",
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           logic: [],
           headline: "Please add more details:",
           required: false,
           subheader: "",
           placeholder: "Type your answer here...",
+          inputType: "text",
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 
@@ -2003,7 +2148,9 @@ export const templates: Template[] = [
     description: "X",
     preset: {
       name: "X",
-      questions: [
+      welcomeCard: welcomeCardDefault,
+questions: [
+
         {
           id: createId(),
           type: "X",
@@ -2014,25 +2161,61 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },  */
 ];
 
-export const customSurvey: Template = {
+export const customSurvey: TTemplate = {
   name: "Start from scratch",
   description: "Create a survey without template.",
   preset: {
     name: "New Survey",
+    welcomeCard: welcomeCardDefault,
     questions: [
       {
         id: createId(),
-        type: QuestionType.OpenText,
+        type: TSurveyQuestionType.OpenText,
         headline: "Custom Survey",
         subheader: "This is an example survey.",
         placeholder: "Type your answer here...",
         required: true,
+        inputType: "text",
       },
     ],
     thankYouCard: thankYouCardDefault,
+    hiddenFields: hiddenFieldsDefault,
   },
+};
+
+export const minimalSurvey: TSurvey = {
+  id: "someUniqueId1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  name: "Minimal Survey",
+  type: "web",
+  environmentId: "someEnvId1",
+  status: "draft",
+  attributeFilters: [],
+  displayOption: "displayOnce",
+  autoClose: null,
+  triggers: [],
+  redirectUrl: null,
+  recontactDays: null,
+  welcomeCard: welcomeCardDefault,
+  questions: [],
+  thankYouCard: {
+    enabled: false,
+  },
+  hiddenFields: {
+    enabled: false,
+  },
+  delay: 0, // No delay
+  autoComplete: null,
+  closeOnDate: null,
+  surveyClosedMessage: {
+    enabled: false,
+  },
+  productOverwrites: null,
+  singleUse: null,
 };

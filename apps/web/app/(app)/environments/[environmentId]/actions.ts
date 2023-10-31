@@ -1,171 +1,63 @@
 "use server";
 
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError } from "@formbricks/errors";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { createMembership } from "@formbricks/lib/membership/service";
+import { createProduct } from "@formbricks/lib/product/service";
+import { createShortUrl } from "@formbricks/lib/shortUrl/service";
+import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
+import { deleteSurvey, duplicateSurvey } from "@formbricks/lib/survey/service";
+import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
+import { getServerSession } from "next-auth";
 
-export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
-  const newTeam = await prisma.team.create({
-    data: {
-      name: teamName,
-      memberships: {
-        create: {
-          user: { connect: { id: ownerUserId } },
-          role: "owner",
-          accepted: true,
-        },
-      },
-      products: {
-        create: [
-          {
-            name: "My Product",
-            environments: {
-              create: [
-                {
-                  type: "production",
-                  eventClasses: {
-                    create: [
-                      {
-                        name: "New Session",
-                        description: "Gets fired when a new session is created",
-                        type: "automatic",
-                      },
-                      {
-                        name: "Exit Intent (Desktop)",
-                        description: "A user on Desktop leaves the website with the cursor.",
-                        type: "automatic",
-                      },
-                      {
-                        name: "50% Scroll",
-                        description: "A user scrolled 50% of the current page",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                  attributeClasses: {
-                    create: [
-                      {
-                        name: "userId",
-                        description: "The internal ID of the person",
-                        type: "automatic",
-                      },
-                      {
-                        name: "email",
-                        description: "The email of the person",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                },
-                {
-                  type: "development",
-                  eventClasses: {
-                    create: [
-                      {
-                        name: "New Session",
-                        description: "Gets fired when a new session is created",
-                        type: "automatic",
-                      },
-                      {
-                        name: "Exit Intent (Desktop)",
-                        description: "A user on Desktop leaves the website with the cursor.",
-                        type: "automatic",
-                      },
-                      {
-                        name: "50% Scroll",
-                        description: "A user scrolled 50% of the current page",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                  attributeClasses: {
-                    create: [
-                      {
-                        name: "userId",
-                        description: "The internal ID of the person",
-                        type: "automatic",
-                      },
-                      {
-                        name: "email",
-                        description: "The email of the person",
-                        type: "automatic",
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    include: {
-      memberships: true,
-      products: {
-        include: {
-          environments: true,
-        },
-      },
-    },
+export const createShortUrlAction = async (url: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthenticationError("Not authenticated");
+
+  const regexPattern = new RegExp("^" + WEBAPP_URL);
+  const isValidUrl = regexPattern.test(url);
+
+  if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
+
+  const shortUrl = await createShortUrl(url);
+  const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
+  return fullShortUrl;
+};
+
+export async function createTeamAction(teamName: string): Promise<Team> {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const newTeam = await createTeam({
+    name: teamName,
   });
 
-  const teamId = newTeam?.id;
+  await createMembership(newTeam.id, session.user.id, {
+    role: "owner",
+    accepted: true,
+  });
 
-  if (teamId) {
-    fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
-      method: "POST",
-      headers: {
-        "x-api-key": INTERNAL_SECRET,
-      },
-    });
-  }
+  await createProduct(newTeam.id, {
+    name: "My Product",
+  });
 
   return newTeam;
 }
 
 export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
-  const existingSurvey = await getSurvey(surveyId);
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
 
-  if (!existingSurvey) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  // create new survey with the data of the existing survey
-  const newSurvey = await prisma.survey.create({
-    data: {
-      ...existingSurvey,
-      id: undefined, // id is auto-generated
-      environmentId: undefined, // environmentId is set below
-      name: `${existingSurvey.name} (copy)`,
-      status: "draft",
-      questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
-      thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
-      triggers: {
-        create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: trigger.id,
-        })),
-      },
-      attributeFilters: {
-        create: existingSurvey.attributeFilters.map((attributeFilter) => ({
-          attributeClassId: attributeFilter.attributeClassId,
-          condition: attributeFilter.condition,
-          value: attributeFilter.value,
-        })),
-      },
-      environment: {
-        connect: {
-          id: environmentId,
-        },
-      },
-      surveyClosedMessage: existingSurvey.surveyClosedMessage
-        ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
-        : prismaClient.JsonNull,
-    },
-  });
-  return newSurvey;
+  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId);
+  return duplicatedSurvey;
 }
 
 export async function copyToOtherEnvironmentAction(
@@ -173,6 +65,24 @@ export async function copyToOtherEnvironmentAction(
   surveyId: string,
   targetEnvironmentId: string
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorizedToAccessSourceEnvironment = await hasUserEnvironmentAccess(
+    session.user.id,
+    environmentId
+  );
+  if (!isAuthorizedToAccessSourceEnvironment) throw new AuthorizationError("Not authorized");
+
+  const isAuthorizedToAccessTargetEnvironment = await hasUserEnvironmentAccess(
+    session.user.id,
+    targetEnvironmentId
+  );
+  if (!isAuthorizedToAccessTargetEnvironment) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
   const existingSurvey = await prisma.survey.findFirst({
     where: {
       id: surveyId,
@@ -290,11 +200,41 @@ export async function copyToOtherEnvironmentAction(
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
+      singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
+      productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
+      verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
     },
   });
   return newSurvey;
 }
 
 export const deleteSurveyAction = async (surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
   await deleteSurvey(surveyId);
+};
+
+export const createProductAction = async (environmentId: string, productName: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const team = await getTeamByEnvironmentId(environmentId);
+  if (!team) throw new ResourceNotFoundError("Team from environment", environmentId);
+
+  const product = await createProduct(team.id, {
+    name: productName,
+  });
+
+  // get production environment
+  const productionEnvironment = product.environments.find((environment) => environment.type === "production");
+  if (!productionEnvironment) throw new ResourceNotFoundError("Production environment", environmentId);
+
+  return productionEnvironment;
 };

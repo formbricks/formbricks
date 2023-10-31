@@ -4,10 +4,10 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "clean": "rimraf node_modules"
+    "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
     "prettier": "^2.8.8",
-    "prettier-plugin-tailwindcss": "^0.4.1"
+    "prettier-plugin-tailwindcss": "^0.2.8"
   }
 }

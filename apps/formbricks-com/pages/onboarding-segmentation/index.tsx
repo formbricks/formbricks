@@ -6,7 +6,7 @@ import UseCaseHeader from "@/components/shared/UseCaseHeader";
 export default function OnboardingSegmentationPage() {
   return (
     <Layout
-      title="Onboarding Segmentation"
+      title="Onboarding Segmentation with Formbricks"
       description="Add a survey to your onboarding to loop in Formbricks right from the start.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
