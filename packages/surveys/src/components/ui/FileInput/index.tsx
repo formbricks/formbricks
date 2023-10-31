@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { uploadFile } from "./lib/fileUpload";
 import { cn } from "@formbricks/lib/cn";
+import { useEffect } from "preact/hooks";
 
 interface FileInputProps {
   allowedFileExtensions?: string[];
@@ -17,9 +18,22 @@ export default function FileInput({
   maxSizeInMB: maxSize,
 }: FileInputProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState("");
   const [isUploaded, setIsUploaded] = useState<boolean>(!!fileUrl);
   const [isError, setIsError] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (fileUrl) {
+      try {
+        setFileName(decodeURIComponent(fileUrl).split("/").pop() as string);
+      } catch (err) {}
+    }
+
+    if (selectedFile) {
+      setFileName(selectedFile.name);
+    }
+  }, [fileUrl, selectedFile]);
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
@@ -181,7 +195,6 @@ export default function FileInput({
                   setSelectedFile(null);
                   setIsUploaded(false);
                 }}>
-                {" "}
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -191,59 +204,49 @@ export default function FileInput({
             </div>
           </div>
 
-          {
-            <div className="flex flex-col items-center justify-center pb-6 pt-5">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-file"
-                className="h-6 text-slate-500">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              <p className="mt-2 text-sm text-slate-500">
-                <span className="font-semibold">{fileUrl.split("/").pop()}</span>
-              </p>
-            </div>
-          }
+          <div className="flex flex-col items-center justify-center pb-6 pt-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-file"
+              className="h-6 text-slate-500">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <p className="mt-2 text-sm text-slate-500">
+              <span className="font-semibold">{fileName}</span>
+            </p>
+          </div>
         </>
       ) : !isUploaded && selectedFile ? (
         <>
-          {selectedFile.type.startsWith("image/") ? (
-            <img
-              src={URL.createObjectURL(selectedFile)}
-              alt="Company Logo"
-              className="max-h-full max-w-full rounded-lg object-contain"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center pb-6 pt-5">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-file"
-                className="h-6 text-slate-500">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              <p className="mt-2 text-sm text-slate-500">
-                <span className="font-semibold">{selectedFile.name}</span>
-              </p>
-            </div>
-          )}
+          <div className="flex flex-col items-center justify-center pb-6 pt-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-file"
+              className="h-6 text-slate-500">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <p className="mt-2 text-sm text-slate-500">
+              <span className="font-semibold">{fileName}</span>
+            </p>
+          </div>
           <div className="hover.bg-opacity-60 absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 transition-opacity duration-300">
             <label htmlFor="selectedFile" className="cursor-pointer text-sm font-semibold text-white">
               Uploading

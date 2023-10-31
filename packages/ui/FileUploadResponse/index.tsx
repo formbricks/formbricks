@@ -8,13 +8,13 @@ interface FileUploadResponseProps {
 export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
   return (
     <>
-      {selected === "skipped" ? (
-        <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">{selected}</div>
+      {selected === "selected" ? (
+        <div className="ph-no-capture col-span-2 whitespace-pre-wrap font-semibold">skipped</div>
       ) : (
         <div className="col-span-2 grid md:grid-cols-2 lg:grid-cols-4">
           {Array.isArray(selected) ? (
             selected.map((fileUrl, index) => (
-              <div className="relative m-2 rounded-lg bg-slate-300">
+              <div className="relative m-2 ml-0 rounded-lg bg-slate-300">
                 <a href={fileUrl as string} key={index} download>
                   <div className="absolute right-0 top-0 m-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 bg-opacity-50 hover:bg-slate-200/50">
@@ -38,7 +38,7 @@ export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
                 <div className="flex flex-col items-center justify-center p-2">
                   <FileIcon className="h-6 text-slate-500" />
                   <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    {fileUrl.split("/").pop()}
+                    {decodeURIComponent(fileUrl).split("/").pop()}
                   </p>
                 </div>
               </div>
@@ -68,7 +68,7 @@ export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
               <div className="flex flex-col items-center justify-center p-2">
                 <FileIcon className="h-6 text-slate-500" />
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  {selected && typeof selected === "string" && selected.split("/").pop()}
+                  {selected && typeof selected === "string" && decodeURIComponent(selected).split("/").pop()}
                 </p>
               </div>
             </div>

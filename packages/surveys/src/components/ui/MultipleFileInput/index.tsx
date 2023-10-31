@@ -97,7 +97,7 @@ export default function MultipleFileInput({
       className="items-left relative flex  w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
       onDragOver={(e) => handleDragOver(e as any)}
       onDrop={(e) => handleDrop(e as any)}>
-      <div className="m-2  grid  grid-cols-1 gap-2">
+      <div className="m-2 grid grid-cols-1 gap-2">
         {fileUrls &&
           fileUrls?.map((file, index) => (
             <div key={index} className="relative m-2 rounded-lg bg-slate-300">
@@ -111,7 +111,6 @@ export default function MultipleFileInput({
                     stroke="currentColor"
                     className="h-5 text-slate-700 hover:text-slate-900"
                     onClick={() => handleDeleteFile(index)}>
-                    {" "}
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -137,7 +136,9 @@ export default function MultipleFileInput({
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{file.split("/").pop()}</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  {decodeURIComponent(file).split("/").pop()}
+                </p>
               </div>
             </div>
           ))}
@@ -167,7 +168,6 @@ export default function MultipleFileInput({
             />
           </svg>
 
-          {/* <ArrowUpTrayIcon className="h-6 text-slate-500" /> */}
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             <span className="font-semibold">Click or drag to upload files.</span>
           </p>

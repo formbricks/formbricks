@@ -1,4 +1,5 @@
 "use client";
+
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { XMarkIcon } from "@heroicons/react/24/outline";

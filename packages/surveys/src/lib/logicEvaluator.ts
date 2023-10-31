@@ -53,7 +53,7 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
       if (Array.isArray(responseValue)) {
         return responseValue.length > 0;
       } else {
-        return !!responseValue;
+        return responseValue !== "skipped" && responseValue !== "" && responseValue !== null;
       }
     case "notUploaded":
       return (

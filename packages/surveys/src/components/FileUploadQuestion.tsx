@@ -36,13 +36,13 @@ export default function FileUploadQuestion({
         e.preventDefault();
         if (question.required) {
           if (value && (typeof value === "string" || Array.isArray(value)) && value.length > 0) {
-            onSubmit({ [question.id]: value });
+            onSubmit({ [question.id]: typeof value === "string" ? [value] : value });
           } else {
             alert("Please upload a file");
           }
         } else {
           if (value) {
-            onSubmit({ [question.id]: value });
+            onSubmit({ [question.id]: typeof value === "string" ? [value] : value });
           } else {
             onSubmit({ [question.id]: "skipped" });
           }
@@ -55,8 +55,12 @@ export default function FileUploadQuestion({
       {question.allowMultipleFiles ? (
         <MultipleFileInput
           surveyId={surveyId}
-          onFileUpload={(url: string[]) => {
-            onChange({ [question.id]: url });
+          onFileUpload={(urls: string[]) => {
+            if (urls) {
+              onChange({ [question.id]: urls });
+            } else {
+              onChange({ [question.id]: "skipped" });
+            }
           }}
           fileUrls={value as string[]}
           {...(!!question.allowedFileTypes ? { allowedFileExtensions: question.allowedFileTypes } : {})}
