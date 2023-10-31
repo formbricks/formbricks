@@ -5,7 +5,7 @@ import { ENCRYPTION_KEY } from "./constants";
 const ALGORITHM = "aes256";
 const INPUT_ENCODING = "utf8";
 const OUTPUT_ENCODING = "hex";
-const BUFFER_ENCODING = ENCRYPTION_KEY.length === 32 ? "latin1" : "hex";
+const BUFFER_ENCODING = ENCRYPTION_KEY!.length === 32 ? "latin1" : "hex";
 const IV_LENGTH = 16; // AES blocksize
 
 /**
@@ -69,7 +69,7 @@ export function generateLocalSignedUrl(
   const uuid = randomBytes(16).toString("hex");
   const timestamp = Date.now();
   const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
-  const signature = createHmac("sha256", ENCRYPTION_KEY).update(data).digest("hex");
+  const signature = createHmac("sha256", ENCRYPTION_KEY!).update(data).digest("hex");
   return { signature, uuid, timestamp };
 }
 

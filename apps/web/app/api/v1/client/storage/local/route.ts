@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
+import { env } from "@/env.mjs";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     fileType,
     Number(signedTimestamp),
     signedSignature,
-    ENCRYPTION_KEY
+    env.ENCRYPTION_KEY
   );
 
   if (!validated) {
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const { plan } = team;
+    const plan = team.billing.features.linkSurvey.status in ["active", "canceled"] ? "pro" : "free";
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
