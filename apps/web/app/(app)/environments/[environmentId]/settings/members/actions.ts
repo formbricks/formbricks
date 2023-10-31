@@ -12,8 +12,9 @@ import {
 import { deleteTeam, updateTeam } from "@formbricks/lib/team/service";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { getServerSession } from "next-auth";
-import { hasTeamAuthority, hasTeamOwnership } from "@formbricks/lib/auth";
+import { hasTeamAuthority } from "@formbricks/lib/auth";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { verifyUserRoleAccess } from "@formbricks/lib/team/auth";
 
 export const updateTeamNameAction = async (teamId: string, teamName: string) => {
   const session = await getServerSession(authOptions);
@@ -50,6 +51,11 @@ export const deleteMembershipAction = async (userId: string, teamId: string) => 
 
   if (!session) {
     throw new AuthenticationError("Not authenticated");
+  }
+
+  const { hasDeleteMembersAccess } = await verifyUserRoleAccess(teamId, session.user.id);
+  if (!hasDeleteMembersAccess) {
+    throw new AuthenticationError("Not authorized");
   }
 
   const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
@@ -116,6 +122,11 @@ export const inviteUserAction = async (
     throw new AuthenticationError("Not authenticated");
   }
 
+  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(teamId, session.user.id);
+  if (!hasCreateOrUpdateMembersAccess) {
+    throw new AuthenticationError("Not authorized");
+  }
+
   const isUserAuthorized = await hasTeamAuthority(session.user.id, teamId);
 
   if (INVITE_DISABLED) {
@@ -145,8 +156,9 @@ export const deleteTeamAction = async (teamId: string) => {
     throw new AuthenticationError("Not authenticated");
   }
 
-  const isUserTeamOwner = await hasTeamOwnership(session.user.id, teamId);
-  if (!isUserTeamOwner) {
+  const { hasDeleteAccess } = await verifyUserRoleAccess(teamId, session.user.id);
+
+  if (!hasDeleteAccess) {
     throw new AuthorizationError("Not authorized");
   }
 
