@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const { status, message } = await webhookHandler(body, signature);
 
   if (status != 200) {
-    return responses.badRequestResponse(message.toString());
+    return responses.badRequestResponse(message?.toString() || "Something went wrong");
   }
   return responses.successResponse({ message }, true);
 }

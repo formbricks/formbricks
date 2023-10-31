@@ -244,7 +244,7 @@ const FAQ = [
 const Leaderboard = [
   {
     name: "Piyush",
-    points: "2650",
+    points: "4045",
     link: "https://github.com/gupta-piyush19",
   },
   {
@@ -257,7 +257,7 @@ const Leaderboard = [
   },
   {
     name: "Pratik",
-    points: "350",
+    points: "1350",
   },
   {
     name: "Karuppiah",
@@ -277,7 +277,7 @@ const Leaderboard = [
   },
   {
     name: "Naitik Kapadia (Arjun)",
-    points: "2250",
+    points: "3250",
     link: "https://github.com/KapadiaNaitik",
   },
   {
@@ -334,7 +334,7 @@ const Leaderboard = [
   },
   {
     name: "Aditya Deshlahre",
-    points: "1320",
+    points: "2120",
     link: "https://github.com/adityadeshlahre",
   },
   {
@@ -367,7 +367,7 @@ const Leaderboard = [
   },
   {
     name: "thanmaisai",
-    points: "860",
+    points: "2825",
   },
   {
     name: "Rayyan Alam (Rayy)",
@@ -387,7 +387,7 @@ const Leaderboard = [
   },
   {
     name: "Anjaneya Gupta",
-    points: "1650",
+    points: "3150",
   },
   {
     name: "Sachin Kuber",
@@ -420,7 +420,7 @@ const Leaderboard = [
   },
   {
     name: "Abhinav Arya",
-    points: "900",
+    points: "1100",
     link: "github.com/itzabhinavarya",
   },
   {
@@ -429,7 +429,7 @@ const Leaderboard = [
   },
   {
     name: "Rohan Gupta",
-    points: "1300",
+    points: "1350",
     link: "https://github.com/rohan9896",
   },
   {
@@ -484,7 +484,7 @@ const Leaderboard = [
   },
   {
     name: "Bilal Mirza",
-    points: "1025",
+    points: "2095",
   },
   {
     name: "Asharan2511",
@@ -520,7 +520,7 @@ const Leaderboard = [
   },
   {
     name: "Moheyt",
-    points: "450",
+    points: "550",
   },
   {
     name: "ortin779",
@@ -528,11 +528,11 @@ const Leaderboard = [
   },
   {
     name: "Piyush Garg",
-    points: "150",
+    points: "650",
   },
   {
     name: "Sachin Mittal",
-    points: "100",
+    points: "850",
   },
   {
     name: "Sha1kh4",
@@ -564,7 +564,7 @@ const Leaderboard = [
   },
   {
     name: "aashish",
-    points: "880",
+    points: "980",
   },
   {
     name: "AliYar-Khan",
@@ -596,7 +596,7 @@ const Leaderboard = [
   },
   {
     name: "Ola",
-    points: "1550",
+    points: "1800",
   },
   {
     name: "Olalaye Blessing",
@@ -612,11 +612,11 @@ const Leaderboard = [
   },
   {
     name: "Shyam Raghu",
-    points: "300",
+    points: "500",
   },
   {
     name: "Vikas Patil",
-    points: "100",
+    points: "250",
   },
   {
     name: "0Armaan025",
@@ -624,6 +624,22 @@ const Leaderboard = [
   },
   {
     name: "mandharet",
+    points: "100",
+  },
+  {
+    name: "Harshit Vashisht",
+    points: "200",
+  },
+  {
+    name: "JiyaGupta-cs",
+    points: "50",
+  },
+  {
+    name: "Kurayami",
+    points: "100",
+  },
+  {
+    name: "Sandy-1711",
     points: "50",
   },
 ];
@@ -647,7 +663,7 @@ export default function FormTribeHackathon() {
 
       <div className="px-4 pb-16 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
         <a
-          href="https://www.producthunt.com/products/formbricks"
+          href="https://www.producthunt.com/posts/formbricks"
           target="_blank"
           className=" rounded-full border bg-slate-100 px-4 py-1.5 text-sm text-slate-500 hover:scale-105">
           Don&apos;t miss the launch! Get notified 🚀
@@ -1110,7 +1126,7 @@ const Breaker = ({ icon, title }) => {
       <div className="mt-4 flex items-center justify-center">
         <Image src={PHLogo} alt="ph-logo" className="mr-2 h-8 w-8" />
         <a
-          href="https://www.producthunt.com/products/formbricks"
+          href="https://www.producthunt.com/posts/formbricks"
           target="_blank"
           className="text-sm font-semibold text-[#ff6154]">
           Get notified on Product Hunt.

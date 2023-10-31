@@ -5,7 +5,11 @@ import { Button } from "@formbricks/ui/Button";
 import { Confetti } from "@formbricks/ui/Confetti";
 import { useEffect, useState } from "react";
 
-export default function ConfirmationPage() {
+interface ConfirmationPageProps {
+  environmentId: string;
+}
+
+export default function ConfirmationPage({ environmentId }: ConfirmationPageProps) {
   const [showConfetti, setShowConfetti] = useState(false);
   useEffect(() => {
     setShowConfetti(true);
@@ -18,11 +22,14 @@ export default function ConfirmationPage() {
           <div className="my-6 sm:flex-auto">
             <h1 className="text-center text-xl font-semibold text-slate-900">Upgrade successful</h1>
             <p className="mt-2 text-center text-sm text-slate-700">
-              Thanks a lot for upgrading your Formbricks subscription. You have now unlimited access.
+              Thanks a lot for upgrading your Formbricks subscription.
             </p>
           </div>
-          <Button variant="darkCTA" className="w-full justify-center" href="/">
-            Back to my surveys
+          <Button
+            variant="darkCTA"
+            className="w-full justify-center"
+            href={`/environments/${environmentId}/settings/billing`}>
+            Back to billing overview
           </Button>
         </div>
       </ContentWrapper>

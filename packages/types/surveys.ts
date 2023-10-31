@@ -16,6 +16,7 @@ export enum TSurveyQuestionType {
   CTA = "cta",
   Rating = "rating",
   Consent = "consent",
+  PictureSelection = "pictureSelection",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -82,6 +83,11 @@ export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 export const ZSurveyChoice = z.object({
   id: z.string(),
   label: z.string(),
+});
+
+export const ZSurveyPictureChoice = z.object({
+  id: z.string(),
+  imageUrl: z.string(),
 });
 
 export type TSurveyChoice = z.infer<typeof ZSurveyChoice>;
@@ -167,6 +173,11 @@ const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
   value: z.union([z.string(), z.number()]).optional(),
 });
 
+const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["submitted", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
@@ -175,6 +186,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyNPSLogic,
   ZSurveyCTALogic,
   ZSurveyRatingLogic,
+  ZSurveyPictureSelectionLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -278,6 +290,15 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
+export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.PictureSelection),
+  allowMulti: z.boolean().optional().default(false),
+  choices: z.array(ZSurveyPictureChoice),
+  logic: z.array(ZSurveyPictureSelectionLogic).optional(),
+});
+
+export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
+
 export const ZSurveyQuestion = z.union([
   // ZSurveyWelcomeQuestion,
   ZSurveyOpenTextQuestion,
@@ -287,6 +308,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyNPSQuestion,
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
+  ZSurveyPictureSelectionQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -380,6 +402,7 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("cta"),
   z.literal("rating"),
   z.literal("consent"),
+  z.literal("pictureSelection"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;

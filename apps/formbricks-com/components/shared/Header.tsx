@@ -120,9 +120,9 @@ export default function Header() {
     : "relative";
   return (
     <Popover className={`${stickyNavClass}`} as="header">
-      <a href="https://www.producthunt.com/products/formbricks" target="_blank">
+      <a href="https://www.producthunt.com/posts/formbricks" target="_blank">
         <div className="hidden bg-[#ff6154] px-4 py-2 text-center text-sm text-white md:block lg:py-0">
-          We&apos;re launching soon on Product Hunt - get notified 🚀
+          We&apos;re live on Product Hunt - Show your support for Open Source 🚀
         </div>
       </a>
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">

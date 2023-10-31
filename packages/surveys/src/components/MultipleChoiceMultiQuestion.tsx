@@ -7,7 +7,7 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
-interface MultipleChoiceSingleProps {
+interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
@@ -18,7 +18,7 @@ interface MultipleChoiceSingleProps {
   brandColor: string;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export default function MultipleChoiceMultiQuestion({
   question,
   value,
   onChange,
@@ -27,7 +27,7 @@ export default function MultipleChoiceSingleQuestion({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
-}: MultipleChoiceSingleProps) {
+}: MultipleChoiceMultiProps) {
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
     [question]
