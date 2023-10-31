@@ -176,67 +176,77 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 };
 
 export const createAction = async (data: TActionInput): Promise<TAction> => {
-  validateInputs([data, ZActionInput]);
-  const { environmentId, name, properties, sessionId } = data;
+  try {
+    validateInputs([data, ZActionInput]);
+    const { environmentId, name, properties, sessionId } = data;
 
-  let eventType: TActionClassType = "code";
-  if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
-    eventType = "automatic";
-  }
+    let eventType: TActionClassType = "code";
+    if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
+      eventType = "automatic";
+    }
 
-  const session = await getSession(sessionId);
+    const session = await getSession(sessionId);
 
-  if (!session) {
-    throw new ResourceNotFoundError("Session", sessionId);
-  }
+    if (!session) {
+      throw new ResourceNotFoundError("Session", sessionId);
+    }
 
-  let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
+    let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
 
-  if (!actionClass) {
-    actionClass = await createActionClass(environmentId, {
-      name,
-      type: eventType,
+    if (!actionClass) {
+      actionClass = await createActionClass(environmentId, {
+        name,
+        type: eventType,
+        environmentId,
+      });
+    }
+
+    const action = await prisma.event.create({
+      data: {
+        properties,
+        session: {
+          connect: {
+            id: sessionId,
+          },
+        },
+        eventClass: {
+          connect: {
+            id: actionClass.id,
+          },
+        },
+      },
+    });
+
+    const environmentPrisma = await prisma.environment.findUnique({
+      where: {
+        id: environmentId,
+      },
+      select: { widgetSetupCompleted: true },
+    });
+
+    if (!environmentPrisma?.widgetSetupCompleted) {
+      updateEnvironment(environmentId, { widgetSetupCompleted: true });
+    }
+
+    revalidateTag(sessionId);
+    actionCache.revalidate({
       environmentId,
     });
+
+    return {
+      id: action.id,
+      createdAt: action.createdAt,
+      sessionId: action.sessionId,
+      properties: action.properties,
+      actionClass,
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
   }
-
-  const action = await prisma.event.create({
-    data: {
-      properties,
-      session: {
-        connect: {
-          id: sessionId,
-        },
-      },
-      eventClass: {
-        connect: {
-          id: actionClass.id,
-        },
-      },
-    },
-  });
-  const environmentPrisma = await prisma.environment.findUnique({
-    where: {
-      id: environmentId,
-    },
-    select: { widgetSetupCompleted: true },
-  });
-  if (!environmentPrisma?.widgetSetupCompleted) {
-    updateEnvironment(environmentId, { widgetSetupCompleted: true });
-  }
-
-  revalidateTag(sessionId);
-  actionCache.revalidate({
-    environmentId,
-  });
-
-  return {
-    id: action.id,
-    createdAt: action.createdAt,
-    sessionId: action.sessionId,
-    properties: action.properties,
-    actionClass,
-  };
 };
 
 export const getActionCountInLastHour = async (actionClassId: string): Promise<number> =>
