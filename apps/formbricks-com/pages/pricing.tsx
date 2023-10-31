@@ -3,6 +3,7 @@ import Layout from "@/components/shared/Layout";
 import { OpenSourceInfo } from "@/components/shared/OpenSourceInfo";
 import { GetStartedWithPricing } from "@/components/shared/PricingGetStarted";
 import { PricingTable } from "../components/shared/PricingTable";
+import { Button } from "@formbricks/ui/Button";
 
 const inProductSurveys = {
   leadRow: {
@@ -135,6 +136,44 @@ const PricingPage = () => {
     <Layout
       title="Pricing | Formbricks Open Source Experience Management"
       description="All our plans start free - choose what's best for you!">
+      <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-50 px-3 pt-4 shadow-2xl sm:px-8 md:pt-8 lg:gap-x-10 lg:px-12 lg:pt-0">
+        <svg
+          viewBox="0 0 1024 1024"
+          className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+          aria-hidden="true">
+          <circle
+            cx={512}
+            cy={512}
+            r={512}
+            fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+            fillOpacity="0.7"
+          />
+          <defs>
+            <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+              <stop stopColor="#00E6CA" />
+              <stop offset={0} stopColor="#00C4B8" />
+            </radialGradient>
+          </defs>
+        </svg>
+        <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-8 lg:text-left">
+          <h2 className="text-2xl font-bold text-gray-800 sm:text-3xl">
+            Launch Special:
+            <br /> Go Unlimited! Forever!
+          </h2>
+          <p className="text-md mt-6 leading-8 text-gray-700">
+            Get access to all pro features and unlimited responses + identified users for a flat fee of{" "}
+            <b>only $99/month.</b>
+            <br /> <br />
+            <span className="text-gray-400">This deal ends on 31st of October 2023 at 11:59 PM PST.</span>
+          </p>
+        </div>
+        <div className="mb-8 items-center justify-center">
+          <Button className="w-full justify-center py-2 shadow-sm" href="https://app.formbricks.com/">
+            Get Started
+          </Button>
+        </div>
+      </div>
+
       <HeroTitle
         headingPt1=""
         headingTeal="Pricing"
