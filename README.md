@@ -1,9 +1,5 @@
 <div id="top"></div>
 
-<div align="center">  
-<a href="https://www.producthunt.com/posts/formbricks" target="_blank">🔥 Go to Product Hunt 🔥</a>
-</div>
-
 [<img src="ph.png">](https://www.producthunt.com/posts/formbricks)
 
 <p align="center">
