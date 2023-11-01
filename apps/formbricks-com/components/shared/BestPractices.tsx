@@ -1,4 +1,3 @@
-import { Button } from "@formbricks/ui/Button";
 import { usePlausible } from "next-plausible";
 import { useRouter } from "next/router";
 import BestPracticeNavigation from "./BestPracticeNavigation";
@@ -22,7 +21,7 @@ export default function InsightOppos() {
 
       <BestPracticeNavigation />
 
-      <div className="mx-auto mt-4 w-fit px-4 py-2 text-center">
+      {/* <div className="mx-auto mt-4 w-fit px-4 py-2 text-center">
         <Button
           className="hidden md:block"
           variant="highlight"
@@ -32,7 +31,7 @@ export default function InsightOppos() {
           }}>
           Launch Live Demo
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 }
