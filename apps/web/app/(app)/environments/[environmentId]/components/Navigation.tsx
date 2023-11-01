@@ -293,18 +293,17 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
-                      <ProfileAvatar userId={session.user.id} />
-                      {/* {session.user.image ? (
+                      {session.user.image ? (
                         <Image
                           src={session.user.image}
-                          width="100"
-                          height="100"
-                          className="ph-no-capture h-9 w-9 rounded-full"
+                          width="40"
+                          height="40"
+                          className="ph-no-capture h-10 w-10 rounded-full"
                           alt="Profile picture"
                         />
                       ) : (
                         <ProfileAvatar userId={session.user.id} />
-                      )} */}
+                      )}
 
                       <div>
                         <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">

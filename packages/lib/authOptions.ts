@@ -62,9 +62,8 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          firstname: user.firstname,
-          lastname: user.firstname,
           emailVerified: user.emailVerified,
+          image: user.image,
         };
       },
     }),
@@ -117,9 +116,8 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          firstname: user.firstname,
-          lastname: user.firstname,
           emailVerified: user.emailVerified,
+          image: user.image,
         };
       },
     }),
@@ -151,6 +149,7 @@ export const authOptions: NextAuthOptions = {
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
         name: existingUser.name,
+        image: existingUser.image,
       };
 
       return {
@@ -167,6 +166,9 @@ export const authOptions: NextAuthOptions = {
       session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
       session.user.name = token.name || "";
+
+      // @ts-ignore
+      session.user.image = token.image || "";
 
       return session;
     },
