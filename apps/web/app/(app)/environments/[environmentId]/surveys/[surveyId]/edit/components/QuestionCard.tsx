@@ -34,9 +34,11 @@ import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { TProduct } from "@formbricks/types/product";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
+  product?: TProduct;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -76,6 +78,7 @@ export function BackButtonInput({
 
 export default function QuestionCard({
   localSurvey,
+  product,
   questionIdx,
   moveQuestion,
   updateQuestion,
@@ -169,16 +172,7 @@ export default function QuestionCard({
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
-              {question.type === TSurveyQuestionType.FileUpload ? (
-                <FileUploadQuestionForm
-                  localSurvey={localSurvey}
-                  question={question}
-                  questionIdx={questionIdx}
-                  updateQuestion={updateQuestion}
-                  lastQuestion={lastQuestion}
-                  isInValid={isInValid}
-                />
-              ) : question.type === TSurveyQuestionType.OpenText ? (
+              {question.type === TSurveyQuestionType.OpenText ? (
                 <OpenQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -243,6 +237,16 @@ export default function QuestionCard({
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
                   localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.FileUpload ? (
+                <FileUploadQuestionForm
+                  localSurvey={localSurvey}
+                  product={product}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

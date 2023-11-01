@@ -5,12 +5,14 @@ import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { toast } from "react-hot-toast";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
+import { TProduct } from "@formbricks/types/product";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
+  product?: TProduct;
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -23,6 +25,7 @@ export default function FileUploadQuestionForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  product,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -61,6 +64,20 @@ export default function FileUploadQuestionForm({
       updateQuestion(questionIdx, { allowedFileTypes: updatedExtensions });
     }
   };
+
+  const maxSizeInMBLimit = useMemo(() => {
+    if (!product || !product?.billingInfo) {
+      return 10;
+    }
+
+    if (product.billingInfo.features.linkSurvey.status === "active") {
+      // 1GB in MB
+      return 1024;
+    }
+
+    return 10;
+  }, [product]);
+
   return (
     <form>
       <div className="mt-3">
@@ -143,7 +160,17 @@ export default function FileUploadQuestionForm({
                 type="number"
                 id="fileSizeLimit"
                 value={question.maxSizeInMB}
-                onChange={(e) => updateQuestion(questionIdx, { maxSizeInMB: parseInt(e.target.value, 10) })}
+                onChange={(e) => {
+                  const parsedValue = parseInt(e.target.value, 10);
+
+                  if (parsedValue > maxSizeInMBLimit) {
+                    toast.error(`Max file size limit is ${maxSizeInMBLimit} MB`);
+                    updateQuestion(questionIdx, { maxSizeInMB: maxSizeInMBLimit });
+                    return;
+                  }
+
+                  updateQuestion(questionIdx, { maxSizeInMB: parseInt(e.target.value, 10) });
+                }}
                 className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
               />
               MB

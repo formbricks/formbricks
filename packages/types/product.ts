@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZEnvironment } from "./environment";
 import { ZColor, ZPlacement } from "./common";
+import { ZTeamBilling } from "./teams";
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -8,6 +9,7 @@ export const ZProduct = z.object({
   updatedAt: z.date(),
   name: z.string(),
   teamId: z.string(),
+  billingInfo: ZTeamBilling.optional(),
   brandColor: ZColor,
   highlightBorderColor: ZColor.nullable(),
   recontactDays: z.number().int(),

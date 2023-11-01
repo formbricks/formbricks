@@ -24,7 +24,6 @@ import {
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isLight } from "@/app/lib/utils";
-import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 
 interface EmailTabProps {
   survey: TSurvey;

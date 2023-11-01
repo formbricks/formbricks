@@ -22,6 +22,11 @@ const selectProduct = {
   updatedAt: true,
   name: true,
   teamId: true,
+  team: {
+    select: {
+      billing: true,
+    },
+  },
   brandColor: true,
   highlightBorderColor: true,
   recontactDays: true,
@@ -82,7 +87,14 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
           select: selectProduct,
         });
 
-        return productPrisma;
+        if (!productPrisma) {
+          return null;
+        }
+
+        return {
+          ...productPrisma,
+          billingInfo: productPrisma.team.billing,
+        };
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -263,9 +275,7 @@ export const createProduct = async (
     type: "production",
   });
 
-  product = await updateProduct(product.id, {
+  return await updateProduct(product.id, {
     environments: [devEnvironment, prodEnvironment],
   });
-
-  return product;
 };
