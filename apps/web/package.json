@@ -31,6 +31,7 @@
     "@t3-oss/env-nextjs": "^0.7.1",
     "@vercel/og": "^0.5.20",
     "bcryptjs": "^2.4.3",
+    "dotenv": "^16.3.1",
     "encoding": "^0.1.13",
     "framer-motion": "10.16.4",
     "googleapis": "^128.0.0",
