@@ -1,11 +1,11 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/v1/surveys";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn, shuffleQuestions } from "../../lib/utils";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+import { useMemo, useRef, useState, useEffect } from "preact/hooks";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -60,6 +60,12 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

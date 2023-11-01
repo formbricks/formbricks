@@ -1,4 +1,4 @@
-import { TJsState, TJsSyncParams } from "@formbricks/types/v1/js";
+import { TJsState, TJsSyncParams } from "@formbricks/types/js";
 import { trackAction } from "./actions";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
@@ -49,7 +49,7 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params);
     if (syncResult?.ok !== true) {
-      logger.error(`Sync failed: ${syncResult.error}`);
+      logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
       return;
     }
 

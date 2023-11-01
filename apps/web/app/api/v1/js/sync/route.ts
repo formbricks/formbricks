@@ -1,7 +1,7 @@
 import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ZJsSyncInput } from "@formbricks/types/v1/js";
+import { ZJsSyncInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -29,7 +29,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
     return responses.internalServerErrorResponse(
       "Unable to complete response. See server logs for details.",
       true

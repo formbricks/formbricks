@@ -1,7 +1,7 @@
 "use client";
 
 import { updateProductAction } from "../actions";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TProduct } from "@formbricks/types/product";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -23,16 +23,28 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { isSubmitting },
+    watch,
   } = useForm<TEditProductName>({
     defaultValues: {
       name: product.name,
     },
   });
+  const productNameValue = watch("name", product.name || "");
+  const isNotEmptySpaces = (value: string) => value.trim() !== "";
 
   const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
+    data.name = data.name.trim();
     try {
-      const updatedProduct = await updateProductAction(environmentId, product.id, data);
+      if (!isNotEmptySpaces(data.name)) {
+        toast.error("Please enter at least one character");
+        return;
+      }
+      if (data.name === product.name) {
+        toast.success("This is already your product name");
+        return;
+      }
+      const updatedProduct = await updateProductAction(environmentId, product.id, { name: data.name });
       if (!!updatedProduct?.id) {
         toast.success("Product name updated successfully.");
         router.refresh();
@@ -50,16 +62,15 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
         type="text"
         id="fullname"
         defaultValue={product.name}
-        {...register("name", { required: { value: true, message: "Product name can't be empty" } })}
+        {...register("name", { required: true })}
       />
 
-      {errors?.name ? (
-        <div className="my-2">
-          <p className="text-xs text-red-500">{errors?.name?.message}</p>
-        </div>
-      ) : null}
-
-      <Button type="submit" variant="darkCTA" className="mt-4">
+      <Button
+        type="submit"
+        variant="darkCTA"
+        className="mt-4"
+        loading={isSubmitting}
+        disabled={!isNotEmptySpaces(productNameValue) || isSubmitting}>
         Update
       </Button>
     </form>

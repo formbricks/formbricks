@@ -6,12 +6,13 @@ import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Controller, SubmitHandler, useForm, FormProvider } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
 import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
 import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
 import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
 import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 
@@ -27,11 +28,13 @@ export const SigninForm = ({
   passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
+  azureOAuthEnabled,
 }: {
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -42,29 +45,39 @@ export const SigninForm = ({
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
 
-    const signInResponse = await signIn("credentials", {
-      callbackUrl: searchParams?.get("callbackUrl") || "/",
-      email: data.email,
-      password: data.password,
-      ...(totpLogin && { totpCode: data.totpCode }),
-      ...(totpBackup && { backupCode: data.backupCode }),
-      redirect: false,
-    });
+    try {
+      const signInResponse = await signIn("credentials", {
+        callbackUrl: searchParams?.get("callbackUrl") || "/",
+        email: data.email,
+        password: data.password,
+        ...(totpLogin && { totpCode: data.totpCode }),
+        ...(totpBackup && { backupCode: data.backupCode }),
+        redirect: false,
+      });
 
-    if (signInResponse?.error === "second factor required") {
-      setTotpLogin(true);
+      if (signInResponse?.error === "second factor required") {
+        setTotpLogin(true);
+        setLoggingIn(false);
+        return;
+      }
+
+      if (signInResponse?.error) {
+        setLoggingIn(false);
+        setSignInError(signInResponse.error);
+        return;
+      }
+
+      if (!signInResponse?.error) {
+        router.push(searchParams?.get("callbackUrl") || "/");
+      }
+    } catch (error) {
+      const errorMessage = error.toString();
+      const errorFeedback = errorMessage.includes("Invalid URL")
+        ? "Too many requests, please try again after some time!"
+        : error.message;
+      setSignInError(errorFeedback);
+    } finally {
       setLoggingIn(false);
-      return;
-    }
-
-    if (signInResponse?.error) {
-      setLoggingIn(false);
-      setSignInError(signInResponse.error);
-      return;
-    }
-
-    if (!signInResponse?.error) {
-      router.push(searchParams?.get("callbackUrl") || "/");
     }
   };
 
@@ -75,9 +88,15 @@ export const SigninForm = ({
   const [totpBackup, setTotpBackup] = useState(false);
   const [signInError, setSignInError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
-
+  const error = searchParams?.get("error");
   const callbackUrl = searchParams?.get("callbackUrl");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
+
+  useEffect(() => {
+    if (error) {
+      setSignInError(error);
+    }
+  }, []);
 
   const formLabel = useMemo(() => {
     if (totpBackup) {
@@ -192,6 +211,12 @@ export const SigninForm = ({
           {githubOAuthEnabled && !totpLogin && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
+            </>
+          )}
+
+          {azureOAuthEnabled && !totpLogin && (
+            <>
+              <AzureButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>

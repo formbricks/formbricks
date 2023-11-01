@@ -1,7 +1,7 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "./constants";
+import { EMAIL_VERIFICATION_DISABLED } from "./constants";
 import { verifyToken } from "./jwt";
 import { getProfileByEmail } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
@@ -9,6 +9,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import AzureAD from "next-auth/providers/azure-ad";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -131,6 +132,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
+    AzureAD({
+      clientId: env.AZUREAD_CLIENT_ID || "",
+      clientSecret: env.AZUREAD_CLIENT_SECRET || "",
+      tenantId: env.AZUREAD_TENANT_ID || "",
+    }),
   ],
   callbacks: {
     async jwt({ token }) {
@@ -177,7 +183,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account.provider) {
-        const provider = account.provider.toLowerCase() as IdentityProvider;
+        const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
         // check if accounts for this provider / account Id already exists
         const existingUserWithAccount = await prisma.user.findFirst({
           include: {
@@ -229,7 +235,7 @@ export const authOptions: NextAuthOptions = {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        const createdUser = await prisma.user.create({
+        await prisma.user.create({
           data: {
             name: user.name,
             email: user.email,
@@ -341,16 +347,6 @@ export const authOptions: NextAuthOptions = {
             memberships: true,
           },
         });
-
-        const teamId = createdUser.memberships?.[0]?.teamId;
-        if (teamId) {
-          fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
-            method: "POST",
-            headers: {
-              "x-api-key": INTERNAL_SECRET,
-            },
-          });
-        }
 
         return true;
       }

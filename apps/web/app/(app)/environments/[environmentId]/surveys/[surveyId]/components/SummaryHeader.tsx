@@ -1,6 +1,6 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,17 +20,17 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProfile } from "@formbricks/types/profile";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 
 interface SummaryHeaderProps {
   surveyId: string;
   environment: TEnvironment;
   survey: TSurvey;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
 }
@@ -38,7 +38,7 @@ const SummaryHeader = ({
   surveyId,
   environment,
   survey,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
 }: SummaryHeaderProps) => {
@@ -56,12 +56,7 @@ const SummaryHeader = ({
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && (
-          <LinkSurveyShareButton
-            survey={survey}
-            surveyBaseUrl={surveyBaseUrl}
-            product={product}
-            profile={profile}
-          />
+          <LinkSurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} profile={profile} />
         )}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
@@ -87,7 +82,7 @@ const SummaryHeader = ({
                 <LinkSurveyShareButton
                   className="flex w-full justify-center p-1"
                   survey={survey}
-                  surveyBaseUrl={surveyBaseUrl}
+                  webAppUrl={webAppUrl}
                   product={product}
                   profile={profile}
                 />
@@ -172,7 +167,7 @@ const SummaryHeader = ({
       <SuccessMessage
         environment={environment}
         survey={survey}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
       />

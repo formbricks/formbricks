@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@formbricks/lib/cn";
 import { md } from "@formbricks/lib/markdownIt";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
@@ -46,6 +46,7 @@ export default function EditWelcomeCard({
       },
     });
   };
+
   return (
     <div
       className={cn(
@@ -99,10 +100,11 @@ export default function EditWelcomeCard({
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
+                id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string) => {
-                  updateSurvey({ fileUrl: url });
+                onFileUpload={(url: string[]) => {
+                  updateSurvey({ fileUrl: url[0] });
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
               />
@@ -148,7 +150,7 @@ export default function EditWelcomeCard({
                     <Input
                       id="buttonLabel"
                       name="buttonLabel"
-                      value={localSurvey?.welcomeCard?.buttonLabel || "Next"}
+                      defaultValue={localSurvey?.welcomeCard?.buttonLabel || "Next"}
                       onChange={(e) => updateSurvey({ buttonLabel: e.target.value })}
                     />
                   </div>

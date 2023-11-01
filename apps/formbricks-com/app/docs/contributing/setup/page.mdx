@@ -1,6 +1,7 @@
-export const meta = {
+export const metadata = {
   title: "Formbricks Development Setup: Complete Guide to Local Environment Configuration for Dev",
-  description: "Step-by-step guide to setting up your local development environment for Formbricks. Includes installing essential tools like Node.JS, pnpm, and Docker, and accessing the entire Formbricks stack including the Demo app and the main website",
+  description:
+    "Step-by-step guide to setting up your local development environment for Formbricks. Includes installing essential tools like Node.JS, pnpm, and Docker, and accessing the entire Formbricks stack including the Demo app and the main website",
 };
 
 #### Contributing
@@ -14,6 +15,7 @@ To get the project running locally on your machine you need to have the followin
 - [Docker](https://www.docker.com/) (to run PostgreSQL / MailHog)
 
 1. Clone the project:
+
 <Col>
    <CodeGroup title="Git clone Formbricks monorepo">
 
@@ -33,7 +35,9 @@ To get the project running locally on your machine you need to have the followin
 
    </CodeGroup>
 </Col>
+
 1. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
+
 <Col>
    <CodeGroup title="Install dependencies via pnpm">
 
@@ -43,7 +47,9 @@ To get the project running locally on your machine you need to have the followin
 
    </CodeGroup>
 </Col>
+
 1. Create a `.env` file based on `.env.example`. It's already preset to work with the docker-compose setup but you can also change values if needed.
+
 <Col>
    <CodeGroup title="Define environment variables">
 
@@ -53,18 +59,21 @@ To get the project running locally on your machine you need to have the followin
 
    </CodeGroup>
 </Col>
+
 1. Generate a secret value mandatory to be set for the key ENCRYPTION_KEY in the .env file. You can use the following command to generate the random string of required length:
+
 <Col>
    <CodeGroup title="Set value of ENCRYPTION_KEY">
 
    ```bash
-   openssl rand -base64 24
+   openssl rand -hex 32
    ```
 
    </CodeGroup>
 </Col>
 
 1. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the formbricks dev setup:
+
 <Col>
    <CodeGroup title="Start Formbricks Dev Setup">
 
@@ -86,6 +95,7 @@ To get the project running locally on your machine you need to have the followin
 ### Build
 
 To build all apps and packages and check for build errors, run the following command:
+
 <Col>
 <CodeGroup title="Build Formbricks stack">
 
@@ -98,6 +108,7 @@ pnpm build
 ### Access Demo app
 
 To run the [Demo app](/docs/contributing/demo), run the following command in a separate terminal window:
+
 <Col>
 <CodeGroup title="Start Formbricks Demo App">
 
@@ -112,6 +123,7 @@ You can now access the Demo app on [http://localhost:3002](http://localhost:3002
 ### Access Formbricks website
 
 If you want to make changes to the Formbricks website, e.g. to update the documentation, run the following command in a separate terminal window:
+
 <Col>
 <CodeGroup title="Start Formbricks Website">
 

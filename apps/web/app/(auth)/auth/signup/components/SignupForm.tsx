@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
 import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
 import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 
 export const SignupForm = ({
@@ -19,6 +20,7 @@ export const SignupForm = ({
   emailVerificationDisabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
+  azureOAuthEnabled,
 }: {
   webAppUrl: string;
   privacyUrl: string | undefined;
@@ -27,6 +29,7 @@ export const SignupForm = ({
   emailVerificationDisabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -87,14 +90,14 @@ export const SignupForm = ({
   return (
     <>
       {error && (
-        <div className="absolute top-10 rounded-md bg-teal-50 p-4">
+        <div className="absolute top-10 rounded-md bg-red-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <XCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+              <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-teal-800">An error occurred when logging you in</h3>
-              <div className="mt-2 text-sm text-teal-700">
+              <h3 className="text-sm font-medium text-red-800">An error occurred when signing you up</h3>
+              <div className="mt-2 text-sm text-red-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>
             </div>
@@ -197,6 +200,11 @@ export const SignupForm = ({
           {githubOAuthEnabled && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
+            </>
+          )}
+          {azureOAuthEnabled && (
+            <>
+              <AzureButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>

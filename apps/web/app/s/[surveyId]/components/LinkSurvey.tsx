@@ -2,18 +2,18 @@
 
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
-import { createDisplay } from "@formbricks/lib/client/display";
+import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
+import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TProduct } from "@formbricks/types/product";
+import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
-import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/v1/responses";
-import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import { FormbricksAPI } from "@formbricks/api";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -39,8 +39,11 @@ export default function LinkSurvey({
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
+  const sourceParam = searchParams?.get("source");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
-  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId));
+  const [surveyState, setSurveyState] = useState(
+    new SurveyState(survey.id, singleUseId, responseId, personId)
+  );
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
@@ -60,11 +63,10 @@ export default function LinkSurvey({
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
           },
           setSurveyState: setSurveyState,
-          personId,
         },
         surveyState
       ),
-    [personId, webAppUrl]
+    [webAppUrl]
   );
   const [autoFocus, setAutofocus] = useState(false);
   const hasFinishedSingleUseResponse = useMemo(() => {
@@ -106,8 +108,7 @@ export default function LinkSurvey({
   if (!surveyState.isResponseFinished() && hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
-
-  if (emailVerificationStatus && emailVerificationStatus !== "verified") {
+  if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
       return <VerifyEmail survey={survey} isErrorComponent={true} />;
     }
@@ -137,7 +138,18 @@ export default function LinkSurvey({
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
             if (!isPreview) {
-              const { id } = await createDisplay({ surveyId: survey.id }, webAppUrl);
+              const api = new FormbricksAPI({
+                apiHost: webAppUrl,
+                environmentId: survey.environmentId,
+              });
+              const res = await api.client.display.create({
+                surveyId: survey.id,
+              });
+              if (!res.ok) {
+                throw new Error("Could not create display");
+              }
+              const { id } = res.data;
+
               const newSurveyState = surveyState.copy();
               newSurveyState.updateDisplayId(id);
               setSurveyState(newSurveyState);
@@ -151,6 +163,10 @@ export default function LinkSurvey({
                   ...hiddenFieldsRecord,
                 },
                 finished: responseUpdate.finished,
+                meta: {
+                  url: window.location.href,
+                  source: sourceParam || "",
+                },
               });
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}

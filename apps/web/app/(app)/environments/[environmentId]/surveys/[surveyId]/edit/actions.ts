@@ -4,8 +4,8 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { TSurvey } from "@formbricks/types/surveys";
 import { getServerSession } from "next-auth";
 
 export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {

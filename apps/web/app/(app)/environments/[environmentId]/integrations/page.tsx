@@ -1,9 +1,10 @@
+import AirtableLogo from "./airtable/images/airtable.svg";
+import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 import JsLogo from "@/images/jslogo.png";
+import MakeLogo from "@/images/make-small.png";
+import n8nLogo from "@/images/n8n.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
-import GoogleSheetsLogo from "@/images/google-sheets-small.png";
-import n8nLogo from "@/images/n8n.png";
-import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui/Card";
 import Image from "next/image";
 import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
@@ -23,6 +24,8 @@ export default async function IntegrationsPage({ params }) {
   const containsGoogleSheetIntegration = integrations.some(
     (integration) => integration.type === "googleSheets"
   );
+
+  const containsAirtableIntegration = integrations.some((integration) => integration.type === "airtable");
 
   const integrationCards = [
     {
@@ -75,6 +78,19 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
       connected: containsGoogleSheetIntegration ? true : false,
       statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/airtable`,
+      connectText: `${containsAirtableIntegration ? "Manage Table" : "Connect"}`,
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/integrations/airtable",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Airtable",
+      description: "Instantly populate your airtable table with survey data",
+      icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
+      connected: containsAirtableIntegration ? true : false,
+      statusText: containsAirtableIntegration ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",

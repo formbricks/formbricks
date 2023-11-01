@@ -1,18 +1,12 @@
 "use client";
 
-import { RatingResponse } from "../RatingResponse";
-import ResponseNotes from "./components/ResponseNote";
-import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
-import { deleteResponseAction } from "./actions";
-import { DeleteDialog } from "../DeleteDialog";
-import QuestionSkip from "./components/QuestionSkip";
-import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { timeSince } from "@formbricks/lib/time";
-import { QuestionType } from "@formbricks/types/questions";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
-import { PersonAvatar } from "../Avatars";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
@@ -20,10 +14,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
-import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { PersonAvatar } from "../Avatars";
+import { DeleteDialog } from "../DeleteDialog";
+import { RatingResponse } from "../RatingResponse";
+import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
+import { deleteResponseAction } from "./actions";
+import QuestionSkip from "./components/QuestionSkip";
+import ResponseNotes from "./components/ResponseNote";
+import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { PictureSelectionResponse } from "../PictureSelectionResponse";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -184,6 +185,7 @@ export default function SingleResponseCard({
               {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
             </p>
           )}
+          {response.meta?.source && <p>Source: {response.meta.source}</p>}
         </div>
       )}
     </>
@@ -292,7 +294,7 @@ export default function SingleResponseCard({
                   />
                 )}
                 {typeof response.data[question.id] !== "object" ? (
-                  question.type === QuestionType.Rating ? (
+                  question.type === TSurveyQuestionType.Rating ? (
                     <div>
                       <RatingResponse
                         scale={question.scale}
@@ -305,6 +307,11 @@ export default function SingleResponseCard({
                       {response.data[question.id]}
                     </p>
                   )
+                ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                  <PictureSelectionResponse
+                    choices={question.choices}
+                    selected={response.data[question.id]}
+                  />
                 ) : (
                   <p className="ph-no-capture my-1 font-semibold text-slate-700">
                     {handleArray(response.data[question.id])}

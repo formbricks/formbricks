@@ -4,8 +4,9 @@ import {
   TSurveyConsentQuestion,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
+  TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
-} from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/surveys";
 
 const validationRules = {
   multipleChoiceMulti: (question: TSurveyMultipleChoiceMultiQuestion) => {
@@ -16,6 +17,9 @@ const validationRules = {
   },
   consent: (question: TSurveyConsentQuestion) => {
     return question.label.trim() !== "";
+  },
+  pictureSelection: (question: TSurveyPictureSelectionQuestion) => {
+    return question.choices.length >= 2;
   },
   defaultValidation: (question: TSurveyQuestion) => {
     return question.headline.trim() !== "";

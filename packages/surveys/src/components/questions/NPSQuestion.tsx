@@ -1,10 +1,10 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyNPSQuestion } from "@formbricks/types/v1/surveys";
 import { cn } from "../../lib/utils";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -31,6 +31,12 @@ export default function NPSQuestion({
         e.preventDefault();
         onSubmit({ [question.id]: value });
       }}>
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">

@@ -1,13 +1,13 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/v1/surveys";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn, shuffleQuestions } from "../../lib/utils";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 
-interface MultipleChoiceSingleProps {
+interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
@@ -17,7 +17,7 @@ interface MultipleChoiceSingleProps {
   isLastQuestion: boolean;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export default function MultipleChoiceMultiQuestion({
   question,
   value,
   onChange,
@@ -25,7 +25,7 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-}: MultipleChoiceSingleProps) {
+}: MultipleChoiceMultiProps) {
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
     [question]
@@ -33,7 +33,7 @@ export default function MultipleChoiceSingleQuestion({
 
   const [otherSelected, setOtherSelected] = useState(
     !!value &&
-      (value as string[]).some((item) => {
+      ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
         return getChoicesWithoutOtherLabels().includes(item) === false;
       })
   ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
@@ -91,6 +91,12 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit({ [question.id]: newValue });
       }}
       className="w-full">
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

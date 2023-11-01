@@ -12,8 +12,10 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.429.0",
-    "@aws-sdk/s3-request-presigner": "^3.429.0",
+    "@formbricks/api": "*",
+    "@aws-sdk/client-s3": "3.433.0",
+    "@aws-sdk/s3-request-presigner": "3.433.0",
+    "mime": "3.0.0",
     "@formbricks/database": "*",
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "@types/jsonwebtoken": "^9.0.3",
+    "@types/mime": "3.0.3",
     "eslint-config-formbricks": "workspace:*"
   }
 }

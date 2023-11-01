@@ -2,7 +2,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasTeamAccess } from "@/app/lib/api/apiHelper";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProducts } from "@formbricks/lib/product/service";
-import { AuthenticationError, AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";

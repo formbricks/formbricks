@@ -1,8 +1,8 @@
 "use client";
 
 import { truncate } from "@/app/lib/utils";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTeam } from "@formbricks/types/v1/teams";
+import { TProduct } from "@formbricks/types/product";
+import { TTeam } from "@formbricks/types/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { FaDiscord } from "react-icons/fa6";
@@ -192,7 +192,7 @@ export default function SettingsNavbar({
 
   return (
     <>
-      <div className="fixed hidden h-full bg-white py-2 pl-4 pr-10 md:block ">
+      <div className="fixed hidden h-full overflow-auto bg-white py-2 pl-4 pr-10 md:block">
         <nav className="flex-1 space-y-1 bg-white px-2">
           {navigation.map((item) => (
             <div key={item.title}>

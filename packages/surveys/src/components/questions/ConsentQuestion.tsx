@@ -1,9 +1,9 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyConsentQuestion } from "@formbricks/types/v1/surveys";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import HtmlBody from "../general/HtmlBody";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -26,6 +26,12 @@ export default function ConsentQuestion({
 }: ConsentQuestionProps) {
   return (
     <div>
+      {question.imageUrl && (
+        <div className="my-4 rounded-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
+        </div>
+      )}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 

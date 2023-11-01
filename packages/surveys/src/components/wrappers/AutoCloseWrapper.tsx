@@ -1,4 +1,4 @@
-import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { useEffect, useRef, useState } from "preact/hooks";
 import Progress from "../general/Progress";
 

@@ -35,6 +35,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
 
   const submitEventClass = async () => {
     const data = getValues();
+    data.role = data.role || MembershipRole.Admin;
     onSubmit(data);
     setOpen(false);
     reset();
@@ -55,7 +56,10 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
             <div className="w-full space-y-4">
               <div>
                 <Label>Full Name</Label>
-                <Input placeholder="e.g. Hans Wurst" {...register("name", { required: true })} />
+                <Input
+                  placeholder="e.g. Hans Wurst"
+                  {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
+                />
               </div>
               <div>
                 <Label>Email Adress</Label>
