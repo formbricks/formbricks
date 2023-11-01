@@ -9,6 +9,7 @@ interface WelcomeCardProps {
   buttonLabel?: string;
   timeToFinish?: boolean;
   onSubmit: (data: { [x: string]: any }) => void;
+  brandColor: string;
 }
 
 export default function WelcomeCard({
@@ -18,6 +19,7 @@ export default function WelcomeCard({
   buttonLabel,
   timeToFinish,
   onSubmit,
+  brandColor,
 }: WelcomeCardProps) {
   return (
     <div>
@@ -38,6 +40,7 @@ export default function WelcomeCard({
               onSubmit({ ["welcomeCard"]: "clicked" });
             }}
             type="button"
+            brandColor={brandColor}
           />
           <div className="flex items-center text-xs text-[--fb-text-2]">Press Enter ↵</div>
         </div>

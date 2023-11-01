@@ -13,6 +13,7 @@ interface CTAQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  brandColor: string;
 }
 
 export default function CTAQuestion({
@@ -21,6 +22,7 @@ export default function CTAQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  brandColor,
 }: CTAQuestionProps) {
   return (
     <div>
@@ -60,6 +62,7 @@ export default function CTAQuestion({
               onSubmit({ [question.id]: "clicked" });
             }}
             type="button"
+            brandColor={brandColor}
           />
         </div>
       </div>

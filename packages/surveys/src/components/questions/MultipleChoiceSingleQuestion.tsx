@@ -15,6 +15,7 @@ interface MultipleChoiceSingleProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  brandColor: string;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -25,6 +26,7 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  brandColor,
 }: MultipleChoiceSingleProps) {
   const [otherSelected, setOtherSelected] = useState(
     !!value && !question.choices.find((c) => c.label === value)
@@ -100,7 +102,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
-                    className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setOtherSelected(false);
@@ -137,7 +139,7 @@ export default function MultipleChoiceSingleQuestion({
                     tabIndex={-1}
                     name={question.id}
                     value={otherOption.label}
-                    className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={() => {
                       setOtherSelected(!otherSelected);
@@ -191,6 +193,7 @@ export default function MultipleChoiceSingleQuestion({
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
+          brandColor={brandColor}
         />
       </div>
     </form>

@@ -67,7 +67,7 @@ p.fb-editor-paragraph {
   --yellow-500: rgb(234 179 8);
 
   /* Default Light Theme, you can override everything by changing these values */
-  --fb-primary: rgb(255, 255, 255);
+  --fb-brand-color: rgb(255, 255, 255);
   --fb-on-primary: black;
   --fb-border: var(--slate-300);
   --fb-border-highlight: var(--slate-500);

@@ -13,6 +13,7 @@ interface ConsentQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  brandColor: string;
 }
 
 export default function ConsentQuestion({
@@ -23,6 +24,7 @@ export default function ConsentQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  brandColor,
 }: ConsentQuestionProps) {
   return (
     <div>
@@ -61,7 +63,7 @@ export default function ConsentQuestion({
               }
             }}
             checked={value === "accepted"}
-            className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
+            className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
             required={question.required}
           />
@@ -80,6 +82,7 @@ export default function ConsentQuestion({
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
+            brandColor={brandColor}
           />
         </div>
       </form>

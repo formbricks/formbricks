@@ -12,6 +12,7 @@ import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
+  brandColor,
   formbricksSignature,
   activeQuestionId,
   onDisplay = () => {},
@@ -128,6 +129,7 @@ export function Survey({
           buttonLabel={survey.welcomeCard.buttonLabel}
           timeToFinish={survey.welcomeCard.timeToFinish}
           onSubmit={onSubmit}
+          brandColor={brandColor}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -149,6 +151,7 @@ export function Survey({
             onChange={onChange}
             onSubmit={onSubmit}
             onBack={onBack}
+            brandColor={brandColor}
             isFirstQuestion={
               history && prefillResponseData
                 ? history[history.length - 1] === survey.questions[0].id

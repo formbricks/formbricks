@@ -4,7 +4,7 @@
 
 /* Example on overriding packages/js colors */
 .dark {
-  --fb-primary: rgb(0, 157, 168);
+  --fb-brand-color: rgb(0, 157, 168);
   --fb-on-primary: black;
   --fb-border: var(--slate-300);
   --fb-border-highlight: var(--slate-500);

@@ -18,7 +18,7 @@ export const addCustomThemeToDom = ({ brandColor }: { brandColor: string }) => {
   styleElement.id = "formbricks__css__custom";
   styleElement.innerHTML = `
     :root {
-      --fb-primary: ${brandColor};
+      --fb-brand-color: ${brandColor};
     }
   `;
   document.head.appendChild(styleElement);

@@ -15,6 +15,7 @@ interface OpenTextQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  brandColor: string;
 }
 
 export default function OpenTextQuestion({
@@ -26,6 +27,7 @@ export default function OpenTextQuestion({
   isFirstQuestion,
   isLastQuestion,
   autoFocus = true,
+  brandColor,
 }: OpenTextQuestionProps) {
   const handleInputChange = (inputValue: string) => {
     // const isValidInput = validateInput(inputValue, question.inputType, question.required);
@@ -105,7 +107,12 @@ export default function OpenTextQuestion({
           />
         )}
         <div></div>
-        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
+        <SubmitButton
+          buttonLabel={question.buttonLabel}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+          brandColor={brandColor}
+        />
       </div>
     </form>
   );

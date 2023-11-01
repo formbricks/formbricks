@@ -15,6 +15,7 @@ interface MultipleChoiceMultiProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  brandColor: string;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -25,6 +26,7 @@ export default function MultipleChoiceMultiQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  brandColor,
 }: MultipleChoiceMultiProps) {
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
@@ -129,7 +131,7 @@ export default function MultipleChoiceMultiQuestion({
                     name={question.id}
                     tabIndex={-1}
                     value={choice.label}
-                    className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={(e) => {
                       if ((e.target as HTMLInputElement)?.checked) {
@@ -170,7 +172,7 @@ export default function MultipleChoiceMultiQuestion({
                     id={otherOption.id}
                     name={question.id}
                     value={otherOption.label}
-                    className="h-4 w-4 border border-[--fb-primary] text-[--fb-primary] focus:ring-0 focus:ring-offset-0"
+                    className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={(e) => {
                       setOtherSelected(!otherSelected);
@@ -230,6 +232,7 @@ export default function MultipleChoiceMultiQuestion({
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
+          brandColor={brandColor}
         />
       </div>
     </form>

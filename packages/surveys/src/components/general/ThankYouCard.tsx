@@ -17,7 +17,7 @@ export default function ThankYouCard({
 }: ThankYouCardProps) {
   return (
     <div className="text-center">
-      <div className="flex items-center justify-center text-[--fb-primary]">
+      <div className="flex items-center justify-center text-[--fb-brand-color]">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"

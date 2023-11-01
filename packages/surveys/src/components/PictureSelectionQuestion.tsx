@@ -2,10 +2,10 @@ import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { useEffect } from "preact/hooks";
 import { cn } from "../lib/utils";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
+import { BackButton } from "./buttons/BackButton";
+import Subheader from "./general/Subheader";
+import SubmitButton from "./buttons/SubmitButton";
+import Headline from "./general/Headline";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
