@@ -136,7 +136,8 @@ const PricingPage = () => {
     <Layout
       title="Pricing | Formbricks Open Source Experience Management"
       description="All our plans start free - choose what's best for you!">
-      <div className="relative isolate mx-5 mt-8 overflow-hidden rounded-lg bg-slate-50 px-3 pt-4 shadow-2xl dark:bg-slate-800 sm:px-8 md:pt-8 lg:gap-x-10 lg:px-12 lg:pt-0">
+      {/* Formbricks Unlimited Deal */}
+      {/* <div className="relative isolate mx-5 mt-8 overflow-hidden rounded-lg bg-slate-50 px-3 pt-4 shadow-2xl dark:bg-slate-800 sm:px-8 md:pt-8 lg:gap-x-10 lg:px-12 lg:pt-0">
         <svg
           viewBox="0 0 1024 1024"
           className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
@@ -174,7 +175,7 @@ const PricingPage = () => {
             Get Started
           </Button>
         </div>
-      </div>
+      </div> */}
 
       <HeroTitle
         headingPt1=""
