@@ -8,6 +8,7 @@ import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import NPSQuestion from "./NPSQuestion";
 import OpenTextQuestion from "./OpenTextQuestion";
 import RatingQuestion from "./RatingQuestion";
+import PictureSelectionQuestion from "./PictureSelectionQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -99,8 +100,19 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "consent" ? (
+  ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === TSurveyQuestionType.PictureSelection ? (
+    <PictureSelectionQuestion
       question={question}
       value={value}
       onChange={onChange}
