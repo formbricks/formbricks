@@ -10,6 +10,7 @@ import { reportUsage } from "../lib/reportUsage";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
+  maxNetworkRetries: 10,
 });
 
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
@@ -37,7 +38,10 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.inAppSurvey.status = "active";
         }
-        if (item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited) {
+        if (
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited ||
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited199
+        ) {
           updatedFeatures.inAppSurvey.unlimited = true;
         } else {
           const countForTeam = await getMonthlyTeamResponseCount(team.id);
@@ -59,7 +63,10 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.linkSurvey.status = "active";
         }
-        if (item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited) {
+        if (
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited ||
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited199
+        ) {
           updatedFeatures.linkSurvey.unlimited = true;
         }
         break;
@@ -72,7 +79,10 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.userTargeting.status = "active";
         }
-        if (item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited) {
+        if (
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited ||
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited199
+        ) {
           updatedFeatures.userTargeting.unlimited = true;
         } else {
           const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);

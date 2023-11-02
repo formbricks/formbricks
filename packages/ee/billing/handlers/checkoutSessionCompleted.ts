@@ -33,7 +33,10 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     switch (product.name) {
       case StripeProductNames.inAppSurvey:
         updatedFeatures.inAppSurvey.status = "active";
-        if (item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited) {
+        if (
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited ||
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited199
+        ) {
           updatedFeatures.inAppSurvey.unlimited = true;
         } else {
           const countForTeam = await getMonthlyTeamResponseCount(team.id);
@@ -47,14 +50,20 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
 
       case StripeProductNames.linkSurvey:
         updatedFeatures.linkSurvey.status = "active";
-        if (item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited) {
+        if (
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited ||
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited199
+        ) {
           updatedFeatures.linkSurvey.unlimited = true;
         }
         break;
 
       case StripeProductNames.userTargeting:
         updatedFeatures.userTargeting.status = "active";
-        if (item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited) {
+        if (
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited ||
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited199
+        ) {
           updatedFeatures.userTargeting.unlimited = true;
         } else {
           const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);
