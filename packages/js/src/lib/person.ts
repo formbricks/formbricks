@@ -13,7 +13,7 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-import { TSession } from "@formbricks/types/sessions";
+// import { TSession } from "@formbricks/types/sessions";
 import { sync } from "./sync";
 
 const config = Config.getInstance();

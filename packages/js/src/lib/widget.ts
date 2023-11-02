@@ -98,7 +98,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         });
         const res = await api.client.display.create({
           surveyId: survey.id,
-          personId: config.get().state.person.id,
+          personId: config.get().state.person?.id,
         });
         if (!res.ok) {
           throw new Error("Could not create display");
@@ -109,8 +109,8 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        if (config.get().state.person) {
-          surveyState.updatePersonId(config.get().state.person.id);
+        if (config.get().state.person && config.get().state.person?.id) {
+          surveyState.updatePersonId(config.get().state.person?.id!);
         }
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
@@ -133,7 +133,6 @@ export const closeSurvey = async (): Promise<void> => {
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       personId: config.get().state.person?.id,
-      sessionId: config.get().state.session?.id,
     });
     surveyRunning = false;
   } catch (e) {

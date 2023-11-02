@@ -13,8 +13,8 @@ import {
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
-import { resetPerson } from "./person";
-import { isExpired } from "./session";
+// import { resetPerson } from "./person";
+// import { isExpired } from "./session";
 import { sync } from "./sync";
 import { addWidgetContainer } from "./widget";
 

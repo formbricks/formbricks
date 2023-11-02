@@ -1,5 +1,5 @@
 import { createPerson } from "@/app/lib/api/clientPerson";
-import { createSession } from "@/app/lib/api/clientSession";
+// import { createSession } from "@/app/lib/api/clientSession";
 import { getSettings } from "@/app/lib/api/clientSettings";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -17,10 +17,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // POST
   else if (req.method === "POST") {
     const person = await createPerson(environmentId);
-    const session = await createSession(person.id);
+    // const session = await createSession(person.id);
     const settings = await getSettings(environmentId, person.id);
 
-    return res.json({ person, session, settings });
+    return res.json({ person, settings });
   }
 
   // Unknown HTTP Method

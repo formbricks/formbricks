@@ -23,9 +23,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, personId, sessionId, jsVersion } = inputValidation.data;
+    const { environmentId, personId, jsVersion } = inputValidation.data;
 
-    const state = await getUpdatedState(environmentId, personId, sessionId, jsVersion);
+    const state = await getUpdatedState(environmentId, personId, jsVersion);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

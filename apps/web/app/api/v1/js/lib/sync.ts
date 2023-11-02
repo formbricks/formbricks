@@ -4,16 +4,16 @@ import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { createSession, getSession } from "@formbricks/lib/session/service";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
+// import { createSession, getSession } from "@formbricks/lib/session/service";
+// import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState } from "@formbricks/types/js";
-import { TSession } from "@formbricks/types/sessions";
+// import { TSession } from "@formbricks/types/sessions";
 import { getSurveys } from "@formbricks/lib/survey/service";
 
-const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
-  await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
-};
+// const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
+//   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
+// };
 
 export const getUpdatedState = async (
   environmentId: string,
@@ -21,6 +21,7 @@ export const getUpdatedState = async (
   jsVersion?: string
 ): Promise<TJsState> => {
   let environment: TEnvironment | null;
+  console.log(jsVersion);
   // let person: TPerson | null = null;
   // let session: TSession | null;
 
@@ -44,8 +45,8 @@ export const getUpdatedState = async (
 
     // check if session was created this month (user already active this month)
 
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // const now = new Date();
+    // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     // if (new Date(session.createdAt) < firstDayOfMonth) {
     //   throw new Error(errorMessage);
     // }
