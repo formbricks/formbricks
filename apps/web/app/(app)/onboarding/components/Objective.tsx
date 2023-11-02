@@ -7,7 +7,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TProfileObjective } from "@formbricks/types/profile";
 import { TProfile } from "@formbricks/types/profile";
 import { Button } from "@formbricks/ui/Button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 type ObjectiveProps = {
@@ -34,6 +34,46 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
 
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isProfileUpdating, setIsProfileUpdating] = useState(false);
+
+  const fieldsetRef = useRef<HTMLFieldSetElement>(null);
+
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Tab") {
+        event.preventDefault();
+        const radioButtons = fieldsetRef.current?.querySelectorAll('input[type="radio"]');
+        if (radioButtons && radioButtons.length > 0) {
+          const focusedRadioButton = fieldsetRef.current?.querySelector(
+            'input[type="radio"]:focus'
+          ) as HTMLInputElement;
+          if (!focusedRadioButton) {
+            // If no radio button is focused, by default the first element will be focused
+            const firstRadioButton = radioButtons[0] as HTMLInputElement;
+            firstRadioButton.focus();
+            setSelectedChoice(firstRadioButton.value);
+          } else {
+            const focusedIndex = Array.from(radioButtons).indexOf(focusedRadioButton);
+            // If the last element is focused, set it back to the first one or change it to the next element
+            if (focusedIndex === radioButtons.length - 1) {
+              const firstRadioButton = radioButtons[0] as HTMLInputElement;
+              firstRadioButton.focus();
+              setSelectedChoice(firstRadioButton.value);
+            } else {
+              const nextRadioButton = radioButtons[focusedIndex + 1] as HTMLInputElement;
+              nextRadioButton.focus();
+              setSelectedChoice(nextRadioButton.value);
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeydown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeydown);
+    };
+  }, []);
 
   const handleNextClick = async () => {
     if (selectedChoice) {
@@ -80,7 +120,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
           We have 85+ templates, help us select the best for your need.
         </label>
         <div className="mt-4">
-          <fieldset id="choices" aria-label="What do you want to achieve?">
+          <fieldset id="choices" aria-label="What do you want to achieve?" ref={fieldsetRef}>
             <legend className="sr-only">Choices</legend>
             <div className=" relative space-y-2 rounded-md">
               {objectives.map((choice) => (
@@ -102,6 +142,11 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleNextClick();
+                        }
                       }}
                     />
                     <span id={`${choice.id}-label`} className="ml-3 font-medium">
