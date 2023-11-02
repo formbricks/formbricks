@@ -1,4 +1,4 @@
-import PictureSelectionQuestion from "../PictureSelectionQuestion";
+import PictureSelectionQuestion from "../questions/PictureSelectionQuestion";
 import CTAQuestion from "../questions/CTAQuestion";
 import ConsentQuestion from "../questions/ConsentQuestion";
 import MultipleChoiceMultiQuestion from "../questions/MultipleChoiceMultiQuestion";

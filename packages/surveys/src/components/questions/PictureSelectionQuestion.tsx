@@ -1,11 +1,11 @@
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { useEffect } from "preact/hooks";
-import { cn } from "../lib/utils";
-import { BackButton } from "./buttons/BackButton";
-import Subheader from "./general/Subheader";
-import SubmitButton from "./buttons/SubmitButton";
-import Headline from "./general/Headline";
+import { cn } from "../../lib/utils";
+import { BackButton } from "../buttons/BackButton";
+import Subheader from "../general/Subheader";
+import SubmitButton from "../buttons/SubmitButton";
+import Headline from "../general/Headline";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -94,7 +94,7 @@ export default function PictureSelectionQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-auto rounded-md bg-white pr-2.5">
+          <div className="rounded-m relative grid max-h-[42vh] grid-cols-2 gap-x-5 gap-y-4 overflow-y-auto bg-[--fb-survey-background-color] pr-2.5">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
