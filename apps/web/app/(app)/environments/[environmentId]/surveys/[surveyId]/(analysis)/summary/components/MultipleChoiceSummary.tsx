@@ -205,7 +205,7 @@ export default function MultipleChoiceSummary({
                     </div>
                   ))}
                 {otherDisplayCount < result.otherValues.length && (
-                  <div className="my-2 flex w-full items-center justify-center">
+                  <div className="flex w-full items-center justify-center">
                     <button
                       onClick={() => setOtherDisplayCount(otherDisplayCount + responsesPerPage)}
                       className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">

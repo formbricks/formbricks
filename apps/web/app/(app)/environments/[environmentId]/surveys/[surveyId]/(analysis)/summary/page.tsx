@@ -3,7 +3,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { OPEN_TEXT_RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { TEXT_RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getProfile } from "@formbricks/lib/profile/service";
@@ -48,7 +48,7 @@ export default async function Page({ params }) {
         profile={profile}
         environmentTags={tags}
         displayCount={displayCount}
-        responsesPerPage={OPEN_TEXT_RESPONSES_PER_PAGE}
+        responsesPerPage={TEXT_RESPONSES_PER_PAGE}
       />
     </>
   );
