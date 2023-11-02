@@ -7,7 +7,6 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { productCache } from "./cache";
 import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
 import { getAccessFlags } from "../../lib/membership/utils";
-import { getTeamByEnvironmentId } from "../../lib/team/service";
 
 export const canUserAccessProduct = async (userId: string, productId: string): Promise<boolean> =>
   await unstable_cache(
@@ -35,30 +34,23 @@ export const verifyUserRoleAccess = async (
 ): Promise<{
   hasCreateOrUpdateAccess: boolean;
   hasDeleteAccess: boolean;
-}> =>
-  await unstable_cache(
-    async () => {
-      const accessObject = {
-        hasCreateOrUpdateAccess: true,
-        hasDeleteAccess: true,
-      };
+}> => {
+  const accessObject = {
+    hasCreateOrUpdateAccess: true,
+    hasDeleteAccess: true,
+  };
 
-      if (!teamId) {
-        throw new Error("Team not found");
-      }
+  if (!teamId) {
+    throw new Error("Team not found");
+  }
 
-      const currentUserMembership = await getMembershipByUserIdTeamId(userId, teamId);
-      const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
+  const currentUserMembership = await getMembershipByUserIdTeamId(userId, teamId);
+  const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
 
-      if (isDeveloper || isViewer) {
-        accessObject.hasCreateOrUpdateAccess = false;
-        accessObject.hasDeleteAccess = false;
-      }
+  if (isDeveloper || isViewer) {
+    accessObject.hasCreateOrUpdateAccess = false;
+    accessObject.hasDeleteAccess = false;
+  }
 
-      return accessObject;
-    },
-    [`users-${userId}-verifyUserRoleAccessOnProduct-${new Date().getTime()}`],
-    {
-      revalidate: 60 * 60 * 24,
-    }
-  )();
+  return accessObject;
+};

@@ -38,30 +38,23 @@ export const verifyUserRoleAccess = async (
 ): Promise<{
   hasCreateOrUpdateAccess: boolean;
   hasDeleteAccess: boolean;
-}> =>
-  await unstable_cache(
-    async () => {
-      const team = await getTeamByEnvironmentId(environmentId);
-      if (!team) {
-        throw new Error("Team not found");
-      }
-      const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
-      const { isViewer } = getAccessFlags(currentUserMembership?.role);
+}> => {
+  const team = await getTeamByEnvironmentId(environmentId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+  const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
-      if (isViewer) {
-        return {
-          hasCreateOrUpdateAccess: false,
-          hasDeleteAccess: false,
-        };
-      }
+  if (isViewer) {
+    return {
+      hasCreateOrUpdateAccess: false,
+      hasDeleteAccess: false,
+    };
+  }
 
-      return {
-        hasCreateOrUpdateAccess: true,
-        hasDeleteAccess: true,
-      };
-    },
-    [`users-${userId}-verifyUserRoleAccess-${new Date().getTime()}`],
-    {
-      revalidate: 60 * 60 * 24,
-    }
-  )();
+  return {
+    hasCreateOrUpdateAccess: true,
+    hasDeleteAccess: true,
+  };
+};

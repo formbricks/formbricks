@@ -35,38 +35,31 @@ export const verifyUserRoleAccess = async (
   hasCreateOrUpdateMembersAccess: boolean;
   hasDeleteMembersAccess: boolean;
   hasBillingAccess: boolean;
-}> =>
-  await unstable_cache(
-    async () => {
-      const accessObject = {
-        hasCreateOrUpdateAccess: true,
-        hasDeleteAccess: true,
-        hasCreateOrUpdateMembersAccess: true,
-        hasDeleteMembersAccess: true,
-        hasBillingAccess: true,
-      };
+}> => {
+  const accessObject = {
+    hasCreateOrUpdateAccess: true,
+    hasDeleteAccess: true,
+    hasCreateOrUpdateMembersAccess: true,
+    hasDeleteMembersAccess: true,
+    hasBillingAccess: true,
+  };
 
-      const currentUserMembership = await getMembershipByUserIdTeamId(userId, teamId);
-      const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
+  const currentUserMembership = await getMembershipByUserIdTeamId(userId, teamId);
+  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
 
-      if (!isOwner) {
-        accessObject.hasCreateOrUpdateAccess = false;
-        accessObject.hasDeleteAccess = false;
-        accessObject.hasCreateOrUpdateMembersAccess = false;
-        accessObject.hasDeleteMembersAccess = false;
-        accessObject.hasBillingAccess = false;
-      }
+  if (!isOwner) {
+    accessObject.hasCreateOrUpdateAccess = false;
+    accessObject.hasDeleteAccess = false;
+    accessObject.hasCreateOrUpdateMembersAccess = false;
+    accessObject.hasDeleteMembersAccess = false;
+    accessObject.hasBillingAccess = false;
+  }
 
-      if (isAdmin) {
-        accessObject.hasCreateOrUpdateMembersAccess = true;
-        accessObject.hasDeleteMembersAccess = true;
-        accessObject.hasBillingAccess = true;
-      }
+  if (isAdmin) {
+    accessObject.hasCreateOrUpdateMembersAccess = true;
+    accessObject.hasDeleteMembersAccess = true;
+    accessObject.hasBillingAccess = true;
+  }
 
-      return accessObject;
-    },
-    [`users-${userId}-verifyUserRoleAccessOnTeam-${new Date().getTime()}`],
-    {
-      revalidate: 60 * 60 * 24,
-    }
-  )();
+  return accessObject;
+};

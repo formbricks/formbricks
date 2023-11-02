@@ -34,31 +34,24 @@ export const verifyUserRoleAccess = async (
 ): Promise<{
   hasCreateOrUpdateAccess: boolean;
   hasDeleteAccess: boolean;
-}> =>
-  await unstable_cache(
-    async () => {
-      const accessObject = {
-        hasCreateOrUpdateAccess: true,
-        hasDeleteAccess: true,
-      };
+}> => {
+  const accessObject = {
+    hasCreateOrUpdateAccess: true,
+    hasDeleteAccess: true,
+  };
 
-      const team = await getTeamByEnvironmentId(environmentId);
-      if (!team) {
-        throw new Error("Team not found");
-      }
+  const team = await getTeamByEnvironmentId(environmentId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
 
-      const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
-      const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
-      if (isViewer) {
-        accessObject.hasCreateOrUpdateAccess = false;
-        accessObject.hasDeleteAccess = false;
-      }
+  if (isViewer) {
+    accessObject.hasCreateOrUpdateAccess = false;
+    accessObject.hasDeleteAccess = false;
+  }
 
-      return accessObject;
-    },
-    [`users-${userId}-verifyUserRoleAccessOnSurvey-${new Date().getTime()}`],
-    {
-      revalidate: 60 * 60 * 24,
-    }
-  )();
+  return accessObject;
+};
