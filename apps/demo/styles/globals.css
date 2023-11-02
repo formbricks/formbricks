@@ -4,9 +4,9 @@
 
 /* Example on overriding packages/js colors */
 .dark {
-  --fb-brand-color: rgb(0, 157, 168);
+  --fb-brand-color: red;
   --fb-brand-text-color: white;
-  --fb-border-color: var(--slate-300);
+  --fb-border-color: green;
   --fb-border-color-highlight: var(--slate-500);
   --fb-focus-color: red;
   --fb-heading-color: yellow;
