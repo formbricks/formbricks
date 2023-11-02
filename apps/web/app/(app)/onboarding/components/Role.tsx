@@ -66,14 +66,14 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
-        <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+        <label htmlFor="choices" className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
           What is your role?
         </label>
         <label className="block text-sm font-normal leading-6 text-slate-500">
           Make your Formbricks experience more personalised.
         </label>
         <div className="mt-4">
-          <fieldset>
+          <fieldset id="choices" aria-label="What is your role?">
             <legend className="sr-only">Choices</legend>
             <div className=" relative space-y-2 rounded-md">
               {roles.map((choice) => (

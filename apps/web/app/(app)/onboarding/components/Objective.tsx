@@ -73,14 +73,14 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
-        <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+        <label htmlFor="choices" className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
           What do you want to achieve?
         </label>
         <label className="block text-sm font-normal leading-6 text-slate-500">
           We have 85+ templates, help us select the best for your need.
         </label>
         <div className="mt-4">
-          <fieldset>
+          <fieldset id="choices" aria-label="What do you want to achieve?">
             <legend className="sr-only">Choices</legend>
             <div className=" relative space-y-2 rounded-md">
               {objectives.map((choice) => (
