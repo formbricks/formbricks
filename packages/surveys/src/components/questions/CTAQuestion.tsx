@@ -47,7 +47,7 @@ export default function CTAQuestion({
               onClick={() => {
                 onSubmit({ [question.id]: "dismissed" });
               }}
-              className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-[--fb-heading-color] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--fb-element-focus-color] focus:ring-offset-2">
+              className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-[--fb-heading-color] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--fb-focus-color] focus:ring-offset-2">
               {question.dismissButtonLabel || "Skip"}
             </button>
           )}

@@ -169,7 +169,7 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     placeholder="Please specify"
-                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-border-color] bg-[--fb-survey-background-color] px-3 py-2 text-sm text-[--fb-heading-color] placeholder:text-[--fb-placeholder-color] focus:outline-none  focus:ring-2 focus:ring-[--fb-element-focus-color] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-border-color] bg-[--fb-survey-background-color] px-3 py-2 text-sm text-[--fb-heading-color] placeholder:text-[--fb-placeholder-color] focus:outline-none  focus:ring-2 focus:ring-[--fb-focus-color] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

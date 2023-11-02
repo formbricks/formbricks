@@ -71,7 +71,7 @@ p.fb-editor-paragraph {
   --fb-brand-text-color: black;
   --fb-border-color: var(--slate-300);
   --fb-border-color-highlight: var(--slate-500);
-  --fb-element-focus-color: var(--slate-500);
+  --fb-focus-color: var(--slate-500);
   --fb-heading-color: var(--slate-900);
   --fb-subheading-color: var(--slate-700);
   --fb-info-text-color: var(--slate-500);
