@@ -48,7 +48,7 @@ export default async function Page({ params }) {
         profile={profile}
         environmentTags={tags}
         displayCount={displayCount}
-        openTextResponsesPerPage={OPEN_TEXT_RESPONSES_PER_PAGE}
+        responsesPerPage={OPEN_TEXT_RESPONSES_PER_PAGE}
       />
     </>
   );

@@ -28,7 +28,7 @@ interface SummaryPageProps {
   profile: TProfile;
   environmentTags: TTag[];
   displayCount: number;
-  openTextResponsesPerPage: number;
+  responsesPerPage: number;
 }
 
 const SummaryPage = ({
@@ -41,7 +41,7 @@ const SummaryPage = ({
   profile,
   environmentTags,
   displayCount,
-  openTextResponsesPerPage,
+  responsesPerPage,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
@@ -87,7 +87,7 @@ const SummaryPage = ({
         responses={filterResponses}
         survey={survey}
         environment={environment}
-        openTextResponsesPerPage={openTextResponsesPerPage}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );
