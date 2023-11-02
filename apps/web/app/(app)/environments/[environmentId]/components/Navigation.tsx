@@ -293,9 +293,9 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
-                      {session.user.image ? (
+                      {session.user.imageUrl ? (
                         <Image
-                          src={session.user.image}
+                          src={session.user.imageUrl}
                           width="40"
                           height="40"
                           className="ph-no-capture h-10 w-10 rounded-full"

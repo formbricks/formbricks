@@ -79,5 +79,5 @@ export async function updateAvatarAction(avatarUrl: string) {
     throw new Error("User not found");
   }
 
-  return await updateProfile(session.user.id, { image: avatarUrl });
+  return await updateProfile(session.user.id, { imageUrl: avatarUrl });
 }

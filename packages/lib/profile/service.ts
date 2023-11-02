@@ -23,7 +23,7 @@ const responseSelection = {
   id: true,
   name: true,
   email: true,
-  image: true,
+  imageUrl: true,
   createdAt: true,
   updatedAt: true,
   onboardingCompleted: true,
@@ -218,11 +218,3 @@ export const deleteProfile = async (id: string): Promise<TProfile> => {
     throw error;
   }
 };
-
-// export const updateProfileAvatar = async(avatarUrl: string) => {
-//   prisma.user.update({
-//     data: {
-
-//     }
-//   })
-// }

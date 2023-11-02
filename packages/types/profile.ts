@@ -17,7 +17,7 @@ export const ZProfile = z.object({
   id: z.string(),
   name: z.string().nullable(),
   email: z.string(),
-  image: z.string().nullable(),
+  imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
   identityProvider: z.enum(["email", "google", "github", "azuread"]),
   createdAt: z.date(),
@@ -34,7 +34,7 @@ export const ZProfileUpdateInput = z.object({
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
   objective: ZProfileObjective.nullish(),
-  image: z.string().nullish(),
+  imageUrl: z.string().url().nullish(),
 });
 
 export type TProfileUpdateInput = z.infer<typeof ZProfileUpdateInput>;

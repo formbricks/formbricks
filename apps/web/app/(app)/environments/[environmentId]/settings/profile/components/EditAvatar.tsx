@@ -52,9 +52,9 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
           </div>
         )}
 
-        {session?.user?.image ? (
+        {session?.user?.imageUrl ? (
           <Image
-            src={session.user.image}
+            src={session.user.imageUrl}
             width="40"
             height="40"
             style={{

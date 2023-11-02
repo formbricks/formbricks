@@ -63,7 +63,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           emailVerified: user.emailVerified,
-          image: user.image,
+          imageUrl: user.imageUrl,
         };
       },
     }),
@@ -117,7 +117,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           emailVerified: user.emailVerified,
-          image: user.image,
+          imageUrl: user.imageUrl,
         };
       },
     }),
@@ -149,7 +149,7 @@ export const authOptions: NextAuthOptions = {
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
         name: existingUser.name,
-        image: existingUser.image,
+        imageUrl: existingUser.imageUrl,
       };
 
       return {
@@ -168,7 +168,7 @@ export const authOptions: NextAuthOptions = {
       session.user.name = token.name || "";
 
       // @ts-ignore
-      session.user.image = token.image || "";
+      session.user.imageUrl = token.imageUrl || "";
 
       return session;
     },
