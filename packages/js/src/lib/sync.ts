@@ -19,12 +19,11 @@ const syncWithBackend = async ({
   apiHost,
   environmentId,
   personId,
-  sessionId,
 }: TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
-  const url = `${apiHost}/api/v1/js/sync/${environmentId}?personId=${personId}&sessionId=${sessionId}&jsVersion=${packageJson.version}`;
+  const url = `${apiHost}/api/v1/js/sync/${environmentId}?personId=${personId}&jsVersion=${packageJson.version}`;
   const publicUrl = `${apiHost}/api/v1/js/sync/${environmentId}`;
 
-  if (!personId || !sessionId) {
+  if (!personId) {
     // public survey
     const response = await fetch(publicUrl);
 
@@ -84,7 +83,7 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
 
     // before finding the surveys, check for public use
 
-    if (!state.person?.id || !state.session?.id) {
+    if (!state.person?.id) {
       // unidentified user
       // set the displays and filter out surveys
       const publicState = {
@@ -109,12 +108,12 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
 
       // if session is new, track action
 
-      if (!oldState?.session || oldState.session.id !== state.session.id) {
-        const trackActionResult = await trackAction("New Session");
-        if (trackActionResult.ok !== true) {
-          logger.error(`Action tracking failed: ${trackActionResult.error}`);
-        }
-      }
+      // if (!oldState?.session || oldState.session.id !== state.session.id) {
+      //   const trackActionResult = await trackAction("New Session");
+      //   if (trackActionResult.ok !== true) {
+      //     logger.error(`Action tracking failed: ${trackActionResult.error}`);
+      //   }
+      // }
     }
   } catch (error) {
     logger.error(`Error during sync: ${error}`);
@@ -181,7 +180,7 @@ export const addSyncEventListener = (debug: boolean = false): void => {
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
         personId: config.get().state?.person?.id,
-        sessionId: config.get().state?.session?.id,
+        // sessionId: config.get().state?.session?.id,
       });
     }, updateInterval);
   }

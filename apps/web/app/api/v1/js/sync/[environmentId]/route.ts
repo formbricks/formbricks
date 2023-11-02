@@ -21,7 +21,6 @@ export async function GET(
     const environmentIdValidation = ZJsPublicSyncInput.safeParse({
       environmentId: environmentIdParam,
       personId: searchParams.get("personId"),
-      sessionId: searchParams.get("sessionId"),
       jsVersion: searchParams.get("jsVersion"),
     });
 
@@ -33,7 +32,7 @@ export async function GET(
       );
     }
 
-    const { environmentId, personId, jsVersion, sessionId } = environmentIdValidation.data;
+    const { environmentId, personId, jsVersion } = environmentIdValidation.data;
 
     // if personId is provided, this is an identfied user
 
@@ -42,7 +41,6 @@ export async function GET(
       const inputValidation = ZJsSyncInput.safeParse({
         environmentId,
         personId,
-        sessionId,
         jsVersion,
       });
 
@@ -57,11 +55,10 @@ export async function GET(
       const {
         environmentId: environmentIdInput,
         personId: personIdInput,
-        sessionId: sessionIdInput,
         jsVersion: jsVersionInput,
       } = inputValidation.data;
 
-      const state = await getUpdatedState(environmentIdInput, personIdInput, sessionIdInput, jsVersionInput);
+      const state = await getUpdatedState(environmentIdInput, personIdInput, jsVersionInput);
 
       return responses.successResponse({ ...state }, true);
     }

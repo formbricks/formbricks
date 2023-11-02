@@ -18,11 +18,9 @@ const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => 
 export const getUpdatedState = async (
   environmentId: string,
   personId: string,
-  sessionId: string,
   jsVersion?: string
 ): Promise<TJsState> => {
   let environment: TEnvironment | null;
-  let session: TSession | null = null;
   // let person: TPerson | null = null;
   // let session: TSession | null;
 
@@ -39,21 +37,18 @@ export const getUpdatedState = async (
 
   if (isMauLimitReached) {
     const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
-    if (!personId || !sessionId) {
+    if (!personId) {
       // don't allow new people or sessions
       throw new Error(errorMessage);
     }
-    const session = await getSession(sessionId);
-    if (!session) {
-      // don't allow new sessions
-      throw new Error(errorMessage);
-    }
+
     // check if session was created this month (user already active this month)
+
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    if (new Date(session.createdAt) < firstDayOfMonth) {
-      throw new Error(errorMessage);
-    }
+    // if (new Date(session.createdAt) < firstDayOfMonth) {
+    //   throw new Error(errorMessage);
+    // }
   }
 
   // const [person, session] = await Promise.all([getPerson(personId), getSession(sessionId)]);
@@ -63,14 +58,12 @@ export const getUpdatedState = async (
     throw new Error("Person not found");
   }
 
-  session = await getSession(sessionId);
-
-  if (!session || session.expiresAt < new Date()) {
-    if (person) {
-      session = await createSession(person.id);
-      captureNewSessionTelemetry(jsVersion);
-    }
-  }
+  // if (!session || session.expiresAt < new Date()) {
+  //   if (person) {
+  //     session = await createSession(person.id);
+  //     captureNewSessionTelemetry(jsVersion);
+  //   }
+  // }
 
   // if (personId) {
   //   person = await getPerson(personId);
@@ -145,7 +138,6 @@ export const getUpdatedState = async (
   // return state
   const state: TJsState = {
     person: person!,
-    session: session!,
     surveys,
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
     product,
@@ -179,7 +171,6 @@ export const getPublicUpdatedState = async (environmentId: string) => {
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
     product,
     person: null,
-    session: null,
   };
 
   return state;

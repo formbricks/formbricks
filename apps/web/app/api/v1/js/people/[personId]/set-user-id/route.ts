@@ -29,7 +29,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, userId, sessionId } = inputValidation.data;
+    const { environmentId, userId } = inputValidation.data;
 
     let returnedPerson;
     // check if person with this userId exists
@@ -54,18 +54,18 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       await Promise.all(displays.map((display) => updateDisplay(display.id, { personId: person.id })));
 
       // reconnect session to new person
-      await prisma.session.update({
-        where: {
-          id: sessionId,
-        },
-        data: {
-          person: {
-            connect: {
-              id: person.id,
-            },
-          },
-        },
-      });
+      // await prisma.session.update({
+      //   where: {
+      //     id: sessionId,
+      //   },
+      //   data: {
+      //     person: {
+      //       connect: {
+      //         id: person.id,
+      //       },
+      //     },
+      //   },
+      // });
 
       // delete old person
       await deletePerson(personId);
@@ -112,7 +112,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       environmentId,
     });
 
-    const state = await getUpdatedState(environmentId, transformedPerson.id, sessionId);
+    const state = await getUpdatedState(environmentId, transformedPerson.id);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

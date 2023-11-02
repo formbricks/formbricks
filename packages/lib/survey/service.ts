@@ -42,7 +42,7 @@ export const selectSurvey = {
   pin: true,
   triggers: {
     select: {
-      eventClass: {
+      actionClass: {
         select: {
           id: true,
           createdAt: true,
@@ -115,7 +115,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       const transformedSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
 
       return transformedSurvey;
@@ -165,7 +165,7 @@ export const getSurveysByAttributeClassId = async (
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
       }
@@ -194,7 +194,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
         where: {
           triggers: {
             some: {
-              eventClass: {
+              actionClass: {
                 id: actionClassId,
               },
             },
@@ -210,7 +210,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
       }
@@ -258,7 +258,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
       }
@@ -323,7 +323,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         create: newTriggers.map((trigger) => ({
-          eventClassId: getActionClassIdFromName(actionClasses, trigger),
+          actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       };
     }
@@ -332,7 +332,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         deleteMany: {
-          eventClassId: {
+          actionClassId: {
             in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
           },
         },
@@ -473,7 +473,7 @@ export async function deleteSurvey(surveyId: string) {
   // Revalidate triggers by actionClassId
   deletedSurvey.triggers.forEach((trigger) => {
     surveyCache.revalidate({
-      actionClassId: trigger.eventClass.id,
+      actionClassId: trigger.actionClass.id,
     });
   });
   // Revalidate surveys by attributeClassId
@@ -519,7 +519,7 @@ export async function createSurvey(environmentId: string, surveyBody: TSurveyInp
 
   const transformedSurvey = {
     ...survey,
-    triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
+    triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
   captureTelemetry("survey created");
@@ -558,7 +558,7 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
         create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: getActionClassIdFromName(actionClasses, trigger),
+          actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       },
       attributeFilters: {

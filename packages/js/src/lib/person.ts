@@ -33,7 +33,7 @@ export const updatePersonUserId = async (
   const input: TJsPeopleUserIdInput = {
     environmentId: config.get().environmentId,
     userId,
-    sessionId: config.get().state.session.id,
+    // sessionId: config.get().state.session.id,
   };
 
   const res = await fetch(url, {
@@ -63,7 +63,7 @@ export const updatePersonAttribute = async (
   key: string,
   value: string
 ): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
-  if (!config.get().state.person || !config.get().state.person.id) {
+  if (!config.get().state.person || !config.get().state.person?.id) {
     return err({
       code: "missing_person",
       message: "Unable to update attribute. No person set.",
@@ -72,13 +72,13 @@ export const updatePersonAttribute = async (
 
   const input: TJsPeopleAttributeInput = {
     environmentId: config.get().environmentId,
-    sessionId: config.get().state.session.id,
+    // sessionId: config.get().state.session.id,
     key,
     value,
   };
 
   const res = await fetch(
-    `${config.get().apiHost}/api/v1/js/people/${config.get().state.person.id}/set-attribute`,
+    `${config.get().apiHost}/api/v1/js/people/${config.get().state.person?.id}/set-attribute`,
     {
       method: "POST",
       headers: {
@@ -123,7 +123,7 @@ export const setPersonUserId = async (
   // if person does not exist, create a new person
 
   const existingPerson = config.get().state.person?.id;
-  let existingSession = config.get().state.session;
+  // let existingSession = config.get().state.session;
 
   if (!existingPerson) {
     const personRes = await fetch(`${config.get().apiHost}/api/v1/js/people`, {
@@ -140,26 +140,26 @@ export const setPersonUserId = async (
 
     const createdPerson = jsonRes.data.person as TPerson;
 
-    if (!existingSession?.id) {
-      const sessionRes = await fetch(`${config.get().apiHost}/api/v1/js/session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          personId: createdPerson.id,
-        }),
-      });
+    // if (!existingSession?.id) {
+    //   const sessionRes = await fetch(`${config.get().apiHost}/api/v1/js/session`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       personId: createdPerson.id,
+    //     }),
+    //   });
 
-      const sessionJsonRes = await sessionRes.json();
+    //   const sessionJsonRes = await sessionRes.json();
 
-      existingSession = sessionJsonRes.data.session as TSession;
-    }
+    //   existingSession = sessionJsonRes.data.session as TSession;
+    // }
 
     const updatedState = {
       ...config.get().state,
       person: createdPerson,
-      session: existingSession,
+      // session: existingSession,
     };
 
     config.update({
@@ -174,7 +174,7 @@ export const setPersonUserId = async (
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       personId: updatedState.person.id,
-      sessionId: updatedState.session.id,
+      // sessionId: updatedState.session.id,
     });
   }
 
@@ -252,6 +252,6 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   }
 };
 
-export const getPerson = (): TPerson => {
+export const getPerson = (): TPerson | null => {
   return config.get().state.person;
 };

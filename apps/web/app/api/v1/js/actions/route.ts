@@ -23,7 +23,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, sessionId, name, properties } = inputValidation.data;
+    const { environmentId, name, properties, personId } = inputValidation.data;
 
     // hotfix: don't create action for "Exit Intent (Desktop)", 50% Scroll events
     if (["Exit Intent (Desktop)", "50% Scroll"].includes(name)) {
@@ -32,7 +32,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     createAction({
       environmentId,
-      sessionId,
+      personId,
       name,
       properties,
     });

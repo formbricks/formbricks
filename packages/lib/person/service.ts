@@ -324,8 +324,8 @@ export const getMonthlyActivePeopleCount = async (environmentId: string): Promis
     async () => {
       validateInputs([environmentId, ZId]);
 
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      // const now = new Date();
+      // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       const personAggregations = await prisma.person.aggregate({
         _count: {
@@ -333,13 +333,6 @@ export const getMonthlyActivePeopleCount = async (environmentId: string): Promis
         },
         where: {
           environmentId,
-          sessions: {
-            some: {
-              createdAt: {
-                gte: firstDayOfMonth,
-              },
-            },
-          },
         },
       });
 

@@ -1,6 +1,5 @@
 import z from "zod";
 import { ZPerson } from "./people";
-import { ZSession } from "./sessions";
 import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
 import { ZProduct } from "./product";
@@ -21,7 +20,6 @@ export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
 
 export const ZJsState = z.object({
   person: ZPerson.nullable(),
-  session: ZSession.nullable(),
   surveys: z.array(ZSurveyWithTriggers),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
@@ -33,16 +31,12 @@ export type TJsState = z.infer<typeof ZJsState>;
 export const ZJsPublicSyncInput = z.object({
   environmentId: z.string().cuid2(),
   personId: z.string().cuid2().nullable(),
-  sessionId: z.string().cuid2().nullable(),
   jsVersion: z.string().nullable(),
 });
 
 export const ZJsSyncInput = z.object({
   environmentId: z.string().cuid2(),
-  // personId: z.string().cuid2().optional(),
   personId: z.string().cuid2(),
-  // sessionId: z.string().cuid2().optional(),
-  sessionId: z.string().cuid2(),
   jsVersion: z.string().optional(),
 });
 
@@ -69,14 +63,12 @@ export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),
   userId: z.string().min(1).max(255),
-  sessionId: z.string().cuid2(),
 });
 
 export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
 
 export const ZJsPeopleAttributeInput = z.object({
   environmentId: z.string().cuid2(),
-  sessionId: z.string().cuid2(),
   key: z.string(),
   value: z.string(),
 });
@@ -85,7 +77,7 @@ export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
 
 export const ZJsActionInput = z.object({
   environmentId: z.string().cuid2(),
-  sessionId: z.string().cuid2(),
+  personId: z.string().cuid2(),
   name: z.string(),
   properties: z.record(z.string()),
 });
@@ -96,7 +88,6 @@ export const ZJsSyncParams = z.object({
   environmentId: z.string().cuid2(),
   apiHost: z.string(),
   personId: z.string().cuid2().optional(),
-  sessionId: z.string().cuid2().optional(),
 });
 
 export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;

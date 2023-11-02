@@ -28,7 +28,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, sessionId, key, value } = inputValidation.data;
+    const { environmentId, key, value } = inputValidation.data;
 
     const existingPerson = await getPerson(personId);
 
@@ -59,7 +59,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       environmentId,
     });
 
-    const state = await getUpdatedState(environmentId, personId, sessionId);
+    const state = await getUpdatedState(environmentId, personId);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
