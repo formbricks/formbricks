@@ -28,7 +28,7 @@ export const EditHighlightBorder = ({
   const handleUpdateHighlightBorder = async () => {
     try {
       setUpdatingBorder(true);
-      await updateProductAction(product.id, { highlightBorderColor: color }, environmentId);
+      await updateProductAction(product.id, { highlightBorderColor: color });
       toast.success("Border color updated successfully.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);

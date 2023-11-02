@@ -6,8 +6,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "../../packages/types/*.d.ts",
-    "../../packages/lib/jwt.ts",
-    "../../packages/ee/RoleManagement/components/EditMembershipRole.tsx"
+    "../../packages/lib/jwt.ts"
   ],
   "exclude": ["../../.env"],
   "compilerOptions": {

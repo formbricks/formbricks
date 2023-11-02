@@ -30,7 +30,7 @@ export const canUserAccessProduct = async (userId: string, productId: string): P
   )();
 
 export const verifyUserRoleAccess = async (
-  environmentId: string,
+  teamId: string,
   userId: string
 ): Promise<{
   hasCreateOrUpdateAccess: boolean;
@@ -43,12 +43,11 @@ export const verifyUserRoleAccess = async (
         hasDeleteAccess: true,
       };
 
-      const team = await getTeamByEnvironmentId(environmentId);
-      if (!team) {
+      if (!teamId) {
         throw new Error("Team not found");
       }
 
-      const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+      const currentUserMembership = await getMembershipByUserIdTeamId(userId, teamId);
       const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
 
       if (isDeveloper || isViewer) {

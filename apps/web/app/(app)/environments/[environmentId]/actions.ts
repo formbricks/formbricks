@@ -8,7 +8,7 @@ import { createMembership } from "@formbricks/lib/membership/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
-import { deleteSurvey, duplicateSurvey } from "@formbricks/lib/survey/service";
+import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Team } from "@prisma/client";
@@ -208,14 +208,16 @@ export async function copyToOtherEnvironmentAction(
   return newSurvey;
 }
 
-export const deleteSurveyAction = async (surveyId: string, environmentId: string) => {
+export const deleteSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const { hasDeleteAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
+  const survey = await getSurvey(surveyId);
+
+  const { hasDeleteAccess } = await verifyUserRoleAccess(survey!.environmentId, session.user.id);
   if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deleteSurvey(surveyId);

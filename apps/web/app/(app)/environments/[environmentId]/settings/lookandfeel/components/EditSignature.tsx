@@ -27,7 +27,7 @@ export function EditFormbricksSignature({ product, canRemoveSignature, environme
       let inputProduct: Partial<TProductUpdateInput> = {
         formbricksSignature: newSignatureState,
       };
-      await updateProductAction(product.id, inputProduct, environmentId);
+      await updateProductAction(product.id, inputProduct);
       toast.success(
         newSignatureState ? "Formbricks signature will be shown." : "Formbricks signature will now be hidden."
       );

@@ -81,7 +81,7 @@ export default function SurveyMenuBar({
 
   const deleteSurvey = async (surveyId) => {
     try {
-      await deleteSurveyAction(surveyId, environment.id);
+      await deleteSurveyAction(surveyId);
       router.refresh();
       setDeleteDialogOpen(false);
       router.back();

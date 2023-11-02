@@ -39,7 +39,7 @@ export function EditPlacement({ product, environmentId }: EditPlacementProps) {
         clickOutsideClose: clickOutside === "allow",
       };
 
-      await updateProductAction(product.id, inputProduct, environmentId);
+      await updateProductAction(product.id, inputProduct);
 
       toast.success("Placement updated successfully.");
     } catch (error) {

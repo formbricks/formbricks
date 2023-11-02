@@ -31,7 +31,6 @@ const SingleTag: React.FC<{
   tagCountLoading?: boolean;
   updateTagsCount?: () => void;
   environmentTags: TTag[];
-  environmentId: string;
 }> = ({
   tagId,
   tagName,
@@ -39,7 +38,6 @@ const SingleTag: React.FC<{
   tagCountLoading = false,
   updateTagsCount = () => {},
   environmentTags,
-  environmentId,
 }) => {
   const router = useRouter();
   // const { updateTag, updateTagError } = useUpdateTag(environment.id, tagId);
@@ -61,7 +59,7 @@ const SingleTag: React.FC<{
               )}
               defaultValue={tagName}
               onBlur={(e) => {
-                updateTagNameAction(tagId, e.target.value.trim(), environmentId)
+                updateTagNameAction(tagId, e.target.value.trim())
                   .then(() => {
                     setUpdateTagError(false);
                     toast.success("Tag updated");
@@ -103,7 +101,7 @@ const SingleTag: React.FC<{
                 }
                 onSelect={(newTagId) => {
                   setIsMergingTags(true);
-                  mergeTagsAction(tagId, newTagId, environmentId)
+                  mergeTagsAction(tagId, newTagId)
                     .then(() => {
                       toast.success("Tags merged");
                       updateTagsCount();
@@ -128,7 +126,7 @@ const SingleTag: React.FC<{
               className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
               onClick={() => {
                 if (confirm("Are you sure you want to delete this tag?")) {
-                  deleteTagAction(tagId, environmentId).then(() => {
+                  deleteTagAction(tagId).then(() => {
                     toast.success("Tag deleted");
                     updateTagsCount();
                     router.refresh();
@@ -166,7 +164,6 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
             tagName={tag.name}
             tagCount={environmentTagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0}
             environmentTags={environmentTags}
-            environmentId={environment.id}
           />
         ))}
       </div>
