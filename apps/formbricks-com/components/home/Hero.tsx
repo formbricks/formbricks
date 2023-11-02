@@ -20,11 +20,11 @@ export const Hero: React.FC = ({}) => {
     <div className="relative">
       <div className="px-4 pb-20 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
         <a
-          href="https://www.producthunt.com/posts/formbricks"
+          href="https://formbricks.com/github"
           target="_blank"
           className="border-brand-dark xs:text-sm animate-bounce rounded-full border px-4 py-1.5 text-xs text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
-          Support us on Product Hunt 🚀
-          <ChevronRightIcon className="inline h-5 w-5 text-slate-300" />
+          We&apos;re Open Source - Star us on GitHub
+          <ChevronRightIcon className="mb-1 ml-1 inline h-4 w-4 text-slate-300" />
         </a>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
           <span className="xl:inline">The Open Source Survey Suite</span>
@@ -98,10 +98,10 @@ export const Hero: React.FC = ({}) => {
             variant="secondary"
             className="px-6"
             onClick={() => {
-              router.push("https://www.producthunt.com/posts/formbricks");
+              router.push("https://formbricks.com/github");
               /*  plausible("Hero_CTA_LaunchDemo"); */
             }}>
-            Support Launch 🚀
+            View Code on GitHub
           </Button>
         </div>
       </div>

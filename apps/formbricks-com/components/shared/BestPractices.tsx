@@ -1,11 +1,6 @@
-import { Button } from "@formbricks/ui/Button";
-import { usePlausible } from "next-plausible";
-import { useRouter } from "next/router";
 import BestPracticeNavigation from "./BestPracticeNavigation";
 
 export default function InsightOppos() {
-  const plausible = usePlausible();
-  const router = useRouter();
   return (
     <div className="pb-10 pt-12 md:pt-20">
       <div className="px-4 py-20 text-center sm:px-6 lg:px-8" id="best-practices">
@@ -21,18 +16,6 @@ export default function InsightOppos() {
       </div>
 
       <BestPracticeNavigation />
-
-      <div className="mx-auto mt-4 w-fit px-4 py-2 text-center">
-        <Button
-          className="hidden md:block"
-          variant="highlight"
-          onClick={() => {
-            router.push("/demo");
-            plausible("subPractices_CTA_LaunchDemo");
-          }}>
-          Launch Live Demo
-        </Button>
-      </div>
     </div>
   );
 }
