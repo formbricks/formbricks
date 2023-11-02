@@ -5,19 +5,19 @@
 /* Example on overriding packages/js colors */
 .dark {
   --fb-brand-color: rgb(0, 157, 168);
-  --fb-on-primary: black;
-  --fb-border: var(--slate-300);
-  --fb-border-highlight: var(--slate-500);
-  --fb-ring-focus: var(--slate-500);
-  --fb-text: #f1ffff;
-  --fb-text-2: rgb(226, 232, 240);
-  --fb-text-3: rgb(209, 209, 209);
-  --fb-text-4: rgb(165 164 170);
-  --fb-bg: #080b15;
-  --fb-bg-2: rgb(44, 50, 60);
-  --fb-bg-selected: rgb(30, 34, 41);
-  --fb-placeholder: rgb(168, 168, 168);
-  --fb-tyc-shadow: rgb(190, 190, 190);
+  --fb-brand-text-color: white;
+  --fb-border-color: var(--slate-300);
+  --fb-border-color-highlight: var(--slate-500);
+  --fb-element-focus-color: red;
+  --fb-heading-color: yellow;
+  --fb-subheading-color: green;
+  --fb-info-text-color: orange;
+  --fb-identifier-text-color: blue;
+  --fb-survey-background-color: black;
+  --fb-accent-background-color: yellow;
+  --fb-accent-background-color-selected: red;
+  --fb-placeholder-color: white;
+  --fb-shadow-color: yellow;
   --fb-rating-fill: var(--yellow-300);
   --fb-rating-hover: var(--yellow-500);
   --fb-back-btn-border: currentColor;

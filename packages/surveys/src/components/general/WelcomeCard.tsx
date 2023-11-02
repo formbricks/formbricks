@@ -42,7 +42,7 @@ export default function WelcomeCard({
             type="button"
             brandColor={brandColor}
           />
-          <div className="flex items-center text-xs text-[--fb-text-2]">Press Enter ↵</div>
+          <div className="flex items-center text-xs text-[--fb-subheading-color]">Press Enter ↵</div>
         </div>
       </div>
       {timeToFinish && <></>}

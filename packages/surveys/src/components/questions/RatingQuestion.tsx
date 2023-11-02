@@ -87,7 +87,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-[--fb-bg] text-center text-sm leading-10">
+                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-[--fb-survey-background-color] text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -97,10 +97,12 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      value === number ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]" : "",
+                      value === number
+                        ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
+                        : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "block h-full w-full border text-[--fb-text] hover:bg-[--fb-bg-2] focus:bg-[--fb-bg-2] focus:outline-none"
+                      "block h-full w-full border text-[--fb-heading-color] hover:bg-[--fb-accent-background-color] focus:bg-[--fb-accent-background-color] focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -114,7 +116,7 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      number <= hoveredNumber ? "text-[--fb-rating-hover]" : "text-[--fb-text]",
+                      number <= hoveredNumber ? "text-[--fb-rating-hover]" : "text-[--fb-heading-color]",
                       "flex h-full w-full justify-center focus:text-[--fb-rating-hover] focus:outline-none"
                     )}
                     onFocus={() => setHoveredNumber(number)}
@@ -156,7 +158,7 @@ export default function RatingQuestion({
                       "flex h-full w-full justify-center",
                       value === number || hoveredNumber === number
                         ? "stroke-[--fb-rating-selected] text-[--fb-rating-selected]"
-                        : "stroke-[--fb-text] text-[--fb-text]"
+                        : "stroke-[--fb-heading-color] text-[--fb-heading-color]"
                     )}
                     tabIndex={i + 1}
                     onKeyDown={(e) => {
@@ -177,7 +179,7 @@ export default function RatingQuestion({
               </span>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-text-2]">
+          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-subheading-color]">
             <p className="w-1/2 text-left">{question.lowerLabel}</p>
             <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>

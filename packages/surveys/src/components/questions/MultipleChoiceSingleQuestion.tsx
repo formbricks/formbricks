@@ -75,7 +75,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-[--fb-bg] py-0.5 pr-2"
+            className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-[--fb-survey-background-color] py-0.5 pr-2"
             role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label
@@ -91,9 +91,9 @@ export default function MultipleChoiceSingleQuestion({
                 }}
                 className={cn(
                   value === choice.label
-                    ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
-                    : "border-[--fb-border]",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] focus-within:border-[--fb-border-highlight] focus-within:bg-[--fb-bg-2] hover:bg-[--fb-bg-2] focus:outline-none"
+                    ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
+                    : "border-[--fb-border-color]",
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-heading-color] focus-within:border-[--fb-border-color-highlight] focus-within:bg-[--fb-accent-background-color] hover:bg-[--fb-accent-background-color] focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -122,9 +122,9 @@ export default function MultipleChoiceSingleQuestion({
                 tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === otherOption.label
-                    ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
-                    : "border-[--fb-border]",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-text] focus-within:border-[--fb-border-highlight] focus-within:bg-[--fb-bg-2] hover:bg-[--fb-bg-2] focus:outline-none"
+                    ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
+                    : "border-[--fb-border-color]",
+                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-heading-color] focus-within:border-[--fb-border-color-highlight] focus-within:bg-[--fb-accent-background-color] hover:bg-[--fb-accent-background-color] focus:outline-none"
                 )}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
@@ -169,7 +169,7 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     placeholder="Please specify"
-                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-border] bg-[--fb-bg] px-3 py-2 text-sm text-[--fb-text] placeholder:text-[--fb-placeholder] focus:outline-none  focus:ring-2 focus:ring-[--fb-ring-focus] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-border-color] bg-[--fb-survey-background-color] px-3 py-2 text-sm text-[--fb-heading-color] placeholder:text-[--fb-placeholder-color] focus:outline-none  focus:ring-2 focus:ring-[--fb-element-focus-color] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

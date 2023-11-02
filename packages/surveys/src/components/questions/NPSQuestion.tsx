@@ -56,9 +56,9 @@ export default function NPSQuestion({
                 }}
                 className={cn(
                   value === number
-                    ? "z-10 border-[--fb-border-highlight] bg-[--fb-bg-selected]"
-                    : "border-[--fb-border]",
-                  "relative h-10 flex-1 cursor-pointer border bg-[--fb-bg] text-center text-sm leading-10 text-[--fb-text] first:rounded-l-md last:rounded-r-md hover:bg-[--fb-bg-2] focus:outline-none"
+                    ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
+                    : "border-[--fb-border-color]",
+                  "relative h-10 flex-1 cursor-pointer border bg-[--fb-survey-background-color] text-center text-sm leading-10 text-[--fb-heading-color] first:rounded-l-md last:rounded-r-md hover:bg-[--fb-accent-background-color] focus:outline-none"
                 )}>
                 <input
                   type="radio"
@@ -80,7 +80,7 @@ export default function NPSQuestion({
               </label>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-text-3]">
+          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-info-text-color]">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>

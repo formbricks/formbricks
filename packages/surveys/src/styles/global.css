@@ -28,7 +28,7 @@
 }
 
 .formbricks-inner {
-  @apply flex h-full w-full flex-col justify-between bg-[--fb-bg] px-6 pb-3 pt-6;
+  @apply flex h-full w-full flex-col justify-between bg-[--fb-survey-background-color] px-6 pb-3 pt-6;
 }
 
 /* .formbricks-question {
@@ -42,11 +42,11 @@
 .fb-htmlbody {
   @apply block text-sm font-normal leading-6;
   /* need to use !important because in packages/ui/components/editor/stylesEditorFrontend.css the color is defined for some classes */
-  color: var(--fb-text-2) !important;
+  color: var(--fb-subheading-color) !important;
 }
 /* without this, it wont override the color */
 p.fb-editor-paragraph {
-  color: var(--fb-text-2) !important;
+  color: var(--fb-subheading-color) !important;
 }
 
 /* theming */
@@ -68,19 +68,19 @@ p.fb-editor-paragraph {
 
   /* Default Light Theme, you can override everything by changing these values */
   --fb-brand-color: rgb(255, 255, 255);
-  --fb-on-primary: black;
-  --fb-border: var(--slate-300);
-  --fb-border-highlight: var(--slate-500);
-  --fb-ring-focus: var(--slate-500);
-  --fb-text: var(--slate-900);
-  --fb-text-2: var(--slate-700);
-  --fb-text-3: var(--slate-500);
-  --fb-text-4: var(--slate-400);
-  --fb-bg: white;
-  --fb-bg-2: var(--slate-200);
-  --fb-bg-selected: var(--slate-100);
-  --fb-placeholder: var(--slate-400);
-  --fb-tyc-shadow: var(--slate-300);
+  --fb-brand-text-color: black;
+  --fb-border-color: var(--slate-300);
+  --fb-border-color-highlight: var(--slate-500);
+  --fb-element-focus-color: var(--slate-500);
+  --fb-heading-color: var(--slate-900);
+  --fb-subheading-color: var(--slate-700);
+  --fb-info-text-color: var(--slate-500);
+  --fb-identifier-text-color: var(--slate-400);
+  --fb-survey-background-color: white;
+  --fb-accent-background-color: var(--slate-200);
+  --fb-accent-background-color-selected: var(--slate-100);
+  --fb-placeholder-color: var(--slate-400);
+  --fb-shadow-color: var(--slate-300);
   --fb-rating-fill: var(--yellow-300);
   --fb-rating-hover: var(--yellow-500);
   --fb-back-btn-border: transparent;

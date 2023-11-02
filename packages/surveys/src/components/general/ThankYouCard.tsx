@@ -33,7 +33,7 @@ export default function ThankYouCard({
         </svg>
       </div>
 
-      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-[--fb-tyc-shadow]"></span>
+      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-[--fb-shadow-color]"></span>
 
       <div>
         <Headline headline={headline} questionId="thankYouCard" style={{ "justify-content": "center" }} />
