@@ -80,7 +80,7 @@ export default function OpenTextSummary({
           );
         })}
 
-        <div className="flex justify-center">
+        <div className="my-1 flex justify-center">
           {displayCount < questionSummary.responses.length && (
             <button
               onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
