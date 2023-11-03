@@ -1,0 +1,280 @@
+import Image from "next/image";
+import UnstableCache from "./unstable-cache-documentation.webp";
+
+export const metadata = {
+  title: "Formbricks Code Contribution Guide: How to create a service in Formbricks",
+  description:
+    "Services are the core backbone of the Formbricks codebase. This is the complete guide to help you create a service in Formbricks.",
+};
+
+#### Contributing
+
+# How to Create a Service
+
+In this guide, you will learn how to create a new service in Formbricks codebase. To begin let’s define what we mean when we use the word `Service`
+
+<Note>
+A service is an abstraction of database calls related to a specific model in the database which comprises of cached functions that can perform generic database level functionalities.
+
+</Note>
+
+Let’s break down some of the jargon in that definition:
+
+**Abstraction of database calls**
+
+From our guide on [How we Code at Formbricks](https://formbricks.com/docs/contributing/how-we-code), we mention that database calls should not be made directly from components or other places other than a **service**. This means that if you need to make a request to the database to fetch some data, let’s say “get the **surveys** of the current user in the current **environment**”, you would need a function in the surveys service like `getSurveysByEnvironmentId`. It is also worth mentioning that we use [Prisma](https://prisma.io/) as a database abstraction layer to perform database calls.
+
+**Comprises of cached functions**
+
+A service consists of multiple functions that can be easily reused in server actions. The other important part of this is that the output of a function in a service MUST be cached so we don’t have make unnecessary database calls for data that hasn’t changed. We will talk more about caching in services a bit later.
+
+**Generic database level functionalities**
+
+By generic we mean that if in the `survey` service there is a function that only gets a survey and now you want a function to get both survey and all its responses, you should not create another function specifically for that. Instead use the `getSurvey` function and then a `getResponsesBySurveyId` function in the `response` service to get this data. The functions need to be generic so that they can be reused for cases like this where you need to combine multiple cached functions to get what you need.
+
+## Do you need a new service?
+
+Firstly you must note that you almost won’t need to create a new service unless a new model was created. If you think that you need a new service or a new function in an existing service, first double check if you can combine one or two existing functions in an existing service to achieve what you want. If you still think that it doesn’t meet your need, please discuss with Matti first with your specific use-case to get the green light to create a new service or function in a service.
+
+This is critical to us as a project because services are a key part of our project and we want to make them as organised, minimal, easy to change and use as possible. This is important to us as a team to move quickly and still keep a good and maintainable codebase.
+
+## Steps to creating a new service
+
+Below is a break down on how to create a new service, if you ned to implement a function in an existing service you can jump to Step 3:
+
+### Step 1: Create the service folder in `packages/lib`
+
+For the sake of this section, let’s say we just added a new model called `ApiKey`, (note this model already exists)
+
+<Col>
+<CodeGroup title="packages/database/schema.prisma">
+
+```sql
+model ApiKey {
+  id            String      @id @unique @default(cuid())
+  createdAt     DateTime    @default(now())
+  lastUsedAt    DateTime?
+  label         String?
+  hashedKey     String      @unique()
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+}
+```
+
+</CodeGroup>
+</Col>
+
+**Step 1a**: The first thing you need to do is go to `packages/lib` and create a new folder called `apiKey`, note that this is the camel cased version of the Model name.
+
+**Step 1b**: We need to create the types for our service once we have the model. To do that you go to `packages/types` and create a file called `apiKey.ts`.
+
+In the type file, we must first create a Zod type that matches the Prisma model called`ZApiKey` (note here that it MUST begin with `Z` (indicating a Zod type) then the service name in pascal case). Next from this Zod type, we create a derived Typescript type called `TApiKey` (this MUST begin with a `T` and then the service name in pascal case).
+
+The reason we need both of them is because the Zod type is used for validating arguments passed into a service and we use the Typescript type to specify what data type a service function returns.
+
+### Step 2: Create `service.ts` and `cache.ts` in the service folder.
+
+The 2 required files are `service.ts` and `cache.ts`, note they are in singular form.
+
+`service.ts` - Where all the reusable cached functions are placed.
+
+`cache.ts` - Where the caching functionality for that service is abstracted to.
+
+### Step 3: Writing your functions in `service.ts` .
+
+A function in a service must have the following requirements:
+
+1. Follow the same naming pattern as we have in other services
+   - If using Prisma’s `findUnique` then the name should be `get` + `ServiceName` (in singular), e.g `getApiKey`
+   - If using Prisma’s `findMany` then the name should be `get` + `ServiceName` (in plural), e.g `getApiKeys`
+   - If your function's primary purpose is to retrieve or manipulate data based on a specific attribute or property of a resource, use "`by`" followed by the attribute name. For example:
+     - **`getMembersByTeamId`**: This function retrieves members filtered by the team's ID.
+     - **`getMembershipByUserIdTeamId`**: It retrieves a membership by the user's and team's IDs.
+   - If using Prisma’s `create` then `createApiKey`
+   - If using Prisma’s `update` then `updateApiKey`
+   - if using Prisma’s `delete` then `deleteApiKey`
+2. All its arguments must be properly typed.
+3. It should have a return type.
+4. The arguments should be validated using `validateInputs` (reference the code to see how it is used)
+5. Every function must return the standardised data types (`TApiKey`), including create or delete functions.
+6. Handle errors in the function and return specific error types for DatabaseErrors.
+
+<Note>
+  A standardised data type is the derived Typescript type in this case `TApiKey` that matches the model of the
+  service.
+</Note>
+
+Here is an example of a function that gets an api key by id:
+
+<Col>
+<CodeGroup title="packages/lib/apiKey/service.ts">
+
+```ts
+export const getApiKey = async (apiKeyId: string): Promise<TApiKey> => {
+  validateInputs([apiKeyId, ZString]);
+
+  try {
+    const apiKeyData = await prisma.apiKey.findUnique({
+      where: {
+        id: apiKeyId,
+      },
+    });
+
+    if (!apiKeyData) {
+      throw new ResourceNotFoundError("API Key from ID", apiKeyId);
+    }
+
+    return apiKeyData;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+```
+
+</CodeGroup>
+</Col>
+
+### Step 4: Implementing caching for your function
+
+**Step 4a**: Firstly in the cache.ts file, you need to follow this structure:
+
+<Col>
+<CodeGroup title="packages/lib/apiKey/cache.ts">
+
+```ts
+import { revalidateTag } from "next/cache";
+
+interface RevalidateProps {
+  id?: string;
+  environmentId?: string;
+}
+
+export const apiKeyCache = {
+  tag: {
+    // Tags can be different depending on your use case
+    byId(id: string) {
+      return `apiKeys-${id}`;
+    },
+    byEnvironmentId(environmentId: string) {
+      return `environments-${environmentId}-apiKeys`;
+    },
+  },
+  revalidate({ id, environmentId }: RevalidateProps): void {
+    if (id) {
+      revalidateTag(this.tag.byId(id));
+    }
+
+    if (environmentId) {
+      revalidateTag(this.tag.byEnvironmentId(environmentId));
+    }
+  },
+};
+```
+
+</CodeGroup>
+</Col>
+
+_Breakdown of the above code._
+
+1. **apiKeyCache**: The name of this object is `serviceName` + `Cache`, which is why this is called `apiKeyCache` .
+2. **tag**: This object is where all the tags for the service cache will be stored. Read below for the definition of a tag
+3. **byId**: This is the required tag, since every service must query by Id at some point, `byId` is a must have in each tag. It is used to revalidate the cache of a single item, e.g. `getApiKey(id)`. If there is a good reason not to query by id, you can avoid creating this tag. The returned string of this function needs to begin with the service name in plural then a dash and the id (which must be passed in).
+4. **byEnvironmentId**: It is used to revalidate the cache of a list of items of the same parent, e.g. `getApiKeys(environmentId)`. For parent dependencies used to query this service, you should add the plural of the name in this case `environments` plus the id of the parent dependency plus the name of the service you are working with in plural, in this case `apiKeys` which results to `environments-${environmentId}-apiKeys`.
+5. **revalidate**: This function receives an object with optional keys. Depending on the key that is passed in, we optionally call the `revalidateTag` from `next/cache` on the appropriate tag. Note each key passed into this function has to match a `tag`.
+
+<Note>
+  A tag is a label or metadata identifier attached to a piece of data, content, or an object to categorize,
+  classify, or organize it for easier retrieval, grouping, or management. In the context of revalidation, tags
+  are used to associate groups of cached data with specific events or triggers. When an event occurs, such as
+  a form submission or content update, the tags are used to identify and revalidate all the cached data items
+  associated with that tag. This ensures that the latest and most up-to-date data is retrieved and displayed
+  in response to the event, contributing to the effective management and real-time updating of cached content.
+</Note>
+
+<Note>
+  We have a [script](https://gist.github.com/rotimi-best/7bd7e4ebda09a68ff0a1dc8ae6fa0009) that can help you
+  auto-generate the `cache.ts` file with the basic structure.
+</Note>
+
+**Step 4b:** Now that you have the `cache.ts`, it is time to actually use the tags and revalidate method in your `service.ts`.
+
+We will rewrite the function `getApiKey` we created in the `service.ts` file to support caching:
+
+<Col>
+<CodeGroup title="packages/lib/apiKey/service.ts">
+
+```ts
+import { unstable_cache } from "next/cache";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { apiKeyCache } from "./cache";
+
+export const getApiKey = async (apiKeyId: string): Promise<TApiKey> =>
+  unstable_cache(
+    async () => {
+      validateInputs([apiKeyId, ZString]);
+
+      try {
+        const apiKeyData = await prisma.apiKey.findUnique({
+          where: {
+            id: apiKeyId,
+          },
+        });
+
+        if (!apiKeyData) {
+          throw new ResourceNotFoundError("API Key from ID", apiKeyId);
+        }
+
+        return apiKeyData;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getApiKey-${apiKeyId}`],
+    {
+      tags: [apiKeyCache.tag.byId(apiKeyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+```
+
+</CodeGroup>
+</Col>
+
+_Breakdown of the above code._
+
+In the above code we only introduce something new called `unstable_cache`, read more about it [here](https://nextjs.org/docs/app/api-reference/functions/unstable_cache#parameters). In a nutshell these are its parameters:
+
+<Image
+  src={UnstableCache}
+  alt="Unstable Cache Parameters"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+From the screenshot above we see that `unstable_cache` receives 3 arguments:
+
+1. `fetchData`: In our case this is the exact function of your service without caching (step 3)
+2. `keyParts`: As a rule of thumb, the key must consist of the name of the function and the arguments passed into the function, all separated by a dash. In our case it is called `getApiKey-${apiKeyId}` because the function name is `getApiKey` and we receive only one argument called `apiKeyId`
+3. `options`: which consists of **tags** and **revalidate**
+   1. `tags`: This is where the tags you created in step 4a comes in, tags are created solely based on the arguments passed to the function. (please reference existing services in `packages/lib` to see more variations of this when dealing with more than one argument)
+   2. `revalidate`: We have a global constant for this which you can use called `SERVICES_REVALIDATION_INTERVAL`
+
+<Note>
+In create, update and delete requests, you don’t need caching however these are the places where the revalidate method is called. For example when the apiKey is deleted we want to call the revalidate method and pass in the id and environmentId, so we invalidate every cached function with `id` and `environmentId` tags.
+`apiKeyCache.revalidate({ id: [apiKey.id](http://apikey.id/), environmentId: apiKey.environmentId });`
+
+</Note>
+
+### Step 5: Check if you need to add these 2 optional files (`auth.ts` and `util.ts`)
+
+`auth.ts` - Is for verifying if the user is authorised to access the service. Typically it has only one function with this naming `canUserAccessApiKey`. Please note that ApiKey at the end of the name is specific to the service name.
+
+`util.ts` - This file holds any helper function that is used in that specific service. For example one common use case for this files is for converting Date fields from string to Date. The reason for this is that when we cache a function using `unstable_cache`, [it does not support deserialisation of dates](https://github.com/vercel/next.js/issues/51613). We therefore need to manually deserialise date fields by writing a function that receives the data of a service and we check for its date fields that are in strings and we convert them into Date.
