@@ -119,7 +119,7 @@ export default function RatingQuestion({
                     onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
                     {typeof value === "number" && value >= number ? (
-                      <span className="text-[--fb-rating-fill]">
+                      <span className="text-rating-fill">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
