@@ -75,7 +75,7 @@ p.fb-editor-paragraph {
   --fb-heading-color: var(--slate-900);
   --fb-subheading-color: var(--slate-700);
   --fb-info-text-color: var(--slate-500);
-  --fb-identifier-text-color: var(--slate-400);
+  --fb-signature-text-color: var(--slate-400);
   --fb-survey-background-color: white;
   --fb-accent-background-color: var(--slate-200);
   --fb-accent-background-color-selected: var(--slate-100);

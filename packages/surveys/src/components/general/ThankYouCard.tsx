@@ -17,7 +17,7 @@ export default function ThankYouCard({
 }: ThankYouCardProps) {
   return (
     <div className="text-center">
-      <div className="flex items-center justify-center text-[--fb-brand-color]">
+      <div className="text-brand flex items-center justify-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -33,7 +33,7 @@ export default function ThankYouCard({
         </svg>
       </div>
 
-      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-[--fb-shadow-color]"></span>
+      <span className="bg-shadow mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
 
       <div>
         <Headline headline={headline} questionId="thankYouCard" style={{ "justify-content": "center" }} />

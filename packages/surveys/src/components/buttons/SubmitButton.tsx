@@ -32,7 +32,7 @@ function SubmitButton({
       type={type}
       tabIndex={tabIndex}
       autoFocus={focus}
-      className="flex items-center rounded-md border border-[--fb-submit-btn-border] bg-[--fb-brand-color] px-3 py-3 text-base font-medium leading-4 text-[--fb-brand-text-color] shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--fb-focus-color] focus:ring-offset-2"
+      className="bg-brand border-submit-button-border text-brand focus:ring-focus flex items-center rounded-md border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
       onClick={onClick}>
       {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
     </button>

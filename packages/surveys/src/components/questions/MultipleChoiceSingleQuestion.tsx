@@ -1,11 +1,11 @@
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn, shuffleQuestions } from "../../lib/utils";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
-import { useMemo, useRef, useState, useEffect } from "preact/hooks";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -75,7 +75,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-[--fb-survey-background-color] py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
             role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label
@@ -91,9 +91,9 @@ export default function MultipleChoiceSingleQuestion({
                 }}
                 className={cn(
                   value === choice.label
-                    ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
-                    : "border-[--fb-border-color]",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-heading-color] focus-within:border-[--fb-border-color-highlight] focus-within:bg-[--fb-accent-background-color] hover:bg-[--fb-accent-background-color] focus:outline-none"
+                    ? "border-border-highlight bg-accent-selected-bg z-10"
+                    : "border-border",
+                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -102,7 +102,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
-                    className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
+                    className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setOtherSelected(false);
@@ -122,9 +122,9 @@ export default function MultipleChoiceSingleQuestion({
                 tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === otherOption.label
-                    ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
-                    : "border-[--fb-border-color]",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-[--fb-heading-color] focus-within:border-[--fb-border-color-highlight] focus-within:bg-[--fb-accent-background-color] hover:bg-[--fb-accent-background-color] focus:outline-none"
+                    ? "border-border-highlight bg-accent-selected-bg z-10"
+                    : "border-border",
+                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
@@ -139,7 +139,7 @@ export default function MultipleChoiceSingleQuestion({
                     tabIndex={-1}
                     name={question.id}
                     value={otherOption.label}
-                    className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
+                    className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={() => {
                       setOtherSelected(!otherSelected);
@@ -169,7 +169,7 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     placeholder="Please specify"
-                    className="mt-3 flex h-10 w-full rounded-md border border-[--fb-border-color] bg-[--fb-survey-background-color] px-3 py-2 text-sm text-[--fb-heading-color] placeholder:text-[--fb-placeholder-color] focus:outline-none  focus:ring-2 focus:ring-[--fb-focus-color] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

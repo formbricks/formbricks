@@ -1,10 +1,10 @@
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { cn } from "../../lib/utils";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -55,10 +55,8 @@ export default function NPSQuestion({
                   }
                 }}
                 className={cn(
-                  value === number
-                    ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
-                    : "border-[--fb-border-color]",
-                  "relative h-10 flex-1 cursor-pointer border bg-[--fb-survey-background-color] text-center text-sm leading-10 text-[--fb-heading-color] first:rounded-l-md last:rounded-r-md hover:bg-[--fb-accent-background-color] focus:outline-none"
+                  value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
+                  "bg-survey-bg text-heading hover:bg-accent-bg relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 first:rounded-l-md last:rounded-r-md focus:outline-none"
                 )}>
                 <input
                   type="radio"
@@ -80,7 +78,7 @@ export default function NPSQuestion({
               </label>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-info-text-color]">
+          <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>

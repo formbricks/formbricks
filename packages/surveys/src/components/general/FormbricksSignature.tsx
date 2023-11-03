@@ -5,10 +5,10 @@ export default function FormbricksSignature() {
       target="_blank"
       tabIndex={-1}
       className="mb-5 mt-2 flex justify-center">
-      <p className="text-xs text-[--fb-identifier-text-color]">
+      <p className="text-signature text-xs">
         Powered by{" "}
         <b>
-          <span className="text-[--fb-info-text-color] hover:text-[--fb-heading-color]">Formbricks</span>
+          <span className="text-info-text hover:text-heading">Formbricks</span>
         </b>
       </p>
     </a>

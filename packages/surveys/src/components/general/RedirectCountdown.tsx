@@ -35,7 +35,7 @@ export default function RedirectCountDown({ redirectUrl, isRedirectDisabled }: R
 
   return (
     <div>
-      <div className="mt-10 rounded-md bg-[--fb-accent-background-color] p-2 text-sm text-[--fb-subheading-color]">
+      <div className="bg-accent-bg text-subheading mt-10 rounded-md p-2 text-sm">
         <span>You&apos;re redirected in </span>
         <span>{timeRemaining}</span>
       </div>

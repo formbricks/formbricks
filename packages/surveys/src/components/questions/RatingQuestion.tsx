@@ -87,7 +87,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-[--fb-survey-background-color] text-center text-sm leading-10">
+                className="max-w-10 bg-survey-bg relative max-h-10 flex-1 cursor-pointer text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -97,12 +97,10 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      value === number
-                        ? "z-10 border-[--fb-border-color-highlight] bg-[--fb-accent-background-color-selected]"
-                        : "",
+                      value === number ? "bg-accent-selected-bg border-border-highlight z-10" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "block h-full w-full border text-[--fb-heading-color] hover:bg-[--fb-accent-background-color] focus:bg-[--fb-accent-background-color] focus:outline-none"
+                      "text-heading hover:bg-accent-bg focus:bg-accent-bg block h-full w-full border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -116,8 +114,8 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      number <= hoveredNumber ? "text-[--fb-rating-hover]" : "text-[--fb-heading-color]",
-                      "flex h-full w-full justify-center focus:text-[--fb-rating-hover] focus:outline-none"
+                      number <= hoveredNumber ? "text-rating-focus" : "text-heading",
+                      "focus:text-rating-focus flex h-full w-full justify-center focus:outline-none"
                     )}
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
@@ -157,8 +155,8 @@ export default function RatingQuestion({
                     className={cn(
                       "flex h-full w-full justify-center",
                       value === number || hoveredNumber === number
-                        ? "stroke-[--fb-rating-selected] text-[--fb-rating-selected]"
-                        : "stroke-[--fb-heading-color] text-[--fb-heading-color]"
+                        ? "stroke-rating-selected text-rating-selected"
+                        : "stroke-heading text-heading"
                     )}
                     tabIndex={i + 1}
                     onKeyDown={(e) => {
@@ -179,7 +177,7 @@ export default function RatingQuestion({
               </span>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-[--fb-subheading-color]">
+          <div className="text-subheading flex justify-between px-1.5 text-xs leading-6">
             <p className="w-1/2 text-left">{question.lowerLabel}</p>
             <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>
@@ -218,7 +216,7 @@ interface RatingSmileyProps {
 }
 
 function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
-  const activeColor = "fill-[--fb-rating-fill]";
+  const activeColor = "fill-rating-fill";
   const inactiveColor = "fill-none";
   let icons = [
     <TiredFace className={active ? activeColor : inactiveColor} />,

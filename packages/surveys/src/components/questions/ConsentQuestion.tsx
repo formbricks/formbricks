@@ -1,9 +1,9 @@
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import HtmlBody from "../general/HtmlBody";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -49,7 +49,7 @@ export default function ConsentQuestion({
               onChange({ [question.id]: "accepted" });
             }
           }}
-          className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-[--fb-border-color] bg-[--fb-survey-background-color] p-4 text-sm text-[--fb-heading-color] hover:bg-[--fb-accent-background-color] focus:bg-[--fb-accent-background-color] focus:outline-none focus:ring-2 focus:ring-[--fb-border-color-highlight] focus:ring-offset-2">
+          className="border-border bg-survey-bg text-heading hover:bg-accent-bg focus:bg-accent-bg focus:ring-border-highlight relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
           <input
             type="checkbox"
             id={question.id}
@@ -63,7 +63,7 @@ export default function ConsentQuestion({
               }
             }}
             checked={value === "accepted"}
-            className="h-4 w-4 border border-[--fb-brand-color] text-[--fb-brand-color] focus:ring-0 focus:ring-offset-0"
+            className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
             required={question.required}
           />

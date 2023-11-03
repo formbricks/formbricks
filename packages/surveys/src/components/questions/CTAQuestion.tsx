@@ -1,9 +1,9 @@
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import Headline from "../general/Headline";
 import HtmlBody from "../general/HtmlBody";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -47,7 +47,7 @@ export default function CTAQuestion({
               onClick={() => {
                 onSubmit({ [question.id]: "dismissed" });
               }}
-              className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-[--fb-heading-color] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--fb-focus-color] focus:ring-offset-2">
+              className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
               {question.dismissButtonLabel || "Skip"}
             </button>
           )}
