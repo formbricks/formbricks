@@ -52,7 +52,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
     renderSurveyModal({
       survey: survey,
       brandColor,
-      formbricksSignature: product.formbricksSignature,
+      formbricksSignature: true,
       clickOutside,
       darkOverlay,
       highlightBorderColor,

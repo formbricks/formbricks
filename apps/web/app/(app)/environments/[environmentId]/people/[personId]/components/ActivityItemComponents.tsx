@@ -1,54 +1,30 @@
-import { capitalizeFirstLetter } from "@/app/lib/utils";
-import { TActivityFeedItem } from "@formbricks/types/activity";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Label } from "@formbricks/ui/Label";
-import {
-  CodeBracketIcon,
-  CursorArrowRaysIcon,
-  EyeIcon,
-  QuestionMarkCircleIcon,
-  SparklesIcon,
-  TagIcon,
-} from "@heroicons/react/24/solid";
 import { formatDistance } from "date-fns";
+import { TAction } from "@formbricks/types/actions";
+import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 
-export const ActivityItemIcon = ({ activityItem }: { activityItem: TActivityFeedItem }) => (
+export const ActivityItemIcon = ({ actionItem }: { actionItem: TAction }) => (
   <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
-    {activityItem.type === "attribute" ? (
-      <TagIcon />
-    ) : activityItem.type === "display" ? (
-      <EyeIcon />
-    ) : activityItem.type === "event" ? (
-      <div>
-        {activityItem.actionType === "code" && <CodeBracketIcon />}
-        {activityItem.actionType === "noCode" && <CursorArrowRaysIcon />}
-        {activityItem.actionType === "automatic" && <SparklesIcon />}
-      </div>
-    ) : (
-      <QuestionMarkCircleIcon />
-    )}
+    <div>
+      {actionItem.actionClass?.type === "code" && <CodeBracketIcon />}
+      {actionItem.actionClass?.type === "noCode" && <CursorArrowRaysIcon />}
+      {actionItem.actionClass?.type === "automatic" && <SparklesIcon />}
+    </div>
   </div>
 );
 
-export const ActivityItemContent = ({ activityItem }: { activityItem: TActivityFeedItem }) => (
+export const ActivityItemContent = ({ actionItem }: { actionItem: TAction }) => (
   <div>
     <div className="font-semibold text-slate-700">
-      {activityItem.type === "attribute" ? (
-        <p>{capitalizeFirstLetter(activityItem.attributeLabel)} added</p>
-      ) : activityItem.type === "display" ? (
-        <p>Seen survey</p>
-      ) : activityItem.type === "event" ? (
-        <p>{activityItem.actionLabel} triggered</p>
-      ) : (
-        <p>Unknown Activity</p>
-      )}
+      {actionItem.actionClass ? <p>{actionItem.actionClass.name}</p> : <p>Unknown Activity</p>}
     </div>
     <div className="text-sm text-slate-400">
       <time
-        dateTime={formatDistance(activityItem.createdAt, new Date(), {
+        dateTime={formatDistance(actionItem.createdAt, new Date(), {
           addSuffix: true,
         })}>
-        {formatDistance(activityItem.createdAt, new Date(), {
+        {formatDistance(actionItem.createdAt, new Date(), {
           addSuffix: true,
         })}
       </time>
@@ -57,10 +33,10 @@ export const ActivityItemContent = ({ activityItem }: { activityItem: TActivityF
 );
 
 export const ActivityItemPopover = ({
-  activityItem,
+  actionItem,
   children,
 }: {
-  activityItem: TActivityFeedItem;
+  actionItem: TAction;
   children: React.ReactNode;
 }) => {
   return (
@@ -68,39 +44,15 @@ export const ActivityItemPopover = ({
       <PopoverTrigger className="group">{children}</PopoverTrigger>
       <PopoverContent className="bg-white">
         <div>
-          {activityItem.type === "attribute" ? (
+          {actionItem && (
             <div>
-              <Label className="font-normal text-slate-400">Attribute Label</Label>
-              <p className=" mb-2 text-sm font-medium text-slate-900">{activityItem.attributeLabel}</p>
-              <Label className="font-normal text-slate-400">Attribute Value</Label>
-              <p className="text-sm font-medium text-slate-900">{activityItem.attributeValue}</p>
+              <Label className="font-normal text-slate-400">Action Label</Label>
+              <p className=" mb-2 text-sm font-medium text-slate-900">{actionItem.actionClass!.name}</p>
+              <Label className="font-normal text-slate-400">Action Description</Label>
+              <p className="text-sm font-medium text-slate-900">{actionItem.actionClass!.description}</p>
+              <Label className="font-normal text-slate-400">Action Type</Label>
+              <p className="text-sm font-medium text-slate-900">{actionItem.actionClass!.type}</p>
             </div>
-          ) : activityItem.type === "display" ? (
-            <div>
-              <Label className="font-normal text-slate-400">Survey Name</Label>
-              <p className=" mb-2 text-sm font-medium text-slate-900">{activityItem.displaySurveyName}</p>
-            </div>
-          ) : activityItem.type === "event" ? (
-            <div>
-              <div>
-                <Label className="font-normal text-slate-400">Action Display Name</Label>
-                <p className=" mb-2 text-sm font-medium text-slate-900">{activityItem.actionLabel}</p>{" "}
-                <Label className="font-normal text-slate-400">Action Description</Label>
-                <p className=" mb-2 text-sm font-medium text-slate-900">
-                  {activityItem.actionDescription ? (
-                    <span>{activityItem.actionDescription}</span>
-                  ) : (
-                    <span>-</span>
-                  )}
-                </p>
-                <Label className="font-normal text-slate-400">Action Type</Label>
-                <p className="text-sm font-medium text-slate-900">
-                  {capitalizeFirstLetter(activityItem.actionType)}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <QuestionMarkCircleIcon />
           )}
         </div>
       </PopoverContent>

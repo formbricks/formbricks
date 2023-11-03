@@ -1,10 +1,20 @@
 import { getSyncSurveysCached } from "@/app/api/v1/js/sync/lib/surveys";
-import { MAU_LIMIT } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import {
+  IS_FORMBRICKS_CLOUD,
+  MAU_LIMIT,
+  PRICING_APPSURVEYS_FREE_RESPONSES,
+  PRICING_USERTARGETING_FREE_MTU,
+} from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { createPerson, getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
-import { getProductByEnvironmentIdCached } from "@formbricks/lib/product/service";
-import { createSession, extendSession, getSessionCached } from "@formbricks/lib/session/service";
+import { createPerson, getPerson } from "@formbricks/lib/person/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { createSession, extendSession, getSession } from "@formbricks/lib/session/service";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeamByEnvironmentId,
+} from "@formbricks/lib/team/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState } from "@formbricks/types/js";
@@ -32,25 +42,37 @@ export const getUpdatedState = async (
     throw new Error("Environment does not exist");
   }
 
+  // check team subscriptons
+  const team = await getTeamByEnvironmentId(environmentId);
+
+  if (!team) {
+    throw new Error("Team does not exist");
+  }
+
   // check if Monthly Active Users limit is reached
-  const currentMau = await getMonthlyActivePeopleCount(environmentId);
-  const isMauLimitReached = currentMau >= MAU_LIMIT;
-  if (isMauLimitReached) {
-    const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
-    if (!personId || !sessionId) {
-      // don't allow new people or sessions
-      throw new Error(errorMessage);
-    }
-    const session = await getSessionCached(sessionId);
-    if (!session) {
-      // don't allow new sessions
-      throw new Error(errorMessage);
-    }
-    // check if session was created this month (user already active this month)
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    if (new Date(session.createdAt) < firstDayOfMonth) {
-      throw new Error(errorMessage);
+  if (IS_FORMBRICKS_CLOUD) {
+    const hasUserTargetingSubscription =
+      team?.billing?.features.userTargeting.status &&
+      team?.billing?.features.userTargeting.status in ["active", "canceled"];
+    const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
+    const isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
+    if (isMauLimitReached) {
+      const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
+      if (!personId || !sessionId) {
+        // don't allow new people or sessions
+        throw new Error(errorMessage);
+      }
+      const session = await getSession(sessionId);
+      if (!session) {
+        // don't allow new sessions
+        throw new Error(errorMessage);
+      }
+      // check if session was created this month (user already active this month)
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      if (new Date(session.createdAt) < firstDayOfMonth) {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -74,7 +96,7 @@ export const getUpdatedState = async (
     session = await createSession(person.id);
   } else {
     // check validity of person & session
-    session = await getSessionCached(sessionId);
+    session = await getSession(sessionId);
     if (!session) {
       // create a new session
       session = await createSession(person.id);
@@ -96,13 +118,24 @@ export const getUpdatedState = async (
       }
     }
   }
-  // we now have a valid person & session
+  // check if App Survey limit is reached
+  let isAppSurveyLimitReached = false;
+  if (IS_FORMBRICKS_CLOUD) {
+    const hasAppSurveySubscription =
+      team?.billing?.features.inAppSurvey.status &&
+      team?.billing?.features.inAppSurvey.status in ["active", "canceled"];
+    const monthlyResponsesCount = await getMonthlyTeamResponseCount(team.id);
+    isAppSurveyLimitReached =
+      IS_FORMBRICKS_CLOUD &&
+      !hasAppSurveySubscription &&
+      monthlyResponsesCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
+  }
 
   // get/create rest of the state
   const [surveys, noCodeActionClasses, product] = await Promise.all([
-    getSyncSurveysCached(environmentId, person),
+    !isAppSurveyLimitReached ? getSyncSurveysCached(environmentId, person) : [],
     getActionClasses(environmentId),
-    getProductByEnvironmentIdCached(environmentId),
+    getProductByEnvironmentId(environmentId),
   ]);
 
   if (!product) {

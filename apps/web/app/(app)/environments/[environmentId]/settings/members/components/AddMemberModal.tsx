@@ -35,6 +35,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
 
   const submitEventClass = async () => {
     const data = getValues();
+    data.role = data.role || MembershipRole.Admin;
     onSubmit(data);
     setOpen(false);
     reset();
