@@ -62,8 +62,6 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          firstname: user.firstname,
-          lastname: user.firstname,
           emailVerified: user.emailVerified,
         };
       },
@@ -117,8 +115,6 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          firstname: user.firstname,
-          lastname: user.firstname,
           emailVerified: user.emailVerified,
         };
       },
@@ -251,6 +247,7 @@ export const authOptions: NextAuthOptions = {
                 {
                   accepted: true,
                   role: "owner",
+                  // @ts-ignore
                   team: {
                     create: {
                       name: `${user.name}'s Team`,

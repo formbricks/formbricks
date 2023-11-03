@@ -11,9 +11,10 @@ export const createResponse = async (
 ): Promise<any> => {
   const api = formbricks.getApi();
   const personId = formbricks.getPerson()?.id;
+
   return await api.client.response.create({
     surveyId,
-    personId,
+    personId: personId ?? "",
     finished,
     data,
   });

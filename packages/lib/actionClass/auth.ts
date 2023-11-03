@@ -15,9 +15,12 @@ export const canUserAccessActionClass = async (userId: string, actionClassId: st
       if (!userId) return false;
 
       const actionClass = await getActionClass(actionClassId);
+      console.log("actionClass: \n\n", actionClass);
       if (!actionClass) return false;
 
       const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, actionClass.environmentId);
+
+      console.log("access: \n\n", hasAccessToEnvironment);
       if (!hasAccessToEnvironment) return false;
 
       return true;

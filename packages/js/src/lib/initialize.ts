@@ -72,9 +72,7 @@ export const initialize = async (
     localConfigResult.value.environmentId === c.environmentId &&
     localConfigResult.value.apiHost === c.apiHost
   ) {
-    // const { state, apiHost, environmentId } = localConfigResult.value;
-
-    logger.debug("Found existing configuration.");
+    logger.debug("Found existing configuration. Updating config.");
 
     config.update(localConfigResult.value);
 

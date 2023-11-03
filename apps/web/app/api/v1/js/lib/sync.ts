@@ -5,15 +5,15 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 // import { createSession, getSession } from "@formbricks/lib/session/service";
-// import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState } from "@formbricks/types/js";
 // import { TSession } from "@formbricks/types/sessions";
 import { getSurveys } from "@formbricks/lib/survey/service";
 
-// const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
-//   await captureTelemetry("session created", { jsVersion: jsVersion ?? "unknown" });
-// };
+const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
+  await captureTelemetry("state update", { jsVersion: jsVersion ?? "unknown" });
+};
 
 export const getUpdatedState = async (
   environmentId: string,
@@ -23,6 +23,10 @@ export const getUpdatedState = async (
   let environment: TEnvironment | null;
   // let person: TPerson | null = null;
   // let session: TSession | null;
+
+  if (jsVersion) {
+    captureNewSessionTelemetry(jsVersion);
+  }
 
   // check if environment exists
   environment = await getEnvironment(environmentId);

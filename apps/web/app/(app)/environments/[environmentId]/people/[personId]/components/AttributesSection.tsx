@@ -5,14 +5,15 @@ import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { capitalizeFirstLetter } from "@/app/lib/utils";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
-import { getSessionCount } from "@formbricks/lib/session/service";
+// import { getSessionCount } from "@formbricks/lib/session/service";
 
 export default async function AttributesSection({ personId }: { personId: string }) {
   const person = await getPerson(personId);
   if (!person) {
     throw new Error("No such person found");
   }
-  const numberOfSessions = await getSessionCount(personId);
+  // const numberOfSessions = await getSessionCount(personId);
+  const numberOfSessions = 1;
   const responses = await getResponsesByPersonId(personId);
 
   const numberOfResponses = responses?.length || 0;
