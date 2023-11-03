@@ -14,12 +14,15 @@ import { getIntegrations } from "@formbricks/lib/integration/service";
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
 
-  const [environment, integrations, userWebhooks, zapierWebhooks] = await Promise.all([
-    getEnvironment(environmentId),
-    getIntegrations(environmentId),
-    getCountOfWebhooksBasedOnSource(environmentId, "user"),
-    getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
-  ]);
+  const [environment, integrations, userWebhooks, zapierWebhooks, makeWebhooks, n8nwebhooks] =
+    await Promise.all([
+      getEnvironment(environmentId),
+      getIntegrations(environmentId),
+      getCountOfWebhooksBasedOnSource(environmentId, "user"),
+      getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
+      getCountOfWebhooksBasedOnSource(environmentId, "make"),
+      getCountOfWebhooksBasedOnSource(environmentId, "n8n"),
+    ]);
 
   const containsGoogleSheetIntegration = integrations.some(
     (integration) => integration.type === "googleSheets"
@@ -102,6 +105,13 @@ export default async function IntegrationsPage({ params }) {
       label: "n8n",
       description: "Integrate Formbricks with 350+ apps via n8n",
       icon: <Image src={n8nLogo} alt="n8n Logo" />,
+      connected: n8nwebhooks > 0,
+      statusText:
+        n8nwebhooks === 1
+          ? "1 integration"
+          : n8nwebhooks === 0
+          ? "Not Connected"
+          : `${n8nwebhooks} integrations`,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -113,6 +123,13 @@ export default async function IntegrationsPage({ params }) {
       label: "Make.com",
       description: "Integrate Formbricks with 1000+ apps via Make",
       icon: <Image src={MakeLogo} alt="Make Logo" />,
+      connected: makeWebhooks > 0,
+      statusText:
+        makeWebhooks === 1
+          ? "1 integration"
+          : makeWebhooks === 0
+          ? "Not Connected"
+          : `${makeWebhooks} integration`,
     },
   ];
 

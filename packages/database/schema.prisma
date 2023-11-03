@@ -34,6 +34,8 @@ enum PipelineTriggers {
 enum WehbhookSource {
   user
   zapier
+  make
+  n8n
 }
 
 model Webhook {
