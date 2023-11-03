@@ -85,14 +85,14 @@ The 2 required files are `service.ts` and `cache.ts`, note they are in singular 
 A function in a service must have the following requirements:
 
 1. Follow the same naming pattern as we have in other services
-   1. If using Prisma’s `findUnique` then the name should be `get` + `ServiceName` (in singular), e.g `getApiKey`
-   2. If using Prisma’s `findMany` then the name should be `get` + `ServiceName` (in plural), e.g `getApiKeys`
-   3. If your function's primary purpose is to retrieve or manipulate data based on a specific attribute or property of a resource, use "`by`" followed by the attribute name. For example:
-      - **`getMembersByTeamId`**: This function retrieves members filtered by the team's ID.
-      - **`getMembershipByUserIdTeamId`**: It retrieves a membership by the user's and team's IDs.
-   4. If using Prisma’s `create` then `createApiKey`
-   5. If using Prisma’s `update` then `updateApiKey`
-   6. if using Prisma’s `delete` then `deleteApiKey`
+   - If using Prisma’s `findUnique` then the name should be `get` + `ServiceName` (in singular), e.g `getApiKey`
+   - If using Prisma’s `findMany` then the name should be `get` + `ServiceName` (in plural), e.g `getApiKeys`
+   - If your function's primary purpose is to retrieve or manipulate data based on a specific attribute or property of a resource, use "`by`" followed by the attribute name. For example:
+     - **`getMembersByTeamId`**: This function retrieves members filtered by the team's ID.
+     - **`getMembershipByUserIdTeamId`**: It retrieves a membership by the user's and team's IDs.
+   - If using Prisma’s `create` then `createApiKey`
+   - If using Prisma’s `update` then `updateApiKey`
+   - if using Prisma’s `delete` then `deleteApiKey`
 2. All its arguments must be properly typed.
 3. It should have a return type.
 4. The arguments should be validated using `validateInputs` (reference the code to see how it is used)
