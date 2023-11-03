@@ -2,6 +2,7 @@ import { LRUCache } from "lru-cache";
 
 type Options = {
   interval: number;
+  allowedPerInterval: number;
 };
 
 export default function rateLimit(options: Options) {
@@ -20,7 +21,7 @@ export default function rateLimit(options: Options) {
         tokenCount[0] += 1;
 
         const currentUsage = tokenCount[0];
-        const isRateLimited = currentUsage >= 5;
+        const isRateLimited = currentUsage >= options.allowedPerInterval;
         return isRateLimited ? reject() : resolve();
       }),
   };
