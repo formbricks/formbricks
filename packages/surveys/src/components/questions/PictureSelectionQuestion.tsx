@@ -105,17 +105,12 @@ export default function PictureSelectionQuestion({
                     handleChange(choice.id);
                   }
                 }}
-                style={{
-                  borderColor:
-                    Array.isArray(value) && value.includes(choice.id) ? brandColor : "border-slate-400",
-                  color: brandColor,
-                }}
                 onClick={() => handleChange(choice.id)}
                 className={cn(
                   Array.isArray(value) && value.includes(choice.id)
-                    ? `z-10 border-4 shadow-xl focus:border-4`
+                    ? `border-brand text-brand z-10 border-4 shadow-xl focus:border-4`
                     : "",
-                  "relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border border-slate-400 focus:border-slate-600 focus:bg-slate-50 focus:outline-none"
+                  "border-border focus:border-border-highlight focus:bg-accent-selected-bg relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border focus:outline-none"
                 )}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -131,8 +126,10 @@ export default function PictureSelectionQuestion({
                     type="checkbox"
                     tabindex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
-                    style={{ borderColor: brandColor, color: brandColor }}
-                    className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border border-slate-400"
+                    className={cn(
+                      "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border",
+                      Array.isArray(value) && value.includes(choice.id) ? "border-brand text-brand" : ""
+                    )}
                     required={
                       question.required && Array.isArray(value) && value.length ? false : question.required
                     }
@@ -144,8 +141,10 @@ export default function PictureSelectionQuestion({
                     type="radio"
                     tabindex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
-                    style={{ borderColor: brandColor, color: brandColor }}
-                    className="pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 "
+                    className={cn(
+                      "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",
+                      Array.isArray(value) && value.includes(choice.id) ? "border-brand text-brand" : ""
+                    )}
                     required={
                       question.required && Array.isArray(value) && value.length ? false : question.required
                     }
