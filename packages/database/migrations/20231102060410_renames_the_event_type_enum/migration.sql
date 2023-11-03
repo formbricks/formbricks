@@ -1,1 +1,0 @@
-ALTER TYPE "EventType" RENAME TO "ActionType";
