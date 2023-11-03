@@ -7,7 +7,6 @@ interface SubmitButtonProps {
   focus?: boolean;
   tabIndex?: number;
   type?: "submit" | "button";
-  brandColor: string;
 }
 
 function SubmitButton({

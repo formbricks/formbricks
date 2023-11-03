@@ -17,7 +17,6 @@ export function SurveyModal({
   onClose = () => {},
   onFinished = () => {},
   isRedirectDisabled = false,
-  brandColor,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -54,7 +53,6 @@ export function SurveyModal({
             }, 4000); // close modal automatically after 4 seconds
           }}
           isRedirectDisabled={isRedirectDisabled}
-          brandColor={brandColor}
         />
       </Modal>
     </div>

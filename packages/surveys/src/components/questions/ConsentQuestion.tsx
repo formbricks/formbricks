@@ -13,7 +13,6 @@ interface ConsentQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function ConsentQuestion({
@@ -24,7 +23,6 @@ export default function ConsentQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: ConsentQuestionProps) {
   return (
     <div>
@@ -82,7 +80,6 @@ export default function ConsentQuestion({
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
-            brandColor={brandColor}
           />
         </div>
       </form>

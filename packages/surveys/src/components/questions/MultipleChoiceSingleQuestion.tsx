@@ -15,7 +15,6 @@ interface MultipleChoiceSingleProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -26,7 +25,6 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: MultipleChoiceSingleProps) {
   const [otherSelected, setOtherSelected] = useState(
     !!value && !question.choices.find((c) => c.label === value)
@@ -193,7 +191,6 @@ export default function MultipleChoiceSingleQuestion({
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
-          brandColor={brandColor}
         />
       </div>
     </form>

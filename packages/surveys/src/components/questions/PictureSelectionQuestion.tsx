@@ -15,7 +15,6 @@ interface PictureSelectionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function PictureSelectionQuestion({
@@ -26,7 +25,6 @@ export default function PictureSelectionQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: PictureSelectionProps) {
   const addItem = (item: string) => {
     let values: string[] = [];
@@ -168,7 +166,6 @@ export default function PictureSelectionQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
-          brandColor={brandColor}
           onClick={() => {}}
         />
       </div>

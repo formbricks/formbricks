@@ -14,7 +14,6 @@ interface NPSQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function NPSQuestion({
@@ -25,7 +24,6 @@ export default function NPSQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: NPSQuestionProps) {
   return (
     <form
@@ -102,7 +100,6 @@ export default function NPSQuestion({
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
-            brandColor={brandColor}
           />
         )}
       </div>

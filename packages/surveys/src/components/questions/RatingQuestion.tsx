@@ -27,7 +27,6 @@ interface RatingQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function RatingQuestion({
@@ -38,7 +37,6 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
 
@@ -201,7 +199,6 @@ export default function RatingQuestion({
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
-            brandColor={brandColor}
           />
         )}
       </div>

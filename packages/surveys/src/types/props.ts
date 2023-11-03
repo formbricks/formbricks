@@ -13,7 +13,6 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
-  brandColor: string;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

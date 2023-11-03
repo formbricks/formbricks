@@ -15,7 +15,6 @@ interface MultipleChoiceMultiProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -26,7 +25,6 @@ export default function MultipleChoiceMultiQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: MultipleChoiceMultiProps) {
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
@@ -232,7 +230,6 @@ export default function MultipleChoiceMultiQuestion({
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
-          brandColor={brandColor}
         />
       </div>
     </form>
