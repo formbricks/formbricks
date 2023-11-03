@@ -33,10 +33,7 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     switch (product.name) {
       case StripeProductNames.inAppSurvey:
         updatedFeatures.inAppSurvey.status = "active";
-        if (
-          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited ||
-          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited199
-        ) {
+        if (item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited) {
           updatedFeatures.inAppSurvey.unlimited = true;
         } else {
           const countForTeam = await getMonthlyTeamResponseCount(team.id);
@@ -50,20 +47,14 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
 
       case StripeProductNames.linkSurvey:
         updatedFeatures.linkSurvey.status = "active";
-        if (
-          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited ||
-          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited199
-        ) {
+        if (item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited) {
           updatedFeatures.linkSurvey.unlimited = true;
         }
         break;
 
       case StripeProductNames.userTargeting:
         updatedFeatures.userTargeting.status = "active";
-        if (
-          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited ||
-          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited199
-        ) {
+        if (item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited) {
           updatedFeatures.userTargeting.unlimited = true;
         } else {
           const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);
@@ -78,15 +69,18 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     }
   }
 
-  await stripe.customers.update(stripeCustomer.id, {
-    name: team.name,
-    metadata: { team: team.id },
-  });
-
   await updateTeam(team.id, {
     billing: {
       stripeCustomerId: stripeCustomer.id,
       features: updatedFeatures,
+    },
+  });
+
+  await stripe.customers.update(stripeCustomer.id, {
+    name: team.name,
+    metadata: { team: team.id },
+    invoice_settings: {
+      default_payment_method: stripeSubscriptionObject.default_payment_method as string,
     },
   });
 };

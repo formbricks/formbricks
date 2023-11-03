@@ -23,14 +23,19 @@ export default async function UnlimitedPage({ params }) {
     throw new Error("Team not found");
   }
 
-  const paymentUrl = await upgradePlanAction(team.id, params.environmentId, [
-    StripePriceLookupKeys.inAppSurveyUnlimited199,
-    StripePriceLookupKeys.linkSurveyUnlimited199,
-    StripePriceLookupKeys.userTargetingUnlimited199,
+  const { status, newPlan, url } = await upgradePlanAction(team.id, params.environmentId, [
+    StripePriceLookupKeys.inAppSurveyUnlimited,
+    StripePriceLookupKeys.linkSurveyUnlimited,
+    StripePriceLookupKeys.userTargetingUnlimited,
   ]);
-  if (!paymentUrl || paymentUrl.length === 0) {
-    throw new Error("Failed to create payment");
+  if (status != 200) {
+    throw new Error("Something went wrong");
   }
-
-  redirect(paymentUrl);
+  if (newPlan && url) {
+    redirect(url);
+  } else if (!newPlan) {
+    redirect(`/billing-confirmation?environmentId=${params.environmentId}`);
+  } else {
+    throw new Error("Something went wrong");
+  }
 }

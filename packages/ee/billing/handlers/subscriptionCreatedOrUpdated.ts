@@ -38,10 +38,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.inAppSurvey.status = "active";
         }
-        if (
-          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited ||
-          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited199
-        ) {
+        if (item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited) {
           updatedFeatures.inAppSurvey.unlimited = true;
         } else {
           const countForTeam = await getMonthlyTeamResponseCount(team.id);
@@ -63,10 +60,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.linkSurvey.status = "active";
         }
-        if (
-          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited ||
-          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited199
-        ) {
+        if (item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited) {
           updatedFeatures.linkSurvey.unlimited = true;
         }
         break;
@@ -79,10 +73,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
         ) {
           updatedFeatures.userTargeting.status = "active";
         }
-        if (
-          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited ||
-          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited199
-        ) {
+        if (item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited) {
           updatedFeatures.userTargeting.unlimited = true;
         } else {
           const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);
