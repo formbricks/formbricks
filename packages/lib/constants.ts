@@ -82,3 +82,17 @@ export const LOCAL_UPLOAD_URL = {
 // Pricing
 export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
+
+// Rate Limiting
+export const CLIENT_SIDE_API_RATE_LIMIT = {
+  interval: 60 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 150,
+};
+export const LOGIN_RATE_LIMIT = {
+  interval: 15 * 60 * 1000, // 15 minutes
+  allowedPerInterval: 5,
+};
+export const SIGNUP_RATE_LIMIT = {
+  interval: 60 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 5,
+};

@@ -1,10 +1,20 @@
 import rateLimit from "@/rate-limit";
+import { CLIENT_SIDE_API_RATE_LIMIT, LOGIN_RATE_LIMIT, SIGNUP_RATE_LIMIT } from "@formbricks/lib/constants";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const signUpLimiter = rateLimit({ interval: 60 * 60 * 1000, allowedPerInterval: 5 }); // 60 minutes
-const loginLimiter = rateLimit({ interval: 15 * 60 * 1000, allowedPerInterval: 5 }); // 15 minutes
-const clientSideApiEndpointsLimiter = rateLimit({ interval: 60 * 60 * 1000, allowedPerInterval: 150 }); // 60 minutes
+const signUpLimiter = rateLimit({
+  interval: SIGNUP_RATE_LIMIT.interval,
+  allowedPerInterval: SIGNUP_RATE_LIMIT.allowedPerInterval,
+});
+const loginLimiter = rateLimit({
+  interval: LOGIN_RATE_LIMIT.interval,
+  allowedPerInterval: LOGIN_RATE_LIMIT.allowedPerInterval,
+});
+const clientSideApiEndpointsLimiter = rateLimit({
+  interval: CLIENT_SIDE_API_RATE_LIMIT.interval,
+  allowedPerInterval: CLIENT_SIDE_API_RATE_LIMIT.allowedPerInterval,
+});
 
 const loginRoute = (url: string) => url === "/api/auth/callback/credentials";
 const signupRoute = (url: string) => url === "/api/v1/users";
