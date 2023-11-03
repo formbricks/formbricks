@@ -108,7 +108,7 @@ export default function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                class="relative rounded-md text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+                class="text-close-button hover:text-close-button-focus focus:ring-close-button-focus relative rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2">
                 <span class="sr-only">Close</span>
                 <svg
                   class="h-4 w-4"

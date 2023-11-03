@@ -27,6 +27,8 @@ module.exports = {
       "rating-selected": "var(--fb-rating-selected)",
       "back-button-border": "var(--fb-back-btn-border)",
       "submit-button-border": "var(--fb-submit-btn-border)",
+      "close-button": "var(--fb-close-btn-color)",
+      "close-button-focus": "var(--fb-close-btn-hover-color)",
     },
     extend: {
       zIndex: {

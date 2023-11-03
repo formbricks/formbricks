@@ -86,4 +86,6 @@ p.fb-editor-paragraph {
   --fb-back-btn-border: transparent;
   --fb-submit-btn-border: transparent;
   --fb-rating-selected: black;
+  --fb-close-btn-color: var(--slate-500);
+  --fb-close-btn-color-hover: var(--slate-700);
 }
