@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { getDisplaysByPersonId, updateDisplay } from "@formbricks/lib/display/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/person/service";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
@@ -102,19 +103,20 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const transformedPerson = transformPrismaPerson(returnedPerson);
 
-    const state = await getUpdatedState(environmentId, transformedPerson.id, sessionId);
-
     personCache.revalidate({
       id: transformedPerson.id,
       environmentId: environmentId,
     });
 
+    surveyCache.revalidate({
+      environmentId,
+    });
+
+    const state = await getUpdatedState(environmentId, transformedPerson.id, sessionId);
+
     return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);
-    return responses.internalServerErrorResponse(
-      "Unable to complete response. See server logs for details.",
-      true
-    );
+    return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }
