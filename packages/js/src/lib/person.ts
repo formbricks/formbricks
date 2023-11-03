@@ -190,6 +190,7 @@ export const setPersonUserId = async (
       message: "userId cannot be changed after it has been set. You need to reset first",
     });
   }
+
   const result = await updatePersonUserId(userId.toString());
 
   if (result.ok !== true) return err(result.error);

@@ -47,6 +47,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       },
       select: selectPerson,
     });
+
     // if person exists, reconnect displays, session and delete old user
     if (person) {
       const displays = await getDisplaysByPersonId(personId);

@@ -21,7 +21,6 @@ export const getUpdatedState = async (
   jsVersion?: string
 ): Promise<TJsState> => {
   let environment: TEnvironment | null;
-  console.log(jsVersion);
   // let person: TPerson | null = null;
   // let session: TSession | null;
 
