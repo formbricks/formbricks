@@ -10,7 +10,6 @@ import { reportUsage } from "../lib/reportUsage";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
-  maxNetworkRetries: 10,
 });
 
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
