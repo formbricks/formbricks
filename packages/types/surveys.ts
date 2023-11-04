@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
+import { ZI18nObject } from "./i18n";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
@@ -194,8 +195,8 @@ export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 const ZSurveyQuestionBase = z.object({
   id: z.string(),
   type: z.string(),
-  headline: z.string(),
-  subheader: z.string().optional(),
+  headline: ZI18nObject,
+  subheader: ZI18nObject.optional(),
   imageUrl: z.string().optional(),
   required: z.boolean(),
   buttonLabel: z.string().optional(),
