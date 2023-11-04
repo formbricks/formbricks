@@ -32,11 +32,11 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
     try {
       setIsDeleting(true);
       const deletedProduct = await deleteProductAction(environmentId, userId, product.id);
-
       if (!!deletedProduct?.id) {
         toast.success("Product deleted successfully.");
         router.push("/");
       }
+      setIsDeleting(false);
     } catch (err) {
       setIsDeleting(false);
       toast.error("Could not delete product.");
