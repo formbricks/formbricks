@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Person" ALTER COLUMN "userId" DROP DEFAULT,
+ALTER COLUMN "userId" SET DATA TYPE TEXT;
+DROP SEQUENCE "Person_userId_seq";
