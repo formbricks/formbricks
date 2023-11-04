@@ -56,6 +56,7 @@ export const ZJsConfigInput = z.object({
   apiHost: z.string(),
   debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
+  userId: z.string().optional(),
 });
 
 export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
@@ -88,6 +89,7 @@ export const ZJsSyncParams = z.object({
   environmentId: z.string().cuid2(),
   apiHost: z.string(),
   personId: z.string().cuid2().optional(),
+  userId: z.string().optional(),
 });
 
 export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;

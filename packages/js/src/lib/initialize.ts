@@ -125,6 +125,7 @@ export const initialize = async (
     await sync({
       apiHost: c.apiHost,
       environmentId: c.environmentId,
+      userId: c.userId,
     });
   }
 

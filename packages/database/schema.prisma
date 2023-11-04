@@ -86,6 +86,7 @@ model AttributeClass {
 
 model Person {
   id            String      @id @default(cuid())
+  userId        String?     @default(uuid())
   createdAt     DateTime    @default(now()) @map(name: "created_at")
   updatedAt     DateTime    @updatedAt @map(name: "updated_at")
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)

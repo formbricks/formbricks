@@ -248,8 +248,21 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
     async () => {
       validateInputs([userId, ZString], [environmentId, ZId]);
 
+      // check if userId exists as a column
+      const personWithUserId = await prisma.person.findFirst({
+        where: {
+          environmentId,
+          userId,
+        },
+        select: selectPerson,
+      });
+
+      if (personWithUserId) {
+        return personWithUserId;
+      }
+
       // Check if a person with the userId attribute exists
-      const personPrisma = await prisma.person.findFirst({
+      const personWithUserIdAttribute = await prisma.person.findFirst({
         where: {
           environmentId,
           attributes: {
@@ -264,50 +277,36 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
         select: selectPerson,
       });
 
-      if (personPrisma) {
-        return personPrisma;
-      } else {
-        // Create a new person with the userId attribute
-        const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
+      if (personWithUserIdAttribute) {
+        return personWithUserIdAttribute;
+      }
 
-        if (!userIdAttributeClass) {
-          throw new ResourceNotFoundError(
-            "Attribute class not found for the given environment",
-            environmentId
-          );
-        }
+      // Create a new person with the userId attribute
+      const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
 
-        const person = await prisma.person.create({
-          data: {
-            environment: {
-              connect: {
-                id: environmentId,
-              },
-            },
-            attributes: {
-              create: [
-                {
-                  attributeClass: {
-                    connect: {
-                      id: userIdAttributeClass.id,
-                    },
-                  },
-                  value: userId,
-                },
-              ],
+      if (!userIdAttributeClass) {
+        throw new ResourceNotFoundError("Attribute class not found for the given environment", environmentId);
+      }
+
+      const person = await prisma.person.create({
+        data: {
+          environment: {
+            connect: {
+              id: environmentId,
             },
           },
-          select: selectPerson,
-        });
-
-        personCache.revalidate({
-          id: person.id,
-          environmentId: person.environmentId,
           userId,
-        });
+        },
+        select: selectPerson,
+      });
 
-        return person;
-      }
+      personCache.revalidate({
+        id: person.id,
+        environmentId: person.environmentId,
+        userId,
+      });
+
+      return person;
     },
     [`getOrCreatePersonByUserId-${userId}-${environmentId}`],
     {
