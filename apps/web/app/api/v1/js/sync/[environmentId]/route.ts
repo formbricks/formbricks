@@ -1,6 +1,7 @@
 import { getPublicUpdatedState, getUpdatedState } from "@/app/api/v1/js/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
 import { ZJsPublicSyncInput, ZJsSyncInput } from "@formbricks/types/js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -15,13 +16,12 @@ export async function GET(
   try {
     const searchParams = req.nextUrl.searchParams;
 
-    const { environmentId: environmentIdParam } = params;
-
     // validate using zod
     const environmentIdValidation = ZJsPublicSyncInput.safeParse({
-      environmentId: environmentIdParam,
+      environmentId: params.environmentId,
       personId: searchParams.get("personId"),
       jsVersion: searchParams.get("jsVersion"),
+      userId: searchParams.get("userId"),
     });
 
     if (!environmentIdValidation.success) {
@@ -32,7 +32,21 @@ export async function GET(
       );
     }
 
-    const { environmentId, personId, jsVersion } = environmentIdValidation.data;
+    const { environmentId, personId, jsVersion, userId } = environmentIdValidation.data;
+
+    // if userId is provided, this is an identified user but we need to get the personId from the userId
+
+    if (userId) {
+      const person = await getOrCreatePersonByUserId(userId, environmentId);
+
+      if (!person) {
+        return responses.badRequestResponse("Fields are missing or incorrectly formatted");
+      }
+
+      const state = await getUpdatedState(environmentId, person.id, jsVersion ?? undefined);
+
+      return responses.successResponse({ ...state }, true);
+    }
 
     // if personId is provided, this is an identfied user
 

@@ -19,9 +19,33 @@ const syncWithBackend = async ({
   apiHost,
   environmentId,
   personId,
+  userId,
 }: TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
   const url = `${apiHost}/api/v1/js/sync/${environmentId}?personId=${personId}&jsVersion=${packageJson.version}`;
   const publicUrl = `${apiHost}/api/v1/js/sync/${environmentId}`;
+
+  // if user id is available
+
+  if (userId) {
+    // call an api which will return the person id from the user id
+    const response = await fetch(
+      `${apiHost}/api/v1/js/sync/${environmentId}?userId=${userId}&jsVersion=${packageJson.version}`
+    );
+
+    if (!response.ok) {
+      const jsonRes = await response.json();
+
+      return err({
+        code: "network_error",
+        status: response.status,
+        message: "Error syncing with backend",
+        url,
+        responseMessage: jsonRes.message,
+      });
+    }
+
+    return ok((await response.json()).data as TJsState);
+  }
 
   if (!personId) {
     // public survey
