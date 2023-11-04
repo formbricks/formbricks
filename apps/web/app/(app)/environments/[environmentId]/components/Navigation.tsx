@@ -43,6 +43,7 @@ import {
   UserCircleIcon,
   UsersIcon,
   LinkIcon,
+  LanguageIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { MenuIcon } from "lucide-react";
@@ -150,6 +151,11 @@ export default function Navigation({
           icon: PaintBrushIcon,
           label: "Look & Feel",
           href: `/environments/${environment.id}/settings/lookandfeel`,
+        },
+        {
+          icon: LanguageIcon,
+          label: "Multiple Languages",
+          href: `/environments/${environment.id}/settings/language`,
         },
       ],
     },

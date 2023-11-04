@@ -14,6 +14,7 @@ import {
   DocumentMagnifyingGlassIcon,
   HashtagIcon,
   KeyIcon,
+  LanguageIcon,
   LinkIcon,
   PaintBrushIcon,
   UserCircleIcon,
@@ -88,6 +89,13 @@ export default function SettingsNavbar({
             href: `/environments/${environmentId}/settings/lookandfeel`,
             icon: PaintBrushIcon,
             current: pathname?.includes("/lookandfeel"),
+            hidden: false,
+          },
+          {
+            name: "Multipe Languages",
+            href: `/environments/${environmentId}/settings/language`,
+            icon: LanguageIcon,
+            current: pathname?.includes("/language"),
             hidden: false,
           },
           {
