@@ -1,6 +1,6 @@
 "use client";
 
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 import { formbricksEnabled } from "@/app/lib/formbricks";
 import formbricks from "@formbricks/js";
 import { useEffect } from "react";

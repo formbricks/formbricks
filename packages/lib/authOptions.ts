@@ -1,4 +1,4 @@
-import { env } from "@/env.mjs";
+import { env } from "./env.mjs";
 import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "./constants";

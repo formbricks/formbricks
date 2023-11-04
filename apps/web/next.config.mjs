@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
-import "./env.mjs";
+import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
 

@@ -10,7 +10,7 @@ import { createPresignedPost, PresignedPostOptions } from "@aws-sdk/s3-presigned
 import { access, mkdir, writeFile, readFile, unlink, rmdir } from "fs/promises";
 import { join } from "path";
 import mime from "mime";
-import { env } from "@/env.mjs";
+import { env } from "../env.mjs";
 import { IS_S3_CONFIGURED, LOCAL_UPLOAD_URL, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { storageCache } from "./cache";
