@@ -26,9 +26,11 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
 }) => {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteProduct = async () => {
     try {
+      setIsDeleting(true);
       const deletedProduct = await deleteProductAction(environmentId, userId, product.id);
 
       if (!!deletedProduct?.id) {
@@ -36,6 +38,7 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
         router.push("/");
       }
     } catch (err) {
+      setIsDeleting(false);
       toast.error("Could not delete product.");
       setIsDeleteDialogOpen(false);
     }
@@ -77,6 +80,7 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
           product.name,
           30
         )}"? This action cannot be undone.`}
+        isDeleting={isDeleting}
       />
     </div>
   );
