@@ -69,7 +69,7 @@ type TGetSignedUrlResponse =
 
 export const getS3FileCached = async (fileKey: string): Promise<string> => {
   const [_, accessType] = fileKey.split("/");
-  const expiresIn = accessType === "public" ? 10 : 10 * 60;
+  const expiresIn = accessType === "public" ? 60 * 60 : 10 * 60;
 
   const revalidateAfter = accessType === "public" ? expiresIn - 60 * 5 : expiresIn - 60 * 2;
 
