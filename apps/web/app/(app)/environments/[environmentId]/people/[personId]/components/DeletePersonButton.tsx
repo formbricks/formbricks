@@ -1,7 +1,6 @@
 "use client";
 
 import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/people/[personId]/actions";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { TrashIcon } from "lucide-react";
