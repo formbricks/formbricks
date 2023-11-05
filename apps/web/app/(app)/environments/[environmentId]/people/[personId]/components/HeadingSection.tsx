@@ -6,18 +6,14 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 interface HeadingSectionProps {
   environmentId: string;
   personId: string;
-  isEnterpriseEdition: boolean;
 }
 
-export default async function HeadingSection({
-  environmentId,
-  personId,
-  isEnterpriseEdition,
-}: HeadingSectionProps) {
+export default async function HeadingSection({ environmentId, personId }: HeadingSectionProps) {
   const person = await getPerson(personId);
   const session = await getServerSession(authOptions);
   const team = await getTeamByEnvironmentId(environmentId);
@@ -34,6 +30,7 @@ export default async function HeadingSection({
     throw new Error("No such person found");
   }
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   return (
     <>
@@ -42,7 +39,7 @@ export default async function HeadingSection({
         <h1 className="ph-no-capture text-4xl font-bold tracking-tight text-slate-900">
           <span>{getPersonIdentifier(person)}</span>
         </h1>
-        {isEnterpriseEdition && (
+        {!isViewer && (
           <div className="flex items-center space-x-3">
             <DeletePersonButton
               environmentId={environmentId}

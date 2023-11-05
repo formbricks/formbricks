@@ -15,18 +15,14 @@ interface DeletePersonButtonProps {
   membershipRole?: TMembershipRole;
 }
 
-export function DeletePersonButton({ environmentId, personId, membershipRole }: DeletePersonButtonProps) {
+export function DeletePersonButton({ environmentId, personId }: DeletePersonButtonProps) {
   const router = useRouter();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
-  const { isViewer } = getAccessFlags(membershipRole);
 
   const handleDeletePerson = async () => {
     try {
-      if (isViewer) {
-        throw new Error("You are not authorized to perform this action");
-      }
       setIsDeletingPerson(true);
       await deletePersonAction(personId);
       router.refresh();
