@@ -75,7 +75,7 @@ export default async function IntegrationsPage({ params }) {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
       connectText: "Manage Webhooks",
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/webhook-api/overview",
+      docsHref: "https://formbricks.com/docs/api/management/webhooks",
       docsText: "Docs",
       docsNewTab: true,
       label: "Webhooks",

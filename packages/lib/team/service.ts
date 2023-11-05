@@ -319,17 +319,17 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
 
       const products = await getProducts(teamId);
 
-      let peopleCount = 0;
+      let responseCount = 0;
 
       for (const product of products) {
         for (const environment of product.environments) {
-          const peopleInThisEnvironment = await getMonthlyResponseCount(environment.id);
+          const responsesInEnvironment = await getMonthlyResponseCount(environment.id);
 
-          peopleCount += peopleInThisEnvironment;
+          responseCount += responsesInEnvironment;
         }
       }
 
-      return peopleCount;
+      return responseCount;
     },
     [`getMonthlyTeamResponseCount-${teamId}`],
     {
