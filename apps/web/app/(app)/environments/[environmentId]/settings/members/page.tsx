@@ -11,6 +11,8 @@ import DeleteTeam from "./components/DeleteTeam";
 import { EditMemberships } from "./components/EditMemberships";
 import EditTeamName from "./components/EditTeamName";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">
@@ -38,6 +40,8 @@ const MembersLoading = () => (
 export default async function MembersSettingsPage({ params }: { params: { environmentId: string } }) {
   const session = await getServerSession(authOptions);
 
+  const isEnterpriseEdition = await getIsEnterpriseEdition();
+
   if (!session) {
     throw new Error("Unauthenticated");
   }
@@ -48,13 +52,14 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
   const userMemberships = await getMembershipsByUserId(session.user.id);
 
-  const isDeleteDisabled = userMemberships.length <= 1;
+  const isDeleteDisabled = userMemberships.length <= 1 || !isOwner;
   const currentUserRole = currentUserMembership?.role;
 
   const isLeaveTeamDisabled = userMemberships.length <= 1;
-  const isUserAdminOrOwner = currentUserRole === "admin" || currentUserRole === "owner";
+  const isUserAdminOrOwner = isAdmin || isOwner;
 
   return (
     <div>
@@ -67,6 +72,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
             role={currentUserRole}
             isLeaveTeamDisabled={isLeaveTeamDisabled}
             isInviteDisabled={INVITE_DISABLED}
+            isEnterpriseEdition={isEnterpriseEdition}
           />
         )}
 
@@ -82,7 +88,11 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
         )}
       </SettingsCard>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">
-        <EditTeamName team={team} environmentId={params.environmentId} />
+        <EditTeamName
+          team={team}
+          environmentId={params.environmentId}
+          membershipRole={currentUserMembership?.role}
+        />
       </SettingsCard>
       <SettingsCard
         title="Delete Team"
