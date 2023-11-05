@@ -1,14 +1,13 @@
 "use server";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
 import { getProduct, updateProduct } from "@formbricks/lib/product/service";
 import { updateProfile } from "@formbricks/lib/profile/service";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { TProductUpdateInput } from "@formbricks/types/product";
 import { TProfileUpdateInput } from "@formbricks/types/profile";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
-import { getTeam } from "@formbricks/lib/team/service";
 
 export async function updateProfileAction(updatedProfile: Partial<TProfileUpdateInput>) {
   const session = await getServerSession(authOptions);

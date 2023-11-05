@@ -5,8 +5,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../../ui/Select";
-import { Label } from "../../../ui/Label";
+} from "@formbricks/ui/Select";
+import { Label } from "@formbricks/ui/Label";
 import { Controller, Control } from "react-hook-form";
 
 enum MembershipRole {

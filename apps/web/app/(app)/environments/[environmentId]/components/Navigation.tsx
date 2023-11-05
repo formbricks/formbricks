@@ -19,7 +19,7 @@ import {
 import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
 import UrlShortenerModal from "./UrlShortenerModal";
 import { formbricksLogout } from "@/app/lib/formbricks";
-import { capitalizeFirstLetter, truncate } from "@/app/lib/utils";
+import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";

@@ -4,7 +4,7 @@ import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@/app/lib/utils";
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { useEffect, useState } from "react";

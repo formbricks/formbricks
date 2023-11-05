@@ -14,7 +14,7 @@ interface EditBrandColorProps {
   environmentId: string;
 }
 
-export function EditBrandColor({ product, isBrandColorDisabled, environmentId }: EditBrandColorProps) {
+export function EditBrandColor({ product, isBrandColorDisabled }: EditBrandColorProps) {
   const [color, setColor] = useState(product.brandColor);
   const [updatingColor, setUpdatingColor] = useState(false);
 

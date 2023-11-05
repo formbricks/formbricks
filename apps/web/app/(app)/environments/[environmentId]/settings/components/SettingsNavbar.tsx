@@ -1,6 +1,6 @@
 "use client";
 
-import { truncate } from "@/app/lib/utils";
+import { truncate } from "@formbricks/lib/strings";
 import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";

@@ -16,11 +16,7 @@ interface EditHighlightBorderProps {
   environmentId: string;
 }
 
-export const EditHighlightBorder = ({
-  product,
-  defaultBrandColor,
-  environmentId,
-}: EditHighlightBorderProps) => {
+export const EditHighlightBorder = ({ product, defaultBrandColor }: EditHighlightBorderProps) => {
   const [showHighlightBorder, setShowHighlightBorder] = useState(product.highlightBorderColor ? true : false);
   const [color, setColor] = useState<string | null>(product.highlightBorderColor || defaultBrandColor);
   const [updatingBorder, setUpdatingBorder] = useState(false);

@@ -1,18 +1,18 @@
 "use client";
 
-import TransferOwnershipModal from "../../../../apps/web/app/(app)/environments/[environmentId]/settings/members/components/TransferOwnershipModal";
+import TransferOwnershipModal from "./TransferOwnershipModal";
 import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
-import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "../../../../apps/web/app/lib/utils";
-import { TMembershipRole } from "../../../types/memberships";
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
+import { TMembershipRole } from "@formbricks/types/memberships";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "../../../ui/DropdownMenu";
-import { Button } from "../../../ui/Button";
-import { Badge } from "../../../ui/Badge";
+} from "@formbricks/ui/DropdownMenu";
+import { Button } from "@formbricks/ui/Button";
+import { Badge } from "@formbricks/ui/Badge";
 import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -94,11 +94,12 @@ export const EditMembershipRole = ({
   };
 
   const getMembershipRoles = () => {
+    const roles = ["owner", "admin", "editor", "developer", "viewer"];
     if (currentUserRole === "owner" && memberAccepted) {
-      return Object.keys(MEMBERSHIP_ROLES);
+      return roles;
     }
 
-    return Object.keys(MEMBERSHIP_ROLES).filter((role) => role !== "OWNER");
+    return roles.filter((role) => role !== "owner");
   };
 
   if (isAdminOrOwner) {
