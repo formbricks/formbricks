@@ -48,7 +48,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit, isEnterpriseEd
         </div>
         {!isEnterpriseEdition && (
           <div className="mx-6 mt-2">
-            <UpgradePlanNotice message="Upgrade to Enterprise Plan to manage access roles for your team" />
+            <UpgradePlanNotice message="Upgrade to an Enterprise License to manage access roles for your team" />
           </div>
         )}
         <form onSubmit={handleSubmit(submitEventClass)}>
