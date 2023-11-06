@@ -39,7 +39,7 @@ export default function DateQuestion({
     // @ts-ignore
     if (!window.initDatePicker) {
       const script = document.createElement("script");
-      script.src = "http://localhost:8080/index.js";
+      script.src = "http://localhost:8080/";
       script.async = true;
 
       document.body.appendChild(script);
