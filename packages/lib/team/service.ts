@@ -1,15 +1,18 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { validateInputs } from "../utils/validate";
+import { getMonthlyActivePeopleCount } from "../person/service";
+import { getProducts } from "../product/service";
+import { getMonthlyResponseCount } from "../response/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { environmentCache } from "../environment/cache";
+import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
 
 export const select = {
@@ -17,9 +20,12 @@ export const select = {
   createdAt: true,
   updatedAt: true,
   name: true,
-  plan: true,
-  stripeCustomerId: true,
+  billing: true,
 };
+
+export const getTeamsTag = (teamId: string) => `teams-${teamId}`;
+export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
+export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
 export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> =>
   unstable_cache(
@@ -90,6 +96,35 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
     [`getTeamByEnvironmentId-${environmentId}`],
     {
       tags: [teamCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getTeam = async (teamId: string): Promise<TTeam | null> =>
+  unstable_cache(
+    async () => {
+      validateInputs([teamId, ZString]);
+
+      try {
+        const team = await prisma.team.findUnique({
+          where: {
+            id: teamId,
+          },
+          select,
+        });
+
+        return team;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getTeam-${teamId}`],
+    {
+      tags: [teamCache.tag.byId(teamId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -208,3 +243,97 @@ export const deleteTeam = async (teamId: string): Promise<TTeam> => {
     throw error;
   }
 };
+
+export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
+  const teams = await unstable_cache(
+    async () => {
+      try {
+        const fetchedTeams = await prisma.team.findMany({
+          where: {
+            OR: [
+              {
+                billing: {
+                  path: ["features", "inAppSurvey", "status"],
+                  not: "inactive",
+                },
+              },
+              {
+                billing: {
+                  path: ["features", "userTargeting", "status"],
+                  not: "inactive",
+                },
+              },
+            ],
+          },
+          select,
+        });
+
+        return fetchedTeams;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+    ["getTeamsWithPaidPlan"],
+    {
+      tags: [],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return teams;
+};
+
+export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<number> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+
+      const products = await getProducts(teamId);
+
+      let peopleCount = 0;
+
+      for (const product of products) {
+        for (const environment of product.environments) {
+          const peopleInThisEnvironment = await getMonthlyActivePeopleCount(environment.id);
+
+          peopleCount += peopleInThisEnvironment;
+        }
+      }
+
+      return peopleCount;
+    },
+    [`getMonthlyActiveTeamPeopleCount-${teamId}`],
+    {
+      tags: [],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getMonthlyTeamResponseCount = async (teamId: string): Promise<number> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([teamId, ZId]);
+
+      const products = await getProducts(teamId);
+
+      let responseCount = 0;
+
+      for (const product of products) {
+        for (const environment of product.environments) {
+          const responsesInEnvironment = await getMonthlyResponseCount(environment.id);
+
+          responseCount += responsesInEnvironment;
+        }
+      }
+
+      return responseCount;
+    },
+    [`getMonthlyTeamResponseCount-${teamId}`],
+    {
+      tags: [],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();

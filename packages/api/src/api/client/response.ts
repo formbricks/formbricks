@@ -12,18 +12,8 @@ export class ResponseAPI {
     this.apiHost = apiHost;
   }
 
-  async create({
-    surveyId,
-    personId,
-    finished,
-    data,
-  }: TResponseInput): Promise<Result<TResponse, NetworkError | Error>> {
-    return makeRequest(this.apiHost, "/api/v1/client/responses", "POST", {
-      surveyId,
-      personId,
-      finished,
-      data,
-    });
+  async create(responseInput: TResponseInput): Promise<Result<TResponse, NetworkError | Error>> {
+    return makeRequest(this.apiHost, "/api/v1/client/responses", "POST", responseInput);
   }
 
   async update({

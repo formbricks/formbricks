@@ -17,6 +17,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useSearchParams } from "next/navigation";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SummaryPageProps {
   environment: TEnvironment;
@@ -28,7 +29,8 @@ interface SummaryPageProps {
   profile: TProfile;
   environmentTags: TTag[];
   displayCount: number;
-  openTextResponsesPerPage: number;
+  responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const SummaryPage = ({
@@ -41,7 +43,8 @@ const SummaryPage = ({
   profile,
   environmentTags,
   displayCount,
-  openTextResponsesPerPage,
+  responsesPerPage,
+  membershipRole,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
@@ -67,6 +70,7 @@ const SummaryPage = ({
         webAppUrl={webAppUrl}
         product={product}
         profile={profile}
+        membershipRole={membershipRole}
       />
       <CustomFilter
         environmentTags={environmentTags}
@@ -87,7 +91,7 @@ const SummaryPage = ({
         responses={filterResponses}
         survey={survey}
         environment={environment}
-        openTextResponsesPerPage={openTextResponsesPerPage}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );

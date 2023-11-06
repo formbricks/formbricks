@@ -1,14 +1,14 @@
 import { Slider } from "@/components/shared/Slider";
 import { useState } from "react";
 
-const ProductItem = ({ label, usersCount, price, onSliderChange }) => (
+const LinkSurveySlider = ({ label, usersCount, price, onSliderChange }) => (
   <div className="mt-12">
     <div className="mb-2 flex items-center gap-x-2 md:gap-x-4">
       <div className="md:text-md w-3/6 text-left text-sm font-medium text-slate-700 dark:text-slate-200">
         {label}
       </div>
       <div className="md:text-md w-2/6 text-center text-sm font-medium text-slate-700 dark:text-slate-200">
-        {Math.round(usersCount).toLocaleString()} MTU
+        {Math.round(usersCount).toLocaleString()} Submissions
       </div>
       <div className="md:text-md flex w-1/6 items-center justify-end text-center text-sm font-medium text-slate-700 dark:text-slate-200 md:justify-center">
         <span>${price.toFixed(2)}</span>
@@ -18,6 +18,72 @@ const ProductItem = ({ label, usersCount, price, onSliderChange }) => (
       <Slider
         className="slider-class"
         defaultValue={[Math.log10(1000)]}
+        min={3}
+        max={6}
+        step={0.01}
+        onValueChange={onSliderChange}
+      />
+      <div className="mt-2 flex items-center justify-between text-sm">
+        {[3, 4, 5, 6].map((mark) => (
+          <span key={mark} className="text-slate-600 dark:text-slate-300">
+            {mark === 3 ? "1K" : mark === 4 ? "10K" : mark === 5 ? "100K" : "1M"}
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const InAppSlider = ({ label, usersCount, price, onSliderChange }) => (
+  <div className="mt-12">
+    <div className="mb-2 flex items-center gap-x-2 md:gap-x-4">
+      <div className="md:text-md w-3/6 text-left text-sm font-medium text-slate-700 dark:text-slate-200">
+        {label}
+      </div>
+      <div className="md:text-md w-2/6 text-center text-sm font-medium text-slate-700 dark:text-slate-200">
+        {Math.round(usersCount).toLocaleString()} Submissions
+      </div>
+      <div className="md:text-md flex w-1/6 items-center justify-end text-center text-sm font-medium text-slate-700 dark:text-slate-200 md:justify-center">
+        <span>${price.toFixed(2)}</span>
+      </div>
+    </div>
+    <div className="my-2 w-5/6 pr-8 md:pr-20">
+      <Slider
+        className="slider-class"
+        defaultValue={[Math.log10(250)]}
+        min={3}
+        max={6}
+        step={0.01}
+        onValueChange={onSliderChange}
+      />
+      <div className="mt-2 flex items-center justify-between text-sm">
+        {[3, 4, 5, 6].map((mark) => (
+          <span key={mark} className="text-slate-600 dark:text-slate-300">
+            {mark === 3 ? "1K" : mark === 4 ? "10K" : mark === 5 ? "100K" : "1M"}
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const UserSegmentationSlider = ({ label, usersCount, price, onSliderChange }) => (
+  <div className="mt-12">
+    <div className="mb-2 flex items-center gap-x-2 md:gap-x-4">
+      <div className="md:text-md w-3/6 text-left text-sm font-medium text-slate-700 dark:text-slate-200">
+        {label}
+      </div>
+      <div className="md:text-md w-2/6 text-center text-sm font-medium text-slate-700 dark:text-slate-200">
+        {Math.round(usersCount).toLocaleString()} Submissions
+      </div>
+      <div className="md:text-md flex w-1/6 items-center justify-end text-center text-sm font-medium text-slate-700 dark:text-slate-200 md:justify-center">
+        <span>${price.toFixed(2)}</span>
+      </div>
+    </div>
+    <div className="my-2 w-5/6 pr-8 md:pr-20">
+      <Slider
+        className="slider-class"
+        defaultValue={[Math.log10(250)]}
         min={3}
         max={6}
         step={0.01}
@@ -89,16 +155,7 @@ export const PricingCalculator = () => {
 
           <hr className="my-4" />
 
-          <ProductItem
-            label="In Product Surveys"
-            usersCount={usersCountForInProductSlider}
-            price={productSurveysPrice}
-            onSliderChange={(value) => setInProductSlider(value[0])}
-          />
-
-          <hr className="my-4" />
-
-          <ProductItem
+          <LinkSurveySlider
             label="Link Surveys"
             usersCount={transformToLog(linkSlider)}
             price={0}
@@ -106,6 +163,22 @@ export const PricingCalculator = () => {
           />
 
           <hr className="my-4" />
+
+          <InAppSlider
+            label="Website and In-App Surveys"
+            usersCount={transformToLog(linkSlider)}
+            price={0}
+            onSliderChange={(value) => setLinkSlider(value[0])}
+          />
+
+          <hr className="my-4" />
+
+          <UserSegmentationSlider
+            label="User Segmentation"
+            usersCount={usersCountForInProductSlider}
+            price={productSurveysPrice}
+            onSliderChange={(value) => setInProductSlider(value[0])}
+          />
 
           <MonthlyEstimate price={productSurveysPrice} />
         </div>

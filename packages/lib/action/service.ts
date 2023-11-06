@@ -70,6 +70,54 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
     : action;
 };
 
+export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
+  const actions = await unstable_cache(
+    async () => {
+      validateInputs([personId, ZId], [page, ZOptionalNumber]);
+
+      const actionsPrisma = await prisma.event.findMany({
+        where: {
+          session: {
+            personId: personId,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        include: {
+          eventClass: true,
+        },
+      });
+
+      const actions: TAction[] = [];
+      // transforming response to type TAction[]
+      actionsPrisma.forEach((action) => {
+        actions.push({
+          id: action.id,
+          createdAt: action.createdAt,
+          sessionId: action.sessionId,
+          properties: action.properties,
+          actionClass: action.eventClass,
+        });
+      });
+      return actions;
+    },
+    [`getActionsByPersonId-${personId}-${page}`],
+    {
+      tags: [actionCache.tag.byPersonId(personId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  // Deserialize dates if caching does not support deserialization
+  return actions.map((action) => ({
+    ...action,
+    createdAt: new Date(action.createdAt),
+  }));
+};
+
 export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
