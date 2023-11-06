@@ -1,4 +1,4 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getTables } from "@formbricks/lib/airtable/service";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";

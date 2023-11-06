@@ -28,15 +28,10 @@ interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
-  openTextResponsesPerPage: number;
+  responsesPerPage: number;
 }
 
-export default function SummaryList({
-  environment,
-  survey,
-  responses,
-  openTextResponsesPerPage,
-}: SummaryListProps) {
+export default function SummaryList({ environment, survey, responses, responsesPerPage }: SummaryListProps) {
   const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses
@@ -73,7 +68,7 @@ export default function SummaryList({
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
                     environmentId={environment.id}
-                    openTextResponsesPerPage={openTextResponsesPerPage}
+                    responsesPerPage={responsesPerPage}
                   />
                 );
               }
@@ -91,6 +86,7 @@ export default function SummaryList({
                     }
                     environmentId={environment.id}
                     surveyType={survey.type}
+                    responsesPerPage={responsesPerPage}
                   />
                 );
               }
