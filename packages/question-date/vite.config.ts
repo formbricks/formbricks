@@ -1,4 +1,4 @@
-import {resolve} from "path";
+import { resolve } from "path";
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 
@@ -36,19 +36,19 @@ export default defineConfig({
         main: resolve(__dirname, "src/main.tsx"),
       },
       output: {
-        entryFileNames: "indexCopy.js",
+        entryFileNames: "index.js",
         // format: "es",
         globals: {
           preact: "preact",
         },
       },
-    }
+    },
   },
   plugins: [preact()],
   resolve: {
     alias: {
-      'react': 'preact/compat',
-      'react-dom': 'preact/compat'
-    }
-  }
+      react: "preact/compat",
+      "react-dom": "preact/compat",
+    },
+  },
 });
