@@ -190,7 +190,7 @@ export default function MultipleChoiceMultiQuestion({
                     style={{ borderColor: brandColor, color: brandColor }}
                   />
                   <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
-                    {otherOption.label}
+                    {otherOption.label[language]}
                   </span>
                 </span>
                 {otherSelected && (

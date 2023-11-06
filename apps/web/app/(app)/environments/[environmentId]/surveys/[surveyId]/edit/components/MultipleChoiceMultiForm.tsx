@@ -241,6 +241,7 @@ export default function MultipleChoiceMultiForm({
                       setIsInvalidValue(null);
                     }
                   }}
+                  languages={languages}
                   onChange={(e) => {
                     let translatedChoiceLabel = {
                       ...question.choices[choiceIdx].label,

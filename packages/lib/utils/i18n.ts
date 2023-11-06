@@ -4,7 +4,6 @@ import { TSurveyChoice, TSurveyQuestion, TSurvey } from "@formbricks/types/surve
 // languages = ["german","hindi"]
 const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
   // Check if text is already an i18nString
-  console.log("creating i18j");
   if (typeof text === "object" && text._i18n_ === true) {
     // It's already an i18n object, so clone it
     const i18nString: TI18nString = { ...text };
@@ -15,7 +14,7 @@ const createI18nString = (text: string | TI18nString, languages?: string[]): TI1
         i18nString[language] = "";
       }
     });
-    console.log({ i18nString });
+
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
