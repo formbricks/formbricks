@@ -132,6 +132,11 @@ export default function PricingTableComponent({
       title: "Unlimited User Identification",
       unlimited: true,
     },
+    {
+      title: "Reusable Segmentscoming",
+      comingSoon: true,
+      unlimited: true,
+    },
   ];
 
   const linkSurveysFeatures = [
@@ -141,7 +146,7 @@ export default function PricingTableComponent({
     },
     {
       title: "File Uploads upto 1 GB",
-      comingSoon: false,
+      comingSoon: true,
     },
     {
       title: "Multi Language Surveys",
