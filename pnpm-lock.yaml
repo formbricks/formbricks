@@ -711,15 +711,24 @@ importers:
       '@preact/preset-vite':
         specifier: ^2.6.0
         version: 2.6.0(@babel/core@7.23.2)(preact@10.18.1)(vite@4.4.11)
+      autoprefixer:
+        specifier: ^10.4.16
+        version: 10.4.16(postcss@8.4.31)
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../eslint-config-formbricks
+      postcss:
+        specifier: ^8.4.31
+        version: 8.4.31
       preact:
         specifier: ^10.18.1
         version: 10.18.1
       react-date-picker:
         specifier: ^10.5.1
         version: 10.5.1(react-dom@18.2.0)(react@18.2.0)
+      tailwindcss:
+        specifier: ^3.3.3
+        version: 3.3.3
       terser:
         specifier: ^5.22.0
         version: 5.22.0
