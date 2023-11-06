@@ -1,27 +1,7 @@
-import rateLimit from "@/rate-limit";
-import { CLIENT_SIDE_API_RATE_LIMIT, LOGIN_RATE_LIMIT, SIGNUP_RATE_LIMIT } from "@formbricks/lib/constants";
+import { signUpLimiter, loginLimiter, clientSideApiEndpointsLimiter } from "@/app/middleware/bucket";
+import { clientSideApiRoute, loginRoute, signupRoute } from "@/app/middleware/endpointValidator";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const signUpLimiter = rateLimit({
-  interval: SIGNUP_RATE_LIMIT.interval,
-  allowedPerInterval: SIGNUP_RATE_LIMIT.allowedPerInterval,
-});
-const loginLimiter = rateLimit({
-  interval: LOGIN_RATE_LIMIT.interval,
-  allowedPerInterval: LOGIN_RATE_LIMIT.allowedPerInterval,
-});
-const clientSideApiEndpointsLimiter = rateLimit({
-  interval: CLIENT_SIDE_API_RATE_LIMIT.interval,
-  allowedPerInterval: CLIENT_SIDE_API_RATE_LIMIT.allowedPerInterval,
-});
-
-const loginRoute = (url: string) => url === "/api/auth/callback/credentials";
-const signupRoute = (url: string) => url === "/api/v1/users";
-const clientSideApiRoute = (url: string): boolean => {
-  const regex = /^\/api\/v\d+\/client\//;
-  return regex.test(url);
-};
 
 export async function middleware(request: NextRequest) {
   if (process.env.NODE_ENV !== "production") {
@@ -56,5 +36,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/auth/callback/credentials", "/api/v1/users", "/api/(.*)/client/:path*"],
+  matcher: [
+    "/api/auth/callback/credentials",
+    "/api/v1/users",
+    "/api/(.*)/client/:path*",
+    "/api/v1/js/actions",
+    "/api/v1/client/storage",
+  ],
 };
