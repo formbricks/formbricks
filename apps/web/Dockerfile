@@ -51,12 +51,12 @@ ENV HOSTNAME "0.0.0.0"
 RUN apk --no-cache add dcron
 
 # Copy your cron files into the container
-COPY cron-closeOnDate.yml /cron-closeOnDate.yml
-COPY cron-reportUsageToStripe.yml /cron-reportUsageToStripe.yml
-COPY cron-weeklySummary.yml /cron-weeklySummary.yml
+COPY .github/workflows/cron-closeOnDate.yml /cron-closeOnDate.yml
+COPY .github/workflows/cron-reportUsageToStripe.yml /cron-reportUsageToStripe.yml
+COPY .github/workflows/cron-weeklySummary.yml /cron-weeklySummary.yml
 
 # Copy your entrypoint.sh script into the container
-COPY entrypoint.sh /entrypoint.sh
+COPY /apps/web/entrypoint.sh /entrypoint.sh
 
 # Make the script executable
 RUN chmod +x /entrypoint.sh
