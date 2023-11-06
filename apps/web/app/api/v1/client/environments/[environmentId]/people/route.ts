@@ -15,7 +15,13 @@ export async function POST(
   const { environmentId } = params;
 
   if (!environmentId) {
-    return responses.badRequestResponse("Missing environmentId");
+    return responses.badRequestResponse(
+      "Missing environmentId",
+      {
+        missing_field: "environmentId",
+      },
+      true
+    );
   }
 
   try {
@@ -32,6 +38,6 @@ export async function POST(
       true
     );
   } catch (error) {
-    return responses.internalServerErrorResponse(error.message);
+    return responses.internalServerErrorResponse(error.message, true);
   }
 }
