@@ -50,10 +50,11 @@ ENV HOSTNAME "0.0.0.0"
 # Install cron
 RUN apk --no-cache add dcron
 
-# Copy your cron files into the container
-COPY .github/workflows/cron-closeOnDate.yml /cron-closeOnDate.yml
-COPY .github/workflows/cron-reportUsageToStripe.yml /cron-reportUsageToStripe.yml
-COPY .github/workflows/cron-weeklySummary.yml /cron-weeklySummary.yml
+# Create a cron directory inside the container
+RUN mkdir /cron
+
+# Copy all the cron job YAML files
+COPY .github/workflows/cron-* /cron/
 
 # Copy your entrypoint.sh script into the container
 COPY /apps/web/entrypoint.sh /entrypoint.sh

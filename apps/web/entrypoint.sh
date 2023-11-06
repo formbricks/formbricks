@@ -2,8 +2,11 @@
 
 # Start the cron service
 crond -l 2 -L /var/log/cron/cron.log
-crontab /cron.yaml
-tail -f /var/log/cron/cron.log &
+
+# Schedule all the cron jobs in the /cron directory
+for file in /cron/cron-*; do
+    crontab $file
+done
 
 # Check if NEXTAUTH_SECRET is set and run the appropriate command
 if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then
