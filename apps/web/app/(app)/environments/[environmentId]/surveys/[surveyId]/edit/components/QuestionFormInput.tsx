@@ -15,6 +15,7 @@ interface QuestionFormInputProps {
   environmentId: string;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
   ref?: RefObject<HTMLInputElement>;
 }
 
@@ -26,6 +27,7 @@ const QuestionFormInput = ({
   environmentId,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
   ref,
 }: QuestionFormInputProps) => {
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
@@ -49,6 +51,7 @@ const QuestionFormInput = ({
             id="subheader"
             name="subheader"
             value={question.headline}
+            languages={languages}
             isInvalid={isInValid}
             onChange={(e) => {
               let translatedheadline = {

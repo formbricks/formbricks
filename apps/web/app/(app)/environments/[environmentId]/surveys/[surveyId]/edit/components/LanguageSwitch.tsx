@@ -2,16 +2,16 @@ import { Button } from "@formbricks/ui/Button";
 import { LanguageIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { Switch } from "@formbricks/ui/Switch";
-export default function LanguageSwitch({ languages, setI18n }) {
+export default function LanguageSwitch({ languages, setLanguages, setI18n }) {
+  const userLangauges = ["german", "hindi"];
   const [translationsEnabled, setTranslationsEnabled] = useState(false);
   const [showLanguageToggle, setshowLanguageToggle] = useState(false);
-  const [selectedLanguages, setSelectedLanguages] = useState(languages);
 
   const toggleLanguage = (language) => {
-    if (selectedLanguages.includes(language)) {
-      setSelectedLanguages(selectedLanguages.filter((lang) => lang !== language));
+    if (languages.includes(language)) {
+      setLanguages(languages.filter((lang) => lang !== language));
     } else {
-      setSelectedLanguages([...selectedLanguages, language]);
+      setLanguages([...languages, language]);
     }
   };
 
@@ -31,14 +31,14 @@ export default function LanguageSwitch({ languages, setI18n }) {
           </div>
           {showLanguageToggle && (
             <div className="absolute z-[15] mt-2 space-y-4 rounded-md border bg-white p-4">
-              {languages?.map((language) => {
+              {userLangauges?.map((language) => {
                 return (
                   <div className="flex items-center">
                     <Switch
                       id={`switch-${language}`}
                       value={language}
                       className="mr-4"
-                      checked={selectedLanguages.includes(language)}
+                      checked={languages.includes(language)}
                       onClick={() => toggleLanguage(language)}
                     />
                     {language}
@@ -54,6 +54,7 @@ export default function LanguageSwitch({ languages, setI18n }) {
           onClick={() => {
             setTranslationsEnabled(!translationsEnabled);
             setI18n(true);
+            setLanguages(languages.concat(userLangauges));
           }}>
           Add Translation
           <LanguageIcon className="ml-1 h-4 w-4" />

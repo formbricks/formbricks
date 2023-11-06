@@ -16,6 +16,7 @@ interface ConsentQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function ConsentQuestionForm({
@@ -26,6 +27,7 @@ export default function ConsentQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   const environmentId = localSurvey.environmentId;
@@ -40,6 +42,7 @@ export default function ConsentQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
 
       <div className="mt-3">

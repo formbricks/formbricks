@@ -21,6 +21,7 @@ interface OpenQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function MultipleChoiceMultiForm({
@@ -31,6 +32,7 @@ export default function MultipleChoiceMultiForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -177,6 +179,7 @@ export default function MultipleChoiceMultiForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
 
       <div className="mt-3">
@@ -188,6 +191,7 @@ export default function MultipleChoiceMultiForm({
                 id="subheader"
                 name="subheader"
                 value={question.subheader}
+                languages={languages}
                 isInValid={isInValid}
                 onChange={(e) => {
                   let translatedSubheader = {

@@ -10,6 +10,7 @@ const LocalizedInput = ({
   selectedLanguage,
   setSelectedLanguage,
   onBlur,
+  languages,
 }) => {
   const hasi18n = value._i18n_;
   return (
@@ -22,9 +23,14 @@ const LocalizedInput = ({
         onChange={onChange}
         onBlur={onBlur}
       />
-      {hasi18n && (
+      {hasi18n && languages?.length > 1 && (
         <div>
-          <LanguageIndicator selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage} />
+          <LanguageIndicator
+            selectedLanguage={selectedLanguage}
+            languages={languages}
+            setSelectedLanguage={setSelectedLanguage}
+          />
+
           {selectedLanguage !== "default" && value.default && (
             <div className="mt-1 text-xs text-gray-500">
               <strong>Translate:</strong> {value.default}

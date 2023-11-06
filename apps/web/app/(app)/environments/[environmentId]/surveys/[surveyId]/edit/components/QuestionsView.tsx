@@ -25,6 +25,7 @@ interface QuestionsViewProps {
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function QuestionsView({
@@ -37,6 +38,7 @@ export default function QuestionsView({
   selectedLanguage,
   setInvalidQuestions,
   setSelectedLanguage,
+  languages,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -217,6 +219,7 @@ export default function QuestionsView({
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
                     isInValid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
+                    languages={languages}
                   />
                 ))}
                 {provided.placeholder}

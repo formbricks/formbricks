@@ -41,8 +41,7 @@ export default function SurveyEditor({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
-  const languages = ["English", "German", "Hindi"];
-
+  const [languages, setLanguages] = useState<string[] | undefined>(["default"]);
   // Assume a state to track the current language
   const [selectedLanguage, setSelectedLanguage] = useState<string>("default");
 
@@ -57,11 +56,10 @@ export default function SurveyEditor({
   }, [survey]);
 
   const translatedSurvey = useMemo(() => {
-    if (localSurvey && typeof localSurvey?.questions[0]?.headline === "string") {
-      return translateSurvey(localSurvey);
+    if (localSurvey) {
+      return translateSurvey(localSurvey, languages);
     }
-    return null;
-  }, [i18n, localSurvey, selectedLanguage]);
+  }, [i18n, localSurvey, selectedLanguage, languages]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -72,13 +70,18 @@ export default function SurveyEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
+  useEffect(() => {
+    if (!languages?.includes(selectedLanguage)) {
+      setSelectedLanguage("default");
+    }
+  }, [languages]);
+
   if (!localSurvey) {
     return <ErrorComponent />;
   }
 
   return (
     <>
-      {console.log(translatedSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
@@ -95,7 +98,13 @@ export default function SurveyEditor({
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
             <div>
-              <LanguageSwitch languages={languages} setI18n={setI18n} />
+              <LanguageSwitch languages={languages} setLanguages={setLanguages} setI18n={setI18n} />
+              <button
+                onClick={() => {
+                  console.log(translatedSurvey);
+                }}>
+                Console
+              </button>
             </div>
             {activeView === "questions" ? (
               <QuestionsView
@@ -108,6 +117,7 @@ export default function SurveyEditor({
                 setInvalidQuestions={setInvalidQuestions}
                 selectedLanguage={selectedLanguage ? selectedLanguage : "default"}
                 setSelectedLanguage={setSelectedLanguage}
+                languages={languages}
               />
             ) : (
               <SettingsView

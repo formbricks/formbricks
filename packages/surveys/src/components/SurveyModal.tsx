@@ -18,6 +18,7 @@ export function SurveyModal({
   onClose = () => {},
   onFinished = () => {},
   isRedirectDisabled = false,
+  language,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -46,6 +47,7 @@ export function SurveyModal({
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
           onClose={onClose}
+          language={language}
           onFinished={() => {
             onFinished();
             setTimeout(() => {

@@ -46,6 +46,7 @@ interface QuestionCardProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export function BackButtonInput({
@@ -87,6 +88,7 @@ export default function QuestionCard({
   isInValid,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
@@ -182,6 +184,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
@@ -193,6 +196,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
@@ -204,6 +208,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
                 <NPSQuestionForm
@@ -215,6 +220,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
                 <CTAQuestionForm
@@ -226,6 +232,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
                 <RatingQuestionForm
@@ -237,6 +244,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
@@ -247,6 +255,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
@@ -258,6 +267,7 @@ export default function QuestionCard({
                   isInValid={isInValid}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : null}
               <div className="mt-4">

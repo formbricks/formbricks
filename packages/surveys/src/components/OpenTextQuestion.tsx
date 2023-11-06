@@ -57,6 +57,7 @@ export default function OpenTextQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
+      {console.log(language)}
       <Headline
         headline={question.headline[language]}
         questionId={question.id}

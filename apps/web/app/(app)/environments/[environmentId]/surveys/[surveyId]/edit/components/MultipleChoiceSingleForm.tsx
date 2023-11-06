@@ -21,6 +21,7 @@ interface OpenQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function MultipleChoiceSingleForm({
@@ -31,6 +32,7 @@ export default function MultipleChoiceSingleForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -177,6 +179,7 @@ export default function MultipleChoiceSingleForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
 
       <div className="mt-3">
@@ -187,6 +190,7 @@ export default function MultipleChoiceSingleForm({
               <LocalizedInput
                 id="subheader"
                 name="subheader"
+                languages={languages}
                 value={question.subheader}
                 isInValid={isInValid}
                 onChange={(e) => {
@@ -227,6 +231,7 @@ export default function MultipleChoiceSingleForm({
                   id={`choice-${choiceIdx}`}
                   name={`choice-${choiceIdx}`}
                   value={choice.label || ""}
+                  languages={languages}
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {

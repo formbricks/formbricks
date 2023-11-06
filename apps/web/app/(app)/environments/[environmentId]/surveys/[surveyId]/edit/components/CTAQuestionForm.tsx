@@ -19,6 +19,7 @@ interface CTAQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function CTAQuestionForm({
@@ -30,6 +31,7 @@ export default function CTAQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   const environmentId = localSurvey.environmentId;
@@ -44,6 +46,7 @@ export default function CTAQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
 
       <div className="mt-3">

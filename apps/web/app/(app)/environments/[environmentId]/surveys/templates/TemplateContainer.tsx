@@ -11,6 +11,7 @@ import type { TProduct } from "@formbricks/types/product";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 import { TProfile } from "@formbricks/types/profile";
+import { translateSurvey } from "@formbricks/lib/utils/i18n";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
@@ -72,11 +73,12 @@ export default function TemplateContainerWithPreview({
             <div className="my-6 flex h-full w-full flex-col items-center justify-center">
               <p className="pb-2 text-center text-sm font-normal text-slate-400">Preview</p>
               <PreviewSurvey
-                survey={{ ...minimalSurvey, ...activeTemplate.preset }}
+                survey={translateSurvey({ ...minimalSurvey, ...activeTemplate.preset })}
                 activeQuestionId={activeQuestionId}
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
+                language={"default"}
               />
             </div>
           )}

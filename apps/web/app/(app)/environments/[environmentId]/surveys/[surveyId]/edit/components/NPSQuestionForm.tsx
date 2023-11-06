@@ -18,6 +18,7 @@ interface NPSQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function NPSQuestionForm({
@@ -29,6 +30,7 @@ export default function NPSQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -43,6 +45,7 @@ export default function NPSQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
 
       <div className="mt-3">
@@ -54,6 +57,7 @@ export default function NPSQuestionForm({
                 id="subheader"
                 name="subheader"
                 value={question.subheader}
+                languages={languages}
                 isInValid={isInValid}
                 onChange={(e) => {
                   let translatedSubheader = {

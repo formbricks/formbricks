@@ -32,6 +32,7 @@ interface OpenQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function OpenQuestionForm({
@@ -42,6 +43,7 @@ export default function OpenQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: OpenQuestionFormProps): JSX.Element {
   console.log(question);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -69,6 +71,7 @@ export default function OpenQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
 
       <div className="mt-3">
@@ -81,6 +84,7 @@ export default function OpenQuestionForm({
                   id="subheader"
                   name="subheader"
                   value={question.subheader}
+                  languages={languages}
                   isInValid={isInValid}
                   onChange={(e) => {
                     let translatedSubheader = {

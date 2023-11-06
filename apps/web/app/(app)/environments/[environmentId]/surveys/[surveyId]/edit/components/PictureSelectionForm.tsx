@@ -19,6 +19,7 @@ interface PictureSelectionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function PictureSelectionForm({
@@ -29,6 +30,7 @@ export default function PictureSelectionForm({
   isInValid,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: PictureSelectionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -43,6 +45,7 @@ export default function PictureSelectionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
       <div className="mt-3">
         {showSubheader && (
@@ -52,6 +55,7 @@ export default function PictureSelectionForm({
               <LocalizedInput
                 id="subheader"
                 name="subheader"
+                languages={languages}
                 value={question.subheader}
                 isInValid={isInValid}
                 onChange={(e) => {

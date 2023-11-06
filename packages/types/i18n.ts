@@ -4,7 +4,7 @@ const LanguageCode = z.string().min(2).max(2);
 
 export const ZI18nObject = z
   .object({
-    _i18n_: z.literal(true),
+    _i18n_: z.boolean(),
   })
   .and(z.record(LanguageCode, z.string()).optional());
 

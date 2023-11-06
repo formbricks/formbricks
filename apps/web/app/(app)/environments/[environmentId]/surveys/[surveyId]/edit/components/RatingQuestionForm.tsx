@@ -18,6 +18,7 @@ interface RatingQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
+  languages: string[] | undefined;
 }
 
 export default function RatingQuestionForm({
@@ -29,6 +30,7 @@ export default function RatingQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
+  languages,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -43,6 +45,7 @@ export default function RatingQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
 
       <div className="mt-3">
@@ -55,6 +58,7 @@ export default function RatingQuestionForm({
                 name="subheader"
                 value={question.subheader}
                 isInValid={isInValid}
+                languages={languages}
                 onChange={(e) => {
                   let translatedSubheader = {
                     ...question.subheader,

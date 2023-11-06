@@ -1,7 +1,6 @@
 import { LanguageIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-export default function LanguageIndicator({ selectedLanguage, setSelectedLanguage }) {
-  const languages = ["default", "german", "hindi"];
+export default function LanguageIndicator({ selectedLanguage, languages, setSelectedLanguage }) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
