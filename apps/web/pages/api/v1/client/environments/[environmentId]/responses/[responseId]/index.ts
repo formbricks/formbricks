@@ -1,10 +1,11 @@
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { TPerson } from "@formbricks/types/v1/people";
-import { TPipelineInput } from "@formbricks/types/v1/pipelines";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TTag } from "@formbricks/types/v1/tags";
+import { responseCache } from "@formbricks/lib/response/cache";
+import { TPerson } from "@formbricks/types/people";
+import { TPipelineInput } from "@formbricks/types/pipelines";
+import { TResponse } from "@formbricks/types/responses";
+import { TTag } from "@formbricks/types/tags";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -112,6 +113,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         },
       },
+    });
+
+    // update response cache
+    responseCache.revalidate({
+      id: responseId,
+      surveyId: responsePrisma.surveyId,
+      environmentId,
     });
 
     const transformPrismaPerson = (person): TPerson => {

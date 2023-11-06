@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { TPersonAttributes } from "@formbricks/types/v1/people";
+import { TPersonAttributes } from "@formbricks/types/people";
 import formbricks from "../src/index";
 import {
   mockEventTrackResponse,

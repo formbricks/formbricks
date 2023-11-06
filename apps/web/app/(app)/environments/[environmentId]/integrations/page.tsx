@@ -1,28 +1,50 @@
+import AirtableLogo from "./airtable/images/airtable.svg";
+import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 import JsLogo from "@/images/jslogo.png";
+import MakeLogo from "@/images/make-small.png";
+import n8nLogo from "@/images/n8n.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
-import GoogleSheetsLogo from "@/images/google-sheets-small.png";
-import n8nLogo from "@/images/n8n.png";
-import MakeLogo from "@/images/make-small.png";
 import { Card } from "@formbricks/ui/Card";
 import Image from "next/image";
 import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getServerSession } from "next-auth";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
 
-  const [environment, integrations, userWebhooks, zapierWebhooks] = await Promise.all([
+  const [environment, integrations, userWebhooks, zapierWebhooks, team, session] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
     getCountOfWebhooksBasedOnSource(environmentId, "user"),
     getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
+    getTeamByEnvironmentId(params.environmentId),
+    getServerSession(authOptions),
   ]);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   const containsGoogleSheetIntegration = integrations.some(
     (integration) => integration.type === "googleSheets"
   );
+
+  const containsAirtableIntegration = integrations.some((integration) => integration.type === "airtable");
 
   const integrationCards = [
     {
@@ -53,7 +75,7 @@ export default async function IntegrationsPage({ params }) {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
       connectText: "Manage Webhooks",
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/webhook-api/overview",
+      docsHref: "https://formbricks.com/docs/api/management/webhooks",
       docsText: "Docs",
       docsNewTab: true,
       label: "Webhooks",
@@ -75,6 +97,19 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
       connected: containsGoogleSheetIntegration ? true : false,
       statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/airtable`,
+      connectText: `${containsAirtableIntegration ? "Manage Table" : "Connect"}`,
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/integrations/airtable",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Airtable",
+      description: "Instantly populate your airtable table with survey data",
+      icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
+      connected: containsAirtableIntegration ? true : false,
+      statusText: containsAirtableIntegration ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
@@ -99,6 +134,8 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={MakeLogo} alt="Make Logo" />,
     },
   ];
+
+  if (isViewer) return <ErrorComponent />;
 
   return (
     <div>

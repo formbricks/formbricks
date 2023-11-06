@@ -1,21 +1,24 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
 import { timeSince } from "@formbricks/lib/time";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TGoogleSheetIntegration, TGoogleSheetsConfigData } from "@formbricks/types/v1/integrations";
+import { TEnvironment } from "@formbricks/types/environment";
+import {
+  TIntegrationGoogleSheets,
+  TIntegrationGoogleSheetsConfigData,
+} from "@formbricks/types/integration/googleSheet";
 import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 interface HomeProps {
   environment: TEnvironment;
-  googleSheetIntegration: TGoogleSheetIntegration;
+  googleSheetIntegration: TIntegrationGoogleSheets;
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
-  setSelectedIntegration: (v: (TGoogleSheetsConfigData & { index: number }) | null) => void;
+  setSelectedIntegration: (v: (TIntegrationGoogleSheetsConfigData & { index: number }) | null) => void;
   refreshSheet: () => void;
 }
 

@@ -2,9 +2,11 @@ import { getUpdatedState } from "@/app/api/v1/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { prisma } from "@formbricks/database";
+import { getDisplaysByPersonId, updateDisplay } from "@formbricks/lib/display/service";
+import { personCache } from "@formbricks/lib/person/cache";
 import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/person/service";
-import { ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
-import { revalidateTag } from "next/cache";
+import { surveyCache } from "@formbricks/lib/survey/cache";
+import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -45,8 +47,12 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       },
       select: selectPerson,
     });
-    // if person exists, reconnect session and delete old user
+    // if person exists, reconnect displays, session and delete old user
     if (person) {
+      const displays = await getDisplaysByPersonId(personId);
+
+      await Promise.all(displays.map((display) => updateDisplay(display.id, { personId: person.id })));
+
       // reconnect session to new person
       await prisma.session.update({
         where: {
@@ -88,23 +94,29 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
         },
         select: selectPerson,
       });
+
+      personCache.revalidate({
+        id: returnedPerson.id,
+        environmentId: returnedPerson.environmentId,
+      });
     }
 
     const transformedPerson = transformPrismaPerson(returnedPerson);
 
-    if (transformedPerson) {
-      // revalidate person
-      revalidateTag(transformedPerson.id);
-    }
+    personCache.revalidate({
+      id: transformedPerson.id,
+      environmentId: environmentId,
+    });
+
+    surveyCache.revalidate({
+      environmentId,
+    });
 
     const state = await getUpdatedState(environmentId, transformedPerson.id, sessionId);
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);
-    return responses.internalServerErrorResponse(
-      "Unable to complete response. See server logs for details.",
-      true
-    );
+    return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }

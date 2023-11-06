@@ -1,10 +1,10 @@
 "use client";
 
 import { GetActiveInactiveSurveysAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
-import { capitalizeFirstLetter } from "@/app/lib/utils";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
 import { TagIcon } from "@heroicons/react/24/solid";

@@ -1,8 +1,8 @@
 "use client";
 
 import { updateProductAction } from "@/app/(app)/onboarding/actions";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
-import { TProduct } from "@formbricks/types/v1/product";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { TProduct } from "@formbricks/types/product";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";

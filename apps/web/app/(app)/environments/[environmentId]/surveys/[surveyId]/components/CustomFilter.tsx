@@ -19,15 +19,15 @@ import toast from "react-hot-toast";
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
 import { fetchFile } from "@/app/lib/fetchFile";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import ResponseFilter from "./ResponseFilter";
 import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TTag } from "@formbricks/types/tags";
 
 enum DateSelected {
   FROM = "from",

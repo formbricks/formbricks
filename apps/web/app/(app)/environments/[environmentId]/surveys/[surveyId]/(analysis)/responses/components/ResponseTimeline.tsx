@@ -1,11 +1,12 @@
 "use client";
+import React, { useState, useEffect, useRef } from "react";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import EmptySpaceFiller from "@/app/components/shared/EmptySpaceFiller";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
 interface ResponseTimelineProps {
@@ -15,6 +16,7 @@ interface ResponseTimelineProps {
   survey: TSurvey;
   profile: TProfile;
   environmentTags: TTag[];
+  responsesPerPage: number;
 }
 
 export default function ResponseTimeline({
@@ -23,12 +25,44 @@ export default function ResponseTimeline({
   survey,
   profile,
   environmentTags,
+  responsesPerPage,
 }: ResponseTimelineProps) {
+  const [displayedResponses, setDisplayedResponses] = useState<TResponse[]>([]);
+  const loadingRef = useRef(null);
+
+  useEffect(() => {
+    setDisplayedResponses(responses.slice(0, responsesPerPage));
+  }, [responses]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setDisplayedResponses((prevResponses) => [
+            ...prevResponses,
+            ...responses.slice(prevResponses.length, prevResponses.length + responsesPerPage),
+          ]);
+        }
+      },
+      { threshold: 0.8 }
+    );
+
+    if (loadingRef.current) {
+      observer.observe(loadingRef.current);
+    }
+
+    return () => {
+      if (loadingRef.current) {
+        observer.unobserve(loadingRef.current);
+      }
+    };
+  }, [responses]);
+
   return (
     <div className="space-y-4">
-      {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
+      {survey.type === "web" && displayedResponses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : responses.length === 0 ? (
+      ) : displayedResponses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
@@ -36,7 +70,7 @@ export default function ResponseTimeline({
         />
       ) : (
         <div>
-          {responses.map((response) => {
+          {displayedResponses.map((response) => {
             return (
               <div key={response.id}>
                 <SingleResponseCard
@@ -50,6 +84,7 @@ export default function ResponseTimeline({
               </div>
             );
           })}
+          <div ref={loadingRef}></div>
         </div>
       )}
     </div>

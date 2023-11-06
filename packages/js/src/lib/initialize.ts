@@ -1,4 +1,4 @@
-import type { TJsConfigInput } from "@formbricks/types/v1/js";
+import type { TJsConfigInput } from "@formbricks/types/js";
 import { Config } from "./config";
 import {
   ErrorHandler,

@@ -2,15 +2,15 @@
 
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { SHORT_SURVEY_BASE_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { deleteSurvey, duplicateSurvey } from "@formbricks/lib/survey/service";
+import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
+import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { getServerSession } from "next-auth";
@@ -19,13 +19,13 @@ export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthenticationError("Not authenticated");
 
-  const regexPattern = new RegExp("^" + SURVEY_BASE_URL);
+  const regexPattern = new RegExp("^" + WEBAPP_URL);
   const isValidUrl = regexPattern.test(url);
 
   if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
 
   const shortUrl = await createShortUrl(url);
-  const fullShortUrl = SHORT_SURVEY_BASE_URL + shortUrl.id;
+  const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
   return fullShortUrl;
 };
 
@@ -56,7 +56,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const duplicatedSurvey = await duplicateSurvey(environmentId,surveyId)
+  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId);
   return duplicatedSurvey;
 }
 
@@ -214,6 +214,11 @@ export const deleteSurveyAction = async (surveyId: string) => {
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const survey = await getSurvey(surveyId);
+
+  const { hasDeleteAccess } = await verifyUserRoleAccess(survey!.environmentId, session.user.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deleteSurvey(surveyId);
 };

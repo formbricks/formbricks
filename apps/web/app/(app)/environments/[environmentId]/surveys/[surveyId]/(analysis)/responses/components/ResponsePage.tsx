@@ -3,27 +3,30 @@ import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surv
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
-import ContentWrapper from "@/app/components/shared/ContentWrapper";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TTag } from "@formbricks/types/tags";
+import { TProfile } from "@formbricks/types/profile";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
   environmentTags: TTag[];
+  responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const ResponsePage = ({
@@ -31,10 +34,12 @@ const ResponsePage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
   environmentTags,
+  responsesPerPage,
+  membershipRole,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -56,9 +61,10 @@ const ResponsePage = ({
         environment={environment}
         survey={survey}
         surveyId={surveyId}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
+        membershipRole={membershipRole}
       />
       <CustomFilter
         environmentTags={environmentTags}
@@ -74,6 +80,7 @@ const ResponsePage = ({
         survey={survey}
         profile={profile}
         environmentTags={environmentTags}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );

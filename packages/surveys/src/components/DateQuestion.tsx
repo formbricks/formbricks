@@ -1,7 +1,5 @@
-"use client";
-
-import { TResponseData } from "@formbricks/types/v1/responses";
-import type { TSurveyDateQuestion } from "@formbricks/types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -41,8 +39,7 @@ export default function DateQuestion({
     // @ts-ignore
     if (!window.initDatePicker) {
       const script = document.createElement("script");
-      script.src =
-        "http://localhost:8080/indexCopy.js";
+      script.src = "http://localhost:8080/index.js";
       script.async = true;
 
       document.body.appendChild(script);
@@ -73,7 +70,7 @@ export default function DateQuestion({
       // @ts-ignore
       setDate(date);
     });
-  }, [])
+  }, []);
 
   // sync the date with the date picker
   useEffect(() => {
@@ -126,10 +123,10 @@ export default function DateQuestion({
         )}
         <div></div>
         <SubmitButton
-          question={question}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
           onClick={() => {}}
+          buttonLabel="Submit"
         />
       </div>
     </form>

@@ -1,4 +1,4 @@
-import { TSurveyLogic } from "@formbricks/types/v1/surveys";
+import { TSurveyLogic } from "@formbricks/types/surveys";
 
 export function evaluateCondition(logic: TSurveyLogic, responseValue: any): boolean {
   switch (logic.condition) {
@@ -47,6 +47,7 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
         (Array.isArray(responseValue) && responseValue.length === 0) ||
         responseValue === "" ||
         responseValue === null ||
+        responseValue === undefined ||
         responseValue === "dismissed"
       );
     default:

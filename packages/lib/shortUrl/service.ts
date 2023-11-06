@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TShortUrl, ZShortUrlId } from "@formbricks/types/v1/shortUrl";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TShortUrl, ZShortUrlId } from "@formbricks/types/shortUrl";
 import { Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { validateInputs } from "../utils/validate";
@@ -29,7 +29,7 @@ export const createShortUrl = async (url: string): Promise<TShortUrl> => {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -47,7 +47,7 @@ export const getShortUrl = async (id: string): Promise<TShortUrl | null> => {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;
@@ -64,7 +64,7 @@ export const getShortUrlByUrl = async (url: string): Promise<TShortUrl | null> =
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

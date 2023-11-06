@@ -8,6 +8,7 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
         <div className="flex items-center gap-x-4">
           <div className="w-1/3 text-left font-semibold text-slate-700 dark:text-slate-200 md:text-xl">
             {leadRow.title}
+            <span className="pl-2 text-sm font-normal text-slate-600">{leadRow.comparison}</span>
           </div>
           <div
             className="flex w-1/3 items-center justify-center text-center text-sm font-semibold
@@ -27,8 +28,13 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
             <div className="w-1/3 text-left text-sm text-slate-700 dark:text-slate-200 md:text-base">
               {feature.name}
               {feature.addOnText && (
-                <span className=" mx-2 bg-teal-100 p-1 text-xs text-slate-400 dark:bg-slate-700 dark:text-teal-500">
+                <span className=" mx-3 rounded-full bg-emerald-200 px-2 text-xs text-slate-800 dark:bg-slate-700 dark:text-teal-500">
                   Addon
+                </span>
+              )}
+              {feature.comingSoon && (
+                <span className="mx-3 rounded-full bg-slate-200 px-2 text-xs text-slate-800 dark:bg-slate-700 dark:text-teal-500">
+                  coming soon
                 </span>
               )}
             </div>
@@ -48,11 +54,11 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
                 </TooltipProvider>
               ) : feature.free ? (
                 <div className="h-6 w-6 rounded-full border border-green-300 bg-green-100 p-0.5 dark:border-green-600 dark:bg-green-900">
-                  <CheckIcon className="p-0.5 text-green-500 dark:text-green-300" />
+                  <CheckIcon className=" text-green-500 dark:text-green-300" />
                 </div>
               ) : (
                 <div className="h-6 w-6 rounded-full border border-red-300 bg-red-100 p-0.5 dark:border-red-500 dark:bg-red-300">
-                  <XMarkIcon className="dark:red-300 p-0.5 text-red-500 dark:text-red-600" />
+                  <XMarkIcon className="text-red-500 dark:text-red-600" />
                 </div>
               )}
             </div>
@@ -72,11 +78,11 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
                 </TooltipProvider>
               ) : feature.paid ? (
                 <div className="h-6 w-6 rounded-full border border-green-300 bg-green-100 p-0.5 dark:border-green-600 dark:bg-green-900">
-                  <CheckIcon className="p-0.5 text-green-500 dark:text-green-300" />
+                  <CheckIcon className="text-green-500 dark:text-green-300" />
                 </div>
               ) : (
                 <div className="h-6 w-6 rounded-full border border-red-300 bg-red-100 p-0.5 dark:border-red-600 dark:bg-red-900">
-                  <XMarkIcon className="dark:red-300 p-0.5 text-red-500" />
+                  <XMarkIcon className="text-red-500 dark:text-red-600" />
                 </div>
               )}
             </div>

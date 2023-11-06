@@ -3,11 +3,11 @@
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { QuestionType } from "@formbricks/types/questions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { AuthenticationError } from "@formbricks/types/v1/errors";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { sendEmailAction } from "../../actions";
-import CodeBlock from "@/app/components/shared/CodeBlock";
+import CodeBlock from "@formbricks/ui/CodeBlock";
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import {
   Column,
@@ -19,6 +19,7 @@ import {
   Tailwind,
   Text,
   render,
+  Img,
 } from "@react-email/components";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -59,8 +60,7 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
 
   return (
     <div className="flex h-full grow flex-col gap-5">
-      <div className="flex items-center gap-4">
-        <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+      <div className="flex items-center justify-end gap-4">
         {showEmbed ? (
           <Button
             variant="darkCTA"
@@ -75,15 +75,18 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
             Copy code
           </Button>
         ) : (
-          <Button
-            variant="secondary"
-            title="send preview email"
-            aria-label="send preview email"
-            onClick={sendPreviewEmail}
-            EndIcon={EnvelopeIcon}
-            className="shrink-0">
-            Send Preview
-          </Button>
+          <>
+            <Input type="email" placeholder="user@mail.com" className="h-11 grow bg-white" value={email} />
+            <Button
+              variant="secondary"
+              title="send preview email"
+              aria-label="send preview email"
+              onClick={sendPreviewEmail}
+              EndIcon={EnvelopeIcon}
+              className="shrink-0">
+              Send Preview
+            </Button>
+          </>
         )}
         <Button
           variant="darkCTA"
@@ -141,7 +144,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
 
   const firstQuestion = survey.questions[0];
   switch (firstQuestion.type) {
-    case QuestionType.OpenText:
+    case TSurveyQuestionType.OpenText:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
@@ -154,7 +157,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case QuestionType.Consent:
+    case TSurveyQuestionType.Consent:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
@@ -187,7 +190,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case QuestionType.NPS:
+    case TSurveyQuestionType.NPS:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
@@ -220,21 +223,21 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
               </Section>
             </Container>
             {/* {!firstQuestion.required && (
-              <EmailButton
-                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                className={cn(
-                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
-                  isLight(brandColor) ? "text-black" : "text-white"
-                )}>
-                {firstQuestion.buttonLabel || "Skip"}
-              </EmailButton>
-            )} */}
+            <EmailButton
+              href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
+              className={cn(
+                "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}>
+              {firstQuestion.buttonLabel || "Skip"}
+            </EmailButton>
+          )} */}
 
             <EmailFooter />
           </Section>
         </EmailTemplateWrapper>
       );
-    case QuestionType.CTA:
+    case TSurveyQuestionType.CTA:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
@@ -264,7 +267,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case QuestionType.Rating:
+    case TSurveyQuestionType.Rating:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
@@ -307,20 +310,20 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
               </Section>
             </Container>
             {/* {!firstQuestion.required && (
-              <EmailButton
-                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                className={cn(
-                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
-                  isLight(brandColor) ? "text-black" : "text-white"
-                )}>
-                {firstQuestion.buttonLabel || "Skip"}
-              </EmailButton>
-            )} */}
+            <EmailButton
+              href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
+              className={cn(
+                "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}>
+              {firstQuestion.buttonLabel || "Skip"}
+            </EmailButton>
+          )} */}
             <EmailFooter />
           </Section>
         </EmailTemplateWrapper>
       );
-    case QuestionType.MultipleChoiceMulti:
+    case TSurveyQuestionType.MultipleChoiceMulti:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
@@ -341,7 +344,7 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case QuestionType.MultipleChoiceSingle:
+    case TSurveyQuestionType.MultipleChoiceSingle:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
@@ -362,6 +365,35 @@ const getEmailTemplate = (survey: TSurvey, surveyUrl: string, brandColor: string
                 </Link>
               ))}
           </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case TSurveyQuestionType.PictureSelection:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {firstQuestion.subheader}
+          </Text>
+          <Section className="mx-0">
+            {firstQuestion.choices.map((choice) =>
+              firstQuestion.allowMulti ? (
+                <Img
+                  src={choice.imageUrl}
+                  className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg"
+                />
+              ) : (
+                <Link
+                  href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
+                  target="_blank"
+                  className="mb-1 mr-1 inline-block h-[110px] w-[220px] rounded-lg">
+                  <Img src={choice.imageUrl} className="h-full w-full rounded-lg" />
+                </Link>
+              )
+            )}
+          </Section>
           <EmailFooter />
         </EmailTemplateWrapper>
       );

@@ -1,11 +1,16 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 interface SummaryMetadataProps {
   responses: TResponse[];
-  survey: TSurveyWithAnalytics;
+  showDropOffs: boolean;
+  setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;
+  survey: TSurvey;
+  displayCount: number;
 }
 
 const StatCard = ({ label, percentage, value, tooltipText }) => (
@@ -29,10 +34,15 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   </TooltipProvider>
 );
 
-export default function SummaryMetadata({ responses, survey }: SummaryMetadataProps) {
+export default function SummaryMetadata({
+  responses,
+  survey,
+  displayCount,
+  setShowDropOffs,
+  showDropOffs,
+}: SummaryMetadataProps) {
   const completedResponses = responses.filter((r) => r.finished).length;
   const totalResponses = responses.length;
-  const totalDisplays = survey.analytics.numDisplays;
 
   return (
     <div className="mb-4">
@@ -41,18 +51,18 @@ export default function SummaryMetadata({ responses, survey }: SummaryMetadataPr
           <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-slate-600">Displays</p>
             <p className="text-2xl font-bold text-slate-800">
-              {totalDisplays === 0 ? <span>-</span> : totalDisplays}
+              {displayCount === 0 ? <span>-</span> : displayCount}
             </p>
           </div>
           <StatCard
             label="Starts"
-            percentage={`${Math.round((totalResponses / totalDisplays) * 100)}%`}
+            percentage={`${Math.round((totalResponses / displayCount) * 100)}%`}
             value={totalResponses === 0 ? <span>-</span> : totalResponses}
             tooltipText="People who started the survey."
           />
           <StatCard
             label="Responses"
-            percentage={`${Math.round((completedResponses / totalDisplays) * 100)}%`}
+            percentage={`${Math.round((completedResponses / displayCount) * 100)}%`}
             value={responses.length === 0 ? <span>-</span> : completedResponses}
             tooltipText="People who completed the survey."
           />
@@ -63,10 +73,17 @@ export default function SummaryMetadata({ responses, survey }: SummaryMetadataPr
             tooltipText="People who started but not completed the survey."
           />
         </div>
-        <div className="flex flex-col justify-between lg:col-span-1">
+        <div className="flex flex-col justify-between gap-2 lg:col-span-1">
           <div className="text-right text-xs text-slate-400">
             Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
           </div>
+          <Button
+            variant="minimal"
+            className="w-max self-start"
+            EndIcon={showDropOffs ? ChevronDownIcon : ChevronUpIcon}
+            onClick={() => setShowDropOffs(!showDropOffs)}>
+            Analyze Drop Offs
+          </Button>
         </div>
       </div>
     </div>

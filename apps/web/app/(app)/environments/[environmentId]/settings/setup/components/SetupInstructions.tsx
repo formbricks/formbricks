@@ -1,6 +1,6 @@
 "use client";
 
-import CodeBlock from "@/app/components/shared/CodeBlock";
+import CodeBlock from "@formbricks/ui/CodeBlock";
 import { TabBar } from "@formbricks/ui/TabBar";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
@@ -69,7 +69,7 @@ if (typeof window !== "undefined") {
                 </span>{" "}
                 <Link
                   className="decoration-brand-dark"
-                  href="https://formbricks.com/docs/getting-started/quickstart"
+                  href="https://formbricks.com/docs/getting-started/quickstart-in-app-survey"
                   target="_blank">
                   Check out the docs.
                 </Link>

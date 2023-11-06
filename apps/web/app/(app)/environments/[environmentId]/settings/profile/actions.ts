@@ -4,8 +4,8 @@ import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { updateProfile, deleteProfile } from "@formbricks/lib/profile/service";
-import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { TProfileUpdateInput } from "@formbricks/types/profile";
+import { AuthorizationError } from "@formbricks/types/errors";
 
 export async function updateProfileAction(data: Partial<TProfileUpdateInput>) {
   const session = await getServerSession(authOptions);

@@ -5,7 +5,7 @@ import GitpodNewWorkspace from "./gitpod-new-workspace.webp";
 import GitpodPreparing from "./gitpod-preparing.webp";
 import GitpodRunning from "./gitpod-running.webp";
 
-export const meta = {
+export const metadata = {
   title: "Gitpod Setup",
   description:
     "With one click, you can setup the Formbricks developer environment in your browser using Gitpod",
@@ -35,7 +35,7 @@ export const meta = {
         3. Installing Docker images by extracting them from the `packages/database/docker-compose.yml` file.
         4. Building the @formbricks/js component.
      - When the workspace starts:
-        1. Waiting for web and demo apps to start and openening the `apps/demo/.env` file automatically such that users can start playing around with the demo app by configuring `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID` straight away!
+        1. Wait for the web and demo apps to launch on Gitpod. This automatically opens the `apps/demo/.env` file. Utilize dynamic localhost URLs (e.g., `localhost:3000` for signup and `localhost:8025` for email confirmation) to configure `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID`. After creating your account and finding the `ID` in the URL at `localhost:3000`, replace `YOUR_ENVIRONMENT_ID` in the `.env` file located in `app/demo`. 
 
     **Web Component Initialization:** 
      - we initialize the @formbricks/web component during prebuilds. This involves:
@@ -74,7 +74,7 @@ After clicking the one-click setup button, Gitpod will open a new tab or window.
 - This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs to authenticate your access to the workspace. Click on 'Continue With Github' to authorize your GitPod session.
 
 ### 3. Creating a New Workspace
-<Image src={GitpodNewWorkspace} alt="Gitpod New Worskpace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={GitpodNewWorkspace} alt="Gitpod New workspace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 - After authentication, Gitpod asks to create a new workspace for you. This page displays the configurations of your workspace. 
 - You can use either choose either VS Code Browser or  VS Code Desktop editor with the 'Standard Class' for your workspace class.
 - If you opt for the VS Code Desktop, follow the following steps
@@ -83,7 +83,7 @@ After clicking the one-click setup button, Gitpod will open a new tab or window.
 
 
 ### 4. Gitpod preparing the created Workspace
-<Image src={GitpodPreparing} alt="Gitpod Preparing Worskpace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={GitpodPreparing} alt="Gitpod Preparing workspace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 - Gitpod is preparing your workspace with all the necessary dependencies and configurations. You will see this page while Gitpod sets up your development environment.
 
 ### 5. Gitpod running the Workspace

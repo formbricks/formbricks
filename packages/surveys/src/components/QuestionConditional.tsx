@@ -1,6 +1,6 @@
-import { TResponseData } from "@formbricks/types/v1/responses";
-import { QuestionType } from "../../../types/questions";
-import { TSurveyQuestion } from "../../../types/v1/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import CTAQuestion from "./CTAQuestion";
 import ConsentQuestion from "./ConsentQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
@@ -9,6 +9,7 @@ import NPSQuestion from "./NPSQuestion";
 import OpenTextQuestion from "./OpenTextQuestion";
 import RatingQuestion from "./RatingQuestion";
 import DateQuestion from "./DateQuestion";
+import PictureSelectionQuestion from "./PictureSelectionQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -33,7 +34,7 @@ export default function QuestionConditional({
   brandColor,
   autoFocus = true,
 }: QuestionConditionalProps) {
-  return question.type === QuestionType.OpenText ? (
+  return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
       value={value}
@@ -45,7 +46,7 @@ export default function QuestionConditional({
       brandColor={brandColor}
       autoFocus={autoFocus}
     />
-  ) : question.type === QuestionType.MultipleChoiceSingle ? (
+  ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       question={question}
       value={value}
@@ -56,7 +57,7 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.MultipleChoiceMulti ? (
+  ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       question={question}
       value={value}
@@ -67,7 +68,7 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.NPS ? (
+  ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
       question={question}
       value={value}
@@ -78,7 +79,7 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.CTA ? (
+  ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
       question={question}
       value={value}
@@ -89,7 +90,7 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.Rating ? (
+  ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
       question={question}
       value={value}
@@ -100,7 +101,7 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "consent" ? (
+  ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
       question={question}
       value={value}
@@ -111,8 +112,19 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === QuestionType.Date ? (
+  ) : question.type === TSurveyQuestionType.Date ? (
     <DateQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === TSurveyQuestionType.PictureSelection ? (
+    <PictureSelectionQuestion
       question={question}
       value={value}
       onChange={onChange}

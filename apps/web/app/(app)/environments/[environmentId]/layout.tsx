@@ -1,5 +1,5 @@
 import EnvironmentsNavbar from "@/app/(app)/environments/[environmentId]/components/EnvironmentsNavbar";
-import ToasterClient from "@/app/components/ToasterClient";
+import ToasterClient from "@formbricks/ui/ToasterClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -7,7 +7,7 @@ import FormbricksClient from "../../components/FormbricksClient";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);

@@ -1,4 +1,4 @@
-import { TSurveyDateQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
@@ -6,7 +6,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 interface IDateQuestionFormProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: TSurvey;
   question: TSurveyDateQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;

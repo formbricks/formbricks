@@ -1,12 +1,12 @@
 "use client";
 
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@/app/lib/utils";
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { useEffect, useState } from "react";
 import {
   getActionCountInLastHourAction,
@@ -16,9 +16,10 @@ import {
 } from "../actions";
 interface ActivityTabProps {
   actionClass: TActionClass;
+  environmentId: string;
 }
 
-export default function EventActivityTab({ actionClass }: ActivityTabProps) {
+export default function EventActivityTab({ actionClass, environmentId }: ActivityTabProps) {
   // const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, actionClass.id);
 
   const [numEventsLastHour, setNumEventsLastHour] = useState<number | undefined>();
@@ -42,10 +43,10 @@ export default function EventActivityTab({ actionClass }: ActivityTabProps) {
           numEventsLast7DaysData,
           activeInactiveSurveys,
         ] = await Promise.all([
-          getActionCountInLastHourAction(actionClass.id),
-          getActionCountInLast24HoursAction(actionClass.id),
-          getActionCountInLast7DaysAction(actionClass.id),
-          GetActiveInactiveSurveysAction(actionClass.id),
+          getActionCountInLastHourAction(actionClass.id, environmentId),
+          getActionCountInLast24HoursAction(actionClass.id, environmentId),
+          getActionCountInLast7DaysAction(actionClass.id, environmentId),
+          GetActiveInactiveSurveysAction(actionClass.id, environmentId),
         ]);
         setNumEventsLastHour(numEventsLastHourData);
         setNumEventsLast24Hours(numEventsLast24HoursData);
@@ -58,7 +59,7 @@ export default function EventActivityTab({ actionClass }: ActivityTabProps) {
         setLoading(false);
       }
     }
-  }, [actionClass.id]);
+  }, [actionClass.id, environmentId]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;

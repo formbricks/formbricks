@@ -10,12 +10,13 @@
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "concurrently": "^8.2.1",
+    "concurrently": "^8.2.2",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.31",
     "react": "18.2.0"
   },
   "dependencies": {
+    "@formbricks/surveys": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@heroicons/react": "^2.0.18",
     "@lexical/code": "^0.12.2",
@@ -40,15 +41,13 @@
     "clsx": "^2.0.0",
     "cmdk": "^0.2.0",
     "lexical": "^0.12.2",
-    "lucide-react": "^0.287.0",
-    "next": "13.5.5",
-    "next-auth": "^4.23.2",
+    "lucide-react": "^0.290.0",
     "react-colorful": "^5.6.1",
     "react-confetti": "^6.1.0",
-    "react-day-picker": "^8.9.0",
-    "react-dom": "^18.2.0",
+    "react-day-picker": "^8.9.1",
     "react-hot-toast": "^2.4.1",
     "react-radio-group": "^3.0.3",
-    "react-use": "^17.4.0"
+    "react-use": "^17.4.0",
+    "mime": "^3.0.0"
   }
 }
