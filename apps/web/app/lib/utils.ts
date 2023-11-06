@@ -1,32 +1,5 @@
 import { TInvite } from "@formbricks/types/invites";
 
-export function capitalizeFirstLetter(string: string | null = "") {
-  if (string === null) {
-    return "";
-  }
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-// write a function that takes a string and truncates it to the specified length
-export const truncate = (str: string, length: number) => {
-  if (!str) return "";
-  if (str.length > length) {
-    return str.substring(0, length) + "...";
-  }
-  return str;
-};
-
-// write a function that takes a string and truncates the middle of it so that the beginning and ending are always visible
-export const truncateMiddle = (str: string, length: number) => {
-  if (!str) return "";
-  if (str.length > length) {
-    const start = str.substring(0, length / 2);
-    const end = str.substring(str.length - length / 2, str.length);
-    return start + " ... " + end;
-  }
-  return str;
-};
-
 export function isLight(color) {
   let r, g, b;
   if (color.length === 4) {
@@ -39,14 +12,6 @@ export function isLight(color) {
     b = parseInt(color[5] + color[6], 16);
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
-}
-
-export enum MEMBERSHIP_ROLES {
-  OWNER = "owner",
-  ADMIN = "admin",
-  EDITOR = "editor",
-  DEVELOPER = "developer",
-  VIEWER = "viewer",
 }
 
 export const isInviteExpired = (invite: TInvite) => {

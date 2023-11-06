@@ -1,12 +1,8 @@
 "use client";
 
-import TransferOwnershipModal from "@/app/(app)/environments/[environmentId]/settings/members/components/TransferOwnershipModal";
-import {
-  transferOwnershipAction,
-  updateInviteAction,
-  updateMembershipAction,
-} from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { MEMBERSHIP_ROLES, capitalizeFirstLetter } from "@/app/lib/utils";
+import TransferOwnershipModal from "./TransferOwnershipModal";
+import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import {
   DropdownMenu,
@@ -34,7 +30,7 @@ interface Role {
   currentUserRole: string;
 }
 
-export default function MembershipRole({
+export const EditMembershipRole = ({
   isAdminOrOwner,
   memberRole,
   teamId,
@@ -44,7 +40,7 @@ export default function MembershipRole({
   memberAccepted,
   inviteId,
   currentUserRole,
-}: Role) {
+}: Role) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
@@ -82,7 +78,7 @@ export default function MembershipRole({
       setTransferOwnershipModalOpen(false);
       toast.success("Ownership transferred successfully");
       router.refresh();
-    } catch (err) {
+    } catch (err: any) {
       toast.error(`Error: ${err.message}`);
       setLoading(false);
       setTransferOwnershipModalOpen(false);
@@ -98,11 +94,12 @@ export default function MembershipRole({
   };
 
   const getMembershipRoles = () => {
+    const roles = ["owner", "admin", "editor", "developer", "viewer"];
     if (currentUserRole === "owner" && memberAccepted) {
-      return Object.keys(MEMBERSHIP_ROLES);
+      return roles;
     }
 
-    return Object.keys(MEMBERSHIP_ROLES).filter((role) => role !== "OWNER");
+    return roles.filter((role) => role !== "owner");
   };
 
   if (isAdminOrOwner) {
@@ -113,7 +110,7 @@ export default function MembershipRole({
             <Button
               disabled={disableRole}
               variant="secondary"
-              className="flex items-center gap-1 p-1.5 text-xs"
+              className="flex items-center gap-1 p-2 text-xs"
               loading={loading}
               size="sm">
               <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
@@ -146,4 +143,4 @@ export default function MembershipRole({
   }
 
   return <Badge text={capitalizeFirstLetter(memberRole)} type="gray" size="tiny" />;
-}
+};

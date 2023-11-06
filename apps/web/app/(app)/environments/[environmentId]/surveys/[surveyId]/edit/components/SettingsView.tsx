@@ -8,6 +8,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SettingsViewProps {
   environment: TEnvironment;
@@ -16,6 +17,7 @@ interface SettingsViewProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   responseCount: number;
+  membershipRole?: TMembershipRole;
 }
 
 export default function SettingsView({
@@ -25,6 +27,7 @@ export default function SettingsView({
   actionClasses,
   attributeClasses,
   responseCount,
+  membershipRole,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -42,6 +45,7 @@ export default function SettingsView({
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
         actionClasses={actionClasses}
+        membershipRole={membershipRole}
       />
 
       <ResponseOptionsCard

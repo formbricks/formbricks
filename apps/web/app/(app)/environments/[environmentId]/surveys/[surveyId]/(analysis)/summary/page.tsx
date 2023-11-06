@@ -9,6 +9,8 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getProfile } from "@formbricks/lib/profile/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -34,6 +36,14 @@ export default async function Page({ params }) {
     throw new Error("Profile not found");
   }
 
+  const team = await getTeamByEnvironmentId(params.environmentId);
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
   return (
@@ -49,6 +59,7 @@ export default async function Page({ params }) {
         environmentTags={tags}
         displayCount={displayCount}
         openTextResponsesPerPage={OPEN_TEXT_RESPONSES_PER_PAGE}
+        membershipRole={currentUserMembership?.role}
       />
     </>
   );
