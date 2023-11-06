@@ -1,3 +1,5 @@
+"use client";
+
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -9,6 +11,7 @@ import { useMemo, useState } from "react";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
+import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -29,6 +32,11 @@ export default function FileUploadQuestionForm({
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
+  const {
+    billingInfo,
+    error: billingInfoError,
+    isLoading: billingInfoLoading,
+  } = useGetBillingInfo(product?.teamId ?? "");
 
   const handleInputChange = (event) => {
     setExtension(event.target.value);
@@ -42,41 +50,41 @@ export default function FileUploadQuestionForm({
       return;
     }
 
-    if (question.allowedFileTypes) {
-      if (!question.allowedFileTypes.includes(extension as TAllowedFileExtension)) {
+    if (question.allowedFileExtensions) {
+      if (!question.allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
         updateQuestion(questionIdx, {
-          allowedFileTypes: [...question.allowedFileTypes, extension],
+          allowedFileExtensions: [...question.allowedFileExtensions, extension],
         });
         setExtension("");
       } else {
         toast.error("This extension is already added");
       }
     } else {
-      updateQuestion(questionIdx, { allowedFileTypes: [extension] });
+      updateQuestion(questionIdx, { allowedFileExtensions: [extension] });
       setExtension("");
     }
   };
 
   const removeExtension = (index: number) => {
-    if (question.allowedFileTypes) {
-      const updatedExtensions = [...question?.allowedFileTypes];
+    if (question.allowedFileExtensions) {
+      const updatedExtensions = [...question?.allowedFileExtensions];
       updatedExtensions.splice(index, 1);
-      updateQuestion(questionIdx, { allowedFileTypes: updatedExtensions });
+      updateQuestion(questionIdx, { allowedFileExtensions: updatedExtensions });
     }
   };
 
   const maxSizeInMBLimit = useMemo(() => {
-    if (!product || !product?.billingInfo) {
+    if (billingInfoError || billingInfoLoading || !billingInfo) {
       return 10;
     }
 
-    if (product.billingInfo.features.linkSurvey.status === "active") {
+    if (billingInfo.features.linkSurvey.status === "active") {
       // 1GB in MB
       return 1024;
     }
 
     return 10;
-  }, [product]);
+  }, [billingInfo, billingInfoError, billingInfoLoading]);
 
   return (
     <form>
@@ -146,7 +154,7 @@ export default function FileUploadQuestionForm({
       <div className="mt-8">
         <AdvancedOptionToggle
           isChecked={!!question.maxSizeInMB}
-          onToggle={(checked) => updateQuestion(questionIdx, { maxSizeInMB: checked ? 10 : null })}
+          onToggle={(checked) => updateQuestion(questionIdx, { maxSizeInMB: checked ? 10 : undefined })}
           htmlId="limitFileType"
           title="Max file size"
           description="Limit the maximum file size."
@@ -184,9 +192,9 @@ export default function FileUploadQuestionForm({
           <Switch
             id="m"
             name="limitFileType"
-            checked={!!question.allowedFileTypes}
+            checked={!!question.allowedFileExtensions}
             onCheckedChange={(checked) =>
-              updateQuestion(questionIdx, { allowedFileTypes: checked ? [] : null })
+              updateQuestion(questionIdx, { allowedFileExtensions: checked ? [] : undefined })
             }
           />
         </div>
@@ -197,11 +205,11 @@ export default function FileUploadQuestionForm({
           </div>
         </div>
       </div>
-      {!!question.allowedFileTypes && (
+      {!!question.allowedFileExtensions && (
         <div className="mt-3">
           <div className="mt-2 flex w-full items-center justify-start gap-2 rounded-md border bg-slate-50 p-4">
-            {question.allowedFileTypes &&
-              question?.allowedFileTypes.map((item, index) => {
+            {question.allowedFileExtensions &&
+              question?.allowedFileExtensions.map((item, index) => {
                 return (
                   <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-2">
                     <p>{item}</p>

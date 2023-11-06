@@ -4,8 +4,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import FileInput from "./ui/FileInput";
-import MultipleFileInput from "./ui/MultipleFileInput";
+import FileInput from "./FileInput";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
@@ -52,35 +51,22 @@ export default function FileUploadQuestion({
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
 
-      {question.allowMultipleFiles ? (
-        <MultipleFileInput
-          surveyId={surveyId}
-          onFileUpload={(urls: string[]) => {
-            if (urls) {
-              onChange({ [question.id]: urls });
-            } else {
-              onChange({ [question.id]: "skipped" });
-            }
-          }}
-          fileUrls={value as string[]}
-          {...(!!question.allowedFileTypes ? { allowedFileExtensions: question.allowedFileTypes } : {})}
-          {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
-        />
-      ) : (
-        <FileInput
-          surveyId={surveyId}
-          onFileUpload={(url: string | undefined) => {
-            if (url) {
-              onChange({ [question.id]: url });
-            } else {
-              onChange({ [question.id]: "skipped" });
-            }
-          }}
-          fileUrl={value as string}
-          {...(!!question.allowedFileTypes ? { allowedFileExtensions: question.allowedFileTypes } : {})}
-          {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
-        />
-      )}
+      <FileInput
+        surveyId={surveyId}
+        onFileUpload={(urls: string[]) => {
+          if (urls) {
+            onChange({ [question.id]: urls });
+          } else {
+            onChange({ [question.id]: "skipped" });
+          }
+        }}
+        fileUrls={value as string[]}
+        allowMultipleFiles={question.allowMultipleFiles}
+        {...(!!question.allowedFileExtensions
+          ? { allowedFileExtensions: question.allowedFileExtensions }
+          : {})}
+        {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
+      />
 
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (

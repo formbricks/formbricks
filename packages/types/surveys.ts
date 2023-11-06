@@ -219,7 +219,7 @@ export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.FileUpload),
   allowMultipleFiles: z.boolean(),
   maxSizeInMB: z.number().optional(),
-  allowedFileTypes: z.array(ZAllowedFileExtension).optional(),
+  allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
   logic: z.array(ZSurveyFileUploadLogic).optional(),
 });
 

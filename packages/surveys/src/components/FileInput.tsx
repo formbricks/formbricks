@@ -1,6 +1,8 @@
-import React, { useState } from "react";
-import { uploadFile } from "../FileInput/lib/fileUpload";
+import { useState } from "react";
 import { TAllowedFileExtension } from "@formbricks/types/common";
+import { useMemo } from "preact/hooks";
+import { JSXInternal } from "preact/src/jsx";
+import { uploadFile } from "../lib/uploadFile";
 
 interface MultipleFileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
@@ -8,29 +10,96 @@ interface MultipleFileInputProps {
   onFileUpload: (uploadedUrls: string[]) => void;
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
+  allowMultipleFiles?: boolean;
 }
 
-export default function MultipleFileInput({
+export default function FileInput({
   allowedFileExtensions,
   surveyId,
   onFileUpload,
   fileUrls,
   maxSizeInMB,
+  allowMultipleFiles,
 }: MultipleFileInputProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleFileUpload = async (file: File) => {
+    if (file) {
+      if (maxSizeInMB) {
+        const fileBuffer = await file.arrayBuffer();
+
+        const bufferBytes = fileBuffer.byteLength;
+        const bufferKB = bufferBytes / 1024;
+        if (bufferKB > maxSizeInMB * 1024) {
+          alert(`File should be less than ${maxSizeInMB} MB`);
+        } else {
+          setIsUploading(true);
+          try {
+            const response = await uploadFile(file, allowedFileExtensions, surveyId);
+            setSelectedFiles([...selectedFiles, file]);
+
+            setIsUploading(false);
+            if (fileUrls) {
+              onFileUpload([...fileUrls, response.url]);
+            } else {
+              onFileUpload([response.url]);
+            }
+          } catch (err: any) {
+            setIsUploading(false);
+            if (err.name === "FileTooLargeError") {
+              alert(err.message);
+            } else {
+              alert("Upload failed! Please try again.");
+            }
+          }
+        }
+      } else {
+        setIsUploading(true);
+
+        try {
+          const response = await uploadFile(file, allowedFileExtensions, surveyId);
+
+          setSelectedFiles([...selectedFiles, file]);
+          setIsUploading(false);
+          if (fileUrls) {
+            onFileUpload([...fileUrls, response.url]);
+          } else {
+            onFileUpload([response.url]);
+          }
+        } catch (err: any) {
+          setIsUploading(false);
+          if (err.name === "FileTooLargeError") {
+            alert(err.message);
+          } else {
+            alert("Upload failed! Please try again.");
+          }
+        }
+      }
+    } else {
+      alert("Please select a file");
+    }
+  };
+
+  const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // @ts-expect-error
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
+    // @ts-expect-error
     const files = Array.from(e.dataTransfer.files);
+
+    if (!allowMultipleFiles && files.length > 1) {
+      alert("Only one file can be uploaded at a time.");
+      return;
+    }
 
     if (files.length > 0) {
       const validFiles = files.filter((file) =>
@@ -50,21 +119,40 @@ export default function MultipleFileInput({
 
             const bufferBytes = fileBuffer.byteLength;
             const bufferKB = bufferBytes / 1024;
+
             if (bufferKB > maxSizeInMB * 1024) {
               alert(`File should be less than ${maxSizeInMB} MB`);
             } else {
               setIsUploading(true);
+              try {
+                const response = await uploadFile(file, allowedFileExtensions, surveyId);
+                setSelectedFiles([...selectedFiles, file]);
+
+                uploadedUrls.push(response.url);
+              } catch (err: any) {
+                setIsUploading(false);
+                if (err.name === "FileTooLargeError") {
+                  alert(err.message);
+                } else {
+                  alert("Upload failed! Please try again.");
+                }
+              }
+            }
+          } else {
+            setIsUploading(true);
+            try {
               const response = await uploadFile(file, allowedFileExtensions, surveyId);
               setSelectedFiles([...selectedFiles, file]);
 
               uploadedUrls.push(response.url);
+            } catch (err: any) {
+              setIsUploading(false);
+              if (err.name === "FileTooLargeError") {
+                alert(err.message);
+              } else {
+                alert("Upload failed! Please try again.");
+              }
             }
-          } else {
-            setIsUploading(true);
-            const response = await uploadFile(file, allowedFileExtensions, surveyId);
-            setSelectedFiles([...selectedFiles, file]);
-
-            uploadedUrls.push(response.url);
           }
         }
 
@@ -75,7 +163,7 @@ export default function MultipleFileInput({
           onFileUpload(uploadedUrls);
         }
       } else {
-        alert("One or more files are not supported");
+        alert("no selected files are valid");
       }
     }
   };
@@ -91,12 +179,28 @@ export default function MultipleFileInput({
     }
   };
 
+  const showUploader = useMemo(() => {
+    if (isUploading) {
+      return false;
+    }
+
+    if (allowMultipleFiles) {
+      return true;
+    }
+
+    if (fileUrls && fileUrls.length > 0) {
+      return false;
+    }
+
+    return true;
+  }, [allowMultipleFiles, fileUrls, isUploading]);
+
   return (
     <label
       htmlFor="selectedFile"
       className="items-left relative flex  w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
-      onDragOver={(e) => handleDragOver(e as any)}
-      onDrop={(e) => handleDrop(e as any)}>
+      onDragOver={(e) => handleDragOver(e)}
+      onDrop={(e) => handleDrop(e)}>
       <div className="m-2 grid grid-cols-1 gap-2">
         {fileUrls &&
           fileUrls?.map((file, index) => (
@@ -152,7 +256,7 @@ export default function MultipleFileInput({
         </div>
       )}
 
-      {!isUploading && (
+      {showUploader && (
         <div className="flex flex-col items-center justify-center pb-6 pt-5">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -177,41 +281,10 @@ export default function MultipleFileInput({
             name="selectedFile"
             accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
             className="hidden"
-            onChange={async (e) => {
+            onChange={(e) => {
               const inputElement = e.target as HTMLInputElement; // Cast e.target to HTMLInputElement
-
-              const selectedFile = inputElement?.files?.[0];
-              if (selectedFile) {
-                if (maxSizeInMB) {
-                  const fileBuffer = await selectedFile.arrayBuffer();
-
-                  const bufferBytes = fileBuffer.byteLength;
-                  const bufferKB = bufferBytes / 1024;
-                  if (bufferKB > maxSizeInMB * 1024) {
-                    alert(`File should be less than ${maxSizeInMB} MB`);
-                  } else {
-                    setIsUploading(true);
-                    const response = await uploadFile(selectedFile, allowedFileExtensions, surveyId);
-                    setSelectedFiles([...selectedFiles, selectedFile]);
-
-                    setIsUploading(false);
-                    if (fileUrls) {
-                      onFileUpload([...fileUrls, response.url]);
-                    } else {
-                      onFileUpload([response.url]);
-                    }
-                  }
-                } else {
-                  setIsUploading(true);
-                  const response = await uploadFile(selectedFile, allowedFileExtensions, surveyId);
-                  setSelectedFiles([...selectedFiles, selectedFile]);
-                  setIsUploading(false);
-                  if (fileUrls) {
-                    onFileUpload([...fileUrls, response.url]);
-                  } else {
-                    onFileUpload([response.url]);
-                  }
-                }
+              if (inputElement.files) {
+                handleFileUpload(inputElement.files[0]);
               }
             }}
           />

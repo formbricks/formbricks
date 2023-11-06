@@ -22,11 +22,6 @@ const selectProduct = {
   updatedAt: true,
   name: true,
   teamId: true,
-  team: {
-    select: {
-      billing: true,
-    },
-  },
   brandColor: true,
   highlightBorderColor: true,
   recontactDays: true,
@@ -91,10 +86,7 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
           return null;
         }
 
-        return {
-          ...productPrisma,
-          billingInfo: productPrisma.team.billing,
-        };
+        return productPrisma;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
