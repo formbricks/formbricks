@@ -30,14 +30,14 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  // const apiKey = headers().get("x-api-key");
-  // if (!apiKey) {
-  //   return responses.notAuthenticatedResponse();
-  // }
-  // const apiKeyData = await getApiKeyFromKey(apiKey);
-  // if (!apiKeyData) {
-  //   return responses.notAuthenticatedResponse();
-  // }
+  const apiKey = headers().get("x-api-key");
+  if (!apiKey) {
+    return responses.notAuthenticatedResponse();
+  }
+  const apiKeyData = await getApiKeyFromKey(apiKey);
+  if (!apiKeyData) {
+    return responses.notAuthenticatedResponse();
+  }
   const webhookInput = await request.json();
   const inputValidation = ZWebhookInput.safeParse(webhookInput);
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
   // add webhook to database
   try {
-    const webhook = await createWebhook("clomxrrfp0009z8ttd6sdpn7t", inputValidation.data);
+    const webhook = await createWebhook(apiKeyData.environmentId, inputValidation.data);
     return responses.successResponse(webhook);
   } catch (error) {
     if (error instanceof InvalidInputError) {
