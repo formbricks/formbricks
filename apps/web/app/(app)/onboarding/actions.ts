@@ -9,7 +9,7 @@ import { TProductUpdateInput } from "@formbricks/types/product";
 import { TProfileUpdateInput } from "@formbricks/types/profile";
 import { getServerSession } from "next-auth";
 
-export async function updateProfileAction(updatedProfile: Partial<TProfileUpdateInput>) {
+export async function updateProfileAction(updatedProfile: TProfileUpdateInput) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

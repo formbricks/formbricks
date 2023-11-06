@@ -60,7 +60,7 @@ export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
 export const RESPONSES_PER_PAGE = 10;
-export const OPEN_TEXT_RESPONSES_PER_PAGE = 5;
+export const TEXT_RESPONSES_PER_PAGE = 5;
 
 // Storage constants
 export const UPLOADS_DIR = path.resolve("./uploads");

@@ -67,3 +67,17 @@ export async function disableTwoFactorAuthAction(params: TDisableTwoFactorAuthPa
 
   return await disableTwoFactorAuth(session.user.id, params);
 }
+
+export async function updateAvatarAction(avatarUrl: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  if (!session.user.id) {
+    throw new Error("User not found");
+  }
+
+  return await updateProfile(session.user.id, { imageUrl: avatarUrl });
+}
