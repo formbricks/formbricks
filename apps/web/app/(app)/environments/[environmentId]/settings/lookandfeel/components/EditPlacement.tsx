@@ -21,6 +21,7 @@ const placements = [
 
 interface EditPlacementProps {
   product: TProduct;
+  environmentId: string;
 }
 
 export function EditPlacement({ product }: EditPlacementProps) {

@@ -69,7 +69,7 @@ if (typeof window !== "undefined") {
                 </span>{" "}
                 <Link
                   className="decoration-brand-dark"
-                  href="https://formbricks.com/docs/getting-started/quickstart"
+                  href="https://formbricks.com/docs/getting-started/quickstart-in-app-survey"
                   target="_blank">
                   Check out the docs.
                 </Link>

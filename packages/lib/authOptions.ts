@@ -1,9 +1,9 @@
-import { env } from "@/env.mjs";
+import { env } from "../../apps/web/env.mjs";
 import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "./constants";
 import { verifyToken } from "./jwt";
-import { getProfileByEmail } from "./profile/service";
+import { getProfileByEmail, updateProfile } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -63,6 +63,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           emailVerified: user.emailVerified,
+          imageUrl: user.imageUrl,
         };
       },
     }),
@@ -105,18 +106,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email already verified");
         }
 
-        user = await prisma.user.update({
-          where: {
-            id: user.id,
-          },
-          data: { emailVerified: new Date().toISOString() },
-        });
+        user = await updateProfile(user.id, { emailVerified: new Date() });
 
-        return {
-          id: user.id,
-          email: user.email,
-          emailVerified: user.emailVerified,
-        };
+        return user;
       },
     }),
     GitHubProvider({
@@ -142,27 +134,16 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      const additionalAttributs = {
-        id: existingUser.id,
-        createdAt: existingUser.createdAt,
-        onboardingCompleted: existingUser.onboardingCompleted,
-        name: existingUser.name,
-      };
-
       return {
         ...token,
-        ...additionalAttributs,
+        profile: existingUser || null,
       };
     },
     async session({ session, token }) {
       // @ts-ignore
       session.user.id = token?.id;
       // @ts-ignore
-      session.user.createdAt = token?.createdAt ? new Date(token?.createdAt).toISOString() : undefined;
-      // @ts-ignore
-      session.user.onboardingCompleted = token?.onboardingCompleted;
-      // @ts-ignore
-      session.user.name = token.name || "";
+      session.user = token.profile;
 
       return session;
     },
@@ -206,15 +187,10 @@ export const authOptions: NextAuthOptions = {
           // check if user with this email already exist
           // if not found just update user with new email address
           // if found throw an error (TODO find better solution)
-          const otherUserWithEmail = await prisma.user.findFirst({
-            where: { email: user.email },
-          });
+          const otherUserWithEmail = await getProfileByEmail(user.email);
 
           if (!otherUserWithEmail) {
-            await prisma.user.update({
-              where: { id: existingUserWithAccount.id },
-              data: { email: user.email },
-            });
+            await updateProfile(existingUserWithAccount.id, { email: user.email });
             return true;
           }
           return "/auth/login?error=Looks%20like%20you%20updated%20your%20email%20somewhere%20else.%0AA%20user%20with%20this%20new%20email%20exists%20already.";
@@ -223,9 +199,7 @@ export const authOptions: NextAuthOptions = {
         // There is no existing account for this identity provider / account id
         // check if user account with this email already exists
         // if user already exists throw error and request password login
-        const existingUserWithEmail = await prisma.user.findFirst({
-          where: { email: user.email },
-        });
+        const existingUserWithEmail = await getProfileByEmail(user.email);
 
         if (existingUserWithEmail) {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
