@@ -30,8 +30,19 @@
   align-items: center;
   /* margin-bottom: 2em; */
   width: 180px;
-  border: 2px solid #333;
+  /* border: 2px solid #333; */
   cursor: pointer;
+}
+
+.date-pick-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-icon {
+  height: 16px;
+  width: 16px;
 }
 
 .react-date-picker__inputGroup {
@@ -39,7 +50,7 @@
 }
 
 .react-date-picker__wrapper {
-  display: none
+  display: none;
 }
 
 .react-calendar {
