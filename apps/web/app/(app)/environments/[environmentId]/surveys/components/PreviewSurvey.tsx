@@ -27,6 +27,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
+  language: string;
 }
 
 let surveyNameTemp;
@@ -64,6 +65,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
+  language,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -207,6 +209,7 @@ export default function PreviewSurvey({
                     formbricksSignature={product.formbricksSignature}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    language={language}
                   />
                 </Modal>
               ) : (
@@ -221,6 +224,7 @@ export default function PreviewSurvey({
                         activeQuestionId={activeQuestionId || undefined}
                         formbricksSignature={product.formbricksSignature}
                         onActiveQuestionChange={setActiveQuestionId}
+                        language={language}
                       />
                     </div>
                   </div>
@@ -277,6 +281,7 @@ export default function PreviewSurvey({
                   formbricksSignature={product.formbricksSignature}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
+                  language={language}
                 />
               </Modal>
             ) : (
@@ -290,6 +295,7 @@ export default function PreviewSurvey({
                       formbricksSignature={product.formbricksSignature}
                       onActiveQuestionChange={setActiveQuestionId}
                       isRedirectDisabled={true}
+                      language={language}
                     />
                   </div>
                 </div>

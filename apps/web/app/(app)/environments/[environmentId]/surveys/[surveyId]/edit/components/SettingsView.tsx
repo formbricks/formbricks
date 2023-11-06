@@ -27,7 +27,7 @@ export default function SettingsView({
   responseCount,
 }: SettingsViewProps) {
   return (
-    <div className="mt-12 space-y-3 p-5">
+    <div className="space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
       <WhoToSendCard

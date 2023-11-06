@@ -59,6 +59,7 @@ export default function MultipleChoiceSummary({
         otherValues: [],
       };
     }
+    console.log(resultsDict);
 
     const addOtherChoice = (response, value) => {
       for (const key in resultsDict) {
@@ -127,7 +128,10 @@ export default function MultipleChoiceSummary({
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+        <Headline
+          headline={questionSummary.question.headline.default}
+          required={questionSummary.question.required}
+        />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
@@ -150,7 +154,7 @@ export default function MultipleChoiceSummary({
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
               <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal">
                 <p className="font-semibold text-slate-700">
-                  {results.length - resultsIdx} - {result.label}
+                  {results.length - resultsIdx} - {result.label.default}
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">

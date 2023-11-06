@@ -28,6 +28,7 @@ interface RatingQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
+  language: string;
 }
 
 export default function RatingQuestion({
@@ -39,6 +40,7 @@ export default function RatingQuestion({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  language,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
 
@@ -76,8 +78,12 @@ export default function RatingQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={question.headline[language]}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader subheader={question.subheader[language]} questionId={question.id} />
       <div className="my-4">
         <fieldset>
           <legend className="sr-only">Choices</legend>

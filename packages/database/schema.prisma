@@ -118,6 +118,7 @@ model Response {
   personAttributes Json?
   // singleUseId, used to prevent multiple responses
   singleUseId      String?
+  language         String?
 
   @@unique([surveyId, singleUseId])
 }

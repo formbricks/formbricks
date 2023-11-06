@@ -35,6 +35,7 @@ const responseSelection = {
   meta: true,
   personAttributes: true,
   singleUseId: true,
+  language: true,
   person: {
     select: {
       id: true,
@@ -192,6 +193,7 @@ export const getResponseBySingleUseId = async (
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
+  console.log(responseInput);
   captureTelemetry("response created");
 
   try {
@@ -220,10 +222,10 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         }),
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
         singleUseId: responseInput.singleUseId,
+        language: responseInput.language,
       },
       select: responseSelection,
     });
-
     const response: TResponse = {
       ...responsePrisma,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
@@ -239,7 +241,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     responseNoteCache.revalidate({
       responseId: response.id,
     });
-
+    console.log(responsePrisma);
+    console.log(response);
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

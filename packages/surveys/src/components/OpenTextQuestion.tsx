@@ -16,6 +16,7 @@ interface OpenTextQuestionProps {
   isLastQuestion: boolean;
   brandColor: string;
   autoFocus?: boolean;
+  language: string;
 }
 
 export default function OpenTextQuestion({
@@ -27,6 +28,7 @@ export default function OpenTextQuestion({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  language,
   autoFocus = true,
 }: OpenTextQuestionProps) {
   const handleInputChange = (inputValue: string) => {
@@ -55,8 +57,12 @@ export default function OpenTextQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={question.headline[language]}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader subheader={question.subheader[language]} questionId={question.id} />
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input

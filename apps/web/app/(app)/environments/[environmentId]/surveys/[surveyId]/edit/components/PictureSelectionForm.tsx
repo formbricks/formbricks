@@ -3,11 +3,10 @@ import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-
+import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { createId } from "@paralleldrive/cuid2";
 import { useState } from "react";
 
@@ -18,6 +17,8 @@ interface PictureSelectionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }
 
 export default function PictureSelectionForm({
@@ -26,6 +27,8 @@ export default function PictureSelectionForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  selectedLanguage,
+  setSelectedLanguage,
 }: PictureSelectionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -38,17 +41,28 @@ export default function PictureSelectionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        selectedLanguage={selectedLanguage}
+        setSelectedLanguage={setSelectedLanguage}
       />
       <div className="mt-3">
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
             <div className="mt-2 inline-flex w-full items-center">
-              <Input
+              <LocalizedInput
                 id="subheader"
                 name="subheader"
                 value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+                isInValid={isInValid}
+                onChange={(e) => {
+                  let translatedSubheader = {
+                    ...question.subheader,
+                    [selectedLanguage]: e.target.value,
+                  };
+                  updateQuestion(questionIdx, { subheader: translatedSubheader });
+                }}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
               />
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

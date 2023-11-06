@@ -10,10 +10,10 @@ import {
 
 const validationRules = {
   multipleChoiceMulti: (question: TSurveyMultipleChoiceMultiQuestion) => {
-    return !question.choices.some((element) => element.label.trim() === "");
+    return !question.choices.some((element) => element.label.default.trim() === "");
   },
   multipleChoiceSingle: (question: TSurveyMultipleChoiceSingleQuestion) => {
-    return !question.choices.some((element) => element.label.trim() === "");
+    return !question.choices.some((element) => element.label.default.trim() === "");
   },
   consent: (question: TSurveyConsentQuestion) => {
     return question.label.trim() !== "";
@@ -22,7 +22,7 @@ const validationRules = {
     return question.choices.length >= 2;
   },
   defaultValidation: (question: TSurveyQuestion) => {
-    return question.headline.trim() !== "";
+    return question.headline.default.trim() !== "";
   },
 };
 

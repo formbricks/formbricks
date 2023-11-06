@@ -35,6 +35,7 @@ export default async function Page({ params }) {
 
   return (
     <>
+      {console.log(responses)}
       <ResponsePage
         environment={environment}
         responses={responses}

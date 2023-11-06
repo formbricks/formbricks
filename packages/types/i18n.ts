@@ -6,6 +6,6 @@ export const ZI18nObject = z
   .object({
     _i18n_: z.literal(true),
   })
-  .and(z.record(LanguageCode, z.string()));
+  .and(z.record(LanguageCode, z.string()).optional());
 
-export type I18nString = z.infer<typeof ZI18nObject>;
+export type TI18nString = z.infer<typeof ZI18nObject>;

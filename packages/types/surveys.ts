@@ -195,8 +195,8 @@ export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 const ZSurveyQuestionBase = z.object({
   id: z.string(),
   type: z.string(),
-  headline: ZI18nObject,
-  subheader: ZI18nObject.optional(),
+  headline: z.union([z.string(), ZI18nObject]),
+  subheader: z.union([z.string(), ZI18nObject]).optional(),
   imageUrl: z.string().optional(),
   required: z.boolean(),
   buttonLabel: z.string().optional(),

@@ -52,6 +52,7 @@ const conditionOptions = {
   tags: ["is"],
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
+  languages: ["is"],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -170,6 +171,25 @@ export const generateQuestionAndFilterOptions = (
         filterComboBoxOptions: attributes[a],
         id: a,
       });
+    });
+  }
+  if (Object.keys(survey.questions[0].headline).length > 2) {
+    // If so, add the LANGUAGES filter to the questionOptions array.
+    questionOptions.push({
+      header: OptionsType.LANGUAGES,
+      option: Object.keys(survey.questions[0].headline)
+        .filter((key) => key !== "_i18n_")
+        .map((langCode) => {
+          return { label: langCode, type: OptionsType.LANGUAGES, id: langCode };
+        }),
+    });
+    questionFilterOptions.push({
+      type: "Languages",
+      filterOptions: conditionOptions.languages,
+      // Assuming you have a predefined set of condition options for languages
+      // and filter options applicable for language filters.
+      filterComboBoxOptions: ["test", "test2"],
+      id: "languageFilters",
     });
   }
 

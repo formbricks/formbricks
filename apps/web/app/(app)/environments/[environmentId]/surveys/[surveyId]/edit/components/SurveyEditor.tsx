@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
@@ -13,6 +13,8 @@ import { TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import LanguageSwitch from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LanguageSwitch";
+import { translateSurvey } from "@formbricks/lib/utils/i18n";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -35,6 +37,11 @@ export default function SurveyEditor({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
+  const [i18n, setI18n] = useState(false);
+  const languages = ["English", "German", "Hindi"];
+
+  // Assume a state to track the current language
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("default");
 
   useEffect(() => {
     if (survey) {
@@ -45,6 +52,13 @@ export default function SurveyEditor({
       }
     }
   }, [survey]);
+
+  const translatedSurvey = useMemo(() => {
+    if (localSurvey && typeof localSurvey?.questions[0]?.headline === "string") {
+      return translateSurvey(localSurvey);
+    }
+    return null;
+  }, [i18n, localSurvey, selectedLanguage]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -61,10 +75,11 @@ export default function SurveyEditor({
 
   return (
     <>
+      {console.log(translatedSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
-          localSurvey={localSurvey}
+          localSurvey={translatedSurvey ? translatedSurvey : localSurvey}
           survey={survey}
           environment={environment}
           activeId={activeView}
@@ -76,20 +91,25 @@ export default function SurveyEditor({
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
+            <div>
+              <LanguageSwitch languages={languages} setI18n={setI18n} />
+            </div>
             {activeView === "questions" ? (
               <QuestionsView
-                localSurvey={localSurvey}
+                localSurvey={translatedSurvey ? translatedSurvey : localSurvey}
                 setLocalSurvey={setLocalSurvey}
                 activeQuestionId={activeQuestionId}
                 setActiveQuestionId={setActiveQuestionId}
                 product={product}
                 invalidQuestions={invalidQuestions}
                 setInvalidQuestions={setInvalidQuestions}
+                selectedLanguage={selectedLanguage ? selectedLanguage : "default"}
+                setSelectedLanguage={setSelectedLanguage}
               />
             ) : (
               <SettingsView
                 environment={environment}
-                localSurvey={localSurvey}
+                localSurvey={i18n && translatedSurvey ? translatedSurvey : localSurvey}
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
@@ -99,12 +119,13 @@ export default function SurveyEditor({
           </main>
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
             <PreviewSurvey
-              survey={localSurvey}
+              survey={i18n && translatedSurvey ? translatedSurvey : localSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
               product={product}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              language={selectedLanguage}
             />
           </aside>
         </div>

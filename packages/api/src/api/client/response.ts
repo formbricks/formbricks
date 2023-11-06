@@ -13,6 +13,7 @@ export class ResponseAPI {
   }
 
   async create(responseInput: TResponseInput): Promise<Result<TResponse, NetworkError | Error>> {
+    console.log(responseInput);
     return makeRequest(this.apiHost, "/api/v1/client/responses", "POST", responseInput);
   }
 

@@ -13,6 +13,7 @@ import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { validateQuestion } from "./Validation";
+import { translateQuestion, translateSurvey } from "@formbricks/lib/utils/i18n";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
@@ -22,6 +23,8 @@ interface QuestionsViewProps {
   product: TProduct;
   invalidQuestions: String[] | null;
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }
 
 export default function QuestionsView({
@@ -31,7 +34,9 @@ export default function QuestionsView({
   setLocalSurvey,
   product,
   invalidQuestions,
+  selectedLanguage,
   setInvalidQuestions,
+  setSelectedLanguage,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -89,7 +94,6 @@ export default function QuestionsView({
       delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
       setActiveQuestionId(updatedAttributes.id);
     }
-
     updatedSurvey.questions[questionIdx] = {
       ...updatedSurvey.questions[questionIdx],
       ...updatedAttributes,
@@ -154,8 +158,8 @@ export default function QuestionsView({
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }
-
-    updatedSurvey.questions.push({ ...question, isDraft: true });
+    const translatedSurvey = translateQuestion(question);
+    updatedSurvey.questions.push({ ...translatedSurvey, isDraft: true });
 
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
@@ -183,7 +187,7 @@ export default function QuestionsView({
   };
 
   return (
-    <div className="mt-12 px-5 py-4">
+    <div className="px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
         <EditWelcomeCard
           localSurvey={localSurvey}
@@ -206,6 +210,8 @@ export default function QuestionsView({
                     moveQuestion={moveQuestion}
                     updateQuestion={updateQuestion}
                     duplicateQuestion={duplicateQuestion}
+                    selectedLanguage={selectedLanguage}
+                    setSelectedLanguage={setSelectedLanguage}
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}

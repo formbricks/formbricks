@@ -40,6 +40,7 @@ export default function LinkSurvey({
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
+  const language = searchParams?.get("lang");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(
     new SurveyState(survey.id, singleUseId, responseId, personId)
@@ -135,6 +136,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
+          language={language ? language : "default"}
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
             if (!isPreview) {
@@ -163,6 +165,7 @@ export default function LinkSurvey({
                   ...hiddenFieldsRecord,
                 },
                 finished: responseUpdate.finished,
+                language: language ?? "default",
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

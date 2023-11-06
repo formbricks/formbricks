@@ -279,7 +279,7 @@ export default function SingleResponseCard({
             return (
               <div key={`${question.id}`}>
                 {isValidValue(response.data[question.id]) ? (
-                  <p className="text-sm text-slate-500">{question.headline}</p>
+                  <p className="text-sm text-slate-500">{question.headline.default}</p>
                 ) : (
                   <QuestionSkip
                     skippedQuestions={skipped}

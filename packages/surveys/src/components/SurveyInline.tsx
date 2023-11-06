@@ -12,6 +12,7 @@ export function SurveyInline({
   onClose = () => {},
   prefillResponseData,
   isRedirectDisabled = false,
+  language,
 }: SurveyBaseProps) {
   return (
     <div id="fbjs" className="h-full w-full">
@@ -26,6 +27,7 @@ export function SurveyInline({
         onClose={onClose}
         prefillResponseData={prefillResponseData}
         isRedirectDisabled={isRedirectDisabled}
+        language={language}
       />
     </div>
   );

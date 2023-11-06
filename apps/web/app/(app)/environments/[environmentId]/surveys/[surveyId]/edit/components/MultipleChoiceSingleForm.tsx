@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
+import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -18,6 +19,8 @@ interface OpenQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }
 
 export default function MultipleChoiceSingleForm({
@@ -26,6 +29,8 @@ export default function MultipleChoiceSingleForm({
   updateQuestion,
   isInValid,
   localSurvey,
+  selectedLanguage,
+  setSelectedLanguage,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -170,6 +175,8 @@ export default function MultipleChoiceSingleForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        selectedLanguage={selectedLanguage}
+        setSelectedLanguage={setSelectedLanguage}
       />
 
       <div className="mt-3">
@@ -177,11 +184,20 @@ export default function MultipleChoiceSingleForm({
           <>
             <Label htmlFor="subheader">Description</Label>
             <div className="mt-2 inline-flex w-full items-center">
-              <Input
+              <LocalizedInput
                 id="subheader"
                 name="subheader"
                 value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+                isInValid={isInValid}
+                onChange={(e) => {
+                  let translatedSubheader = {
+                    ...question.subheader,
+                    [selectedLanguage]: e.target.value,
+                  };
+                  updateQuestion(questionIdx, { subheader: translatedSubheader });
+                }}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
               />
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
@@ -207,13 +223,10 @@ export default function MultipleChoiceSingleForm({
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
               <div key={choiceIdx} className="inline-flex w-full items-center">
-                <Input
-                  ref={choiceIdx === question.choices.length - 1 ? lastChoiceRef : null}
-                  id={choice.id}
-                  name={choice.id}
-                  value={choice.label}
-                  className={cn(choice.id === "other" && "border-dashed")}
-                  placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+                <LocalizedInput
+                  id={`choice-${choiceIdx}`}
+                  name={`choice-${choiceIdx}`}
+                  value={choice.label || ""}
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {
@@ -224,10 +237,19 @@ export default function MultipleChoiceSingleForm({
                       setIsInvalidValue(null);
                     }
                   }}
-                  onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
+                  onChange={(e) => {
+                    let translatedChoiceLabel = {
+                      ...question.choices[choiceIdx].label,
+                      [selectedLanguage]: e.target.value,
+                    };
+                    updateChoice(choiceIdx, { label: translatedChoiceLabel });
+                  }}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                   isInvalid={
-                    (isInvalidValue === "" && choice.label.trim() === "") ||
-                    (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim())
+                    (isInvalidValue === "" && choice.label[selectedLanguage].trim() === "") ||
+                    (isInvalidValue !== null &&
+                      choice.label[selectedLanguage].trim() === isInvalidValue.trim())
                   }
                 />
                 {question.choices && question.choices.length > 2 && (

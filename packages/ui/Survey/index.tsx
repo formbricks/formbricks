@@ -18,6 +18,7 @@ interface SurveyProps {
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
+  language: string;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -39,6 +40,7 @@ export const SurveyInline = ({
   autoFocus,
   prefillResponseData,
   isRedirectDisabled,
+  language,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -55,6 +57,7 @@ export const SurveyInline = ({
       autoFocus,
       prefillResponseData,
       isRedirectDisabled,
+      language,
     });
   }, [
     activeQuestionId,
@@ -88,6 +91,7 @@ export const SurveyModal = ({
   onClose = () => {},
   autoFocus,
   isRedirectDisabled,
+  language,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -105,6 +109,7 @@ export const SurveyModal = ({
       onActiveQuestionChange,
       autoFocus,
       isRedirectDisabled,
+      language,
     });
   }, [
     activeQuestionId,

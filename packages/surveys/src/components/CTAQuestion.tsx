@@ -14,6 +14,7 @@ interface CTAQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
+  language: string;
 }
 
 export default function CTAQuestion({
@@ -23,6 +24,7 @@ export default function CTAQuestion({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  language,
 }: CTAQuestionProps) {
   return (
     <div>
@@ -32,7 +34,11 @@ export default function CTAQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
+      <Headline
+        headline={question.headline[language]}
+        questionId={question.id}
+        required={question.required}
+      />
       <HtmlBody htmlString={question.html} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-between">

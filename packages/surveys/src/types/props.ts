@@ -14,6 +14,7 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
+  language: string;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

@@ -2,7 +2,7 @@
 
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
-import { Input } from "@formbricks/ui/Input";
+import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
 import { Label } from "@formbricks/ui/Label";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useState } from "react";
@@ -13,6 +13,8 @@ interface QuestionFormInputProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   isInValid: boolean;
   environmentId: string;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
   ref?: RefObject<HTMLInputElement>;
 }
 
@@ -22,10 +24,11 @@ const QuestionFormInput = ({
   updateQuestion,
   isInValid,
   environmentId,
+  selectedLanguage,
+  setSelectedLanguage,
   ref,
 }: QuestionFormInputProps) => {
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
-
   return (
     <div className="mt-3">
       <Label htmlFor="headline">Question</Label>
@@ -42,14 +45,20 @@ const QuestionFormInput = ({
           />
         )}
         <div className="flex items-center space-x-2">
-          <Input
-            autoFocus
-            ref={ref}
-            id="headline"
-            name="headline"
+          <LocalizedInput
+            id="subheader"
+            name="subheader"
             value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
+            isInvalid={isInValid}
+            onChange={(e) => {
+              let translatedheadline = {
+                ...question.headline,
+                [selectedLanguage]: e.target.value,
+              };
+              updateQuestion(questionIdx, { headline: translatedheadline });
+            }}
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
           />
           <ImagePlusIcon
             aria-label="Toggle image uploader"

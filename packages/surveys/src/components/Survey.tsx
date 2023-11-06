@@ -22,6 +22,7 @@ export function Survey({
   onFinished = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  language,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -159,6 +160,7 @@ export function Survey({
             }
             isLastQuestion={currQues.id === survey.questions[survey.questions.length - 1].id}
             brandColor={brandColor}
+            language={language}
           />
         )
       );

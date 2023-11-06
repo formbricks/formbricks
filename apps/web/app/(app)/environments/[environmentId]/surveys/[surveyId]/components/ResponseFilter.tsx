@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import QuestionsComboBox, { OptionsType, QuestionOption } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyTSurveyQuestionType | "Attributes" | "Tags";
+  type: TSurveyTSurveyQuestionType | "Attributes" | "Tags" | "Languages";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;

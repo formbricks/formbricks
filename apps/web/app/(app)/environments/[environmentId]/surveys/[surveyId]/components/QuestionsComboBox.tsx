@@ -15,6 +15,7 @@ import {
   ListBulletIcon,
   QueueListIcon,
   CheckIcon,
+  LanguageIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 
@@ -22,6 +23,7 @@ export enum OptionsType {
   QUESTIONS = "Questions",
   TAGS = "Tags",
   ATTRIBUTES = "Attributes",
+  LANGUAGES = "Languages",
 }
 
 export type QuestionOption = {
@@ -64,6 +66,9 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
     if (type === OptionsType.ATTRIBUTES) {
       return <HashtagIcon width={18} className="text-white" />;
     }
+    if (type === OptionsType.LANGUAGES) {
+      return <LanguageIcon width={18} className="text-white" />;
+    }
     if (type === OptionsType.TAGS) {
       return <TagIcon width={18} className="text-white" />;
     }
@@ -74,6 +79,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
       return "bg-indigo-500";
     } else if (type === OptionsType.QUESTIONS) {
       return "bg-brand-dark";
+    } else if (type === OptionsType.LANGUAGES) {
+      return "bg-black";
     } else {
       return "bg-amber-500";
     }
@@ -81,7 +88,9 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-base text-slate-600">{label}</p>
+      <p className="ml-3 truncate text-base text-slate-600">
+        {typeof label === "string" ? label : label!.default}
+      </p>
     </div>
   );
 };
@@ -123,6 +132,7 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
+            {console.log(options)}
             <CommandEmpty>No result found.</CommandEmpty>
             {options?.map((data) => (
               <>

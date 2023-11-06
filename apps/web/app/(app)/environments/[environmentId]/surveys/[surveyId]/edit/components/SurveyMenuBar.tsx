@@ -147,11 +147,11 @@ export default function SurveyMenuBar({
         question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
-          question.choices.some((element) => element.label.trim() === "") ||
+          question.choices.some((element) => element.label.default.trim() === "") ||
           question.choices.some((element, index) =>
             question.choices
               .slice(index + 1)
-              .some((nextElement) => nextElement.label.trim() === element.label.trim())
+              .some((nextElement) => nextElement.label.default.trim() === element.label.default.trim())
           );
 
         if (haveSameChoices) {

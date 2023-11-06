@@ -44,6 +44,8 @@ interface QuestionCardProps {
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
   isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }
 
 export function BackButtonInput({
@@ -83,10 +85,13 @@ export default function QuestionCard({
   setActiveQuestionId,
   lastQuestion,
   isInValid,
+  selectedLanguage,
+  setSelectedLanguage,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+  const hasI8n = question.headline._i18n_;
 
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
@@ -143,7 +148,9 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {question.headline || getTSurveyQuestionTypeName(question.type)}
+                      {hasI8n
+                        ? question.headline[selectedLanguage]
+                        : question.headline.default || getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">
@@ -173,6 +180,8 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
@@ -182,6 +191,8 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
@@ -191,6 +202,8 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
                 <NPSQuestionForm
@@ -200,6 +213,8 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
                 <CTAQuestionForm
@@ -209,6 +224,8 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
                 <RatingQuestionForm
@@ -218,6 +235,8 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
@@ -226,6 +245,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
@@ -235,6 +256,8 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               ) : null}
               <div className="mt-4">

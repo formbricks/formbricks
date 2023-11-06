@@ -7,6 +7,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
@@ -15,6 +16,8 @@ interface NPSQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }
 
 export default function NPSQuestionForm({
@@ -24,6 +27,8 @@ export default function NPSQuestionForm({
   lastQuestion,
   isInValid,
   localSurvey,
+  selectedLanguage,
+  setSelectedLanguage,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -36,6 +41,8 @@ export default function NPSQuestionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        selectedLanguage={selectedLanguage}
+        setSelectedLanguage={setSelectedLanguage}
       />
 
       <div className="mt-3">
@@ -43,11 +50,20 @@ export default function NPSQuestionForm({
           <>
             <Label htmlFor="subheader">Description</Label>
             <div className="mt-2 inline-flex w-full items-center">
-              <Input
+              <LocalizedInput
                 id="subheader"
                 name="subheader"
                 value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+                isInValid={isInValid}
+                onChange={(e) => {
+                  let translatedSubheader = {
+                    ...question.subheader,
+                    [selectedLanguage]: e.target.value,
+                  };
+                  updateQuestion(questionIdx, { subheader: translatedSubheader });
+                }}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
               />
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

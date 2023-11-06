@@ -19,6 +19,7 @@ interface QuestionConditionalProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   brandColor: string;
+  language: string;
   autoFocus?: boolean;
 }
 
@@ -31,6 +32,7 @@ export default function QuestionConditional({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  language,
   autoFocus = true,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
@@ -44,6 +46,7 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
       autoFocus={autoFocus}
+      language={language}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -55,6 +58,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      language={language}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -66,6 +70,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      language={language}
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
@@ -77,6 +82,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      language={language}
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
@@ -88,6 +94,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      language={language}
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
@@ -99,6 +106,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      language={language}
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
@@ -110,6 +118,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      language={language}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
@@ -121,6 +130,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       brandColor={brandColor}
+      language={language}
     />
   ) : null;
 }
