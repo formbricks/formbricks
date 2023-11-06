@@ -85,6 +85,9 @@ services:
       - 3000:3000
     volumes:
       - uploads:/apps/web/uploads/
+      - ../../.github/workflows/cron-closeOnDate.yml
+      - ../../.github/workflows/cron-reportUsageToStripe.yml
+      - ../../.github/workflows/cron-weeklySummary.yml
     <<: *environment
 
 volumes:

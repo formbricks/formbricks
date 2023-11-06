@@ -47,9 +47,20 @@ EXPOSE 3000
 
 ENV HOSTNAME "0.0.0.0"
 
-CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
-        pnpm dlx prisma migrate deploy && node apps/web/server.js; \
-    else \
-        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
-        exit 1; \
-    fi
+# Install cron
+RUN apk --no-cache add dcron
+
+# Copy your cron files into the container
+COPY cron-closeOnDate.yml /cron-closeOnDate.yml
+COPY cron-reportUsageToStripe.yml /cron-reportUsageToStripe.yml
+COPY cron-weeklySummary.yml /cron-weeklySummary.yml
+
+# Copy your entrypoint.sh script into the container
+COPY entrypoint.sh /entrypoint.sh
+
+# Make the script executable
+RUN chmod +x /entrypoint.sh
+
+# Combine all cron job schedules and your entrypoint script in a single CMD
+CMD ["/entrypoint.sh"]
+
