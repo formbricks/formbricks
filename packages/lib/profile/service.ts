@@ -23,6 +23,7 @@ const responseSelection = {
   id: true,
   name: true,
   email: true,
+  emailVerified: true,
   imageUrl: true,
   createdAt: true,
   updatedAt: true,
@@ -103,10 +104,7 @@ const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");
 
 // function to update a user's profile
-export const updateProfile = async (
-  personId: string,
-  data: Partial<TProfileUpdateInput>
-): Promise<TProfile> => {
+export const updateProfile = async (personId: string, data: TProfileUpdateInput): Promise<TProfile> => {
   validateInputs([personId, ZId], [data, ZProfileUpdateInput.partial()]);
 
   try {
