@@ -1,4 +1,7 @@
 <div id="top"></div>
+
+[<img src="ph.png">](https://www.producthunt.com/posts/formbricks)
+
 <p align="center">
 <a href="https://formbricks.com">
     <img width="120" alt="Open Source Experience Management Solution Qualtrics Alternative Logo" src="https://github.com/formbricks/formbricks/assets/72809645/0086704f-bee7-4d38-9cc8-fa42ee59e004">
@@ -6,7 +9,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Survey & Experience Management solution for fast-growing companies
+    The Open Source Survey Toolbox
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
@@ -34,14 +37,6 @@
   <a href="https://trendshift.io/repositories/2570" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2570" alt="Trendshift Badge for formbricks/formbricks" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </p>
 
-<img width="1527" alt="formtribe hackathon" src="https://github.com/formbricks/formbricks/assets/72809645/addc3a5b-421c-4c8d-8be2-eedf087100ed">
-
-## 🔥 The FormTribe Hackathon is on!
-
-To celebrate Hacktoberfest, we've launched our FormTribe hackathon. Write code or perform non-code side quests to collect points and increase your chances of winning the MacBook Air M2!
-
-**Join the lottery with a [single tweet!](https://formtribe.com). All info on [formtribe.com](https://formtribe.com)**
-
 ## ✨ About Formbricks
 
 <img width="1527" alt="formbricks-sneak" src="https://github-production-user-asset-6210df.s3.amazonaws.com/675065/249441967-ccb89ea3-82b4-4bf2-8d2c-528721ec313b.png">
@@ -52,7 +47,21 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 
 ## 💪 Mission: Make customer-centric decisions based on data.
 
-Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
+Formbricks is a powerful tool for creating in-product micro-surveys - and leverage a significantly higher conversion rate. It allows you to gather valuable insights from your users, enabling you to make data-driven decisions that enhance your product's user experience. With Formbricks, you can create surveys with our no-code editor, choose from a variety of templates, target specific user groups, and much more.
+
+### Table of Contents
+
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Cloud Version](#cloud-version)
+  - [Self-hosted Version](#self-hosted-version)
+  - [Development](#development)
+- [Contribution](#contribution)
+- [Contact](#contact-us)
+- [License](#license)
+- [Security](#security)
+
+<a id="features"></a>
 
 ### Features
 
@@ -74,13 +83,19 @@ Formbricks helps you apply best practices from data-driven work and experience m
 - 🔒 [Auth.js](https://authjs.dev/)
 - 🧘‍♂️ [Zod](https://zod.dev/)
 
+<a id="getting-started"></a>
+
 ## 🚀 Getting started
 
 We've got several options depending on your need to help you quickly get started with Formbricks.
 
+<a id="cloud-version"></a>
+
 ### ☁️ Cloud Version
 
 Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com).
+
+<a id="self-hosted-version"></a>
 
 ### 🐳 Self-hosted version
 
@@ -101,6 +116,8 @@ To get started with self-hosting with Docker, take a look at our [self-hosting d
 You can deploy Formbricks on [Railway](https://railway.app) using the button below.
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
+
+<a id="development"></a>
 
 ### 👨‍💻 Development
 
@@ -124,6 +141,8 @@ To get started locally, we've got a [guide to help you](https://formbricks.com/d
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
 
+<a id="contribution"></a>
+
 ## ✍️ Contribution
 
 We are very happy if you are interested in contributing to Formbricks 🤗
@@ -142,15 +161,21 @@ Please check out [our contribution guide](https://formbricks.com/docs/contributi
   <img src="https://contrib.rocks/image?repo=formbricks/formbricks" />
 </a>
 
+<a id="contact-us"></a>
+
 ## 📆 Contact us
 
 Let's have a chat about your survey needs and get you started.
 
 <a href="https://cal.com/johannes/onboarding?utm_source=banner&utm_campaign=oss"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
+<a id="license"></a>
+
 ## ⚖️ License
 
 Distributed under the AGPLv3 License. See [`LICENSE`](./LICENSE) for more information.
+
+<a id="security"></a>
 
 ## 🔒 Security
 

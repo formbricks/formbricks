@@ -5,6 +5,9 @@ import { getSurvey } from "./service";
 import { surveyCache } from "./cache";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
+import { getAccessFlags } from "../../lib/membership/utils";
+import { getTeamByEnvironmentId } from "../../lib/team/service";
 
 export const canUserAccessSurvey = async (userId: string, surveyId: string): Promise<boolean> =>
   await unstable_cache(
@@ -24,3 +27,31 @@ export const canUserAccessSurvey = async (userId: string, surveyId: string): Pro
     [`canUserAccessSurvey-${userId}-${surveyId}`],
     { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [surveyCache.tag.byId(surveyId)] }
   )();
+
+export const verifyUserRoleAccess = async (
+  environmentId: string,
+  userId: string
+): Promise<{
+  hasCreateOrUpdateAccess: boolean;
+  hasDeleteAccess: boolean;
+}> => {
+  const accessObject = {
+    hasCreateOrUpdateAccess: true,
+    hasDeleteAccess: true,
+  };
+
+  const team = await getTeamByEnvironmentId(environmentId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+
+  if (isViewer) {
+    accessObject.hasCreateOrUpdateAccess = false;
+    accessObject.hasDeleteAccess = false;
+  }
+
+  return accessObject;
+};

@@ -174,6 +174,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://twenty.com",
         },
         {
+          name: "Unkey",
+          description:
+            "An API authentication and authorization platform for scaling user facing APIs. Create, verify, and manage low latency API keys in seconds.",
+          href: "https://unkey.dev",
+        },
+        {
           name: "Webiny",
           description:
             "Open-source enterprise-grade serverless CMS. Own your data. Scale effortlessly. Customize everything.",

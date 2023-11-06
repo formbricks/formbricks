@@ -24,7 +24,7 @@ jobs:
 
   build:
     name: Build Formbricks-web
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/build-web.yml
     secrets: inherit
 
   required:

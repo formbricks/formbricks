@@ -14,6 +14,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TTag } from "@formbricks/types/tags";
 import { TProfile } from "@formbricks/types/profile";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -25,6 +26,7 @@ interface ResponsePageProps {
   profile: TProfile;
   environmentTags: TTag[];
   responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const ResponsePage = ({
@@ -37,6 +39,7 @@ const ResponsePage = ({
   profile,
   environmentTags,
   responsesPerPage,
+  membershipRole,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -61,6 +64,7 @@ const ResponsePage = ({
         webAppUrl={webAppUrl}
         product={product}
         profile={profile}
+        membershipRole={membershipRole}
       />
       <CustomFilter
         environmentTags={environmentTags}
