@@ -66,7 +66,7 @@ export default function OpenTextQuestion({
             id={question.id}
             placeholder={question.placeholder}
             required={question.required}
-            value={value as string}
+            value={value ? (value as string) : ""}
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
