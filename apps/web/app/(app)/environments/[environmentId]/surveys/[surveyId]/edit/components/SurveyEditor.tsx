@@ -15,6 +15,7 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import LanguageSwitch from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LanguageSwitch";
 import { translateSurvey } from "@formbricks/lib/utils/i18n";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -23,6 +24,7 @@ interface SurveyEditorProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   responseCount: number;
+  membershipRole?: TMembershipRole;
 }
 
 export default function SurveyEditor({
@@ -32,6 +34,7 @@ export default function SurveyEditor({
   actionClasses,
   attributeClasses,
   responseCount,
+  membershipRole,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -114,6 +117,7 @@ export default function SurveyEditor({
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
                 responseCount={responseCount}
+                membershipRole={membershipRole}
               />
             )}
           </main>

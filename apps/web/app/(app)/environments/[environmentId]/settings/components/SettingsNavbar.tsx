@@ -1,6 +1,6 @@
 "use client";
 
-import { truncate } from "@/app/lib/utils";
+import { truncate } from "@formbricks/lib/strings";
 import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
@@ -24,20 +24,26 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 export default function SettingsNavbar({
   environmentId,
   isFormbricksCloud,
   team,
   product,
+  membershipRole,
 }: {
   environmentId: string;
   isFormbricksCloud: boolean;
   team: TTeam;
   product: TProduct;
+  membershipRole?: TMembershipRole;
 }) {
   const pathname = usePathname();
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
+  const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
+  const isPricingDisabled = !isOwner && !isAdmin;
 
   interface NavigationLink {
     name: string;
@@ -51,6 +57,7 @@ export default function SettingsNavbar({
   interface NavigationSection {
     title: string;
     links: NavigationLink[];
+    hidden: boolean;
   }
 
   const navigation: NavigationSection[] = useMemo(
@@ -73,6 +80,7 @@ export default function SettingsNavbar({
             hidden: false,
           },
         ],
+        hidden: false,
       },
       {
         title: "Product",
@@ -89,7 +97,7 @@ export default function SettingsNavbar({
             href: `/environments/${environmentId}/settings/lookandfeel`,
             icon: PaintBrushIcon,
             current: pathname?.includes("/lookandfeel"),
-            hidden: false,
+            hidden: isViewer,
           },
           {
             name: "Multipe Languages",
@@ -103,16 +111,17 @@ export default function SettingsNavbar({
             href: `/environments/${environmentId}/settings/api-keys`,
             icon: KeyIcon,
             current: pathname?.includes("/api-keys"),
-            hidden: false,
+            hidden: isViewer,
           },
           {
             name: "Tags",
             href: `/environments/${environmentId}/settings/tags`,
             icon: HashtagIcon,
             current: pathname?.includes("/tags"),
-            hidden: false,
+            hidden: isViewer,
           },
         ],
+        hidden: isViewer,
       },
       {
         title: "Team",
@@ -128,10 +137,11 @@ export default function SettingsNavbar({
             name: "Billing & Plan",
             href: `/environments/${environmentId}/settings/billing`,
             icon: CreditCardIcon,
-            hidden: !isFormbricksCloud,
+            hidden: !isFormbricksCloud || isPricingDisabled,
             current: pathname?.includes("/billing"),
           },
         ],
+        hidden: false,
       },
       {
         title: "Setup",
@@ -158,6 +168,7 @@ export default function SettingsNavbar({
             hidden: false,
           },
         ],
+        hidden: false,
       },
       {
         title: "Compliance",
@@ -191,6 +202,7 @@ export default function SettingsNavbar({
             hidden: false,
           },
         ],
+        hidden: false,
       },
     ],
     [environmentId, isFormbricksCloud, pathname]
@@ -202,39 +214,44 @@ export default function SettingsNavbar({
     <>
       <div className="fixed hidden h-full overflow-auto bg-white py-2 pl-4 pr-10 md:block">
         <nav className="flex-1 space-y-1 bg-white px-2">
-          {navigation.map((item) => (
-            <div key={item.title}>
-              <p className="mt-6 pl-3 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                {item.title}{" "}
-                {item.title === "Product" && product?.name && (
-                  <span className="font-normal capitalize">({truncate(product?.name, 10)})</span>
-                )}
-                {item.title === "Team" && team?.name && (
-                  <span className="font-normal capitalize">({truncate(team?.name, 14)})</span>
-                )}
-              </p>
-              <div className="ml-2 mt-1 space-y-1">
-                {item.links
-                  .filter((l) => !l.hidden)
-                  .map((link) => (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      target={link.target}
-                      className={clsx(
-                        link.current ? "bg-slate-100 text-slate-900" : "text-slate-900 hover:bg-slate-50 ",
-                        "group flex items-center whitespace-nowrap rounded-md px-1 py-1 pl-2 text-sm font-medium "
-                      )}>
-                      <link.icon
-                        className="mr-3 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-500"
-                        aria-hidden="true"
-                      />
-                      {link.name}
-                    </Link>
-                  ))}
-              </div>
-            </div>
-          ))}
+          {navigation.map(
+            (item) =>
+              !item.hidden && (
+                <div key={item.title}>
+                  <p className="mt-6 pl-3 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    {item.title}{" "}
+                    {item.title === "Product" && product?.name && (
+                      <span className="font-normal capitalize">({truncate(product?.name, 10)})</span>
+                    )}
+                    {item.title === "Team" && team?.name && (
+                      <span className="font-normal capitalize">({truncate(team?.name, 14)})</span>
+                    )}
+                  </p>
+                  <div className="ml-2 mt-1 space-y-1">
+                    {item.links
+                      .filter((l) => !l.hidden)
+                      .map((link) => (
+                        <Link
+                          key={link.name}
+                          href={link.href}
+                          target={link.target}
+                          className={clsx(
+                            link.current
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-900 hover:bg-slate-50 ",
+                            "group flex items-center whitespace-nowrap rounded-md px-1 py-1 pl-2 text-sm font-medium "
+                          )}>
+                          <link.icon
+                            className="mr-3 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-500"
+                            aria-hidden="true"
+                          />
+                          {link.name}
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              )
+          )}
         </nav>
       </div>
 

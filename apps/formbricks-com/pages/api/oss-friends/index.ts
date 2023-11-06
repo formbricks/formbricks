@@ -144,7 +144,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
           href: "https://www.sniffnet.net",
         },
-         {
+        {
           name: "Spark.NET",
           description:
             "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
@@ -172,6 +172,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "A modern CRM offering the flexibility of open-source, advanced features and sleek design.",
           href: "https://twenty.com",
+        },
+        {
+          name: "Unkey",
+          description:
+            "An API authentication and authorization platform for scaling user facing APIs. Create, verify, and manage low latency API keys in seconds.",
+          href: "https://unkey.dev",
         },
         {
           name: "Webiny",
