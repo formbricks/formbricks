@@ -20,6 +20,7 @@ type TeamActionsProps = {
   isLeaveTeamDisabled: boolean;
   team: TTeam;
   isInviteDisabled: boolean;
+  isEnterpriseEdition: boolean;
 };
 
 export default function TeamActions({
@@ -28,6 +29,7 @@ export default function TeamActions({
   team,
   isLeaveTeamDisabled,
   isInviteDisabled,
+  isEnterpriseEdition,
 }: TeamActionsProps) {
   const router = useRouter();
   const [isLeaveTeamModalOpen, setLeaveTeamModalOpen] = useState(false);
@@ -91,6 +93,7 @@ export default function TeamActions({
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}
         onSubmit={handleAddMember}
+        isEnterpriseEdition={isEnterpriseEdition}
       />
 
       <CustomDialog
