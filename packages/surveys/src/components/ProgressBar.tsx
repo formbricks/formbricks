@@ -58,7 +58,7 @@ export default function ProgressBar({ survey, questionId, brandColor }: Progress
         updatedProgress = progress + PROGRESS_INCREMENT;
       }
 
-      setProgress(calculateProgress(questionId, survey, progress));
+      setPrevQuestionIdx(currentQustionIdx);
       return updatedProgress;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
