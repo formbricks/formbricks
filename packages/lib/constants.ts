@@ -1,5 +1,7 @@
 import "server-only";
 import path from "path";
+import { env } from "@/env.mjs";
+import { unstable_cache } from "next/cache";
 
 export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
@@ -96,3 +98,18 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 10 * 60 * 1000, // 60 minutes
   allowedPerInterval: 50,
 };
+
+// Enterprise License constant
+export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const getIsEnterpriseEdition = () =>
+  unstable_cache(
+    async () => {
+      if (ENTERPRISE_LICENSE_KEY) {
+        return ENTERPRISE_LICENSE_KEY?.length > 0;
+      }
+      return false;
+    },
+    ["isEE"],
+    { revalidate: 60 * 60 * 24 }
+  )();
