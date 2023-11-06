@@ -50,13 +50,18 @@ export default function PricingTableComponent({
   const upgradePlan = async (priceLookupKeys: StripePriceLookupKeys[]) => {
     try {
       setUpgradingPlan(true);
-      const paymentUrl = await upgradePlanAction(team.id, environmentId, priceLookupKeys);
+      const { status, newPlan, url } = await upgradePlanAction(team.id, environmentId, priceLookupKeys);
       setUpgradingPlan(false);
-      if (!paymentUrl || paymentUrl === "") {
+      if (status != 200) {
+        throw new Error("Something went wrong");
+      }
+      if (!newPlan) {
         toast.success("Plan upgraded successfully");
         router.refresh();
+      } else if (newPlan && url) {
+        router.push(url);
       } else {
-        router.push(paymentUrl);
+        throw new Error("Something went wrong");
       }
     } catch (err) {
       toast.error("Unable to upgrade plan");
