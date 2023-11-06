@@ -25,6 +25,8 @@ import { TProduct } from "@formbricks/types/product";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { TProfile } from "@formbricks/types/profile";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -33,6 +35,7 @@ interface SummaryHeaderProps {
   webAppUrl: string;
   product: TProduct;
   profile: TProfile;
+  membershipRole?: TMembershipRole;
 }
 const SummaryHeader = ({
   surveyId,
@@ -41,13 +44,14 @@ const SummaryHeader = ({
   webAppUrl,
   product,
   profile,
+  membershipRole,
 }: SummaryHeaderProps) => {
   const router = useRouter();
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
-
+  const { isViewer } = getAccessFlags(membershipRole);
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>
@@ -58,16 +62,20 @@ const SummaryHeader = ({
         {survey.type === "link" && (
           <LinkSurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} profile={profile} />
         )}
-        {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
+        {!isViewer &&
+        (environment?.widgetSetupCompleted || survey.type === "link") &&
+        survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
-        <Button
-          variant="darkCTA"
-          className="h-full w-full px-3 lg:px-6"
-          href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
-          Edit
-          <PencilSquareIcon className="ml-1 h-4" />
-        </Button>
+        {!isViewer && (
+          <Button
+            variant="darkCTA"
+            className="h-full w-full px-3 lg:px-6"
+            href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
+            Edit
+            <PencilSquareIcon className="ml-1 h-4" />
+          </Button>
+        )}
       </div>
       <div className="block sm:hidden">
         <DropdownMenu>

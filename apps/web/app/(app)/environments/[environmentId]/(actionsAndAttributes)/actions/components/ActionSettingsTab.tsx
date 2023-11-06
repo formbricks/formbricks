@@ -18,14 +18,22 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "../lib/testURLmatch";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 interface ActionSettingsTabProps {
   environmentId: string;
   actionClass: any;
   setOpen: (v: boolean) => void;
+  membershipRole?: TMembershipRole;
 }
 
-export default function ActionSettingsTab({ environmentId, actionClass, setOpen }: ActionSettingsTabProps) {
+export default function ActionSettingsTab({
+  environmentId,
+  actionClass,
+  setOpen,
+  membershipRole,
+}: ActionSettingsTabProps) {
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [testUrl, setTestUrl] = useState("");
@@ -35,6 +43,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
   const [isInnerHtml, setIsInnerHtml] = useState(actionClass.noCodeConfig?.innerHtml ? true : false);
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   const { register, handleSubmit, control, watch } = useForm({
     defaultValues: {
@@ -128,16 +137,18 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
               })}
             />
           </div>
-          <div className="col-span-1">
-            <Label>Description</Label>
-            <Input
-              placeholder="User clicked Download Button "
-              {...register("description", {
-                value: actionClass.description,
-                disabled: actionClass.type === "automatic" ? true : false,
-              })}
-            />
-          </div>
+          {!isViewer && (
+            <div className="col-span-1">
+              <Label>Description</Label>
+              <Input
+                placeholder="User clicked Download Button "
+                {...register("description", {
+                  value: actionClass.description,
+                  disabled: actionClass.type === "automatic" ? true : false,
+                })}
+              />
+            </div>
+          )}
         </div>
         {actionClass.type === "code" ? (
           <p className="text-sm text-slate-600">
@@ -177,7 +188,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
         ) : null}
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
-            {actionClass.type !== "automatic" && (
+            {!isViewer && actionClass.type !== "automatic" && (
               <Button
                 type="button"
                 variant="warn"

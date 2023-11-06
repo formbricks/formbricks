@@ -1,3 +1,5 @@
+"use client";
+
 import CustomDialog from "@formbricks/ui/CustomDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -19,7 +21,7 @@ export default function TransferOwnershipModal({
 }: TransferOwnershipModalProps) {
   const [inputValue, setInputValue] = useState("");
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
