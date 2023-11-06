@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { getServerSession } from "next-auth";
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { getServerSession } from "next-auth";
 
