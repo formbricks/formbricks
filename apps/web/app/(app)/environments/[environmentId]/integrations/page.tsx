@@ -7,21 +7,21 @@ import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import { Card } from "@formbricks/ui/Card";
 import Image from "next/image";
-import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
+import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
 
-  const [environment, integrations, userWebhooks, zapierWebhooks, makeWebhooks, n8nwebhooks] =
+  const [environment, integrations, userWebhookCount, zapierWebhookCount, makeWebhookCount, n8nwebhookCount] =
     await Promise.all([
       getEnvironment(environmentId),
       getIntegrations(environmentId),
-      getCountOfWebhooksBasedOnSource(environmentId, "user"),
-      getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
-      getCountOfWebhooksBasedOnSource(environmentId, "make"),
-      getCountOfWebhooksBasedOnSource(environmentId, "n8n"),
+      getWebhookCountBySource(environmentId, "user"),
+      getWebhookCountBySource(environmentId, "zapier"),
+      getWebhookCountBySource(environmentId, "make"),
+      getWebhookCountBySource(environmentId, "n8n"),
     ]);
 
   const containsGoogleSheetIntegration = integrations.some(
@@ -51,9 +51,13 @@ export default async function IntegrationsPage({ params }) {
       label: "Zapier",
       description: "Integrate Formbricks with 5000+ apps via Zapier",
       icon: <Image src={ZapierLogo} alt="Zapier Logo" />,
-      connected: zapierWebhooks > 0,
+      connected: zapierWebhookCount > 0,
       statusText:
-        zapierWebhooks === 1 ? "1 zap" : zapierWebhooks === 0 ? "Not Connected" : `${zapierWebhooks} zaps`,
+        zapierWebhookCount === 1
+          ? "1 zap"
+          : zapierWebhookCount === 0
+          ? "Not Connected"
+          : `${zapierWebhookCount} zaps`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
@@ -65,9 +69,13 @@ export default async function IntegrationsPage({ params }) {
       label: "Webhooks",
       description: "Trigger Webhooks based on actions in your surveys",
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
-      connected: userWebhooks > 0,
+      connected: userWebhookCount > 0,
       statusText:
-        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} webhooks`,
+        userWebhookCount === 1
+          ? "1 webhook"
+          : userWebhookCount === 0
+          ? "Not Connected"
+          : `${userWebhookCount} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
@@ -105,13 +113,13 @@ export default async function IntegrationsPage({ params }) {
       label: "n8n",
       description: "Integrate Formbricks with 350+ apps via n8n",
       icon: <Image src={n8nLogo} alt="n8n Logo" />,
-      connected: n8nwebhooks > 0,
+      connected: n8nwebhookCount > 0,
       statusText:
-        n8nwebhooks === 1
+        n8nwebhookCount === 1
           ? "1 integration"
-          : n8nwebhooks === 0
+          : n8nwebhookCount === 0
           ? "Not Connected"
-          : `${n8nwebhooks} integrations`,
+          : `${n8nwebhookCount} integrations`,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -123,13 +131,13 @@ export default async function IntegrationsPage({ params }) {
       label: "Make.com",
       description: "Integrate Formbricks with 1000+ apps via Make",
       icon: <Image src={MakeLogo} alt="Make Logo" />,
-      connected: makeWebhooks > 0,
+      connected: makeWebhookCount > 0,
       statusText:
-        makeWebhooks === 1
+        makeWebhookCount === 1
           ? "1 integration"
-          : makeWebhooks === 0
+          : makeWebhookCount === 0
           ? "Not Connected"
-          : `${makeWebhooks} integration`,
+          : `${makeWebhookCount} integration`,
     },
   ];
 

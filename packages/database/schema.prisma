@@ -31,7 +31,7 @@ enum PipelineTriggers {
   responseFinished
 }
 
-enum WehbhookSource {
+enum WebhookSource {
   user
   zapier
   make
@@ -44,7 +44,7 @@ model Webhook {
   createdAt     DateTime           @default(now()) @map(name: "created_at")
   updatedAt     DateTime           @updatedAt @map(name: "updated_at")
   url           String
-  source        WehbhookSource     @default(user)
+  source        WebhookSource      @default(user)
   environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   triggers      PipelineTriggers[]
