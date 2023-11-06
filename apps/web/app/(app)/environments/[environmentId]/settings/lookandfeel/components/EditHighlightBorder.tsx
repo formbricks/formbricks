@@ -13,6 +13,7 @@ import { updateProductAction } from "../actions";
 interface EditHighlightBorderProps {
   product: TProduct;
   defaultBrandColor: string;
+  environmentId: string;
 }
 
 export const EditHighlightBorder = ({ product, defaultBrandColor }: EditHighlightBorderProps) => {

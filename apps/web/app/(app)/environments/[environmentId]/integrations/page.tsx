@@ -10,19 +10,46 @@ import Image from "next/image";
 import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getServerSession } from "next-auth";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
 
-  const [environment, integrations, userWebhookCount, zapierWebhookCount, makeWebhookCount, n8nwebhookCount] =
-    await Promise.all([
-      getEnvironment(environmentId),
-      getIntegrations(environmentId),
-      getWebhookCountBySource(environmentId, "user"),
-      getWebhookCountBySource(environmentId, "zapier"),
-      getWebhookCountBySource(environmentId, "make"),
-      getWebhookCountBySource(environmentId, "n8n"),
-    ]);
+  const [
+    environment,
+    integrations,
+    team,
+    session,
+    userWebhookCount,
+    zapierWebhookCount,
+    makeWebhookCount,
+    n8nwebhookCount,
+  ] = await Promise.all([
+    getEnvironment(environmentId),
+    getIntegrations(environmentId),
+    getTeamByEnvironmentId(params.environmentId),
+    getServerSession(authOptions),
+    getWebhookCountBySource(environmentId, "user"),
+    getWebhookCountBySource(environmentId, "zapier"),
+    getWebhookCountBySource(environmentId, "make"),
+    getWebhookCountBySource(environmentId, "n8n"),
+  ]);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   const containsGoogleSheetIntegration = integrations.some(
     (integration) => integration.type === "googleSheets"
@@ -140,6 +167,8 @@ export default async function IntegrationsPage({ params }) {
           : `${makeWebhookCount} integration`,
     },
   ];
+
+  if (isViewer) return <ErrorComponent />;
 
   return (
     <div>
