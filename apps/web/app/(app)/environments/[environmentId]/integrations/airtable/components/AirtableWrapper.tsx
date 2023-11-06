@@ -1,6 +1,6 @@
 "use client";
 import Connect from "./Connect";
-import Home from "../Home";
+import Home from "./Home";
 import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
