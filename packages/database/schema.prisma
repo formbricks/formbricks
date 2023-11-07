@@ -304,8 +304,6 @@ model Event {
   /// @zod.custom(imports.ZEventProperties)
   /// [EventProperties]
   properties   Json        @default("{}")
-
-  @@index([eventClassId])
 }
 
 enum EventType {
