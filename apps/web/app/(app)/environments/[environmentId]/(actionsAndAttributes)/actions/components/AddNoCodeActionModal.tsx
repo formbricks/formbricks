@@ -20,6 +20,7 @@ interface AddNoCodeActionModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   setActionClassArray?;
+  isViewer: boolean;
 }
 
 function isValidCssSelector(selector?: string) {
@@ -40,6 +41,7 @@ export default function AddNoCodeActionModal({
   open,
   setOpen,
   setActionClassArray,
+  isViewer,
 }: AddNoCodeActionModalProps) {
   const { register, control, handleSubmit, watch, reset } = useForm();
   const [isPageUrl, setIsPageUrl] = useState(false);
@@ -80,6 +82,9 @@ export default function AddNoCodeActionModal({
   const submitEventClass = async (data: Partial<TActionClassInput>): Promise<void> => {
     const { noCodeConfig } = data;
     try {
+      if (isViewer) {
+        throw new Error("You are not authorised to perform this action.");
+      }
       setIsCreatingAction(true);
       if (data.name === "") throw new Error("Please give your action a name");
       if (!isPageUrl && !isCssSelector && !isInnerHtml)

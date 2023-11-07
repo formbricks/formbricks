@@ -19,7 +19,7 @@ import {
 import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
 import UrlShortenerModal from "./UrlShortenerModal";
 import { formbricksLogout } from "@/app/lib/formbricks";
-import { capitalizeFirstLetter, truncate } from "@/app/lib/utils";
+import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -53,6 +53,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -63,6 +65,7 @@ interface NavigationProps {
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
   webAppUrl: string;
+  membershipRole?: TMembershipRole;
 }
 
 export default function Navigation({
@@ -74,6 +77,7 @@ export default function Navigation({
   environments,
   isFormbricksCloud,
   webAppUrl,
+  membershipRole,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -85,6 +89,8 @@ export default function Navigation({
   const [showLinkShortenerModal, setShowLinkShortenerModal] = useState(false);
   const product = products.find((product) => product.id === environment.productId);
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
+  const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
+  const isPricingDisabled = !isOwner && !isAdmin;
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -108,30 +114,35 @@ export default function Navigation({
         href: `/environments/${environment.id}/surveys`,
         icon: FormIcon,
         current: pathname?.includes("/surveys"),
+        hidden: false,
       },
       {
         name: "People",
         href: `/environments/${environment.id}/people`,
         icon: CustomersIcon,
         current: pathname?.includes("/people"),
+        hidden: false,
       },
       {
         name: "Actions & Attributes",
         href: `/environments/${environment.id}/actions`,
         icon: FilterIcon,
         current: pathname?.includes("/actions") || pathname?.includes("/attributes"),
+        hidden: false,
       },
       {
         name: "Integrations",
         href: `/environments/${environment.id}/integrations`,
         icon: DashboardIcon,
         current: pathname?.includes("/integrations"),
+        hidden: isViewer,
       },
       {
         name: "Settings",
         href: `/environments/${environment.id}/settings/profile`,
         icon: SettingsIcon,
         current: pathname?.includes("/settings"),
+        hidden: false,
       },
     ],
     [environment.id, pathname]
@@ -145,11 +156,13 @@ export default function Navigation({
           icon: AdjustmentsVerticalIcon,
           label: "Product Settings",
           href: `/environments/${environment.id}/settings/product`,
+          hidden: false,
         },
         {
           icon: PaintBrushIcon,
           label: "Look & Feel",
           href: `/environments/${environment.id}/settings/lookandfeel`,
+          hidden: isViewer,
         },
       ],
     },
@@ -166,7 +179,7 @@ export default function Navigation({
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environment.id}/settings/billing`,
-          hidden: !isFormbricksCloud,
+          hidden: !isFormbricksCloud || isPricingDisabled,
         },
       ],
     },
@@ -243,19 +256,21 @@ export default function Navigation({
                   const IconComponent: React.ElementType = item.icon;
 
                   return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={clsx(
-                        item.current
-                          ? "bg-slate-100 text-slate-900"
-                          : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
-                        "hidden items-center rounded-md px-2 py-1 text-sm font-medium lg:inline-flex"
-                      )}
-                      aria-current={item.current ? "page" : undefined}>
-                      <IconComponent className="mr-3 h-5 w-5" />
-                      {item.name}
-                    </Link>
+                    !item.hidden && (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={clsx(
+                          item.current
+                            ? "bg-slate-100 text-slate-900"
+                            : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
+                          "hidden items-center rounded-md px-2 py-1 text-sm font-medium lg:inline-flex"
+                        )}
+                        aria-current={item.current ? "page" : undefined}>
+                        <IconComponent className="mr-3 h-5 w-5" />
+                        {item.name}
+                      </Link>
+                    )
                   );
                 })}
               </div>
@@ -270,19 +285,22 @@ export default function Navigation({
                   </PopoverTrigger>
                   <PopoverContent className="mr-4 bg-slate-100 shadow">
                     <div className="flex flex-col">
-                      {navigation.map((navItem) => (
-                        <Link key={navItem.name} href={navItem.href}>
-                          <div
-                            onClick={() => setMobileNavMenuOpen(false)}
-                            className={cn(
-                              "flex items-center space-x-2 rounded-md p-2",
-                              navItem.current && "bg-slate-200"
-                            )}>
-                            <navItem.icon className="h-5 w-5" />
-                            <span className="font-medium text-slate-600">{navItem.name}</span>
-                          </div>
-                        </Link>
-                      ))}
+                      {navigation.map(
+                        (navItem) =>
+                          !navItem.hidden && (
+                            <Link key={navItem.name} href={navItem.href}>
+                              <div
+                                onClick={() => setMobileNavMenuOpen(false)}
+                                className={cn(
+                                  "flex items-center space-x-2 rounded-md p-2",
+                                  navItem.current && "bg-slate-200"
+                                )}>
+                                <navItem.icon className="h-5 w-5" />
+                                <span className="font-medium text-slate-600">{navItem.name}</span>
+                              </div>
+                            </Link>
+                          )
+                      )}
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -293,18 +311,17 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
-                      <ProfileAvatar userId={session.user.id} />
-                      {/* {session.user.image ? (
+                      {session.user.imageUrl ? (
                         <Image
-                          src={session.user.image}
-                          width="100"
-                          height="100"
-                          className="ph-no-capture h-9 w-9 rounded-full"
+                          src={session.user.imageUrl}
+                          width="40"
+                          height="40"
+                          className="ph-no-capture h-10 w-10 rounded-full"
                           alt="Profile picture"
                         />
                       ) : (
                         <ProfileAvatar userId={session.user.id} />
-                      )} */}
+                      )}
 
                       <div>
                         <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
@@ -375,10 +392,12 @@ export default function Navigation({
                           </DropdownMenuRadioGroup>
 
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
-                            <PlusIcon className="mr-2 h-4 w-4" />
-                            <span>Add product</span>
-                          </DropdownMenuItem>
+                          {!isViewer && (
+                            <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
+                              <PlusIcon className="mr-2 h-4 w-4" />
+                              <span>Add product</span>
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
