@@ -1,4 +1,4 @@
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/notion/actions";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";

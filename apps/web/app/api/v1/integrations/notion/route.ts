@@ -1,4 +1,4 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,

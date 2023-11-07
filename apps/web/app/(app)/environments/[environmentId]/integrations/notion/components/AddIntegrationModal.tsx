@@ -5,7 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon, PlusIcon, XMarkIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/notion/actions";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import { Modal } from "@formbricks/ui/Modal";
 import { Label } from "@formbricks/ui/Label";
 import { Button } from "@formbricks/ui/Button";
@@ -176,7 +176,7 @@ export default function AddIntegrationModal({
         notionIntegrationData.config!.data.push(integrationData);
       }
 
-      await upsertIntegrationAction(environmentId, notionIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, notionIntegrationData);
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
@@ -191,7 +191,7 @@ export default function AddIntegrationModal({
     notionIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await upsertIntegrationAction(environmentId, notionIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, notionIntegrationData);
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {
