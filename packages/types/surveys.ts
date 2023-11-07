@@ -45,7 +45,6 @@ export const ZSurveyBackground = z.object({
   bg: z.string().nullish(),
   bgType: z.string().nullish(),
   brightness: z.number().nullish(),
-  // darkOverlay: z.boolean().nullish(),
 });
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;

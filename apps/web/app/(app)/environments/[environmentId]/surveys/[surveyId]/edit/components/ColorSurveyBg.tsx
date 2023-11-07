@@ -6,36 +6,10 @@ import { TSurvey } from "@formbricks/types/surveys";
 interface ColorSurveyBgBgProps {
   localSurvey?: TSurvey;
   handleBgChange: (bg: string, bgType: string) => void;
+  colours: string[];
 }
 
-export default function ColorSurveyBg({ localSurvey, handleBgChange }: ColorSurveyBgBgProps) {
-  const colours = [
-    "#FFF2D8",
-    "#EAD7BB",
-    "#BCA37F",
-    "#113946",
-    "#04364A",
-    "#176B87",
-    "#64CCC5",
-    "#DAFFFB",
-    "#132043",
-    "#1F4172",
-    "#F1B4BB",
-    "#FDF0F0",
-    "#001524",
-    "#445D48",
-    "#D6CC99",
-    "#FDE5D4",
-    "#BEADFA",
-    "#D0BFFF",
-    "#DFCCFB",
-    "#FFF8C9",
-    "#FF8080",
-    "#FFCF96",
-    "#F6FDC3",
-    "#CDFAD5",
-  ];
-
+export default function ColorSurveyBg({ localSurvey, handleBgChange, colours }: ColorSurveyBgBgProps) {
   const [color, setColor] = useState(localSurvey?.surveyBackground?.bg || "#ffff");
 
   const handleBg = (x: string) => {

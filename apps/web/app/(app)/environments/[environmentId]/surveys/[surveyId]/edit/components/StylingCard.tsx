@@ -16,9 +16,10 @@ import AnimatedSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/[
 interface StylingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  colours: string[];
 }
 
-export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
+export default function StylingCard({ localSurvey, setLocalSurvey, colours }: StylingCardProps) {
   const [open, setOpen] = useState(false);
 
   const { type, productOverwrites, surveyBackground } = localSurvey;
@@ -236,7 +237,11 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 ) : tab == "animation" ? (
                   <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
                 ) : (
-                  <ColorSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
+                  <ColorSurveyBg
+                    localSurvey={localSurvey}
+                    handleBgChange={handleBgChange}
+                    colours={colours}
+                  />
                 )}
               </div>
             )}

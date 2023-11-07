@@ -23,6 +23,7 @@ interface SurveyEditorProps {
   attributeClasses: TAttributeClass[];
   responseCount: number;
   membershipRole?: TMembershipRole;
+  colours: string[];
 }
 
 export default function SurveyEditor({
@@ -33,6 +34,7 @@ export default function SurveyEditor({
   attributeClasses,
   responseCount,
   membershipRole,
+  colours,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -98,6 +100,7 @@ export default function SurveyEditor({
                 attributeClasses={attributeClasses}
                 responseCount={responseCount}
                 membershipRole={membershipRole}
+                colours={colours}
               />
             )}
           </main>

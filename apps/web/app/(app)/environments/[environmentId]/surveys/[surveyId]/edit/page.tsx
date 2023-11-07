@@ -13,6 +13,7 @@ import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service"
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { colours } from "@formbricks/lib/constants";
 
 export default async function SurveysEditPage({ params }) {
   const [survey, product, environment, actionClasses, attributeClasses, responseCount, team, session] =
@@ -60,6 +61,7 @@ export default async function SurveysEditPage({ params }) {
         attributeClasses={attributeClasses}
         responseCount={responseCount}
         membershipRole={currentUserMembership?.role}
+        colours={colours}
       />
     </>
   );
