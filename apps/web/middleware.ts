@@ -30,9 +30,8 @@ export async function middleware(request: NextRequest) {
 
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
-  } else {
-    return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
   }
+  return res;
 }
 
 export const config = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { truncateMiddle } from "@/app/lib/utils";
+import { truncateMiddle } from "@formbricks/lib/strings";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
