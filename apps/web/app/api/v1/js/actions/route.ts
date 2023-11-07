@@ -30,6 +30,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       return responses.successResponse({}, true);
     }
 
+    if (!personId.length && name === "New Session") {
+      return responses.successResponse({}, true);
+    }
+
     createAction({
       environmentId,
       personId,

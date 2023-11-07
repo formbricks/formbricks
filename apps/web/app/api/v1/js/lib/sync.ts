@@ -1,15 +1,14 @@
 import { getSyncSurveysCached } from "@/app/api/v1/js/lib/surveys";
-import { MAU_LIMIT } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMonthlyActivePeopleCount, getPerson } from "@formbricks/lib/person/service";
+import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-// import { createSession, getSession } from "@formbricks/lib/session/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState } from "@formbricks/types/js";
-// import { TSession } from "@formbricks/types/sessions";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("state update", { jsVersion: jsVersion ?? "unknown" });
@@ -21,8 +20,6 @@ export const getUpdatedState = async (
   jsVersion?: string
 ): Promise<TJsState> => {
   let environment: TEnvironment | null;
-  // let person: TPerson | null = null;
-  // let session: TSession | null;
 
   if (jsVersion) {
     captureNewSessionTelemetry(jsVersion);
@@ -35,99 +32,48 @@ export const getUpdatedState = async (
     throw new Error("Environment does not exist");
   }
 
-  // check if Monthly Active Users limit is reached
-  const currentMau = await getMonthlyActivePeopleCount(environmentId);
-  const isMauLimitReached = currentMau >= MAU_LIMIT;
+  // check team subscriptons
+  const team = await getTeamByEnvironmentId(environmentId);
 
-  if (isMauLimitReached) {
-    const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
-    if (!personId) {
-      // don't allow new people or sessions
-      throw new Error(errorMessage);
-    }
-
-    // check if session was created this month (user already active this month)
-
-    // const now = new Date();
-    // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    // if (new Date(session.createdAt) < firstDayOfMonth) {
-    //   throw new Error(errorMessage);
-    // }
+  if (!team) {
+    throw new Error("Team does not exist");
   }
 
-  // const [person, session] = await Promise.all([getPerson(personId), getSession(sessionId)]);
+  // check if Monthly Active Users limit is reached
+  if (IS_FORMBRICKS_CLOUD) {
+    const hasUserTargetingSubscription =
+      team?.billing?.features.userTargeting.status &&
+      team?.billing?.features.userTargeting.status in ["active", "canceled"];
+    const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
+    const isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
+
+    if (isMauLimitReached) {
+      const errorMessage = `Monthly Active Users limit reached in ${environmentId} (${currentMau}/${MAU_LIMIT})`;
+      throw new Error(errorMessage);
+
+      // if (!personId) {
+      //   // don't allow new people
+      //   throw new Error(errorMessage);
+      // }
+      // const session = await getSession(sessionId);
+      // if (!session) {
+      //   // don't allow new sessions
+      //   throw new Error(errorMessage);
+      // }
+      // // check if session was created this month (user already active this month)
+      // const now = new Date();
+      // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      // if (new Date(session.createdAt) < firstDayOfMonth) {
+      //   throw new Error(errorMessage);
+      // }
+    }
+  }
+
   const person = await getPerson(personId);
 
   if (!person) {
     throw new Error("Person not found");
   }
-
-  // if (!session || session.expiresAt < new Date()) {
-  //   if (person) {
-  //     session = await createSession(person.id);
-  //     captureNewSessionTelemetry(jsVersion);
-  //   }
-  // }
-
-  // if (personId) {
-  //   person = await getPerson(personId);
-  // }
-
-  // if (sessionId) {
-  //   session = await getSession(sessionId);
-  // if (!session || session.expiresAt < new Date()) {
-  //   if (person) {
-  //     session = await createSession(person.id);
-  //     captureNewSessionTelemetry(jsVersion);
-  //   }
-  // }
-  // }
-
-  // if (!personId) {
-  //   // create a new person
-  //   person = await createPerson(environmentId);
-  //   // create a new session
-  //   session = await createSession(person.id);
-  // } else {
-  //   // check if person exists
-  //   const existingPerson = await getPerson(personId);
-  //   if (!existingPerson) {
-  //     // create a new person
-  //     person = await createPerson(environmentId);
-  //   } else {
-  //     person = existingPerson;
-  //   }
-  // }
-  // if (!sessionId) {
-  //   // create a new session
-  //   session = await createSession(person.id);
-  // } else {
-  //   // check validity of person & session
-  //   session = await getSession(sessionId);
-  //   if (!session) {
-  //     // create a new session
-  //     session = await createSession(person.id);
-  //     captureNewSessionTelemetry(jsVersion);
-  //   } else {
-  //     // check if session is expired
-  //     if (session.expiresAt < new Date()) {
-  //       // create a new session
-  //       session = await createSession(person.id);
-  //       captureNewSessionTelemetry(jsVersion);
-  //     } else {
-  //       // extend session (if about to expire)
-  //       const isSessionAboutToExpire =
-  //         new Date(session.expiresAt).getTime() - new Date().getTime() < 1000 * 60 * 10;
-
-  //       if (isSessionAboutToExpire) {
-  //         session = await extendSession(sessionId);
-  //       }
-  //     }
-  //   }
-  // }
-  // we now have a valid person & session
-
-  // get/create rest of the state
 
   const [surveys, noCodeActionClasses, product] = await Promise.all([
     getSyncSurveysCached(environmentId, person),

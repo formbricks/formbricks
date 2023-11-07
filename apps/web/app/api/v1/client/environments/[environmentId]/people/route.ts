@@ -1,7 +1,6 @@
 import { getSettings } from "@/app/lib/api/clientSettings";
 import { responses } from "@/app/lib/api/response";
 import { createPerson } from "@formbricks/lib/person/service";
-import { createSession } from "@formbricks/lib/session/service";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -26,13 +25,11 @@ export async function POST(
 
   try {
     const person = await createPerson(environmentId);
-    const session = await createSession(person.id);
     const settings = await getSettings(environmentId, person.id);
 
     return responses.successResponse(
       {
         person,
-        session,
         settings,
       },
       true

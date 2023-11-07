@@ -1,5 +1,4 @@
 import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/js";
-// import { createPerson } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/people";
 import { Config } from "./config";
 import {
@@ -13,8 +12,8 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-// import { TSession } from "@formbricks/types/sessions";
 import { sync } from "./sync";
+import { trackAction } from "./actions";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -33,7 +32,6 @@ export const updatePersonUserId = async (
   const input: TJsPeopleUserIdInput = {
     environmentId: config.get().environmentId,
     userId,
-    // sessionId: config.get().state.session.id,
   };
 
   const res = await fetch(url, {
@@ -72,7 +70,6 @@ export const updatePersonAttribute = async (
 
   const input: TJsPeopleAttributeInput = {
     environmentId: config.get().environmentId,
-    // sessionId: config.get().state.session.id,
     key,
     value,
   };
@@ -120,10 +117,7 @@ export const hasAttributeKey = (key: string): boolean => {
 export const setPersonUserId = async (
   userId: string | number
 ): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
-  // if person does not exist, create a new person
-
   const existingPerson = config.get().state.person?.id;
-  // let existingSession = config.get().state.session;
 
   if (!existingPerson) {
     const personRes = await fetch(`${config.get().apiHost}/api/v1/js/people`, {
@@ -137,29 +131,11 @@ export const setPersonUserId = async (
     });
 
     const jsonRes = await personRes.json();
-
     const createdPerson = jsonRes.data.person as TPerson;
-
-    // if (!existingSession?.id) {
-    //   const sessionRes = await fetch(`${config.get().apiHost}/api/v1/js/session`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({
-    //       personId: createdPerson.id,
-    //     }),
-    //   });
-
-    //   const sessionJsonRes = await sessionRes.json();
-
-    //   existingSession = sessionJsonRes.data.session as TSession;
-    // }
 
     const updatedState = {
       ...config.get().state,
       person: createdPerson,
-      // session: existingSession,
     };
 
     config.update({
@@ -174,7 +150,6 @@ export const setPersonUserId = async (
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       personId: updatedState.person.id,
-      // sessionId: updatedState.session.id,
     });
   }
 
@@ -203,6 +178,8 @@ export const setPersonUserId = async (
     state,
   });
 
+  // track the new session event after setting the userId
+  trackAction("New Session");
   return okVoid();
 };
 

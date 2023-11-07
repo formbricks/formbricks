@@ -33,31 +33,53 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     let returnedPerson;
     // check if person with this userId exists
-    const person = await prisma.person.findFirst({
+
+    let alreadyExistingPerson;
+
+    const personWithUserId = await prisma.person.findFirst({
       where: {
         environmentId,
-        attributes: {
-          some: {
-            attributeClass: {
-              name: "userId",
-            },
-            value: userId,
-          },
-        },
+        userId,
       },
       select: selectPerson,
     });
 
+    if (personWithUserId) {
+      alreadyExistingPerson = personWithUserId;
+    } else {
+      const person = await prisma.person.findFirst({
+        where: {
+          environmentId,
+          attributes: {
+            some: {
+              attributeClass: {
+                name: "userId",
+              },
+              value: userId,
+            },
+          },
+        },
+        select: selectPerson,
+      });
+
+      if (person) {
+        alreadyExistingPerson = person;
+      }
+    }
+
     // if person exists, reconnect displays, session and delete old user
-    if (person) {
+
+    if (alreadyExistingPerson) {
       const displays = await getDisplaysByPersonId(personId);
 
-      await Promise.all(displays.map((display) => updateDisplay(display.id, { personId: person.id })));
+      await Promise.all(
+        displays.map((display) => updateDisplay(display.id, { personId: alreadyExistingPerson.id }))
+      );
 
       // delete old person
       await deletePerson(personId);
 
-      returnedPerson = person;
+      returnedPerson = alreadyExistingPerson;
     } else {
       // update person with userId
       returnedPerson = await prisma.person.update({
@@ -65,19 +87,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
           id: personId,
         },
         data: {
-          attributes: {
-            create: {
-              value: userId,
-              attributeClass: {
-                connect: {
-                  name_environmentId: {
-                    name: "userId",
-                    environmentId,
-                  },
-                },
-              },
-            },
-          },
+          userId,
         },
         select: selectPerson,
       });

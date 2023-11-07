@@ -15,6 +15,7 @@ import { randomUUID } from "crypto";
 
 export const selectPerson = {
   id: true,
+  userId: true,
   createdAt: true,
   updatedAt: true,
   environmentId: true,
@@ -38,6 +39,7 @@ export const selectPerson = {
 
 type TransformPersonInput = {
   id: string;
+  userId: string;
   environmentId: string;
   attributes: {
     value: string;
@@ -57,6 +59,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
 
   return {
     id: person.id,
+    userId: person.userId,
     attributes: attributes,
     environmentId: person.environmentId,
     createdAt: new Date(person.createdAt),

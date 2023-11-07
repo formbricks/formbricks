@@ -206,7 +206,6 @@ export const addSyncEventListener = (debug: boolean = false): void => {
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
         personId: config.get().state?.person?.id,
-        // sessionId: config.get().state?.session?.id,
       });
     }, updateInterval);
   }

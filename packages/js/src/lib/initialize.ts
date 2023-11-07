@@ -15,6 +15,7 @@ import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
 import { addWidgetContainer } from "./widget";
+import { trackAction } from "./actions";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -76,11 +77,15 @@ export const initialize = async (
     logger.debug("No valid configuration found or it has been expired. Creating new config.");
     logger.debug("Syncing.");
 
+    // when the local storage is expired / empty, we sync to get the latest config
     await sync({
       apiHost: c.apiHost,
       environmentId: c.environmentId,
       userId: c.userId,
     });
+
+    // and track the new session event
+    trackAction("New Session");
   }
 
   logger.debug("Adding event listeners");
