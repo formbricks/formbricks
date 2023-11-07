@@ -47,23 +47,27 @@ export default function WelcomeCard({
     if (idx === 0.5) {
       idx = 1;
     }
-    const timeInSeconds = (survey.questions.length / idx) * 15; // Assuming base unit is 15 seconds per question.
-
+    const timeInSeconds = (survey.questions.length / idx) * 15; //15 seconds per question.
     if (timeInSeconds > 360) {
-      // 360 seconds is 6 minutes
+      // If it's more than 6 minutes
       return "6+ minutes";
-    } else if (timeInSeconds > 60) {
-      const minutes = Math.floor(timeInSeconds / 60);
-      const seconds = Math.round(timeInSeconds % 60);
-
-      if (seconds === 0) {
-        return `${minutes} minutes`;
-      }
-
-      return `${minutes} minutes ${seconds} seconds`;
     }
+    // Calculate minutes, if there are any seconds left, add a minute
+    const minutes = Math.floor(timeInSeconds / 60);
+    const remainingSeconds = timeInSeconds % 60;
 
-    return `${Math.round(timeInSeconds)} seconds`;
+    if (remainingSeconds > 0) {
+      // If there are any seconds left, we'll need to round up to the next minute
+      if (minutes === 0) {
+        // If less than 1 minute, return 'less than 1 minute'
+        return "less than 1 minute";
+      } else {
+        // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
+        return `less than ${minutes + 1} minutes`;
+      }
+    }
+    // If there are no remaining seconds, just return the number of minutes
+    return `${minutes} minutes`;
   };
 
   return (
