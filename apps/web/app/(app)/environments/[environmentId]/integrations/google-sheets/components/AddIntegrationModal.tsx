@@ -1,4 +1,4 @@
-import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,

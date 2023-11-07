@@ -549,6 +549,7 @@ export const getMonthlyResponseCount = async (environmentId: string): Promise<nu
         where: {
           survey: {
             environmentId,
+            type: "web",
           },
           createdAt: {
             gte: firstDayOfMonth,

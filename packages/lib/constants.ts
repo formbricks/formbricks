@@ -1,5 +1,7 @@
 import "server-only";
 import path from "path";
+import { env } from "@/env.mjs";
+import { unstable_cache } from "next/cache";
 
 export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
@@ -63,7 +65,7 @@ export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
 export const RESPONSES_PER_PAGE = 10;
-export const OPEN_TEXT_RESPONSES_PER_PAGE = 5;
+export const TEXT_RESPONSES_PER_PAGE = 5;
 
 // Storage constants
 export const UPLOADS_DIR = path.resolve("./uploads");
@@ -87,3 +89,17 @@ export const LOCAL_UPLOAD_URL = {
 // Pricing
 export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
+// Enterprise License constant
+export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const getIsEnterpriseEdition = () =>
+  unstable_cache(
+    async () => {
+      if (ENTERPRISE_LICENSE_KEY) {
+        return ENTERPRISE_LICENSE_KEY?.length > 0;
+      }
+      return false;
+    },
+    ["isEE"],
+    { revalidate: 60 * 60 * 24 }
+  )();

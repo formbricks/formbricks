@@ -226,11 +226,12 @@ export const navigation: Array<NavGroup> = [
   {
     title: "Integrations",
     links: [
-      { title: "Zapier", href: "/docs/integrations/zapier" },
-      { title: "n8n", href: "/docs/integrations/n8n" },
-      { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "Airtable", href: "/docs/integrations/airtable" },
       { title: "Google Sheets", href: "/docs/integrations/google-sheets" },
       { title: "Notion", href: "/docs/integrations/notion" },
+      { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
   },
   {
@@ -254,10 +255,11 @@ export const navigation: Array<NavGroup> = [
     title: "Contributing",
     links: [
       { title: "Introduction", href: "/docs/contributing/introduction" },
-      { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
+      { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
       { title: "Gitpod", href: "/docs/contributing/gitpod" },
-      { title: "Demo App", href: "/docs/contributing/demo" },
+      { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
+      { title: "How to create a service", href: "/docs/contributing/creating-a-service" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
       { title: "FAQ", href: "/docs/faq" },
     ],
