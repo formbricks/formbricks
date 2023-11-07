@@ -67,8 +67,12 @@ EXPOSE 3000
 
 ENV HOSTNAME "0.0.0.0"
 
+USER root
+
 # Install cron and set up cron jobs
 RUN apk --no-cache add dcron
+
+USER nextjs
 
 # Create a cron directory inside the container
 RUN mkdir /cron
