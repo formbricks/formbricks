@@ -13,7 +13,7 @@ if (typeof window !== "undefined") {
       environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
       apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
       debug: true,
-      userId: "15278462-1b8b-4010-9321-b6f386e02636",
+      userId: "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING",
     });
     window.formbricks = formbricks;
   }

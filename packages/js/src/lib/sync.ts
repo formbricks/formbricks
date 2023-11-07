@@ -130,6 +130,8 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
       const surveyNames = state.surveys.map((s) => s.name);
       logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
 
+      // TODO: check if session is new for users
+
       // if session is new, track action
 
       // if (!oldState?.session || oldState.session.id !== state.session.id) {

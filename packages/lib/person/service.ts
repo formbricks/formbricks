@@ -11,6 +11,7 @@ import { getAttributeClassByName } from "../attributeClass/service";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { personCache } from "./cache";
+import { randomUUID } from "crypto";
 
 export const selectPerson = {
   id: true,
@@ -28,6 +29,7 @@ export const selectPerson = {
       attributeClass: {
         select: {
           name: true,
+          id: true,
         },
       },
     },
@@ -168,6 +170,7 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
             id: environmentId,
           },
         },
+        userId: randomUUID(),
       },
       select: selectPerson,
     });
@@ -262,7 +265,7 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
       }
 
       // Check if a person with the userId attribute exists
-      const personWithUserIdAttribute = await prisma.person.findFirst({
+      let personWithUserIdAttribute = await prisma.person.findFirst({
         where: {
           environmentId,
           attributes: {
@@ -277,7 +280,24 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
         select: selectPerson,
       });
 
+      const userIdAttributeClassId = personWithUserIdAttribute?.attributes.find(
+        (attr) => attr.attributeClass.name === "userId" && attr.value === userId
+      )?.attributeClass.id;
+
       if (personWithUserIdAttribute) {
+        personWithUserIdAttribute = await prisma.person.update({
+          where: {
+            id: personWithUserIdAttribute.id,
+          },
+          data: {
+            userId,
+            attributes: {
+              deleteMany: { attributeClassId: userIdAttributeClassId },
+            },
+          },
+          select: selectPerson,
+        });
+
         return personWithUserIdAttribute;
       }
 

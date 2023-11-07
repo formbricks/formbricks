@@ -54,20 +54,6 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
       await Promise.all(displays.map((display) => updateDisplay(display.id, { personId: person.id })));
 
-      // reconnect session to new person
-      // await prisma.session.update({
-      //   where: {
-      //     id: sessionId,
-      //   },
-      //   data: {
-      //     person: {
-      //       connect: {
-      //         id: person.id,
-      //       },
-      //     },
-      //   },
-      // });
-
       // delete old person
       await deletePerson(personId);
 
