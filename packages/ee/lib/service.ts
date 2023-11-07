@@ -1,6 +1,6 @@
 import "server-only";
 
-import { env } from "../../../apps/web/env.mjs";
+import { env } from "../../lib/env.mjs";
 import { unstable_cache } from "next/cache";
 
 // Enterprise License constant
