@@ -509,6 +509,9 @@ importers:
       '@formbricks/types':
         specifier: '*'
         version: link:../types
+      '@formbricks/ui':
+        specifier: '*'
+        version: link:../ui
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../eslint-config-formbricks

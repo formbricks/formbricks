@@ -66,6 +66,7 @@ export const env = createEnv({
     AZUREAD_CLIENT_SECRET: z.string().optional(),
     AZUREAD_TENANT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
+    ENTERPRISE_LICENSE_KEY: z.string().optional(),
   },
 
   /*
@@ -141,5 +142,6 @@ export const env = createEnv({
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
     AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
   },
 });

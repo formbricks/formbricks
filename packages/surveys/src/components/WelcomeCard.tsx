@@ -24,6 +24,7 @@ export default function WelcomeCard({
   return (
     <div>
       {fileUrl && (
+        /* eslint-disable-next-line @next/next/no-img-element */
         <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
       )}
 

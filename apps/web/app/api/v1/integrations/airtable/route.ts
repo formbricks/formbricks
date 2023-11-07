@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import crypto from "crypto";

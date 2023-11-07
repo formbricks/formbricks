@@ -69,15 +69,18 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     }
   }
 
-  await stripe.customers.update(stripeCustomer.id, {
-    name: team.name,
-    metadata: { team: team.id },
-  });
-
   await updateTeam(team.id, {
     billing: {
       stripeCustomerId: stripeCustomer.id,
       features: updatedFeatures,
+    },
+  });
+
+  await stripe.customers.update(stripeCustomer.id, {
+    name: team.name,
+    metadata: { team: team.id },
+    invoice_settings: {
+      default_payment_method: stripeSubscriptionObject.default_payment_method as string,
     },
   });
 };
