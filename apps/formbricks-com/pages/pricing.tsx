@@ -90,7 +90,7 @@ const linkSurveys = {
     { name: "Unlimited Responses", free: true, paid: true },
     { name: "Partial Responses", free: true, paid: true },
     { name: "Multi-media Backgrounds", free: true, paid: true },
-    { name: "File Upload", free: true, paid: true },
+    { name: "File Upload", free: true, paid: true, comingSoon: true },
     { name: "Hidden Fields", free: true, paid: true },
     { name: "Single Use Survey Links", free: true, paid: true },
     { name: "Pin-protected Surveys", free: true, paid: true },
