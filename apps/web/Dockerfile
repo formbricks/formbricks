@@ -72,8 +72,6 @@ USER root
 # Install cron and set up cron jobs
 RUN apk --no-cache add dcron
 
-USER nextjs
-
 # Create a cron directory inside the container
 RUN mkdir /cron
 
@@ -85,6 +83,8 @@ COPY /apps/web/entrypoint.sh /entrypoint.sh
 
 # Make the script executable
 RUN chmod +x /entrypoint.sh
+
+USER nextjs
 
 # Combine all cron job schedules and your entrypoint script in a single CMD
 CMD ["/entrypoint.sh"]
