@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
   }
 
   const integration = (await getIntegrationByType(environmentId, "airtable")) as TIntegrationAirtable;
-  console.log(integration);
 
   if (!integration) {
     return responses.notFoundResponse("Integration not found", environmentId);
