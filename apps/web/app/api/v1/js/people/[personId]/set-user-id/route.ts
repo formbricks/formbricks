@@ -15,7 +15,14 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function POST(req: Request, { params }): Promise<NextResponse> {
   try {
-    const { personId } = params;
+    let { personId } = params;
+
+    // check if personId is anonymous
+    if (personId === "anonymous") {
+      // remove this from the request
+      return responses.successResponse({}, true);
+    }
+
     const jsonInput = await req.json();
 
     // validate using zod

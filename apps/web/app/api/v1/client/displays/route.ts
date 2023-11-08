@@ -24,12 +24,20 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const displayInput = inputValidation.data;
+  const { surveyId, responseId } = inputValidation.data;
+  let { personId } = inputValidation.data;
+
+  // check if personId is anonymous
+  if (personId === "anonymous") {
+    // remove this from the request
+    personId = undefined;
+  }
+
   // find environmentId from surveyId
   let survey;
 
   try {
-    survey = await getSurvey(displayInput.surveyId);
+    survey = await getSurvey(surveyId);
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
@@ -45,7 +53,11 @@ export async function POST(request: Request): Promise<NextResponse> {
   // create display
   let display: TDisplay;
   try {
-    display = await createDisplay(displayInput);
+    display = await createDisplay({
+      surveyId,
+      personId,
+      responseId,
+    });
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
@@ -57,7 +69,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (teamDetails?.teamOwnerId) {
     await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId, {
-      surveyId: displayInput.surveyId,
+      surveyId,
     });
   } else {
     console.warn("Posthog capture not possible. No team owner found");
