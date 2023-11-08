@@ -9,7 +9,7 @@ interface EnvironmentNoticeProps {
 export default async function EnvironmentNotice({ environmentId }: EnvironmentNoticeProps) {
   const environment = await getEnvironment(environmentId);
   const environments = await getEnvironments(environment.productId);
-  const otherEnvironmentId = environments.find((e) => e.id !== environment.id)?.id || "";
+  const otherEnvironmentId = environments.filter((e) => e.id !== environment.id)[0].id;
 
   return (
     <div>
