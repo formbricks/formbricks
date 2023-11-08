@@ -89,31 +89,15 @@ export const setPersonUserId = async (
 
   logger.debug("setting userId: " + userId);
 
-  // const personRes = await fetch(`${config.get().apiHost}/api/v1/js/people`, {
-  //   method: "POST",
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //   },
-  //   body: JSON.stringify({
-  //     environmentId: config.get().environmentId,
-  //   }),
-  // });
+  const personRes = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify({
+      environmentId,
+      userId,
+    }),
+  });
 
-  const personRes = await fetch(url);
   const jsonRes = (await personRes.json()) as { data: TJsState };
-
-  // const createdPerson = jsonRes.data.person as TPerson;
-
-  // const updatedState = {
-  //   ...config.get().state,
-  //   person: createdPerson,
-  // };
-
-  // config.update({
-  //   apiHost: config.get().apiHost,
-  //   environmentId: config.get().environmentId,
-  //   state: updatedState,
-  // });
 
   config.update({
     apiHost: config.get().apiHost,
@@ -142,19 +126,8 @@ export const setPersonUserId = async (
   //   });
   // }
 
-  // const result = await updatePersonUserId(userId.toString());
-
-  // if (result.ok !== true) return err(result.error);
-
-  // const state = result.value;
-
-  // config.update({
-  //   apiHost: config.get().apiHost,
-  //   environmentId: config.get().environmentId,
-  //   state,
-  // });
-
   // track the new session event after setting the userId
+
   trackAction("New Session");
   return okVoid();
 };

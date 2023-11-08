@@ -4,7 +4,12 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { getDisplaysByPersonId, updateDisplay } from "@formbricks/lib/display/service";
 import { personCache } from "@formbricks/lib/person/cache";
-import { deletePerson, selectPerson, transformPrismaPerson } from "@formbricks/lib/person/service";
+import {
+  deletePerson,
+  getOrCreatePersonByUserId,
+  selectPerson,
+  transformPrismaPerson,
+} from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
@@ -16,12 +21,6 @@ export async function OPTIONS(): Promise<NextResponse> {
 export async function POST(req: Request, { params }): Promise<NextResponse> {
   try {
     let { personId } = params;
-
-    // check if personId is anonymous
-    if (personId === "anonymous") {
-      // remove this from the request
-      return responses.successResponse({}, true);
-    }
 
     const jsonInput = await req.json();
 
@@ -37,6 +36,23 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
     }
 
     const { environmentId, userId } = inputValidation.data;
+
+    if (personId === "anonymous") {
+      const person = await getOrCreatePersonByUserId(userId, environmentId);
+
+      personCache.revalidate({
+        id: person.id,
+        environmentId: environmentId,
+      });
+
+      surveyCache.revalidate({
+        environmentId,
+      });
+
+      const state = await getUpdatedState(environmentId, person.id);
+
+      return responses.successResponse({ ...state }, true);
+    }
 
     let returnedPerson;
     // check if person with this userId exists
