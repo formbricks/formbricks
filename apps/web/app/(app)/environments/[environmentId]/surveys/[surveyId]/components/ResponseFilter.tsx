@@ -171,7 +171,9 @@ const ResponseFilter = () => {
                   key={`${s.questionType.id}-${i}`}
                   filterOptions={
                     selectedOptions.questionFilterOptions.find(
-                      (q) => q.type === s.questionType.type || q.type === s.questionType.questionType
+                      (q) =>
+                        (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
+                        q.id === s.questionType.id
                     )?.filterOptions
                   }
                   filterComboBoxOptions={

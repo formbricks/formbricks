@@ -9,7 +9,6 @@ import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
   StarIcon,
   HashtagIcon,
-  TagIcon,
   CursorArrowRippleIcon,
   QuestionMarkCircleIcon,
   ListBulletIcon,
@@ -21,9 +20,10 @@ import clsx from "clsx";
 
 export enum OptionsType {
   QUESTIONS = "Questions",
-  TAGS = "Tags",
+  TAGS = "tags",
   ATTRIBUTES = "Attributes",
-  LANGUAGES = "Languages",
+  LANGUAGE = "language",
+  METADATA = "Metadata",
 }
 
 export type QuestionOption = {
@@ -66,11 +66,11 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
     if (type === OptionsType.ATTRIBUTES) {
       return <HashtagIcon width={18} className="text-white" />;
     }
-    if (type === OptionsType.LANGUAGES) {
+    if (type === OptionsType.LANGUAGE) {
       return <LanguageIcon width={18} className="text-white" />;
     }
     if (type === OptionsType.TAGS) {
-      return <TagIcon width={18} className="text-white" />;
+      return <HashtagIcon width={18} className="text-white" />;
     }
   };
 
@@ -79,8 +79,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
       return "bg-indigo-500";
     } else if (type === OptionsType.QUESTIONS) {
       return "bg-brand-dark";
-    } else if (type === OptionsType.LANGUAGES) {
-      return "bg-black";
+    } else if (type === OptionsType.LANGUAGE || type === OptionsType.TAGS) {
+      return "bg-indigo-500";
     } else {
       return "bg-amber-500";
     }
@@ -132,7 +132,6 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-            {console.log(options)}
             <CommandEmpty>No result found.</CommandEmpty>
             {options?.map((data) => (
               <>

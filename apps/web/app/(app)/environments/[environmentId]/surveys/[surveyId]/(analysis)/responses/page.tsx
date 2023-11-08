@@ -11,6 +11,7 @@ import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { translateSurvey } from "@formbricks/lib/utils/i18n";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
@@ -43,11 +44,10 @@ export default async function Page({ params }) {
 
   return (
     <>
-      {console.log(responses)}
       <ResponsePage
         environment={environment}
         responses={responses}
-        survey={survey}
+        survey={translateSurvey(survey)}
         surveyId={params.surveyId}
         webAppUrl={WEBAPP_URL}
         product={product}

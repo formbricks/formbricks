@@ -43,7 +43,10 @@ const QuestionFilterComboBox = ({
 
   // multiple when question type is multi selection
   const isMultiple =
-    type === TSurveyQuestionType.MultipleChoiceMulti || type === TSurveyQuestionType.MultipleChoiceSingle;
+    type === TSurveyQuestionType.MultipleChoiceMulti ||
+    type === TSurveyQuestionType.MultipleChoiceSingle ||
+    type === "language" ||
+    type === "tags";
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
@@ -57,8 +60,6 @@ const QuestionFilterComboBox = ({
 
   return (
     <div className="inline-flex w-full flex-row">
-      {console.log(filterComboBoxValue)}
-      {console.log(filterComboBoxOptions)}
       {filterOptions && filterOptions?.length <= 1 ? (
         <div className="h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600">
           <p className="mr-1 max-w-[50px] truncate text-slate-600 sm:max-w-[100px]">{filterValue}</p>

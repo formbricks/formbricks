@@ -99,12 +99,6 @@ export default function SurveyEditor({
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
             <div>
               <LanguageSwitch languages={languages} setLanguages={setLanguages} setI18n={setI18n} />
-              <button
-                onClick={() => {
-                  console.log(translatedSurvey);
-                }}>
-                Console
-              </button>
             </div>
             {activeView === "questions" ? (
               <QuestionsView
