@@ -1,17 +1,16 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/people";
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import { validateInputs } from "../utils/validate";
-import { getAttributeClassByName } from "../attributeClass/service";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
-import { personCache } from "./cache";
 import { randomUUID } from "crypto";
+import { unstable_cache } from "next/cache";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { validateInputs } from "../utils/validate";
+import { personCache } from "./cache";
 
 export const selectPerson = {
   id: true,
@@ -340,32 +339,6 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
 
   return transformPrismaPerson(personPrisma);
 };
-
-export const getMonthlyActivePeopleCount = async (environmentId: string): Promise<number> =>
-  await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-
-      // const now = new Date();
-      // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const personAggregations = await prisma.person.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          environmentId,
-        },
-      });
-
-      return personAggregations._count.id;
-    },
-    [`getMonthlyActivePeopleCount-${environmentId}`],
-    {
-      tags: [personCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
 
 export const updatePersonAttribute = async (
   personId: string,

@@ -14,7 +14,7 @@ import { getProfile } from "@formbricks/lib/profile/service";
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
-  const profile = session ? await getProfile(session.user.id) : null;
+  const profile = session && session.user ? await getProfile(session.user.id) : null;
 
   return (
     <>

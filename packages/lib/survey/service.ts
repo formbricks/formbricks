@@ -287,7 +287,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   }));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
@@ -457,7 +457,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     throw error;
   }
-}
+};
 
 export async function deleteSurvey(surveyId: string) {
   validateInputs([surveyId, ZId]);
@@ -494,7 +494,7 @@ export async function deleteSurvey(surveyId: string) {
   return deletedSurvey;
 }
 
-export async function createSurvey(environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> {
+export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
 
   if (surveyBody.attributeFilters) {
@@ -538,9 +538,9 @@ export async function createSurvey(environmentId: string, surveyBody: TSurveyInp
   });
 
   return transformedSurvey;
-}
+};
 
-export async function duplicateSurvey(environmentId: string, surveyId: string) {
+export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -604,7 +604,7 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
   revalidateSurveyByAttributeClassId(newAttributeFilters);
 
   return newSurvey;
-}
+};
 
 export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
   unstable_cache(
