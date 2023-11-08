@@ -23,7 +23,7 @@ export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
 
 export const ZDisplayLegacyCreateInput = z.object({
   surveyId: z.string().cuid(),
-  personId: z.string().cuid(),
+  personId: z.string().cuid().optional(),
   responseId: z.string().cuid().optional(),
 });
 
