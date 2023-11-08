@@ -132,7 +132,8 @@ export const closeSurvey = async (): Promise<void> => {
     await sync({
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
-      personId: config.get().state.person?.id,
+      userId: config.get().state?.person?.userId,
+      // personId: config.get().state.person?.id,
     });
     surveyRunning = false;
   } catch (e) {

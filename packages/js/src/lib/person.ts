@@ -18,45 +18,6 @@ import { trackAction } from "./actions";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-export const updatePersonUserId = async (
-  userId: string
-): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
-  if (!config.get().state.person || !config.get().state.person?.id)
-    return err({
-      code: "missing_person",
-      message: "Unable to update userId. No person set.",
-    });
-
-  const url = `${config.get().apiHost}/api/v1/js/people/${config.get().state.person?.id}/set-user-id`;
-
-  const input: TJsPeopleUserIdInput = {
-    environmentId: config.get().environmentId,
-    userId,
-  };
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  });
-
-  const jsonRes = await res.json();
-
-  if (!res.ok) {
-    return err({
-      code: "network_error",
-      message: "Error updating person",
-      status: res.status,
-      url,
-      responseMessage: jsonRes.message,
-    });
-  }
-
-  return ok(jsonRes.data as TJsState);
-};
-
 export const updatePersonAttribute = async (
   key: string,
   value: string
@@ -118,65 +79,80 @@ export const setPersonUserId = async (
   userId: string | number
 ): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
   const existingPerson = config.get().state.person?.id;
+  const environmentId = config.get().environmentId;
+  const url = `${config.get().apiHost}/api/v1/client/in-app/${environmentId}/${userId}`;
 
-  if (!existingPerson) {
-    const personRes = await fetch(`${config.get().apiHost}/api/v1/js/people`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        environmentId: config.get().environmentId,
-      }),
-    });
-
-    const jsonRes = await personRes.json();
-    const createdPerson = jsonRes.data.person as TPerson;
-
-    const updatedState = {
-      ...config.get().state,
-      person: createdPerson,
-    };
-
-    config.update({
-      apiHost: config.get().apiHost,
-      environmentId: config.get().environmentId,
-      state: updatedState,
-    });
-
-    logger.debug("Syncing with backend");
-
-    await sync({
-      apiHost: config.get().apiHost,
-      environmentId: config.get().environmentId,
-      personId: updatedState.person.id,
-    });
+  if (existingPerson) {
+    logger.debug("userId already set. Skipping update.");
+    return okVoid();
   }
 
   logger.debug("setting userId: " + userId);
-  // check if attribute already exists with this value
-  if (hasAttributeValue("userId", userId.toString())) {
-    logger.debug("userId already set to this value. Skipping update.");
-    return okVoid();
-  }
-  if (hasAttributeKey("userId")) {
-    return err({
-      code: "attribute_already_exists",
-      message: "userId cannot be changed after it has been set. You need to reset first",
-    });
-  }
 
-  const result = await updatePersonUserId(userId.toString());
+  // const personRes = await fetch(`${config.get().apiHost}/api/v1/js/people`, {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({
+  //     environmentId: config.get().environmentId,
+  //   }),
+  // });
 
-  if (result.ok !== true) return err(result.error);
+  const personRes = await fetch(url);
+  const jsonRes = (await personRes.json()) as { data: TJsState };
 
-  const state = result.value;
+  // const createdPerson = jsonRes.data.person as TPerson;
+
+  // const updatedState = {
+  //   ...config.get().state,
+  //   person: createdPerson,
+  // };
+
+  // config.update({
+  //   apiHost: config.get().apiHost,
+  //   environmentId: config.get().environmentId,
+  //   state: updatedState,
+  // });
 
   config.update({
     apiHost: config.get().apiHost,
     environmentId: config.get().environmentId,
-    state,
+    state: jsonRes.data,
   });
+
+  logger.debug("Syncing with backend");
+
+  await sync({
+    apiHost: config.get().apiHost,
+    environmentId: config.get().environmentId,
+    userId: jsonRes.data.person?.userId,
+  });
+
+  // check if attribute already exists with this value
+  // if (hasAttributeValue("userId", userId.toString())) {
+  //   logger.debug("userId already set to this value. Skipping update.");
+  //   return okVoid();
+  // }
+
+  // if (hasAttributeKey("userId")) {
+  //   return err({
+  //     code: "attribute_already_exists",
+  //     message: "userId cannot be changed after it has been set. You need to reset first",
+  //   });
+  // }
+
+  // const result = await updatePersonUserId(userId.toString());
+
+  // if (result.ok !== true) return err(result.error);
+
+  // const state = result.value;
+
+  // config.update({
+  //   apiHost: config.get().apiHost,
+  //   environmentId: config.get().environmentId,
+  //   state,
+  // });
 
   // track the new session event after setting the userId
   trackAction("New Session");

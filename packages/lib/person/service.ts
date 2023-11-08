@@ -305,11 +305,11 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
       }
 
       // Create a new person with the userId attribute
-      const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
+      // const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
 
-      if (!userIdAttributeClass) {
-        throw new ResourceNotFoundError("Attribute class not found for the given environment", environmentId);
-      }
+      // if (!userIdAttributeClass) {
+      //   throw new ResourceNotFoundError("Attribute class not found for the given environment", environmentId);
+      // }
 
       const person = await prisma.person.create({
         data: {

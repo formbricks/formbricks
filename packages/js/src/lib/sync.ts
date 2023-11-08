@@ -1,9 +1,7 @@
 import { TJsState, TJsSyncParams } from "@formbricks/types/js";
-// import { trackAction } from "./actions";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
-import packageJson from "../../package.json";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -18,36 +16,14 @@ const diffInDays = (date1: Date, date2: Date) => {
 const syncWithBackend = async ({
   apiHost,
   environmentId,
-  personId,
   userId,
 }: TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
-  const url = `${apiHost}/api/v1/js/sync/${environmentId}?personId=${personId}&jsVersion=${packageJson.version}`;
-  const publicUrl = `${apiHost}/api/v1/js/sync/${environmentId}`;
+  const url = `${apiHost}/api/v1/client/in-app/${environmentId}/${userId}`;
+  const publicUrl = `${apiHost}/api/v1/client/in-app/${environmentId}`;
 
   // if user id is available
 
-  if (userId) {
-    // call an api which will return the person id from the user id
-    const response = await fetch(
-      `${apiHost}/api/v1/js/sync/${environmentId}?userId=${userId}&jsVersion=${packageJson.version}`
-    );
-
-    if (!response.ok) {
-      const jsonRes = await response.json();
-
-      return err({
-        code: "network_error",
-        status: response.status,
-        message: "Error syncing with backend",
-        url,
-        responseMessage: jsonRes.message,
-      });
-    }
-
-    return ok((await response.json()).data as TJsState);
-  }
-
-  if (!personId) {
+  if (!userId) {
     // public survey
     const response = await fetch(publicUrl);
 
@@ -66,6 +42,8 @@ const syncWithBackend = async ({
     return ok((await response.json()).data as TJsState);
   }
 
+  // userId is available, call the api with the `userId` param
+
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -80,7 +58,10 @@ const syncWithBackend = async ({
     });
   }
 
-  return ok((await response.json()).data as TJsState);
+  const data = await response.json();
+  const { data: state } = data;
+
+  return ok(state as TJsState);
 };
 
 export const sync = async (params: TJsSyncParams): Promise<void> => {
@@ -129,17 +110,6 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
     } else {
       const surveyNames = state.surveys.map((s) => s.name);
       logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
-
-      // TODO: check if session is new for users
-
-      // if session is new, track action
-
-      // if (!oldState?.session || oldState.session.id !== state.session.id) {
-      //   const trackActionResult = await trackAction("New Session");
-      //   if (trackActionResult.ok !== true) {
-      //     logger.error(`Action tracking failed: ${trackActionResult.error}`);
-      //   }
-      // }
     }
   } catch (error) {
     logger.error(`Error during sync: ${error}`);
@@ -205,7 +175,8 @@ export const addSyncEventListener = (debug: boolean = false): void => {
       await sync({
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
-        personId: config.get().state?.person?.id,
+        userId: config.get().state?.person?.userId,
+        // personId: config.get().state?.person?.id,
       });
     }, updateInterval);
   }

@@ -20,7 +20,16 @@ export const trackAction = async (
   };
 
   if (config.get().state?.person?.id && !intentsToNotCreateOnApp.includes(name)) {
-    const res = await fetch(`${config.get().apiHost}/api/v1/js/actions`, {
+    // const res = await fetch(`${config.get().apiHost}/api/v1/js/actions`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+
+    //   body: JSON.stringify(input),
+    // });
+
+    const res = await fetch(`${config.get().apiHost}/api/v1/client/actions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

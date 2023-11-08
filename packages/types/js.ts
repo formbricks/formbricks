@@ -30,9 +30,9 @@ export type TJsState = z.infer<typeof ZJsState>;
 
 export const ZJsPublicSyncInput = z.object({
   environmentId: z.string().cuid2(),
-  personId: z.string().cuid2().nullable(),
-  userId: z.string().nullable(),
-  jsVersion: z.string().nullable(),
+  // personId: z.string().cuid2().nullable(),
+  // userId: z.string().nullable(),
+  // jsVersion: z.string().nullable(),
 });
 
 export const ZJsSyncInput = z.object({
@@ -90,7 +90,7 @@ export type TJsActionInput = z.infer<typeof ZJsActionInput>;
 export const ZJsSyncParams = z.object({
   environmentId: z.string().cuid2(),
   apiHost: z.string(),
-  personId: z.string().cuid2().optional(),
+  // personId: z.string().cuid2().optional(),
   userId: z.string().optional(),
 });
 
