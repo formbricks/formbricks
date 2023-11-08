@@ -69,10 +69,21 @@ export const initialize = async (
     localConfigResult.ok &&
     localConfigResult.value.state &&
     localConfigResult.value.environmentId === c.environmentId &&
-    localConfigResult.value.apiHost === c.apiHost
+    localConfigResult.value.apiHost === c.apiHost &&
+    localConfigResult.value.state?.person?.userId === c.userId
   ) {
-    logger.debug("Found existing configuration. Updating config.");
-    config.update(localConfigResult.value);
+    logger.debug("Found existing configuration.");
+    if (localConfigResult.value.expiresAt < new Date()) {
+      logger.debug("Configuration expired.");
+      await sync({
+        apiHost: c.apiHost,
+        environmentId: c.environmentId,
+        userId: c.userId,
+      });
+    } else {
+      logger.debug("Configuration not expired. Extending expiration.");
+      config.update(localConfigResult.value);
+    }
   } else {
     logger.debug("No valid configuration found or it has been expired. Creating new config.");
     logger.debug("Syncing.");

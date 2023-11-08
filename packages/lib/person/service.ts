@@ -6,7 +6,6 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/people";
 import { Prisma } from "@prisma/client";
-import { randomUUID } from "crypto";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -161,7 +160,7 @@ export const getPeopleCount = async (environmentId: string): Promise<number> =>
     }
   )();
 
-export const createPerson = async (environmentId: string): Promise<TPerson> => {
+export const createPerson = async (environmentId: string, userId: string): Promise<TPerson> => {
   validateInputs([environmentId, ZId]);
 
   try {
@@ -172,7 +171,7 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
             id: environmentId,
           },
         },
-        userId: randomUUID(),
+        userId,
       },
       select: selectPerson,
     });

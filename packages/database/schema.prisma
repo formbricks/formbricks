@@ -320,19 +320,16 @@ model ActionClass {
 }
 
 model Action {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
   actionClass   ActionClass @relation(fields: [actionClassId], references: [id], onDelete: Cascade)
   actionClassId String
-
-  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId String
-
+  person        Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId      String
   /// @zod.custom(imports.ZActionProperties)
   /// @zod.custom(imports.ZActionProperties)
   /// [ActionProperties]
-  properties Json @default("{}")
+  properties    Json        @default("{}")
 
   @@index([personId])
   @@index([actionClassId])

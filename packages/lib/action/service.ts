@@ -221,6 +221,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 
   actionCache.revalidate({
     environmentId,
+    personId: person.id,
   });
 
   return {

@@ -28,13 +28,14 @@ export const updatePersonAttribute = async (
   }
 
   const input: TJsPeopleAttributeInput = {
-    environmentId: config.get().environmentId,
     key,
     value,
   };
 
   const res = await fetch(
-    `${config.get().apiHost}/api/v1/js/people/${config.get().state.person?.id}/set-attribute`,
+    `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/people/${
+      config.get().state.person?.id
+    }/set-attribute`,
     {
       method: "POST",
       headers: {

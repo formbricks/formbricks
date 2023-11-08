@@ -21,7 +21,8 @@ export const trackAction = async (
 
   // don't send actions to the backend if the person is not identified
   if (config.get().state?.person?.userId && !intentsToNotCreateOnApp.includes(name)) {
-    const res = await fetch(`${config.get().apiHost}/api/v1/client/actions`, {
+    logger.debug(`Sending action "${name}" to backend`);
+    const res = await fetch(`${config.get().apiHost}/api/v1/client/${config.get().environmentId}/actions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -33,6 +33,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
   const responseQueue = new ResponseQueue(
     {
       apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: (response) => {
         alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
@@ -59,37 +60,23 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
       placement,
       onDisplay: async () => {
         // if config does not have a person, we store the displays in local storage
-
-        if (!config.get().state.person || !config.get().state.person?.id) {
+        if (!config.get().state.person || !config.get().state.person?.userId) {
           const localDisplay: TJSStateDisplay = {
             createdAt: new Date(),
             surveyId: survey.id,
             responseId: null,
           };
 
-          const displays = config.get().state.displays;
+          const existingDisplays = config.get().state.displays;
+          const displays = existingDisplays ? [...existingDisplays, localDisplay] : [localDisplay];
           const previousConfig = config.get();
-          if (displays) {
-            config.update({
-              ...previousConfig,
-              state: {
-                ...previousConfig.state,
-                displays: [...displays, localDisplay],
-              },
-            });
-          } else {
-            config.update({
-              ...previousConfig,
-              state: {
-                ...previousConfig.state,
-                displays: [localDisplay],
-              },
-            });
-          }
-
-          // surveyState.updateDisplayId(id);
-          // responseQueue.updateSurveyState(surveyState);
-          return;
+          config.update({
+            ...previousConfig,
+            state: {
+              ...previousConfig.state,
+              displays,
+            },
+          });
         }
 
         const api = new FormbricksAPI({

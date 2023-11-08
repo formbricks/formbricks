@@ -97,12 +97,19 @@ export const ZJsPeopleUserIdInput = z.object({
 export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
 
 export const ZJsPeopleAttributeInput = z.object({
-  environmentId: z.string().cuid(),
   key: z.string(),
   value: z.string(),
 });
 
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
+
+export const ZJsPeopleLegacyAttributeInput = z.object({
+  environmentId: z.string().cuid(),
+  key: z.string(),
+  value: z.string(),
+});
+
+export type TJsPeopleLegacyAttributeInput = z.infer<typeof ZJsPeopleLegacyAttributeInput>;
 
 export const ZJsActionInput = z.object({
   environmentId: z.string().cuid(),

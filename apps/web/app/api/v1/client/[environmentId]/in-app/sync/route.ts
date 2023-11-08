@@ -48,7 +48,7 @@ export async function GET(
     }
 
     const state: TJsState = {
-      surveys: surveys.filter((survey) => survey.type === "web"),
+      surveys: surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web"),
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
       person: null,
