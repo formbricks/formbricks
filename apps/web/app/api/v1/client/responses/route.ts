@@ -54,6 +54,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     };
 
+    // check if personId is anonymous
+    if (responseInput.personId === "anonymous") {
+      // remove this from the request
+      responseInput.personId = null;
+    }
+
     response = await createResponse({
       ...responseInput,
       meta,

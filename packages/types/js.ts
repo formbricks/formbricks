@@ -37,8 +37,8 @@ export const ZJsPublicSyncInput = z.object({
 
 export const ZJsSyncInput = z.object({
   environmentId: z.string().cuid2(),
-  personId: z.string().cuid2(),
-  userId: z.string().optional(),
+  personId: z.string().cuid2().optional(),
+  userId: z.string().optional().optional(),
   jsVersion: z.string().optional(),
 });
 

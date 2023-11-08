@@ -198,12 +198,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   try {
     let person: TPerson | null = null;
 
-    // check if personId is anonymous
-    if (responseInput.personId === "anonymous") {
-      // remove this from the request
-      responseInput.personId = null;
-    }
-
     if (responseInput.personId) {
       person = await getPerson(responseInput.personId);
     }

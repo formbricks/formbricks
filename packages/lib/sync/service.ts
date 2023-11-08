@@ -104,8 +104,6 @@ export const getPublicUpdatedState = async (environmentId: string): Promise<TJsS
     throw new Error("Environment does not exist");
   }
 
-  // TODO: check if Monthly Active Users limit is reached
-
   const [surveys, noCodeActionClasses, product] = await Promise.all([
     getSurveys(environmentId),
     getActionClasses(environmentId),

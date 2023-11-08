@@ -315,6 +315,9 @@ model Action {
   /// @zod.custom(imports.ZActionProperties)
   /// [ActionProperties]
   properties Json @default("{}")
+
+  @@index([personId])
+  @@index([actionClassId])
 }
 
 enum EnvironmentType {
