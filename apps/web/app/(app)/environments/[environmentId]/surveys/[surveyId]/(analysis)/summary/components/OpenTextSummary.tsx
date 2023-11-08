@@ -12,16 +12,16 @@ import { questionTypes } from "@/app/lib/questions";
 interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
-  openTextResponsesPerPage: number;
+  responsesPerPage: number;
 }
 
 export default function OpenTextSummary({
   questionSummary,
   environmentId,
-  openTextResponsesPerPage,
+  responsesPerPage,
 }: OpenTextSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-  const [displayCount, setDisplayCount] = useState(openTextResponsesPerPage);
+  const [displayCount, setDisplayCount] = useState(responsesPerPage);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -86,7 +86,7 @@ export default function OpenTextSummary({
         <div className="my-1 flex justify-center">
           {displayCount < questionSummary.responses.length && (
             <button
-              onClick={() => setDisplayCount((prevCount) => prevCount + openTextResponsesPerPage)}
+              onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
               className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
               Show more
             </button>

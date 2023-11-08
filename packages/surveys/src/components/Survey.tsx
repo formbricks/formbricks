@@ -55,6 +55,7 @@ export function Survey({
     if (prefillResponseData) {
       onSubmit(prefillResponseData, true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   let currIdx = currentQuestionIndex;
   let currQues = currentQuestion;

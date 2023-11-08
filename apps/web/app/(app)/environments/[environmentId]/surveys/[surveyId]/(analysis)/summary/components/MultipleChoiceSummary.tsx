@@ -6,6 +6,7 @@ import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { useState } from "react";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
@@ -19,6 +20,7 @@ interface MultipleChoiceSummaryProps {
   >;
   environmentId: string;
   surveyType: string;
+  responsesPerPage: number;
 }
 
 interface ChoiceResult {
@@ -40,9 +42,10 @@ export default function MultipleChoiceSummary({
   questionSummary,
   environmentId,
   surveyType,
+  responsesPerPage,
 }: MultipleChoiceSummaryProps) {
   const isSingleChoice = questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle;
-
+  const [otherDisplayCount, setOtherDisplayCount] = useState(responsesPerPage);
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const results: ChoiceResult[] = useMemo(() => {
@@ -175,6 +178,7 @@ export default function MultipleChoiceSummary({
                 </div>
                 {result.otherValues
                   .filter((otherValue) => otherValue !== "")
+                  .slice(0, otherDisplayCount)
                   .map((otherValue, idx) => (
                     <div key={idx}>
                       {surveyType === "link" && (
@@ -204,6 +208,15 @@ export default function MultipleChoiceSummary({
                       )}
                     </div>
                   ))}
+                {otherDisplayCount < result.otherValues.length && (
+                  <div className="flex w-full items-center justify-center">
+                    <button
+                      onClick={() => setOtherDisplayCount(otherDisplayCount + responsesPerPage)}
+                      className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                      Show more
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

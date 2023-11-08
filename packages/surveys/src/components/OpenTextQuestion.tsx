@@ -36,11 +36,14 @@ export default function OpenTextQuestion({
     // setIsValid(isValidInput);
     onChange({ [question.id]: inputValue });
   };
-  const openTextRef = useCallback((currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-    if (currentElement && autoFocus) {
-      currentElement.focus();
-    }
-  }, []);
+  const openTextRef = useCallback(
+    (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
+      if (currentElement && autoFocus) {
+        currentElement.focus();
+      }
+    },
+    [autoFocus]
+  );
 
   return (
     <form
@@ -73,7 +76,7 @@ export default function OpenTextQuestion({
             id={question.id}
             placeholder={question.placeholder}
             required={question.required}
-            value={value as string}
+            value={value ? (value as string) : ""}
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}

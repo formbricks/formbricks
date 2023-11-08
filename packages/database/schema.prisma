@@ -47,6 +47,8 @@ model Webhook {
   environmentId String
   triggers      PipelineTriggers[]
   surveyIds     String[]
+
+  @@index([environmentId])
 }
 
 model Attribute {
@@ -82,6 +84,7 @@ model AttributeClass {
   attributeFilters SurveyAttributeFilter[]
 
   @@unique([name, environmentId])
+  @@index([environmentId])
 }
 
 model Person {
@@ -94,6 +97,8 @@ model Person {
   sessions      Session[]
   attributes    Attribute[]
   displays      Display[]
+
+  @@index([environmentId])
 }
 
 model Response {
@@ -121,6 +126,8 @@ model Response {
   language         String?
 
   @@unique([surveyId, singleUseId])
+  @@index([surveyId, createdAt]) // to determine monthly response count
+  @@index([surveyId])
 }
 
 model ResponseNote {
@@ -134,6 +141,8 @@ model ResponseNote {
   text       String
   isResolved Boolean  @default(false)
   isEdited   Boolean  @default(false)
+
+  @@index([responseId])
 }
 
 model Tag {
@@ -146,6 +155,7 @@ model Tag {
   environment   Environment       @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
   @@unique([environmentId, name])
+  @@index([environmentId])
 }
 
 model TagsOnResponses {
@@ -155,6 +165,7 @@ model TagsOnResponses {
   tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([responseId, tagId])
+  @@index([responseId])
 }
 
 enum SurveyStatus {
@@ -179,6 +190,9 @@ model Display {
   personId   String?
   responseId String?        @unique
   status     DisplayStatus?
+
+  @@index([surveyId])
+  @@index([personId])
 }
 
 model SurveyTrigger {
@@ -191,6 +205,7 @@ model SurveyTrigger {
   eventClassId String
 
   @@unique([surveyId, eventClassId])
+  @@index([surveyId])
 }
 
 enum SurveyAttributeFilterCondition {
@@ -210,6 +225,8 @@ model SurveyAttributeFilter {
   value            String
 
   @@unique([surveyId, attributeClassId])
+  @@index([surveyId])
+  @@index([attributeClassId])
 }
 
 enum SurveyType {
@@ -273,6 +290,8 @@ model Survey {
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
   pin               String?
+
+  @@index([environmentId])
 }
 
 model Event {
@@ -342,6 +361,7 @@ model Integration {
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
   @@unique([type, environmentId])
+  @@index([environmentId])
 }
 
 model Environment {
@@ -360,6 +380,8 @@ model Environment {
   webhooks             Webhook[]
   tags                 Tag[]
   integration          Integration[]
+
+  @@index([productId])
 }
 
 enum WidgetPlacement {
@@ -387,6 +409,7 @@ model Product {
   darkOverlay          Boolean         @default(false)
 
   @@unique([teamId, name])
+  @@index([teamId])
 }
 
 model Team {
@@ -399,8 +422,7 @@ model Team {
   /// @zod.custom(imports.ZTeamBilling)
   /// [TeamBilling]
   billing     Json         @default("{\"stripeCustomerId\": null, \"features\": {\"inAppSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"linkSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"userTargeting\": {\"status\": \"inactive\", \"unlimited\": false}}}")
-
-  invites Invite[]
+  invites     Invite[]
 }
 
 enum MembershipRole {
@@ -420,6 +442,8 @@ model Membership {
   role     MembershipRole
 
   @@id([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
 }
 
 model Invite {
@@ -437,7 +461,8 @@ model Invite {
   expiresAt  DateTime
   role       MembershipRole @default(admin)
 
-  @@index([email, teamId], name: "email_teamId_unique")
+  @@index([email, teamId])
+  @@index([teamId])
 }
 
 model ApiKey {
@@ -448,6 +473,8 @@ model ApiKey {
   hashedKey     String      @unique()
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
+
+  @@index([environmentId])
 }
 
 enum IdentityProvider {
@@ -476,6 +503,7 @@ model Account {
   session_state     String?
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 enum Role {
@@ -510,6 +538,7 @@ model User {
   name                      String?
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
+  imageUrl                  String?
   twoFactorSecret           String?
   twoFactorEnabled          Boolean          @default(false)
   backupCodes               String?
@@ -529,6 +558,8 @@ model User {
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
+
+  @@index([email])
 }
 
 model ShortUrl {

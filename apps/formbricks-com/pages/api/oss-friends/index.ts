@@ -128,6 +128,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://requestly.io",
         },
         {
+          name: "Revert",
+          description: "The open-source unified API to build B2B integrations remarkably fast",
+          href: "https://revert.dev",
+        },
+        {
           name: "Rivet",
           description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",

@@ -193,6 +193,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
+      { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
     ],
   },
   {
@@ -226,10 +227,11 @@ export const navigation: Array<NavGroup> = [
   {
     title: "Integrations",
     links: [
-      { title: "Zapier", href: "/docs/integrations/zapier" },
-      { title: "n8n", href: "/docs/integrations/n8n" },
-      { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "Airtable", href: "/docs/integrations/airtable" },
       { title: "Google Sheets", href: "/docs/integrations/google-sheets" },
+      { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
   },
   {
