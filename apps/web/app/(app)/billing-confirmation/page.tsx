@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import ConfirmationPage from "./components/ConfirmationPage";
 
 export default function BillingConfirmation({ searchParams }) {
