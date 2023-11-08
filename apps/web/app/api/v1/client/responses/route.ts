@@ -33,7 +33,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     survey = await getSurvey(responseInput.surveyId);
     if (!survey) {
-      throw new Error("Survey not found");
+      return responses.notFoundResponse("Survey", responseInput.surveyId);
     }
   } catch (error) {
     if (error instanceof InvalidInputError) {
