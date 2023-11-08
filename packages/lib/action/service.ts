@@ -213,7 +213,9 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
   });
 
   // revalidateTag(sessionId)
-  revalidateTag(personId);
+  if (personId) {
+    revalidateTag(personId);
+  }
   actionCache.revalidate({
     environmentId,
   });

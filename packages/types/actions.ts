@@ -13,8 +13,8 @@ export type TAction = z.infer<typeof ZAction>;
 
 export const ZActionInput = z.object({
   environmentId: z.string().cuid2(),
-  personId: z.string(),
-  sessionId: z.string().cuid2().optional(),
+  personId: z.string().optional(),
+  sessionId: z.string().optional(),
   name: z.string(),
   properties: z.record(z.string()),
 });

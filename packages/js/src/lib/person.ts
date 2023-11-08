@@ -1,4 +1,4 @@
-import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/js";
+import { TJsPeopleAttributeInput, TJsState } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
 import { Config } from "./config";
 import {
