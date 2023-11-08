@@ -12,8 +12,6 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-import { sync } from "./sync";
-import { trackAction } from "./actions";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();

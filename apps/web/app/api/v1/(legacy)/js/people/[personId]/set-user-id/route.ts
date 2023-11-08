@@ -1,4 +1,4 @@
-import { getUpdatedState } from "@/app/api/v1/js/lib/sync";
+import { getUpdatedState } from "@/app/api/v1/(legacy)/js/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { prisma } from "@formbricks/database";
@@ -37,7 +37,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const { environmentId, userId } = inputValidation.data;
 
-    if (personId === "anonymous") {
+    if (!personId) {
       const person = await getOrCreatePersonByUserId(userId, environmentId);
 
       personCache.revalidate({

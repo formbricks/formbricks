@@ -69,7 +69,7 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
     const syncResult = await syncWithBackend(params);
     if (syncResult?.ok !== true) {
       logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
-      return;
+      throw syncResult.error;
     }
 
     const state = syncResult.value;
@@ -113,6 +113,7 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
     }
   } catch (error) {
     logger.error(`Error during sync: ${error}`);
+    throw error;
   }
 };
 

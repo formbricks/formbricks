@@ -98,7 +98,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         });
         const res = await api.client.display.create({
           surveyId: survey.id,
-          personId: config.get().state.person?.id,
+          userId: config.get().state.person?.userId,
         });
         if (!res.ok) {
           throw new Error("Could not create display");

@@ -4,16 +4,25 @@ import { createAction } from "@formbricks/lib/action/service";
 import { ZActionInput } from "@formbricks/types/actions";
 import { NextResponse } from "next/server";
 
+interface Context {
+  params: {
+    environmentId: string;
+  };
+}
+
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+export async function POST(req: Request, context: Context): Promise<NextResponse> {
   try {
     const jsonInput = await req.json();
 
     // validate using zod
-    const inputValidation = ZActionInput.safeParse(jsonInput);
+    const inputValidation = ZActionInput.safeParse({
+      ...jsonInput,
+      environmentId: context.params.environmentId,
+    });
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -23,23 +32,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, name, properties, personId } = inputValidation.data;
-
-    // hotfix: don't create action for "Exit Intent (Desktop)", 50% Scroll events
-    if (["Exit Intent (Desktop)", "50% Scroll"].includes(name)) {
-      return responses.successResponse({}, true);
-    }
-
-    if (!personId?.length && name === "New Session") {
-      return responses.successResponse({}, true);
-    }
-
-    await createAction({
-      environmentId,
-      personId,
-      name,
-      properties,
-    });
+    await createAction(inputValidation.data);
 
     return responses.successResponse({}, true);
   } catch (error) {

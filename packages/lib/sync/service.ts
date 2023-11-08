@@ -1,14 +1,13 @@
-import { getSyncSurveysCached } from "../survey/service";
-import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "../constants";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TJsState } from "@formbricks/types/js";
 import { getActionClasses } from "../actionClass/service";
+import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "../constants";
 import { getEnvironment } from "../environment/service";
 import { getPerson } from "../person/service";
 import { getProductByEnvironmentId } from "../product/service";
-import { captureTelemetry } from "../telemetry";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TJsState } from "@formbricks/types/js";
-import { getSurveys } from "../survey/service";
+import { getSyncSurveysCached } from "../survey/service";
 import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "../team/service";
+import { captureTelemetry } from "../telemetry";
 
 const captureNewSessionTelemetry = async (jsVersion?: string): Promise<void> => {
   await captureTelemetry("state update", { jsVersion: jsVersion ?? "unknown" });

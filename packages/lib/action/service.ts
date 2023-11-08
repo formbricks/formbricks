@@ -7,12 +7,13 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
+import { getPersonByUserId } from "../person/service";
 
 export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
   const action = await unstable_cache(
@@ -179,11 +180,17 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
 
-  const { environmentId, name, properties, personId } = data;
+  const { environmentId, name, properties, userId } = data;
 
   let actionType: TActionClassType = "code";
   if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
     actionType = "automatic";
+  }
+
+  const person = await getPersonByUserId(userId, environmentId);
+
+  if (!person) {
+    throw new Error("Person not found");
   }
 
   let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
@@ -201,7 +208,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
       properties,
       person: {
         connect: {
-          id: personId,
+          id: person.id,
         },
       },
       actionClass: {
@@ -212,10 +219,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     },
   });
 
-  // revalidateTag(sessionId)
-  if (personId) {
-    revalidateTag(personId);
-  }
   actionCache.revalidate({
     environmentId,
   });

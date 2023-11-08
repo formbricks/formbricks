@@ -1,20 +1,28 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { InvalidInputError } from "@formbricks/types/errors";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createDisplay } from "@formbricks/lib/display/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
+import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { TDisplay, ZDisplayCreateInput } from "@formbricks/types/displays";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { NextResponse } from "next/server";
+
+interface Context {
+  params: {
+    environmentId: string;
+  };
+}
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const jsonInput: unknown = await request.json();
-  const inputValidation = ZDisplayCreateInput.safeParse(jsonInput);
+export async function POST(request: Request, context: Context): Promise<NextResponse> {
+  const jsonInput = await request.json();
+  const inputValidation = ZDisplayCreateInput.safeParse({
+    ...jsonInput,
+    environmentId: context.params.environmentId,
+  });
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -24,40 +32,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const { surveyId, responseId } = inputValidation.data;
-  let { personId } = inputValidation.data;
-
-  // check if personId is anonymous
-  if (personId === "anonymous") {
-    // remove this from the request
-    personId = undefined;
-  }
-
-  // find environmentId from surveyId
-  let survey;
-
-  try {
-    survey = await getSurvey(surveyId);
-  } catch (error) {
-    if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
-    } else {
-      console.error(error);
-      return responses.internalServerErrorResponse(error.message);
-    }
-  }
-
   // find teamId & teamOwnerId from environmentId
-  const teamDetails = await getTeamDetails(survey.environmentId);
+  const teamDetails = await getTeamDetails(inputValidation.data.environmentId);
 
   // create display
   let display: TDisplay;
   try {
-    display = await createDisplay({
-      surveyId,
-      personId,
-      responseId,
-    });
+    display = await createDisplay(inputValidation.data);
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
@@ -68,9 +49,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId, {
-      surveyId,
-    });
+    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId);
   } else {
     console.warn("Posthog capture not possible. No team owner found");
   }

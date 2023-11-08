@@ -14,13 +14,13 @@ export const trackAction = async (
 ): Promise<Result<void, NetworkError>> => {
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
-    personId: config.get().state?.person?.id || "",
+    userId: config.get().state?.person?.userId,
     name,
     properties: properties || {},
   };
 
   // don't send actions to the backend if the person is not identified
-  if (config.get().state?.person?.id && !intentsToNotCreateOnApp.includes(name)) {
+  if (config.get().state?.person?.userId && !intentsToNotCreateOnApp.includes(name)) {
     const res = await fetch(`${config.get().apiHost}/api/v1/client/actions`, {
       method: "POST",
       headers: {

@@ -11,7 +11,15 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+interface Context {
+  params: {
+    environmentId: string;
+  };
+}
+
+export async function POST(req: NextRequest, context: Context): Promise<NextResponse> {
+  const environmentId = context.params.environmentId;
+
   const accessType = "private"; // private files are accessible only by authorized users
   const headersList = headers();
 
@@ -47,15 +55,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return responses.unauthorizedResponse();
   }
 
-  const survey = await getSurvey(surveyId);
+  const [survey, team] = await Promise.all([getSurvey(surveyId), getTeamByEnvironmentId(environmentId)]);
 
   if (!survey) {
     return responses.notFoundResponse("Survey", surveyId);
   }
-
-  const { environmentId } = survey;
-
-  const team = await getTeamByEnvironmentId(environmentId);
 
   if (!team) {
     return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
