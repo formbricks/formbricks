@@ -319,39 +319,6 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
   return transformPrismaPerson(personPrisma);
 };
 
-export const getMonthlyActivePeopleCount = async (environmentId: string): Promise<number> =>
-  await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const personAggregations = await prisma.person.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          environmentId,
-          sessions: {
-            some: {
-              createdAt: {
-                gte: firstDayOfMonth,
-              },
-            },
-          },
-        },
-      });
-
-      return personAggregations._count.id;
-    },
-    [`getMonthlyActivePeopleCount-${environmentId}`],
-    {
-      tags: [personCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
 export const updatePersonAttribute = async (
   personId: string,
   attributeClassId: string,
