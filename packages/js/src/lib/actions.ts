@@ -19,6 +19,7 @@ export const trackAction = async (
     properties: properties || {},
   };
 
+  // don't send actions to the backend if the person is not identified
   if (config.get().state?.person?.id && !intentsToNotCreateOnApp.includes(name)) {
     const res = await fetch(`${config.get().apiHost}/api/v1/client/actions`, {
       method: "POST",
@@ -34,7 +35,7 @@ export const trackAction = async (
 
       return err({
         code: "network_error",
-        message: `Error tracking event: ${JSON.stringify(error)}`,
+        message: `Error tracking action: ${JSON.stringify(error)}`,
         status: res.status,
         url: res.url,
         responseMessage: error.message,
@@ -42,7 +43,7 @@ export const trackAction = async (
     }
   }
 
-  logger.debug(`Formbricks: Event "${name}" tracked`);
+  logger.debug(`Formbricks: Action "${name}" tracked`);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = config.get().state?.surveys;

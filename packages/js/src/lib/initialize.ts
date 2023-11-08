@@ -89,7 +89,7 @@ export const initialize = async (
   }
 
   logger.debug("Adding event listeners");
-  addEventListeners(c.debug);
+  addEventListeners();
   addCleanupEventListeners();
 
   isInitialized = true;

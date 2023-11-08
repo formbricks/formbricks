@@ -167,11 +167,16 @@ export const filterPublicSurveys = (state: TJsState): TJsState => {
   };
 };
 
-export const addSyncEventListener = (debug: boolean = false): void => {
-  const updateInterval = debug ? 1000 * 60 : 1000 * 60 * 5; // 5 minutes in production, 1 minute in debug mode
+export const addExpiryCheckListener = (): void => {
+  const updateInterval = 1000 * 60; // every minute
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {
     syncIntervalId = window.setInterval(async () => {
+      // check if the config has not expired yet
+      if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
+        logger.debug("Config has not expired yet. Skipping sync.");
+        return;
+      }
       await sync({
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
@@ -182,7 +187,7 @@ export const addSyncEventListener = (debug: boolean = false): void => {
   }
 };
 
-export const removeSyncEventListener = (): void => {
+export const removeExpiryCheckListener = (): void => {
   if (typeof window !== "undefined" && syncIntervalId !== null) {
     window.clearInterval(syncIntervalId);
 

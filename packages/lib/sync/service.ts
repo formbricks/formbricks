@@ -95,31 +95,3 @@ export const getUpdatedState = async (
 
   return state;
 };
-
-export const getPublicUpdatedState = async (environmentId: string): Promise<TJsState> => {
-  // check if environment exists
-  const environment = await getEnvironment(environmentId);
-
-  if (!environment) {
-    throw new Error("Environment does not exist");
-  }
-
-  const [surveys, noCodeActionClasses, product] = await Promise.all([
-    getSurveys(environmentId),
-    getActionClasses(environmentId),
-    getProductByEnvironmentId(environmentId),
-  ]);
-
-  if (!product) {
-    throw new Error("Product not found");
-  }
-
-  const state: TJsState = {
-    surveys,
-    noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-    product,
-    person: null,
-  };
-
-  return state;
-};

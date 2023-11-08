@@ -75,60 +75,10 @@ export const hasAttributeKey = (key: string): boolean => {
   return false;
 };
 
-export const setPersonUserId = async (
-  userId: string | number
-): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
-  const existingPerson = config.get().state.person?.id;
-  const environmentId = config.get().environmentId;
-  const url = `${config.get().apiHost}/api/v1/client/in-app/${environmentId}/${userId}`;
-
-  if (existingPerson) {
-    logger.debug("userId already set. Skipping update.");
-    return okVoid();
-  }
-
-  logger.debug("setting userId: " + userId);
-
-  const personRes = await fetch(url, {
-    method: "POST",
-    body: JSON.stringify({
-      environmentId,
-      userId,
-    }),
-  });
-
-  const jsonRes = (await personRes.json()) as { data: TJsState };
-
-  config.update({
-    apiHost: config.get().apiHost,
-    environmentId: config.get().environmentId,
-    state: jsonRes.data,
-  });
-
-  logger.debug("Syncing with backend");
-
-  await sync({
-    apiHost: config.get().apiHost,
-    environmentId: config.get().environmentId,
-    userId: jsonRes.data.person?.userId,
-  });
-
-  // check if attribute already exists with this value
-  // if (hasAttributeValue("userId", userId.toString())) {
-  //   logger.debug("userId already set to this value. Skipping update.");
-  //   return okVoid();
-  // }
-
-  // if (hasAttributeKey("userId")) {
-  //   return err({
-  //     code: "attribute_already_exists",
-  //     message: "userId cannot be changed after it has been set. You need to reset first",
-  //   });
-  // }
-
-  // track the new session event after setting the userId
-
-  trackAction("New Session");
+export const setPersonUserId = async (): Promise<
+  Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>
+> => {
+  logger.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
   return okVoid();
 };
 

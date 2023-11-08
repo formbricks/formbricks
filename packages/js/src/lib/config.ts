@@ -1,4 +1,4 @@
-import { TJsConfig } from "@formbricks/types/js";
+import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { Result, err, ok, wrapThrows } from "./errors";
 
 export const LOCAL_STORAGE_KEY = "formbricks-js";
@@ -14,15 +14,14 @@ export class Config {
     return Config.instance;
   }
 
-  public update(newConfig: TJsConfig): void {
+  public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
-      const expirationTime = new Date();
-      expirationTime.setHours(expirationTime.getHours() + 1);
+      const expiresAt = new Date(new Date().getTime() + 15 * 60000); // 15 minutes in the future
 
       this.config = {
         ...this.config,
         ...newConfig,
-        expirationTime,
+        expiresAt,
       };
 
       this.saveToLocalStorage();
@@ -46,7 +45,7 @@ export class Config {
         const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
 
         // check if the config has expired
-        if (parsedConfig.expirationTime && new Date(parsedConfig.expirationTime) <= new Date()) {
+        if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
           return err(new Error("Config in local storage has expired"));
         }
 
