@@ -54,7 +54,7 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
-    AIR_TABLE_CLIENT_ID: z.string().optional(),
+    AIRTABLE_CLIENT_ID: z.string().optional(),
     AWS_ACCESS_KEY: z.string().optional(),
     AWS_SECRET_KEY: z.string().optional(),
     S3_ACCESS_KEY: z.string().optional(),
@@ -139,7 +139,7 @@ export const env = createEnv({
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
-    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
   },
 });

@@ -47,7 +47,7 @@ export const GOOGLE_SHEETS_CLIENT_ID = process.env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = process.env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = process.env.GOOGLE_SHEETS_REDIRECT_URL;
 
-export const AIR_TABLE_CLIENT_ID = process.env.AIR_TABLE_CLIENT_ID;
+export const AIRTABLE_CLIENT_ID = process.env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = process.env.SMTP_HOST;
 export const SMTP_PORT = process.env.SMTP_PORT;
