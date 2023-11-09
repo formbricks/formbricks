@@ -70,7 +70,8 @@ export const initialize = async (
     localConfigResult.value.state &&
     localConfigResult.value.environmentId === c.environmentId &&
     localConfigResult.value.apiHost === c.apiHost &&
-    localConfigResult.value.state?.person?.userId === c.userId
+    localConfigResult.value.state?.person?.userId === c.userId &&
+    localConfigResult.value.expiresAt // only accept config when they follow new config version with expiresAt
   ) {
     logger.debug("Found existing configuration.");
     if (localConfigResult.value.expiresAt < new Date()) {
