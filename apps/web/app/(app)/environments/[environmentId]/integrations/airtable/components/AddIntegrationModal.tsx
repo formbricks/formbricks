@@ -351,7 +351,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                                     : field.onChange(field.value?.filter((value) => value !== question.id));
                                 }}
                               />
-                              <span className="ml-2">{question.headline}</span>
+                              <span className="ml-2">{question.headline.default}</span>
                             </label>
                           </div>
                         )}

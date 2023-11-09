@@ -31,14 +31,32 @@ interface SummaryListProps {
   responsesPerPage: number;
 }
 
+const checkForI18n = (response: TResponse, id, survey: TSurvey) => {
+  const language = response.language ?? "default";
+  const question: TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion =
+    survey.questions.find((question) => question.id === id);
+  if (question?.type === "multipleChoiceMulti") {
+    let choiceValues = [] as string[];
+    (response.data[id] as string[]).forEach((data) => {
+      choiceValues.push(question.choices.find((choice) => choice.label[language] === data)?.label.default);
+    });
+    return choiceValues;
+  }
+  return question.choices.find((choice) => choice.label[language] === response.data[id])?.label.default;
+};
+
 export default function SummaryList({ environment, survey, responses, responsesPerPage }: SummaryListProps) {
   const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
+      console.log(responses);
       const questionResponses = responses
         .filter((response) => question.id in response.data)
         .map((r) => ({
           id: r.id,
-          value: r.data[question.id],
+          value:
+            question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti"
+              ? checkForI18n(r, question.id, survey)
+              : r.data[question.id],
           updatedAt: r.updatedAt,
           person: r.person,
         }));

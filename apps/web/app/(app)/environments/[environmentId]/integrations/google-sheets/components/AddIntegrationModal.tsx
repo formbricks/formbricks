@@ -284,7 +284,7 @@ export default function AddIntegrationModal({
                                 handleCheckboxChange(question.id);
                               }}
                             />
-                            <span className="ml-2">{question.headline}</span>
+                            <span className="ml-2">{question.headline.default}</span>
                           </label>
                         </div>
                       ))}

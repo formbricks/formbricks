@@ -31,7 +31,7 @@ export default function MultipleChoiceMultiQuestion({
   language,
 }: MultipleChoiceMultiProps) {
   const getChoicesWithoutOtherLabels = useCallback(
-    () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
+    () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label[language]),
     [question]
   );
 
@@ -88,9 +88,11 @@ export default function MultipleChoiceMultiQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        console.log(value);
         const newValue = (value as string[])?.filter((item) => {
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
+        console.log(newValue);
         onChange({ [question.id]: newValue });
         onSubmit({ [question.id]: newValue });
       }}
@@ -139,12 +141,12 @@ export default function MultipleChoiceMultiQuestion({
                     aria-labelledby={`${choice.id}-label`}
                     onChange={(e) => {
                       if ((e.target as HTMLInputElement)?.checked) {
-                        addItem(choice.label);
+                        addItem(choice.label[language]);
                       } else {
-                        removeItem(choice.label);
+                        removeItem(choice.label[language]);
                       }
                     }}
-                    checked={Array.isArray(value) && value.includes(choice.label)}
+                    checked={Array.isArray(value) && value.includes(choice.label[language])}
                     style={{ borderColor: brandColor, color: brandColor }}
                     required={
                       question.required && Array.isArray(value) && value.length ? false : question.required
