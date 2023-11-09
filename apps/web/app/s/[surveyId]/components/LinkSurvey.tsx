@@ -84,8 +84,8 @@ export default function LinkSurvey({
     }
   }, []);
 
-  const hiddenFieldsRecord = useMemo(() => {
-    const fieldsRecord = {};
+  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
+    const fieldsRecord: Record<string, string | number | string[]> = {};
     let fieldsSet = false;
 
     survey.hiddenFields?.fieldIds?.forEach((field) => {
