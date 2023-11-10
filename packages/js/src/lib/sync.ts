@@ -175,9 +175,9 @@ export const addExpiryCheckListener = (): void => {
     syncIntervalId = window.setInterval(async () => {
       // check if the config has not expired yet
       if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
-        logger.debug("Config has not expired yet. Skipping sync.");
         return;
       }
+      logger.debug("Config has expired. Starting sync.");
       await sync({
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,

@@ -15,7 +15,6 @@ export class ResponseAPI {
   }
 
   async create(responseInput: TResponseInput): Promise<Result<TResponse, NetworkError | Error>> {
-    console.log(this);
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses`, "POST", responseInput);
   }
 
