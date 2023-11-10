@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
+import { responses } from "@/app/lib/api/response";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import crypto from "crypto";
 
-import { AIR_TABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
+import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
@@ -13,23 +14,22 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!environmentId) {
-    return NextResponse.json({ Error: "environmentId is missing" }, { status: 400 });
+    return responses.badRequestResponse("environmentId is missing");
   }
 
   if (!session) {
-    return NextResponse.json({ Error: "Invalid session" }, { status: 400 });
+    return responses.notAuthenticatedResponse();
   }
 
   const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user.id, environmentId);
   if (!canUserAccessEnvironment) {
-    return NextResponse.json({ Error: "You dont have access to environment" }, { status: 401 });
+    return responses.unauthorizedResponse();
   }
 
-  const client_id = AIR_TABLE_CLIENT_ID;
+  const client_id = AIRTABLE_CLIENT_ID;
   const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
-  if (!client_id) return NextResponse.json({ Error: "Airtable client id is missing" }, { status: 400 });
-  if (!redirect_uri) return NextResponse.json({ Error: "Airtable redirect url is missing" }, { status: 400 });
-
+  if (!client_id) return responses.internalServerErrorResponse("Airtable client id is missing");
+  if (!redirect_uri) return responses.internalServerErrorResponse("Airtable redirect url is missing");
   const codeVerifier = Buffer.from(environmentId + session.user.id + environmentId).toString("base64");
 
   const codeChallengeMethod = "S256";
@@ -51,5 +51,5 @@ export async function GET(req: NextRequest) {
   authUrl.searchParams.append("code_challenge_method", codeChallengeMethod);
   authUrl.searchParams.append("code_challenge", codeChallenge);
 
-  return NextResponse.json({ authUrl: authUrl.toString() }, { status: 200 });
+  return responses.successResponse({ authUrl: authUrl.toString() });
 }
