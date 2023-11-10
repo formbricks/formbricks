@@ -39,8 +39,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
       if (selectedRole) {
         try {
           setIsUpdating(true);
-          const updatedProfile = { ...profile, role: selectedRole.id };
-          await updateProfileAction(updatedProfile);
+          await updateProfileAction({ role: selectedRole.id });
           setIsUpdating(false);
         } catch (e) {
           setIsUpdating(false);
