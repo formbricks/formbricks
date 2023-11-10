@@ -13,7 +13,7 @@ import {
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
 import { Prisma } from "@prisma/client";
-import { AIR_TABLE_CLIENT_ID } from "../constants";
+import { AIRTABLE_CLIENT_ID } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
 
 interface ConnectAirtableOptions {
@@ -90,12 +90,11 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   });
 
   const tokenRes: unknown = await tokenReq.json();
-
   const parsedToken = ZIntegrationAirtableTokenSchema.safeParse(tokenRes);
 
   if (!parsedToken.success) {
-    throw new Error("invalid token format");
-    return;
+    console.error(parsedToken.error);
+    throw new Error(parsedToken.error.message);
   }
   const { access_token, refresh_token, expires_in } = parsedToken.data;
   const expiry_date = new Date();
@@ -123,7 +122,7 @@ export const getAirtableToken = async (environmentId: string) => {
     const currentDate = new Date();
 
     if (currentDate >= expiryDate) {
-      const client_id = AIR_TABLE_CLIENT_ID;
+      const client_id = AIRTABLE_CLIENT_ID;
 
       const newToken = await fetchAirtableAuthToken({
         grant_type: "refresh_token",

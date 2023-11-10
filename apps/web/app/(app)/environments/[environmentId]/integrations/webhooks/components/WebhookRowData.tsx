@@ -1,4 +1,4 @@
-import { capitalizeFirstLetter } from "@/app/lib/utils";
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TWebhook } from "@formbricks/types/webhooks";

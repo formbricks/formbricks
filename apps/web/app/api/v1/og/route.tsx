@@ -1,4 +1,7 @@
-import { ImageResponse, NextRequest } from "next/server";
+import { ImageResponse } from "@vercel/og";
+import { NextRequest } from "next/server";
+/* import { NextRequest } from "next/server";
+import { ImageResponse } from "next/og"; */
 // App router includes @vercel/og.
 // No need to install it.
 

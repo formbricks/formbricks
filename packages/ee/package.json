@@ -10,12 +10,14 @@
     "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
+    "@formbricks/lib": "*",
     "@formbricks/tsconfig": "*",
     "@formbricks/types": "*",
+    "@formbricks/ui": "*",
     "eslint-config-formbricks": "workspace:*"
   },
   "dependencies": {
-    "@formbricks/database": "workspace:*",
+    "@formbricks/lib": "workspace:*",
     "stripe": "^14.0.0"
   }
 }

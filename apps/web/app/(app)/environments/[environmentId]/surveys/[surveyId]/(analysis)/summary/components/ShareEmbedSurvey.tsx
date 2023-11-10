@@ -17,7 +17,7 @@ interface ShareEmbedSurveyProps {
   survey: TSurvey;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
 }
@@ -25,11 +25,11 @@ export default function ShareEmbedSurvey({
   survey,
   open,
   setOpen,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
 }: ShareEmbedSurveyProps) {
-  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
+  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
   const { email } = profile;
   const { brandColor } = product;
@@ -45,7 +45,7 @@ export default function ShareEmbedSurvey({
 
   const componentMap = {
     link: isSingleUseLinkSurvey ? (
-      <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={surveyBaseUrl} />
+      <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={webAppUrl} />
     ) : (
       <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={surveyBrandColor} />
     ),

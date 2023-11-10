@@ -10,7 +10,7 @@ import { Prisma } from "@prisma/client";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getSessionCached } from "../session/service";
+import { getSession } from "../session/service";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
@@ -68,6 +68,54 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
         createdAt: new Date(action.createdAt),
       }
     : action;
+};
+
+export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
+  const actions = await unstable_cache(
+    async () => {
+      validateInputs([personId, ZId], [page, ZOptionalNumber]);
+
+      const actionsPrisma = await prisma.event.findMany({
+        where: {
+          session: {
+            personId: personId,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+        include: {
+          eventClass: true,
+        },
+      });
+
+      const actions: TAction[] = [];
+      // transforming response to type TAction[]
+      actionsPrisma.forEach((action) => {
+        actions.push({
+          id: action.id,
+          createdAt: action.createdAt,
+          sessionId: action.sessionId,
+          properties: action.properties,
+          actionClass: action.eventClass,
+        });
+      });
+      return actions;
+    },
+    [`getActionsByPersonId-${personId}-${page}`],
+    {
+      tags: [actionCache.tag.byPersonId(personId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  // Deserialize dates if caching does not support deserialization
+  return actions.map((action) => ({
+    ...action,
+    createdAt: new Date(action.createdAt),
+  }));
 };
 
 export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
@@ -136,7 +184,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     eventType = "automatic";
   }
 
-  const session = await getSessionCached(sessionId);
+  const session = await getSession(sessionId);
 
   if (!session) {
     throw new ResourceNotFoundError("Session", sessionId);

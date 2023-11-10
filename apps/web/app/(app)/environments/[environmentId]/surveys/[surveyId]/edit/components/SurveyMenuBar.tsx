@@ -366,7 +366,7 @@ export default function SurveyMenuBar({
             router.back();
           }}
           text="You have unsaved changes in your survey. Would you like to save them before leaving?"
-          useSaveInsteadOfCancel={true}
+          confirmButtonLabel="Save"
           onSave={() => saveSurveyAction(true)}
         />
       </div>

@@ -9,6 +9,7 @@ import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -27,14 +28,18 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  let survey;
+  let survey: TSurvey | null;
 
   try {
     survey = await getSurvey(responseInput.surveyId);
+    if (!survey) {
+      return responses.notFoundResponse("Survey", responseInput.surveyId);
+    }
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -61,6 +66,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }

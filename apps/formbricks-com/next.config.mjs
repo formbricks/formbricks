@@ -132,7 +132,7 @@ const nextConfig = {
       },
       {
         source: "/launch",
-        destination: "https://www.producthunt.com/products/formbricks",
+        destination: "https://www.producthunt.com/posts/formbricks",
         permanent: true,
       },
       {
@@ -146,11 +146,15 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/self-hosting/migrating-to-1.1",
+        destination: "/docs/self-hosting/migration-guide",
+        permanent: true,
+      },
+      {
         source: "/cla",
         destination: "https://formbricks.com/clmyhzfrymr4ko00hycsg1tvx",
         permanent: true,
       },
-      
     ];
   },
   async rewrites() {

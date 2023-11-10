@@ -123,7 +123,7 @@ export default function PreviewSurvey({
   useEffect(() => {
     // close modal if there are no questions left
     if (survey.type === "web" && !survey.thankYouCard.enabled) {
-      if (activeQuestionId === "thank-you-card") {
+      if (activeQuestionId === "end") {
         setIsModalOpen(false);
         setTimeout(() => {
           setActiveQuestionId(survey.questions[0].id);

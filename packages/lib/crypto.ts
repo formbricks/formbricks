@@ -5,6 +5,7 @@ import { ENCRYPTION_KEY } from "./constants";
 const ALGORITHM = "aes256";
 const INPUT_ENCODING = "utf8";
 const OUTPUT_ENCODING = "hex";
+const BUFFER_ENCODING = ENCRYPTION_KEY!.length === 32 ? "latin1" : "hex";
 const IV_LENGTH = 16; // AES blocksize
 
 /**
@@ -15,7 +16,7 @@ const IV_LENGTH = 16; // AES blocksize
  * @returns Encrypted value using key
  */
 export const symmetricEncrypt = function (text: string, key: string) {
-  const _key = Buffer.from(key, "latin1");
+  const _key = Buffer.from(key, BUFFER_ENCODING);
   const iv = crypto.randomBytes(IV_LENGTH);
 
   const cipher = crypto.createCipheriv(ALGORITHM, _key, iv);
@@ -32,7 +33,7 @@ export const symmetricEncrypt = function (text: string, key: string) {
  * @param key Key used to decrypt value must be 32 bytes for AES256 encryption algorithm
  */
 export const symmetricDecrypt = function (text: string, key: string) {
-  const _key = Buffer.from(key, "latin1");
+  const _key = Buffer.from(key, BUFFER_ENCODING);
 
   const components = text.split(":");
   const iv_from_ciphertext = Buffer.from(components.shift() || "", OUTPUT_ENCODING);
@@ -68,7 +69,7 @@ export function generateLocalSignedUrl(
   const uuid = randomBytes(16).toString("hex");
   const timestamp = Date.now();
   const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
-  const signature = createHmac("sha256", ENCRYPTION_KEY).update(data).digest("hex");
+  const signature = createHmac("sha256", ENCRYPTION_KEY!).update(data).digest("hex");
   return { signature, uuid, timestamp };
 }
 
