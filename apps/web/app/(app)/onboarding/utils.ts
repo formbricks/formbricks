@@ -21,14 +21,14 @@ export const handleTabNavigation = (fieldsetRef, setSelectedChoice) => (event) =
     firstRadioButton.focus();
     setSelectedChoice(firstRadioButton.value);
     return;
-  } else {
-    const focusedIndex = Array.from(radioButtons).indexOf(focusedRadioButton);
-    const lastIndex = radioButtons.length - 1;
-
-    // Calculate the next index, considering wrapping from the last to the first element
-    const nextIndex = focusedIndex === lastIndex ? 0 : focusedIndex + 1;
-    const nextRadioButton = radioButtons[nextIndex] as HTMLInputElement;
-    nextRadioButton.focus();
-    setSelectedChoice(nextRadioButton.value);
   }
+
+  const focusedIndex = Array.from(radioButtons).indexOf(focusedRadioButton);
+  const lastIndex = radioButtons.length - 1;
+
+  // Calculate the next index, considering wrapping from the last to the first element
+  const nextIndex = focusedIndex === lastIndex ? 0 : focusedIndex + 1;
+  const nextRadioButton = radioButtons[nextIndex] as HTMLInputElement;
+  nextRadioButton.focus();
+  setSelectedChoice(nextRadioButton.value);
 };
