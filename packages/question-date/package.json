@@ -20,7 +20,7 @@
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.31",
     "preact": "^10.18.1",
-    "react-calendar": "4.6.1",
+    "react-date-picker": "^10.5.2",
     "tailwindcss": "^3.3.3",
     "terser": "^5.22.0",
     "typescript": "^5.2.2",

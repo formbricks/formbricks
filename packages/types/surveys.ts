@@ -293,7 +293,6 @@ export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Date),
   html: z.string().optional(),
   label: z.string(),
-  dateSubmitted: z.string(),
 });
 
 export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;

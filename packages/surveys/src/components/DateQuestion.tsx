@@ -26,9 +26,11 @@ export default function DateQuestion({
   isFirstQuestion,
   isLastQuestion,
   brandColor,
+  onChange,
 }: IDateQuestionProps) {
+  console.log({ value });
   const [datePickerOpen, _setDatePickerOpen] = useState(true);
-  const [date, setDate] = useState(new Date());
+  const defaultDate = value ? new Date(value as string) : new Date();
 
   useEffect(() => {
     // Check if the DatePicker has already been loaded
@@ -46,16 +48,22 @@ export default function DateQuestion({
       script.onload = () => {
         // Initialize the DatePicker once the script is loaded
         // @ts-expect-error
-        window.initDatePicker(document.getElementById("date-pick"));
+        window.initDatePicker(document.getElementById("date-pick"), defaultDate);
       };
 
       return () => {
         document.body.removeChild(script);
       };
     } else {
-      // If already loaded, just initialize
+      // If already loaded, remove the date picker and re-initialize it
+
+      const datePickerContainer = document.getElementById("datePickerContainer");
+      if (datePickerContainer) {
+        datePickerContainer.remove();
+      }
+
       // @ts-ignore
-      window.initDatePicker(document.getElementById("date-pick"));
+      window.initDatePicker(document.getElementById("date-pick"), defaultDate);
     }
 
     return () => {};
@@ -65,32 +73,21 @@ export default function DateQuestion({
     window.addEventListener("dateChange", (e) => {
       // @ts-expect-error
       const date = e.detail as Date;
-      setDate(date);
+
+      onChange({ [question.id]: date.toISOString() });
     });
   }, []);
-
-  // sync the date with the date picker
-  useEffect(() => {
-    // @ts-expect-error
-    window.selectedDate = date;
-  }, [date]);
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        //  if ( validateInput(value as string, question.inputType, question.required)) {
+        console.log("submit: ", value);
         onSubmit({ [question.id]: value });
-        // }
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-
-      <h1 className="my-4">
-        {/* @ts-ignore */}
-        You Selected: {date?.toLocaleDateString()}
-      </h1>
 
       <div className="mt-4" id="date-pick"></div>
 
@@ -103,7 +100,6 @@ export default function DateQuestion({
             }}
           />
         )}
-        <div></div>
         <SubmitButton
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}

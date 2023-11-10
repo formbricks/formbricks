@@ -4,6 +4,7 @@ import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
@@ -19,25 +20,19 @@ export default function DateQuestionForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  localSurvey,
 }: IDateQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
-
+      <QuestionFormInput
+        environmentId={localSurvey.environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
       <div className="mt-3">
         {showSubheader && (
           <>
@@ -66,8 +61,7 @@ export default function DateQuestionForm({
           </Button>
         )}
       </div>
-
-      <div className="mt-3">{/* Date Picker component */}</div>
+      <div className="mt-2"></div>
     </form>
   );
 }
