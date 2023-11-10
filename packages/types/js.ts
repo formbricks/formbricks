@@ -13,7 +13,7 @@ export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 export const ZJSStateDisplay = z.object({
   createdAt: z.date(),
   surveyId: z.string().cuid(),
-  responseId: z.string().cuid().nullable(),
+  responded: z.boolean(),
 });
 
 export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
