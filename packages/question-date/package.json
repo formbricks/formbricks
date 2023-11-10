@@ -16,14 +16,14 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.6.0",
-    "eslint-config-formbricks": "workspace:*",
     "autoprefixer": "^10.4.16",
-    "react-date-picker": "^10.5.1",
+    "eslint-config-formbricks": "workspace:*",
+    "postcss": "^8.4.31",
     "preact": "^10.18.1",
+    "react-calendar": "4.6.1",
+    "tailwindcss": "^3.3.3",
     "terser": "^5.22.0",
     "typescript": "^5.2.2",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.3",
     "vite": "^4.4.11"
   }
 }

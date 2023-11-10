@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* margin-bottom: 2em; */
+  width: 180px;
+  /* border: 2px solid #333; */
+  cursor: pointer;
+}
+
+.react-date-picker__inputGroup {
+  display: none;
+}
+
+.react-date-picker__wrapper {
+  display: none;
+}
+
+.date-picker-root [class$="navigation"] {
+  height: 36px;
+  margin-bottom: 0px;
+}
+
+.date-picker-root [class$="navigation"] button {
+  border-radius: 8px;
+}
+
+.date-picker-root [class$="navigation"] button:hover {
+  background: rgb(226 232 240) !important;
+}
+
+.date-picker-root [class$="navigation"] [class$="navigation__label"] {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  color: rgb(100, 116, 139);
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+.react-calendar__month-view__weekdays__weekday > abbr {
+  text-decoration: none;
+}

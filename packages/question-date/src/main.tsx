@@ -1,11 +1,7 @@
 import { render } from "preact";
-import { App } from "./app.tsx";
-import globalCss from "./app.css?inline";
-import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
+import App from "./components/app.tsx";
+import globalCss from "./styles/globals.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
-import "./app.css";
-import "react-date-picker/dist/DatePicker.css";
-import "react-calendar/dist/Calendar.css";
 
 declare global {
   interface Window {
@@ -18,7 +14,7 @@ const addStylesToDom = () => {
   if (document.getElementById("formbricks__question_date_css") === null) {
     const styleElement = document.createElement("style");
     styleElement.id = "formbricks__question_date_css";
-    styleElement.innerHTML = globalCss + datePickerCss + calendarCss;
+    styleElement.innerHTML = globalCss + calendarCss;
     document.head.appendChild(styleElement);
   }
 };

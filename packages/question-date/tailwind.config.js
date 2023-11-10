@@ -1,11 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  important: "#fbjs",
-  darkMode: "class",
-  corePlugins: {
-    preflight: false,
-  },
-  content: ["./src/**/*.{tsx,ts,jsx,js}"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  important: "#dpc",
+  // corePlugins: {
+  //   preflight: false,
+  // },
   theme: {
     extend: {
       zIndex: {
