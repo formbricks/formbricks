@@ -9,6 +9,7 @@ import { TProfile } from "@formbricks/types/profile";
 import { Button } from "@formbricks/ui/Button";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { handleTabNavigation } from "../utils";
 
 type ObjectiveProps = {
   next: () => void;
@@ -38,42 +39,12 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
   const fieldsetRef = useRef<HTMLFieldSetElement>(null);
 
   useEffect(() => {
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") {
-        event.preventDefault();
-        const radioButtons = fieldsetRef.current?.querySelectorAll('input[type="radio"]');
-        if (radioButtons && radioButtons.length > 0) {
-          const focusedRadioButton = fieldsetRef.current?.querySelector(
-            'input[type="radio"]:focus'
-          ) as HTMLInputElement;
-          if (!focusedRadioButton) {
-            // If no radio button is focused, by default the first element will be focused
-            const firstRadioButton = radioButtons[0] as HTMLInputElement;
-            firstRadioButton.focus();
-            setSelectedChoice(firstRadioButton.value);
-          } else {
-            const focusedIndex = Array.from(radioButtons).indexOf(focusedRadioButton);
-            // If the last element is focused, set it back to the first one or change it to the next element
-            if (focusedIndex === radioButtons.length - 1) {
-              const firstRadioButton = radioButtons[0] as HTMLInputElement;
-              firstRadioButton.focus();
-              setSelectedChoice(firstRadioButton.value);
-            } else {
-              const nextRadioButton = radioButtons[focusedIndex + 1] as HTMLInputElement;
-              nextRadioButton.focus();
-              setSelectedChoice(nextRadioButton.value);
-            }
-          }
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeydown);
-
+    const onKeyDown = handleTabNavigation(fieldsetRef, setSelectedChoice);
+    window.addEventListener("keydown", onKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeydown);
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [fieldsetRef, setSelectedChoice]);
 
   const handleNextClick = async () => {
     if (selectedChoice) {
