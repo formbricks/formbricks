@@ -8,35 +8,83 @@ import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { questionTypes } from "@/app/lib/questions";
+import { Button } from "@formbricks/ui/Button";
+import { LightBulbIcon } from "@heroicons/react/24/outline";
+import { BrainIcon } from "@formbricks/ui/icons";
+import { useChat } from "ai/react";
 
 interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
+  surveyId: string;
   responsesPerPage: number;
 }
 
 export default function OpenTextSummary({
   questionSummary,
+  surveyId,
   environmentId,
   responsesPerPage,
 }: OpenTextSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
   const [displayCount, setDisplayCount] = useState(responsesPerPage);
+  const { messages, handleSubmit, isLoading, setInput } = useChat({
+    api: "/api/ai",
+    body: {
+      surveyId,
+    },
+  });
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
 
-        <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
-            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
+        <div className="space-y-2">
+          <div className="flex items-center justify-between space-x-2">
+            <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
+              <div className="flex items-center rounded-lg bg-slate-100 p-2">
+                {questionTypeInfo?.icon && <questionTypeInfo.icon className="mr-2 h-4 w-4" />}
+                {questionTypeInfo?.label || "Unknown Question Type"} Question
+              </div>
+              <div className="flex items-center rounded-lg bg-slate-100 p-2">
+                <InboxStackIcon className="mr-2 h-4 w-4" />
+                {questionSummary.responses.length} Responses
+              </div>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <Button
+                variant="darkCTA"
+                size="sm"
+                loading={isLoading}
+                type="submit"
+                onClick={() => setInput("openTextInsights")}>
+                <BrainIcon className="mr-2 h-4 w-4" />
+                Get Insights with AI
+              </Button>
+            </form>
           </div>
-          <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxStackIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responses.length} Responses
-          </div>
+
+          {messages.length > 0 && (
+            <div className="flex items-center rounded-lg p-2 text-sm font-semibold text-slate-600">
+              <LightBulbIcon className="mr-4 h-6 w-6" />
+              <div className="flex-1">
+                {messages
+                  .filter((message) => message.role === "assistant")
+                  .slice(-1)
+                  .map((m, index) => (
+                    <div key={index}>
+                      {m.content.split("\n").map((line, lineIndex) => (
+                        <React.Fragment key={lineIndex}>
+                          {line}
+                          <br />
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="rounded-b-lg bg-white ">

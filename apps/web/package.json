@@ -30,6 +30,7 @@
     "@sentry/nextjs": "^7.76.0",
     "@t3-oss/env-nextjs": "^0.7.1",
     "@vercel/og": "^0.5.20",
+    "ai": "^2.2.22",
     "bcryptjs": "^2.4.3",
     "encoding": "^0.1.13",
     "framer-motion": "10.16.4",

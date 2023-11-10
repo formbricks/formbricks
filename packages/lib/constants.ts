@@ -6,6 +6,8 @@ import { unstable_cache } from "next/cache";
 export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
+export const OPENAI_REVALIDATION_INTERVAL = 60 * 5; // 5 minutes
+
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
@@ -98,3 +100,5 @@ export const getIsEnterpriseEdition = () =>
     ["isEE"],
     { revalidate: 60 * 60 * 24 }
   )();
+
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
+    "openai": "^4.17.0",
     "stripe": "^14.0.0"
   }
 }

@@ -66,6 +66,7 @@ export default function SummaryList({ environment, survey, responses, responsesP
                 return (
                   <OpenTextSummary
                     key={questionSummary.question.id}
+                    surveyId={survey.id}
                     questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
                     environmentId={environment.id}
                     responsesPerPage={responsesPerPage}
