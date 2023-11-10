@@ -1,10 +1,9 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
-import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
-import { TProfile } from "@formbricks/types/profile";
+import { env } from "@/env.mjs";
+import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -13,7 +12,6 @@ type RoleProps = {
   next: () => void;
   skip: () => void;
   setFormbricksResponseId: (id: string) => void;
-  profile: TProfile;
 };
 
 type RoleChoice = {
@@ -21,7 +19,7 @@ type RoleChoice = {
   id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
 };
 
-const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profile }) => {
+const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
