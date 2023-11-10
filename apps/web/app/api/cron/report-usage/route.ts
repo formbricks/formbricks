@@ -51,7 +51,7 @@ async function reportTeamUsage(team: TTeam) {
   }
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function POST(): Promise<NextResponse> {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
 
@@ -66,9 +66,6 @@ export async function GET(): Promise<NextResponse> {
     return responses.successResponse({}, true);
   } catch (error) {
     console.error(error);
-    return responses.internalServerErrorResponse(
-      "Unable to complete response. See server logs for details.",
-      true
-    );
+    return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }

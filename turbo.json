@@ -112,13 +112,14 @@
         "TELEMETRY_DISABLED",
         "VERCEL_URL",
         "WEBAPP_URL",
-        "AIR_TABLE_CLIENT_ID",
+        "AIRTABLE_CLIENT_ID",
         "AWS_ACCESS_KEY",
         "AWS_SECRET_KEY",
         "S3_ACCESS_KEY",
         "S3_SECRET_KEY",
         "S3_REGION",
-        "S3_BUCKET_NAME"
+        "S3_BUCKET_NAME",
+        "ENTERPRISE_LICENSE_KEY"
       ]
     },
     "post-install": {

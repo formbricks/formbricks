@@ -45,7 +45,7 @@ export const GOOGLE_SHEETS_CLIENT_ID = process.env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = process.env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = process.env.GOOGLE_SHEETS_REDIRECT_URL;
 
-export const AIR_TABLE_CLIENT_ID = process.env.AIR_TABLE_CLIENT_ID;
+export const AIRTABLE_CLIENT_ID = process.env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = process.env.SMTP_HOST;
 export const SMTP_PORT = process.env.SMTP_PORT;
@@ -58,7 +58,7 @@ export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
 export const RESPONSES_PER_PAGE = 10;
-export const OPEN_TEXT_RESPONSES_PER_PAGE = 5;
+export const TEXT_RESPONSES_PER_PAGE = 5;
 
 // Storage constants
 export const UPLOADS_DIR = path.resolve("./uploads");
@@ -82,3 +82,5 @@ export const LOCAL_UPLOAD_URL = {
 // Pricing
 export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
+// Enterprise License constant
+export const ENTERPRISE_LICENSE_KEY = process.env.ENTERPRISE_LICENSE_KEY;

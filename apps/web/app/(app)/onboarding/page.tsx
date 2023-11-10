@@ -7,11 +7,12 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getProfile } from "@formbricks/lib/profile/service";
 import { getServerSession } from "next-auth";
 import Onboarding from "./components/Onboarding";
+import { redirect } from "next/navigation";
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("No session found");
+    redirect("/auth/login");
   }
   const userId = session?.user.id;
   const environment = await getFirstEnvironmentByUserId(userId);
