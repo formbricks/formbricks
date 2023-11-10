@@ -1,72 +1,71 @@
 version: "3.3"
 x-environment: &environment
-  environment:
-    # The url of your Formbricks instance used in the admin panel
-    WEBAPP_URL:
+environment:
+# The url of your Formbricks instance used in the admin panel
+WEBAPP_URL:
+  # PostgreSQL DB for Formbricks to connect to
+  DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
-    # PostgreSQL DB for Formbricks to connect to
-    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+  # NextJS Auth
+  # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+  # You can use: `openssl rand -hex 32` to generate one
+  NEXTAUTH_SECRET:
 
-    # NextJS Auth
-    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -hex 32` to generate one
-    NEXTAUTH_SECRET:
+  # Set this to your public-facing URL, e.g., https://example.com
+  # You do not need the NEXTAUTH_URL environment variable in Vercel.
+  NEXTAUTH_URL: http://localhost:3000
 
-    # Set this to your public-facing URL, e.g., https://example.com
-    # You do not need the NEXTAUTH_URL environment variable in Vercel.
-    NEXTAUTH_URL: http://localhost:3000
+  # Encryption Key is used for 2FA & Single use URLs for Link Surveys
+  # You can use: $(openssl rand -hex 32) to generate one
+  ENCRYPTION_KEY:
 
-    # Encryption Key is used for 2FA & Single use URLs for Link Surveys
-    # You can use: $(openssl rand -hex 32) to generate one
-    ENCRYPTION_KEY:
+  # PostgreSQL password
+  POSTGRES_PASSWORD: postgres
 
-    # PostgreSQL password
-    POSTGRES_PASSWORD: postgres
+  # Email Configuration
+  # MAIL_FROM:
+  # SMTP_HOST:
+  # SMTP_PORT:
+  # SMTP_SECURE_ENABLED:
+  # SMTP_USER:
+  # SMTP_PASSWORD:
 
-    # Email Configuration
-    # MAIL_FROM:
-    # SMTP_HOST:
-    # SMTP_PORT:
-    # SMTP_SECURE_ENABLED:
-    # SMTP_USER:
-    # SMTP_PASSWORD:
+  # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
+  # SHORT_URL_BASE:
 
-    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
-    # SHORT_URL_BASE:
+  # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
+  EMAIL_VERIFICATION_DISABLED: 1
 
-    # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
-    EMAIL_VERIFICATION_DISABLED: 1
+  # Set the below to 0 to enable Password Reset (will required Email Configuration)
+  PASSWORD_RESET_DISABLED: 1
 
-    # Set the below to 0 to enable Password Reset (will required Email Configuration)
-    PASSWORD_RESET_DISABLED: 1
+  # Uncomment the below and set it to 1 to disable Signups
+  # SIGNUP_DISABLED:
 
-    # Uncomment the below and set it to 1 to disable Signups
-    # SIGNUP_DISABLED:
+  # Uncomment the below and set it to 1 to disable Invites
+  # INVITE_DISABLED:
 
-    # Uncomment the below and set it to 1 to disable Invites
-    # INVITE_DISABLED:
+  # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
+  # PRIVACY_URL:
 
-    # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
-    # PRIVACY_URL:
+  # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
+  # TERMS_URL:
 
-    # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
-    # TERMS_URL:
+  # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
+  # IMPRINT_URL:
 
-    # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
-    # IMPRINT_URL:
+  # Uncomment the below and set to 1 if you want to enable GitHub OAuth
+  # GITHUB_AUTH_ENABLED:
+  # GITHUB_ID:
+  # GITHUB_SECRET:
 
-    # Uncomment the below and set to 1 if you want to enable GitHub OAuth
-    # GITHUB_AUTH_ENABLED:
-    # GITHUB_ID:
-    # GITHUB_SECRET:
+  # Uncomment the below and set to 1 if you want to enable Google OAuth
+  # GOOGLE_AUTH_ENABLED:
+  # GOOGLE_CLIENT_ID:
+  # GOOGLE_CLIENT_SECRET:
 
-    # Uncomment the below and set to 1 if you want to enable Google OAuth
-    # GOOGLE_AUTH_ENABLED:
-    # GOOGLE_CLIENT_ID:
-    # GOOGLE_CLIENT_SECRET:
-
-    # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
-    # ASSET_PREFIX_URL: *asset_prefix_url
+  # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+  # ASSET_PREFIX_URL: *asset_prefix_url
 
 services:
   postgres:
@@ -89,6 +88,7 @@ services:
       - .github/workflows/cron-reportUsageToStripe.yml
       - .github/workflows/cron-weeklySummary.yml
     <<: *environment
+    entrypoint: ["sh", "-c", "/entrypoint.sh"]
 
 volumes:
   postgres:

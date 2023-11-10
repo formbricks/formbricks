@@ -1,7 +1,7 @@
 # Use the official Node.js image as a base image for the installer stage
 FROM node:18-alpine AS installer
 
-# Install system dependencies and tools
+# Install system dependencies and tools, including sudo
 RUN apk add --no-cache --virtual .build-deps \
         g++ \
         gcc \
@@ -10,7 +10,9 @@ RUN apk add --no-cache --virtual .build-deps \
         linux-headers \
         make \
         python3 \
-        cmake
+        cmake \
+        sudo \
+        openssl
 
 # Enable corepack and prepare pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -45,13 +47,6 @@ FROM node:18-alpine AS runner
 # Enable corepack and prepare pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Create a non-root user for running the application
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-USER nextjs
-
-WORKDIR /home/nextjs
-
 # Copy configuration files and built artifacts from the installer stage
 COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
@@ -67,9 +62,9 @@ EXPOSE 3000
 
 ENV HOSTNAME "0.0.0.0"
 
+# Install cron and set up cron jobs as root user
 USER root
 
-# Install cron and set up cron jobs
 RUN apk --no-cache add dcron
 
 # Create a cron directory inside the container
@@ -84,7 +79,5 @@ COPY /apps/web/entrypoint.sh /entrypoint.sh
 # Make the script executable
 RUN chmod +x /entrypoint.sh
 
-USER nextjs
-
-# Combine all cron job schedules and your entrypoint script in a single CMD
+# Run entrypoint.sh as the root user
 CMD ["/entrypoint.sh"]

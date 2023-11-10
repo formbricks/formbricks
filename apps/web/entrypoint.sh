@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Generate a random 32-character hexadecimal string using openssl rand
+CRON_SECRET=$(openssl rand -hex 32)
+
+# Export the CRON_SECRET as an environment variable
+export CRON_SECRET
+
 # Start the cron service
 crond -l 2 -L /var/log/cron/cron.log
 
