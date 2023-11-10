@@ -88,12 +88,7 @@ export default function Onboarding({ session, environmentId, profile, product }:
           <Greeting next={next} skip={doLater} name={profile.name ? profile.name : ""} session={session} />
         )}
         {currentStep === 2 && (
-          <Role
-            next={next}
-            skip={skipStep}
-            setFormbricksResponseId={setFormbricksResponseId}
-            profile={profile}
-          />
+          <Role next={next} skip={skipStep} setFormbricksResponseId={setFormbricksResponseId} />
         )}
         {currentStep === 3 && (
           <Objective
