@@ -1,7 +1,5 @@
 import "server-only";
 import path from "path";
-import { env } from "@/env.mjs";
-import { unstable_cache } from "next/cache";
 
 export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
@@ -47,7 +45,7 @@ export const GOOGLE_SHEETS_CLIENT_ID = process.env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = process.env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = process.env.GOOGLE_SHEETS_REDIRECT_URL;
 
-export const AIR_TABLE_CLIENT_ID = process.env.AIR_TABLE_CLIENT_ID;
+export const AIRTABLE_CLIENT_ID = process.env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = process.env.SMTP_HOST;
 export const SMTP_PORT = process.env.SMTP_PORT;
@@ -85,16 +83,4 @@ export const LOCAL_UPLOAD_URL = {
 export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
 // Enterprise License constant
-export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
-
-export const getIsEnterpriseEdition = () =>
-  unstable_cache(
-    async () => {
-      if (ENTERPRISE_LICENSE_KEY) {
-        return ENTERPRISE_LICENSE_KEY?.length > 0;
-      }
-      return false;
-    },
-    ["isEE"],
-    { revalidate: 60 * 60 * 24 }
-  )();
+export const ENTERPRISE_LICENSE_KEY = process.env.ENTERPRISE_LICENSE_KEY;
