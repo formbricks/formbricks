@@ -6,7 +6,7 @@ export default function LanguageIndicator({ selectedLanguage, languages, setSele
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
 
   const changeLanguage = (language) => {
-    setSelectedLanguage(language);
+    setSelectedLanguage(language[0]);
     setShowLanguageDropdown(false);
   };
   return (
@@ -17,20 +17,20 @@ export default function LanguageIndicator({ selectedLanguage, languages, setSele
         onClick={toggleDropdown}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        {selectedLanguage}
+        {languages.find((language) => language[0] === selectedLanguage)[1]}
         <LanguageIcon className="ml-1 h-3 w-3" />
       </button>
       {showLanguageDropdown && (
         <div className="absolute right-0 z-10 mt-1 space-y-2 rounded-lg bg-black p-2 text-xs text-white">
           {languages.map(
             (language) =>
-              language !== selectedLanguage && (
+              language[0] !== selectedLanguage && (
                 <button
                   key={language}
                   type="button"
                   className="block w-full text-left"
                   onClick={() => changeLanguage(language)}>
-                  {language}
+                  {language[1]}
                 </button>
               )
           )}

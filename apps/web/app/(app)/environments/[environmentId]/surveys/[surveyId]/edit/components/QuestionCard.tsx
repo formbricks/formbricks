@@ -152,7 +152,7 @@ export default function QuestionCard({
                     <p className="text-sm font-semibold">
                       {hasI8n
                         ? question.headline[selectedLanguage]
-                        : question.headline.default || getTSurveyQuestionTypeName(question.type)}
+                        : question.headline.en || getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">

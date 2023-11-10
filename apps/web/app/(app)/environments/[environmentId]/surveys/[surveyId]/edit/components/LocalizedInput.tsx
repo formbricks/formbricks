@@ -31,9 +31,9 @@ const LocalizedInput = ({
             setSelectedLanguage={setSelectedLanguage}
           />
 
-          {selectedLanguage !== "default" && value.default && (
+          {selectedLanguage !== "en" && value.en && (
             <div className="mt-1 text-xs text-gray-500">
-              <strong>Translate:</strong> {value.default}
+              <strong>Translate:</strong> {value.en}
             </div>
           )}
         </div>

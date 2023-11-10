@@ -407,6 +407,9 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+  /// @zod.custom(imports.ZLanguages)
+  /// [Languages]
+  languages            Json            @default("{\"en\":\"English\"}")
 
   @@unique([teamId, name])
   @@index([teamId])

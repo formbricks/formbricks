@@ -1,11 +1,10 @@
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyChoice, TSurveyQuestion, TSurvey } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurvey } from "@formbricks/types/surveys";
 // Helper function to create an i18nString from a regular string.
 // languages = ["german","hindi"]
 const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
   // Check if text is already an i18nString
   if (typeof text === "object" && text._i18n_ === true) {
-    // It's already an i18n object, so clone it
     const i18nString: TI18nString = { ...text };
 
     // Add new language keys with empty strings if they don't exist
@@ -15,17 +14,24 @@ const createI18nString = (text: string | TI18nString, languages?: string[]): TI1
       }
     });
 
+    // Remove language keys that are not in the languages array
+    Object.keys(i18nString).forEach((key) => {
+      if (key !== "_i18n_" && key !== "en" && languages && !languages.includes(key)) {
+        delete i18nString[key];
+      }
+    });
+
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
     const i18nString: TI18nString = {
       _i18n_: true,
-      default: text, // Assuming 'en' is your default language
+      en: text, // Assuming 'en' is your default language
     };
 
-    // Add languages with empty strings
+    // Initialize all provided languages with empty strings
     languages?.forEach((language) => {
-      if (language !== "default") {
+      if (language !== "en") {
         i18nString[language] = "";
       }
     });
@@ -81,3 +87,13 @@ export const getTranslation = (i18nObject: TI18nString, languageCode: string): s
   // If not, return the English version or a default fallback
   return i18nObject.en || "Translation not available";
 };
+
+export function convertArrayToObject(array2D: string[][]) {
+  return array2D.reduce((obj, item) => {
+    if (item.length >= 2) {
+      const [key, value] = item;
+      obj[key] = value;
+    }
+    return obj;
+  }, {});
+}

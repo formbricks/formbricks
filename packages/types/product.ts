@@ -2,6 +2,10 @@ import { z } from "zod";
 import { ZEnvironment } from "./environment";
 import { ZColor, ZPlacement } from "./common";
 
+export const ZLanguages = z.record(z.string());
+
+export type TLanguages = z.infer<typeof ZLanguages>;
+
 export const ZProduct = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -16,6 +20,7 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
+  languages: ZLanguages,
 });
 
 export type TProduct = z.infer<typeof ZProduct>;

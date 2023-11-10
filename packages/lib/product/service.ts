@@ -23,6 +23,7 @@ const selectProduct = {
   name: true,
   teamId: true,
   brandColor: true,
+  languages: true,
   highlightBorderColor: true,
   recontactDays: true,
   formbricksSignature: true,
@@ -102,6 +103,7 @@ export const updateProduct = async (
   productId: string,
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
+  console.log(inputProduct);
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
 
   const { environments, ...data } = inputProduct;

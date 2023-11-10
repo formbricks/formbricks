@@ -41,9 +41,9 @@ export default function SurveyEditor({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
-  const [languages, setLanguages] = useState<string[] | undefined>(["default"]);
-  // Assume a state to track the current language
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("default");
+  const [languages, setLanguages] = useState(product.languages);
+  const allLanguages = Object.entries(product.languages);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
 
   useEffect(() => {
     if (survey) {
@@ -57,7 +57,7 @@ export default function SurveyEditor({
 
   const translatedSurvey = useMemo(() => {
     if (localSurvey) {
-      return translateSurvey(localSurvey, languages);
+      return translateSurvey(localSurvey, Object.keys(languages));
     }
   }, [i18n, localSurvey, selectedLanguage, languages]);
 
@@ -71,8 +71,8 @@ export default function SurveyEditor({
   }, [localSurvey?.type]);
 
   useEffect(() => {
-    if (!languages?.includes(selectedLanguage)) {
-      setSelectedLanguage("default");
+    if (!Object.entries(languages).some((lang) => lang[0] !== selectedLanguage)) {
+      setSelectedLanguage("en");
     }
   }, [languages]);
 
@@ -82,6 +82,7 @@ export default function SurveyEditor({
 
   return (
     <>
+      {console.log(translatedSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
@@ -98,7 +99,7 @@ export default function SurveyEditor({
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
             <div>
-              <LanguageSwitch languages={languages} setLanguages={setLanguages} setI18n={setI18n} />
+              <LanguageSwitch allLanguages={allLanguages} setLanguages={setLanguages} setI18n={setI18n} />
             </div>
             {activeView === "questions" ? (
               <QuestionsView
@@ -109,9 +110,9 @@ export default function SurveyEditor({
                 product={product}
                 invalidQuestions={invalidQuestions}
                 setInvalidQuestions={setInvalidQuestions}
-                selectedLanguage={selectedLanguage ? selectedLanguage : "default"}
+                selectedLanguage={selectedLanguage ? selectedLanguage : "en"}
                 setSelectedLanguage={setSelectedLanguage}
-                languages={languages}
+                languages={Object.entries(languages)}
               />
             ) : (
               <SettingsView

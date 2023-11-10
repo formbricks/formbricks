@@ -2,16 +2,21 @@ import { Button } from "@formbricks/ui/Button";
 import { LanguageIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { Switch } from "@formbricks/ui/Switch";
-export default function LanguageSwitch({ languages, setLanguages, setI18n }) {
-  const userLangauges = ["german", "hindi"];
+import { convertArrayToObject } from "@formbricks/lib/utils/i18n";
+export default function LanguageSwitch({ allLanguages, setLanguages, setI18n }) {
   const [translationsEnabled, setTranslationsEnabled] = useState(false);
   const [showLanguageToggle, setshowLanguageToggle] = useState(false);
-
+  const [languagesArray, setLanguagesArray] = useState<string[][]>(allLanguages);
   const toggleLanguage = (language) => {
-    if (languages.includes(language)) {
-      setLanguages(languages.filter((lang) => lang !== language));
+    const languageCode = language[0]; // Assuming the first element is a unique language code
+    if (languagesArray.some((lang) => lang[0] === languageCode)) {
+      const updateArray = languagesArray.filter((lang) => lang[0] !== languageCode);
+      setLanguagesArray(updateArray);
+      setLanguages(convertArrayToObject(updateArray));
     } else {
-      setLanguages([...languages, language]);
+      const updateArray = [...languagesArray, language];
+      setLanguagesArray(updateArray);
+      setLanguages(convertArrayToObject(updateArray));
     }
   };
 
@@ -31,17 +36,18 @@ export default function LanguageSwitch({ languages, setLanguages, setI18n }) {
           </div>
           {showLanguageToggle && (
             <div className="absolute z-[15] mt-2 space-y-4 rounded-md border bg-white p-4">
-              {userLangauges?.map((language) => {
+              {allLanguages?.map((language) => {
+                if (language[0] === "en") return;
                 return (
                   <div className="flex items-center">
                     <Switch
                       id={`switch-${language}`}
                       value={language}
                       className="mr-4"
-                      checked={languages.includes(language)}
+                      checked={languagesArray.some((lang) => lang[0] === language[0])}
                       onClick={() => toggleLanguage(language)}
                     />
-                    {language}
+                    {language[1]}
                   </div>
                 );
               })}
@@ -54,7 +60,6 @@ export default function LanguageSwitch({ languages, setLanguages, setI18n }) {
           onClick={() => {
             setTranslationsEnabled(!translationsEnabled);
             setI18n(true);
-            setLanguages(languages.concat(userLangauges));
           }}>
           Add Translation
           <LanguageIcon className="ml-1 h-4 w-4" />

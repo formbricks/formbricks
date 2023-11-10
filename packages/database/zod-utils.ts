@@ -19,3 +19,4 @@ export {
 
 export { ZTeamBilling } from "@formbricks/types/teams";
 export { ZUserNotificationSettings } from "@formbricks/types/users";
+export { ZLanguages } from "@formbricks/types/product";
