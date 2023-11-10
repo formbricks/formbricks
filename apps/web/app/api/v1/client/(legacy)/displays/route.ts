@@ -13,7 +13,10 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const jsonInput: unknown = await request.json();
+  const jsonInput = await request.json();
+  if (jsonInput.personId === "legacy") {
+    delete jsonInput.personId;
+  }
   const inputValidation = ZDisplayLegacyCreateInput.safeParse(jsonInput);
 
   if (!inputValidation.success) {

@@ -6,7 +6,7 @@ import { TResponseUpdate } from "@formbricks/types/responses";
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
-import { sync } from "./sync";
+import { filterPublicSurveys, sync } from "./sync";
 import { FormbricksAPI } from "@formbricks/api";
 
 const containerId = "formbricks-web-container";
@@ -64,7 +64,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
           const localDisplay: TJSStateDisplay = {
             createdAt: new Date(),
             surveyId: survey.id,
-            responseId: null,
+            responded: false,
           };
 
           const existingDisplays = config.get().state.displays;
@@ -96,6 +96,26 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
+        // if user is unidentified, update the display in local storage if not already updated
+        if (!config.get().state.person || !config.get().state.person?.userId) {
+          const displays = config.get().state.displays;
+          const lastDisplay = displays && displays[displays.length - 1];
+          if (!lastDisplay) {
+            throw new Error("No lastDisplay found");
+          }
+          if (!lastDisplay.responded) {
+            lastDisplay.responded = true;
+            const previousConfig = config.get();
+            config.update({
+              ...previousConfig,
+              state: {
+                ...previousConfig.state,
+                displays,
+              },
+            });
+          }
+        }
+
         if (config.get().state.person && config.get().state.person?.id) {
           surveyState.updatePersonId(config.get().state.person?.id!);
         }
@@ -115,12 +135,23 @@ export const closeSurvey = async (): Promise<void> => {
   document.getElementById(containerId)?.remove();
   addWidgetContainer();
 
+  // if unidentified user, refilter the surveys
+  if (!config.get().state.person || !config.get().state.person?.userId) {
+    const state = config.get().state;
+    const updatedState = filterPublicSurveys(state);
+    config.update({
+      ...config.get(),
+      state: updatedState,
+    });
+    surveyRunning = false;
+    return;
+  }
+
   try {
     await sync({
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       userId: config.get().state?.person?.userId,
-      // personId: config.get().state.person?.id,
     });
     surveyRunning = false;
   } catch (e) {

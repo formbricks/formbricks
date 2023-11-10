@@ -17,6 +17,9 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function POST(request: Request): Promise<NextResponse> {
   const responseInput: TResponseInput = await request.json();
+  if (responseInput.personId === "legacy") {
+    responseInput.personId = null;
+  }
   const agent = UAParser(request.headers.get("user-agent"));
   const inputValidation = ZResponseInput.safeParse(responseInput);
 

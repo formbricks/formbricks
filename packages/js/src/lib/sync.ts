@@ -121,7 +121,6 @@ export const filterPublicSurveys = (state: TJsState): TJsState => {
   const { displays, product } = state;
 
   let { surveys } = state;
-  surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
 
   if (!displays) {
     return state;
@@ -134,10 +133,7 @@ export const filterPublicSurveys = (state: TJsState): TJsState => {
     } else if (survey.displayOption === "displayOnce") {
       return displays.filter((display) => display.surveyId === survey.id).length === 0;
     } else if (survey.displayOption === "displayMultiple") {
-      return (
-        displays.filter((display) => display.surveyId === survey.id && display.responseId !== null).length ===
-        0
-      );
+      return displays.filter((display) => display.surveyId === survey.id && display.responded).length === 0;
     } else {
       throw Error("Invalid displayOption");
     }

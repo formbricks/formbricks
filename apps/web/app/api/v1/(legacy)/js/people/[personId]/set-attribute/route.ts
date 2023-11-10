@@ -15,6 +15,11 @@ export async function OPTIONS(): Promise<NextResponse> {
 export async function POST(req: Request, { params }): Promise<NextResponse> {
   try {
     const { personId } = params;
+
+    if (!personId || personId === "legacy") {
+      return responses.internalServerErrorResponse("setAttribute requires an identified user", true);
+    }
+
     const jsonInput = await req.json();
 
     // validate using zod
