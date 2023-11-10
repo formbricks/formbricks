@@ -6,7 +6,7 @@ import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TJsState } from "@formbricks/types/js";
+import { TJsLegacyState } from "@formbricks/types/js";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
@@ -18,7 +18,7 @@ export const getUpdatedState = async (
   environmentId: string,
   personId: string,
   jsVersion?: string
-): Promise<TJsState> => {
+): Promise<TJsLegacyState> => {
   let environment: TEnvironment | null;
 
   if (jsVersion) {
@@ -86,8 +86,9 @@ export const getUpdatedState = async (
   }
 
   // return state
-  const state: TJsState = {
+  const state: TJsLegacyState = {
     person: person!,
+    session: {},
     surveys,
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
     product,
@@ -116,8 +117,9 @@ export const getPublicUpdatedState = async (environmentId: string) => {
     throw new Error("Product not found");
   }
 
-  const state: TJsState = {
+  const state: TJsLegacyState = {
     surveys,
+    session: {},
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
     product,
     person: null,

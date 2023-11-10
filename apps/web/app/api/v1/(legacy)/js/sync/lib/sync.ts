@@ -56,14 +56,14 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
 
   if (!personId) {
     // create a new person
-    person = {};
+    person = { id: "legacy" };
   } else {
     // check if person exists
     const existingPerson = await getPerson(personId);
     if (existingPerson) {
       person = existingPerson;
     } else {
-      person = {};
+      person = { id: "legacy" };
     }
   }
   // check if App Survey limit is reached
