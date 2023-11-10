@@ -118,6 +118,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   const syncParams = {
     environmentId: config.get().environmentId,
     apiHost: config.get().apiHost,
+    userId: config.get().state?.person?.userId,
   };
   await logoutPerson();
   try {
