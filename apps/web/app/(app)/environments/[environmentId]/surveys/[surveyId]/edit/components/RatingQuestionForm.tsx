@@ -8,6 +8,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import Dropdown from "./RatingTypeDropdown";
 import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
+import { TI18nString } from "@formbricks/types/i18n";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;
@@ -18,7 +19,7 @@ interface RatingQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[] | undefined;
+  languages: string[][];
 }
 
 export default function RatingQuestionForm({
@@ -56,12 +57,12 @@ export default function RatingQuestionForm({
               <LocalizedInput
                 id="subheader"
                 name="subheader"
-                value={question.subheader}
+                value={question.subheader as TI18nString}
                 isInValid={isInValid}
                 languages={languages}
                 onChange={(e) => {
                   let translatedSubheader = {
-                    ...question.subheader,
+                    ...(question.subheader as TI18nString),
                     [selectedLanguage]: e.target.value,
                   };
                   updateQuestion(questionIdx, { subheader: translatedSubheader });

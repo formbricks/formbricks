@@ -6,6 +6,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { getLocalizedValue } from "../../../lib/utils/i18n";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -93,11 +94,14 @@ export default function PictureSelectionQuestion({
         </div>
       )}
       <Headline
-        headline={question.headline[language]}
+        headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
         required={question.required}
       />
-      <Subheader subheader={question.subheader[language]} questionId={question.id} />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        questionId={question.id}
+      />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>

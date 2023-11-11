@@ -71,7 +71,7 @@ export const ZResponseInput = z.object({
   personId: z.string().cuid2().nullable(),
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
-  language: z.string(),
+  language: z.string().optional(),
   data: ZResponseData,
   meta: z
     .object({
@@ -106,7 +106,7 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
-  language: z.string(),
+  language: z.string().optional(),
   meta: z
     .object({
       url: z.string().optional(),

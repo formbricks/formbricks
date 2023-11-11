@@ -6,6 +6,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { getLocalizedValue } from "../../../lib/utils/i18n";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -31,7 +32,10 @@ export default function MultipleChoiceMultiQuestion({
   language,
 }: MultipleChoiceMultiProps) {
   const getChoicesWithoutOtherLabels = useCallback(
-    () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label[language]),
+    () =>
+      question.choices
+        .filter((choice) => choice.id !== "other")
+        .map((item) => getLocalizedValue(item.label, language)),
     [question]
   );
 
@@ -104,11 +108,14 @@ export default function MultipleChoiceMultiQuestion({
         </div>
       )}
       <Headline
-        headline={question.headline[language]}
+        headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
         required={question.required}
       />
-      <Subheader subheader={question.subheader[language]} questionId={question.id} />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        questionId={question.id}
+      />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -176,7 +183,7 @@ export default function MultipleChoiceMultiQuestion({
                     tabIndex={-1}
                     id={otherOption.id}
                     name={question.id}
-                    value={otherOption.label}
+                    value={getLocalizedValue(otherOption.label, language)}
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={(e) => {
@@ -192,7 +199,7 @@ export default function MultipleChoiceMultiQuestion({
                     style={{ borderColor: brandColor, color: brandColor }}
                   />
                   <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
-                    {otherOption.label[language]}
+                    {getLocalizedValue(otherOption.label, language)}
                   </span>
                 </span>
                 {otherSelected && (

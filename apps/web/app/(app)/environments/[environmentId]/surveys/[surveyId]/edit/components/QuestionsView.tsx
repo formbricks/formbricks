@@ -13,7 +13,7 @@ import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { validateQuestion } from "./Validation";
-import { translateQuestion, translateSurvey } from "@formbricks/lib/utils/i18n";
+import { translateQuestion } from "@formbricks/lib/utils/i18n";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
@@ -25,7 +25,7 @@ interface QuestionsViewProps {
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[] | undefined;
+  languages: string[][];
 }
 
 export default function QuestionsView({

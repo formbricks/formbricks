@@ -41,7 +41,7 @@ export default function SurveyEditor({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
-  const [languages, setLanguages] = useState(product.languages);
+  const [languages, setLanguages] = useState({ en: "English" });
   const allLanguages = Object.entries(product.languages);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
 
@@ -57,6 +57,8 @@ export default function SurveyEditor({
 
   const translatedSurvey = useMemo(() => {
     if (localSurvey) {
+      console.log("traslating");
+      console.log(languages);
       return translateSurvey(localSurvey, Object.keys(languages));
     }
   }, [i18n, localSurvey, selectedLanguage, languages]);
@@ -71,7 +73,10 @@ export default function SurveyEditor({
   }, [localSurvey?.type]);
 
   useEffect(() => {
-    if (!Object.entries(languages).some((lang) => lang[0] !== selectedLanguage)) {
+    console.log(languages);
+    console.log(selectedLanguage);
+    if (!Object.keys(languages).includes(selectedLanguage)) {
+      console.log("hello");
       setSelectedLanguage("en");
     }
   }, [languages]);
@@ -99,7 +104,12 @@ export default function SurveyEditor({
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
             <div>
-              <LanguageSwitch allLanguages={allLanguages} setLanguages={setLanguages} setI18n={setI18n} />
+              <LanguageSwitch
+                allLanguages={allLanguages}
+                setLanguages={setLanguages}
+                setI18n={setI18n}
+                environmentId={environment.id}
+              />
             </div>
             {activeView === "questions" ? (
               <QuestionsView

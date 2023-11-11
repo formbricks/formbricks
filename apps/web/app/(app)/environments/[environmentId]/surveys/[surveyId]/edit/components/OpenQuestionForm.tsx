@@ -1,8 +1,7 @@
 "use client";
-
-import LanguageIndicator from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LanguageIndicator";
 import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import { TI18nString } from "@formbricks/types/i18n";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -12,7 +11,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
-import { LanguageIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 const questionTypes = [
@@ -32,7 +31,7 @@ interface OpenQuestionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[] | undefined;
+  languages: string[][];
 }
 
 export default function OpenQuestionForm({
@@ -45,10 +44,8 @@ export default function OpenQuestionForm({
   setSelectedLanguage,
   languages,
 }: OpenQuestionFormProps): JSX.Element {
-  console.log(question);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
-  const hasI18n = question.headline._i18n_;
 
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
@@ -83,12 +80,12 @@ export default function OpenQuestionForm({
                 <LocalizedInput
                   id="subheader"
                   name="subheader"
-                  value={question.subheader}
+                  value={question.subheader as TI18nString}
                   languages={languages}
                   isInValid={isInValid}
                   onChange={(e) => {
                     let translatedSubheader = {
-                      ...question.subheader,
+                      ...(question.subheader as TI18nString),
                       [selectedLanguage]: e.target.value,
                     };
                     updateQuestion(questionIdx, { subheader: translatedSubheader });

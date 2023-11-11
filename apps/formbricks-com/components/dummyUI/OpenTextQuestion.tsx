@@ -29,8 +29,8 @@ export default function OpenTextQuestion({
         setValue(""); // reset value
         onSubmit(data);
       }}>
-      <Headline headline={question.headline} questionId={question.id} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline headline={question.headline as string} questionId={question.id} />
+      <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="mt-4">
         <textarea
           rows={3}

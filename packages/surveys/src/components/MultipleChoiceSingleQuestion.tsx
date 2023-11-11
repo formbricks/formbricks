@@ -6,6 +6,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { getLocalizedValue } from "../../../lib/utils/i18n";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -71,11 +72,14 @@ export default function MultipleChoiceSingleQuestion({
         </div>
       )}
       <Headline
-        headline={question.headline[language]}
+        headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
         required={question.required}
       />
-      <Subheader subheader={question.subheader[language]} questionId={question.id} />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        questionId={question.id}
+      />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -140,7 +144,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={otherOption.id}
                     tabIndex={-1}
                     name={question.id}
-                    value={otherOption.label}
+                    value={getLocalizedValue(otherOption.label, language)}
                     className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={() => {
@@ -151,7 +155,7 @@ export default function MultipleChoiceSingleQuestion({
                     style={{ borderColor: brandColor, color: brandColor }}
                   />
                   <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
-                    {otherOption.label[language]}
+                    {getLocalizedValue(otherOption.label, language)}
                   </span>
                 </span>
                 {otherSelected && (

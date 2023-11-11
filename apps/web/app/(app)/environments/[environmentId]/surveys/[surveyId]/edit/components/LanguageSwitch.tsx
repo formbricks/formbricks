@@ -1,12 +1,17 @@
+"use client";
+
 import { Button } from "@formbricks/ui/Button";
 import { LanguageIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { Switch } from "@formbricks/ui/Switch";
+import Link from "next/link";
+
 import { convertArrayToObject } from "@formbricks/lib/utils/i18n";
-export default function LanguageSwitch({ allLanguages, setLanguages, setI18n }) {
+export default function LanguageSwitch({ allLanguages, setLanguages, setI18n, environmentId }) {
   const [translationsEnabled, setTranslationsEnabled] = useState(false);
   const [showLanguageToggle, setshowLanguageToggle] = useState(false);
-  const [languagesArray, setLanguagesArray] = useState<string[][]>(allLanguages);
+  const [languagesArray, setLanguagesArray] = useState<string[][]>([["en", "English"]]);
+
   const toggleLanguage = (language) => {
     const languageCode = language[0]; // Assuming the first element is a unique language code
     if (languagesArray.some((lang) => lang[0] === languageCode)) {
@@ -51,6 +56,11 @@ export default function LanguageSwitch({ allLanguages, setLanguages, setI18n }) 
                   </div>
                 );
               })}
+              <div className="w-full">
+                <Link href={`/environments/${environmentId}/settings/language`} className=" w-full text-sm">
+                  Add Language +
+                </Link>
+              </div>
             </div>
           )}
         </div>

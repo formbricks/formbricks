@@ -29,8 +29,8 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit(data);
         setSelectedChoice(null); // reset form
       }}>
-      <Headline headline={question.headline} questionId={question.id} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline headline={question.headline as string} questionId={question.id} />
+      <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -50,7 +50,7 @@ export default function MultipleChoiceSingleQuestion({
                       type="radio"
                       id={choice.id}
                       name={question.id}
-                      value={choice.label}
+                      value={choice.label as string}
                       className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0 dark:border-slate-600 dark:bg-slate-500"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
@@ -63,7 +63,7 @@ export default function MultipleChoiceSingleQuestion({
                     <span
                       id={`${choice.id}-label`}
                       className="ml-3 font-medium text-slate-900 dark:text-slate-200">
-                      {choice.label}
+                      {choice.label as string}
                     </span>
                   </span>
                 </label>

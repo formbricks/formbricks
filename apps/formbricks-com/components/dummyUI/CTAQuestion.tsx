@@ -12,7 +12,7 @@ interface CTAQuestionProps {
 export default function CTAQuestion({ question, onSubmit, lastQuestion, brandColor }: CTAQuestionProps) {
   return (
     <div>
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline as string} questionId={question.id} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-end">

@@ -15,7 +15,7 @@ interface QuestionFormInputProps {
   environmentId: string;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[] | undefined;
+  languages: string[][];
   ref?: RefObject<HTMLInputElement>;
 }
 

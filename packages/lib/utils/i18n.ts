@@ -1,15 +1,15 @@
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyQuestion, TSurvey } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 // Helper function to create an i18nString from a regular string.
 // languages = ["german","hindi"]
 const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
-  // Check if text is already an i18nString
-  if (typeof text === "object" && text._i18n_ === true) {
+  if (typeof text === "object" && "_i18n_" in text) {
+    // It's already an i18n object, so clone it
     const i18nString: TI18nString = { ...text };
 
     // Add new language keys with empty strings if they don't exist
     languages?.forEach((language) => {
-      if (!i18nString.hasOwnProperty(language)) {
+      if (!(language in i18nString)) {
         i18nString[language] = "";
       }
     });
@@ -24,9 +24,9 @@ const createI18nString = (text: string | TI18nString, languages?: string[]): TI1
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
-    const i18nString: TI18nString = {
+    const i18nString: any = {
       _i18n_: true,
-      en: text, // Assuming 'en' is your default language
+      en: text as string, // Type assertion to assure TypeScript `text` is a string
     };
 
     // Initialize all provided languages with empty strings
@@ -41,7 +41,7 @@ const createI18nString = (text: string | TI18nString, languages?: string[]): TI1
 };
 
 // Function to translate a choice label
-const translateChoice = (choice: any, languages?: string) => {
+const translateChoice = (choice: any, languages?: string[]) => {
   // Assuming choice is a simple object and choice.label is a string.
   return {
     ...choice,
@@ -50,24 +50,25 @@ const translateChoice = (choice: any, languages?: string) => {
 };
 
 // Function that will translate a single question
-export const translateQuestion = (question: TSurveyQuestion, languages: string[]) => {
+export const translateQuestion = (question: TSurveyQuestion, languages?: string[]) => {
   // Clone the question to avoid mutating the original
   const clonedQuestion = { ...question };
 
   // Translate headline and subheader
   clonedQuestion.headline = createI18nString(question.headline, languages);
-  clonedQuestion.subheader = createI18nString(question.subheader, languages);
+  clonedQuestion.subheader = createI18nString(question.subheader ? question.subheader : "", languages);
 
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     // Make sure to create a deep copy of the choices to avoid any reference issues
-    clonedQuestion.choices = question.choices.map((choice) => translateChoice({ ...choice }, languages));
+    (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
+      question.choices.map((choice) => translateChoice({ ...choice }, languages));
   }
 
   return clonedQuestion;
 };
 
 // Function to translate an entire survey
-export const translateSurvey = (survey: TSurvey, languages?: string[]): TSurvey => {
+export const translateSurvey = (survey: TSurvey, languages: string[]): TSurvey => {
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages); // Added return here
   });
@@ -88,12 +89,23 @@ export const getTranslation = (i18nObject: TI18nString, languageCode: string): s
   return i18nObject.en || "Translation not available";
 };
 
-export function convertArrayToObject(array2D: string[][]) {
-  return array2D.reduce((obj, item) => {
+export function convertArrayToObject(array2D: string[][]): Record<string, string> {
+  return array2D.reduce((obj: Record<string, string>, item) => {
     if (item.length >= 2) {
       const [key, value] = item;
       obj[key] = value;
     }
     return obj;
-  }, {});
+  }, {} as Record<string, string>);
+}
+
+export const getLocalizedValue = (value: string | TI18nString, language: string): string => {
+  if (isI18nString(value)) {
+    return value[language] || value.en; // Fall back to 'en' if the specified language is not found
+  }
+  return value; // If it's a string, return it as-is
+};
+
+function isI18nString(object: any): object is TI18nString {
+  return typeof object === "object" && object !== null && "_i18n_" in object;
 }

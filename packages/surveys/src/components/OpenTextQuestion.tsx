@@ -5,6 +5,7 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 import { useCallback } from "react";
+import { getLocalizedValue } from "../../../lib/utils/i18n";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -60,13 +61,15 @@ export default function OpenTextQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
-      {console.log(language)}
       <Headline
-        headline={question.headline[language]}
+        headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
         required={question.required}
       />
-      <Subheader subheader={question.subheader[language]} questionId={question.id} />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        questionId={question.id}
+      />
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input

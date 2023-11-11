@@ -83,7 +83,7 @@ export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
-  label: z.string(),
+  label: z.union([z.string(), ZI18nObject]),
 });
 
 export const ZSurveyPictureChoice = z.object({

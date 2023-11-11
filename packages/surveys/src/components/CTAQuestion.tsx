@@ -4,6 +4,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
+import { getLocalizedValue } from "../../../lib/utils/i18n";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -36,7 +37,7 @@ export default function CTAQuestion({
         </div>
       )}
       <Headline
-        headline={question.headline[language]}
+        headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
         required={question.required}
       />

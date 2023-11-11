@@ -1,6 +1,18 @@
 import { Input } from "@formbricks/ui/Input";
 import LanguageIndicator from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LanguageIndicator";
+import { TI18nString } from "@formbricks/types/i18n";
 
+interface LocalizedInputProps {
+  id: string;
+  name: string;
+  value: TI18nString;
+  isInValid: boolean;
+  onChange;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
+  onBlur?;
+  languages: string[][];
+}
 const LocalizedInput = ({
   id,
   name,
@@ -11,7 +23,7 @@ const LocalizedInput = ({
   setSelectedLanguage,
   onBlur,
   languages,
-}) => {
+}: LocalizedInputProps) => {
   const hasi18n = value._i18n_;
   return (
     <div className="relative w-full">

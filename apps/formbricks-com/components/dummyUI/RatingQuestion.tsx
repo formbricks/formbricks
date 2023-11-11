@@ -42,8 +42,8 @@ export default function RatingQuestion({
 
         onSubmit(data);
       }}>
-      <Headline headline={question.headline} questionId={question.id} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline headline={question.headline as string} questionId={question.id} />
+      <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="my-4">
         <fieldset>
           <legend className="sr-only">Options</legend>

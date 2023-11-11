@@ -1,5 +1,7 @@
+import { TI18nString } from "@formbricks/types/i18n";
+
 interface HeadlineProps {
-  headline?: string;
+  headline?: TI18nString | string;
   questionId: string;
   style?: any;
   required?: boolean;

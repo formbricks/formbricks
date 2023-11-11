@@ -19,7 +19,7 @@ interface PictureSelectionFormProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[] | undefined;
+  languages: string[][];
 }
 
 export default function PictureSelectionForm({

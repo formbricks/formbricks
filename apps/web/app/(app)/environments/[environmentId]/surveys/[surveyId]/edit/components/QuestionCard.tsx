@@ -46,7 +46,7 @@ interface QuestionCardProps {
   isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[] | undefined;
+  languages: string[][];
 }
 
 export function BackButtonInput({
@@ -93,7 +93,6 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
-  const hasI8n = question.headline._i18n_;
 
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
@@ -150,9 +149,7 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {hasI8n
-                        ? question.headline[selectedLanguage]
-                        : question.headline.en || getTSurveyQuestionTypeName(question.type)}
+                      {question.headline[selectedLanguage] || getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">
