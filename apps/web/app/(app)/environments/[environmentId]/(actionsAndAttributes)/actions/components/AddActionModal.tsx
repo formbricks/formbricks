@@ -111,14 +111,10 @@ export default function AddNoCodeActionModal({
         type,
       } as TActionClassInput;
 
-      console.log("type", type);
-
       if (type === "noCode") {
         const filteredNoCodeConfig = filterNoCodeConfig(noCodeConfig as TActionClassNoCodeConfig);
         updatedAction.noCodeConfig = filteredNoCodeConfig;
       }
-
-      console.log("updatedAction", updatedAction);
 
       const newActionClass: TActionClass = await createActionClassAction(updatedAction);
       if (setActionClassArray) {
