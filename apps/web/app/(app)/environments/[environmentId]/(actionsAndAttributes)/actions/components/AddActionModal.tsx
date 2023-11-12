@@ -5,18 +5,18 @@ import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAn
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
+import { TabBar } from "@formbricks/ui/TabBar";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { Terminal } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "../lib/testURLmatch";
-import { TabBar } from "@formbricks/ui/TabBar";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
-import { Terminal } from "lucide-react";
 
 interface AddNoCodeActionModalProps {
   environmentId: string;
@@ -230,8 +230,8 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>Identifier / What did your user do?</Label>
-                    <Input placeholder="E.g. Clicked Download" {...register("name", { required: true })} />
+                    <Label>Identifier</Label>
+                    <Input placeholder="E.g. clicked-download" {...register("name", { required: true })} />
                   </div>
                   <div className="col-span-1">
                     <Label>Description</Label>
@@ -241,7 +241,7 @@ export default function AddNoCodeActionModal({
                 <hr />
                 <Alert>
                   <Terminal className="h-4 w-4" />
-                  <AlertTitle>Let the code decide</AlertTitle>
+                  <AlertTitle>How do Code Actions work?</AlertTitle>
                   <AlertDescription>
                     You can track code action anywhere in your app using{" "}
                     <span className="rounded bg-gray-100 px-2 py-1 text-xs">
