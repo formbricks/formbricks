@@ -139,7 +139,7 @@ export const filterPublicSurveys = (state: TJsState): TJsState => {
     }
   });
 
-  const latestDisplay = displays[0];
+  const latestDisplay = displays.length > 0 ? displays[displays.length - 1] : undefined;
 
   // filter surveys that meet the recontactDays criteria
   filteredSurveys = filteredSurveys.filter((survey) => {

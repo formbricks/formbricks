@@ -147,6 +147,7 @@ export const closeSurvey = async (): Promise<void> => {
     return;
   }
 
+  // for identified users we sync to get the latest surveys
   try {
     await sync({
       apiHost: config.get().apiHost,

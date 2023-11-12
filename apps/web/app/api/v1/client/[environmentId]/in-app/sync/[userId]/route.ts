@@ -2,7 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSyncSurveysCached } from "@formbricks/lib/survey/service";
@@ -57,6 +57,10 @@ export async function GET(
 
     if (!environment) {
       throw new Error("Environment does not exist");
+    }
+
+    if (!environment?.widgetSetupCompleted) {
+      await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
 
     // check team subscriptons

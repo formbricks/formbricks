@@ -1,7 +1,7 @@
 import { getSyncSurveysCached } from "@/app/api/v1/(legacy)/js/lib/surveys";
 import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
@@ -30,6 +30,10 @@ export const getUpdatedState = async (
 
   if (!environment) {
     throw new Error("Environment does not exist");
+  }
+
+  if (!environment?.widgetSetupCompleted) {
+    await updateEnvironment(environment.id, { widgetSetupCompleted: true });
   }
 
   // check team subscriptons
