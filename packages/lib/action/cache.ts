@@ -14,9 +14,12 @@ export const actionCache = {
       return `environments-${personId}-actions`;
     },
   },
-  revalidate({ environmentId }: RevalidateProps): void {
+  revalidate({ environmentId, personId }: RevalidateProps): void {
     if (environmentId) {
       revalidateTag(this.tag.byEnvironmentId(environmentId));
+    }
+    if (personId) {
+      revalidateTag(this.tag.byPersonId(personId));
     }
   },
 };

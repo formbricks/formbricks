@@ -19,8 +19,8 @@ const init = async (initConfig: TJsConfigInput) => {
   await queue.wait();
 };
 
-const setUserId = async (userId: string | number): Promise<void> => {
-  queue.add(true, setPersonUserId, userId);
+const setUserId = async (): Promise<void> => {
+  queue.add(true, setPersonUserId);
   await queue.wait();
 };
 

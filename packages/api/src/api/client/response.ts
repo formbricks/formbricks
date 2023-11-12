@@ -7,13 +7,15 @@ type TResponseUpdateInputWithResponseId = TResponseUpdateInput & { responseId: s
 
 export class ResponseAPI {
   private apiHost: string;
+  private environmentId: string;
 
-  constructor(apiHost: string) {
+  constructor(apiHost: string, environmentId: string) {
     this.apiHost = apiHost;
+    this.environmentId = environmentId;
   }
 
   async create(responseInput: TResponseInput): Promise<Result<TResponse, NetworkError | Error>> {
-    return makeRequest(this.apiHost, "/api/v1/client/responses", "POST", responseInput);
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses`, "POST", responseInput);
   }
 
   async update({
@@ -21,7 +23,7 @@ export class ResponseAPI {
     finished,
     data,
   }: TResponseUpdateInputWithResponseId): Promise<Result<TResponse, NetworkError | Error>> {
-    return makeRequest(this.apiHost, `/api/v1/client/responses/${responseId}`, "PUT", {
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
       data,
     });
