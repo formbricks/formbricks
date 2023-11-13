@@ -91,7 +91,7 @@ export async function copyToOtherEnvironmentAction(
     include: {
       triggers: {
         include: {
-          eventClass: true,
+          actionClass: true,
         },
       },
       attributeFilters: {
@@ -109,9 +109,9 @@ export async function copyToOtherEnvironmentAction(
   let targetEnvironmentTriggers: string[] = [];
   // map the local triggers to the target environment
   for (const trigger of existingSurvey.triggers) {
-    const targetEnvironmentTrigger = await prisma.eventClass.findFirst({
+    const targetEnvironmentTrigger = await prisma.actionClass.findFirst({
       where: {
-        name: trigger.eventClass.name,
+        name: trigger.actionClass.name,
         environment: {
           id: targetEnvironmentId,
         },
@@ -119,18 +119,18 @@ export async function copyToOtherEnvironmentAction(
     });
     if (!targetEnvironmentTrigger) {
       // if the trigger does not exist in the target environment, create it
-      const newTrigger = await prisma.eventClass.create({
+      const newTrigger = await prisma.actionClass.create({
         data: {
-          name: trigger.eventClass.name,
+          name: trigger.actionClass.name,
           environment: {
             connect: {
               id: targetEnvironmentId,
             },
           },
-          description: trigger.eventClass.description,
-          type: trigger.eventClass.type,
-          noCodeConfig: trigger.eventClass.noCodeConfig
-            ? JSON.parse(JSON.stringify(trigger.eventClass.noCodeConfig))
+          description: trigger.actionClass.description,
+          type: trigger.actionClass.type,
+          noCodeConfig: trigger.actionClass.noCodeConfig
+            ? JSON.parse(JSON.stringify(trigger.actionClass.noCodeConfig))
             : undefined,
         },
       });
@@ -183,8 +183,8 @@ export async function copyToOtherEnvironmentAction(
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
-        create: targetEnvironmentTriggers.map((eventClassId) => ({
-          eventClassId: eventClassId,
+        create: targetEnvironmentTriggers.map((actionClassId) => ({
+          actionClassId: actionClassId,
         })),
       },
       attributeFilters: {

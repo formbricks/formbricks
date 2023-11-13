@@ -6,7 +6,7 @@ Discover a myriad of ways to leave your mark on Formbricks — whether it's by s
 
 ## 🐛 Issue Hunters
 
-Did you stumble upon a bug? Encountered a hiccup in deployment? Perhaps you have some user feedback to share? Your quickest route to help us out is by [raising an issue](https://github.com/formbricks/formbricks/issues/new/choose). We're on standby to respond swiftly. 
+Did you stumble upon a bug? Encountered a hiccup in deployment? Perhaps you have some user feedback to share? Your quickest route to help us out is by [raising an issue](https://github.com/formbricks/formbricks/issues/new/choose). We're on standby to respond swiftly.
 
 ## 💡 Feature Architects
 
@@ -20,12 +20,11 @@ Ready to dive into the code and make a real impact? Here's your path:
 
 1. **Fork the Repository:** Fork our repository or use [Gitpod](https://formbricks.com/docs/contributing/gitpod)
 
-2. **Tweak and Transform:** Work your coding magic and apply your changes.
+1. **Tweak and Transform:** Work your coding magic and apply your changes.
 
-3. **Pull Request Act:** If you're ready to go, craft a new pull request closely following our PR template 🙏
+1. **Pull Request Act:** If you're ready to go, craft a new pull request closely following our PR template 🙏
 
 Would you prefer a chat before you dive into a lot of work? Our [Discord server](https://formbricks.com/discord) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
-
 
 ## 🚀 Aspiring Features
 

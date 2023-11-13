@@ -17,8 +17,8 @@ import { TUserNotificationSettings } from "@formbricks/types/users";
 
 declare global {
   namespace PrismaJson {
-    export type EventProperties = { [key: string]: string };
-    export type EventClassNoCodeConfig = TActionClassNoCodeConfig;
+    export type ActionProperties = { [key: string]: string };
+    export type ActionClassNoCodeConfig = TActionClassNoCodeConfig;
     export type IntegrationConfig = TIntegrationConfig;
     export type ResponseData = TResponseData;
     export type ResponseMeta = TResponseMeta;

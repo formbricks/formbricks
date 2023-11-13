@@ -221,6 +221,7 @@ export const authOptions: NextAuthOptions = {
                 {
                   accepted: true,
                   role: "owner",
+                  // @ts-ignore
                   team: {
                     create: {
                       name: `${user.name}'s Team`,

@@ -49,7 +49,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
   const options = [
     {
       id: "web",
-      name: "Web App",
+      name: "In-App Survey",
       icon: ComputerDesktopIcon,
       description: "Embed a survey in your web app to collect responses.",
       comingSoon: false,
@@ -65,7 +65,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
     },
     {
       id: "mobile",
-      name: "Mobile app",
+      name: "Mobile App Survey",
       icon: DevicePhoneMobileIcon,
       description: "Survey users inside a mobile app (iOS & Android).",
       comingSoon: true,
