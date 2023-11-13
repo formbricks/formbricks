@@ -38,6 +38,7 @@ const responseSelection = {
   person: {
     select: {
       id: true,
+      userId: true,
       createdAt: true,
       updatedAt: true,
       environmentId: true,
@@ -530,38 +531,6 @@ export const getResponseCountBySurveyId = async (surveyId: string): Promise<numb
     [`getResponseCountBySurveyId-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-export const getMonthlyResponseCount = async (environmentId: string): Promise<number> =>
-  await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const responseAggregations = await prisma.response.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          survey: {
-            environmentId,
-            type: "web",
-          },
-          createdAt: {
-            gte: firstDayOfMonth,
-          },
-        },
-      });
-
-      return responseAggregations._count.id;
-    },
-    [`getMonthlyResponseCount-${environmentId}`],
-    {
-      tags: [responseCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

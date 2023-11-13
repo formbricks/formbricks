@@ -1,19 +1,19 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/people";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { getAttributeClassByName } from "../attributeClass/service";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { personCache } from "./cache";
 
 export const selectPerson = {
   id: true,
+  userId: true,
   createdAt: true,
   updatedAt: true,
   environmentId: true,
@@ -28,6 +28,7 @@ export const selectPerson = {
       attributeClass: {
         select: {
           name: true,
+          id: true,
         },
       },
     },
@@ -36,6 +37,7 @@ export const selectPerson = {
 
 type TransformPersonInput = {
   id: string;
+  userId: string;
   environmentId: string;
   attributes: {
     value: string;
@@ -55,6 +57,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
 
   return {
     id: person.id,
+    userId: person.userId,
     attributes: attributes,
     environmentId: person.environmentId,
     createdAt: new Date(person.createdAt),
@@ -157,7 +160,7 @@ export const getPeopleCount = async (environmentId: string): Promise<number> =>
     }
   )();
 
-export const createPerson = async (environmentId: string): Promise<TPerson> => {
+export const createPerson = async (environmentId: string, userId: string): Promise<TPerson> => {
   validateInputs([environmentId, ZId]);
 
   try {
@@ -168,6 +171,7 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
             id: environmentId,
           },
         },
+        userId,
       },
       select: selectPerson,
     });
@@ -243,13 +247,26 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   }
 };
 
-export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> => {
+export const getPersonByUserId = async (userId: string, environmentId: string): Promise<TPerson | null> => {
   const personPrisma = await unstable_cache(
     async () => {
       validateInputs([userId, ZString], [environmentId, ZId]);
 
+      // check if userId exists as a column
+      const personWithUserId = await prisma.person.findFirst({
+        where: {
+          environmentId,
+          userId,
+        },
+        select: selectPerson,
+      });
+
+      if (personWithUserId) {
+        return personWithUserId;
+      }
+
       // Check if a person with the userId attribute exists
-      const personPrisma = await prisma.person.findFirst({
+      let personWithUserIdAttribute = await prisma.person.findFirst({
         where: {
           environmentId,
           attributes: {
@@ -264,90 +281,82 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
         select: selectPerson,
       });
 
-      if (personPrisma) {
-        return personPrisma;
-      } else {
-        // Create a new person with the userId attribute
-        const userIdAttributeClass = await getAttributeClassByName(environmentId, "userId");
+      const userIdAttributeClassId = personWithUserIdAttribute?.attributes.find(
+        (attr) => attr.attributeClass.name === "userId" && attr.value === userId
+      )?.attributeClass.id;
 
-        if (!userIdAttributeClass) {
-          throw new ResourceNotFoundError(
-            "Attribute class not found for the given environment",
-            environmentId
-          );
-        }
-
-        const person = await prisma.person.create({
-          data: {
-            environment: {
-              connect: {
-                id: environmentId,
-              },
-            },
-            attributes: {
-              create: [
-                {
-                  attributeClass: {
-                    connect: {
-                      id: userIdAttributeClass.id,
-                    },
-                  },
-                  value: userId,
-                },
-              ],
-            },
-          },
-          select: selectPerson,
-        });
-
-        personCache.revalidate({
-          id: person.id,
-          environmentId: person.environmentId,
-          userId,
-        });
-
-        return person;
+      if (!personWithUserIdAttribute) {
+        return null;
       }
+
+      personWithUserIdAttribute = await prisma.person.update({
+        where: {
+          id: personWithUserIdAttribute.id,
+        },
+        data: {
+          userId,
+          attributes: {
+            deleteMany: { attributeClassId: userIdAttributeClassId },
+          },
+        },
+        select: selectPerson,
+      });
+
+      personCache.revalidate({
+        id: personWithUserIdAttribute.id,
+        environmentId: personWithUserIdAttribute.environmentId,
+        userId,
+      });
+
+      return personWithUserIdAttribute;
     },
-    [`getOrCreatePersonByUserId-${userId}-${environmentId}`],
+    [`getPersonByUserId-${userId}-${environmentId}`],
     {
       tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
+  if (!personPrisma) {
+    return null;
+  }
   return transformPrismaPerson(personPrisma);
 };
 
-export const getMonthlyActivePeopleCount = async (environmentId: string): Promise<number> =>
+export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> =>
   await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId]);
+      validateInputs([userId, ZString], [environmentId, ZId]);
 
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      let person = await getPersonByUserId(userId, environmentId);
 
-      const personAggregations = await prisma.person.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          environmentId,
-          sessions: {
-            some: {
-              createdAt: {
-                gte: firstDayOfMonth,
-              },
+      if (person) {
+        return person;
+      }
+
+      // create a new person
+      const personPrisma = await prisma.person.create({
+        data: {
+          environment: {
+            connect: {
+              id: environmentId,
             },
           },
+          userId,
         },
+        select: selectPerson,
       });
 
-      return personAggregations._count.id;
+      personCache.revalidate({
+        id: personPrisma.id,
+        environmentId: personPrisma.environmentId,
+        userId,
+      });
+
+      return transformPrismaPerson(personPrisma);
     },
-    [`getMonthlyActivePeopleCount-${environmentId}`],
+    [`getOrCreatePersonByUserId-${userId}-${environmentId}`],
     {
-      tags: [personCache.tag.byEnvironmentId(environmentId)],
+      tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
