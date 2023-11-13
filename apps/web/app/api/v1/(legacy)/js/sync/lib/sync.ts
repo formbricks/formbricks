@@ -1,4 +1,4 @@
-import { getSyncSurveys } from "@/app/api/v1/(legacy)/js/sync/lib/surveys";
+import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,

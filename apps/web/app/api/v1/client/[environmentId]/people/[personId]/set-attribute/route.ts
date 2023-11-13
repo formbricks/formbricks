@@ -1,4 +1,4 @@
-import { getUpdatedState } from "@/app/api/v1/(legacy)/js/lib/sync";
+import { getUpdatedState } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/state";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
