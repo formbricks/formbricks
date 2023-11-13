@@ -108,7 +108,7 @@ export const generateQuestionAndFilterOptions = (
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
       questionsOptions.push({
-        label: q.headline,
+        label: q.headline.en,
         questionType: q.type,
         type: OptionsType.QUESTIONS,
         id: q.id,

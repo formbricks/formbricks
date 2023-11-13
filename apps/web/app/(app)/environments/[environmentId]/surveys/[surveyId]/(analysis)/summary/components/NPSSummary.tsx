@@ -80,7 +80,7 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline
-          headline={questionSummary.question.headline.default}
+          headline={questionSummary.question.headline.en}
           required={questionSummary.question.required}
         />
 

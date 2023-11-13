@@ -27,6 +27,8 @@ interface SurveyMenuBarProps {
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
   responseCount: number;
+  languages: string[];
+  selectedLanguage: string;
 }
 
 export default function SurveyMenuBar({
@@ -39,6 +41,8 @@ export default function SurveyMenuBar({
   setInvalidQuestions,
   product,
   responseCount,
+  languages,
+  selectedLanguage,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -120,7 +124,7 @@ export default function SurveyMenuBar({
     faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question);
+      const isValid = validateQuestion(question, languages);
 
       if (!isValid) {
         faultyQuestions.push(question.id);
@@ -147,11 +151,14 @@ export default function SurveyMenuBar({
         question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
-          question.choices.some((element) => element.label.default.trim() === "") ||
+          question.choices.some((element) => element.label[selectedLanguage].trim() === "") ||
           question.choices.some((element, index) =>
             question.choices
               .slice(index + 1)
-              .some((nextElement) => nextElement.label.default.trim() === element.label.default.trim())
+              .some(
+                (nextElement) =>
+                  nextElement.label[selectedLanguage].trim() === element.label[selectedLanguage].trim()
+              )
           );
 
         if (haveSameChoices) {

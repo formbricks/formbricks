@@ -13,7 +13,7 @@ import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { validateQuestion } from "./Validation";
-import { translateQuestion } from "@formbricks/lib/utils/i18n";
+import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguageSupport/utils/i18n";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
@@ -68,7 +68,8 @@ export default function QuestionsView({
       return;
     }
     let temp = JSON.parse(JSON.stringify(invalidQuestions));
-    if (validateQuestion(question)) {
+    console.log(languages);
+    if (validateQuestion(question, extractLanguageSymbols(languages))) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
     } else if (!invalidQuestions.includes(question.id)) {

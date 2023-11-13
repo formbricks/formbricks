@@ -136,7 +136,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          language={language ? language : "default"}
+          language={language ? language : "en"}
           formbricksSignature={product.formbricksSignature}
           onDisplay={async () => {
             if (!isPreview) {
@@ -165,7 +165,7 @@ export default function LinkSurvey({
                   ...hiddenFieldsRecord,
                 },
                 finished: responseUpdate.finished,
-                language: language ?? "default",
+                language: language ?? "en",
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

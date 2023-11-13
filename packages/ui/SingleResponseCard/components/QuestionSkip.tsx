@@ -39,7 +39,7 @@ export default function QuestionSkip({ skippedQuestions, status, questions }: Qu
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId)!.headline.default}
+                        {questions.find((question) => question.id === questionId)!.headline.en}
                       </p>
                     );
                   })}
@@ -64,7 +64,7 @@ export default function QuestionSkip({ skippedQuestions, status, questions }: Qu
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId)!.headline.default}
+                        {questions.find((question) => question.id === questionId)!.headline.en}
                       </p>
                     );
                   })}

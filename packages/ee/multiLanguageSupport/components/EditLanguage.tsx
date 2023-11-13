@@ -1,19 +1,18 @@
 "use client";
-import { TProduct } from "@formbricks/types/product";
+import { TLanguages, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { TProductUpdateInput } from "@formbricks/types/product";
-import { updateProductAction } from "../lookandfeel/actions";
 import { toast } from "react-hot-toast";
+import { updateProductAction } from "../lib/actions";
 
 export default function EditLanguage({ product }: { product: TProduct }) {
   const initialLanguages = Object.entries(product.languages || {}).sort(([key1], [key2]) =>
     key1 === "en" ? -1 : key2 === "en" ? 1 : 0
   );
-  const [languages, setLanguages] = useState(initialLanguages);
+  const [languages, setLanguages] = useState<string[][]>(initialLanguages);
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -22,10 +21,10 @@ export default function EditLanguage({ product }: { product: TProduct }) {
     setIsEditing(true);
   };
 
-  const deleteLanguage = (index) => {
+  const deleteLanguage = (index: number) => {
     const newLanguages = [...languages];
     newLanguages.splice(index, 1);
-    const languagesObject: Partial<TProductUpdateInput> = newLanguages.reduce((acc, [key, value]) => {
+    const languagesObject: TLanguages = newLanguages.reduce((acc, [key, value]) => {
       if (key && value) {
         acc[key] = value;
       }
@@ -36,7 +35,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
     setIsEditing(false);
   };
 
-  const handleOnChange = (index, type, e) => {
+  const handleOnChange = (index: number, type: string, e: React.ChangeEvent<HTMLInputElement>) => {
     setIsEditing(true); // Set editing state to true when change begins
     const newLanguages = [...languages];
     newLanguages[index][type === "symbol" ? 0 : 1] = e.target.value;
@@ -44,7 +43,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
   };
 
   const updateLanguages = () => {
-    const languagesObject: Partial<TProductUpdateInput> = languages.reduce((acc, [key, value]) => {
+    const languagesObject: TLanguages = languages.reduce((acc, [key, value]) => {
       if (key && value) {
         acc[key] = value;
       }
@@ -53,7 +52,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
     handleSave(languagesObject);
   };
 
-  const handleSave = async (languages) => {
+  const handleSave = async (languages: TLanguages) => {
     try {
       setIsUpdating(true);
       await updateProductAction(product.id, { languages });
@@ -61,7 +60,9 @@ export default function EditLanguage({ product }: { product: TProduct }) {
       setIsUpdating(false);
       toast.success("Lanuages updated successfully");
     } catch (error) {
-      toast.error(error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
       setIsUpdating(false);
     }
   };

@@ -7,8 +7,8 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
-import { TI18nString } from "@formbricks/types/i18n";
+import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
+import { TI18nString } from "@formbricks/types/surveys";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;

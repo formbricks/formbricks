@@ -1,7 +1,7 @@
 "use client";
-import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
+import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { TI18nString } from "@formbricks/types/i18n";
+import { TI18nString } from "@formbricks/types/surveys";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,

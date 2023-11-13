@@ -4,7 +4,7 @@ import { BackButton } from "./BackButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
-import { getLocalizedValue } from "../../../lib/utils/i18n";
+import { getLocalizedValue } from "../lib/utils";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;

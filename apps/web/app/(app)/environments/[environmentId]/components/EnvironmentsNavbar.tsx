@@ -5,6 +5,7 @@ import { IS_FORMBRICKS_CLOUD, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbri
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProducts } from "@formbricks/lib/product/service";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { getTeamByEnvironmentId, getTeamsByUserId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import type { Session } from "next-auth";
@@ -16,10 +17,11 @@ interface EnvironmentsNavbarProps {
 }
 
 export default async function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
-  const [environment, teams, team] = await Promise.all([
+  const [environment, teams, team, isEnterpriseEdition] = await Promise.all([
     getEnvironment(environmentId),
     getTeamsByUserId(session.user.id),
     getTeamByEnvironmentId(environmentId),
+    getIsEnterpriseEdition(),
   ]);
 
   if (!team || !environment) {
@@ -47,6 +49,7 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       webAppUrl={WEBAPP_URL}
       membershipRole={currentUserMembership?.role}
+      isEnterpriseEdition={isEnterpriseEdition}
     />
   );
 }

@@ -172,6 +172,7 @@ export default function PreviewSurvey({
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
+      {console.log(survey)}
       <motion.div
         variants={previewParentContainerVariant}
         className="fixed hidden h-[95%] w-5/6"

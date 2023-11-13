@@ -6,16 +6,18 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 
 export const metadata: Metadata = {
   title: "Settings",
 };
 
 export default async function SettingsLayout({ children, params }) {
-  const [team, product, session] = await Promise.all([
+  const [team, product, session, isEnterpriseEdition] = await Promise.all([
     getTeamByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
+    getIsEnterpriseEdition(),
   ]);
   if (!team) {
     throw new Error("Team not found");
@@ -39,6 +41,7 @@ export default async function SettingsLayout({ children, params }) {
           team={team}
           product={product}
           membershipRole={currentUserMembership?.role}
+          isEnterpriseEdition={isEnterpriseEdition}
         />
         <div className="w-full md:ml-64">
           <div className="max-w-4xl px-6 pb-6 pt-14 md:pt-6">

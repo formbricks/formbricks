@@ -318,10 +318,10 @@ export default function LogicEditor({
                   {localSurvey.questions.map(
                     (question, idx) =>
                       idx !== questionIdx && (
-                        <SelectItem key={question.id} value={question.id} title={question.headline.default}>
+                        <SelectItem key={question.id} value={question.id} title={question.headline.en}>
                           <div className="w-40">
                             <p className="truncate">
-                              {idx + 1} - {question.headline.default}
+                              {idx + 1} - {question.headline.en}
                             </p>
                           </div>
                         </SelectItem>

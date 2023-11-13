@@ -54,9 +54,9 @@ export default function MultipleChoiceSummary({
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (const choice of questionSummary.question.choices) {
-      resultsDict[choice.label.default] = {
+      resultsDict[choice.label.en] = {
         id: choice.id,
-        label: choice.label.default,
+        label: choice.label.en,
         count: 0,
         percentage: 0,
         otherValues: [],
@@ -130,10 +130,9 @@ export default function MultipleChoiceSummary({
 
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-      {console.log(questionSummary)}
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline
-          headline={questionSummary.question.headline.default}
+          headline={questionSummary.question.headline.en}
           required={questionSummary.question.required}
         />
 

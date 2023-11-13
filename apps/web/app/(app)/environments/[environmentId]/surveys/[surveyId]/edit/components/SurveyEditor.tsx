@@ -9,12 +9,12 @@ import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TProduct } from "@formbricks/types/product";
+import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import LanguageSwitch from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LanguageSwitch";
-import { translateSurvey } from "@formbricks/lib/utils/i18n";
+import LanguageSwitch from "@formbricks/ee/multiLanguageSupport/components/LanguageSwitch";
+import { translateSurvey } from "@formbricks/ee/multiLanguageSupport/utils/i18n";
 import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SurveyEditorProps {
@@ -25,6 +25,7 @@ interface SurveyEditorProps {
   attributeClasses: TAttributeClass[];
   responseCount: number;
   membershipRole?: TMembershipRole;
+  isEnterpriseEdition: boolean;
 }
 
 export default function SurveyEditor({
@@ -35,30 +36,44 @@ export default function SurveyEditor({
   attributeClasses,
   responseCount,
   membershipRole,
+  isEnterpriseEdition,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
-  const [languages, setLanguages] = useState({ en: "English" });
+  const [languages, setLanguages] = useState<TLanguages>({ en: "English" });
   const allLanguages = Object.entries(product.languages);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
 
   useEffect(() => {
+    console.log(survey);
     if (survey) {
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
 
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
+      if (survey.questions[0].headline._i18n_) {
+        console.log("hellooo");
+        // Construct an object with the language codes from the headline
+        const languagesObj: TLanguages = Object.keys(survey.questions[0].headline)
+          .filter((key) => key !== "_i18n_") // Exclude the _i18n_ property
+          .reduce((acc, lang) => {
+            console.log(lang);
+            acc[lang] = product.languages[lang];
+            return acc;
+          }, {});
+
+        setLanguages(languagesObj);
+      }
     }
   }, [survey]);
 
   const translatedSurvey = useMemo(() => {
+    if (localSurvey?.questions[0].headline._i18n_) return localSurvey;
     if (localSurvey) {
-      console.log("traslating");
-      console.log(languages);
       return translateSurvey(localSurvey, Object.keys(languages));
     }
   }, [i18n, localSurvey, selectedLanguage, languages]);
@@ -73,10 +88,7 @@ export default function SurveyEditor({
   }, [localSurvey?.type]);
 
   useEffect(() => {
-    console.log(languages);
-    console.log(selectedLanguage);
     if (!Object.keys(languages).includes(selectedLanguage)) {
-      console.log("hello");
       setSelectedLanguage("en");
     }
   }, [languages]);
@@ -87,7 +99,6 @@ export default function SurveyEditor({
 
   return (
     <>
-      {console.log(translatedSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
@@ -99,16 +110,20 @@ export default function SurveyEditor({
           setInvalidQuestions={setInvalidQuestions}
           product={product}
           responseCount={responseCount}
+          languages={Object.keys(languages)}
+          selectedLanguage={selectedLanguage}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
-            <div>
+            <div className="mt-16 ">
               <LanguageSwitch
                 allLanguages={allLanguages}
+                languages={languages}
                 setLanguages={setLanguages}
                 setI18n={setI18n}
                 environmentId={environment.id}
+                isEnterpriseEdition={isEnterpriseEdition}
               />
             </div>
             {activeView === "questions" ? (

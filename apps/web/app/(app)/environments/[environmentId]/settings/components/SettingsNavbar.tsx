@@ -33,12 +33,14 @@ export default function SettingsNavbar({
   team,
   product,
   membershipRole,
+  isEnterpriseEdition,
 }: {
   environmentId: string;
   isFormbricksCloud: boolean;
   team: TTeam;
   product: TProduct;
   membershipRole?: TMembershipRole;
+  isEnterpriseEdition: boolean;
 }) {
   const pathname = usePathname();
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
@@ -104,7 +106,7 @@ export default function SettingsNavbar({
             href: `/environments/${environmentId}/settings/language`,
             icon: LanguageIcon,
             current: pathname?.includes("/language"),
-            hidden: false,
+            hidden: !isEnterpriseEdition,
           },
           {
             name: "API Keys",

@@ -7,8 +7,8 @@ import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outlin
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import Dropdown from "./RatingTypeDropdown";
-import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
-import { TI18nString } from "@formbricks/types/i18n";
+import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
+import { TI18nString } from "@formbricks/types/surveys";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;

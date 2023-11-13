@@ -38,11 +38,11 @@ const checkForI18n = (response: TResponse, id, survey: TSurvey) => {
   if (question?.type === "multipleChoiceMulti") {
     let choiceValues = [] as string[];
     (response.data[id] as string[]).forEach((data) => {
-      choiceValues.push(question.choices.find((choice) => choice.label[language] === data)?.label.default);
+      choiceValues.push(question.choices.find((choice) => choice.label[language] === data)?.label.en);
     });
     return choiceValues;
   }
-  return question.choices.find((choice) => choice.label[language] === response.data[id])?.label.default;
+  return question.choices.find((choice) => choice.label[language] === response.data[id])?.label.en;
 };
 
 export default function SummaryList({ environment, survey, responses, responsesPerPage }: SummaryListProps) {

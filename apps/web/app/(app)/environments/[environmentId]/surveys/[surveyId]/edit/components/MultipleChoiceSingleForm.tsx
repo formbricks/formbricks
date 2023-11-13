@@ -1,16 +1,14 @@
 "use client";
 
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
-import LocalizedInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LocalizedInput";
+import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -61,8 +59,11 @@ export default function MultipleChoiceSingleForm({
   const findDuplicateLabel = () => {
     for (let i = 0; i < question.choices.length; i++) {
       for (let j = i + 1; j < question.choices.length; j++) {
-        if (question.choices[i].label.trim() === question.choices[j].label.trim()) {
-          return question.choices[i].label.trim(); // Return the duplicate label
+        if (
+          question.choices[i].label[selectedLanguage].trim() ===
+          question.choices[j].label[selectedLanguage].trim()
+        ) {
+          return question.choices[i].label[selectedLanguage].trim(); // Return the duplicate label
         }
       }
     }
@@ -71,13 +72,13 @@ export default function MultipleChoiceSingleForm({
 
   const findEmptyLabel = () => {
     for (let i = 0; i < question.choices.length; i++) {
-      if (question.choices[i].label.trim() === "") return true;
+      if (question.choices[i].label[selectedLanguage].trim() === "") return true;
     }
     return false;
   };
 
-  const updateChoice = (choiceIdx: number, updatedAttributes: { label: string }) => {
-    const newLabel = updatedAttributes.label;
+  const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
+    const newLabel = updatedAttributes.label.en;
     const oldLabel = question.choices[choiceIdx].label;
     let newChoices: any[] = [];
     if (question.choices) {
@@ -191,11 +192,11 @@ export default function MultipleChoiceSingleForm({
                 id="subheader"
                 name="subheader"
                 languages={languages}
-                value={question.subheader}
+                value={question.subheader as TI18nString}
                 isInValid={isInValid}
                 onChange={(e) => {
                   let translatedSubheader = {
-                    ...question.subheader,
+                    ...(question.subheader as TI18nString),
                     [selectedLanguage]: e.target.value,
                   };
                   updateQuestion(questionIdx, { subheader: translatedSubheader });
@@ -230,7 +231,7 @@ export default function MultipleChoiceSingleForm({
                 <LocalizedInput
                   id={`choice-${choiceIdx}`}
                   name={`choice-${choiceIdx}`}
-                  value={choice.label || ""}
+                  value={choice.label as TI18nString}
                   languages={languages}
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
@@ -244,14 +245,14 @@ export default function MultipleChoiceSingleForm({
                   }}
                   onChange={(e) => {
                     let translatedChoiceLabel = {
-                      ...question.choices[choiceIdx].label,
+                      ...(question.choices[choiceIdx].label as TI18nString),
                       [selectedLanguage]: e.target.value,
                     };
                     updateChoice(choiceIdx, { label: translatedChoiceLabel });
                   }}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  isInvalid={
+                  isInValid={
                     (isInvalidValue === "" && choice.label[selectedLanguage].trim() === "") ||
                     (isInvalidValue !== null &&
                       choice.label[selectedLanguage].trim() === isInvalidValue.trim())

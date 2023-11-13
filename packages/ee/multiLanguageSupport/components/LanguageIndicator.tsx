@@ -1,23 +1,33 @@
 import { LanguageIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-export default function LanguageIndicator({ selectedLanguage, languages, setSelectedLanguage }) {
+
+interface LanguageIndicatorProps {
+  selectedLanguage: string;
+  languages: string[][];
+  setSelectedLanguage: (language: string) => void;
+}
+export default function LanguageIndicator({
+  selectedLanguage,
+  languages,
+  setSelectedLanguage,
+}: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
 
-  const changeLanguage = (language) => {
+  const changeLanguage = (language: string[]) => {
     setSelectedLanguage(language[0]);
     setShowLanguageDropdown(false);
   };
   return (
-    <div className="absolute inset-y-2 right-2">
+    <div className="absolute right-2 top-2">
       <button
         type="button"
         className="flex items-center justify-center rounded-lg bg-black p-1 px-2 text-xs text-white"
         onClick={toggleDropdown}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        {languages.find((language) => language[0] === selectedLanguage)[1]}
+        {languages.find((language) => language[0] === selectedLanguage)![1]}
         <LanguageIcon className="ml-1 h-3 w-3" />
       </button>
       {showLanguageDropdown && (
@@ -26,7 +36,7 @@ export default function LanguageIndicator({ selectedLanguage, languages, setSele
             (language) =>
               language[0] !== selectedLanguage && (
                 <button
-                  key={language}
+                  key={language[0]}
                   type="button"
                   className="block w-full text-left"
                   onClick={() => changeLanguage(language)}>

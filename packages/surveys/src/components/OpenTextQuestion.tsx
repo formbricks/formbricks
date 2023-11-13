@@ -5,7 +5,7 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 import { useCallback } from "react";
-import { getLocalizedValue } from "../../../lib/utils/i18n";
+import { getLocalizedValue } from "../lib/utils";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;

@@ -1,16 +1,16 @@
 import { Input } from "@formbricks/ui/Input";
-import LanguageIndicator from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LanguageIndicator";
-import { TI18nString } from "@formbricks/types/i18n";
+import LanguageIndicator from "./LanguageIndicator";
+import { TI18nString } from "@formbricks/types/surveys";
 
 interface LocalizedInputProps {
   id: string;
   name: string;
   value: TI18nString;
   isInValid: boolean;
-  onChange;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  onBlur?;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
   languages: string[][];
 }
 const LocalizedInput = ({

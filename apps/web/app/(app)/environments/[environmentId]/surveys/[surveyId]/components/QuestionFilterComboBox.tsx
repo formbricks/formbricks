@@ -148,16 +148,16 @@ const QuestionFilterComboBox = ({
                   <CommandItem
                     onSelect={() => {
                       !isMultiple
-                        ? onChangeFilterComboBoxValue(typeof o === "object" ? o.default : o)
+                        ? onChangeFilterComboBoxValue(typeof o === "object" ? o.en : o)
                         : onChangeFilterComboBoxValue(
                             Array.isArray(filterComboBoxValue)
-                              ? [...filterComboBoxValue, typeof o === "object" ? o.default : o]
-                              : [typeof o === "object" ? o.default : o]
+                              ? [...filterComboBoxValue, typeof o === "object" ? o.en : o]
+                              : [typeof o === "object" ? o.en : o]
                           );
                       !isMultiple && setOpen(false);
                     }}
                     className="cursor-pointer">
-                    {typeof o === "object" ? o.default : o}
+                    {typeof o === "object" ? o.en : o}
                   </CommandItem>
                 ))}
               </CommandGroup>

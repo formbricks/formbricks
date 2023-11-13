@@ -13,6 +13,7 @@ const containerId = "formbricks-web-container";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
+const language = "de";
 let surveyRunning = false;
 
 export const renderWidget = (survey: TSurveyWithTriggers) => {
@@ -55,6 +56,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
       formbricksSignature: true,
       clickOutside,
       darkOverlay,
+      language,
       highlightBorderColor,
       placement,
       onDisplay: async () => {

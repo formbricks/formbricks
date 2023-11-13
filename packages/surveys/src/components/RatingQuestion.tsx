@@ -18,7 +18,7 @@ import {
 } from "./Smileys";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { getLocalizedValue } from "../../../lib/utils/i18n";
+import { getLocalizedValue } from "../lib/utils";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
