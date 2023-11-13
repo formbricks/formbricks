@@ -5,7 +5,7 @@ import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSyncSurveysCached } from "@formbricks/lib/survey/service";
+import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/js";
@@ -88,7 +88,7 @@ export async function GET(
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveysCached(environmentId, person),
+      getSyncSurveys(environmentId, person),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

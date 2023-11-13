@@ -16,12 +16,12 @@ const diffInDays = (date1: Date, date2: Date) => {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
+export const getSyncSurveys = (environmentId: string, person: TPerson) =>
   unstable_cache(
     async () => {
       return await getSyncSurveys(environmentId, person);
     },
-    [`getSyncSurveysCached-${environmentId}-${person.id}`],
+    [`getSyncSurveys-${environmentId}-${person.id}`],
     {
       tags: [
         displayCache.tag.byPersonId(person.id),

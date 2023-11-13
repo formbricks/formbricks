@@ -1,4 +1,4 @@
-import { getSyncSurveysCached } from "@/app/api/v1/(legacy)/js/lib/surveys";
+import { getSyncSurveys } from "@/app/api/v1/(legacy)/js/lib/surveys";
 import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
@@ -80,7 +80,7 @@ export const getUpdatedState = async (
   }
 
   const [surveys, noCodeActionClasses, product] = await Promise.all([
-    getSyncSurveysCached(environmentId, person),
+    getSyncSurveys(environmentId, person),
     getActionClasses(environmentId),
     getProductByEnvironmentId(environmentId),
   ]);
