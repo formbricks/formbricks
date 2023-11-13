@@ -9,9 +9,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import Placement from "./Placement";
-import ColorSurveyBg from "./ColorSurveyBg";
-import ImageSurveyBg from "./ImageSurveyBg";
-import AnimatedSurveyBg from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AnimatedSurveyBg";
+import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
 
 interface StylingCardProps {
   localSurvey: TSurvey;
@@ -200,82 +198,65 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
               </div>
             )}
           </div>
-          {/* Background */}
-          <div className="p-3">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoCompleteBg" checked={!!bg} onCheckedChange={toggleBackgroundColor} />
-              <Label htmlFor="autoCompleteBg" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Change Background</h3>
-                  <p className="text-xs font-normal text-slate-500">
-                    Pick a background from our library or upload your own.
-                  </p>
+          {type == "link" && (
+            <>
+              {/* Background */}
+              <div className="p-3">
+                <div className="ml-2 flex items-center space-x-1">
+                  <Switch id="autoCompleteBg" checked={!!bg} onCheckedChange={toggleBackgroundColor} />
+                  <Label htmlFor="autoCompleteBg" className="cursor-pointer">
+                    <div className="ml-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Change Background</h3>
+                      <p className="text-xs font-normal text-slate-500">
+                        Pick a background from our library or upload your own.
+                      </p>
+                    </div>
+                  </Label>
                 </div>
-              </Label>
-            </div>
-            {bg && (
-              <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4 px-8">
-                <div className="flex w-full items-center justify-between border bg-slate-50 px-6">
-                  <button
-                    className={tab === "image" ? "rounded-md bg-white p-2" : "rounded-md p-2"}
-                    onClick={() => setTab("image")}>
-                    Image
-                  </button>
-                  <button
-                    className={tab === "animation" ? "rounded-md bg-white p-2" : "rounded-md p-2"}
-                    onClick={() => setTab("animation")}>
-                    Animation
-                  </button>
-                  <button
-                    className={tab === "color" ? "rounded-md bg-white p-2" : "rounded-md p-2"}
-                    onClick={() => setTab("color")}>
-                    Color
-                  </button>
-                </div>
-                {tab == "image" ? (
-                  <ImageSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
-                ) : tab == "animation" ? (
-                  <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
-                ) : (
-                  <ColorSurveyBg
+                {bg && (
+                  <SurveyBgSelectorTab
                     localSurvey={localSurvey}
                     handleBgChange={handleBgChange}
                     colours={colours}
                   />
                 )}
               </div>
-            )}
-          </div>
-          {/* Overlay */}
-          <div className="p-3">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoCompleteOverlay" checked={!!brightness} onCheckedChange={toggleBrightness} />
-              <Label htmlFor="autoCompleteOverlay" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Background Overlay</h3>
-                  <p className="text-xs font-normal text-slate-500">
-                    Darken or lighten background of your choice.
-                  </p>
-                </div>
-              </Label>
-            </div>
-            {brightness && (
-              <div>
-                <div className="mt-4 flex flex-col justify-center rounded-lg border bg-slate-50 p-4 px-8">
-                  <h3 className="mb-4 text-sm font-semibold text-slate-700">Transparency</h3>
-                  <input
-                    id="small-range"
-                    type="range"
-                    min="1"
-                    max="200"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"
+              {/* Overlay */}
+              <div className="p-3">
+                <div className="ml-2 flex items-center space-x-1">
+                  <Switch
+                    id="autoCompleteOverlay"
+                    checked={!!brightness}
+                    onCheckedChange={toggleBrightness}
                   />
+                  <Label htmlFor="autoCompleteOverlay" className="cursor-pointer">
+                    <div className="ml-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Background Overlay</h3>
+                      <p className="text-xs font-normal text-slate-500">
+                        Darken or lighten background of your choice.
+                      </p>
+                    </div>
+                  </Label>
                 </div>
+                {brightness && (
+                  <div>
+                    <div className="mt-4 flex flex-col justify-center rounded-lg border bg-slate-50 p-4 px-8">
+                      <h3 className="mb-4 text-sm font-semibold text-slate-700">Transparency</h3>
+                      <input
+                        id="small-range"
+                        type="range"
+                        min="1"
+                        max="200"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
           {/* positioning */}
           {type !== "link" && (
             <div className="p-3 ">

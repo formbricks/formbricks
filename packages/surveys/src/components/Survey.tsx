@@ -170,7 +170,7 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
-        <div className="flex h-full w-full flex-col justify-between rounded-2xl bg-white px-6 pb-3 pt-6">
+        <div className="flex h-full w-full flex-col justify-between rounded-lg bg-white px-6 pb-3 pt-6 shadow-lg">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled
