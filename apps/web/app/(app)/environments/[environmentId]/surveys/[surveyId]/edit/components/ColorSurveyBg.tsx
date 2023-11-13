@@ -21,7 +21,7 @@ export default function ColorSurveyBg({ localSurvey, handleBgChange, colours }: 
       <div className="w-full max-w-xs py-2">
         <ColorPicker color={color} onChange={handleBg} />
       </div>
-      <div className="grid grid-cols-10 gap-4">
+      <div className="grid grid-cols-4 gap-4 md:grid-cols-5 xl:grid-cols-8 2xl:grid-cols-10">
         {colours.map((x) => {
           return (
             <div
