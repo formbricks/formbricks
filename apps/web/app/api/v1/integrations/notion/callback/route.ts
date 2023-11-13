@@ -1,11 +1,11 @@
 import {
   ENCRYPTION_KEY,
-  NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
   NOTION_OAUTH_CLIENT_SECRET,
   NOTION_REDIRECT_URI,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { responses } from "@/app/lib/api/response";
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 import { NextRequest, NextResponse } from "next/server";
@@ -18,22 +18,19 @@ export async function GET(req: NextRequest) {
   const error = queryParams.get("error");
 
   if (!environmentId) {
-    return NextResponse.json({ Error: "Invalid environmentId" });
+    return responses.badRequestResponse("Invalid environmentId");
   }
 
   if (code && typeof code !== "string") {
-    return NextResponse.json({ message: "`code` must be a string" }, { status: 400 });
+    return responses.badRequestResponse("`code` must be a string");
   }
 
   const client_id = NOTION_OAUTH_CLIENT_ID;
   const client_secret = NOTION_OAUTH_CLIENT_SECRET;
-  const auth_url = NOTION_AUTH_URL;
   const redirect_uri = NOTION_REDIRECT_URI;
-  if (!client_id) return NextResponse.json({ Error: "Notion client id is missing" }, { status: 400 });
-  if (!client_secret) return NextResponse.json({ Error: "Notion client secret is missing" }, { status: 400 });
-  if (!auth_url) return NextResponse.json({ Error: "Notion auth url is missing" }, { status: 400 });
-  if (!redirect_uri) return NextResponse.json({ Error: "Notion redirect url is missing" }, { status: 400 });
-
+  if (!client_id) return responses.internalServerErrorResponse("Notion client id is missing");
+  if (!redirect_uri) return responses.internalServerErrorResponse("Notion redirect url is missing");
+  if (!client_secret) return responses.internalServerErrorResponse("Notion client secret is missing");
   if (code) {
     // encode in base 64
     const encoded = Buffer.from(`${client_id}:${client_secret}`).toString("base64");
@@ -53,7 +50,7 @@ export async function GET(req: NextRequest) {
     });
 
     const tokenData = await response.json();
-    const encryptedAccessToken = symmetricEncrypt(tokenData.access_token, ENCRYPTION_KEY);
+    const encryptedAccessToken = symmetricEncrypt(tokenData.access_token, ENCRYPTION_KEY!);
     tokenData.access_token = encryptedAccessToken;
 
     const notionIntegration = {

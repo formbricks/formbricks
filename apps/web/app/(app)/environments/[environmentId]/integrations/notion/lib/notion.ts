@@ -9,6 +9,6 @@ export const authorize = async (environmentId: string, apiHost: string): Promise
     throw new Error("Could not create response");
   }
   const resJSON = await res.json();
-  const authUrl = resJSON.authUrl;
+  const authUrl = resJSON.data.authUrl;
   return authUrl;
 };
