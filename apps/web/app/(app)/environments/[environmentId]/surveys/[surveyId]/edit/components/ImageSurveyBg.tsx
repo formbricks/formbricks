@@ -11,13 +11,12 @@ export default function ImageSurveyBg({ localSurvey, handleBgChange }: ImageSurv
     <div className="mb-2 mt-4 w-full rounded-lg border bg-slate-50 p-4">
       <div className="flex w-full items-center justify-center">
         <FileInput
-          id="choices-file-input"
+          id="survey-bg-file-input"
           allowedFileExtensions={["png", "jpeg", "jpg"]}
           environmentId={localSurvey?.environmentId}
           onFileUpload={(url: string[]) => {
             handleBgChange(url[0], "image");
           }}
-          // fileUrl={localSurvey?.surveyBackground?.bg}
         />
       </div>
     </div>

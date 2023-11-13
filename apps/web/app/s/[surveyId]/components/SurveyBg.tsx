@@ -42,7 +42,7 @@ export default async function SurveyBg({ children, survey }: { children: React.R
         className={`flex  min-h-screen flex-col items-center justify-center px-2`}
         style={{
           backgroundImage: `url(${survey.surveyBackground?.bg})`,
-          backgroundSize: "inherit",
+          backgroundSize: "cover",
           filter: survey.surveyBackground?.brightness
             ? `brightness(${survey.surveyBackground.brightness}%)`
             : "none",
