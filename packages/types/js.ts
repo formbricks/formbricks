@@ -20,7 +20,7 @@ export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
 
 export const ZJsState = z.object({
   person: ZPerson.nullable(),
-  surveys: z.array(ZSurveyWithTriggers),
+  surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
   displays: z.array(ZJSStateDisplay).optional(),

@@ -1,13 +1,14 @@
+import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
 import { renderSurveyModal } from "@formbricks/surveys";
-import { TJSStateDisplay, TSurveyWithTriggers } from "@formbricks/types/js";
+import { TJSStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
-import { FormbricksAPI } from "@formbricks/api";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -15,7 +16,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 
-export const renderWidget = (survey: TSurveyWithTriggers) => {
+export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;

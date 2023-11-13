@@ -1,29 +1,33 @@
-import { getUpdatedState } from "@/app/api/v1/(legacy)/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
+import { getSyncSurveys } from "@formbricks/lib/survey/service";
+import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
+
+interface Context {
+  params: {
+    personId: string;
+    environmentId: string;
+  };
+}
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: Request, { params }): Promise<NextResponse> {
+export async function POST(req: Request, context: Context): Promise<NextResponse> {
   try {
-    const { personId } = params;
-
-    if (!personId || personId === "legacy") {
-      return responses.internalServerErrorResponse("setAttribute requires an identified user", true);
-    }
-
+    const { personId, environmentId } = context.params;
     const jsonInput = await req.json();
 
     // validate using zod
-    const inputValidation = ZJsPeopleLegacyAttributeInput.safeParse(jsonInput);
+    const inputValidation = ZJsPeopleAttributeInput.safeParse(jsonInput);
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -33,11 +37,11 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       );
     }
 
-    const { environmentId, key, value } = inputValidation.data;
+    const { key, value } = inputValidation.data;
 
-    const existingPerson = await getPerson(personId);
+    const person = await getPerson(personId);
 
-    if (!existingPerson) {
+    if (!person) {
       return responses.notFoundResponse("Person", personId, true);
     }
 
@@ -64,7 +68,23 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
       environmentId,
     });
 
-    const state = await getUpdatedState(environmentId, personId);
+    const [surveys, noCodeActionClasses, product] = await Promise.all([
+      getSyncSurveys(environmentId, person),
+      getActionClasses(environmentId),
+      getProductByEnvironmentId(environmentId),
+    ]);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    // return state
+    const state: TJsState = {
+      person,
+      surveys,
+      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+      product,
+    };
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

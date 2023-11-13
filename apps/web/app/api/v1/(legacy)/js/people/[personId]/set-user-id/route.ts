@@ -1,4 +1,4 @@
-import { getUpdatedState } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/state";
+import { getUpdatedState } from "@/app/api/v1/(legacy)/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
@@ -29,7 +29,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     const personWithUserId = await getOrCreatePersonByUserId(userId, environmentId);
 
     const state = await getUpdatedState(environmentId, personWithUserId.id);
-
     return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);

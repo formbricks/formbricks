@@ -605,7 +605,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
   return newSurvey;
 };
 
-export const getSyncSurveys = (environmentId: string, person: TPerson) =>
+export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> =>
   unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
