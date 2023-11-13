@@ -1,21 +1,21 @@
 import { UsageAttributesUpdater } from "@/app/(app)/components/FormbricksClient";
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
-import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
+import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
-import type { TEnvironment } from "@formbricks/types/environment";
-import { Badge } from "@formbricks/ui/Badge";
-import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getSurveys } from "@formbricks/lib/survey/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import type { TEnvironment } from "@formbricks/types/environment";
+import { Badge } from "@formbricks/ui/Badge";
+import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
+import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { getServerSession } from "next-auth";
+import Link from "next/link";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const session = await getServerSession(authOptions);
@@ -81,7 +81,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
             const singleUseId = isSingleUse ? generateSurveySingleUseId(isEncrypted) : undefined;
             return (
               <li key={survey.id} className="relative col-span-1 h-56">
-                <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
+                <div className="delay-50 bg-fill-primary flex h-full flex-col justify-between rounded-md shadow transition ease-in-out hover:scale-105">
                   <div className="px-6 py-4">
                     <Badge
                       StartIcon={survey.type === "link" ? LinkIcon : ComputerDesktopIcon}
