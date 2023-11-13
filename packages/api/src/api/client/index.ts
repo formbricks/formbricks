@@ -7,9 +7,9 @@ export class Client {
   display: DisplayAPI;
 
   constructor(options: ApiConfig) {
-    const { apiHost } = options;
+    const { apiHost, environmentId } = options;
 
-    this.response = new ResponseAPI(apiHost);
-    this.display = new DisplayAPI(apiHost);
+    this.response = new ResponseAPI(apiHost, environmentId);
+    this.display = new DisplayAPI(apiHost, environmentId);
   }
 }

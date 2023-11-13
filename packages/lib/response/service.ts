@@ -39,6 +39,7 @@ const responseSelection = {
   person: {
     select: {
       id: true,
+      userId: true,
       createdAt: true,
       updatedAt: true,
       environmentId: true,

@@ -5,8 +5,10 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import {
   TDisplay,
   TDisplayCreateInput,
+  TDisplayLegacyCreateInput,
   TDisplayUpdateInput,
   ZDisplayCreateInput,
+  ZDisplayLegacyCreateInput,
   ZDisplayUpdateInput,
 } from "@formbricks/types/displays";
 import { ZId } from "@formbricks/types/environment";
@@ -14,6 +16,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 import { formatDisplaysDateFields } from "./util";
@@ -71,6 +74,48 @@ export const updateDisplay = async (
 
 export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayCreateInput]);
+  try {
+    let person;
+    if (displayInput.userId) {
+      person = await getPersonByUserId(displayInput.userId, displayInput.environmentId);
+    }
+    const display = await prisma.display.create({
+      data: {
+        survey: {
+          connect: {
+            id: displayInput.surveyId,
+          },
+        },
+
+        ...(person && {
+          person: {
+            connect: {
+              id: person.id,
+            },
+          },
+        }),
+      },
+      select: selectDisplay,
+    });
+
+    displayCache.revalidate({
+      id: display.id,
+      personId: display.personId,
+      surveyId: display.surveyId,
+    });
+
+    return display;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const createDisplayLegacy = async (displayInput: TDisplayLegacyCreateInput): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayLegacyCreateInput]);
   try {
     const display = await prisma.display.create({
       data: {

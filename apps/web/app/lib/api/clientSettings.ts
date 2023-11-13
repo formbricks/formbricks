@@ -72,7 +72,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       triggers: {
         select: {
           id: true,
-          eventClass: {
+          actionClass: {
             select: {
               id: true,
               name: true,
@@ -181,7 +181,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       return {
         id: survey.id,
         questions: JSON.parse(JSON.stringify(survey.questions)),
-        triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
         thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
         welcomeCard: JSON.parse(JSON.stringify(survey.welcomeCard)),
         autoClose: survey.autoClose,
@@ -189,7 +189,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       };
     });
 
-  const noCodeEvents = await prisma.eventClass.findMany({
+  const noCodeEvents = await prisma.actionClass.findMany({
     where: {
       environmentId,
       type: "noCode",

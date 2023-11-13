@@ -1,19 +1,18 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
-import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
-import { TProfile } from "@formbricks/types/profile";
+import { env } from "@/env.mjs";
+import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { handleTabNavigation } from "../utils";
 
 type RoleProps = {
   next: () => void;
   skip: () => void;
   setFormbricksResponseId: (id: string) => void;
-  profile: TProfile;
 };
 
 type RoleChoice = {
@@ -21,9 +20,18 @@ type RoleChoice = {
   id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
 };
 
-const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profile }) => {
+const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const fieldsetRef = useRef<HTMLFieldSetElement>(null);
+
+  useEffect(() => {
+    const onKeyDown = handleTabNavigation(fieldsetRef, setSelectedChoice);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [fieldsetRef, setSelectedChoice]);
 
   const roles: Array<RoleChoice> = [
     { label: "Project Manager", id: "project_manager" },
@@ -39,8 +47,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
       if (selectedRole) {
         try {
           setIsUpdating(true);
-          const updatedProfile = { ...profile, role: selectedRole.id };
-          await updateProfileAction(updatedProfile);
+          await updateProfileAction({ role: selectedRole.id });
           setIsUpdating(false);
         } catch (e) {
           setIsUpdating(false);
@@ -66,19 +73,20 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
-        <label className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
+        <label htmlFor="choices" className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
           What is your role?
         </label>
         <label className="block text-sm font-normal leading-6 text-slate-500">
           Make your Formbricks experience more personalised.
         </label>
         <div className="mt-4">
-          <fieldset>
+          <fieldset id="choices" aria-label="What is your role?" ref={fieldsetRef}>
             <legend className="sr-only">Choices</legend>
             <div className=" relative space-y-2 rounded-md">
               {roles.map((choice) => (
                 <label
                   key={choice.id}
+                  htmlFor={choice.id}
                   className={cn(
                     selectedChoice === choice.label
                       ? "z-10 border-slate-400 bg-slate-100"
@@ -90,11 +98,17 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, profil
                       type="radio"
                       id={choice.id}
                       value={choice.label}
+                      name="role"
                       checked={choice.label === selectedChoice}
                       className="checked:text-brand-dark  focus:text-brand-dark h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleNextClick();
+                        }
                       }}
                     />
                     <span id={`${choice.id}-label`} className="ml-3 font-medium">
