@@ -32,12 +32,6 @@ export const mockInitResponse = () => {
           updatedAt: "2021-03-09T15:00:00.000Z",
           attributes: {},
         },
-        session: {
-          id: sessionId,
-          createdAt: "2021-03-09T15:00:00.000Z",
-          updatedAt: "2021-03-09T15:00:00.000Z",
-          expiresAt: expiryTime,
-        },
         surveys: [
           {
             id: surveyId,
@@ -171,12 +165,6 @@ export const mockUpdateEmailResponse = () => {
       data: {
         surveys: [],
         noCodeActionClasses: [],
-        session: {
-          id: sessionId,
-          createdAt: "2021-03-09T15:00:00.000Z",
-          updatedAt: "2021-03-09T15:00:00.000Z",
-          expiresAt: expiryTime,
-        },
         person: {
           id: initialPersonUid,
           environmentId,
@@ -218,10 +206,7 @@ export const mockResetResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
       data: {
-        settings: {
-          surveys: [],
-          noCodeEvents: [],
-        },
+        surveys: [],
         person: {
           id: newPersonUid,
           environmentId,

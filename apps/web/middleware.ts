@@ -6,7 +6,7 @@ const signUpLimiter = rateLimit({ interval: 60 * 60 * 1000 }); // 60 minutes
 const loginLimiter = rateLimit({ interval: 15 * 60 * 1000 }); // 15 minutes
 
 export async function middleware(request: NextRequest) {
-  if (process.env.IS_FORMBRICKS_CLOUD != "1") {
+  if (process.env.NODE_ENV !== "production") {
     return NextResponse.next();
   }
 
@@ -30,9 +30,8 @@ export async function middleware(request: NextRequest) {
 
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
-  } else {
-    return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
   }
+  return res;
 }
 
 export const config = {

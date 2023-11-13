@@ -46,6 +46,7 @@ export default function EditWelcomeCard({
       },
     });
   };
+
   return (
     <div
       className={cn(
@@ -99,10 +100,11 @@ export default function EditWelcomeCard({
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
+                id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string) => {
-                  updateSurvey({ fileUrl: url });
+                onFileUpload={(url: string[]) => {
+                  updateSurvey({ fileUrl: url[0] });
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
               />
@@ -155,7 +157,7 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
-            {/*             <div className="mt-8 flex items-center">
+            <div className="mt-8 flex items-center">
               <div className="mr-2">
                 <Switch
                   id="timeToFinish"
@@ -174,7 +176,7 @@ export default function EditWelcomeCard({
                   Display an estimate of completion time for survey
                 </div>
               </div>
-            </div> */}
+            </div>
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

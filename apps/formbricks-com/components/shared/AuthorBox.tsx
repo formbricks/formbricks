@@ -1,5 +1,5 @@
-import Image from "next/image";
 import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
+import Image from "next/image";
 
 interface AuthorBoxProps {
   name: string;
@@ -23,12 +23,12 @@ export default function AuthorBox({ name, title, date, duration }: AuthorBoxProp
       />
       <div className="flex w-full items-end justify-between">
         <div>
-          <p className="m-0 font-medium text-slate-600 dark:text-slate-300">{name}</p>
-          <p className="m-0 text-sm text-slate-400">{title}</p>
+          <p className="leading-0 !m-0  font-medium text-slate-600 dark:text-slate-300">{name}</p>
+          <p className="!m-0 text-sm text-slate-400">{title}</p>
         </div>
         <div className="text-right">
-          <p className="m-0 font-medium text-slate-600 dark:text-slate-300">{duration} Minutes</p>
-          <p className="m-0 text-sm text-slate-400">{date}</p>
+          <p className="!m-0 font-medium text-slate-600 dark:text-slate-300">{duration} Minutes</p>
+          <p className="!m-0 text-sm text-slate-400">{date}</p>
         </div>
       </div>
     </div>

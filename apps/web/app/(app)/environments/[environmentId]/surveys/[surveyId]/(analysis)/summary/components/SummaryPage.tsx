@@ -17,17 +17,20 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useSearchParams } from "next/navigation";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
   environmentTags: TTag[];
   displayCount: number;
+  responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const SummaryPage = ({
@@ -35,11 +38,13 @@ const SummaryPage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
   environmentTags,
   displayCount,
+  responsesPerPage,
+  membershipRole,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
@@ -62,9 +67,10 @@ const SummaryPage = ({
         environment={environment}
         survey={survey}
         surveyId={surveyId}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
+        membershipRole={membershipRole}
       />
       <CustomFilter
         environmentTags={environmentTags}
@@ -81,7 +87,12 @@ const SummaryPage = ({
         setShowDropOffs={setShowDropOffs}
       />
       {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
-      <SummaryList responses={filterResponses} survey={survey} environment={environment} />
+      <SummaryList
+        responses={filterResponses}
+        survey={survey}
+        environment={environment}
+        responsesPerPage={responsesPerPage}
+      />
     </ContentWrapper>
   );
 };

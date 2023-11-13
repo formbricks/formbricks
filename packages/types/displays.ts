@@ -1,29 +1,40 @@
 import { z } from "zod";
-import { ZPerson } from "./people";
 
 export const ZDisplay = z.object({
-  id: z.string().cuid2(),
+  id: z.string().cuid(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  surveyId: z.string().cuid2(),
-  person: ZPerson.nullable(),
-  responseId: z.string().cuid2().nullable(),
+  personId: z.string().cuid().nullable(),
+  surveyId: z.string().cuid(),
+  responseId: z.string().cuid().nullable(),
   status: z.enum(["seen", "responded"]).optional(),
 });
 
 export type TDisplay = z.infer<typeof ZDisplay>;
 
-export const ZDisplayInput = z.object({
-  surveyId: z.string().cuid2(),
-  personId: z.string().cuid2().optional(),
-  responseId: z.string().cuid2().optional(),
+export const ZDisplayCreateInput = z.object({
+  environmentId: z.string().cuid(),
+  surveyId: z.string().cuid(),
+  userId: z.string().optional(),
+  responseId: z.string().cuid().optional(),
 });
 
-export const ZDisplayUpdate = z.object({
-  responseId: z.string().cuid2().optional(),
+export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
+
+export const ZDisplayLegacyCreateInput = z.object({
+  surveyId: z.string().cuid(),
+  personId: z.string().cuid().optional(),
+  responseId: z.string().cuid().optional(),
 });
 
-export type TDisplayInput = z.infer<typeof ZDisplayInput>;
+export type TDisplayLegacyCreateInput = z.infer<typeof ZDisplayLegacyCreateInput>;
+
+export const ZDisplayUpdateInput = z.object({
+  personId: z.string().cuid().optional(),
+  responseId: z.string().cuid().optional(),
+});
+
+export type TDisplayUpdateInput = z.infer<typeof ZDisplayUpdateInput>;
 
 export const ZDisplaysWithSurveyName = ZDisplay.extend({
   surveyName: z.string(),

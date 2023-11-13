@@ -34,8 +34,12 @@ export function Survey({
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
+      setQuestionId(survey?.questions[0]?.id);
+      return;
+    }
     setQuestionId(activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id));
-  }, [activeQuestionId, survey.questions]);
+  }, [activeQuestionId, survey.questions, survey.welcomeCard.enabled]);
 
   useEffect(() => {
     // scroll to top when question changes
@@ -44,25 +48,32 @@ export function Survey({
     }
   }, [questionId]);
 
-  // call onDisplay when component is mounted
   useEffect(() => {
+    // call onDisplay when component is mounted
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData);
+      onSubmit(prefillResponseData, true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  function getNextQuestionId(data: TResponseData): string {
+  let currIdx = currentQuestionIndex;
+  let currQues = currentQuestion;
+  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
     if (questionId === "start") {
-      return questions[0]?.id || "end";
+      if (!isFromPrefilling) {
+        return questions[0]?.id || "end";
+      } else {
+        currIdx = 0;
+        currQues = questions[0];
+      }
     }
+    if (currIdx === -1) throw new Error("Question not found");
 
-    if (currentQuestionIndex === -1) throw new Error("Question not found");
-
-    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
+    if (currQues?.logic && currQues?.logic.length > 0) {
+      for (let logic of currQues.logic) {
         if (!logic.destination) continue;
 
         if (evaluateCondition(logic, responseValue)) {
@@ -70,7 +81,7 @@ export function Survey({
         }
       }
     }
-    return questions[currentQuestionIndex + 1]?.id || "end";
+    return questions[currIdx + 1]?.id || "end";
   }
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -78,9 +89,9 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData) => {
+  const onSubmit = (responseData: TResponseData, isFromPrefilling: Boolean = false) => {
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData);
+    const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, finished });
     if (finished) {
@@ -103,57 +114,69 @@ export function Survey({
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
-      prevQuestionId = survey.questions[currentQuestionIndex - 1]?.id;
+      prevQuestionId = survey.questions[currIdx - 1]?.id;
     }
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
     onActiveQuestionChange(prevQuestionId);
   };
+  function getCardContent() {
+    if (questionId === "start" && survey.welcomeCard.enabled) {
+      return (
+        <WelcomeCard
+          headline={survey.welcomeCard.headline}
+          html={survey.welcomeCard.html}
+          fileUrl={survey.welcomeCard.fileUrl}
+          buttonLabel={survey.welcomeCard.buttonLabel}
+          timeToFinish={survey.welcomeCard.timeToFinish}
+          brandColor={brandColor}
+          onSubmit={onSubmit}
+          survey={survey}
+        />
+      );
+    } else if (questionId === "end" && survey.thankYouCard.enabled) {
+      return (
+        <ThankYouCard
+          headline={survey.thankYouCard.headline}
+          subheader={survey.thankYouCard.subheader}
+          brandColor={brandColor}
+          redirectUrl={survey.redirectUrl}
+          isRedirectDisabled={isRedirectDisabled}
+        />
+      );
+    } else {
+      const currQues = survey.questions.find((q) => q.id === questionId);
+      return (
+        currQues && (
+          <QuestionConditional
+            question={currQues}
+            value={responseData[currQues.id]}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            onBack={onBack}
+            isFirstQuestion={
+              history && prefillResponseData
+                ? history[history.length - 1] === survey.questions[0].id
+                : currQues.id === survey?.questions[0]?.id
+            }
+            isLastQuestion={currQues.id === survey.questions[survey.questions.length - 1].id}
+            brandColor={brandColor}
+          />
+        )
+      );
+    }
+  }
 
   return (
     <>
       <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
         <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
-            {questionId === "start" && survey.welcomeCard.enabled ? (
-              <WelcomeCard
-                headline={survey.welcomeCard.headline}
-                html={survey.welcomeCard.html}
-                fileUrl={survey.welcomeCard.fileUrl}
-                buttonLabel={survey.welcomeCard.buttonLabel}
-                timeToFinish={survey.welcomeCard.timeToFinish}
-                brandColor={brandColor}
-                onSubmit={onSubmit}
-              />
-            ) : questionId === "end" && survey.thankYouCard.enabled ? (
-              <ThankYouCard
-                headline={survey.thankYouCard.headline}
-                subheader={survey.thankYouCard.subheader}
-                brandColor={brandColor}
-                redirectUrl={survey.redirectUrl}
-                isRedirectDisabled={isRedirectDisabled}
-              />
+            {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
+              // Handle the case when there are no questions and both welcome and thank you cards are disabled
+              <div>No questions available.</div>
             ) : (
-              survey.questions.map(
-                (question, idx) =>
-                  questionId === question.id && (
-                    <QuestionConditional
-                      question={question}
-                      value={responseData[question.id]}
-                      onChange={onChange}
-                      onSubmit={onSubmit}
-                      onBack={onBack}
-                      isFirstQuestion={
-                        // if prefillResponseData is provided, check if we're on the first "real" question
-                        history && prefillResponseData
-                          ? history[history.length - 1] === survey.questions[0].id
-                          : idx === 0
-                      }
-                      isLastQuestion={idx === survey.questions.length - 1}
-                      brandColor={brandColor}
-                    />
-                  )
-              )
+              getCardContent()
             )}
           </div>
           <div className="mt-8">

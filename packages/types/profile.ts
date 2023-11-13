@@ -17,11 +17,14 @@ export const ZProfile = z.object({
   id: z.string(),
   name: z.string().nullable(),
   email: z.string(),
+  emailVerified: z.date().nullable(),
+  imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
   identityProvider: z.enum(["email", "google", "github", "azuread"]),
   createdAt: z.date(),
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
+  objective: ZProfileObjective.nullable(),
 });
 
 export type TProfile = z.infer<typeof ZProfile>;
@@ -29,9 +32,11 @@ export type TProfile = z.infer<typeof ZProfile>;
 export const ZProfileUpdateInput = z.object({
   name: z.string().nullish(),
   email: z.string().optional(),
+  emailVerified: z.date().nullish(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZProfileObjective.optional(),
+  objective: ZProfileObjective.nullish(),
+  imageUrl: z.string().url().nullish(),
 });
 
 export type TProfileUpdateInput = z.infer<typeof ZProfileUpdateInput>;
@@ -39,9 +44,10 @@ export type TProfileUpdateInput = z.infer<typeof ZProfileUpdateInput>;
 export const ZProfileCreateInput = z.object({
   name: z.string().optional(),
   email: z.string(),
+  emailVerified: z.date().optional(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZProfileObjective.optional(),
+  objective: ZProfileObjective.nullish(),
 });
 
 export type TProfileCreateInput = z.infer<typeof ZProfileCreateInput>;

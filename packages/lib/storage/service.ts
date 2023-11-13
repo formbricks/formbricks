@@ -1,7 +1,22 @@
-import { PutObjectCommand, S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { access, mkdir, writeFile, readFile } from "fs/promises";
+import {
+  S3Client,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsCommand,
+  DeleteObjectsCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createPresignedPost, PresignedPostOptions } from "@aws-sdk/s3-presigned-post";
+import { access, mkdir, writeFile, readFile, unlink, rmdir } from "fs/promises";
+import { join } from "path";
 import mime from "mime";
 import { env } from "@/env.mjs";
+import { IS_S3_CONFIGURED, LOCAL_UPLOAD_URL, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import { unstable_cache } from "next/cache";
+import { storageCache } from "./cache";
+import { TAccessType } from "@formbricks/types/storage";
+import { generateLocalSignedUrl } from "../crypto";
+import path from "path";
 
 // global variables
 
@@ -39,29 +54,92 @@ type TGetFileResponse = {
   };
 };
 
-export const getFileFromS3 = async (fileKey: string): Promise<TGetFileResponse> => {
-  const getObjectCommand = new GetObjectCommand({
-    Bucket: AWS_BUCKET_NAME,
-    Key: fileKey,
-  });
-
-  try {
-    const data = await s3Client.send(getObjectCommand);
-    const byteArray = await data.Body?.transformToByteArray();
-    const buffer = Buffer.from(byteArray as Uint8Array);
-
-    return {
-      fileBuffer: buffer,
-      metaData: {
-        contentType: data.ContentType ?? "",
-      },
+// discriminated union
+type TGetSignedUrlResponse =
+  | { signedUrl: string; fileUrl: string; presignedFields: Object }
+  | {
+      signedUrl: string;
+      fileUrl: string;
+      signingData: {
+        signature: string;
+        timestamp: number;
+        uuid: string;
+      };
     };
-  } catch (err) {
-    throw err;
-  }
+
+const getS3SignedUrl = async (fileKey: string): Promise<string> => {
+  const [_, accessType] = fileKey.split("/");
+  const expiresIn = accessType === "public" ? 60 * 60 : 10 * 60;
+  const revalidateAfter = accessType === "public" ? expiresIn - 60 * 5 : expiresIn - 60 * 2;
+
+  return unstable_cache(
+    async () => {
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: AWS_BUCKET_NAME,
+        Key: fileKey,
+      });
+
+      try {
+        return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
+      } catch (err) {
+        throw err;
+      }
+    },
+    [`getFileFromS3-${fileKey}`],
+    {
+      revalidate: revalidateAfter,
+      tags: [storageCache.tag.byFileKey(fileKey)],
+    }
+  )();
 };
 
-export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFileResponse> => {
+export const getS3File = async (fileKey: string): Promise<string> => {
+  const signedUrl = await getS3SignedUrl(fileKey);
+
+  // The logic below is to check if the signed url has expired.
+  // We do this by parsing the X-Amz-Date and Expires query parameters from the signed url
+  // and checking if the current time is past the expiration time.
+  // If it is, we generate a new signed url and return that instead.
+  // We do this because the time-based revalidation for the signed url is not working as expected. (mayve a bug in next.js caching?)
+
+  const amzDate = signedUrl.match(/X-Amz-Date=(.*?)&/)?.[1];
+  const amzExpires = signedUrl.match(/X-Amz-Expires=(.*?)&/)?.[1];
+
+  if (amzDate && amzExpires) {
+    // Parse the X-Amz-Date and calculate the expiration date
+    const expiryDate = new Date(
+      Date.UTC(
+        parseInt(amzDate.slice(0, 4), 10), // year
+        parseInt(amzDate.slice(4, 6), 10) - 1, // month (0-indexed)
+        parseInt(amzDate.slice(6, 8), 10), // day
+        parseInt(amzDate.slice(9, 11), 10), // hour
+        parseInt(amzDate.slice(11, 13), 10), // minute
+        parseInt(amzDate.slice(13, 15), 10) // second
+      )
+    );
+
+    const expiryDateSeconds = expiryDate.getSeconds();
+    const expiresSeconds = parseInt(amzExpires, 10);
+
+    expiryDate.setSeconds(expiryDateSeconds + expiresSeconds);
+
+    // Get the current UTC time
+    const now = new Date();
+
+    // Check if the current time is past the expiration time
+    const isExpired = now > expiryDate;
+
+    if (isExpired) {
+      // generate a new signed url
+      storageCache.revalidate({ fileKey });
+      return await getS3SignedUrl(fileKey);
+    }
+  }
+
+  return signedUrl;
+};
+
+export const getLocalFile = async (filePath: string): Promise<TGetFileResponse> => {
   try {
     const file = await readFile(filePath);
     let contentType = "";
@@ -83,39 +161,79 @@ export const getFileFromLocalStorage = async (filePath: string): Promise<TGetFil
   }
 };
 
-export const putFileToS3 = async (
+// a single service for generating a signed url based on user's environment variables
+export const getUploadSignedUrl = async (
+  fileName: string,
+  environmentId: string,
+  fileType: string,
+  accessType: TAccessType,
+  plan: "free" | "pro" = "free"
+): Promise<TGetSignedUrlResponse> => {
+  // handle the local storage case first
+  if (!IS_S3_CONFIGURED) {
+    try {
+      const { signature, timestamp, uuid } = generateLocalSignedUrl(fileName, environmentId, fileType);
+
+      return {
+        signedUrl: LOCAL_UPLOAD_URL[accessType],
+        signingData: {
+          signature,
+          timestamp,
+          uuid,
+        },
+        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  try {
+    const { presignedFields, signedUrl } = await getS3UploadSignedUrl(
+      fileName,
+      fileType,
+      accessType,
+      environmentId,
+      accessType === "public",
+      plan
+    );
+
+    return {
+      signedUrl,
+      presignedFields,
+      fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
+    };
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getS3UploadSignedUrl = async (
   fileName: string,
   contentType: string,
-  fileBuffer: Buffer,
   accessType: string,
   environmentId: string,
-  isPublic: boolean = false
+  isPublic: boolean,
+  plan: "free" | "pro" = "free"
 ) => {
+  const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
+  const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
+
   try {
-    const buffer = Buffer.from(fileBuffer);
-
-    if (isPublic) {
-      //check the size of buffer and if it is greater than 10MB, return error
-
-      const bufferBytes = buffer.byteLength;
-      const bufferKB = bufferBytes / 1024;
-
-      if (bufferKB > 10240) {
-        const err = new Error("File size is greater than 10MB");
-        err.name = "FileTooLargeError";
-
-        throw err;
-      }
-    }
-
-    const putObjectCommand = new PutObjectCommand({
+    const { fields, url } = await createPresignedPost(s3Client, {
+      Expires: 10 * 60, // 10 minutes
       Bucket: AWS_BUCKET_NAME,
       Key: `${environmentId}/${accessType}/${fileName}`,
-      Body: buffer,
-      ContentType: contentType,
+      Fields: {
+        "Content-Type": contentType,
+      },
+      Conditions: postConditions,
     });
 
-    await s3Client.send(putObjectCommand);
+    return {
+      signedUrl: url,
+      presignedFields: fields,
+    };
   } catch (err) {
     throw err;
   }
@@ -127,7 +245,8 @@ export const putFileToLocalStorage = async (
   accessType: string,
   environmentId: string,
   rootDir: string,
-  isPublic: boolean = false
+  isPublic: boolean = false,
+  plan: "free" | "pro" = "free"
 ) => {
   try {
     await ensureDirectoryExists(`${rootDir}/${environmentId}/${accessType}`);
@@ -135,22 +254,114 @@ export const putFileToLocalStorage = async (
     const uploadPath = `${rootDir}/${environmentId}/${accessType}/${fileName}`;
 
     const buffer = Buffer.from(fileBuffer);
+    const bufferBytes = buffer.byteLength;
 
-    if (isPublic) {
-      //check the size of buffer and if it is greater than 10MB, return error
+    const maxSize = isPublic ? MAX_SIZES.public : MAX_SIZES[plan];
 
-      const bufferBytes = buffer.byteLength;
-      const bufferKB = bufferBytes / 1024;
+    if (bufferBytes > maxSize) {
+      const err = new Error(`File size exceeds the ${maxSize / (1024 * 1024)} MB limit`);
+      err.name = "FileTooLargeError";
 
-      if (bufferKB > 10240) {
-        const err = new Error("File size is greater than 10MB");
-        err.name = "FileTooLargeError";
-
-        throw err;
-      }
+      throw err;
     }
 
     await writeFile(uploadPath, buffer);
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
+  if (!IS_S3_CONFIGURED) {
+    try {
+      await deleteLocalFile(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
+      return { success: true, message: "File deleted" };
+    } catch (err: any) {
+      if (err.code !== "ENOENT") {
+        return { success: false, message: err.message ?? "Something went wrong" };
+      }
+
+      return { success: false, message: "File not found", code: 404 };
+    }
+  }
+
+  try {
+    await deleteS3File(`${environmentId}/${accessType}/${fileName}`);
+    return { success: true, message: "File deleted" };
+  } catch (err: any) {
+    if (err.name === "NoSuchKey") {
+      return { success: false, message: "File not found", code: 404 };
+    } else {
+      return { success: false, message: err.message ?? "Something went wrong" };
+    }
+  }
+};
+
+export const deleteLocalFile = async (filePath: string) => {
+  try {
+    await unlink(filePath);
+  } catch (err: any) {
+    throw err;
+  }
+};
+
+export const deleteS3File = async (fileKey: string) => {
+  const deleteObjectCommand = new DeleteObjectCommand({
+    Bucket: AWS_BUCKET_NAME,
+    Key: fileKey,
+  });
+
+  try {
+    await s3Client.send(deleteObjectCommand);
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const deleteS3FilesByEnvironmentId = async (environmentId: string) => {
+  try {
+    // List all objects in the bucket with the prefix of environmentId
+    const listObjectsOutput = await s3Client.send(
+      new ListObjectsCommand({
+        Bucket: AWS_BUCKET_NAME,
+        Prefix: environmentId,
+      })
+    );
+
+    if (listObjectsOutput.Contents) {
+      const objectsToDelete = listObjectsOutput.Contents.map((obj) => {
+        return { Key: obj.Key };
+      });
+
+      if (!objectsToDelete.length) {
+        // no objects to delete
+        return null;
+      }
+
+      // Delete the objects
+      await s3Client.send(
+        new DeleteObjectsCommand({
+          Bucket: AWS_BUCKET_NAME,
+          Delete: {
+            Objects: objectsToDelete,
+          },
+        })
+      );
+    } else {
+      // no objects to delete
+      return null;
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const deleteLocalFilesByEnvironmentId = async (environmentId: string) => {
+  const dirPath = join(UPLOADS_DIR, environmentId);
+
+  try {
+    await ensureDirectoryExists(dirPath);
+    await rmdir(dirPath, { recursive: true });
   } catch (err) {
     throw err;
   }

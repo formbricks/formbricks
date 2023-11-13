@@ -14,16 +14,19 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TTag } from "@formbricks/types/tags";
 import { TProfile } from "@formbricks/types/profile";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
   environmentTags: TTag[];
+  responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const ResponsePage = ({
@@ -31,10 +34,12 @@ const ResponsePage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
   environmentTags,
+  responsesPerPage,
+  membershipRole,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -56,9 +61,10 @@ const ResponsePage = ({
         environment={environment}
         survey={survey}
         surveyId={surveyId}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
+        membershipRole={membershipRole}
       />
       <CustomFilter
         environmentTags={environmentTags}
@@ -74,6 +80,7 @@ const ResponsePage = ({
         survey={survey}
         profile={profile}
         environmentTags={environmentTags}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );
