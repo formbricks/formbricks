@@ -1,17 +1,16 @@
 "use client";
 
+import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
+import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
-import { toast } from "react-hot-toast";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TProduct } from "@formbricks/types/product";
-import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
+import { toast } from "react-hot-toast";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -42,30 +41,46 @@ export default function FileUploadQuestionForm({
     setExtension(event.target.value);
   };
 
-  const addExtension = () => {
-    const parsedExtensionResult = ZAllowedFileExtension.safeParse(extension);
+  const addExtension = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    let modifiedExtension = extension.trim();
+
+    // Remove the dot at the start if it exists
+    if (modifiedExtension.startsWith(".")) {
+      modifiedExtension = modifiedExtension.substring(1);
+    }
+
+    if (!modifiedExtension) {
+      toast.error("Please enter a file extension.");
+      return;
+    }
+
+    const parsedExtensionResult = ZAllowedFileExtension.safeParse(modifiedExtension);
 
     if (!parsedExtensionResult.success) {
-      toast.error("This extension is not supported");
+      toast.error("This file type is not supported.");
       return;
     }
 
     if (question.allowedFileExtensions) {
-      if (!question.allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
+      if (!question.allowedFileExtensions.includes(modifiedExtension as TAllowedFileExtension)) {
         updateQuestion(questionIdx, {
-          allowedFileExtensions: [...question.allowedFileExtensions, extension],
+          allowedFileExtensions: [...question.allowedFileExtensions, modifiedExtension],
         });
         setExtension("");
       } else {
-        toast.error("This extension is already added");
+        toast.error("This extension is already added.");
       }
     } else {
-      updateQuestion(questionIdx, { allowedFileExtensions: [extension] });
+      updateQuestion(questionIdx, { allowedFileExtensions: [modifiedExtension] });
       setExtension("");
     }
   };
 
-  const removeExtension = (index: number) => {
+  const removeExtension = (event, index: number) => {
+    event.preventDefault();
     if (question.allowedFileExtensions) {
       const updatedExtensions = [...question?.allowedFileExtensions];
       updatedExtensions.splice(index, 1);
@@ -129,33 +144,20 @@ export default function FileUploadQuestionForm({
           </Button>
         )}
       </div>
-      {/* Add a dropdown to select the question type */}
-      <div className="mt-8 flex items-center">
-        <div className="mr-2">
-          <Switch
-            id="m"
-            name="allowMultipleFile"
-            checked={question.allowMultipleFiles}
-            onCheckedChange={() =>
-              updateQuestion(questionIdx, { allowMultipleFiles: !question.allowMultipleFiles })
-            }
-          />
-        </div>
-        <div className="flex-column">
-          <Label htmlFor="allowMultipleFile" className="">
-            Allow Multiple Files
-          </Label>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Let people upload up to 10 files at the same time.
-          </div>
-        </div>
-      </div>
+      <div className="mb-8 mt-6 space-y-6">
+        <AdvancedOptionToggle
+          isChecked={question.allowMultipleFiles}
+          onToggle={() => updateQuestion(questionIdx, { allowMultipleFiles: !question.allowMultipleFiles })}
+          htmlId="allowMultipleFile"
+          title="Allow Multiple Files"
+          description="Let people upload up to 10 files at the same time."
+          childBorder
+          customContainerClass="p-0"></AdvancedOptionToggle>
 
-      <div className="mt-8">
         <AdvancedOptionToggle
           isChecked={!!question.maxSizeInMB}
           onToggle={(checked) => updateQuestion(questionIdx, { maxSizeInMB: checked ? 10 : undefined })}
-          htmlId="limitFileType"
+          htmlId="maxFileSize"
           title="Max file size"
           description="Limit the maximum file size."
           childBorder
@@ -185,59 +187,48 @@ export default function FileUploadQuestionForm({
             </p>
           </label>
         </AdvancedOptionToggle>
-      </div>
 
-      <div className="mt-8 flex items-center">
-        <div className="mr-2">
-          <Switch
-            id="m"
-            name="limitFileType"
-            checked={!!question.allowedFileExtensions}
-            onCheckedChange={(checked) =>
-              updateQuestion(questionIdx, { allowedFileExtensions: checked ? [] : undefined })
-            }
-          />
-        </div>
-        <div className="flex-column">
-          <Label htmlFor="limitFileType">Allowed file types</Label>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Control which file types can be uploaded.
-          </div>
-        </div>
-      </div>
-      {!!question.allowedFileExtensions && (
-        <div className="mt-3">
-          <div className="mt-2 flex w-full items-center justify-start gap-2 rounded-md border bg-slate-50 p-4">
-            {question.allowedFileExtensions &&
-              question?.allowedFileExtensions.map((item, index) => {
-                return (
-                  <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-2">
-                    <p>{item}</p>
-                    <div
-                      className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-50"
-                      onClick={() => removeExtension(index)}>
-                      -
-                    </div>
+        <AdvancedOptionToggle
+          isChecked={!!question.allowedFileExtensions}
+          onToggle={(checked) =>
+            updateQuestion(questionIdx, { allowedFileExtensions: checked ? [] : undefined })
+          }
+          htmlId="limitFileType"
+          title="Limit file types"
+          description="Control which file types can be uploaded."
+          childBorder
+          customContainerClass="p-0">
+          <div className="p-4">
+            <div className="flex flex-row flex-wrap gap-2">
+              {question.allowedFileExtensions &&
+                question.allowedFileExtensions.map((item, index) => (
+                  <div className="mb-2 flex h-8 items-center space-x-2 rounded-full bg-slate-200 px-2">
+                    <p className="text-sm text-slate-800">{item}</p>
+                    <Button
+                      className="inline-flex px-0"
+                      variant="minimal"
+                      onClick={(e) => removeExtension(e, index)}>
+                      <XCircleIcon className="h-4 w-4" />
+                    </Button>
                   </div>
-                );
-              })}
-            <div className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 p-2">
-              <input
-                className="w-16 rounded-md border-none py-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                placeholder="pdf"
+                ))}
+            </div>
+            <div className="flex items-center">
+              <Input
+                autoFocus
+                className="mr-2 w-20 rounded-md bg-white placeholder:text-sm"
+                placeholder=".pdf"
                 value={extension}
                 onChange={handleInputChange}
                 type="text"
               />
-              <div
-                className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-50"
-                onClick={addExtension}>
-                +
-              </div>
+              <Button size="sm" variant="secondary" onClick={(e) => addExtension(e)}>
+                Allow file type
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        </AdvancedOptionToggle>
+      </div>
     </form>
   );
 }
