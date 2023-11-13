@@ -81,7 +81,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
             const singleUseId = isSingleUse ? generateSurveySingleUseId(isEncrypted) : undefined;
             return (
               <li key={survey.id} className="relative col-span-1 h-56">
-                <div className="delay-50 bg-fill-primary flex h-full flex-col justify-between rounded-md shadow transition ease-in-out hover:scale-105">
+                <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
                   <div className="px-6 py-4">
                     <Badge
                       StartIcon={survey.type === "link" ? LinkIcon : ComputerDesktopIcon}
