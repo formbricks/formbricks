@@ -397,8 +397,8 @@ model Product {
   brandColor           String          @default("#64748b")
   highlightBorderColor String?
   recontactDays        Int             @default(7)
-  linkSurveyBranding   Boolean         @default(true)
-  inAppSurveyBranding  Boolean         @default(true)
+  linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be linked
+  inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in-app
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
