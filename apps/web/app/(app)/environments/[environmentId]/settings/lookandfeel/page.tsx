@@ -33,7 +33,8 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   }
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
+  const canRemoveLinkSurveySignature = team.billing.features.linkSurvey.status !== "inactive";
+  const canRemoveInAppSurveySignature = team.billing.features.inAppSurvey.status !== "inactive";
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
 
@@ -70,15 +71,15 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
         <EditFormbricksSignature
-          type="Link"
+          type="linkSurvey"
           product={product}
-          canRemoveSignature={canRemoveSignature}
+          canRemoveSignature={canRemoveLinkSurveySignature}
           environmentId={params.environmentId}
         />
         <EditFormbricksSignature
-          type="App"
+          type="inAppSurvey"
           product={product}
-          canRemoveSignature={canRemoveSignature}
+          canRemoveSignature={canRemoveInAppSurveySignature}
           environmentId={params.environmentId}
         />
       </SettingsCard>

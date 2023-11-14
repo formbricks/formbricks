@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { updateProductAction } from "../actions";
 
 interface EditSignatureProps {
-  type?: "Link" | "App";
+  type: "linkSurvey" | "inAppSurvey";
   product: TProduct;
   canRemoveSignature: boolean;
   environmentId: string;
@@ -52,7 +52,7 @@ export function EditFormbricksSignature({
             <AlertDescription>
               To remove the Formbricks branding from the <span className="font-semibold">{type} surveys</span>
               , please{" "}
-              {type === "Link" ? (
+              {type === "linkSurvey" ? (
                 <span className="underline">
                   <Link href={`/environments/${environmentId}/settings/billing`}>upgrade your plan.</Link>
                 </span>
