@@ -444,7 +444,6 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
-    console.log(responseInput.finished);
     const ttc = mergeAndAdd(currentResponse.ttc, responseInput.ttc!, responseInput.finished);
 
     const responsePrisma = await prisma.response.update({

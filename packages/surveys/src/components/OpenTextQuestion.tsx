@@ -144,13 +144,7 @@ export default function OpenTextQuestion({
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
-          onClick={() => {
-            onSubmit(
-              { [question.id]: value, inputType: question.inputType },
-              true,
-              performance.now() - startTime.current
-            );
-          }}
+          onClick={() => {}}
         />
       </div>
     </form>

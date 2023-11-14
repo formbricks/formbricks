@@ -194,9 +194,7 @@ export default function PictureSelectionQuestion({
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
-          onClick={() => {
-            onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
-          }}
+          onClick={() => {}}
         />
       </div>
     </form>
