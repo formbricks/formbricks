@@ -233,7 +233,7 @@ export const authOptions: NextAuthOptions = {
                               create: [
                                 {
                                   type: "production",
-                                  eventClasses: {
+                                  actionClasses: {
                                     create: [
                                       {
                                         name: "New Session",
@@ -269,7 +269,7 @@ export const authOptions: NextAuthOptions = {
                                 },
                                 {
                                   type: "development",
-                                  eventClasses: {
+                                  actionClasses: {
                                     create: [
                                       {
                                         name: "New Session",
