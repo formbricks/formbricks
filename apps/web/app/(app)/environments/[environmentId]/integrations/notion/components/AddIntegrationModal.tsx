@@ -206,10 +206,17 @@ export default function AddIntegrationModal({
     setSelectedDatabase(null);
     setSelectedSurvey(null);
   };
+  const getFilteredQuestionItems = (selectedIdx) => {
+    const selectedQuestionIds = mapping.filter((_, idx) => idx !== selectedIdx).map((m) => m.question.id);
+
+    return questionItems.filter((q) => !selectedQuestionIds.includes(q.id));
+  };
 
   const createCopy = (item) => JSON.parse(JSON.stringify(item));
 
   const MappingRow = ({ idx }: { idx: number }) => {
+    const filteredQuestionItems = getFilteredQuestionItems(idx);
+
     const addRow = () => {
       setMapping((prev) => [
         ...prev,
@@ -277,7 +284,7 @@ export default function AddIntegrationModal({
             <div className="w-[340px] max-w-full">
               <DropdownSelector
                 placeholder="Select a formbricks question"
-                items={questionItems}
+                items={filteredQuestionItems}
                 selectedItem={mapping?.[idx]?.question}
                 setSelectedItem={(item) => {
                   setMapping((prev) => {
