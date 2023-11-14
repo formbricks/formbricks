@@ -54,7 +54,7 @@ export const ZActionClass = z.object({
 export type TActionClass = z.infer<typeof ZActionClass>;
 
 export const ZActionClassInput = z.object({
-  environmentId: z.string(),
+  environmentId: z.string().optional(),
   name: z.string(),
   description: z.string().optional(),
   noCodeConfig: ZActionClassNoCodeConfig.nullish(),
