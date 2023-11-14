@@ -6,6 +6,8 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { getIntegrationByType } from "../integration/service";
+import { Prisma } from "@prisma/client";
+import { DatabaseError } from "@formbricks/types/errors";
 
 async function fetchPages(config: TIntegrationNotionConfig) {
   try {
@@ -21,8 +23,11 @@ async function fetchPages(config: TIntegrationNotionConfig) {
       }),
     });
     return (await res.json()).results;
-  } catch (err) {
-    throw err;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 }
 
@@ -35,6 +40,9 @@ export const getNotionDatabases = async (environmentId: string): Promise<TIntegr
     }
     return results;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
     throw error;
   }
 };
@@ -56,6 +64,9 @@ export async function writeData(
       }),
     });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
     throw error;
   }
 }
