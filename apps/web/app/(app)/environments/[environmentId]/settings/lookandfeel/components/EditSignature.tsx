@@ -1,21 +1,27 @@
 "use client";
 
-import { Alert, AlertDescription } from "@formbricks/ui/Alert";
-import { updateProductAction } from "../actions";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { Alert, AlertDescription } from "@formbricks/ui/Alert";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
+import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
+import { updateProductAction } from "../actions";
 
 interface EditSignatureProps {
+  type?: "Link" | "App";
   product: TProduct;
   canRemoveSignature: boolean;
   environmentId: string;
 }
 
-export function EditFormbricksSignature({ product, canRemoveSignature, environmentId }: EditSignatureProps) {
+export function EditFormbricksSignature({
+  product,
+  canRemoveSignature,
+  environmentId,
+  type,
+}: EditSignatureProps) {
   const [formbricksSignature, setFormbricksSignature] = useState(product.formbricksSignature);
   const [updatingSignature, setUpdatingSignature] = useState(false);
 
@@ -44,23 +50,29 @@ export function EditFormbricksSignature({ product, canRemoveSignature, environme
         <div className="mb-4">
           <Alert>
             <AlertDescription>
-              To remove the Formbricks branding from the link surveys, please{" "}
-              <span className="underline">
-                <Link href={`/environments/${environmentId}/settings/billing`}>upgrade</Link>
-              </span>{" "}
-              your plan.
+              To remove the Formbricks branding from the <span className="font-semibold">{type} surveys</span>
+              , please{" "}
+              {type === "Link" ? (
+                <span className="underline">
+                  <Link href={`/environments/${environmentId}/settings/billing`}>upgrade your plan.</Link>
+                </span>
+              ) : (
+                <span className="underline">
+                  <Link href={`/environments/${environmentId}/settings/billing`}>add your creditcard.</Link>
+                </span>
+              )}
             </AlertDescription>
           </Alert>
         </div>
       )}
-      <div className="flex items-center space-x-2">
+      <div className="mb-6 flex items-center space-x-2">
         <Switch
           id="signature"
           checked={formbricksSignature}
           onCheckedChange={toggleSignature}
           disabled={!canRemoveSignature || updatingSignature}
         />
-        <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature in Link Surveys</Label>
+        <Label htmlFor="signature">{type} surveys: Show Formbricks Signature</Label>
       </div>
     </div>
   );

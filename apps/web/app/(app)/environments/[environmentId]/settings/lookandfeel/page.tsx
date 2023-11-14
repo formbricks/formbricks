@@ -1,20 +1,19 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
-import { EditFormbricksSignature } from "./components/EditSignature";
-import { EditBrandColor } from "./components/EditBrandColor";
-import { EditPlacement } from "./components/EditPlacement";
-import { EditHighlightBorder } from "./components/EditHighlightBorder";
-import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { DEFAULT_BRAND_COLOR, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { getServerSession } from "next-auth";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import { EditBrandColor } from "./components/EditBrandColor";
+import { EditHighlightBorder } from "./components/EditHighlightBorder";
+import { EditPlacement } from "./components/EditPlacement";
+import { EditFormbricksSignature } from "./components/EditSignature";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([
@@ -71,6 +70,13 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
         <EditFormbricksSignature
+          type="Link"
+          product={product}
+          canRemoveSignature={canRemoveSignature}
+          environmentId={params.environmentId}
+        />
+        <EditFormbricksSignature
+          type="App"
           product={product}
           canRemoveSignature={canRemoveSignature}
           environmentId={params.environmentId}
