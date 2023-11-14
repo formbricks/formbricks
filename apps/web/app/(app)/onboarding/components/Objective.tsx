@@ -1,7 +1,7 @@
 "use client";
 
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
 import { TProfileObjective } from "@formbricks/types/profile";
