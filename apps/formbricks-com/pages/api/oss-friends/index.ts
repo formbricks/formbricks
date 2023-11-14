@@ -88,6 +88,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://htmx.org",
         },
         {
+          name: "Inbox Zero",
+          description:
+            "Inbox Zero makes it easy to clean up your inbox and reach inbox zero fast. It provides bulk newsletter unsubscribe, cold email blocking, email analytics, and AI automations.",
+          href: "https://getinboxzero.com",
+        },
+        {
           name: "Infisical",
           description:
             "Open source, end-to-end encrypted platform that lets you securely manage secrets and configs across your team, devices, and infrastructure.",
