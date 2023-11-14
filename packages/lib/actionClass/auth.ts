@@ -21,6 +21,7 @@ export const canUserUpdateActionClass = async (userId: string, actionClassId: st
       if (!actionClass) return false;
 
       const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, actionClass.environmentId);
+
       if (!hasAccessToEnvironment) return false;
 
       return true;
