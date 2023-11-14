@@ -202,7 +202,14 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     if (responseInput.personId) {
       person = await getPerson(responseInput.personId);
     }
-
+    const ttcTemp = responseInput.ttc;
+    const questionId = Object.keys(ttcTemp)[0];
+    const ttc = responseInput.finished
+      ? {
+          ...ttcTemp,
+          _total: ttcTemp[questionId], // Add _total property with the same value
+        }
+      : ttcTemp;
     const responsePrisma = await prisma.response.create({
       data: {
         survey: {
@@ -212,7 +219,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
         finished: responseInput.finished,
         data: responseInput.data,
-        ttc: responseInput.ttc,
+        ttc,
         ...(responseInput.personId && {
           person: {
             connect: {
@@ -437,6 +444,7 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
+    console.log(responseInput.finished);
     const ttc = mergeAndAdd(currentResponse.ttc, responseInput.ttc!, responseInput.finished);
 
     const responsePrisma = await prisma.response.update({

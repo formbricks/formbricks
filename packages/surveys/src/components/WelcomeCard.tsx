@@ -12,6 +12,7 @@ interface WelcomeCardProps {
   timeToFinish?: boolean;
   brandColor: string;
   onSubmit: (data: { [x: string]: any }, isSubmit: boolean, time: number) => void;
+  survey: TSurveyWithTriggers;
 }
 
 const TimerIcon = () => {

@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
-import { useEffect } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { cn } from "../lib/utils";
 import { BackButton } from "./BackButton";
 import Headline from "./Headline";
@@ -11,7 +11,7 @@ interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -28,6 +28,26 @@ export default function PictureSelectionQuestion({
   isLastQuestion,
   brandColor,
 }: PictureSelectionProps) {
+  const startTime = useRef<number>(performance.now());
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Restart the timer when the tab becomes visible again
+        startTime.current = performance.now();
+      } else {
+        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+      }
+    };
+
+    // Attach the event listener
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      // Clean up the event listener when the component is unmounted
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
   const addItem = (item: string) => {
     let values: string[] = [];
 
@@ -81,7 +101,7 @@ export default function PictureSelectionQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
       }}
       className="w-full">
       {question.imageUrl && (
@@ -162,7 +182,10 @@ export default function PictureSelectionQuestion({
           <BackButton
             tabIndex={questionChoices.length + 3}
             backButtonLabel={question.backButtonLabel}
-            onClick={onBack}
+            onClick={() => {
+              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+              onBack();
+            }}
           />
         )}
         <div></div>
@@ -171,7 +194,9 @@ export default function PictureSelectionQuestion({
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
           brandColor={brandColor}
-          onClick={() => {}}
+          onClick={() => {
+            onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
+          }}
         />
       </div>
     </form>

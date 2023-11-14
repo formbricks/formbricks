@@ -22,10 +22,12 @@ export class ResponseAPI {
     responseId,
     finished,
     data,
+    ttc,
   }: TResponseUpdateInputWithResponseId): Promise<Result<TResponse, NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
       data,
+      ttc,
     });
   }
 }

@@ -3,6 +3,7 @@ import { env } from "@/env.mjs";
 
 export const formbricksEnabled =
   typeof env.NEXT_PUBLIC_FORMBRICKS_API_HOST && env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID;
+const ttc = { onboarding: 0 };
 
 export const createResponse = async (
   surveyId: string,
@@ -11,12 +12,12 @@ export const createResponse = async (
 ): Promise<any> => {
   const api = formbricks.getApi();
   const personId = formbricks.getPerson()?.id;
-
   return await api.client.response.create({
     surveyId,
     personId: personId ?? "",
     finished,
     data,
+    ttc,
   });
 };
 
@@ -30,6 +31,7 @@ export const updateResponse = async (
     responseId,
     finished,
     data,
+    ttc,
   });
 };
 
