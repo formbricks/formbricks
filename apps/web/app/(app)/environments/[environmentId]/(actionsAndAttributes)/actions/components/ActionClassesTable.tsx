@@ -3,7 +3,7 @@
 import { Button } from "@formbricks/ui/Button";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import AddNoCodeActionModal from "./AddNoCodeActionModal";
+import AddNoCodeActionModal from "./AddActionModal";
 import ActionDetailModal from "./ActionDetailModal";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";

@@ -193,6 +193,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
+      { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
     ],
   },
   {
@@ -248,6 +249,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Production", href: "/docs/self-hosting/production" },
       { title: "Docker", href: "/docs/self-hosting/docker" },
       { title: "Migration Guide", href: "/docs/self-hosting/migration-guide" },
+      { title: "External auth providers", href: "/docs/self-hosting/external-auth-providers" },
     ],
   },
   {

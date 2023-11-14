@@ -221,6 +221,7 @@ export const authOptions: NextAuthOptions = {
                 {
                   accepted: true,
                   role: "owner",
+                  // @ts-ignore
                   team: {
                     create: {
                       name: `${user.name}'s Team`,
@@ -232,7 +233,7 @@ export const authOptions: NextAuthOptions = {
                               create: [
                                 {
                                   type: "production",
-                                  eventClasses: {
+                                  actionClasses: {
                                     create: [
                                       {
                                         name: "New Session",
@@ -268,7 +269,7 @@ export const authOptions: NextAuthOptions = {
                                 },
                                 {
                                   type: "development",
-                                  eventClasses: {
+                                  actionClasses: {
                                     create: [
                                       {
                                         name: "New Session",

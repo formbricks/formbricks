@@ -1,28 +1,37 @@
 import { z } from "zod";
 
 export const ZDisplay = z.object({
-  id: z.string().cuid2(),
+  id: z.string().cuid(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  personId: z.string().cuid2().nullable(),
-  surveyId: z.string().cuid2(),
-  responseId: z.string().cuid2().nullable(),
+  personId: z.string().cuid().nullable(),
+  surveyId: z.string().cuid(),
+  responseId: z.string().cuid().nullable(),
   status: z.enum(["seen", "responded"]).optional(),
 });
 
 export type TDisplay = z.infer<typeof ZDisplay>;
 
 export const ZDisplayCreateInput = z.object({
-  surveyId: z.string().cuid2(),
-  personId: z.string().cuid2().optional(),
-  responseId: z.string().cuid2().optional(),
+  environmentId: z.string().cuid(),
+  surveyId: z.string().cuid(),
+  userId: z.string().optional(),
+  responseId: z.string().cuid().optional(),
 });
 
 export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
 
+export const ZDisplayLegacyCreateInput = z.object({
+  surveyId: z.string().cuid(),
+  personId: z.string().cuid().optional(),
+  responseId: z.string().cuid().optional(),
+});
+
+export type TDisplayLegacyCreateInput = z.infer<typeof ZDisplayLegacyCreateInput>;
+
 export const ZDisplayUpdateInput = z.object({
-  personId: z.string().cuid2().optional(),
-  responseId: z.string().cuid2().optional(),
+  personId: z.string().cuid().optional(),
+  responseId: z.string().cuid().optional(),
 });
 
 export type TDisplayUpdateInput = z.infer<typeof ZDisplayUpdateInput>;
