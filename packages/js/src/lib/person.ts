@@ -1,5 +1,5 @@
-import { TJsPeopleAttributeInput, TJsState } from "@formbricks/types/js";
-import { TPerson } from "@formbricks/types/people";
+import { TJsState } from "@formbricks/types/js";
+import { TPerson, TPersonUpdateInput } from "@formbricks/types/people";
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
@@ -12,6 +12,7 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
+import { sync } from "./sync";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -27,15 +28,16 @@ export const updatePersonAttribute = async (
     });
   }
 
-  const input: TJsPeopleAttributeInput = {
-    key,
-    value,
+  const input: TPersonUpdateInput = {
+    attributes: {
+      [key]: value,
+    },
   };
 
   const res = await fetch(
     `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/people/${
-      config.get().state.person?.id
-    }/set-attribute`,
+      config.get().state.person?.userId
+    }`,
     {
       method: "POST",
       headers: {
@@ -56,6 +58,14 @@ export const updatePersonAttribute = async (
       responseMessage: resJson.message,
     });
   }
+
+  logger.debug("Attribute updated. Syncing...");
+
+  await sync({
+    environmentId: config.get().environmentId,
+    apiHost: config.get().apiHost,
+    userId: config.get().state.person?.userId,
+  });
 
   return ok(resJson.data as TJsState);
 };

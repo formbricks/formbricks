@@ -10,6 +10,7 @@ import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
+import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
 
 export const selectPerson = {
   id: true,
@@ -224,20 +225,62 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   validateInputs([personId, ZId], [personInput, ZPersonUpdateInput]);
 
   try {
-    const person = await prisma.person.update({
-      where: {
-        id: personId,
-      },
-      data: personInput,
-      select: selectPerson,
+    const person = await getPerson(personId);
+    if (!person) {
+      throw new Error(`Person ${personId} not found`);
+    }
+
+    // Process each attribute
+    const attributeUpdates = Object.entries(personInput.attributes).map(async ([attributeName, value]) => {
+      let attributeClass = await getAttributeClassByName(person.environmentId, attributeName);
+
+      // Create new attribute class if not found
+      if (attributeClass === null) {
+        attributeClass = await createAttributeClass(person.environmentId, attributeName, "code");
+      }
+
+      // Now perform the upsert for the attribute with the found or created attributeClassId
+      await prisma.attribute.upsert({
+        where: {
+          attributeClassId_personId: {
+            attributeClassId: attributeClass!.id,
+            personId,
+          },
+        },
+        update: {
+          value: value.toString(),
+        },
+        create: {
+          attributeClass: {
+            connect: {
+              id: attributeClass!.id,
+            },
+          },
+          person: {
+            connect: {
+              id: personId,
+            },
+          },
+          value: value.toString(),
+        },
+      });
     });
+
+    // Execute all attribute updates
+    await Promise.all(attributeUpdates);
 
     personCache.revalidate({
       id: personId,
       environmentId: person.environmentId,
     });
 
-    return transformPrismaPerson(person);
+    const updatedPerson = await getPerson(personId);
+
+    if (!updatedPerson) {
+      throw new Error(`Person ${personId} not found`);
+    }
+
+    return updatedPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
