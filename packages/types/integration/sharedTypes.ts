@@ -8,8 +8,8 @@ export const ZIntegrationBase = z.object({
 
 export const ZIntegrationBaseSurveyData = z.object({
   createdAt: z.date(),
-  questionIds: z.array(z.string()).optional(),
-  questions: z.string().optional(),
+  questionIds: z.array(z.string()),
+  questions: z.string(),
   surveyId: z.string(),
   surveyName: z.string(),
 });

@@ -61,7 +61,7 @@ export async function writeData(
 }
 
 function getHeaders(config: TIntegrationNotionConfig) {
-  const decryptedToken = symmetricDecrypt(config.key.access_token, ENCRYPTION_KEY);
+  const decryptedToken = symmetricDecrypt(config.key.access_token, ENCRYPTION_KEY!);
   return {
     Accept: "application/json",
     "Content-Type": "application/json",

@@ -49,7 +49,12 @@ export const ZIntegrationNotionConfigData = z
     databaseId: z.string(),
     databaseName: z.string(),
   })
-  .merge(ZIntegrationBaseSurveyData);
+  .merge(
+    ZIntegrationBaseSurveyData.omit({
+      questionIds: true,
+      questions: true,
+    })
+  );
 
 export type TIntegrationNotionConfigData = z.infer<typeof ZIntegrationNotionConfigData>;
 
