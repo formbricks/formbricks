@@ -32,9 +32,10 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     throw new Error("Team not found");
   }
 
+  const canRemoveLinkSignature = team.billing.features.linkSurvey.status !== "inactive";
+  const canRemoveInAppSignature = team.billing.features.inAppSurvey.status !== "inactive";
+
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const canRemoveLinkSurveySignature = team.billing.features.linkSurvey.status !== "inactive";
-  const canRemoveInAppSurveySignature = team.billing.features.inAppSurvey.status !== "inactive";
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
 
@@ -68,18 +69,18 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         />
       </SettingsCard>
       <SettingsCard
-        title="Formbricks Signature"
+        title="Formbricks Branding"
         description="We love your support but understand if you toggle it off.">
         <EditFormbricksSignature
           type="linkSurvey"
           product={product}
-          canRemoveSignature={canRemoveLinkSurveySignature}
+          canRemoveSignature={canRemoveLinkSignature}
           environmentId={params.environmentId}
         />
         <EditFormbricksSignature
           type="inAppSurvey"
           product={product}
-          canRemoveSignature={canRemoveInAppSurveySignature}
+          canRemoveSignature={canRemoveInAppSignature}
           environmentId={params.environmentId}
         />
       </SettingsCard>

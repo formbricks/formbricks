@@ -397,7 +397,8 @@ model Product {
   brandColor           String          @default("#64748b")
   highlightBorderColor String?
   recontactDays        Int             @default(7)
-  formbricksSignature  Boolean         @default(true)
+  linkSurveyBranding   Boolean         @default(true)
+  inAppSurveyBranding  Boolean         @default(true)
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)

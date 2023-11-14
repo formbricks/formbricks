@@ -17,25 +17,27 @@ interface EditSignatureProps {
 }
 
 export function EditFormbricksSignature({
+  type,
   product,
   canRemoveSignature,
   environmentId,
-  type,
 }: EditSignatureProps) {
-  const [formbricksSignature, setFormbricksSignature] = useState(product.formbricksSignature);
+  const [isBrandingEnabled, setIsBrandingEnabled] = useState(
+    type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
+  );
   const [updatingSignature, setUpdatingSignature] = useState(false);
 
   const toggleSignature = async () => {
     try {
       setUpdatingSignature(true);
-      const newSignatureState = !formbricksSignature;
-      setFormbricksSignature(newSignatureState);
+      const newSignatureState = !isBrandingEnabled;
+      setIsBrandingEnabled(newSignatureState);
       let inputProduct: Partial<TProductUpdateInput> = {
-        formbricksSignature: newSignatureState,
+        [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newSignatureState,
       };
       await updateProductAction(product.id, inputProduct);
       toast.success(
-        newSignatureState ? "Formbricks signature will be shown." : "Formbricks signature will now be hidden."
+        newSignatureState ? "Formbricks branding will be shown." : "Formbricks branding will now be hidden."
       );
     } catch (error) {
       toast.error(`Error: ${error.message}`);
@@ -67,12 +69,14 @@ export function EditFormbricksSignature({
       )}
       <div className="mb-6 flex items-center space-x-2">
         <Switch
-          id="signature"
-          checked={formbricksSignature}
+          id="branding"
+          checked={isBrandingEnabled}
           onCheckedChange={toggleSignature}
           disabled={!canRemoveSignature || updatingSignature}
         />
-        <Label htmlFor="signature">{type} surveys: Show Formbricks Signature</Label>
+        <Label htmlFor="signature">
+          Show Formbricks Branding in {type === "linkSurvey" ? "Link" : "In-App"} Surveys
+        </Label>
       </div>
     </div>
   );
