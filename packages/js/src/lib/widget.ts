@@ -48,12 +48,13 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
   const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
+  const isBrandingEnabled = product.inAppSurveyBranding;
 
   setTimeout(() => {
     renderSurveyModal({
       survey: survey,
       brandColor,
-      formbricksSignature: true,
+      isBrandingEnabled: isBrandingEnabled,
       clickOutside,
       darkOverlay,
       highlightBorderColor,
