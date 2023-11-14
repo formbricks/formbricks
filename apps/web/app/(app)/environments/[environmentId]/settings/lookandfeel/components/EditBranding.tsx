@@ -9,46 +9,46 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { updateProductAction } from "../actions";
 
-interface EditSignatureProps {
+interface EditFormbricksBrandingProps {
   type: "linkSurvey" | "inAppSurvey";
   product: TProduct;
-  canRemoveSignature: boolean;
+  canRemoveBranding: boolean;
   environmentId: string;
 }
 
-export function EditFormbricksSignature({
+export function EditFormbricksBranding({
   type,
   product,
-  canRemoveSignature,
+  canRemoveBranding,
   environmentId,
-}: EditSignatureProps) {
+}: EditFormbricksBrandingProps) {
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
   );
-  const [updatingSignature, setUpdatingSignature] = useState(false);
+  const [updatingBranding, setUpdatingBranding] = useState(false);
 
-  const toggleSignature = async () => {
+  const toggleBranding = async () => {
     try {
-      setUpdatingSignature(true);
-      const newSignatureState = !isBrandingEnabled;
-      setIsBrandingEnabled(newSignatureState);
+      setUpdatingBranding(true);
+      const newBrandingState = !isBrandingEnabled;
+      setIsBrandingEnabled(newBrandingState);
       let inputProduct: Partial<TProductUpdateInput> = {
-        [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newSignatureState,
+        [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
       };
       await updateProductAction(product.id, inputProduct);
       toast.success(
-        newSignatureState ? "Formbricks branding will be shown." : "Formbricks branding will now be hidden."
+        newBrandingState ? "Formbricks branding will be shown." : "Formbricks branding will now be hidden."
       );
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     } finally {
-      setUpdatingSignature(false);
+      setUpdatingBranding(false);
     }
   };
 
   return (
     <div className="w-full items-center">
-      {!canRemoveSignature && (
+      {!canRemoveBranding && (
         <div className="mb-4">
           <Alert>
             <AlertDescription>
@@ -69,12 +69,12 @@ export function EditFormbricksSignature({
       )}
       <div className="mb-6 flex items-center space-x-2">
         <Switch
-          id="branding"
+          id={`branding-${type}`}
           checked={isBrandingEnabled}
-          onCheckedChange={toggleSignature}
-          disabled={!canRemoveSignature || updatingSignature}
+          onCheckedChange={toggleBranding}
+          disabled={!canRemoveBranding || updatingBranding}
         />
-        <Label htmlFor="signature">
+        <Label htmlFor={`branding-${type}`}>
           Show Formbricks Branding in {type === "linkSurvey" ? "Link" : "In-App"} Surveys
         </Label>
       </div>

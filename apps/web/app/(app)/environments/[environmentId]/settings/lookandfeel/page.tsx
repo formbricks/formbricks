@@ -13,7 +13,7 @@ import SettingsTitle from "../components/SettingsTitle";
 import { EditBrandColor } from "./components/EditBrandColor";
 import { EditHighlightBorder } from "./components/EditHighlightBorder";
 import { EditPlacement } from "./components/EditPlacement";
-import { EditFormbricksSignature } from "./components/EditSignature";
+import { EditFormbricksBranding } from "./components/EditBranding";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([
@@ -32,8 +32,8 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     throw new Error("Team not found");
   }
 
-  const canRemoveLinkSignature = team.billing.features.linkSurvey.status !== "inactive";
-  const canRemoveInAppSignature = team.billing.features.inAppSurvey.status !== "inactive";
+  const canRemoveLinkBranding = team.billing.features.linkSurvey.status !== "inactive";
+  const canRemoveInAppBranding = team.billing.features.inAppSurvey.status !== "inactive";
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
@@ -71,16 +71,16 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       <SettingsCard
         title="Formbricks Branding"
         description="We love your support but understand if you toggle it off.">
-        <EditFormbricksSignature
+        <EditFormbricksBranding
           type="linkSurvey"
           product={product}
-          canRemoveSignature={canRemoveLinkSignature}
+          canRemoveBranding={canRemoveLinkBranding}
           environmentId={params.environmentId}
         />
-        <EditFormbricksSignature
+        <EditFormbricksBranding
           type="inAppSurvey"
           product={product}
-          canRemoveSignature={canRemoveInAppSignature}
+          canRemoveBranding={canRemoveInAppBranding}
           environmentId={params.environmentId}
         />
       </SettingsCard>
