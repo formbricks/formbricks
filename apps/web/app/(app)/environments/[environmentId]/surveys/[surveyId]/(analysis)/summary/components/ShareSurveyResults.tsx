@@ -1,8 +1,8 @@
 "use client";
 
-import { DialogContent, Dialog } from "@formbricks/ui/Dialog";
 import { Button } from "@formbricks/ui/Button";
-import { GlobeEuropeAfricaIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
+import { CheckCircleIcon, GlobeEuropeAfricaIcon } from "@heroicons/react/24/solid";
 
 interface ShareEmbedSurveyProps {
   open: boolean;
@@ -69,10 +69,10 @@ export default function ShareSurveyResults({
               Publish Results to web
             </div>
             <div className="text-md px-4  py-3 text-slate-500 lg:px-6 lg:py-0 ">
-              Share survey results with anyone who has link.
+              Share survey results with anyone who has the link.
             </div>
             <div className=" text-md px-4  py-3 text-slate-500  lg:px-6 lg:py-0 ">
-              The Results will not be indexed by search engines.
+              The results will not be indexed by search engines.
             </div>
             <Button
               type="submit"
