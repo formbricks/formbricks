@@ -1,5 +1,5 @@
-import "server-only";
 import path from "path";
+import "server-only";
 
 export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
@@ -48,6 +48,7 @@ export const GOOGLE_SHEETS_CLIENT_SECRET = process.env.GOOGLE_SHEETS_CLIENT_SECR
 export const GOOGLE_SHEETS_REDIRECT_URL = process.env.GOOGLE_SHEETS_REDIRECT_URL;
 
 export const AIRTABLE_CLIENT_ID = process.env.AIRTABLE_CLIENT_ID;
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export const SMTP_HOST = process.env.SMTP_HOST;
 export const SMTP_PORT = process.env.SMTP_PORT;

@@ -1,17 +1,16 @@
-import React, { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { questionTypes } from "@/app/lib/questions";
 import { Button } from "@formbricks/ui/Button";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
-import { BrainIcon } from "@formbricks/ui/icons";
+import { InboxStackIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import { useChat } from "ai/react";
+import Link from "next/link";
+import React, { useState } from "react";
 
 interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
@@ -58,9 +57,9 @@ export default function OpenTextSummary({
                 size="sm"
                 loading={isLoading}
                 type="submit"
-                onClick={() => setInput("openTextInsights")}>
-                <BrainIcon className="mr-2 h-4 w-4" />
-                Get Insights with AI
+                onClick={() => setInput("openTextInsights")}
+                EndIcon={SparklesIcon}>
+                Summarize
               </Button>
             </form>
           </div>
