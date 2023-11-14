@@ -84,7 +84,7 @@ export default function AddIntegrationModal({
           return survey.id === selectedIntegration.surveyId;
         })!
       );
-      setSelectedQuestions(selectedIntegration.questionIds as string[]);
+      setSelectedQuestions(selectedIntegration.questionIds);
       return;
     }
     resetForm();
