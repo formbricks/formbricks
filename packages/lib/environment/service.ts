@@ -14,14 +14,13 @@ import {
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import "server-only";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
-
-export const getEnvironmentCacheTag = (environmentId: string) => `environments-${environmentId}`;
-export const getEnvironmentsCacheTag = (productId: string) => `products-${productId}-environments`;
+import { environmentCache } from "./cache";
+import { formatEnvironmentDateFields } from "./util";
 
 export const getEnvironment = (environmentId: string) =>
   unstable_cache(
@@ -37,7 +36,7 @@ export const getEnvironment = (environmentId: string) =>
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -54,9 +53,9 @@ export const getEnvironment = (environmentId: string) =>
         throw new ValidationError("Data validation of environment failed");
       }
     },
-    [`environments-${environmentId}`],
+    [`getEnvironment-${environmentId}`],
     {
-      tags: [getEnvironmentCacheTag(environmentId)],
+      tags: [environmentCache.tag.byId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -101,9 +100,9 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
         throw new ValidationError("Data validation of environments array failed");
       }
     },
-    [`products-${productId}-environments`],
+    [`getEnvironments-${productId}`],
     {
-      tags: [getEnvironmentsCacheTag(productId)],
+      tags: [environmentCache.tag.byProductId(productId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -123,8 +122,10 @@ export const updateEnvironment = async (
       data: newData,
     });
 
-    revalidateTag(getEnvironmentsCacheTag(updatedEnvironment.productId));
-    revalidateTag(getEnvironmentCacheTag(environmentId));
+    environmentCache.revalidate({
+      id: environmentId,
+      productId: updatedEnvironment.productId,
+    });
 
     return updatedEnvironment;
   } catch (error) {
@@ -136,29 +137,40 @@ export const updateEnvironment = async (
 };
 
 export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
-  validateInputs([userId, ZId]);
-  try {
-    return await prisma.environment.findFirst({
-      where: {
-        type: "production",
-        product: {
-          team: {
-            memberships: {
-              some: {
-                userId,
+  const environment = await unstable_cache(
+    async () => {
+      validateInputs([userId, ZId]);
+      try {
+        return await prisma.environment.findFirst({
+          where: {
+            type: "production",
+            product: {
+              team: {
+                memberships: {
+                  some: {
+                    userId,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
 
-    throw error;
-  }
+        throw error;
+      }
+    },
+    [`getFirstEnvironmentByUserId-${userId}`],
+    {
+      tags: [environmentCache.tag.byUserId(userId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return environment ? formatEnvironmentDateFields(environment) : environment;
 };
 
 export const createEnvironment = async (
@@ -167,12 +179,12 @@ export const createEnvironment = async (
 ): Promise<TEnvironment> => {
   validateInputs([productId, ZId], [environmentInput, ZEnvironmentCreateInput]);
 
-  return await prisma.environment.create({
+  const environment = await prisma.environment.create({
     data: {
       type: environmentInput.type || "development",
       product: { connect: { id: productId } },
       widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
-      eventClasses: {
+      actionClasses: {
         create: [
           {
             name: "New Session",
@@ -199,4 +211,11 @@ export const createEnvironment = async (
       },
     },
   });
+
+  environmentCache.revalidate({
+    id: environment.id,
+    productId: environment.productId,
+  });
+
+  return environment;
 };

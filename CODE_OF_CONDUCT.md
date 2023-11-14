@@ -60,10 +60,9 @@ Community managers will follow these Community Impact Guidelines in determining 
 
 ### 4. Permanent Ban
 
-**Community Impact**: Demonstrating a pattern of violation of community standards, including sustained inappropriate behavior,  harassment of an individual, or aggression toward or disparagement of classes of individuals.
+**Community Impact**: Demonstrating a pattern of violation of community standards, including sustained inappropriate behavior, harassment of an individual, or aggression toward or disparagement of classes of individuals.
 
 **Consequence**: A permanent ban from any sort of public interaction within the community.
-
 
 ## Attribution
 

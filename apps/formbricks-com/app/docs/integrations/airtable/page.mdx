@@ -1,0 +1,189 @@
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import IntegrationTab from "./integrations-tab.webp";
+import ConnectWithAirtable from "./connect-with-airtable.webp";
+import AirtableConnected from "./airtable-connected.webp";
+import LinkSurveyWithTable from "./link-survey-with-table.webp";
+import LinkWithQuestions from "./link-with-questions.webp";
+import ListLinkedSurveys from "./list-linked-surveys.webp";
+import OpenDeveloperHub from "./open-developer-hub.webp";
+import CreateNewIntegration from "./create-new-integration.webp";
+import RegisterNewIntegration from "./register-new-integration.webp";
+import SelectScopes from "./select-scopes.webp";
+import DeleteIntegration from "./deleteIntegration.webp";
+import Image from "next/image";
+
+export const metadata = {
+  title: "Airtable Setup",
+  description: "Instantly populate your airtable table with survey data",
+};
+
+#### Integrations
+
+# Airtable
+
+The Airtable integration allows you to automatically send responses to an Airtable of your choice.
+
+<Note>
+  This feature is enabled by default in Formbricks Cloud but needs to be self-configured when running a
+  self-hosted version of Formbricks.
+</Note>
+
+## Formbricks Cloud
+
+1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) and click on the "Connect" button under Airtable integration.
+
+<Image
+  src={IntegrationTab}
+  alt="Formbricks Integrations Tab"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+2. Now click on the "Connect with Airtable" button to authenticate yourself with Airtable.
+
+<Image
+  src={ConnectWithAirtable}
+  alt="Connect Formbricks with Airtable"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. You will now be taken to a page where you need to add and grant access to the base you want to use for the integration.
+
+<Image
+  src={ConnectWithAirtable}
+  alt="Add and grant access to airtable base"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. Once you add and grant access to your base, you will be taken back to Formbricks Cloud and see the connected status as below:
+
+<Image
+  src={AirtableConnected}
+  alt="Formbricks is now connected with Google"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+<Note>
+
+Before the next step, make sure that you have a Formbricks Survey with at least one question and a Airtable base with atleast one table in the Airtable account you integrated.
+
+</Note>
+
+6. Now click on the "Link New Table" button to link a new Airtable with Formbricks and a modal will open up.
+
+<Image
+  src={LinkSurveyWithTable}
+  alt="Link Formbricks with a Airtable"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+7. Select the Base and table you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in Airtable. Select the questions and click on the "Save" button.
+
+<Image
+  src={LinkWithQuestions}
+  alt="Select question to link with Airtable"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+
+/>
+
+8. On submitting, the modal will close and you will see the linked table in the list of linked tables.
+
+<Image
+  src={ListLinkedSurveys}
+  alt="List of linked tables"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Congratulations! You have successfully linked an Airtable with Formbricks. Now whenever a response is submitted for the linked Survey, it will be automatically added to the linked Airtable.
+
+Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
+
+## Setup in self-hosted Formbricks
+
+Enabling the Airtable Integration in a self-hosted environment requires creating an airtable account and changing the environment variables of your Formbricks instance.
+
+1. Go to the [Airtable](https://airtable.com) and create a new account if you dont already have one.
+
+2. Click on user icon on top left and open to Developer hub
+
+<Image
+  src={OpenDeveloperHub}
+  alt="List of linked tables"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. Navigate to OAuth integrations and click on **Register an OAuth integrations**
+
+<Image
+  src={CreateNewIntegration}
+  alt="List of linked tables"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. Select a name for you integration and also add a redirect URL which will be YOUR_WEBAPP_URL/api/v1/integrations/airtable/callback
+
+   <Image
+     src={RegisterNewIntegration}
+     alt="List of linked tables"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />
+
+4. Now fill some basic details about your integrations and then go to scope section. You need to enable 5 scopes
+
+   - data.records:read
+   - data.records:write
+   - schema.bases:read
+   - schema.bases:write
+   - user.email:read
+
+{" "}
+
+<Image
+  src={SelectScopes}
+  alt="List of linked tables"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+5. Click on the "Save" button and you are done
+6. Now just copy client id and redirect url for your integration and add it to formbricks .env file
+
+### By now, your environment variables should include the below ones:
+
+- `AIRTABLE_CLIENT_ID`
+- `AIRTABLE_REDIRECT_URL`
+
+Voila! You have successfully enabled the Airtable integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Formbricks Cloud](#formbricks-cloud) section to link an Airtable with Formbricks.
+
+## Remove Integration with Airtable
+
+To remove the integration with Airtable,
+
+1. Visit the Integrations tab in your Formbricks Cloud dashboard.
+2. Select "Manage" button in the Airtable card.
+3. Click on the "Connected with `<your-email-here`>" just before the "Link new Table" button.
+4. It will now ask for a confirmation to remove the integration. Click on the "Delete" button to remove the integration. You can always come back and connect again with the same Airtable Account.
+
+<Image
+  src={DeleteIntegration}
+  alt="Delete Airtable Integration with Formbricks"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+<Note>
+  We do not store any other information of yours! We value Privacy more than you and rest assured you're safe
+  with us!
+</Note>
+
+Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

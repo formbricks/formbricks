@@ -2,17 +2,24 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
-import { TDisplay, TDisplayInput, TDisplaysWithSurveyName, ZDisplayInput } from "@formbricks/types/displays";
+import {
+  TDisplay,
+  TDisplayCreateInput,
+  TDisplayLegacyCreateInput,
+  TDisplayUpdateInput,
+  ZDisplayCreateInput,
+  ZDisplayLegacyCreateInput,
+  ZDisplayUpdateInput,
+} from "@formbricks/types/displays";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { transformPrismaPerson } from "../person/service";
+import { getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 import { formatDisplaysDateFields } from "./util";
-import { responseCache } from "../response/cache";
 
 const selectDisplay = {
   id: true,
@@ -20,43 +27,34 @@ const selectDisplay = {
   updatedAt: true,
   surveyId: true,
   responseId: true,
-  person: {
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      environmentId: true,
-      attributes: {
-        select: {
-          value: true,
-          attributeClass: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-  },
+  personId: true,
 };
 
 export const updateDisplay = async (
   displayId: string,
-  displayInput: Partial<TDisplayInput>
+  displayInput: Partial<TDisplayUpdateInput>
 ): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayInput.partial()]);
+  validateInputs([displayInput, ZDisplayUpdateInput.partial()]);
   try {
-    const displayPrisma = await prisma.display.update({
+    const data = {
+      ...(displayInput.personId && {
+        person: {
+          connect: {
+            id: displayInput.personId,
+          },
+        },
+      }),
+      ...(displayInput.responseId && {
+        responseId: displayInput.responseId,
+      }),
+    };
+    const display = await prisma.display.update({
       where: {
         id: displayId,
       },
-      data: displayInput,
+      data,
       select: selectDisplay,
     });
-    const display: TDisplay = {
-      ...displayPrisma,
-      person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
-    };
 
     displayCache.revalidate({
       id: display.id,
@@ -74,11 +72,52 @@ export const updateDisplay = async (
   }
 };
 
-export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayInput]);
-
+export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayCreateInput]);
   try {
-    const displayPrisma = await prisma.display.create({
+    let person;
+    if (displayInput.userId) {
+      person = await getPersonByUserId(displayInput.userId, displayInput.environmentId);
+    }
+    const display = await prisma.display.create({
+      data: {
+        survey: {
+          connect: {
+            id: displayInput.surveyId,
+          },
+        },
+
+        ...(person && {
+          person: {
+            connect: {
+              id: person.id,
+            },
+          },
+        }),
+      },
+      select: selectDisplay,
+    });
+
+    displayCache.revalidate({
+      id: display.id,
+      personId: display.personId,
+      surveyId: display.surveyId,
+    });
+
+    return display;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const createDisplayLegacy = async (displayInput: TDisplayLegacyCreateInput): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayLegacyCreateInput]);
+  try {
+    const display = await prisma.display.create({
       data: {
         survey: {
           connect: {
@@ -97,14 +136,9 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
       select: selectDisplay,
     });
 
-    const display: TDisplay = {
-      ...displayPrisma,
-      person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
-    };
-
     displayCache.revalidate({
       id: display.id,
-      personId: display.person?.id,
+      personId: display.personId,
       surveyId: display.surveyId,
     });
 
@@ -124,7 +158,7 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
   try {
     if (!displayId) throw new Error("Display ID is required");
 
-    const displayPrisma = await prisma.display.update({
+    const display = await prisma.display.update({
       where: {
         id: displayId,
       },
@@ -134,18 +168,13 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
       select: selectDisplay,
     });
 
-    if (!displayPrisma) {
+    if (!display) {
       throw new ResourceNotFoundError("Display", displayId);
     }
 
-    const display: TDisplay = {
-      ...displayPrisma,
-      person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
-    };
-
     displayCache.revalidate({
       id: display.id,
-      personId: display.person?.id,
+      personId: display.personId,
       surveyId: display.surveyId,
     });
 
@@ -159,32 +188,17 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
   }
 };
 
-export const getDisplaysByPersonId = async (
-  personId: string,
-  page?: number
-): Promise<TDisplaysWithSurveyName[]> => {
+export const getDisplaysByPersonId = async (personId: string, page?: number): Promise<TDisplay[]> => {
   const displays = await unstable_cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
       try {
-        const displaysPrisma = await prisma.display.findMany({
+        const displays = await prisma.display.findMany({
           where: {
             personId: personId,
           },
-          select: {
-            id: true,
-            createdAt: true,
-            updatedAt: true,
-            surveyId: true,
-            responseId: true,
-            survey: {
-              select: {
-                name: true,
-              },
-            },
-            status: true,
-          },
+          select: selectDisplay,
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
@@ -192,24 +206,9 @@ export const getDisplaysByPersonId = async (
           },
         });
 
-        if (!displaysPrisma) {
+        if (!displays) {
           throw new ResourceNotFoundError("Display from PersonId", personId);
         }
-
-        let displays: TDisplaysWithSurveyName[] = [];
-
-        displaysPrisma.forEach((displayPrisma) => {
-          const display: TDisplaysWithSurveyName = {
-            id: displayPrisma.id,
-            createdAt: displayPrisma.createdAt,
-            updatedAt: displayPrisma.updatedAt,
-            person: null,
-            surveyId: displayPrisma.surveyId,
-            surveyName: displayPrisma.survey.name,
-            responseId: displayPrisma.responseId,
-          };
-          displays.push(display);
-        });
 
         return displays;
       } catch (error) {
@@ -234,26 +233,17 @@ export const deleteDisplayByResponseId = async (responseId: string, surveyId: st
   validateInputs([responseId, ZId], [surveyId, ZId]);
 
   try {
-    const deletedDisplay = await prisma.display.delete({
+    const display = await prisma.display.delete({
       where: {
         responseId,
       },
       select: selectDisplay,
     });
 
-    const display: TDisplay = {
-      ...deletedDisplay,
-      person: deletedDisplay.person ? transformPrismaPerson(deletedDisplay.person) : null,
-    };
-
     displayCache.revalidate({
       id: display.id,
-      personId: display.person?.id,
+      personId: display.personId,
       surveyId,
-    });
-
-    responseCache.revalidate({
-      responseId,
     });
 
     return display;
@@ -271,7 +261,7 @@ export const getDisplayCountBySurveyId = async (surveyId: string): Promise<numbe
       validateInputs([surveyId, ZId]);
 
       try {
-        const displayCount = await prisma.response.count({
+        const displayCount = await prisma.display.count({
           where: {
             surveyId: surveyId,
           },

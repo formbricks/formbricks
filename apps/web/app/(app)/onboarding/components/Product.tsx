@@ -96,6 +96,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
                 placeholder="e.g. Formbricks"
                 value={name}
                 onChange={handleNameChange}
+                aria-label="Your product name"
               />
             </div>
           </div>

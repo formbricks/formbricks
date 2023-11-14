@@ -2,13 +2,13 @@
 
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { SHORT_SURVEY_BASE_URL, SURVEY_BASE_URL } from "@formbricks/lib/constants";
+import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { deleteSurvey, duplicateSurvey } from "@formbricks/lib/survey/service";
+import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
+import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Team } from "@prisma/client";
@@ -19,13 +19,13 @@ export const createShortUrlAction = async (url: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthenticationError("Not authenticated");
 
-  const regexPattern = new RegExp("^" + SURVEY_BASE_URL);
+  const regexPattern = new RegExp("^" + WEBAPP_URL);
   const isValidUrl = regexPattern.test(url);
 
   if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
 
   const shortUrl = await createShortUrl(url);
-  const fullShortUrl = SHORT_SURVEY_BASE_URL + shortUrl.id;
+  const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
   return fullShortUrl;
 };
 
@@ -91,7 +91,7 @@ export async function copyToOtherEnvironmentAction(
     include: {
       triggers: {
         include: {
-          eventClass: true,
+          actionClass: true,
         },
       },
       attributeFilters: {
@@ -109,9 +109,9 @@ export async function copyToOtherEnvironmentAction(
   let targetEnvironmentTriggers: string[] = [];
   // map the local triggers to the target environment
   for (const trigger of existingSurvey.triggers) {
-    const targetEnvironmentTrigger = await prisma.eventClass.findFirst({
+    const targetEnvironmentTrigger = await prisma.actionClass.findFirst({
       where: {
-        name: trigger.eventClass.name,
+        name: trigger.actionClass.name,
         environment: {
           id: targetEnvironmentId,
         },
@@ -119,18 +119,18 @@ export async function copyToOtherEnvironmentAction(
     });
     if (!targetEnvironmentTrigger) {
       // if the trigger does not exist in the target environment, create it
-      const newTrigger = await prisma.eventClass.create({
+      const newTrigger = await prisma.actionClass.create({
         data: {
-          name: trigger.eventClass.name,
+          name: trigger.actionClass.name,
           environment: {
             connect: {
               id: targetEnvironmentId,
             },
           },
-          description: trigger.eventClass.description,
-          type: trigger.eventClass.type,
-          noCodeConfig: trigger.eventClass.noCodeConfig
-            ? JSON.parse(JSON.stringify(trigger.eventClass.noCodeConfig))
+          description: trigger.actionClass.description,
+          type: trigger.actionClass.type,
+          noCodeConfig: trigger.actionClass.noCodeConfig
+            ? JSON.parse(JSON.stringify(trigger.actionClass.noCodeConfig))
             : undefined,
         },
       });
@@ -183,8 +183,8 @@ export async function copyToOtherEnvironmentAction(
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
-        create: targetEnvironmentTriggers.map((eventClassId) => ({
-          eventClassId: eventClassId,
+        create: targetEnvironmentTriggers.map((actionClassId) => ({
+          actionClassId: actionClassId,
         })),
       },
       attributeFilters: {
@@ -214,6 +214,11 @@ export const deleteSurveyAction = async (surveyId: string) => {
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const survey = await getSurvey(surveyId);
+
+  const { hasDeleteAccess } = await verifyUserRoleAccess(survey!.environmentId, session.user.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deleteSurvey(surveyId);
 };

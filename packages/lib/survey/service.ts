@@ -5,20 +5,24 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "../response/cache";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { formatSurveyDateFields } from "./util";
-
-// surveys cache key and tags
-const getSurveysCacheTag = (environmentId: string): string => `environments-${environmentId}-surveys`;
-
-// survey cache key and tags
-export const getSurveyCacheTag = (surveyId: string): string => `surveys-${surveyId}`;
+import { surveyCache } from "./cache";
+import { displayCache } from "../display/cache";
+import { productCache } from "../product/cache";
+import { TPerson } from "@formbricks/types/people";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { getAttributeClasses } from "../attributeClass/service";
+import { getProductByEnvironmentId } from "../product/service";
+import { getDisplaysByPersonId } from "../display/service";
+import { diffInDays } from "../utils/datetime";
 
 export const selectSurvey = {
   id: true,
@@ -46,7 +50,7 @@ export const selectSurvey = {
   pin: true,
   triggers: {
     select: {
-      eventClass: {
+      actionClass: {
         select: {
           id: true,
           createdAt: true,
@@ -70,10 +74,32 @@ export const selectSurvey = {
   },
 };
 
+const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName: string): string => {
+  return actionClasses.find((actionClass) => actionClass.name === actionClassName)!.id;
+};
+
+const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionClassNames: string[]): void => {
+  for (const actionClassName of actionClassNames) {
+    const actionClassId: string = getActionClassIdFromName(actionClasses, actionClassName);
+    surveyCache.revalidate({
+      actionClassId,
+    });
+  }
+};
+
+const revalidateSurveyByAttributeClassId = (attributeFilters: TSurveyAttributeFilter[]): void => {
+  for (const attributeFilter of attributeFilters) {
+    surveyCache.revalidate({
+      attributeClassId: attributeFilter.attributeClassId,
+    });
+  }
+};
+
 export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   const survey = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
+
       let surveyPrisma;
       try {
         surveyPrisma = await prisma.survey.findUnique({
@@ -84,7 +110,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -97,14 +123,14 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       const transformedSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
 
       return transformedSurvey;
     },
-    [`surveys-${surveyId}`],
+    [`getSurvey-${surveyId}`],
     {
-      tags: [getSurveyCacheTag(surveyId)],
+      tags: [surveyCache.tag.byId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -125,61 +151,91 @@ export const getSurveysByAttributeClassId = async (
   attributeClassId: string,
   page?: number
 ): Promise<TSurvey[]> => {
-  validateInputs([attributeClassId, ZId], [page, ZOptionalNumber]);
+  const surveys = await unstable_cache(
+    async () => {
+      validateInputs([attributeClassId, ZId], [page, ZOptionalNumber]);
 
-  const surveysPrisma = await prisma.survey.findMany({
-    where: {
-      attributeFilters: {
-        some: {
-          attributeClassId,
+      const surveysPrisma = await prisma.survey.findMany({
+        where: {
+          attributeFilters: {
+            some: {
+              attributeClassId,
+            },
+          },
         },
-      },
+        select: selectSurvey,
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      });
+
+      const surveys: TSurvey[] = [];
+
+      for (const surveyPrisma of surveysPrisma) {
+        const transformedSurvey = {
+          ...surveyPrisma,
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+        };
+        surveys.push(transformedSurvey);
+      }
+
+      return surveys;
     },
-    select: selectSurvey,
-    take: page ? ITEMS_PER_PAGE : undefined,
-    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-  });
+    [`getSurveysByAttributeClassId-${attributeClassId}-${page}`],
+    {
+      tags: [surveyCache.tag.byAttributeClassId(attributeClassId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
 
-  const surveys: TSurvey[] = [];
-
-  for (const surveyPrisma of surveysPrisma) {
-    const transformedSurvey = {
-      ...surveyPrisma,
-      triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
-    };
-    surveys.push(transformedSurvey);
-  }
-  return surveys;
+  return surveys.map((survey) => ({
+    ...survey,
+    ...formatSurveyDateFields(survey),
+  }));
 };
 
 export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
-  validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
+  const surveys = await unstable_cache(
+    async () => {
+      validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
 
-  const surveysPrisma = await prisma.survey.findMany({
-    where: {
-      triggers: {
-        some: {
-          eventClass: {
-            id: actionClassId,
+      const surveysPrisma = await prisma.survey.findMany({
+        where: {
+          triggers: {
+            some: {
+              actionClass: {
+                id: actionClassId,
+              },
+            },
           },
         },
-      },
+        select: selectSurvey,
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      });
+
+      const surveys: TSurvey[] = [];
+
+      for (const surveyPrisma of surveysPrisma) {
+        const transformedSurvey = {
+          ...surveyPrisma,
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+        };
+        surveys.push(transformedSurvey);
+      }
+
+      return surveys;
     },
-    select: selectSurvey,
-    take: page ? ITEMS_PER_PAGE : undefined,
-    skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-  });
+    [`getSurveysByActionClassId-${actionClassId}-${page}`],
+    {
+      tags: [surveyCache.tag.byActionClassId(actionClassId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
 
-  const surveys: TSurvey[] = [];
-
-  for (const surveyPrisma of surveysPrisma) {
-    const transformedSurvey = {
-      ...surveyPrisma,
-      triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
-    };
-    surveys.push(transformedSurvey);
-  }
-  return surveys;
+  return surveys.map((survey) => ({
+    ...survey,
+    ...formatSurveyDateFields(survey),
+  }));
 };
 
 export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
@@ -198,7 +254,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error.message);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -210,15 +266,15 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
       }
       return surveys;
     },
-    [`environments-${environmentId}-surveys`],
+    [`getSurveys-${environmentId}-${page}`],
     {
-      tags: [getSurveysCacheTag(environmentId)],
+      tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -231,7 +287,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   }));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
@@ -249,6 +305,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   if (triggers) {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
+
     // find added triggers
     for (const trigger of triggers) {
       if (!trigger) {
@@ -260,6 +317,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         newTriggers.push(trigger);
       }
     }
+
     // find removed triggers
     for (const trigger of currentSurvey.triggers) {
       if (triggers.find((t: any) => t === trigger)) {
@@ -273,7 +331,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         create: newTriggers.map((trigger) => ({
-          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
+          actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       };
     }
@@ -282,24 +340,27 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         deleteMany: {
-          eventClassId: {
-            in: removedTriggers.map(
-              (trigger) => actionClasses.find((actionClass) => actionClass.name === trigger)!.id
-            ),
+          actionClassId: {
+            in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
           },
         },
       };
     }
+
+    // Revalidation for newly added/removed actionClassId
+    revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
   }
 
   if (attributeFilters) {
     const newFilters: TSurveyAttributeFilter[] = [];
-    const removedFilterIds: string[] = [];
+    const removedFilters: TSurveyAttributeFilter[] = [];
+
     // find added attribute filters
     for (const attributeFilter of attributeFilters) {
       if (!attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
         continue;
       }
+
       if (
         currentSurvey.attributeFilters.find(
           (f) =>
@@ -329,9 +390,14 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       ) {
         continue;
       } else {
-        removedFilterIds.push(attributeFilter.attributeClassId);
+        removedFilters.push({
+          attributeClassId: attributeFilter.attributeClassId,
+          condition: attributeFilter.condition,
+          value: attributeFilter.value,
+        });
       }
     }
+
     // create new attribute filters
     if (newFilters.length > 0) {
       data.attributeFilters = {
@@ -343,19 +409,21 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
         })),
       };
     }
-    // delete removed triggers
-    if (removedFilterIds.length > 0) {
+    // delete removed attribute filter
+    if (removedFilters.length > 0) {
       // delete all attribute filters that match the removed attribute classes
       await Promise.all(
-        removedFilterIds.map(async (attributeClassId) => {
+        removedFilters.map(async (attributeFilter) => {
           await prisma.surveyAttributeFilter.deleteMany({
             where: {
-              attributeClassId,
+              attributeClassId: attributeFilter.attributeClassId,
             },
           });
         })
       );
     }
+
+    revalidateSurveyByAttributeClassId([...newFilters, ...removedFilters]);
   }
 
   data = {
@@ -375,19 +443,21 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
     };
 
-    revalidateTag(getSurveysCacheTag(modifiedSurvey.environmentId));
-    revalidateTag(getSurveyCacheTag(modifiedSurvey.id));
+    surveyCache.revalidate({
+      id: modifiedSurvey.id,
+      environmentId: modifiedSurvey.environmentId,
+    });
 
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error.message);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
 
     throw error;
   }
-}
+};
 
 export async function deleteSurvey(surveyId: string) {
   validateInputs([surveyId, ZId]);
@@ -399,19 +469,42 @@ export async function deleteSurvey(surveyId: string) {
     select: selectSurvey,
   });
 
-  revalidateTag(getSurveysCacheTag(deletedSurvey.environmentId));
-  revalidateTag(getSurveyCacheTag(surveyId));
-
   responseCache.revalidate({
     surveyId,
     environmentId: deletedSurvey.environmentId,
+  });
+  surveyCache.revalidate({
+    id: deletedSurvey.id,
+    environmentId: deletedSurvey.environmentId,
+  });
+
+  // Revalidate triggers by actionClassId
+  deletedSurvey.triggers.forEach((trigger) => {
+    surveyCache.revalidate({
+      actionClassId: trigger.actionClass.id,
+    });
+  });
+  // Revalidate surveys by attributeClassId
+  deletedSurvey.attributeFilters.forEach((attributeFilter) => {
+    surveyCache.revalidate({
+      attributeClassId: attributeFilter.attributeClassId,
+    });
   });
 
   return deletedSurvey;
 }
 
-export async function createSurvey(environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> {
+export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
+
+  if (surveyBody.attributeFilters) {
+    revalidateSurveyByAttributeClassId(surveyBody.attributeFilters);
+  }
+
+  if (surveyBody.triggers) {
+    const actionClasses = await getActionClasses(environmentId);
+    revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
+  }
 
   // TODO: Create with triggers & attributeFilters
   delete surveyBody.triggers;
@@ -434,18 +527,20 @@ export async function createSurvey(environmentId: string, surveyBody: TSurveyInp
 
   const transformedSurvey = {
     ...survey,
-    triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
+    triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
   captureTelemetry("survey created");
 
-  revalidateTag(getSurveysCacheTag(environmentId));
-  revalidateTag(getSurveyCacheTag(survey.id));
+  surveyCache.revalidate({
+    id: survey.id,
+    environmentId: survey.environmentId,
+  });
 
   return transformedSurvey;
-}
+};
 
-export async function duplicateSurvey(environmentId: string, surveyId: string) {
+export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -453,6 +548,11 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
   }
 
   const actionClasses = await getActionClasses(environmentId);
+  const newAttributeFilters = existingSurvey.attributeFilters.map((attributeFilter) => ({
+    attributeClassId: attributeFilter.attributeClassId,
+    condition: attributeFilter.condition,
+    value: attributeFilter.value,
+  }));
 
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
@@ -466,15 +566,11 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
         create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: actionClasses.find((actionClass) => actionClass.name === trigger)!.id,
+          actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       },
       attributeFilters: {
-        create: existingSurvey.attributeFilters.map((attributeFilter) => ({
-          attributeClassId: attributeFilter.attributeClassId,
-          condition: attributeFilter.condition,
-          value: attributeFilter.value,
-        })),
+        create: newAttributeFilters,
       },
       environment: {
         connect: {
@@ -496,8 +592,115 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
     },
   });
 
-  revalidateTag(getSurveysCacheTag(environmentId));
-  revalidateTag(getSurveyCacheTag(surveyId));
+  surveyCache.revalidate({
+    id: newSurvey.id,
+    environmentId: newSurvey.environmentId,
+  });
+
+  // Revalidate surveys by actionClassId
+  revalidateSurveyByActionClassId(actionClasses, existingSurvey.triggers);
+
+  // Revalidate surveys by attributeClassId
+  revalidateSurveyByAttributeClassId(newAttributeFilters);
 
   return newSurvey;
-}
+};
+
+export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
+  unstable_cache(
+    async () => {
+      return await getSyncSurveys(environmentId, person);
+    },
+    [`getSyncSurveysCached-${environmentId}`],
+    {
+      tags: [
+        displayCache.tag.byPersonId(person.id),
+        surveyCache.tag.byEnvironmentId(environmentId),
+        productCache.tag.byEnvironmentId(environmentId),
+      ],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getSyncSurveys = async (
+  environmentId: string,
+  person: TPerson
+): Promise<TSurveyWithTriggers[]> => {
+  // get recontactDays from product
+  const product = await getProductByEnvironmentId(environmentId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  let surveys = await getSurveys(environmentId);
+
+  // filtered surveys for running and web
+  surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+
+  const displays = await getDisplaysByPersonId(person.id);
+
+  // filter surveys that meet the displayOption criteria
+  surveys = surveys.filter((survey) => {
+    if (survey.displayOption === "respondMultiple") {
+      return true;
+    } else if (survey.displayOption === "displayOnce") {
+      return displays.filter((display) => display.surveyId === survey.id).length === 0;
+    } else if (survey.displayOption === "displayMultiple") {
+      return (
+        displays.filter((display) => display.surveyId === survey.id && display.responseId !== null).length ===
+        0
+      );
+    } else {
+      throw Error("Invalid displayOption");
+    }
+  });
+
+  const attributeClasses = await getAttributeClasses(environmentId);
+
+  // filter surveys that meet the attributeFilters criteria
+  const potentialSurveysWithAttributes = surveys.filter((survey) => {
+    const attributeFilters = survey.attributeFilters;
+    if (attributeFilters.length === 0) {
+      return true;
+    }
+    // check if meets all attribute filters criterias
+    return attributeFilters.every((attributeFilter) => {
+      const attributeClassName = attributeClasses.find(
+        (attributeClass) => attributeClass.id === attributeFilter.attributeClassId
+      )?.name;
+      if (!attributeClassName) {
+        throw Error("Invalid attribute filter class");
+      }
+      const personAttributeValue = person.attributes[attributeClassName];
+      if (attributeFilter.condition === "equals") {
+        return personAttributeValue === attributeFilter.value;
+      } else if (attributeFilter.condition === "notEquals") {
+        return personAttributeValue !== attributeFilter.value;
+      } else {
+        throw Error("Invalid attribute filter condition");
+      }
+    });
+  });
+
+  const latestDisplay = displays[0];
+
+  // filter surveys that meet the recontactDays criteria
+  surveys = potentialSurveysWithAttributes.filter((survey) => {
+    if (!latestDisplay) {
+      return true;
+    } else if (survey.recontactDays !== null) {
+      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+      if (!lastDisplaySurvey) {
+        return true;
+      }
+      return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+    } else if (product.recontactDays !== null) {
+      return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+    } else {
+      return true;
+    }
+  });
+
+  return surveys;
+};
