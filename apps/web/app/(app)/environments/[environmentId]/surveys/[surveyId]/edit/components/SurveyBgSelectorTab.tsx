@@ -8,14 +8,16 @@ interface SurveyBgSelectorTabProps {
   localSurvey: TSurvey;
   handleBgChange: (bg: string, bgType: string) => void;
   colours: string[];
+  bgType: string | null | undefined;
 }
 
 export default function SurveyBgSelectorTab({
   localSurvey,
   handleBgChange,
   colours,
+  bgType,
 }: SurveyBgSelectorTabProps) {
-  const [tab, setTab] = useState("image");
+  const [tab, setTab] = useState(bgType || "image");
 
   return (
     <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4 px-8">

@@ -24,8 +24,6 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
   const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
   const { bg, bgType, brightness } = surveyBackground ?? {};
 
-  const [tab, setTab] = useState(bgType || "image");
-
   const [inputValue, setInputValue] = useState(100);
 
   const handleInputChange = (e) => {
@@ -103,6 +101,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
         ...localSurvey.surveyBackground,
         bg: color,
         bgType: type,
+        brightness: brightness !== undefined ? 100 : brightness,
       },
     });
   };
@@ -218,6 +217,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
                     localSurvey={localSurvey}
                     handleBgChange={handleBgChange}
                     colours={colours}
+                    bgType={bgType}
                   />
                 )}
               </div>
