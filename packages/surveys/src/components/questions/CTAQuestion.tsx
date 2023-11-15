@@ -1,9 +1,9 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import HtmlBody from "@/components/general/HtmlBody";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
-import { BackButton } from "../buttons/BackButton";
-import SubmitButton from "../buttons/SubmitButton";
-import Headline from "../general/Headline";
-import HtmlBody from "../general/HtmlBody";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;

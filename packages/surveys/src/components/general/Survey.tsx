@@ -1,10 +1,10 @@
+import FormbricksBranding from "@/components/general/FormbricksBranding";
+import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
+import { evaluateCondition } from "@/lib/logicEvaluator";
+import { cn } from "@/lib/utils";
+import { SurveyBaseProps } from "@/types/props";
 import type { TResponseData } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { evaluateCondition } from "../../lib/logicEvaluator";
-import { cn } from "../../lib/utils";
-import { SurveyBaseProps } from "../../types/props";
-import { AutoCloseWrapper } from "../wrappers/AutoCloseWrapper";
-import FormbricksBranding from "../general/FormbricksBranding";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";

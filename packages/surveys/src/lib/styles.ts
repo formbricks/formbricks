@@ -1,6 +1,6 @@
+import global from "@/styles/global.css?inline";
+import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
-import global from "../styles/global.css?inline";
-import preflight from "../styles/preflight.css?inline";
 
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {

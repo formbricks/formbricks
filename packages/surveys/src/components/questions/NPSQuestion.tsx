@@ -1,10 +1,10 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import Subheader from "@/components/general/Subheader";
+import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
-import { cn } from "../../lib/utils";
-import { BackButton } from "../buttons/BackButton";
-import SubmitButton from "../buttons/SubmitButton";
-import Headline from "../general/Headline";
-import Subheader from "../general/Subheader";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;

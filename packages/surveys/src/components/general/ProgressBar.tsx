@@ -1,7 +1,7 @@
 import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { useEffect, useState } from "preact/hooks";
 import Progress from "./Progress";
-import { calculateElementIdx } from "../lib/utils";
+import { calculateElementIdx } from "@/lib/utils";
 
 interface ProgressBarProps {
   survey: TSurveyWithTriggers;

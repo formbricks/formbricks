@@ -1,10 +1,10 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
-import { cn } from "../../lib/utils";
-import { BackButton } from "../buttons/BackButton";
-import SubmitButton from "../buttons/SubmitButton";
-import Headline from "../general/Headline";
 import {
   ConfusedFace,
   FrowningFace,

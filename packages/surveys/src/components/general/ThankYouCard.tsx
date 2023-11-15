@@ -1,6 +1,6 @@
-import Headline from "../general/Headline";
-import RedirectCountDown from "../general/RedirectCountdown";
-import Subheader from "../general/Subheader";
+import Headline from "@/components/general/Headline";
+import RedirectCountDown from "@/components/general/RedirectCountdown";
+import Subheader from "@/components/general/Subheader";
 
 interface ThankYouCardProps {
   headline?: string;

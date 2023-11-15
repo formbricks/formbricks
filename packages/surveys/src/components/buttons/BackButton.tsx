@@ -1,4 +1,4 @@
-import { cn } from "@formbricks/lib/cn";
+import { cn } from "@/lib/utils";
 
 interface BackButtonProps {
   onClick: () => void;

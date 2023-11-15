@@ -1,6 +1,6 @@
+import SubmitButton from "@/components/buttons/SubmitButton";
+import { calculateElementIdx } from "@/lib/utils";
 import { TSurveyWithTriggers } from "@formbricks/types/js";
-import { calculateElementIdx } from "../../lib/utils";
-import SubmitButton from "../buttons/SubmitButton";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 

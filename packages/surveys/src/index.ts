@@ -1,8 +1,8 @@
+import { SurveyInline } from "@/components/general/SurveyInline";
+import { SurveyModal } from "@/components/general/SurveyModal";
+import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
+import { SurveyInlineProps, SurveyModalProps } from "@/types/props";
 import { h, render } from "preact";
-import { SurveyInline } from "./components/general/SurveyInline";
-import { SurveyModal } from "./components/general/SurveyModal";
-import { addCustomThemeToDom, addStylesToDom } from "./lib/styles";
-import { SurveyInlineProps, SurveyModalProps } from "./types/props";
 
 export const renderSurveyInline = (props: SurveyInlineProps & { brandColor: string }) => {
   addStylesToDom();

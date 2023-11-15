@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
-import { SurveyModalProps } from "../../types/props";
-import Modal from "../wrappers/Modal";
+import { SurveyModalProps } from "@/types/props";
+import Modal from "@/components/wrappers/Modal";
 import { Survey } from "./Survey";
 
 export function SurveyModal({
