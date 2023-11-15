@@ -129,8 +129,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Revert",
-          description:
-            "The open-source unified API to build B2B integrations remarkably fast",
+          description: "The open-source unified API to build B2B integrations remarkably fast",
           href: "https://revert.dev",
         },
         {

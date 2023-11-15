@@ -40,8 +40,11 @@ export default function OpenTextQuestion({
         currentElement.focus();
       }
     },
-    [autoFocus]
+    [question]
   );
+  const isInputEmpty = (value: string) => {
+    return question.required && !value?.trim();
+  };
 
   return (
     <form
@@ -74,7 +77,11 @@ export default function OpenTextQuestion({
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
             onKeyDown={(e) => {
-              if (e.key == "Enter") onSubmit({ [question.id]: value });
+              if (e.key === "Enter" && isInputEmpty(value as string)) {
+                e.preventDefault(); // Prevent form submission
+              } else if (e.key === "Enter") {
+                onSubmit({ [question.id]: value });
+              }
             }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}

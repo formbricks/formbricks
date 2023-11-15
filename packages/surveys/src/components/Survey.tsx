@@ -4,7 +4,7 @@ import { evaluateCondition } from "../lib/logicEvaluator";
 import { cn } from "../lib/utils";
 import { SurveyBaseProps } from "../types/props";
 import { AutoCloseWrapper } from "./AutoCloseWrapper";
-import FormbricksSignature from "./FormbricksSignature";
+import FormbricksBranding from "./FormbricksBranding";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
@@ -13,7 +13,7 @@ import WelcomeCard from "./WelcomeCard";
 export function Survey({
   survey,
   brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
   onActiveQuestionChange = () => {},
@@ -131,6 +131,7 @@ export function Survey({
           timeToFinish={survey.welcomeCard.timeToFinish}
           brandColor={brandColor}
           onSubmit={onSubmit}
+          survey={survey}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -179,7 +180,7 @@ export function Survey({
             )}
           </div>
           <div className="mt-8">
-            {formbricksSignature && <FormbricksSignature />}
+            {isBrandingEnabled && <FormbricksBranding />}
             <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
           </div>
         </div>
