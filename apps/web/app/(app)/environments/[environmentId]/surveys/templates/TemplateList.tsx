@@ -15,7 +15,7 @@ import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSurveyAction } from "../actions";
-import { customSurvey, templates } from "./templates";
+import { customSurvey, templates, testTemplate } from "./templates";
 
 type TemplateList = {
   environmentId: string;
@@ -23,6 +23,7 @@ type TemplateList = {
   onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
+  IS_FORMBRICKS_CLOUD: boolean;
   templateSearch?: string;
 };
 
@@ -35,6 +36,7 @@ export default function TemplateList({
   product,
   environment,
   templateSearch,
+  IS_FORMBRICKS_CLOUD,
 }: TemplateList) {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
@@ -147,62 +149,66 @@ export default function TemplateList({
             </div>
           )}
         </button>
-        {filteredTemplates.map((template: TTemplate) => (
-          <div
-            onClick={() => {
-              const newTemplate = replacePresetPlaceholders(template, product);
-              onTemplateClick(newTemplate);
-              setActiveTemplate(newTemplate);
-            }}
-            key={template.name}
-            className={cn(
-              activeTemplate?.name === template.name && "ring-2 ring-slate-400",
-              "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
-            )}>
-            <div className="flex">
-              <div
-                className={`rounded border px-1.5 py-0.5 text-xs ${
-                  template.category === "Product Experience"
-                    ? "border-blue-300 bg-blue-50 text-blue-500"
-                    : template.category === "Exploration"
-                    ? "border-pink-300 bg-pink-50 text-pink-500"
-                    : template.category === "Growth"
-                    ? "border-orange-300 bg-orange-50 text-orange-500"
-                    : template.category === "Increase Revenue"
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                    : template.category === "Customer Success"
-                    ? "border-violet-300 bg-violet-50 text-violet-500"
-                    : "border-slate-300 bg-slate-50 text-slate-500" // default color
-                }`}>
-                {template.category}
+        {(IS_FORMBRICKS_CLOUD ? filteredTemplates : [...filteredTemplates, testTemplate]).map(
+          (template: TTemplate) => (
+            <div
+              onClick={() => {
+                const newTemplate = replacePresetPlaceholders(template, product);
+                onTemplateClick(newTemplate);
+                setActiveTemplate(newTemplate);
+              }}
+              key={template.name}
+              className={cn(
+                activeTemplate?.name === template.name && "ring-2 ring-slate-400",
+                "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
+              )}>
+              <div className="flex">
+                <div
+                  className={`rounded border px-1.5 py-0.5 text-xs ${
+                    template.category === "Product Experience"
+                      ? "border-blue-300 bg-blue-50 text-blue-500"
+                      : template.category === "Exploration"
+                      ? "border-pink-300 bg-pink-50 text-pink-500"
+                      : template.category === "Growth"
+                      ? "border-orange-300 bg-orange-50 text-orange-500"
+                      : template.category === "Increase Revenue"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                      : template.category === "Customer Success"
+                      ? "border-violet-300 bg-violet-50 text-violet-500"
+                      : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                  }`}>
+                  {template.category}
+                </div>
+                {template.preset.questions.some(
+                  (question) => question.logic && question.logic.length > 0
+                ) && (
+                  <TooltipProvider delayDuration={80}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div>
+                          <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>This survey uses branching logic.</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
-              {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
-                <TooltipProvider delayDuration={80}>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <div>
-                        <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>This survey uses branching logic.</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
+              <p className="text-left text-xs text-slate-600">{template.description}</p>
+              {activeTemplate?.name === template.name && (
+                <Button
+                  variant="darkCTA"
+                  className="mt-6 px-6 py-3"
+                  disabled={activeTemplate === null}
+                  loading={loading}
+                  onClick={() => addSurvey(activeTemplate)}>
+                  Use this template
+                </Button>
               )}
             </div>
-            <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
-            <p className="text-left text-xs text-slate-600">{template.description}</p>
-            {activeTemplate?.name === template.name && (
-              <Button
-                variant="darkCTA"
-                className="mt-6 px-6 py-3"
-                disabled={activeTemplate === null}
-                loading={loading}
-                onClick={() => addSurvey(activeTemplate)}>
-                Use this template
-              </Button>
-            )}
-          </div>
-        ))}
+          )
+        )}
       </div>
     </main>
   );

@@ -16,11 +16,13 @@ export default function SurveyStarter({
   environment,
   product,
   profile,
+  IS_FORMBRICKS_CLOUD,
 }: {
   environmentId: string;
   environment: TEnvironment;
   product: TProduct;
   profile: TProfile;
+  IS_FORMBRICKS_CLOUD: boolean;
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
@@ -60,6 +62,7 @@ export default function SurveyStarter({
             environment={environment}
             product={product}
             profile={profile}
+            IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
           />
         </>
       )}

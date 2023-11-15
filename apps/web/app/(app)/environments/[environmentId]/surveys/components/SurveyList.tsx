@@ -15,6 +15,7 @@ import { Badge } from "@formbricks/ui/Badge";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { getServerSession } from "next-auth";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import Link from "next/link";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
@@ -54,6 +55,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
         environment={environment}
         product={product}
         profile={session.user}
+        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       />
     );
   }
