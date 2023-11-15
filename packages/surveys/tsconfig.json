@@ -6,6 +6,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "preact"
+    "jsxImportSource": "preact",
+    "baseUrl": "./packages/surveys/src/",
+    "paths": {
+      "@/*": ["./*"]
+    }
   }
 }

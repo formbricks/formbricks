@@ -70,6 +70,7 @@ export default function PictureSelectionQuestion({
     if (!question.allowMulti && Array.isArray(value) && value.length > 1) {
       onChange({ [question.id]: [] });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.allowMulti]);
 
   const questionChoices = question.choices;

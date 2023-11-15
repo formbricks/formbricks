@@ -4,7 +4,7 @@ import { evaluateCondition } from "../../lib/logicEvaluator";
 import { cn } from "../../lib/utils";
 import { SurveyBaseProps } from "../../types/props";
 import { AutoCloseWrapper } from "../wrappers/AutoCloseWrapper";
-import FormbricksSignature from "./FormbricksSignature";
+import FormbricksBranding from "../general/FormbricksBranding";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
@@ -12,7 +12,7 @@ import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
   onActiveQuestionChange = () => {},
@@ -53,6 +53,7 @@ export function Survey({
     if (prefillResponseData) {
       onSubmit(prefillResponseData, true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   let currIdx = currentQuestionIndex;
   let currQues = currentQuestion;
@@ -128,6 +129,7 @@ export function Survey({
           buttonLabel={survey.welcomeCard.buttonLabel}
           timeToFinish={survey.welcomeCard.timeToFinish}
           onSubmit={onSubmit}
+          survey={survey}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -173,8 +175,8 @@ export function Survey({
               getCardContent()
             )}
           </div>
-          <div className="formbricks-footer">
-            {formbricksSignature && <FormbricksSignature />}
+          <div className="mt-8">
+            {isBrandingEnabled && <FormbricksBranding />}
             <ProgressBar survey={survey} questionId={questionId} />
           </div>
         </div>

@@ -32,11 +32,17 @@ export default function OpenTextQuestion({
     // setIsValid(isValidInput);
     onChange({ [question.id]: inputValue });
   };
-  const openTextRef = useCallback((currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-    if (currentElement && autoFocus) {
-      currentElement.focus();
-    }
-  }, []);
+  const openTextRef = useCallback(
+    (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
+      if (currentElement && autoFocus) {
+        currentElement.focus();
+      }
+    },
+    [question.id]
+  );
+  const isInputEmpty = (value: string) => {
+    return question.required && !value?.trim();
+  };
 
   return (
     <form
@@ -64,13 +70,17 @@ export default function OpenTextQuestion({
             id={question.id}
             placeholder={question.placeholder}
             required={question.required}
-            value={value as string}
+            value={value ? (value as string) : ""}
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
             className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
             onKeyDown={(e) => {
-              if (e.key == "Enter") onSubmit({ [question.id]: value });
+              if (e.key === "Enter" && isInputEmpty(value as string)) {
+                e.preventDefault(); // Prevent form submission
+              } else if (e.key === "Enter") {
+                onSubmit({ [question.id]: value });
+              }
             }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}

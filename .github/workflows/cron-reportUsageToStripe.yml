@@ -10,13 +10,13 @@ jobs:
   cron-reportUsageToStripe:
     env:
       APP_URL: ${{ secrets.APP_URL }}
-      API_KEY: ${{ secrets.API_KEY }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     runs-on: ubuntu-latest
     steps:
       - name: cURL request
-        if: ${{ env.APP_URL && env.API_KEY }}
+        if: ${{ env.APP_URL && env.CRON_SECRET }}
         run: |
           curl ${{ env.APP_URL }}/api/cron/report-usage \
-            -X GET \
-            -H 'x-api-key: ${{ env.API_KEY }}' \
+            -X POST \
+            -H 'x-api-key: ${{ env.CRON_SECRET }}' \
             --fail

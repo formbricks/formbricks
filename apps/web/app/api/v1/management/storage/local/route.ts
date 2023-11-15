@@ -10,7 +10,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "public"; // public files are accessible by anyone

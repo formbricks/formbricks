@@ -60,7 +60,7 @@ if (typeof window !== "undefined") {
           </>
         ) : activeTab === "html" ? (
           <CodeBlock>{`<script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.1.2/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("claDadXk29dak92dK9","https://app.formbricks.com")},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.2.0/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("claDadXk29dak92dK9","https://app.formbricks.com")},500)}();
 </script>`}</CodeBlock>
         ) : null}
       </div>

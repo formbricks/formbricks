@@ -84,7 +84,7 @@ export const getAttributeClasses = async (
   return attributeClasses.map(formatAttributeClassDateFields);
 };
 
-export const updatetAttributeClass = async (
+export const updateAttributeClass = async (
   attributeClassId: string,
   data: Partial<TAttributeClassUpdateInput>
 ): Promise<TAttributeClass | null> => {

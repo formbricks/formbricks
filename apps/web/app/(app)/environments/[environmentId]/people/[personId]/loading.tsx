@@ -12,7 +12,8 @@ export default function Loading() {
     {
       id: "demoId1",
       createdAt: new Date(),
-      sessionId: "",
+      // sessionId: "",
+      personId: "",
       properties: {},
       actionClass: {
         id: "demoId1",
@@ -28,7 +29,8 @@ export default function Loading() {
     {
       id: "demoId2",
       createdAt: new Date(),
-      sessionId: "",
+      // sessionId: "",
+      personId: "",
       properties: {},
       actionClass: {
         id: "demoId2",

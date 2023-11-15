@@ -11,9 +11,10 @@ import { EditAvatar } from "./components/EditAvatar";
 import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/components/AccountSecurity";
 import { getProfile } from "@formbricks/lib/profile/service";
 
-export default async function ProfileSettingsPage() {
+export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
+  const { environmentId } = params;
   const session = await getServerSession(authOptions);
-  const profile = session ? await getProfile(session.user.id) : null;
+  const profile = session && session.user ? await getProfile(session.user.id) : null;
 
   return (
     <>
@@ -24,7 +25,7 @@ export default async function ProfileSettingsPage() {
             <EditName profile={profile} />
           </SettingsCard>
           <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
-            <EditAvatar session={session} />
+            <EditAvatar session={session} environmentId={environmentId} />
           </SettingsCard>
           {profile.identityProvider === "email" && (
             <SettingsCard title="Security" description="Manage your password and other security settings.">

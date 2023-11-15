@@ -51,7 +51,7 @@ async function reportTeamUsage(team: TTeam) {
   }
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function POST(): Promise<NextResponse> {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
 
