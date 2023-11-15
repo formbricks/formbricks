@@ -1,9 +1,9 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import Subheader from "@/components/general/Subheader";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
 import { useCallback } from "react";
 
 interface OpenTextQuestionProps {
@@ -14,7 +14,6 @@ interface OpenTextQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   autoFocus?: boolean;
 }
 
@@ -26,7 +25,6 @@ export default function OpenTextQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   autoFocus = true,
 }: OpenTextQuestionProps) {
   const handleInputChange = (inputValue: string) => {
@@ -76,6 +74,7 @@ export default function OpenTextQuestion({
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
+            className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
             onKeyDown={(e) => {
               if (e.key === "Enter" && isInputEmpty(value as string)) {
                 e.preventDefault(); // Prevent form submission
@@ -85,9 +84,6 @@ export default function OpenTextQuestion({
             }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
-            className={`block w-full rounded-md border
-       border-slate-100
-       bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm`}
           />
         ) : (
           <textarea
@@ -102,11 +98,10 @@ export default function OpenTextQuestion({
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
+            className="border-border bg-survey-bg text-subheading focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
-            className={`block w-full rounded-md border
-      border-slate-100
-      bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm`}></textarea>
+          />
         )}
       </div>
 
@@ -120,12 +115,7 @@ export default function OpenTextQuestion({
           />
         )}
         <div></div>
-        <SubmitButton
-          buttonLabel={question.buttonLabel}
-          isLastQuestion={isLastQuestion}
-          brandColor={brandColor}
-          onClick={() => {}}
-        />
+        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
       </div>
     </form>
   );

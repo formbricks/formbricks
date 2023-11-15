@@ -1,15 +1,14 @@
 import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { useEffect, useRef, useState } from "preact/hooks";
-import Progress from "./Progress";
+import Progress from "../general/Progress";
 
 interface AutoCloseProps {
   survey: TSurveyWithTriggers;
-  brandColor: string;
   onClose: () => void;
   children: any;
 }
 
-export function AutoCloseWrapper({ survey, brandColor, onClose, children }: AutoCloseProps) {
+export function AutoCloseWrapper({ survey, onClose, children }: AutoCloseProps) {
   const [countdownProgress, setCountdownProgress] = useState(100);
   const [countdownStop, setCountdownStop] = useState(false);
   const startRef = useRef(performance.now());
@@ -49,9 +48,7 @@ export function AutoCloseWrapper({ survey, brandColor, onClose, children }: Auto
 
   return (
     <>
-      {!countdownStop && survey.autoClose && (
-        <Progress progress={countdownProgress} brandColor={brandColor} />
-      )}
+      {!countdownStop && survey.autoClose && <Progress progress={countdownProgress} />}
       <div onClick={handleStopCountdown} onMouseOver={handleStopCountdown} className="h-full w-full">
         {children}
       </div>

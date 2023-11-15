@@ -1,9 +1,8 @@
-import { SurveyBaseProps } from "../types/props";
+import { SurveyBaseProps } from "@/types/props";
 import { Survey } from "./Survey";
 
 export function SurveyInline({
   survey,
-  brandColor,
   isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
@@ -14,10 +13,9 @@ export function SurveyInline({
   isRedirectDisabled = false,
 }: SurveyBaseProps) {
   return (
-    <div id="fbjs" className="h-full w-full">
+    <div id="fbjs" className="formbricks-form h-full w-full">
       <Survey
         survey={survey}
-        brandColor={brandColor}
         isBrandingEnabled={isBrandingEnabled}
         activeQuestionId={activeQuestionId}
         onDisplay={onDisplay}

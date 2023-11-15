@@ -1,10 +1,10 @@
+import FormbricksBranding from "@/components/general/FormbricksBranding";
+import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
+import { evaluateCondition } from "@/lib/logicEvaluator";
+import { cn } from "@/lib/utils";
+import { SurveyBaseProps } from "@/types/props";
 import type { TResponseData } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { evaluateCondition } from "../lib/logicEvaluator";
-import { cn } from "../lib/utils";
-import { SurveyBaseProps } from "../types/props";
-import { AutoCloseWrapper } from "./AutoCloseWrapper";
-import FormbricksBranding from "./FormbricksBranding";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
@@ -12,7 +12,6 @@ import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
-  brandColor,
   isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
@@ -129,7 +128,6 @@ export function Survey({
           fileUrl={survey.welcomeCard.fileUrl}
           buttonLabel={survey.welcomeCard.buttonLabel}
           timeToFinish={survey.welcomeCard.timeToFinish}
-          brandColor={brandColor}
           onSubmit={onSubmit}
           survey={survey}
         />
@@ -139,7 +137,6 @@ export function Survey({
         <ThankYouCard
           headline={survey.thankYouCard.headline}
           subheader={survey.thankYouCard.subheader}
-          brandColor={brandColor}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
         />
@@ -160,7 +157,6 @@ export function Survey({
                 : currQues.id === survey?.questions[0]?.id
             }
             isLastQuestion={currQues.id === survey.questions[survey.questions.length - 1].id}
-            brandColor={brandColor}
           />
         )
       );
@@ -169,8 +165,8 @@ export function Survey({
 
   return (
     <>
-      <AutoCloseWrapper survey={survey} brandColor={brandColor} onClose={onClose}>
-        <div className="flex h-full w-full flex-col justify-between bg-white px-6 pb-3 pt-6">
+      <AutoCloseWrapper survey={survey} onClose={onClose}>
+        <div className="flex h-full w-full flex-col justify-between bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled
@@ -181,7 +177,7 @@ export function Survey({
           </div>
           <div className="mt-8">
             {isBrandingEnabled && <FormbricksBranding />}
-            <ProgressBar survey={survey} questionId={questionId} brandColor={brandColor} />
+            <ProgressBar survey={survey} questionId={questionId} />
           </div>
         </div>
       </AutoCloseWrapper>
