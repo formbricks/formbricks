@@ -1,5 +1,5 @@
 export const TYPE_MAPPING = {
-  cta: [],
+  cta: ["checkbox"],
   multipleChoiceMulti: ["multi_select"],
   multipleChoiceSingle: ["select", "status"],
   openText: [
