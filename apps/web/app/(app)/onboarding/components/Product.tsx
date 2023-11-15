@@ -10,6 +10,7 @@ import { Label } from "@formbricks/ui/Label";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { isLight } from "@/app/lib/utils";
 
 type Product = {
   done: () => void;
@@ -75,23 +76,9 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
   }
   const buttonStyle = {
     backgroundColor: color,
-    color: isColorNearWhite(color) ? "black" : "white",
+    color: isLight(color) ? "black" : "white",
   };
-  function isColorNearWhite(color: string) {
-    const colorRegExp = /^#(..)(..)(..)$/;
-    const match = colorRegExp.exec(color);
-    if (match) {
-      const [, r, g, b] = match;
-      const red = parseInt(r, 16);
-      const green = parseInt(g, 16);
-      const blue = parseInt(b, 16);
-      const brightness = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
-      const threshold = 0.9;
-      return brightness > threshold;
-    } else {
-      return false;
-    }
-  }
+
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
