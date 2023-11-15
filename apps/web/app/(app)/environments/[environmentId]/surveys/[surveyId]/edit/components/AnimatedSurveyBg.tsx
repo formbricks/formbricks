@@ -86,6 +86,7 @@ export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: Animat
               onClick={() => handleBg(value)}
               className="relative cursor-pointer overflow-hidden rounded-lg">
               <video
+                disablePictureInPicture
                 id={`video-${index}`}
                 autoPlay={hoveredVideo === index}
                 className="h-46 w-96 origin-center scale-105 transform">
