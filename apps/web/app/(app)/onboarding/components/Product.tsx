@@ -10,6 +10,7 @@ import { Label } from "@formbricks/ui/Label";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { isLight } from "@/app/lib/utils";
 
 type Product = {
   done: () => void;
@@ -73,6 +74,10 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
   if (!product) {
     return <ErrorComponent />;
   }
+  const buttonStyle = {
+    backgroundColor: color,
+    color: isLight(color) ? "black" : "white",
+  };
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -140,7 +145,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
                 </fieldset>
               </div>
               <div className="mt-4 flex w-full justify-end">
-                <Button className="pointer-events-none" style={{ backgroundColor: color }}>
+                <Button className="pointer-events-none" style={buttonStyle}>
                   Next
                 </Button>
               </div>

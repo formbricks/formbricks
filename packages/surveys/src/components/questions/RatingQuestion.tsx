@@ -1,9 +1,10 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
-import { cn } from "../lib/utils";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
 import {
   ConfusedFace,
   FrowningFace,
@@ -15,9 +16,8 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "./Smileys";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
+} from "../general/Smileys";
+import Subheader from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
@@ -27,7 +27,6 @@ interface RatingQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function RatingQuestion({
@@ -38,7 +37,6 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
 
@@ -87,7 +85,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="max-w-10 relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
+                className="max-w-10 bg-survey-bg relative max-h-10 flex-1 cursor-pointer text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -97,10 +95,10 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      value === number ? "z-10 border-slate-400 bg-slate-50" : "",
+                      value === number ? "bg-accent-selected-bg border-border-highlight z-10" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "block h-full w-full border text-slate-800 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                      "text-heading hover:bg-accent-bg focus:bg-accent-bg block h-full w-full border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -114,14 +112,14 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      number <= hoveredNumber ? "text-yellow-500" : "",
-                      "flex h-full w-full justify-center focus:text-yellow-500 focus:outline-none"
+                      number <= hoveredNumber ? "text-rating-focus" : "text-heading",
+                      "focus:text-rating-focus flex h-full w-full justify-center focus:outline-none"
                     )}
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
                     {typeof value === "number" && value >= number ? (
-                      <span className="text-yellow-300">
+                      <span className="text-rating-fill">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
@@ -152,13 +150,18 @@ export default function RatingQuestion({
                   </label>
                 ) : (
                   <label
+                    className={cn(
+                      "flex h-full w-full justify-center",
+                      value === number || hoveredNumber === number
+                        ? "stroke-rating-selected text-rating-selected"
+                        : "stroke-heading text-heading"
+                    )}
                     tabIndex={i + 1}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
                         handleSelect(number);
                       }
                     }}
-                    className="flex h-full  w-full justify-center text-slate-800 focus:outline-none"
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
@@ -172,7 +175,7 @@ export default function RatingQuestion({
               </span>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
+          <div className="text-subheading flex justify-between px-1.5 text-xs leading-6">
             <p className="w-1/2 text-left">{question.lowerLabel}</p>
             <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>
@@ -195,7 +198,6 @@ export default function RatingQuestion({
             tabIndex={question.range + 1}
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
-            brandColor={brandColor}
             onClick={() => {}}
           />
         )}
@@ -211,7 +213,7 @@ interface RatingSmileyProps {
 }
 
 function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
-  const activeColor = "fill-yellow-500";
+  const activeColor = "fill-rating-fill";
   const inactiveColor = "fill-none";
   let icons = [
     <TiredFace className={active ? activeColor : inactiveColor} />,
