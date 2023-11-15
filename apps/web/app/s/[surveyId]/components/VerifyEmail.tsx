@@ -6,7 +6,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Toaster, toast } from "react-hot-toast";
 import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export default function VerifyEmail({
   survey,

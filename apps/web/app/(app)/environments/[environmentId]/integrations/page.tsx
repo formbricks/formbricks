@@ -10,16 +10,35 @@ import Image from "next/image";
 import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getServerSession } from "next-auth";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
 
-  const [environment, integrations, userWebhooks, zapierWebhooks] = await Promise.all([
+  const [environment, integrations, userWebhooks, zapierWebhooks, team, session] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
     getCountOfWebhooksBasedOnSource(environmentId, "user"),
     getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
+    getTeamByEnvironmentId(params.environmentId),
+    getServerSession(authOptions),
   ]);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   const containsGoogleSheetIntegration = integrations.some(
     (integration) => integration.type === "googleSheets"
@@ -56,7 +75,7 @@ export default async function IntegrationsPage({ params }) {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
       connectText: "Manage Webhooks",
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/webhook-api/overview",
+      docsHref: "https://formbricks.com/docs/api/management/webhooks",
       docsText: "Docs",
       docsNewTab: true,
       label: "Webhooks",
@@ -115,6 +134,8 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={MakeLogo} alt="Make Logo" />,
     },
   ];
+
+  if (isViewer) return <ErrorComponent />;
 
   return (
     <div>

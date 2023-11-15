@@ -1,4 +1,4 @@
-import { TJsConfigInput } from "@formbricks/types/v1/js";
+import { TJsConfigInput } from "@formbricks/types/js";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
@@ -19,8 +19,8 @@ const init = async (initConfig: TJsConfigInput) => {
   await queue.wait();
 };
 
-const setUserId = async (userId: string | number): Promise<void> => {
-  queue.add(true, setPersonUserId, userId);
+const setUserId = async (): Promise<void> => {
+  queue.add(true, setPersonUserId);
   await queue.wait();
 };
 

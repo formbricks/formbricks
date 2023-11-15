@@ -1,4 +1,4 @@
-import { TJsConfig } from "@formbricks/types/v1/js";
+import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { Result, err, ok, wrapThrows } from "./errors";
 
 export const LOCAL_STORAGE_KEY = "formbricks-js";
@@ -14,11 +14,14 @@ export class Config {
     return Config.instance;
   }
 
-  public update(newConfig: TJsConfig): void {
+  public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
+      const expiresAt = new Date(new Date().getTime() + 15 * 60000); // 15 minutes in the future
+
       this.config = {
         ...this.config,
         ...newConfig,
+        expiresAt,
       };
 
       this.saveToLocalStorage();
@@ -39,6 +42,13 @@ export class Config {
         // TODO: validate config
         // This is a hack to get around the fact that we don't have a proper
         // way to validate the config yet.
+        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
+
+        // check if the config has expired
+        if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
+          return err(new Error("Config in local storage has expired"));
+        }
+
         return ok(JSON.parse(savedConfig) as TJsConfig);
       }
     }

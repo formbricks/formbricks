@@ -2,36 +2,46 @@ import {
   ActivityItemIcon,
   ActivityItemPopover,
 } from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivityItemComponents";
-import { TActivityFeedItem } from "@formbricks/types/v1/activity";
+import { TAction } from "@formbricks/types/actions";
 import { BackIcon } from "@formbricks/ui/icons";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "lucide-react";
 
 export default function Loading() {
-  const unifiedList: TActivityFeedItem[] = [
+  const actionItemList: TAction[] = [
     {
-      id: "clk9o7gnu000kz8kw4nb26o21",
-      type: "event",
-      actionType: "noCode",
+      id: "demoId1",
       createdAt: new Date(),
-      actionLabel: "Loading User Acitivity",
-      updatedAt: null,
-      attributeLabel: null,
-      attributeValue: null,
-      actionDescription: null,
-      displaySurveyName: null,
+      // sessionId: "",
+      personId: "",
+      properties: {},
+      actionClass: {
+        id: "demoId1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Loading User Acitivity",
+        description: null,
+        type: "automatic",
+        noCodeConfig: null,
+        environmentId: "testEnvironment",
+      },
     },
     {
-      id: "clk9o7fwc000iz8kw4s0ha0ql",
-      type: "event",
-      actionType: "automatic",
+      id: "demoId2",
       createdAt: new Date(),
-      actionLabel: "Loading User Session Info",
-      updatedAt: null,
-      attributeLabel: null,
-      attributeValue: null,
-      actionDescription: null,
-      displaySurveyName: null,
+      // sessionId: "",
+      personId: "",
+      properties: {},
+      actionClass: {
+        id: "demoId2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Loading User Acitivity",
+        description: null,
+        type: "automatic",
+        noCodeConfig: null,
+        environmentId: "testEnvironment",
+      },
     },
   ];
   return (
@@ -118,17 +128,17 @@ export default function Loading() {
                 </div>
               </div>
               <div>
-                {unifiedList.map((activityItem) => (
-                  <li key={activityItem.id} className="list-none">
+                {actionItemList.map((actionItem) => (
+                  <li key={actionItem.id} className="list-none">
                     <div className="relative pb-12">
                       <span
                         className="absolute left-6 top-4 -ml-px h-full w-0.5 bg-slate-200"
                         aria-hidden="true"
                       />
                       <div className="relative animate-pulse cursor-not-allowed select-none">
-                        <ActivityItemPopover activityItem={activityItem}>
+                        <ActivityItemPopover actionItem={actionItem}>
                           <div className="flex cursor-not-allowed select-none items-center space-x-3">
-                            <ActivityItemIcon activityItem={activityItem} />
+                            <ActivityItemIcon actionItem={actionItem} />
                             <div className="font-semibold text-slate-700">Loading</div>
                           </div>
                         </ActivityItemPopover>

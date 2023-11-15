@@ -1,6 +1,6 @@
-import { TDisplaysWithSurveyName } from "@formbricks/types/v1/displays";
+import { TDisplay } from "@formbricks/types/displays";
 
-export const formatDisplaysDateFields = (displays: TDisplaysWithSurveyName[]): TDisplaysWithSurveyName[] => {
+export const formatDisplaysDateFields = (displays: TDisplay[]): TDisplay[] => {
   return displays.map((display) => ({
     ...display,
     createdAt: new Date(display.createdAt),

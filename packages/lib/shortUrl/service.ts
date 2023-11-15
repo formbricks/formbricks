@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TShortUrl, ZShortUrlId } from "@formbricks/types/v1/shortUrl";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TShortUrl, ZShortUrlId } from "@formbricks/types/shortUrl";
 import { Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { validateInputs } from "../utils/validate";

@@ -4,7 +4,7 @@ import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnRespo
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { canUserAccessTagOnResponse } from "@formbricks/lib/tagOnResponse/auth";
 
 export const createTagAction = async (environmentId: string, tagName: string) => {

@@ -53,6 +53,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://formbricks.com",
         },
         {
+          name: "Firecamp",
+          description: "vscode for apis, open-source postman/insomnia alternative",
+          href: "https://firecamp.io",
+        },
+        {
           name: "Ghostfolio",
           description:
             "Ghostfolio is a privacy-first, open source dashboard for your personal finances. Designed to simplify asset tracking and empower informed investment decisions.",
@@ -123,6 +128,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://requestly.io",
         },
         {
+          name: "Revert",
+          description: "The open-source unified API to build B2B integrations remarkably fast",
+          href: "https://revert.dev",
+        },
+        {
           name: "Rivet",
           description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",
@@ -138,6 +148,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
           href: "https://www.sniffnet.net",
+        },
+        {
+          name: "Spark.NET",
+          description:
+            "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
+          href: "https://spark-framework.net",
         },
         {
           name: "Tolgee",
@@ -163,6 +179,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://twenty.com",
         },
         {
+          name: "Unkey",
+          description:
+            "An API authentication and authorization platform for scaling user facing APIs. Create, verify, and manage low latency API keys in seconds.",
+          href: "https://unkey.dev",
+        },
+        {
           name: "Webiny",
           description:
             "Open-source enterprise-grade serverless CMS. Own your data. Scale effortlessly. Customize everything.",
@@ -172,17 +194,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Webstudio",
           description: "Webstudio is an open source alternative to Webflow",
           href: "https://webstudio.is",
-        },
-        {
-          name: "Spark.NET",
-          description:
-            "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
-          href: "https://spark-framework.net",
-        },
-        {
-          name: "Firecamp",
-          description: "vscode for apis, open-source postman/insomnia alternative",
-          href: "https://firecamp.io",
         },
       ],
     });

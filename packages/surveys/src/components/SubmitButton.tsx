@@ -21,13 +21,16 @@ function SubmitButton({
   focus = false,
   type = "submit",
 }: SubmitButtonProps) {
-  const buttonRef = useCallback((currentButton: HTMLButtonElement | null) => {
-    if (currentButton && focus) {
-      setTimeout(() => {
-        currentButton.focus();
-      }, 200);
-    }
-  }, []);
+  const buttonRef = useCallback(
+    (currentButton: HTMLButtonElement | null) => {
+      if (currentButton && focus) {
+        setTimeout(() => {
+          currentButton.focus();
+        }, 200);
+      }
+    },
+    [focus]
+  );
 
   return (
     <button

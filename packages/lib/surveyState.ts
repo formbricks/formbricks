@@ -1,14 +1,21 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TResponseUpdate } from "@formbricks/types/responses";
 
 export class SurveyState {
   responseId: string | null = null;
   displayId: string | null = null;
+  personId: string | null = null;
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {} };
   singleUseId: string | null;
 
-  constructor(surveyId: string, singleUseId?: string, responseId?: string) {
+  constructor(
+    surveyId: string,
+    singleUseId?: string | null,
+    responseId?: string | null,
+    personId?: string | null
+  ) {
     this.surveyId = surveyId;
+    this.personId = personId ?? null;
     this.singleUseId = singleUseId ?? null;
     this.responseId = responseId ?? null;
   }
@@ -28,7 +35,8 @@ export class SurveyState {
     const copyInstance = new SurveyState(
       this.surveyId,
       this.singleUseId ?? undefined,
-      this.responseId ?? undefined
+      this.responseId ?? undefined,
+      this.personId ?? undefined
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
@@ -49,6 +57,14 @@ export class SurveyState {
    */
   updateDisplayId(id: string) {
     this.displayId = id;
+  }
+
+  /**
+   * Update the person ID
+   * @param id - The person ID
+   */
+  updatePersonId(id: string) {
+    this.personId = id;
   }
 
   /**

@@ -1,14 +1,15 @@
-import { env } from "@/env.mjs";
+import { env } from "./env.mjs";
 import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "./constants";
+import { EMAIL_VERIFICATION_DISABLED } from "./constants";
 import { verifyToken } from "./jwt";
-import { getProfileByEmail } from "./profile/service";
+import { getProfileByEmail, updateProfile } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import AzureAD from "next-auth/providers/azure-ad";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -61,9 +62,8 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          firstname: user.firstname,
-          lastname: user.firstname,
           emailVerified: user.emailVerified,
+          imageUrl: user.imageUrl,
         };
       },
     }),
@@ -106,20 +106,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email already verified");
         }
 
-        user = await prisma.user.update({
-          where: {
-            id: user.id,
-          },
-          data: { emailVerified: new Date().toISOString() },
-        });
+        user = await updateProfile(user.id, { emailVerified: new Date() });
 
-        return {
-          id: user.id,
-          email: user.email,
-          firstname: user.firstname,
-          lastname: user.firstname,
-          emailVerified: user.emailVerified,
-        };
+        return user;
       },
     }),
     GitHubProvider({
@@ -131,6 +120,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
+    AzureAD({
+      clientId: env.AZUREAD_CLIENT_ID || "",
+      clientSecret: env.AZUREAD_CLIENT_SECRET || "",
+      tenantId: env.AZUREAD_TENANT_ID || "",
+    }),
   ],
   callbacks: {
     async jwt({ token }) {
@@ -140,27 +134,16 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      const additionalAttributs = {
-        id: existingUser.id,
-        createdAt: existingUser.createdAt,
-        onboardingCompleted: existingUser.onboardingCompleted,
-        name: existingUser.name,
-      };
-
       return {
         ...token,
-        ...additionalAttributs,
+        profile: existingUser || null,
       };
     },
     async session({ session, token }) {
       // @ts-ignore
       session.user.id = token?.id;
       // @ts-ignore
-      session.user.createdAt = token?.createdAt ? new Date(token?.createdAt).toISOString() : undefined;
-      // @ts-ignore
-      session.user.onboardingCompleted = token?.onboardingCompleted;
-      // @ts-ignore
-      session.user.name = token.name || "";
+      session.user = token.profile;
 
       return session;
     },
@@ -177,7 +160,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account.provider) {
-        const provider = account.provider.toLowerCase() as IdentityProvider;
+        const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
         // check if accounts for this provider / account Id already exists
         const existingUserWithAccount = await prisma.user.findFirst({
           include: {
@@ -204,15 +187,10 @@ export const authOptions: NextAuthOptions = {
           // check if user with this email already exist
           // if not found just update user with new email address
           // if found throw an error (TODO find better solution)
-          const otherUserWithEmail = await prisma.user.findFirst({
-            where: { email: user.email },
-          });
+          const otherUserWithEmail = await getProfileByEmail(user.email);
 
           if (!otherUserWithEmail) {
-            await prisma.user.update({
-              where: { id: existingUserWithAccount.id },
-              data: { email: user.email },
-            });
+            await updateProfile(existingUserWithAccount.id, { email: user.email });
             return true;
           }
           return "/auth/login?error=Looks%20like%20you%20updated%20your%20email%20somewhere%20else.%0AA%20user%20with%20this%20new%20email%20exists%20already.";
@@ -221,15 +199,13 @@ export const authOptions: NextAuthOptions = {
         // There is no existing account for this identity provider / account id
         // check if user account with this email already exists
         // if user already exists throw error and request password login
-        const existingUserWithEmail = await prisma.user.findFirst({
-          where: { email: user.email },
-        });
+        const existingUserWithEmail = await getProfileByEmail(user.email);
 
         if (existingUserWithEmail) {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        const createdUser = await prisma.user.create({
+        await prisma.user.create({
           data: {
             name: user.name,
             email: user.email,
@@ -245,6 +221,7 @@ export const authOptions: NextAuthOptions = {
                 {
                   accepted: true,
                   role: "owner",
+                  // @ts-ignore
                   team: {
                     create: {
                       name: `${user.name}'s Team`,
@@ -256,7 +233,7 @@ export const authOptions: NextAuthOptions = {
                               create: [
                                 {
                                   type: "production",
-                                  eventClasses: {
+                                  actionClasses: {
                                     create: [
                                       {
                                         name: "New Session",
@@ -292,7 +269,7 @@ export const authOptions: NextAuthOptions = {
                                 },
                                 {
                                   type: "development",
-                                  eventClasses: {
+                                  actionClasses: {
                                     create: [
                                       {
                                         name: "New Session",
@@ -341,16 +318,6 @@ export const authOptions: NextAuthOptions = {
             memberships: true,
           },
         });
-
-        const teamId = createdUser.memberships?.[0]?.teamId;
-        if (teamId) {
-          fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
-            method: "POST",
-            headers: {
-              "x-api-key": INTERNAL_SECRET,
-            },
-          });
-        }
 
         return true;
       }

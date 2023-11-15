@@ -5,8 +5,8 @@ import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
   TIntegrationAirtableInput,
-} from "@formbricks/types/v1/integration/airtable";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+} from "@formbricks/types/integration/airtable";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Button } from "@formbricks/ui/Button";
@@ -15,13 +15,13 @@ import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 import AirtableLogo from "../images/airtable.svg";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { upsertIntegrationAction } from "../actions";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { TIntegrationItem } from "@formbricks/types/integration";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -183,7 +183,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
 
       const actionMessage = isEditMode ? "updated" : "added";
 
-      await upsertIntegrationAction(environmentId, airtableIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, airtableIntegrationData);
       toast.success(`Integration ${actionMessage} successfully`);
       handleClose();
     } catch (e) {
@@ -215,7 +215,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
       const integrationCopy = { ...airtableIntegration };
       integrationCopy.config.data.splice(index, 1);
 
-      await upsertIntegrationAction(environmentId, integrationCopy);
+      await createOrUpdateIntegrationAction(environmentId, integrationCopy);
       handleClose();
       router.refresh();
 

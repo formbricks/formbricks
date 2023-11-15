@@ -1,14 +1,16 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { Info } from "lucide-react";
 import { useEffect, useState } from "react"; /*  */
 
 const filterConditions = [
@@ -98,6 +100,24 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, attributeCl
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
+
+          <div className="mx-6 mb-4 mt-3">
+            <Alert variant="info">
+              <Info className="h-4 w-4" />
+              <AlertTitle>User Identification</AlertTitle>
+              <AlertDescription>
+                To target your audience you need to identify your users within your app. You can read more
+                about how to do this in our{" "}
+                <a
+                  href="https://formbricks.com/docs/attributes/identify-users"
+                  className="underline"
+                  target="_blank">
+                  docs
+                </a>
+                .
+              </AlertDescription>
+            </Alert>
+          </div>
 
           <div className="mx-6 flex items-center rounded-lg border border-slate-200 p-4 text-slate-800">
             <div>

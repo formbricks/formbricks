@@ -1,4 +1,4 @@
-import { TIntegrationAirtableTables } from "@formbricks/types/v1/integration/airtable";
+import { TIntegrationAirtableTables } from "@formbricks/types/integration/airtable";
 
 export const fetchTables = async (environmentId: string, baseId: string) => {
   const res = await fetch(`/api/v1/integrations/airtable/tables?baseId=${baseId}`, {
@@ -6,8 +6,8 @@ export const fetchTables = async (environmentId: string, baseId: string) => {
     headers: { environmentId: environmentId },
     cache: "no-store",
   });
-
-  return res.json() as Promise<TIntegrationAirtableTables>;
+  const resJson = await res.json();
+  return resJson.data as Promise<TIntegrationAirtableTables>;
 };
 
 export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
@@ -21,6 +21,6 @@ export const authorize = async (environmentId: string, apiHost: string): Promise
     throw new Error("Could not create response");
   }
   const resJSON = await res.json();
-  const authUrl = resJSON.authUrl;
+  const authUrl = resJSON.data.authUrl;
   return authUrl;
 };

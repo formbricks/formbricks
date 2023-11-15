@@ -1,12 +1,12 @@
 "use client";
 
 import { timeSince } from "@formbricks/lib/time";
-import { QuestionType } from "@formbricks/types/questions";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TTag } from "@formbricks/types/v1/tags";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProfile } from "@formbricks/types/profile";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
@@ -24,6 +24,10 @@ import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { PictureSelectionResponse } from "../PictureSelectionResponse";
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { LoadingWrapper } from "../LoadingWrapper";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -73,6 +77,8 @@ export default function SingleResponseCard({
   const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
+  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   function isValidValue(value: any) {
     return (
@@ -127,6 +133,9 @@ export default function SingleResponseCard({
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
     try {
+      if (isViewer) {
+        throw new Error("You are not authorized to perform this action.");
+      }
       await deleteResponseAction(response.id);
       router.refresh();
       toast.success("Submission deleted successfully.");
@@ -245,22 +254,24 @@ export default function SingleResponseCard({
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
-              <TooltipRenderer
-                shouldRender={isSubmissionFresh || !response.finished}
-                tooltipContent={deleteSubmissionToolTip}>
-                <TrashIcon
-                  onClick={() => {
-                    if (!isSubmissionFresh || !response.finished) {
-                      setDeleteDialogOpen(true);
-                    }
-                  }}
-                  className={`h-4 w-4 ${
-                    isSubmissionFresh || !response.finished
-                      ? "cursor-not-allowed text-gray-400"
-                      : "text-slate-500 hover:text-red-700"
-                  } `}
-                />
-              </TooltipRenderer>
+              {!isViewer && (
+                <TooltipRenderer
+                  shouldRender={isSubmissionFresh || !response.finished}
+                  tooltipContent={deleteSubmissionToolTip}>
+                  <TrashIcon
+                    onClick={() => {
+                      if (!isSubmissionFresh || !response.finished) {
+                        setDeleteDialogOpen(true);
+                      }
+                    }}
+                    className={`h-4 w-4 ${
+                      isSubmissionFresh || !response.finished
+                        ? "cursor-not-allowed text-gray-400"
+                        : "text-slate-500 hover:text-red-700"
+                    } `}
+                  />
+                </TooltipRenderer>
+              )}
             </div>
           </div>
         </div>
@@ -293,7 +304,7 @@ export default function SingleResponseCard({
                   />
                 )}
                 {typeof response.data[question.id] !== "object" ? (
-                  question.type === QuestionType.Rating ? (
+                  question.type === TSurveyQuestionType.Rating ? (
                     <div>
                       <RatingResponse
                         scale={question.scale}
@@ -306,6 +317,11 @@ export default function SingleResponseCard({
                       {response.data[question.id]}
                     </p>
                   )
+                ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                  <PictureSelectionResponse
+                    choices={question.choices}
+                    selected={response.data[question.id]}
+                  />
                 ) : (
                   <p className="ph-no-capture my-1 font-semibold text-slate-700">
                     {handleArray(response.data[question.id])}
@@ -334,12 +350,16 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        <ResponseTagsWrapper
-          environmentId={environmentId}
-          responseId={response.id}
-          tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-          environmentTags={environmentTags}
-        />
+        <LoadingWrapper isLoading={isLoading} error={error}>
+          {!isViewer && (
+            <ResponseTagsWrapper
+              environmentId={environmentId}
+              responseId={response.id}
+              tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+              environmentTags={environmentTags}
+            />
+          )}
+        </LoadingWrapper>
 
         <DeleteDialog
           open={deleteDialogOpen}

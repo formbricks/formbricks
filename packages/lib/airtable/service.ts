@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TIntegrationItem } from "@formbricks/types/v1/integration";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
@@ -11,9 +11,9 @@ import {
   ZIntegrationAirtableTables,
   ZIntegrationAirtableTablesWithFields,
   ZIntegrationAirtableTokenSchema,
-} from "@formbricks/types/v1/integration/airtable";
+} from "@formbricks/types/integration/airtable";
 import { Prisma } from "@prisma/client";
-import { AIR_TABLE_CLIENT_ID } from "../constants";
+import { AIRTABLE_CLIENT_ID } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
 
 interface ConnectAirtableOptions {
@@ -90,9 +90,13 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   });
 
   const tokenRes: unknown = await tokenReq.json();
+  const parsedToken = ZIntegrationAirtableTokenSchema.safeParse(tokenRes);
 
-  const { access_token, expires_in, refresh_token } = ZIntegrationAirtableTokenSchema.parse(tokenRes);
-
+  if (!parsedToken.success) {
+    console.error(parsedToken.error);
+    throw new Error(parsedToken.error.message);
+  }
+  const { access_token, refresh_token, expires_in } = parsedToken.data;
   const expiry_date = new Date();
   expiry_date.setSeconds(expiry_date.getSeconds() + expires_in);
 
@@ -118,13 +122,17 @@ export const getAirtableToken = async (environmentId: string) => {
     const currentDate = new Date();
 
     if (currentDate >= expiryDate) {
-      const client_id = AIR_TABLE_CLIENT_ID;
+      const client_id = AIRTABLE_CLIENT_ID;
 
       const newToken = await fetchAirtableAuthToken({
         grant_type: "refresh_token",
         refresh_token,
         client_id,
       });
+
+      if (!newToken) {
+        throw new Error("Failed to create new token");
+      }
 
       await createOrUpdateIntegration(environmentId, {
         type: "airtable",

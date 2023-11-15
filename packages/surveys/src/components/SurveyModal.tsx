@@ -6,7 +6,7 @@ import { Survey } from "./Survey";
 export function SurveyModal({
   survey,
   brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   placement,
   clickOutside,
@@ -40,7 +40,7 @@ export function SurveyModal({
         <Survey
           survey={survey}
           brandColor={brandColor}
-          formbricksSignature={formbricksSignature}
+          isBrandingEnabled={isBrandingEnabled}
           activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}

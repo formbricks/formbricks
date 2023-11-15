@@ -10,10 +10,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
+import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
 import { deleteWebhookAction, updateWebhookAction } from "../actions";
-import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TPipelineTrigger } from "@formbricks/types/pipelines";
+import { TSurvey } from "@formbricks/types/surveys";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
 import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
@@ -213,7 +213,7 @@ export default function WebhookSettingsTab({
 
             <Button
               variant="secondary"
-              href="https://formbricks.com/docs/webhook-api/overview"
+              href="https://formbricks.com/docs/api/management/webhooks"
               target="_blank">
               Read Docs
             </Button>

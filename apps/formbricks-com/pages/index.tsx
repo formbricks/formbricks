@@ -14,9 +14,9 @@ const IndexPage = () => (
     title="Formbricks | Privacy-first Experience Management"
     description="Build qualitative user research into your product. Leverage Best practices to increase Product-Market Fit.">
     <Hero />
-    <div className="hidden lg:block">
+    {/*     <div className="hidden lg:block">
       <GitHubSponsorship />
-    </div>
+    </div> */}
     <BestPractices />
     <Features />
     <Highlights />

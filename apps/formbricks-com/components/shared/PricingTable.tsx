@@ -8,6 +8,7 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
         <div className="flex items-center gap-x-4">
           <div className="w-1/3 text-left font-semibold text-slate-700 dark:text-slate-200 md:text-xl">
             {leadRow.title}
+            <span className="pl-2 text-sm font-normal text-slate-600">{leadRow.comparison}</span>
           </div>
           <div
             className="flex w-1/3 items-center justify-center text-center text-sm font-semibold
@@ -27,8 +28,13 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
             <div className="w-1/3 text-left text-sm text-slate-700 dark:text-slate-200 md:text-base">
               {feature.name}
               {feature.addOnText && (
-                <span className=" mx-2 bg-teal-100 p-1 text-xs text-slate-400 dark:bg-slate-700 dark:text-teal-500">
+                <span className=" mx-3 rounded-full bg-emerald-200 px-2 text-xs text-slate-800 dark:bg-slate-700 dark:text-teal-500">
                   Addon
+                </span>
+              )}
+              {feature.comingSoon && (
+                <span className="mx-3 rounded-full bg-slate-200 px-2 text-xs text-slate-800 dark:bg-slate-700 dark:text-teal-500">
+                  coming soon
                 </span>
               )}
             </div>

@@ -1,5 +1,10 @@
-import { LogicCondition, QuestionType } from "@formbricks/types/questions";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import {
+  TSurvey,
+  TSurveyLogic,
+  TSurveyQuestion,
+  TSurveyQuestionType,
+  TSurveyLogicCondition,
+} from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -24,7 +29,7 @@ interface LogicEditorProps {
 }
 
 type LogicConditions = {
-  [K in LogicCondition]: {
+  [K in TSurveyLogicCondition]: {
     label: string;
     values: string[] | null;
     unique?: boolean;
@@ -43,7 +48,7 @@ export default function LogicEditor({
       return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
-    } else if (question.type === QuestionType.NPS) {
+    } else if (question.type === TSurveyQuestionType.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
@@ -75,6 +80,7 @@ export default function LogicEditor({
     ],
     cta: ["clicked", "skipped"],
     consent: ["skipped", "accepted"],
+    pictureSelection: ["submitted", "skipped"],
   };
 
   const logicConditions: LogicConditions = {

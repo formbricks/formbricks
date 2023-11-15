@@ -1,6 +1,6 @@
 import { getPlacementStyle } from "@/app/lib/preview";
 import { cn } from "@formbricks/lib/cn";
-import { PlacementType } from "@formbricks/types/js";
+import { TPlacement } from "@formbricks/types/common";
 import { ReactNode, useEffect, useMemo, useState, useRef } from "react";
 
 export default function Modal({
@@ -12,7 +12,7 @@ export default function Modal({
 }: {
   children: ReactNode;
   isOpen: boolean;
-  placement: PlacementType;
+  placement: TPlacement;
   previewMode: string;
   highlightBorderColor: string | null | undefined;
 }) {

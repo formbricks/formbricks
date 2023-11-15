@@ -1,5 +1,5 @@
-import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/v1/js";
-import { TPerson } from "@formbricks/types/v1/people";
+import { TJsPeopleAttributeInput, TJsState } from "@formbricks/types/js";
+import { TPerson } from "@formbricks/types/people";
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
@@ -16,51 +16,11 @@ import { Logger } from "./logger";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-export const updatePersonUserId = async (
-  userId: string
-): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
-  if (!config.get().state.person || !config.get().state.person.id)
-    return err({
-      code: "missing_person",
-      message: "Unable to update userId. No person set.",
-    });
-
-  const url = `${config.get().apiHost}/api/v1/js/people/${config.get().state.person.id}/set-user-id`;
-
-  const input: TJsPeopleUserIdInput = {
-    environmentId: config.get().environmentId,
-    userId,
-    sessionId: config.get().state.session.id,
-  };
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  });
-
-  const jsonRes = await res.json();
-
-  if (!res.ok) {
-    return err({
-      code: "network_error",
-      message: "Error updating person",
-      status: res.status,
-      url,
-      responseMessage: jsonRes.message,
-    });
-  }
-
-  return ok(jsonRes.data as TJsState);
-};
-
 export const updatePersonAttribute = async (
   key: string,
   value: string
 ): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
-  if (!config.get().state.person || !config.get().state.person.id) {
+  if (!config.get().state.person || !config.get().state.person?.id) {
     return err({
       code: "missing_person",
       message: "Unable to update attribute. No person set.",
@@ -68,14 +28,14 @@ export const updatePersonAttribute = async (
   }
 
   const input: TJsPeopleAttributeInput = {
-    environmentId: config.get().environmentId,
-    sessionId: config.get().state.session.id,
     key,
     value,
   };
 
   const res = await fetch(
-    `${config.get().apiHost}/api/v1/js/people/${config.get().state.person.id}/set-attribute`,
+    `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/people/${
+      config.get().state.person?.id
+    }/set-attribute`,
     {
       method: "POST",
       headers: {
@@ -114,33 +74,10 @@ export const hasAttributeKey = (key: string): boolean => {
   return false;
 };
 
-export const setPersonUserId = async (
-  userId: string | number
-): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
-  logger.debug("setting userId: " + userId);
-  // check if attribute already exists with this value
-  if (hasAttributeValue("userId", userId.toString())) {
-    logger.debug("userId already set to this value. Skipping update.");
-    return okVoid();
-  }
-  if (hasAttributeKey("userId")) {
-    return err({
-      code: "attribute_already_exists",
-      message: "userId cannot be changed after it has been set. You need to reset first",
-    });
-  }
-  const result = await updatePersonUserId(userId.toString());
-
-  if (result.ok !== true) return err(result.error);
-
-  const state = result.value;
-
-  config.update({
-    apiHost: config.get().apiHost,
-    environmentId: config.get().environmentId,
-    state,
-  });
-
+export const setPersonUserId = async (): Promise<
+  Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>
+> => {
+  logger.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
   return okVoid();
 };
 
@@ -181,6 +118,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   const syncParams = {
     environmentId: config.get().environmentId,
     apiHost: config.get().apiHost,
+    userId: config.get().state?.person?.userId,
   };
   await logoutPerson();
   try {
@@ -191,6 +129,6 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   }
 };
 
-export const getPerson = (): TPerson => {
+export const getPerson = (): TPerson | null => {
   return config.get().state.person;
 };

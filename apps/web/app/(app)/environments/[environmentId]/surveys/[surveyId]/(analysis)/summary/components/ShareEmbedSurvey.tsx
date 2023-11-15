@@ -5,19 +5,19 @@ import EmailTab from "./shareEmbedTabs/EmailTab";
 import WebpageTab from "./shareEmbedTabs/WebpageTab";
 import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { useMemo, useState } from "react";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { cn } from "@formbricks/lib/cn";
 import { DialogContent, Dialog } from "@formbricks/ui/Dialog";
 import { Button } from "@formbricks/ui/Button";
 import { LinkIcon, EnvelopeIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProfile } from "@formbricks/types/profile";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
 }
@@ -25,11 +25,11 @@ export default function ShareEmbedSurvey({
   survey,
   open,
   setOpen,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
 }: ShareEmbedSurveyProps) {
-  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey]);
+  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
   const { email } = profile;
   const { brandColor } = product;
@@ -45,7 +45,7 @@ export default function ShareEmbedSurvey({
 
   const componentMap = {
     link: isSingleUseLinkSurvey ? (
-      <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={surveyBaseUrl} />
+      <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={webAppUrl} />
     ) : (
       <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={surveyBrandColor} />
     ),

@@ -4,7 +4,7 @@ import { Survey } from "./Survey";
 export function SurveyInline({
   survey,
   brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
   onActiveQuestionChange = () => {},
@@ -18,7 +18,7 @@ export function SurveyInline({
       <Survey
         survey={survey}
         brandColor={brandColor}
-        formbricksSignature={formbricksSignature}
+        isBrandingEnabled={isBrandingEnabled}
         activeQuestionId={activeQuestionId}
         onDisplay={onDisplay}
         onActiveQuestionChange={onActiveQuestionChange}

@@ -3,6 +3,12 @@ import SettingsTitle from "../components/SettingsTitle";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getServerSession } from "next-auth";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 export default async function MembersSettingsPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
@@ -10,9 +16,26 @@ export default async function MembersSettingsPage({ params }) {
     throw new Error("Environment not found");
   }
   const tags = await getTagsByEnvironmentId(params.environmentId);
-  const environmentTagsCount = await getTagsOnResponsesCount();
+  const environmentTagsCount = await getTagsOnResponsesCount(params.environmentId);
+  const team = await getTeamByEnvironmentId(params.environmentId);
+  const session = await getServerSession(authOptions);
 
-  return (
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  if (!session) {
+    throw new Error("Unauthenticated");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const isTagSettingDisabled = isViewer;
+
+  return !isTagSettingDisabled ? (
     <div>
       <SettingsTitle title="Tags" />
       <EditTagsWrapper
@@ -21,5 +44,7 @@ export default async function MembersSettingsPage({ params }) {
         environmentTagsCount={environmentTagsCount}
       />
     </div>
+  ) : (
+    <ErrorComponent />
   );
 }

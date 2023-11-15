@@ -4,9 +4,9 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 
 import { SurveyInline } from "@formbricks/ui/Survey";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
@@ -123,7 +123,7 @@ export default function PreviewSurvey({
   useEffect(() => {
     // close modal if there are no questions left
     if (survey.type === "web" && !survey.thankYouCard.enabled) {
-      if (activeQuestionId === "thank-you-card") {
+      if (activeQuestionId === "end") {
         setIsModalOpen(false);
         setTimeout(() => {
           setActiveQuestionId(survey.questions[0].id);
@@ -204,7 +204,7 @@ export default function PreviewSurvey({
                     survey={survey}
                     brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
-                    formbricksSignature={product.formbricksSignature}
+                    isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                   />
@@ -219,7 +219,7 @@ export default function PreviewSurvey({
                         survey={survey}
                         brandColor={brandColor}
                         activeQuestionId={activeQuestionId || undefined}
-                        formbricksSignature={product.formbricksSignature}
+                        isBrandingEnabled={product.linkSurveyBranding}
                         onActiveQuestionChange={setActiveQuestionId}
                       />
                     </div>
@@ -274,7 +274,7 @@ export default function PreviewSurvey({
                   survey={survey}
                   brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
-                  formbricksSignature={product.formbricksSignature}
+                  isBrandingEnabled={product.linkSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                 />
@@ -287,7 +287,7 @@ export default function PreviewSurvey({
                       survey={survey}
                       brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
+                      isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       isRedirectDisabled={true}
                     />

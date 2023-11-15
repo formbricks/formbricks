@@ -1,9 +1,9 @@
 "use client";
 
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { capitalizeFirstLetter } from "@/app/lib/utils";
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { timeSince } from "@formbricks/lib/time";
-import { TApiKey } from "@formbricks/types/v1/apiKeys";
+import { TApiKey } from "@formbricks/types/apiKeys";
 import { Button } from "@formbricks/ui/Button";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";

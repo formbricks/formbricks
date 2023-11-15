@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
-import { Settings } from "@formbricks/types/js";
+import { TSettings } from "@formbricks/types/js";
 
-export const getSettings = async (environmentId: string, personId: string): Promise<Settings> => {
+export const getSettings = async (environmentId: string, personId: string): Promise<TSettings> => {
   // get recontactDays from product
   const product = await prisma.product.findFirst({
     where: {
@@ -72,7 +72,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       triggers: {
         select: {
           id: true,
-          eventClass: {
+          actionClass: {
             select: {
               id: true,
               name: true,
@@ -181,7 +181,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       return {
         id: survey.id,
         questions: JSON.parse(JSON.stringify(survey.questions)),
-        triggers: survey.triggers,
+        triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
         thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
         welcomeCard: JSON.parse(JSON.stringify(survey.welcomeCard)),
         autoClose: survey.autoClose,
@@ -189,7 +189,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       };
     });
 
-  const noCodeEvents = await prisma.eventClass.findMany({
+  const noCodeEvents = await prisma.actionClass.findMany({
     where: {
       environmentId,
       type: "noCode",
@@ -208,7 +208,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       product: {
         select: {
           brandColor: true,
-          formbricksSignature: true,
+          linkSurveyBranding: true,
           placement: true,
           darkOverlay: true,
           clickOutsideClose: true,
@@ -217,7 +217,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     },
   });
 
-  const formbricksSignature = environmentProdut?.product.formbricksSignature;
+  const formbricksSignature = environmentProdut?.product.linkSurveyBranding;
   const brandColor = environmentProdut?.product.brandColor;
   const placement = environmentProdut?.product.placement;
   const darkOverlay = environmentProdut?.product.darkOverlay;

@@ -335,3 +335,12 @@ i.italic {
 i.link {
   background-image: url(images/icons/link.svg);
 }
+
+.active-button {
+  color: #000000;
+
+}
+
+.inactive-button {
+  color: #777; 
+}

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { ZId } from "@formbricks/types/v1/environment";
+import { ZId } from "@formbricks/types/environment";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { hasUserEnvironmentAccess } from "../environment/auth";
@@ -27,6 +27,6 @@ export const canUserAccessResponse = async (userId: string, responseId: string):
 
       return true;
     },
-    [`users-${userId}-responses-${responseId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [responseCache.tag.byResponseId(responseId)] }
+    [`canUserAccessResponse-${userId}-${responseId}`],
+    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [responseCache.tag.byId(responseId)] }
   )();

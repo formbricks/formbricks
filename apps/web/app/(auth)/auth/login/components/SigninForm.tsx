@@ -6,12 +6,13 @@ import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Controller, SubmitHandler, useForm, FormProvider } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
 import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
 import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
 import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
 import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 
@@ -27,11 +28,13 @@ export const SigninForm = ({
   passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
+  azureOAuthEnabled,
 }: {
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,9 +88,15 @@ export const SigninForm = ({
   const [totpBackup, setTotpBackup] = useState(false);
   const [signInError, setSignInError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
-
+  const error = searchParams?.get("error");
   const callbackUrl = searchParams?.get("callbackUrl");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
+
+  useEffect(() => {
+    if (error) {
+      setSignInError(error);
+    }
+  }, []);
 
   const formLabel = useMemo(() => {
     if (totpBackup) {
@@ -202,6 +211,12 @@ export const SigninForm = ({
           {githubOAuthEnabled && !totpLogin && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
+            </>
+          )}
+
+          {azureOAuthEnabled && !totpLogin && (
+            <>
+              <AzureButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>
