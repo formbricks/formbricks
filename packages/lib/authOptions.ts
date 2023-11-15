@@ -273,7 +273,7 @@ export const authOptions: NextAuthOptions = {
           },
         ];
 
-        async function registerUserAndSetupTeam() {
+        const registerUserAndSetupTeam = async () => {
           const userProfile = await createProfileWithProviders({
             name: user.name,
             email: user.email,
@@ -287,20 +287,26 @@ export const authOptions: NextAuthOptions = {
           const product = await createProduct(team.id, { name: "My Product" });
           const productionEnvironment = await createEnvironment(product.id, { type: "production" });
           prodActionClasses.forEach(async (actionClass) => {
-            await createActionClass(productionEnvironment.id, actionClass);
+            await createActionClass(productionEnvironment.id, {
+              ...actionClass,
+              environmentId: productionEnvironment.id,
+            });
           });
           prodAttributeClasses.forEach(async (attributeClass) => {
             await createAttributeClass(productionEnvironment.id, attributeClass.name, attributeClass.type);
           });
-          await createEnvironment(product.id, { type: "development" });
+          const developmentEnvironment = await createEnvironment(product.id, { type: "development" });
           devActionClasses.forEach(async (actionClass) => {
-            await createActionClass(productionEnvironment.id, actionClass);
+            await createActionClass(productionEnvironment.id, {
+              ...actionClass,
+              environmentId: developmentEnvironment.id,
+            });
           });
           devAttributeClasses.forEach(async (attributeClass) => {
             await createAttributeClass(productionEnvironment.id, attributeClass.name, attributeClass.type);
           });
           await createMembership(team.id, user.id, { role: "owner" });
-        }
+        };
 
         await registerUserAndSetupTeam();
 
