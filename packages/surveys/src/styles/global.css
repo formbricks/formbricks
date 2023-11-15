@@ -27,10 +27,6 @@
   border-radius: 99px;
 }
 
-.formbricks-inner {
-  @apply flex h-full w-full flex-col justify-between bg-[--fb-survey-background-color] px-6 pb-3 pt-6;
-}
-
 /* this is for styling the HtmlBody component */
 .fb-htmlbody {
   @apply block text-sm font-normal leading-6;
