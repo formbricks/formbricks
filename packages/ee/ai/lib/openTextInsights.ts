@@ -1,52 +1,30 @@
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { getResponses } from "@formbricks/lib/response/service";
-import { TSurveyQuestionSummary, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { askAi } from "../api/ask";
 
-export const getOpenTextInsights = async (surveyId: string) => {
+export const getOpenTextInsights = async (surveyId: string, questionId: string) => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     throw new Error("Survey not Found");
   }
 
+  const question = survey.questions.find((question) => question.id === questionId);
+
   const surveyResponses = await getResponses(surveyId);
+  let questionResponses = surveyResponses.map((response) => response.data[questionId]);
 
-  const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
-    survey.questions.map((question) => {
-      const questionResponses = surveyResponses
-        .filter((response) => question.id in response.data)
-        .map((r) => ({
-          id: r.id,
-          value: r.data[question.id],
-          updatedAt: r.updatedAt,
-          person: r.person,
-        }));
-      return {
-        question,
-        responses: questionResponses,
-      };
-    });
-
-  const [openTextResponses] = getSummaryData().map((questionSummary) => {
-    if (questionSummary.question.type === TSurveyQuestionType.OpenText) {
-      if (questionSummary.responses.length > 10) {
-        return questionSummary.responses.sort(() => 0.5 - Math.random()).slice(0, 10);
-      }
-      return questionSummary.responses;
-    }
-  });
-  if (!openTextResponses) {
-    throw new Error("No Open Text Responses");
-  }
-
-  const allAnswers = openTextResponses
-    .filter((response) => response.value.toString().length >= 2)
-    .map((response) => response.value.toString().trim())
-    .join(", ");
+  // Remove empty responses
+  questionResponses = questionResponses.filter((response) => response);
+  // randomize responses and take the first 50
+  questionResponses = questionResponses.sort(() => 0.5 - Math.random()).slice(0, 50);
 
   const summaryWithAi = await askAi(
-    "The following are all the responses I have received in a survey. Combine them all and then give me 3 insights, where each insight is separated by a new line character",
-    allAnswers
+    `You are  survey analyst. We have asked our users the following question: ${question?.headline}
+Introduce the findings with aone sentence summary and determine up to ${
+      questionResponses.length > 40 ? "5" : "4"
+    } categories most answers fall into. Write a brief description for every category (up to 2 sentences) and provide an example answer from the list of answers for each category.
+\`\`\`answers
+${questionResponses.join("\n")}}`
   );
 
   return summaryWithAi;

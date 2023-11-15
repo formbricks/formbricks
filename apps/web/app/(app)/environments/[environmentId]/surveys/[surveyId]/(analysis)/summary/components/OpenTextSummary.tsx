@@ -31,6 +31,7 @@ export default function OpenTextSummary({
     api: "/api/ai",
     body: {
       surveyId,
+      questionId: questionSummary.question.id,
     },
   });
 

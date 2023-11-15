@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     return responses.unauthorizedResponse();
   }
 
-  const { messages, surveyId } = await request.json();
+  const { messages, surveyId, questionId } = await request.json();
   const intent = messages[messages.length - 1].content;
 
   try {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
           return responses.unauthorizedResponse();
         }
 
-        const answer = await getOpenTextInsights(surveyId);
+        const answer = await getOpenTextInsights(surveyId, questionId);
         return answer;
 
       default:
