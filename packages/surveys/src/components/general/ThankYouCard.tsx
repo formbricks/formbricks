@@ -1,11 +1,10 @@
-import Headline from "./Headline";
-import RedirectCountDown from "./RedirectCountdown";
-import Subheader from "./Subheader";
+import Headline from "@/components/general/Headline";
+import RedirectCountDown from "@/components/general/RedirectCountdown";
+import Subheader from "@/components/general/Subheader";
 
 interface ThankYouCardProps {
   headline?: string;
   subheader?: string;
-  brandColor: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
 }
@@ -13,13 +12,12 @@ interface ThankYouCardProps {
 export default function ThankYouCard({
   headline,
   subheader,
-  brandColor,
   redirectUrl,
   isRedirectDisabled,
 }: ThankYouCardProps) {
   return (
     <div className="text-center">
-      <div className="flex items-center justify-center" style={{ color: brandColor }}>
+      <div className="text-brand flex items-center justify-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -35,7 +33,7 @@ export default function ThankYouCard({
         </svg>
       </div>
 
-      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-slate-300"></span>
+      <span className="bg-shadow mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
 
       <div>
         <Headline headline={headline} questionId="thankYouCard" style={{ "justify-content": "center" }} />

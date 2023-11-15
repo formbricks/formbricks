@@ -1,14 +1,13 @@
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import CTAQuestion from "./CTAQuestion";
-import ConsentQuestion from "./ConsentQuestion";
-import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
-import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
-import NPSQuestion from "./NPSQuestion";
-import OpenTextQuestion from "./OpenTextQuestion";
-import RatingQuestion from "./RatingQuestion";
-import PictureSelectionQuestion from "./PictureSelectionQuestion";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import CTAQuestion from "@/components/questions/CTAQuestion";
+import ConsentQuestion from "@/components/questions/ConsentQuestion";
+import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
+import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
+import NPSQuestion from "@/components/questions/NPSQuestion";
+import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
+import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
+import RatingQuestion from "@/components/questions/RatingQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -18,7 +17,6 @@ interface QuestionConditionalProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   autoFocus?: boolean;
 }
 
@@ -30,7 +28,6 @@ export default function QuestionConditional({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   autoFocus = true,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
@@ -42,7 +39,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       autoFocus={autoFocus}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
@@ -54,7 +50,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -65,7 +60,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
@@ -76,7 +70,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
@@ -87,7 +80,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
@@ -98,7 +90,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
@@ -109,7 +100,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
@@ -120,7 +110,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : null;
 }

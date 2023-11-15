@@ -1,8 +1,8 @@
+import SubmitButton from "@/components/buttons/SubmitButton";
+import { calculateElementIdx } from "@/lib/utils";
+import { TSurveyWithTriggers } from "@formbricks/types/js";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
-import SubmitButton from "./SubmitButton";
-import { calculateElementIdx } from "../lib/utils";
-import { TSurveyWithTriggers } from "@formbricks/types/js";
 
 interface WelcomeCardProps {
   headline?: string;
@@ -10,7 +10,6 @@ interface WelcomeCardProps {
   fileUrl?: string;
   buttonLabel?: string;
   timeToFinish?: boolean;
-  brandColor: string;
   onSubmit: (data: { [x: string]: any }) => void;
   survey: TSurveyWithTriggers;
 }
@@ -38,7 +37,6 @@ export default function WelcomeCard({
   fileUrl,
   buttonLabel,
   timeToFinish,
-  brandColor,
   onSubmit,
   survey,
 }: WelcomeCardProps) {
@@ -85,14 +83,13 @@ export default function WelcomeCard({
           <SubmitButton
             buttonLabel={buttonLabel}
             isLastQuestion={false}
-            brandColor={brandColor}
             focus={true}
             onClick={() => {
               onSubmit({ ["welcomeCard"]: "clicked" });
             }}
             type="button"
           />
-          <div className="flex items-center text-xs text-slate-600">Press Enter ↵</div>
+          <div className="text-subheading flex items-center text-xs">Press Enter ↵</div>
         </div>
       </div>
       {timeToFinish && (
