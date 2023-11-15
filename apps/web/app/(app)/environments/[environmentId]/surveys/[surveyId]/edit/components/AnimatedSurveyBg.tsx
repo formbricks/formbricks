@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys";
+import { useState } from "react";
 
 interface AnimatedSurveyBgProps {
   localSurvey?: TSurvey;
@@ -84,11 +84,11 @@ export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: Animat
               onMouseEnter={() => handleMouseEnter(index)}
               onMouseLeave={() => handleMouseLeave(index)}
               onClick={() => handleBg(value)}
-              className="relative cursor-pointer hover:scale-110">
+              className="relative cursor-pointer overflow-hidden rounded-lg">
               <video
                 id={`video-${index}`}
                 autoPlay={hoveredVideo === index}
-                className="h-46 w-96  rounded-lg ">
+                className="h-46 w-96 origin-center scale-105 transform">
                 <source src={`${key}`} type="video/mp4" />
               </video>
               <input
