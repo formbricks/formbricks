@@ -136,7 +136,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          formbricksSignature={product.formbricksSignature}
+          isBrandingEnabled={product.linkSurveyBranding}
           onDisplay={async () => {
             if (!isPreview) {
               const api = new FormbricksAPI({

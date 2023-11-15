@@ -79,7 +79,8 @@ export const mockInitResponse = () => {
         product: {
           noCodeEvents: [],
           brandColor: "#20b398",
-          formbricksSignature: true,
+          linkSurveyBranding: true,
+          inAppBranding: true,
           placement: "bottomRight",
           darkOverlay: false,
           clickOutsideClose: true,

@@ -1,8 +1,8 @@
 "use client";
 
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
+import { env } from "@formbricks/lib/env.mjs";
 import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
-import { env } from "@/env.mjs";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { useEffect, useRef, useState } from "react";
