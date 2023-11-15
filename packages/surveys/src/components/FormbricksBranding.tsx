@@ -1,4 +1,4 @@
-export default function FormbricksSignature() {
+export default function FormbricksBranding() {
   return (
     <a
       href="https://formbricks.com?utm_source=survey_branding"
