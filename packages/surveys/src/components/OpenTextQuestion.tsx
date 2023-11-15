@@ -40,7 +40,7 @@ export default function OpenTextQuestion({
         currentElement.focus();
       }
     },
-    [question]
+    [question.id]
   );
   const isInputEmpty = (value: string) => {
     return question.required && !value?.trim();
