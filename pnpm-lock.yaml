@@ -7,6 +7,7 @@ settings:
 importers:
 
   .:
+    
     devDependencies:
       '@changesets/cli':
         specifier: ^2.26.2
@@ -9195,6 +9196,12 @@ packages:
 
   /@types/prismjs@1.26.2:
     resolution: {integrity: sha512-/r7Cp7iUIk7gts26mHXD66geUC+2Fo26TZYjQK6Nr4LDfi6lmdRmMqM0oPwfiMhUwoBAOFe8GstKi2pf6hZvwA==}
+    dev: false
+
+  /@types/progress@2.0.7:
+    resolution: {integrity: sha512-iadjw02vte8qWx7U0YM++EybBha2CQLPGu9iJ97whVgJUT5Zq9MjAPYUnbfRI2Kpehimf1QjFJYxD0t8nqzu5w==}
+    dependencies:
+      '@types/node': 20.8.6
     dev: false
 
   /@types/prop-types@15.7.9:
