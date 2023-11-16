@@ -96,7 +96,6 @@ export default function MultipleChoiceSingleQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
-      {console.log(startTime)}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
