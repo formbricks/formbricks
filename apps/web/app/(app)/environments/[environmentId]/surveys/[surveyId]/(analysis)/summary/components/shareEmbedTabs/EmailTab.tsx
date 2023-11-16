@@ -7,7 +7,7 @@ import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { sendEmailAction } from "../../actions";
-import CircularProgress from "@mui/material/CircularProgress";
+
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import {
   Column,
@@ -48,7 +48,11 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
   }, []);
 
   if (isLoading) {
-    return <CircularProgress />;
+    return (
+      <div className="flex items-center justify-center">
+        <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-solid border-blue-500"></div>
+      </div>
+    );
   }
 
   const emailValues = getEmailValues({ brandColor, survey, surveyUrl, preview: false });
