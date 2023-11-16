@@ -58,6 +58,7 @@ export default function LinkSurvey({
       new ResponseQueue(
         {
           apiHost: webAppUrl,
+          environmentId: survey.environmentId,
           retryAttempts: 2,
           onResponseSendingFailed: (response) => {
             alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
@@ -134,7 +135,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          formbricksSignature={product.formbricksSignature}
+          isBrandingEnabled={product.linkSurveyBranding}
           onDisplay={async () => {
             if (!isPreview) {
               const api = new FormbricksAPI({

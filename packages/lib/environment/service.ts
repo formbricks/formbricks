@@ -184,7 +184,7 @@ export const createEnvironment = async (
       type: environmentInput.type || "development",
       product: { connect: { id: productId } },
       widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
-      eventClasses: {
+      actionClasses: {
         create: [
           {
             name: "New Session",
