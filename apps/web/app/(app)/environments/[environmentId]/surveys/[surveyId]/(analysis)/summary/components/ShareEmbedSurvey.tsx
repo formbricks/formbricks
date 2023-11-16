@@ -12,6 +12,8 @@ import { DialogContent, Dialog } from "@formbricks/ui/Dialog";
 import { Button } from "@formbricks/ui/Button";
 import { LinkIcon, EnvelopeIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
 import { TProfile } from "@formbricks/types/profile";
+import { LoadingBarIcon } from "@formbricks/ui/icons";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
@@ -34,7 +36,7 @@ export default function ShareEmbedSurvey({
   const { email } = profile;
   const { brandColor } = product;
   const surveyBrandColor = survey.productOverwrites?.brandColor || brandColor;
-
+  const [loading, setloading] = useState(false);
   const tabs = [
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
     { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
@@ -71,7 +73,9 @@ export default function ShareEmbedSurvey({
                   startIconClassName={cn("h-4 w-4")}
                   variant="minimal"
                   key={tab.id}
-                  onClick={() => setActiveId(tab.id)}
+                  onClick={() => {
+                    setActiveId(tab.id);
+                  }}
                   className={cn(
                     "rounded-[4px] px-4 py-[6px] text-slate-600",
                     // "focus:ring-0 focus:ring-offset-0", // enable these classes to remove the focus rings on buttons
@@ -94,7 +98,9 @@ export default function ShareEmbedSurvey({
                 <Button
                   variant="minimal"
                   key={tab.id}
-                  onClick={() => setActiveId(tab.id)}
+                  onClick={() => {
+                    setActiveId(tab.id);
+                  }}
                   className={cn(
                     "rounded-sm px-3 py-[6px]",
                     tab.id === activeId
