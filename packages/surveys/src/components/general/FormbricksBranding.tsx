@@ -5,10 +5,10 @@ export default function FormbricksBranding() {
       target="_blank"
       tabIndex={-1}
       className="mb-5 mt-2 flex justify-center">
-      <p className="text-xs text-slate-400">
+      <p className="text-signature text-xs">
         Powered by{" "}
         <b>
-          <span className="text-slate-500 hover:text-slate-700">Formbricks</span>
+          <span className="text-info-text hover:text-heading">Formbricks</span>
         </b>
       </p>
     </a>

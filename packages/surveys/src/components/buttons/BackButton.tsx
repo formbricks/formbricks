@@ -1,4 +1,4 @@
-import { cn } from "../../../lib/cn";
+import { cn } from "@/lib/utils";
 
 interface BackButtonProps {
   onClick: () => void;
@@ -12,7 +12,7 @@ export function BackButton({ onClick, backButtonLabel, tabIndex = 2 }: BackButto
       tabIndex={tabIndex}
       type={"button"}
       className={cn(
-        "flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+        "border-back-button-border text-heading focus:ring-focus flex items-center rounded-md border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
       )}
       onClick={onClick}>
       {backButtonLabel || "Back"}

@@ -1,10 +1,10 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import HtmlBody from "@/components/general/HtmlBody";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import HtmlBody from "./HtmlBody";
-import SubmitButton from "./SubmitButton";
-import { useRef, useEffect } from "preact/hooks";
+import { useRef, useEffect } from "react";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -14,7 +14,6 @@ interface CTAQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
 }
 
 export default function CTAQuestion({
@@ -23,7 +22,6 @@ export default function CTAQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
 }: CTAQuestionProps) {
   const startTime = useRef<number>(performance.now());
 
@@ -75,14 +73,13 @@ export default function CTAQuestion({
               onClick={() => {
                 onSubmit({ [question.id]: "dismissed" }, true, performance.now() - startTime.current);
               }}
-              className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:text-slate-400">
+              className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
               {question.dismissButtonLabel || "Skip"}
             </button>
           )}
           <SubmitButton
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
-            brandColor={brandColor}
             focus={true}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
