@@ -20,7 +20,10 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
 
   const emailHtml = useMemo(() => {
     if (!emailHtmlPreview) return "";
-    return emailHtmlPreview.replaceAll("?preview=true&", "?").replaceAll("?preview=true", "");
+    return emailHtmlPreview
+      .replaceAll("?preview=true&amp;", "?")
+      .replaceAll("?preview=true&;", "?")
+      .replaceAll("?preview=true", "");
   }, [emailHtmlPreview]);
 
   useEffect(() => {

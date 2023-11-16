@@ -129,17 +129,6 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
                 </Row>
               </Section>
             </Container>
-            {/* {!firstQuestion.required && (
-              <EmailButton
-                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                className={cn(
-                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
-                  isLight(brandColor) ? "text-black" : "text-white"
-                )}>
-                {firstQuestion.buttonLabel || "Skip"}
-              </EmailButton>
-            )} */}
-
             <EmailFooter />
           </Section>
         </EmailTemplateWrapper>
@@ -216,16 +205,6 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
                 </Row>
               </Section>
             </Container>
-            {/* {!firstQuestion.required && (
-              <EmailButton
-                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
-                className={cn(
-                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
-                  isLight(brandColor) ? "text-black" : "text-white"
-                )}>
-                {firstQuestion.buttonLabel || "Skip"}
-              </EmailButton>
-            )} */}
             <EmailFooter />
           </Section>
         </EmailTemplateWrapper>
