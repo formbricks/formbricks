@@ -8,7 +8,9 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
-    serverActions: true,
+    serverActions: {
+        allowedOrigins: [process.env.ALLOWED_ORIGIN ?? "localhost:3000"],
+    },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
