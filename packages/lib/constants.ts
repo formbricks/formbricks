@@ -59,7 +59,7 @@ export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 
 // Storage constants
-export const UPLOADS_DIR = path.resolve("./uploads");
+export const UPLOADS_DIR = "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
   free: 1024 * 1024 * 10, // 10MB
