@@ -40,19 +40,20 @@ export const getEmailTemplateHtml = async (surveyId) => {
   });
   const doctype =
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-  const htmlCleaned = html.toString().replace(doctype, "").replace("preview=true&", "");
+  const htmlCleaned = html.toString().replace(doctype, "");
 
   return htmlCleaned;
 };
 
 const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) => {
+  const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&`;
 
   const firstQuestion = survey.questions[0];
   switch (firstQuestion.type) {
     case TSurveyQuestionType.OpenText:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
@@ -65,7 +66,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       );
     case TSurveyQuestionType.Consent:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
@@ -98,7 +99,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       );
     case TSurveyQuestionType.NPS:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
             <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
               {firstQuestion.headline}
@@ -128,13 +129,24 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
                 </Row>
               </Section>
             </Container>
+            {/* {!firstQuestion.required && (
+              <EmailButton
+                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
+                className={cn(
+                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                  isLight(brandColor) ? "text-black" : "text-white"
+                )}>
+                {firstQuestion.buttonLabel || "Skip"}
+              </EmailButton>
+            )} */}
+
             <EmailFooter />
           </Section>
         </EmailTemplateWrapper>
       );
     case TSurveyQuestionType.CTA:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
@@ -164,7 +176,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       );
     case TSurveyQuestionType.Rating:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
             <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
               {firstQuestion.headline}
@@ -204,13 +216,23 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
                 </Row>
               </Section>
             </Container>
+            {/* {!firstQuestion.required && (
+              <EmailButton
+                href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
+                className={cn(
+                  "bg-brand-color mt-4 cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
+                  isLight(brandColor) ? "text-black" : "text-white"
+                )}>
+                {firstQuestion.buttonLabel || "Skip"}
+              </EmailButton>
+            )} */}
             <EmailFooter />
           </Section>
         </EmailTemplateWrapper>
       );
     case TSurveyQuestionType.MultipleChoiceMulti:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
@@ -231,7 +253,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       );
     case TSurveyQuestionType.MultipleChoiceSingle:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
@@ -255,7 +277,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       );
     case TSurveyQuestionType.PictureSelection:
       return (
-        <EmailTemplateWrapper brandColor={brandColor}>
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
             {firstQuestion.headline}
           </Text>
@@ -285,7 +307,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
   }
 };
 
-const EmailTemplateWrapper = ({ children, brandColor }) => {
+const EmailTemplateWrapper = ({ children, surveyUrl, brandColor }) => {
   return (
     <Tailwind
       config={{
@@ -297,9 +319,12 @@ const EmailTemplateWrapper = ({ children, brandColor }) => {
           },
         },
       }}>
-      <Container className="mx-0 my-2 block rounded-lg border border-solid border-slate-300 bg-white p-8 font-sans text-inherit">
+      <Link
+        href={surveyUrl}
+        target="_blank"
+        className="mx-0 my-2 block rounded-lg border border-solid border-slate-300 bg-white p-8 font-sans text-inherit">
         {children}
-      </Container>
+      </Link>
     </Tailwind>
   );
 };

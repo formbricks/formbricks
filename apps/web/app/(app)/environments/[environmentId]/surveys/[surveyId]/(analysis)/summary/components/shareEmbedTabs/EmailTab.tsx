@@ -4,7 +4,7 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { Button } from "@formbricks/ui/Button";
 import CodeBlock from "@formbricks/ui/CodeBlock";
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getEmailHtmlAction, sendEmailAction } from "../../actions";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
@@ -16,14 +16,19 @@ interface EmailTabProps {
 
 export default function EmailTab({ surveyId, email }: EmailTabProps) {
   const [showEmbed, setShowEmbed] = useState(false);
-  const [emailHtml, setEmailHtml] = useState<string>("");
+  const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
+
+  const emailHtml = useMemo(() => {
+    if (!emailHtmlPreview) return "";
+    return emailHtmlPreview.replaceAll("?preview=true&", "?").replaceAll("?preview=true", "");
+  }, [emailHtmlPreview]);
 
   useEffect(() => {
     getData();
 
     async function getData() {
       const emailHtml = await getEmailHtmlAction(surveyId);
-      setEmailHtml(emailHtml);
+      setEmailHtmlPreview(emailHtml);
     }
   });
 
@@ -68,7 +73,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
               variant="secondary"
               title="send preview email"
               aria-label="send preview email"
-              onClick={sendPreviewEmail}
+              onClick={() => sendPreviewEmail(emailHtmlPreview)}
               EndIcon={EnvelopeIcon}
               className="shrink-0">
               Send Preview
@@ -106,7 +111,11 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
             <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
             <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
             <div className="p-4">
-              {emailHtml ? <div dangerouslySetInnerHTML={{ __html: emailHtml }}></div> : <LoadingSpinner />}
+              {emailHtml ? (
+                <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>
+              ) : (
+                <LoadingSpinner />
+              )}
             </div>
           </div>
         </div>
