@@ -76,6 +76,7 @@ export const LOCAL_UPLOAD_URL = {
 export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
 
+// Colors for Survey Bg
 export const colours = [
   "#FFF2D8",
   "#EAD7BB",
