@@ -1,13 +1,12 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TResponseKey, ZResponseKeyId } from "@formbricks/types/responseKey";
 import { Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
-import { validateInputs } from "../utils/validate";
 import z from "zod";
+import { validateInputs } from "../utils/validate";
 
 // Create the short url and return it
-export const createResponseSharingkey = async (surveyId: string): Promise<string> => {
+export const createResultShareUrl = async (surveyId: string): Promise<string> => {
   validateInputs([surveyId, z.string().cuid2()]);
 
   try {
@@ -21,7 +20,7 @@ export const createResponseSharingkey = async (surveyId: string): Promise<string
     // If an entry with the provided fullUrl does not exist, create a new one.
     const id = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10)();
 
-    const key = await prisma.responseSharingKey.create({
+    const key = await prisma.resultShareUrl.create({
       data: {
         id,
         surveyId,
@@ -37,10 +36,10 @@ export const createResponseSharingkey = async (surveyId: string): Promise<string
   }
 };
 
-export const getResponseKeyBySurveyId = async (surveyId: string): Promise<string | null> => {
+export const getResultShareUrlsBySurveyId = async (surveyId: string): Promise<string | null> => {
   validateInputs([surveyId, z.string().cuid2()]);
   try {
-    const key = await prisma.responseSharingKey.findFirst({
+    const key = await prisma.resultShareUrl.findFirst({
       where: {
         surveyId,
       },
@@ -62,7 +61,7 @@ export const getResponseKeyBySurveyId = async (surveyId: string): Promise<string
 
 export const getResponseKeySurvey = async (key: string): Promise<string | null> => {
   try {
-    const responseKey = await prisma.responseSharingKey.findFirst({
+    const responseKey = await prisma.resultShareUrl.findFirst({
       where: {
         id: key,
       },
@@ -82,11 +81,11 @@ export const getResponseKeySurvey = async (key: string): Promise<string | null> 
   }
 };
 
-export const deleteResponseSharingKeyBySurveyId = async (surveyId: string): Promise<boolean> => {
+export const deleteResultShareUrlBySurveyId = async (surveyId: string): Promise<boolean> => {
   try {
     validateInputs([surveyId, z.string().cuid2()]);
 
-    const existingKey = await prisma.responseSharingKey.findFirst({
+    const existingKey = await prisma.resultShareUrl.findFirst({
       where: {
         surveyId,
       },
@@ -96,7 +95,7 @@ export const deleteResponseSharingKeyBySurveyId = async (surveyId: string): Prom
       throw new Error("Key not found");
     }
 
-    await prisma.responseSharingKey.delete({
+    await prisma.resultShareUrl.delete({
       where: {
         id: existingKey.id,
       },

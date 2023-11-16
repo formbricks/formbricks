@@ -7,10 +7,10 @@ import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { getServerSession } from "next-auth";
 import {
-  createResponseSharingkey,
+  createResultShareUrl,
   getResponseKeyBySurveyId,
-  deleteResponseSharingKeyBySurveyId,
-} from "@formbricks/lib/responseSharing/service";
+  deleteResultShareUrlBySurveyId,
+} from "@formbricks/lib/resultShareUrl/service";
 
 type TSendEmailActionArgs = {
   to: string;
@@ -38,7 +38,7 @@ export const sendEmailAction = async ({ html, subject, to }: TSendEmailActionArg
   return await sendEmbedSurveyPreviewEmail(to, subject, html);
 };
 
-export async function generateResponseSharingKeyAction(surveyId: string): Promise<string> {
+export async function generateResultShareUrlAction(surveyId: string): Promise<string> {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -46,10 +46,10 @@ export async function generateResponseSharingKeyAction(surveyId: string): Promis
 
   if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
 
-  return createResponseSharingkey(surveyId);
+  return createResultShareUrl(surveyId);
 }
 
-export async function getResponseSharingKeyAction(surveyId: string): Promise<string | null> {
+export async function getResultShareUrlAction(surveyId: string): Promise<string | null> {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -60,7 +60,7 @@ export async function getResponseSharingKeyAction(surveyId: string): Promise<str
   return getResponseKeyBySurveyId(surveyId);
 }
 
-export async function deleteResponseSharingKeyAction(surveyId: string): Promise<boolean> {
+export async function deleteResultShareUrlAction(surveyId: string): Promise<boolean> {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -68,5 +68,5 @@ export async function deleteResponseSharingKeyAction(surveyId: string): Promise<
 
   if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
 
-  return await deleteResponseSharingKeyBySurveyId(surveyId);
+  return await deleteResultShareUrlBySurveyId(surveyId);
 }

@@ -6,12 +6,12 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { getResponseSharingKeySurveyAction } from "@/app/(app)/share/[sharingKey]/action";
+import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
 import { OPEN_TEXT_RESPONSES_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { redirect } from "next/navigation";
 
 export default async function Page({ params }) {
-  const surveyId = await getResponseSharingKeySurveyAction(params.sharingKey);
+  const surveyId = await getResultShareUrlSurveyAction(params.sharingKey);
 
   if (!surveyId) {
     return redirect(`/`);

@@ -283,16 +283,16 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
-  productOverwrites  Json?
+  productOverwrites Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse          Json?                @default("{\"enabled\": false, \"isEncrypted\": true}")
+  singleUse         Json?            @default("{\"enabled\": false, \"isEncrypted\": true}")
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail        Json?
-  pin                String?
-  ResponseSharingKey ResponseSharingKey[]
-  
+  verifyEmail       Json?
+  pin               String?
+  resultShareUrls   ResultShareUrl[]
+
   @@index([environmentId])
 }
 
@@ -565,7 +565,7 @@ model ShortUrl {
   url       String   @unique
 }
 
-model ResponseSharingKey {
+model ResultShareUrl {
   id        String   @id @unique // generate nanoId in service
   createdAt DateTime @default(now()) @map(name: "created_at")
   surveyId  String

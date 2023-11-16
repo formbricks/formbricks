@@ -15,9 +15,9 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 import { DownloadIcon } from "lucide-react";
 import {
-  generateResponseSharingKeyAction,
-  getResponseSharingKeyAction,
-  deleteResponseSharingKeyAction,
+  generateResultShareUrlAction,
+  getResultShareUrlAction,
+  deleteResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
@@ -44,13 +44,13 @@ export default function LinkSurveyShareButton({
   const [surveyUrl, setSurveyUrl] = useState("");
 
   const handlePublish = async () => {
-    const key = await generateResponseSharingKeyAction(survey.id);
+    const key = await generateResultShareUrlAction(survey.id);
     setSurveyUrl(webAppUrl + "/share/" + key);
     setShowPublishModal(true);
   };
 
   const handleUnpublish = () => {
-    deleteResponseSharingKeyAction(survey.id)
+    deleteResultShareUrlAction(survey.id)
       .then(() => {
         toast.success("Survey Unpublished successfully");
         setShowPublishModal(false);
@@ -62,7 +62,7 @@ export default function LinkSurveyShareButton({
 
   useEffect(() => {
     async function fetchSharingKey() {
-      const sharingKey = await getResponseSharingKeyAction(survey.id);
+      const sharingKey = await getResultShareUrlAction(survey.id);
       if (sharingKey) {
         setSurveyUrl(webAppUrl + "/share/" + sharingKey);
         setShowPublishModal(true);
