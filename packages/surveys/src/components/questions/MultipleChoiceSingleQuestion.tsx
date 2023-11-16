@@ -6,15 +6,19 @@ import { cn, shuffleQuestions } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -25,24 +29,28 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttcObj,
+  setTtcObj,
 }: MultipleChoiceSingleProps) {
-  const startTime = useRef<number>(performance.now());
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useEffect(() => {
+    setStartTime(performance.now());
+  }, [question.id]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         // Restart the timer when the tab becomes visible again
-        startTime.current = performance.now();
+        setStartTime(performance.now());
       } else {
-        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
       }
     };
-
-    // Attach the event listener
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      // Clean up the event listener when the component is unmounted
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
@@ -77,7 +85,9 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && (
@@ -86,6 +96,7 @@ export default function MultipleChoiceSingleQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
+      {console.log(startTime)}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
@@ -102,8 +113,14 @@ export default function MultipleChoiceSingleQuestion({
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
                     onChange({ [question.id]: choice.label });
+                    const updatedTtcObj = getUpdatedTtcObj(
+                      ttcObj,
+                      question.id,
+                      performance.now() - startTime
+                    );
+                    setTtcObj(updatedTtcObj);
                     setTimeout(() => {
-                      onSubmit({ [question.id]: choice.label }, true, performance.now() - startTime.current);
+                      onSubmit({ [question.id]: choice.label }, updatedTtcObj);
                     }, 350);
                   }
                 }}
@@ -181,8 +198,14 @@ export default function MultipleChoiceSingleQuestion({
                     }}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
+                        const updatedTtcObj = getUpdatedTtcObj(
+                          ttcObj,
+                          question.id,
+                          performance.now() - startTime
+                        );
+                        setTtcObj(updatedTtcObj);
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
+                          onSubmit({ [question.id]: value }, updatedTtcObj);
                         }, 100);
                       }
                     }}
@@ -203,7 +226,8 @@ export default function MultipleChoiceSingleQuestion({
             backButtonLabel={question.backButtonLabel}
             tabIndex={questionChoices.length + 3}
             onClick={() => {
-              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+              setTtcObj(updatedTtcObj);
               onBack();
             }}
           />

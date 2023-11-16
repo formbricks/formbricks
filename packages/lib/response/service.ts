@@ -23,7 +23,7 @@ import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
-import { formatResponseDateFields, mergeAndAdd } from "../response/util";
+import { calculateTotal, formatResponseDateFields } from "../response/util";
 
 const responseSelection = {
   id: true,
@@ -444,7 +444,7 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
-    const ttc = mergeAndAdd(currentResponse.ttc, responseInput.ttc!, responseInput.finished);
+    const ttc = responseInput.finished ? calculateTotal(responseInput.ttc) : responseInput.ttc;
 
     const responsePrisma = await prisma.response.update({
       where: {

@@ -1,4 +1,4 @@
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 import CTAQuestion from "@/components/questions/CTAQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
@@ -13,11 +13,13 @@ interface QuestionConditionalProps {
   question: TSurveyQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function QuestionConditional({
@@ -29,6 +31,8 @@ export default function QuestionConditional({
   isFirstQuestion,
   isLastQuestion,
   autoFocus = true,
+  ttcObj,
+  setTtcObj,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
@@ -40,6 +44,8 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       autoFocus={autoFocus}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -50,6 +56,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -60,6 +68,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
@@ -70,6 +80,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
@@ -80,6 +92,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
@@ -90,6 +104,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
@@ -100,6 +116,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
@@ -110,6 +128,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      ttcObj={ttcObj}
+      setTtcObj={setTtcObj}
     />
   ) : null;
 }

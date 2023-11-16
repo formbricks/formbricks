@@ -4,16 +4,20 @@ import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
-import { useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function CTAQuestion({
@@ -22,16 +26,22 @@ export default function CTAQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttcObj,
+  setTtcObj,
 }: CTAQuestionProps) {
-  const startTime = useRef<number>(performance.now());
+  const [startTime, setStartTime] = useState(performance.now());
 
+  useEffect(() => {
+    setStartTime(performance.now());
+  }, [question.id]);
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         // Restart the timer when the tab becomes visible again
-        startTime.current = performance.now();
+        setStartTime(performance.now());
       } else {
-        onSubmit({ [question.id]: "" }, false, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
       }
     };
 
@@ -60,7 +70,9 @@ export default function CTAQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: "" }, false, performance.now() - startTime.current);
+              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+              setTtcObj(updatedTtcObj);
+              onSubmit({ [question.id]: "" }, updatedTtcObj);
               onBack();
             }}
           />
@@ -71,7 +83,9 @@ export default function CTAQuestion({
               tabIndex={0}
               type="button"
               onClick={() => {
-                onSubmit({ [question.id]: "dismissed" }, true, performance.now() - startTime.current);
+                const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+                setTtcObj(updatedTtcObj);
+                onSubmit({ [question.id]: "dismissed" }, updatedTtcObj);
               }}
               className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
               {question.dismissButtonLabel || "Skip"}
@@ -85,7 +99,9 @@ export default function CTAQuestion({
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();
               }
-              onSubmit({ [question.id]: "clicked" }, true, performance.now() - startTime.current);
+              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+              setTtcObj(updatedTtcObj);
+              onSubmit({ [question.id]: "clicked" }, updatedTtcObj);
             }}
             type="button"
           />

@@ -3,6 +3,7 @@ import { calculateElementIdx } from "@/lib/utils";
 import { TSurveyWithTriggers } from "@formbricks/types/js";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 
 interface WelcomeCardProps {
   headline?: string;
@@ -10,8 +11,7 @@ interface WelcomeCardProps {
   fileUrl?: string;
   buttonLabel?: string;
   timeToFinish?: boolean;
-  brandColor: string;
-  onSubmit: (data: { [x: string]: any }, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurveyWithTriggers;
 }
 
@@ -86,7 +86,7 @@ export default function WelcomeCard({
             isLastQuestion={false}
             focus={true}
             onClick={() => {
-              onSubmit({ ["welcomeCard"]: "clicked" }, true, 0);
+              onSubmit({ ["welcomeCard"]: "clicked" }, {});
             }}
             type="button"
           />

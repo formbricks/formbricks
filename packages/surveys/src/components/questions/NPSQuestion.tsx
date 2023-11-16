@@ -5,16 +5,20 @@ import Subheader from "@/components/general/Subheader";
 import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
-import { useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function NPSQuestion({
@@ -25,16 +29,22 @@ export default function NPSQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttcObj,
+  setTtcObj,
 }: NPSQuestionProps) {
-  const startTime = useRef<number>(performance.now());
+  const [startTime, setStartTime] = useState(performance.now());
 
+  useEffect(() => {
+    setStartTime(performance.now());
+  }, [question.id]);
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         // Restart the timer when the tab becomes visible again
-        startTime.current = performance.now();
+        setStartTime(performance.now());
       } else {
-        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
       }
     };
 
@@ -50,7 +60,9 @@ export default function NPSQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
       {question.imageUrl && (
         <div className="my-4 rounded-md">
@@ -70,7 +82,13 @@ export default function NPSQuestion({
                 tabIndex={idx + 1}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
-                    onSubmit({ [question.id]: number }, true, performance.now() - startTime.current);
+                    const updatedTtcObj = getUpdatedTtcObj(
+                      ttcObj,
+                      question.id,
+                      performance.now() - startTime
+                    );
+                    setTtcObj(updatedTtcObj);
+                    onSubmit({ [question.id]: number }, updatedTtcObj);
                   }
                 }}
                 className={cn(
@@ -85,12 +103,17 @@ export default function NPSQuestion({
                   className="absolute h-full w-full cursor-pointer opacity-0"
                   onClick={() => {
                     if (question.required) {
+                      const updatedTtcObj = getUpdatedTtcObj(
+                        ttcObj,
+                        question.id,
+                        performance.now() - startTime
+                      );
+                      setTtcObj(updatedTtcObj);
                       onSubmit(
                         {
                           [question.id]: number,
                         },
-                        true,
-                        performance.now() - startTime.current
+                        updatedTtcObj
                       );
                     }
                     onChange({ [question.id]: number });
@@ -114,7 +137,8 @@ export default function NPSQuestion({
             tabIndex={isLastQuestion ? 12 : 13}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+              setTtcObj(updatedTtcObj);
               onBack();
             }}
           />

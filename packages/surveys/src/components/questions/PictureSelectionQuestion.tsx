@@ -5,16 +5,20 @@ import Subheader from "@/components/general/Subheader";
 import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
-import { useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function PictureSelectionQuestion({
@@ -25,16 +29,22 @@ export default function PictureSelectionQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttcObj,
+  setTtcObj,
 }: PictureSelectionProps) {
-  const startTime = useRef<number>(performance.now());
+  const [startTime, setStartTime] = useState(performance.now());
 
+  useEffect(() => {
+    setStartTime(performance.now());
+  }, [question.id]);
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         // Restart the timer when the tab becomes visible again
-        startTime.current = performance.now();
+        setStartTime(performance.now());
       } else {
-        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
       }
     };
 
@@ -99,7 +109,9 @@ export default function PictureSelectionQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && (
@@ -180,7 +192,8 @@ export default function PictureSelectionQuestion({
             tabIndex={questionChoices.length + 3}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+              setTtcObj(updatedTtcObj);
               onBack();
             }}
           />

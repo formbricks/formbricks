@@ -5,17 +5,21 @@ import Subheader from "@/components/general/Subheader";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { useCallback } from "react";
-import { useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function OpenTextQuestion({
@@ -27,16 +31,22 @@ export default function OpenTextQuestion({
   isFirstQuestion,
   isLastQuestion,
   autoFocus = true,
+  ttcObj,
+  setTtcObj,
 }: OpenTextQuestionProps) {
-  const startTime = useRef<number>(performance.now());
+  const [startTime, setStartTime] = useState(performance.now());
 
+  useEffect(() => {
+    setStartTime(performance.now());
+  }, [question.id]);
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         // Restart the timer when the tab becomes visible again
-        startTime.current = performance.now();
+        setStartTime(performance.now());
       } else {
-        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
       }
     };
 
@@ -71,11 +81,9 @@ export default function OpenTextQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         //  if ( validateInput(value as string, question.inputType, question.required)) {
-        onSubmit(
-          { [question.id]: value, inputType: question.inputType },
-          true,
-          performance.now() - startTime.current
-        );
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
+        onSubmit({ [question.id]: value, inputType: question.inputType }, updatedTtcObj);
         // }
       }}
       className="w-full">
@@ -105,7 +113,9 @@ export default function OpenTextQuestion({
               if (e.key === "Enter" && isInputEmpty(value as string)) {
                 e.preventDefault(); // Prevent form submission
               } else if (e.key === "Enter") {
-                onSubmit({ [question.id]: value });
+                const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+                setTtcObj(updatedTtcObj);
+                onSubmit({ [question.id]: value, inputType: question.inputType }, updatedTtcObj);
               }
             }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
@@ -136,7 +146,8 @@ export default function OpenTextQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+              setTtcObj(updatedTtcObj);
               onBack();
             }}
           />

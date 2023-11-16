@@ -3,7 +3,7 @@ import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
-import type { TResponseData } from "@formbricks/types/responses";
+import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
 import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
@@ -31,6 +31,7 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const [ttcObj, setTtcObj] = useState<TResponseTtc>({});
 
   useEffect(() => {
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
@@ -51,7 +52,7 @@ export function Survey({
     // call onDisplay when component is mounted
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData, true, 0, true);
+      onSubmit(prefillResponseData, {}, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -88,22 +89,12 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (
-    responseData: TResponseData,
-    isSubmit: boolean,
-    time: number,
-    isFromPrefilling: Boolean = false
-  ) => {
+  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFromPrefilling: Boolean = false) => {
     const questionId = Object.keys(responseData)[0];
-    const timeData = { [questionId]: time };
-    if (!isSubmit) {
-      onResponse({ data: responseData, ttc: timeData, finished: false });
-      return;
-    }
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
     const finished = nextQuestionId === "end";
-    onResponse({ data: responseData, ttc: timeData, finished });
+    onResponse({ data: responseData, ttc, finished });
     if (finished) {
       onFinished();
     }
@@ -162,6 +153,8 @@ export function Survey({
             onChange={onChange}
             onSubmit={onSubmit}
             onBack={onBack}
+            ttcObj={ttcObj}
+            setTtcObj={setTtcObj}
             isFirstQuestion={
               history && prefillResponseData
                 ? history[history.length - 1] === survey.questions[0].id

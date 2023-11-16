@@ -4,16 +4,20 @@ import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
-import { useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function ConsentQuestion({
@@ -24,16 +28,23 @@ export default function ConsentQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttcObj,
+  setTtcObj,
 }: ConsentQuestionProps) {
-  const startTime = useRef<number>(performance.now());
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useEffect(() => {
+    setStartTime(performance.now());
+  }, [question.id]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         // Restart the timer when the tab becomes visible again
-        startTime.current = performance.now();
+        setStartTime(performance.now());
       } else {
-        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
       }
     };
 
@@ -59,7 +70,9 @@ export default function ConsentQuestion({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
+          const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+          setTtcObj(updatedTtcObj);
+          onSubmit({ [question.id]: value }, updatedTtcObj);
         }}>
         <label
           tabIndex={1}
@@ -97,7 +110,9 @@ export default function ConsentQuestion({
               tabIndex={3}
               backButtonLabel={question.backButtonLabel}
               onClick={() => {
-                onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+                const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+                setTtcObj(updatedTtcObj);
+                onSubmit({ [question.id]: value }, updatedTtcObj);
                 onBack();
               }}
             />

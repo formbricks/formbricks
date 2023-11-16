@@ -4,8 +4,9 @@ import Headline from "@/components/general/Headline";
 import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
-import { useState } from "preact/hooks";
-import { useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtcObj } from "../../lib/utils";
 
 import {
   ConfusedFace,
@@ -25,10 +26,12 @@ interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData, isSubmit: boolean, time: number) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttcObj: TResponseTtc;
+  setTtcObj: (ttc: TResponseTtc) => void;
 }
 
 export default function RatingQuestion({
@@ -39,17 +42,23 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttcObj,
+  setTtcObj,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
-  const startTime = useRef<number>(performance.now());
+  const [startTime, setStartTime] = useState(performance.now());
 
+  useEffect(() => {
+    setStartTime(performance.now());
+  }, [question.id]);
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         // Restart the timer when the tab becomes visible again
-        startTime.current = performance.now();
+        setStartTime(performance.now());
       } else {
-        onSubmit({ [question.id]: value }, false, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
       }
     };
 
@@ -65,12 +74,13 @@ export default function RatingQuestion({
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
     if (question.required) {
+      const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+      setTtcObj(updatedTtcObj);
       onSubmit(
         {
           [question.id]: number,
         },
-        true,
-        performance.now() - startTime.current
+        updatedTtcObj
       );
     }
   };
@@ -91,7 +101,9 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value }, true, performance.now() - startTime.current);
+        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+        setTtcObj(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && (
@@ -214,6 +226,8 @@ export default function RatingQuestion({
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
+              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
+              setTtcObj(updatedTtcObj);
               onBack();
             }}
           />
