@@ -85,21 +85,20 @@ export default function LinkSurvey({
     }
   }, []);
 
-  const [hiddenFieldsRecord, setHiddenFieldsRecord] = useState<Record<string, string | number | string[]>>();
+  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
+    const fieldsRecord: Record<string, string | number | string[]> = {};
+    let fieldsSet = false;
 
-  useEffect(() => {
     survey.hiddenFields?.fieldIds?.forEach((field) => {
-      // set the question and answer to the survey state
       const answer = searchParams?.get(field);
       if (answer) {
-        setHiddenFieldsRecord((prev) => {
-          return {
-            ...prev,
-            [field]: answer,
-          };
-        });
+        fieldsRecord[field] = answer;
+        fieldsSet = true;
       }
     });
+
+    // Only return the record if at least one field was set.
+    return fieldsSet ? fieldsRecord : null;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   useEffect(() => {

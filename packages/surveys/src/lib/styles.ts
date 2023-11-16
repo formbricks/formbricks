@@ -1,6 +1,7 @@
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
+import { isLight } from "@/lib/utils";
 
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {
@@ -19,6 +20,7 @@ export const addCustomThemeToDom = ({ brandColor }: { brandColor: string }) => {
   styleElement.innerHTML = `
     :root {
       --fb-brand-color: ${brandColor};
+      ${isLight(brandColor) ? "--fb-brand-text-color: black;" : "--fb-brand-text-color: white;"}
     }
   `;
   document.head.appendChild(styleElement);

@@ -15,7 +15,7 @@ import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSurveyAction } from "../actions";
-import { customSurvey, templates } from "./templates";
+import { customSurvey, templates, testTemplate } from "./templates";
 
 type TemplateList = {
   environmentId: string;
@@ -147,7 +147,10 @@ export default function TemplateList({
             </div>
           )}
         </button>
-        {filteredTemplates.map((template: TTemplate) => (
+        {(process.env.NODE_ENV === "development"
+          ? [...filteredTemplates, testTemplate]
+          : filteredTemplates
+        ).map((template: TTemplate) => (
           <div
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);

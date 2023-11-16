@@ -103,6 +103,20 @@ export const colours = [
   "#CDFAD5",
 ];
 
+// Rate Limiting
+export const SIGNUP_RATE_LIMIT = {
+  interval: 60 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 5,
+};
+export const LOGIN_RATE_LIMIT = {
+  interval: 15 * 60 * 1000, // 15 minutes
+  allowedPerInterval: 5,
+};
+export const CLIENT_SIDE_API_RATE_LIMIT = {
+  interval: 10 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 50,
+};
+
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
