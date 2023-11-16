@@ -1,14 +1,13 @@
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import CTAQuestion from "./CTAQuestion";
-import ConsentQuestion from "./ConsentQuestion";
-import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
-import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
-import NPSQuestion from "./NPSQuestion";
-import OpenTextQuestion from "./OpenTextQuestion";
-import RatingQuestion from "./RatingQuestion";
-import PictureSelectionQuestion from "./PictureSelectionQuestion";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import CTAQuestion from "@/components/questions/CTAQuestion";
+import ConsentQuestion from "@/components/questions/ConsentQuestion";
+import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
+import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
+import NPSQuestion from "@/components/questions/NPSQuestion";
+import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
+import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
+import RatingQuestion from "@/components/questions/RatingQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -18,7 +17,6 @@ interface QuestionConditionalProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   language: string;
   autoFocus?: boolean;
 }
@@ -31,7 +29,6 @@ export default function QuestionConditional({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   language,
   autoFocus = true,
 }: QuestionConditionalProps) {
@@ -44,7 +41,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       autoFocus={autoFocus}
       language={language}
     />
@@ -57,7 +53,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       language={language}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
@@ -69,7 +64,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       language={language}
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
@@ -81,7 +75,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       language={language}
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
@@ -93,7 +86,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       language={language}
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
@@ -105,7 +97,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       language={language}
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
@@ -117,7 +108,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       language={language}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
@@ -129,7 +119,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
       language={language}
     />
   ) : null;

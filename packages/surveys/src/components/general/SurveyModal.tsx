@@ -1,12 +1,11 @@
 import { useState } from "preact/hooks";
-import { SurveyModalProps } from "../types/props";
-import Modal from "./Modal";
+import { SurveyModalProps } from "@/types/props";
+import Modal from "@/components/wrappers/Modal";
 import { Survey } from "./Survey";
 
 export function SurveyModal({
   survey,
-  brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   placement,
   clickOutside,
@@ -30,7 +29,7 @@ export function SurveyModal({
   };
 
   return (
-    <div id="fbjs">
+    <div id="fbjs" className="formbricks-form">
       <Modal
         placement={placement}
         clickOutside={clickOutside}
@@ -40,8 +39,7 @@ export function SurveyModal({
         onClose={close}>
         <Survey
           survey={survey}
-          brandColor={brandColor}
-          formbricksSignature={formbricksSignature}
+          isBrandingEnabled={isBrandingEnabled}
           activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}

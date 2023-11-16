@@ -8,7 +8,7 @@ const createContainerId = () => `formbricks-survey-container`;
 interface SurveyProps {
   survey: TSurvey;
   brandColor: string;
-  formbricksSignature: boolean;
+  isBrandingEnabled: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
@@ -31,7 +31,7 @@ interface SurveyModalProps extends SurveyProps {
 export const SurveyInline = ({
   survey,
   brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
   onResponse = () => {},
@@ -47,7 +47,7 @@ export const SurveyInline = ({
     renderSurveyInline({
       survey,
       brandColor,
-      formbricksSignature,
+      isBrandingEnabled,
       containerId,
       onDisplay,
       onResponse,
@@ -63,7 +63,7 @@ export const SurveyInline = ({
     activeQuestionId,
     brandColor,
     containerId,
-    formbricksSignature,
+    isBrandingEnabled,
     onActiveQuestionChange,
     onClose,
     onDisplay,
@@ -79,7 +79,7 @@ export const SurveyInline = ({
 export const SurveyModal = ({
   survey,
   brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   placement = "bottomRight",
   clickOutside = false,
@@ -97,7 +97,7 @@ export const SurveyModal = ({
     renderSurveyModal({
       survey,
       brandColor,
-      formbricksSignature,
+      isBrandingEnabled,
       placement,
       clickOutside,
       darkOverlay,
@@ -116,7 +116,7 @@ export const SurveyModal = ({
     brandColor,
     clickOutside,
     darkOverlay,
-    formbricksSignature,
+    isBrandingEnabled,
     highlightBorderColor,
     onActiveQuestionChange,
     onClose,

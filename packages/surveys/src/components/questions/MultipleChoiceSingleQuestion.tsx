@@ -1,12 +1,11 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import Subheader from "@/components/general/Subheader";
+import { cn, shuffleQuestions, getLocalizedValue } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
-import { useMemo, useRef, useState, useEffect } from "preact/hooks";
-import { cn, shuffleQuestions } from "../lib/utils";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
-import { getLocalizedValue } from "../lib/utils";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -16,7 +15,6 @@ interface MultipleChoiceSingleProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   language: string;
 }
 
@@ -28,7 +26,6 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   language,
 }: MultipleChoiceSingleProps) {
   const [otherSelected, setOtherSelected] = useState(
@@ -84,8 +81,9 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
+
           <div
-            className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md bg-white py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
             role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label
@@ -100,8 +98,10 @@ export default function MultipleChoiceSingleQuestion({
                   }
                 }}
                 className={cn(
-                  value === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 focus-within:border-slate-400  focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-none "
+                  value === choice.label
+                    ? "border-border-highlight bg-accent-selected-bg z-10"
+                    : "border-border",
+                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -110,14 +110,13 @@ export default function MultipleChoiceSingleQuestion({
                     id={choice.id}
                     name={question.id}
                     value={choice.label}
-                    className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                    className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setOtherSelected(false);
                       onChange({ [question.id]: choice.label[language] });
                     }}
                     checked={value === choice.label[language]}
-                    style={{ borderColor: brandColor, color: brandColor }}
                     required={question.required && idx === 0}
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
@@ -130,8 +129,10 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === otherOption.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                  "relative flex cursor-pointer flex-col rounded-md border p-4 text-slate-800 focus-within:border-slate-400 focus-within:bg-slate-50  hover:bg-slate-50 focus:outline-none"
+                  value === otherOption.label
+                    ? "border-border-highlight bg-accent-selected-bg z-10"
+                    : "border-border",
+                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
@@ -146,14 +147,13 @@ export default function MultipleChoiceSingleQuestion({
                     tabIndex={-1}
                     name={question.id}
                     value={getLocalizedValue(otherOption.label, language)}
-                    className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                    className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={() => {
                       setOtherSelected(!otherSelected);
                       onChange({ [question.id]: "" });
                     }}
                     checked={otherSelected}
-                    style={{ borderColor: brandColor, color: brandColor }}
                   />
                   <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
                     {getLocalizedValue(otherOption.label, language)}
@@ -177,7 +177,7 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     placeholder="Please specify"
-                    className="mt-3 flex h-10 w-full rounded-md border border-slate-300 bg-transparent bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none  focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
+                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />
@@ -200,7 +200,6 @@ export default function MultipleChoiceSingleQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={question.buttonLabel}
           isLastQuestion={isLastQuestion}
-          brandColor={brandColor}
           onClick={() => {}}
         />
       </div>

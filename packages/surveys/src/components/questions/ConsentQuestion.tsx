@@ -1,10 +1,10 @@
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import HtmlBody from "./HtmlBody";
-import SubmitButton from "./SubmitButton";
-import { getLocalizedValue } from "../lib/utils";
+import { getLocalizedValue } from "../../lib/utils";
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import HtmlBody from "@/components/general/HtmlBody";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -14,7 +14,6 @@ interface ConsentQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   language: string;
 }
 
@@ -26,7 +25,6 @@ export default function ConsentQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   language,
 }: ConsentQuestionProps) {
   return (
@@ -56,7 +54,7 @@ export default function ConsentQuestion({
               onChange({ [question.id]: "accepted" });
             }
           }}
-          className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 p-4 text-sm text-slate-800 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+          className="border-border bg-survey-bg text-heading hover:bg-accent-bg focus:bg-accent-bg focus:ring-border-highlight relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
           <input
             type="checkbox"
             id={question.id}
@@ -70,9 +68,8 @@ export default function ConsentQuestion({
               }
             }}
             checked={value === "accepted"}
-            className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+            className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
-            style={{ borderColor: brandColor, color: brandColor }}
             required={question.required}
           />
           <span id={`${question.id}-label`} className="ml-3 font-medium">
@@ -87,7 +84,6 @@ export default function ConsentQuestion({
           <div />
           <SubmitButton
             tabIndex={2}
-            brandColor={brandColor}
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}

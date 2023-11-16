@@ -1,4 +1,4 @@
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 import { decryptAES128, symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import cuid2 from "@paralleldrive/cuid2";
 

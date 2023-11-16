@@ -1,11 +1,10 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import Subheader from "@/components/general/Subheader";
+import { cn, getLocalizedValue } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
-import { cn } from "../lib/utils";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
-import { getLocalizedValue } from "../lib/utils";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -15,7 +14,6 @@ interface NPSQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   language: string;
 }
 
@@ -27,7 +25,6 @@ export default function NPSQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   language,
 }: NPSQuestionProps) {
   return (
@@ -65,8 +62,8 @@ export default function NPSQuestion({
                   }
                 }}
                 className={cn(
-                  value === number ? "z-10 border-slate-400 bg-slate-50" : "",
-                  "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm leading-10 text-slate-800 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                  value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
+                  "bg-survey-bg text-heading hover:bg-accent-bg relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 first:rounded-l-md last:rounded-r-md focus:outline-none"
                 )}>
                 <input
                   type="radio"
@@ -88,7 +85,7 @@ export default function NPSQuestion({
               </label>
             ))}
           </div>
-          <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
+          <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>
@@ -111,7 +108,6 @@ export default function NPSQuestion({
             tabIndex={12}
             buttonLabel={question.buttonLabel}
             isLastQuestion={isLastQuestion}
-            brandColor={brandColor}
             onClick={() => {}}
           />
         )}
