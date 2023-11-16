@@ -7,7 +7,7 @@ import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { sendEmailAction } from "../../actions";
-import CodeBlock from "@formbricks/ui/CodeBlock";
+
 import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import {
   Column,
@@ -21,9 +21,11 @@ import {
   render,
   Img,
 } from "@react-email/components";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isLight } from "@/app/lib/utils";
+
+import CodeBlock from "@formbricks/ui/CodeBlock";
 
 interface EmailTabProps {
   survey: TSurvey;
@@ -34,15 +36,24 @@ interface EmailTabProps {
 
 export default function EmailTab({ survey, surveyUrl, email, brandColor }: EmailTabProps) {
   const [showEmbed, setShowEmbed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // New state for loading
+
   const subject = "Formbricks Email Survey Preview";
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000); // Adjust the timeout as needed
 
-  const emailValues = useMemo(() => {
-    return getEmailValues({ brandColor, survey, surveyUrl, preview: false });
+    return () => clearTimeout(loadingTimeout);
   }, []);
 
-  const previewEmailValues = useMemo(() => {
-    return getEmailValues({ brandColor, survey, surveyUrl, preview: true });
-  }, []);
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  const emailValues = getEmailValues({ brandColor, survey, surveyUrl, preview: false });
+
+  const previewEmailValues = getEmailValues({ brandColor, survey, surveyUrl, preview: true });
 
   const sendPreviewEmail = async () => {
     try {
