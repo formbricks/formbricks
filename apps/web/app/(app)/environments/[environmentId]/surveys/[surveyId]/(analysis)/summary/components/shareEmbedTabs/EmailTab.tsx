@@ -48,11 +48,7 @@ export default function EmailTab({ survey, surveyUrl, email, brandColor }: Email
   }, []);
 
   if (isLoading) {
-    return (
-      <div>
-        <CircularProgress />
-      </div>
-    );
+    return <CircularProgress />;
   }
 
   const emailValues = getEmailValues({ brandColor, survey, surveyUrl, preview: false });

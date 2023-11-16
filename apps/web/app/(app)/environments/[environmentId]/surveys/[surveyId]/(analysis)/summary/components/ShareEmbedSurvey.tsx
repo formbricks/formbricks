@@ -42,7 +42,7 @@ export default function ShareEmbedSurvey({
   ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
-  console.log(activeId);
+
   const componentMap = {
     link: isSingleUseLinkSurvey ? (
       <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={webAppUrl} />
