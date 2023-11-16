@@ -3,7 +3,6 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getServerSession } from "next-auth";
 import TemplateContainerWithPreview from "./TemplateContainer";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 export default async function SurveyTemplatesPage({ params }) {
   const session = await getServerSession(authOptions);
@@ -32,7 +31,6 @@ export default async function SurveyTemplatesPage({ params }) {
       profile={session.user}
       environment={environment}
       product={product}
-      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
     />
   );
 }

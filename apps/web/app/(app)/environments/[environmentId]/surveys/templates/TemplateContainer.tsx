@@ -17,7 +17,6 @@ type TemplateContainerWithPreviewProps = {
   product: TProduct;
   environment: TEnvironment;
   profile: TProfile;
-  IS_FORMBRICKS_CLOUD: boolean;
 };
 
 export default function TemplateContainerWithPreview({
@@ -25,7 +24,6 @@ export default function TemplateContainerWithPreview({
   product,
   environment,
   profile,
-  IS_FORMBRICKS_CLOUD,
 }: TemplateContainerWithPreviewProps) {
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -67,7 +65,6 @@ export default function TemplateContainerWithPreview({
               setActiveQuestionId(template.preset.questions[0].id);
               setActiveTemplate(template);
             }}
-            IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
           />
         </div>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
