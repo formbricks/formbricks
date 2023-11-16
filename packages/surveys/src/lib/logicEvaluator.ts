@@ -47,6 +47,7 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
         (Array.isArray(responseValue) && responseValue.length === 0) ||
         responseValue === "" ||
         responseValue === null ||
+        responseValue === undefined ||
         responseValue === "dismissed"
       );
     default:

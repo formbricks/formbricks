@@ -10,23 +10,29 @@ export const metadata = {
 
 At Formbricks, we value user privacy. By default, Formbricks doesn't collect or store any personal information from your users. However, we understand that it can be helpful for you to know which user submitted the feedback and also functionality like recontacting users and controlling the waiting period between surveys requires identifying the users. That's why we provide a way for you to share existing user data from your app, so you can view it in our dashboard.
 
-Once the Formbricks widget is loaded on your web app, our SDK exposes methods for identifying user attributes. Let's set it up!
+If you would like to use the User Identification feature of Formbricks, target surveys to specific user segments and see more information about the user who responded to a survey, you can identify users by setting a User ID, email, and custom attributes. This guide will walk you through how to do that.
 
 ## Setting User ID
 
-You can use the `setUserId` function to identify a user with any string. It's best to use the default identifier you use in your app (e.g. unique id from database) but you can also anonymize these as long as they are unique for every user. This function can be called multiple times with the same value safely and stores the identifier in local storage. We recommend you set the User ID whenever the user logs in to your website, as well as after the installation snippet (if the user is already logged in).
+To enable the User identification feature you need to set the `userId` in the init() call of Formbricks. Only when the `userId` is set the person will be visible in the Formbricks dashboard. The `userId` can be any string and it's best to use the default identifier you use in your app (e.g. unique id from database or the email address if it's unique) but you can also anonymize these as long as they are unique for every user.
+
 <Col>
 <CodeGroup title="Setting User ID">
 
 ```javascript
-formbricks.setUserId("USER_ID");
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user_id>",
+});
 ```
 
 </CodeGroup>
 </Col>
 ## Setting User Email
 
-You can use the setEmail function to set the user's email:
+The `userId` is the main identifier used in Formbricks and user identification is only enabled when it is set. In addition to the userId you can also set attributes that describes the user better. The email address can be set using the setEmail function:
+
 <Col>
 <CodeGroup title="Setting Email">
 
@@ -39,11 +45,12 @@ formbricks.setEmail("user@example.com");
 ### Setting Custom User Attributes
 
 You can use the setAttribute function to set any custom attribute for the user (e.g. name, plan, etc.):
+
 <Col>
 <CodeGroup title="Setting Custom Attributes">
 
 ```javascript
-formbricks.setAttribute("attribute_key", "attribute_value");
+formbricks.setAttribute("Plan", "free");
 ```
 
 </CodeGroup>
@@ -51,6 +58,7 @@ formbricks.setAttribute("attribute_key", "attribute_value");
 ### Logging Out Users
 
 When a user logs out of your webpage, make sure to log them out of Formbricks as well. This will prevent new activity from being associated with an incorrect user. Use the logout function:
+
 <Col>
 <CodeGroup title="Logging out User">
 

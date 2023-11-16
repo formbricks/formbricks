@@ -204,7 +204,7 @@ export default function PreviewSurvey({
                     survey={survey}
                     brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
-                    formbricksSignature={product.formbricksSignature}
+                    isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                   />
@@ -219,7 +219,7 @@ export default function PreviewSurvey({
                         survey={survey}
                         brandColor={brandColor}
                         activeQuestionId={activeQuestionId || undefined}
-                        formbricksSignature={product.formbricksSignature}
+                        isBrandingEnabled={product.linkSurveyBranding}
                         onActiveQuestionChange={setActiveQuestionId}
                       />
                     </div>
@@ -274,7 +274,7 @@ export default function PreviewSurvey({
                   survey={survey}
                   brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
-                  formbricksSignature={product.formbricksSignature}
+                  isBrandingEnabled={product.linkSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                 />
@@ -287,7 +287,7 @@ export default function PreviewSurvey({
                       survey={survey}
                       brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
+                      isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       isRedirectDisabled={true}
                     />
