@@ -11,7 +11,9 @@ import { Command, CommandGroup, CommandItem, CommandEmpty } from "@formbricks/ui
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import clsx from "clsx";
+import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;
@@ -20,7 +22,7 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type: TSurveyQuestionType | "Attributes" | "Tags" | undefined;
+  type: OptionsType.METADATA | TSurveyQuestionType | "Attributes" | "tags" | "language" | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };
@@ -148,16 +150,19 @@ const QuestionFilterComboBox = ({
                   <CommandItem
                     onSelect={() => {
                       !isMultiple
-                        ? onChangeFilterComboBoxValue(typeof o === "object" ? o.en : o)
+                        ? onChangeFilterComboBoxValue(typeof o === "object" ? getLocalizedValue(o, "en") : o)
                         : onChangeFilterComboBoxValue(
                             Array.isArray(filterComboBoxValue)
-                              ? [...filterComboBoxValue, typeof o === "object" ? o.en : o]
-                              : [typeof o === "object" ? o.en : o]
+                              ? [
+                                  ...filterComboBoxValue,
+                                  typeof o === "object" ? getLocalizedValue(o, "en") : o,
+                                ]
+                              : [typeof o === "object" ? getLocalizedValue(o, "en") : o]
                           );
                       !isMultiple && setOpen(false);
                     }}
                     className="cursor-pointer">
-                    {typeof o === "object" ? o.en : o}
+                    {typeof o === "object" ? getLocalizedValue(o, "en") : o}
                   </CommandItem>
                 ))}
               </CommandGroup>

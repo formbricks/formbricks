@@ -5,6 +5,7 @@ import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useMemo } from "react";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface PictureChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>;
@@ -74,7 +75,7 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline
-          headline={questionSummary.question.headline.en}
+          headline={getLocalizedValue(questionSummary.question.headline, "en")}
           required={questionSummary.question.required}
         />
 

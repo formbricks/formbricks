@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import GoogleSheetLogo from "../images/google-sheets-small.png";
 import { TIntegrationItem } from "@formbricks/types/integration";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface AddWebhookModalProps {
   environmentId: string;
@@ -284,7 +285,7 @@ export default function AddIntegrationModal({
                                 handleCheckboxChange(question.id);
                               }}
                             />
-                            <span className="ml-2">{question.headline.default}</span>
+                            <span className="ml-2">{getLocalizedValue(question.headline, "en")}</span>
                           </label>
                         </div>
                       ))}

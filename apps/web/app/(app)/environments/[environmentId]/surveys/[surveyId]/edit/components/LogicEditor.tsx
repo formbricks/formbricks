@@ -20,6 +20,7 @@ import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface LogicEditorProps {
   localSurvey: TSurvey;
@@ -318,10 +319,13 @@ export default function LogicEditor({
                   {localSurvey.questions.map(
                     (question, idx) =>
                       idx !== questionIdx && (
-                        <SelectItem key={question.id} value={question.id} title={question.headline.en}>
+                        <SelectItem
+                          key={question.id}
+                          value={question.id}
+                          title={getLocalizedValue(question.headline, "en")}>
                           <div className="w-40">
                             <p className="truncate">
-                              {idx + 1} - {question.headline.en}
+                              {idx + 1} - {getLocalizedValue(question.headline, "en")}
                             </p>
                           </div>
                         </SelectItem>

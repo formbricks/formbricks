@@ -8,7 +8,7 @@ import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { questionTypes } from "@/app/lib/questions";
-
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
@@ -27,7 +27,7 @@ export default function OpenTextSummary({
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline
-          headline={questionSummary.question.headline.en}
+          headline={getLocalizedValue(questionSummary.question.headline, "en")}
           required={questionSummary.question.required}
         />
 

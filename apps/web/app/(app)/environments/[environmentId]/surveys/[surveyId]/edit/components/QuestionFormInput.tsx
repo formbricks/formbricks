@@ -1,6 +1,6 @@
 "use client";
 
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TI18nString, TSurveyQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
 import { Label } from "@formbricks/ui/Label";
@@ -28,7 +28,6 @@ const QuestionFormInput = ({
   selectedLanguage,
   setSelectedLanguage,
   languages,
-  ref,
 }: QuestionFormInputProps) => {
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
   return (
@@ -50,12 +49,12 @@ const QuestionFormInput = ({
           <LocalizedInput
             id="subheader"
             name="subheader"
-            value={question.headline}
+            value={question.headline as TI18nString}
             languages={languages}
-            isInvalid={isInValid}
+            isInValid={isInValid}
             onChange={(e) => {
               let translatedheadline = {
-                ...question.headline,
+                ...(question.headline as TI18nString),
                 [selectedLanguage]: e.target.value,
               };
               updateQuestion(questionIdx, { headline: translatedheadline });

@@ -17,6 +17,7 @@ import {
   LanguageIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 export enum OptionsType {
   QUESTIONS = "Questions",
@@ -88,9 +89,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-base text-slate-600">
-        {typeof label === "string" ? label : label!.default}
-      </p>
+      <p className="ml-3 truncate text-base text-slate-600">{getLocalizedValue(label, "en")}</p>
     </div>
   );
 };

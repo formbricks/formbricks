@@ -1,6 +1,9 @@
 import { TI18nString } from "@formbricks/types/surveys";
 
-export const getLocalizedValue = (value: string | TI18nString, language: string): string => {
+export const getLocalizedValue = (value: string | TI18nString | undefined, language: string): string => {
+  if (!value) {
+    return "";
+  }
   if (isI18nString(value)) {
     return value[language]; // Fall back to 'en' if the specified language is not found
   }

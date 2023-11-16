@@ -2,6 +2,7 @@ import { evaluateCondition } from "@/app/(app)/environments/[environmentId]/surv
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { useMemo } from "react";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface SummaryDropOffsProps {
   survey: TSurvey;
@@ -108,7 +109,7 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
           <div
             key={question.id}
             className="grid grid-cols-5 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
-            <div className="col-span-3 pl-4 md:pl-6">{question.headline}</div>
+            <div className="col-span-3 pl-4 md:pl-6">{getLocalizedValue(question.headline, "en")}</div>
             <div className="whitespace-pre-wrap pl-6 text-center font-semibold">{viewsCount[i]}</div>
             <div className="px-4 text-center md:px-6">
               <span className="font-semibold">{dropoffCount[i]} </span>

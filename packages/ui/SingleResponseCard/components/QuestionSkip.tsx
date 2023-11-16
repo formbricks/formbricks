@@ -1,6 +1,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
 import { ChevronDoubleDownIcon, XCircleIcon } from "@heroicons/react/20/solid";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface QuestionSkipProps {
   skippedQuestions: string[] | undefined;
@@ -39,7 +40,10 @@ export default function QuestionSkip({ skippedQuestions, status, questions }: Qu
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId)!.headline.en}
+                        {getLocalizedValue(
+                          questions.find((question) => question.id === questionId)!.headline,
+                          "en"
+                        )}{" "}
                       </p>
                     );
                   })}
@@ -64,7 +68,10 @@ export default function QuestionSkip({ skippedQuestions, status, questions }: Qu
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId)!.headline.en}
+                        {getLocalizedValue(
+                          questions.find((question) => question.id === questionId)!.headline,
+                          "en"
+                        )}
                       </p>
                     );
                   })}

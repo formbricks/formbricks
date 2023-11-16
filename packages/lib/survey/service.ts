@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyAttributeFilter, TSurveyInput } from "@formbricks/types/surveys";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";

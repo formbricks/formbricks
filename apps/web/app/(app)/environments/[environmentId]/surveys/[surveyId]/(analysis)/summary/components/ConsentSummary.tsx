@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { questionTypes } from "@/app/lib/questions";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface ConsentSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyConsentQuestion>;
@@ -40,7 +41,7 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
         <Headline
-          headline={questionSummary.question.headline.en}
+          headline={getLocalizedValue(questionSummary.question.headline, "en")}
           required={questionSummary.question.required}
         />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">

@@ -12,12 +12,13 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { isWithinInterval } from "date-fns";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
   let questionNames: string[] = [];
 
   if (survey?.questions) {
-    questionNames = survey.questions.map((question) => question.headline);
+    questionNames = survey.questions.map((question) => getLocalizedValue(question.headline, "en"));
   }
 
   const attributeMap: Record<string, Record<string, string | number>> = {};
@@ -108,7 +109,7 @@ export const generateQuestionAndFilterOptions = (
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
       questionsOptions.push({
-        label: q.headline.en,
+        label: getLocalizedValue(q.headline, "en"),
         questionType: q.type,
         type: OptionsType.QUESTIONS,
         id: q.id,

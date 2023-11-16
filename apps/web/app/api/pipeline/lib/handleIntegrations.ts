@@ -5,6 +5,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {
   for (const integration of integrations) {
@@ -57,7 +58,7 @@ async function extractResponses(data: TPipelineInput, questionIds: string[]): Pr
     }
 
     const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(question?.headline || "");
+    questions.push(getLocalizedValue(question?.headline, "en") || "");
   }
 
   return [responses, questions];

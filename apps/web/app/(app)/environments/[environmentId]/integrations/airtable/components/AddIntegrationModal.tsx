@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TIntegrationItem } from "@formbricks/types/integration";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -351,7 +352,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                                     : field.onChange(field.value?.filter((value) => value !== question.id));
                                 }}
                               />
-                              <span className="ml-2">{question.headline.default}</span>
+                              <span className="ml-2">{getLocalizedValue(question.headline, "en")}</span>
                             </label>
                           </div>
                         )}

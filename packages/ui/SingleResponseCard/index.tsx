@@ -28,7 +28,7 @@ import { PictureSelectionResponse } from "../PictureSelectionResponse";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { LoadingWrapper } from "../LoadingWrapper";
-
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
@@ -289,7 +289,7 @@ export default function SingleResponseCard({
             return (
               <div key={`${question.id}`}>
                 {isValidValue(response.data[question.id]) ? (
-                  <p className="text-sm text-slate-500">{question.headline.en}</p>
+                  <p className="text-sm text-slate-500">{getLocalizedValue(question.headline, "en")}</p>
                 ) : (
                   <QuestionSkip
                     skippedQuestions={skipped}

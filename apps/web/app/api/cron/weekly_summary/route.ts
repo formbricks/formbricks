@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
 import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 export async function POST(): Promise<NextResponse> {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -89,7 +90,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
         if (answer === null || answer === "" || answer?.length === 0) {
           continue;
         }
-        surveyResponse[headline] = answer;
+        surveyResponse[getLocalizedValue(headline, "en")] = answer;
       }
       surveyData.responses.push(surveyResponse);
     }

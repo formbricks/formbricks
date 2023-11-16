@@ -1,4 +1,4 @@
-import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -56,11 +56,11 @@ export default function PictureSelectionForm({
                 id="subheader"
                 name="subheader"
                 languages={languages}
-                value={question.subheader}
+                value={question.subheader as TI18nString}
                 isInValid={isInValid}
                 onChange={(e) => {
                   let translatedSubheader = {
-                    ...question.subheader,
+                    ...(question.subheader as TI18nString),
                     [selectedLanguage]: e.target.value,
                   };
                   updateQuestion(questionIdx, { subheader: translatedSubheader });

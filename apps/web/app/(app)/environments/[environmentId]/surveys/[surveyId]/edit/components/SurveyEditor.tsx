@@ -8,7 +8,7 @@ import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -55,7 +55,7 @@ export default function SurveyEditor({
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
-      if (survey.questions[0].headline._i18n_) {
+      if ((survey.questions[0].headline as TI18nString)._i18n_) {
         console.log("hellooo");
         // Construct an object with the language codes from the headline
         const languagesObj: TLanguages = Object.keys(survey.questions[0].headline)
@@ -72,7 +72,7 @@ export default function SurveyEditor({
   }, [survey]);
 
   const translatedSurvey = useMemo(() => {
-    if (localSurvey?.questions[0].headline._i18n_) return localSurvey;
+    if ((localSurvey?.questions[0].headline as TI18nString)._i18n_) return localSurvey;
     if (localSurvey) {
       return translateSurvey(localSurvey, Object.keys(languages));
     }
