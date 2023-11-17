@@ -105,14 +105,6 @@ export const setPersonAttribute = async (
   const result = await updatePersonAttribute(key, value.toString());
 
   if (result.ok) {
-    const state = result.value;
-
-    config.update({
-      apiHost: config.get().apiHost,
-      environmentId: config.get().environmentId,
-      state,
-    });
-
     return okVoid();
   }
 

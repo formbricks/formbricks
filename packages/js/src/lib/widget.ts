@@ -46,7 +46,7 @@ export const renderWidget = (survey: TSurvey) => {
   const productOverwrites = survey.productOverwrites ?? {};
   const brandColor = productOverwrites.brandColor ?? product.brandColor;
   const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
-  const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
+  const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;

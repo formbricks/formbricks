@@ -68,7 +68,7 @@ export type TResponseDates = {
 export const ZResponseInput = z.object({
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
-  userId: z.string().nullable(),
+  userId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
   data: ZResponseData,

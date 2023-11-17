@@ -1,17 +1,17 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { createResponse } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
+import { ZId } from "@formbricks/types/environment";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { TPerson } from "@formbricks/types/people";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
-import { ZId } from "@formbricks/types/environment";
-import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
-import { TPerson } from "@formbricks/types/people";
 
 interface Context {
   params: {
@@ -35,7 +35,15 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     );
   }
 
-  const responseInput: TResponseInput = await request.json();
+  const responseInput = await request.json();
+
+  // legacy workaround for formbricks-js 1.2.0 & 1.2.1
+  if (responseInput.personId && typeof responseInput.personId === "string") {
+    const person = await getPerson(responseInput.personId);
+    responseInput.userId = person?.userId;
+    delete responseInput.personId;
+  }
+
   const agent = UAParser(request.headers.get("user-agent"));
   const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
