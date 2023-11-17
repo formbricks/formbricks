@@ -89,7 +89,7 @@ export const ZResponseInput = z.object({
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
 
-export const ZResponseLegacyInput = ZResponseInput.omit({ userId: true }).extend({
+export const ZResponseLegacyInput = ZResponseInput.omit({ userId: true, environmentId: true }).extend({
   personId: z.string().cuid2().nullable(),
 });
 

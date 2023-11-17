@@ -11,6 +11,7 @@ import {
   TResponseLegacyInput,
   TResponseUpdateInput,
   ZResponseInput,
+  ZResponseLegacyInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
@@ -256,7 +257,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 };
 
 export const createResponseLegacy = async (responseInput: TResponseLegacyInput): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput]);
+  validateInputs([responseInput, ZResponseLegacyInput]);
   captureTelemetry("response created");
 
   try {

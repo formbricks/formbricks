@@ -32,6 +32,35 @@ const selectDisplay = {
   personId: true,
 };
 
+export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
+  await unstable_cache(
+    async () => {
+      validateInputs([displayId, ZId]);
+
+      try {
+        const responsePrisma = await prisma.response.findUnique({
+          where: {
+            id: displayId,
+          },
+          select: selectDisplay,
+        });
+
+        return responsePrisma;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getDisplay-${displayId}`],
+    {
+      tags: [displayCache.tag.byId(displayId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
 export const updateDisplay = async (
   displayId: string,
   displayInput: TDisplayUpdateInput
