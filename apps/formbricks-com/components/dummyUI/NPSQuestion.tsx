@@ -3,7 +3,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
@@ -35,7 +35,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
         onSubmit(data);
         // reset form
       }}>
-      <Headline headline={question.headline as string} questionId={question.id} />
+      <Headline headline={getLocalizedValue(question.headline, "en")} questionId={question.id} />
       <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="my-4">
         <fieldset>

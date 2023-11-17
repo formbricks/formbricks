@@ -3,6 +3,7 @@ import { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -29,7 +30,7 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit(data);
         setSelectedChoice(null); // reset form
       }}>
-      <Headline headline={question.headline as string} questionId={question.id} />
+      <Headline headline={getLocalizedValue(question.headline, "en")} questionId={question.id} />
       <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="mt-4">
         <fieldset>

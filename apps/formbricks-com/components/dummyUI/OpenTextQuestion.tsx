@@ -2,7 +2,7 @@ import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
@@ -29,7 +29,7 @@ export default function OpenTextQuestion({
         setValue(""); // reset value
         onSubmit(data);
       }}>
-      <Headline headline={question.headline as string} questionId={question.id} />
+      <Headline headline={getLocalizedValue(question.headline, "en")} questionId={question.id} />
       <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="mt-4">
         <textarea

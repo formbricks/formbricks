@@ -3,6 +3,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -39,7 +40,7 @@ export default function MultipleChoiceMultiQuestion({
         onSubmit(data);
         setSelectedChoices([]); // reset value
       }}>
-      <Headline headline={question.headline as string} questionId={question.id} />
+      <Headline headline={getLocalizedValue(question.headline, "en")} questionId={question.id} />
       <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
