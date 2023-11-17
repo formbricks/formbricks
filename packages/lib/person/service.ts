@@ -181,7 +181,8 @@ export const createPerson = async (environmentId: string, userId: string): Promi
 
     personCache.revalidate({
       id: transformedPerson.id,
-      environmentId: transformedPerson.environmentId,
+      environmentId,
+      userId,
     });
 
     return transformedPerson;
@@ -347,7 +348,7 @@ export const getPersonByUserId = async (userId: string, environmentId: string): 
 
       personCache.revalidate({
         id: personWithUserIdAttribute.id,
-        environmentId: personWithUserIdAttribute.environmentId,
+        environmentId,
         userId,
       });
 
@@ -355,7 +356,11 @@ export const getPersonByUserId = async (userId: string, environmentId: string): 
     },
     [`getPersonByUserId-${userId}-${environmentId}`],
     {
-      tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
+      tags: [
+        personCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
+        personCache.tag.byUserId(userId), // fix for caching issue on vercel
+        personCache.tag.byEnvironmentId(environmentId), // fix for caching issue on vercel
+      ],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -391,7 +396,7 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
 
       personCache.revalidate({
         id: personPrisma.id,
-        environmentId: personPrisma.environmentId,
+        environmentId,
         userId,
       });
 
