@@ -111,6 +111,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://openbb.co",
         },
         {
+          name: "OpenSign™",
+          description:
+            "The best open source & free DocuSign alternative. Get your free online document signatures now.",
+          href: "https://www.opensignlabs.com",
+        },
+        {
           name: "OpenStatus",
           description: "Open-source monitoring platform with beautiful status pages",
           href: "https://www.openstatus.dev",
