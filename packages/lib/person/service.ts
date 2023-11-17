@@ -181,7 +181,8 @@ export const createPerson = async (environmentId: string, userId: string): Promi
 
     personCache.revalidate({
       id: transformedPerson.id,
-      environmentId: transformedPerson.environmentId,
+      environmentId,
+      userId,
     });
 
     return transformedPerson;
