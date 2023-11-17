@@ -6,18 +6,37 @@ import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
-import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TResponse, TResponseInput, ZResponseInput, ZResponseClientInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
+import { ZId } from "@formbricks/types/environment";
+import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
+
+interface Context {
+  params: {
+    environmentId: string;
+  };
+}
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request, context: Context): Promise<NextResponse> {
+  const { environmentId } = context.params;
+  const environmentIdValidation = ZId.safeParse(environmentId);
+
+  if (!environmentIdValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(environmentIdValidation.error),
+      true
+    );
+  }
+
   const responseInput: TResponseInput = await request.json();
   const agent = UAParser(request.headers.get("user-agent"));
-  const inputValidation = ZResponseInput.safeParse(responseInput);
+  const inputValidation = ZResponseClientInput.safeParse(responseInput);
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -27,18 +46,29 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  let survey;
-
-  try {
-    survey = await getSurvey(responseInput.surveyId);
-  } catch (error) {
-    if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
-    } else {
-      console.error(error);
-      return responses.internalServerErrorResponse(error.message);
-    }
+  // get and check survey
+  const survey = await getSurvey(responseInput.surveyId);
+  if (!survey) {
+    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
   }
+  if (survey.environmentId !== environmentId) {
+    return responses.badRequestResponse(
+      "Survey is part of another environment",
+      {
+        "survey.environmentId": survey.environmentId,
+        environmentId,
+      },
+      true
+    );
+  }
+
+  // get or create person
+  const person = await getOrCreatePersonByUserId(inputValidation.data.userId, survey.environmentId);
+
+  const responseInputWithPersonId: TResponseInput = {
+    ...responseInput,
+    personId: person.id,
+  };
 
   const teamDetails = await getTeamDetails(survey.environmentId);
 
@@ -54,14 +84,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     };
 
-    // check if personId is anonymous
-    if (responseInput.personId === "anonymous") {
-      // remove this from the request
-      responseInput.personId = null;
-    }
-
     response = await createResponse({
-      ...responseInput,
+      ...responseInputWithPersonId,
       meta,
     });
   } catch (error) {

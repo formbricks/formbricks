@@ -95,6 +95,12 @@ export const ZResponseUpdateInput = z.object({
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
 
+export const ZResponseClientInput = ZResponseInput.omit({ personId: true }).extend({
+  userId: z.string(),
+});
+
+export type TResponseClientInput = z.infer<typeof ZResponseClientInput>;
+
 export const ZResponseWithSurvey = ZResponse.extend({
   survey: ZSurvey,
 });
