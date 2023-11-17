@@ -41,6 +41,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      if (localSurvey) return;
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
 
       if (survey.questions.length > 0) {
