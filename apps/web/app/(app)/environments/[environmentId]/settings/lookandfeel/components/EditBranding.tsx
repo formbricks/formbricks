@@ -57,8 +57,8 @@ export function EditFormbricksBranding({
         <div className="mb-4">
           <Alert>
             <AlertDescription>
-              To remove the Formbricks branding from the{" "}
-              <span className="font-semibold">{getTextFromType(type)}</span>, please{" "}
+              To remove the Formbricks branding from the&nbsp;
+              <span className="font-semibold">{getTextFromType(type)}</span>, please&nbsp;
               {type === "linkSurvey" ? (
                 <span className="underline">
                   <Link href={`/environments/${environmentId}/settings/billing`}>upgrade your plan.</Link>
