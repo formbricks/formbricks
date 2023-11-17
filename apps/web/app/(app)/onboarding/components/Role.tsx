@@ -88,10 +88,8 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
                   key={choice.id}
                   htmlFor={choice.id}
                   className={cn(
-                    selectedChoice === choice.label
-                      ? "z-10 border-slate-400 bg-slate-100"
-                      : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-100 focus:outline-none"
+                    selectedChoice === choice.label ? "z-10 border-zinc-500 bg-slate-100" : "border-zinc-300",
+                    "relative flex cursor-pointer flex-col rounded-md border-2 bg-zinc-100 p-4 hover:bg-zinc-200 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -122,7 +120,12 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip} id="role-skip">
+        <Button
+          size="lg"
+          className="text-slate-500 hover:text-slate-900"
+          variant="minimal"
+          onClick={skip}
+          id="role-skip">
           Skip
         </Button>
         <Button
