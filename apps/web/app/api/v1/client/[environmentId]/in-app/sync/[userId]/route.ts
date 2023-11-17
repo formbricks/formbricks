@@ -2,7 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { IS_FORMBRICKS_CLOUD, MAU_LIMIT, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getOrCreatePersonByUserId, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -11,7 +11,6 @@ import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbr
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
-import { get } from "lodash";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {

@@ -22,6 +22,7 @@ import { getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 import { formatDisplaysDateFields } from "./util";
+import { TPerson } from "@formbricks/types/people";
 
 const selectDisplay = {
   id: true,
@@ -67,7 +68,7 @@ export const updateDisplay = async (
 ): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayUpdateInput.partial()]);
 
-  let person = null;
+  let person: TPerson | null = null;
   if (displayInput.userId) {
     person = await getPersonByUserId(displayInput.userId, displayInput.environmentId);
     if (!person) {

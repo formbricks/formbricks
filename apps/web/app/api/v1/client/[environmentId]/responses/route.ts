@@ -8,8 +8,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { ZId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
-import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
