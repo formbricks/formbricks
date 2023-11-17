@@ -8,7 +8,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
 import { TSurveyMultipleChoiceMultiQuestion, TSurvey, TI18nString } from "@formbricks/types/surveys";
-import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface OpenQuestionFormProps {

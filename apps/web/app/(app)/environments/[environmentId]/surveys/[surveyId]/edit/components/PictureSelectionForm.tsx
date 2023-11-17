@@ -3,7 +3,7 @@ import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";

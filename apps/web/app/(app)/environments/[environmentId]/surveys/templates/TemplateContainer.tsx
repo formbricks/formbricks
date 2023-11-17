@@ -11,7 +11,7 @@ import type { TProduct } from "@formbricks/types/product";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { SearchBox } from "@formbricks/ui/SearchBox";
 import { TProfile } from "@formbricks/types/profile";
-import { translateSurvey } from "@formbricks/ee/multiLanguageSupport/utils/i18n";
+import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;

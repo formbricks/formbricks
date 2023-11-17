@@ -46,7 +46,7 @@ export default function LogicEditor({
 }: LogicEditorProps): JSX.Element {
   const questionValues = useMemo(() => {
     if ("choices" in question) {
-      return question.choices.map((choice) => choice.label);
+      return question.choices.map((choice) => getLocalizedValue(choice.label, "en"));
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
     } else if (question.type === TSurveyQuestionType.NPS) {

@@ -13,7 +13,7 @@ import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { validateQuestion } from "./Validation";
-import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguageSupport/utils/i18n";
+import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguage/utils/i18n";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;

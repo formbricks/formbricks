@@ -1,5 +1,5 @@
 export const revalidate = REVALIDATION_INTERVAL;
-import EditLanguage from "@formbricks/ee/multiLanguageSupport/components/EditLanguage";
+import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";

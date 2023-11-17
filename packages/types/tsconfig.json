@@ -1,6 +1,6 @@
 {
   "extends": "@formbricks/tsconfig/base.json",
-  "include": [".", "../ee/multiLanguageSupport/types/*"],
+  "include": [".", "../ee/multiLanguage/types/*"],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
     "composite": true,

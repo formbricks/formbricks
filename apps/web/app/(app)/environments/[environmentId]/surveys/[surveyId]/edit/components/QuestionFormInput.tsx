@@ -2,7 +2,7 @@
 
 import { TI18nString, TSurveyQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
-import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { Label } from "@formbricks/ui/Label";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useState } from "react";

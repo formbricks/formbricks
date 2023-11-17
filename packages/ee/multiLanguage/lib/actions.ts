@@ -11,12 +11,12 @@ export async function updateProductAction(productId: string, inputProduct: Parti
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await canUserAccessProduct(session.user.id, productId);
+  const isAuthorized = await canUserAccessProduct(session.user?.id, productId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const product = await getProduct(productId);
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user?.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateProduct(productId, inputProduct);

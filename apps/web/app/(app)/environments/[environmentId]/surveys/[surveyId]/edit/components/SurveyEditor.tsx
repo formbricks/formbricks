@@ -13,8 +13,8 @@ import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import LanguageSwitch from "@formbricks/ee/multiLanguageSupport/components/LanguageSwitch";
-import { translateSurvey } from "@formbricks/ee/multiLanguageSupport/utils/i18n";
+import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
+import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SurveyEditorProps {

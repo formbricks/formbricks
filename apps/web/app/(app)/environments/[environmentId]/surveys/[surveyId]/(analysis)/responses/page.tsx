@@ -11,7 +11,7 @@ import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { translateSurvey } from "@formbricks/ee/multiLanguageSupport/utils/i18n";
+import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);
