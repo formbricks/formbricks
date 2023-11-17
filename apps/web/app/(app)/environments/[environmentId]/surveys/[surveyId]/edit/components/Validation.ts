@@ -46,7 +46,6 @@ const validationRules = {
 
 // Main validation function
 const validateQuestion = (question: TSurveyQuestion, languages: string[]): boolean => {
-  console.log(languages);
   const specificValidation = validationRules[question.type];
   const defaultValidation = validationRules.defaultValidation;
 

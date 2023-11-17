@@ -68,7 +68,6 @@ export default function QuestionsView({
       return;
     }
     let temp = JSON.parse(JSON.stringify(invalidQuestions));
-    console.log(languages);
     if (validateQuestion(question, extractLanguageSymbols(languages))) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);

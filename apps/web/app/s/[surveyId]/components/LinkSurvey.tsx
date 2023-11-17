@@ -7,7 +7,7 @@ import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TProduct } from "@formbricks/types/product";
+import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
@@ -24,6 +24,7 @@ interface LinkSurveyProps {
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
+  languages: TLanguages;
 }
 
 export default function LinkSurvey({
@@ -35,12 +36,13 @@ export default function LinkSurvey({
   singleUseId,
   singleUseResponse,
   webAppUrl,
+  languages,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
-  const language = searchParams?.get("lang");
+  const languageSymbol = searchParams?.get("lang");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(
     new SurveyState(survey.id, singleUseId, responseId, personId)
@@ -136,7 +138,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          language={language ? language : "en"}
+          language={languageSymbol ? languageSymbol : "en"}
           isBrandingEnabled={product.linkSurveyBranding}
           onDisplay={async () => {
             if (!isPreview) {
@@ -165,7 +167,7 @@ export default function LinkSurvey({
                   ...hiddenFieldsRecord,
                 },
                 finished: responseUpdate.finished,
-                language: language ?? "en",
+                language: languageSymbol ? languages[languageSymbol] : "English",
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

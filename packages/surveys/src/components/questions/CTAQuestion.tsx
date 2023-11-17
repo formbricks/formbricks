@@ -27,7 +27,6 @@ export default function CTAQuestion({
 }: CTAQuestionProps) {
   return (
     <div>
-      {console.log(language)}
       {question.imageUrl && (
         <div className="my-4 rounded-md">
           {/* eslint-disable-next-line @next/next/no-img-element */}

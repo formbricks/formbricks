@@ -5,7 +5,10 @@ export const getLocalizedValue = (value: string | TI18nString | undefined, langu
     return "";
   }
   if (isI18nString(value)) {
-    return value[language]; // Fall back to 'en' if the specified language is not found
+    if (value[language]) {
+      return value[language];
+    }
+    return "";
   }
   return value; // If it's a string, return it as-is
 };

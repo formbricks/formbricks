@@ -60,7 +60,7 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
           autoFocus={false}
           isRedirectDisabled={false}
           key={survey.id}
-          language="default"
+          language="en"
         />
 
         <Button

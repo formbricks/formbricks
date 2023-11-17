@@ -16,6 +16,7 @@ import {
   Tailwind,
   Text,
 } from "@react-email/components";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { render } from "@react-email/render";
 
 interface EmailTemplateProps {
@@ -55,10 +56,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {firstQuestion.subheader}
+            {getLocalizedValue(firstQuestion.subheader, "en")}
           </Text>
           <Section className="mt-4 block h-20 w-full rounded-lg border border-solid border-gray-200 bg-slate-50" />
           <EmailFooter />
@@ -68,7 +69,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Container className="m-0 text-sm font-normal leading-6 text-slate-500">
             <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
@@ -102,10 +103,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
             <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
-              {firstQuestion.headline}
+              {getLocalizedValue(firstQuestion.headline, "en")}
             </Text>
             <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-              {firstQuestion.subheader}
+              {getLocalizedValue(firstQuestion.subheader, "en")}
             </Text>
             <Container className="mx-0 mt-4 flex w-max flex-col">
               <Section className="block overflow-hidden rounded-md border border-gray-200">
@@ -137,7 +138,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Container className="mt-2 text-sm font-normal leading-6 text-slate-500">
             <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
@@ -168,10 +169,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
             <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
-              {firstQuestion.headline}
+              {getLocalizedValue(firstQuestion.headline, "en")}
             </Text>
             <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-              {firstQuestion.subheader}
+              {getLocalizedValue(firstQuestion.subheader, "en")}
             </Text>
             <Container className="mx-0 mt-4 flex">
               <Section
@@ -213,17 +214,17 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {firstQuestion.subheader}
+            {getLocalizedValue(firstQuestion.subheader, "en")}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Section
                 className="mt-2 block w-full rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
                 key={choice.id}>
-                {choice.label}
+                {getLocalizedValue(choice.label, "en")}
               </Section>
             ))}
           </Container>
@@ -234,10 +235,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {firstQuestion.subheader}
+            {getLocalizedValue(firstQuestion.subheader, "en")}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices
@@ -247,7 +248,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
                   key={choice.id}
                   className="mt-2 block rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.label}`}>
-                  {choice.label}
+                  {getLocalizedValue(choice.label, "en")}
                 </Link>
               ))}
           </Container>
@@ -258,10 +259,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {firstQuestion.subheader}
+            {getLocalizedValue(firstQuestion.subheader, "en")}
           </Text>
           <Section className="mx-0">
             {firstQuestion.choices.map((choice) =>

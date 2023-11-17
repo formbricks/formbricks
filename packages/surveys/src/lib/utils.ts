@@ -50,8 +50,6 @@ export const shuffleQuestions = (array: any[], shuffleOption: string) => {
 };
 
 export const getLocalizedValue = (value: string | TI18nString, language: string): string => {
-  console.log(value);
-  console.log(language);
   if (isI18nString(value)) {
     return value[language]; // Fall back to 'en' if the specified language is not found
   }

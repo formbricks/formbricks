@@ -64,8 +64,6 @@ export default function MultipleChoiceSummary({
       };
     }
 
-    console.log(resultsDict);
-
     const addOtherChoice = (response, value) => {
       for (const key in resultsDict) {
         if (resultsDict[key].id === "other" && value !== "") {

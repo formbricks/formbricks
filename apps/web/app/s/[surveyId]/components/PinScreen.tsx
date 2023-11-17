@@ -109,6 +109,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
       webAppUrl={webAppUrl}
+      languages={product.languages}
     />
   );
 };

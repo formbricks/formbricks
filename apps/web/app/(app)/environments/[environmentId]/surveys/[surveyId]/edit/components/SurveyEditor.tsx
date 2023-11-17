@@ -48,7 +48,6 @@ export default function SurveyEditor({
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
 
   useEffect(() => {
-    console.log(survey);
     if (survey) {
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
 
@@ -56,12 +55,10 @@ export default function SurveyEditor({
         setActiveQuestionId(survey.questions[0].id);
       }
       if ((survey.questions[0].headline as TI18nString)._i18n_) {
-        console.log("hellooo");
         // Construct an object with the language codes from the headline
         const languagesObj: TLanguages = Object.keys(survey.questions[0].headline)
           .filter((key) => key !== "_i18n_") // Exclude the _i18n_ property
           .reduce((acc, lang) => {
-            console.log(lang);
             acc[lang] = product.languages[lang];
             return acc;
           }, {});
@@ -72,7 +69,8 @@ export default function SurveyEditor({
   }, [survey]);
 
   const translatedSurvey = useMemo(() => {
-    if ((localSurvey?.questions[0].headline as TI18nString)._i18n_) return localSurvey;
+    if (!localSurvey || localSurvey.questions.length === 0) return;
+    if ((localSurvey.questions[0]?.headline as TI18nString)._i18n_) return localSurvey;
     if (localSurvey) {
       return translateSurvey(localSurvey, Object.keys(languages));
     }

@@ -178,6 +178,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
       webAppUrl={WEBAPP_URL}
+      languages={product.languages}
     />
   );
 }

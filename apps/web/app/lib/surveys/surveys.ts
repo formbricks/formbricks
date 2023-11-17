@@ -62,7 +62,6 @@ const filterOptions = {
   cta: ["Clicked", "Dismissed"],
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
-  language: ["german", "hindi"],
 };
 
 // creating an object for the attributes in key value format when key is string and value is an string array
@@ -175,7 +174,7 @@ export const generateQuestionAndFilterOptions = (
     questionFilterOptions.push({
       type: "language",
       filterOptions: conditionOptions.languages,
-      filterComboBoxOptions: ["german", "hindi"],
+      filterComboBoxOptions: Array.from(new Set(responses.map((response) => response.language))),
       id: "language",
     });
     if (tagsOptions && tagsOptions.length > 0) {

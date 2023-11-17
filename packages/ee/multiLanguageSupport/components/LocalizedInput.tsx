@@ -29,9 +29,9 @@ const LocalizedInput = ({
     <div className="relative w-full">
       <Input
         id={id}
-        isInvalid={isInValid && value[selectedLanguage].trim() === ""}
+        isInvalid={isInValid && value[selectedLanguage]?.trim() === ""}
         name={name}
-        value={value[selectedLanguage]}
+        value={value[selectedLanguage] ? value[selectedLanguage] : ""}
         onChange={onChange}
         onBlur={onBlur}
       />

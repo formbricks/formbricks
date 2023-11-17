@@ -92,6 +92,7 @@ const SummaryPage = ({
         survey={survey}
         environment={environment}
         responsesPerPage={responsesPerPage}
+        languages={product.languages}
       />
     </ContentWrapper>
   );

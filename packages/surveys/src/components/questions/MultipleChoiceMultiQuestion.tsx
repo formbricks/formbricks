@@ -89,11 +89,9 @@ export default function MultipleChoiceMultiQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        console.log(value);
         const newValue = (value as string[])?.filter((item) => {
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
-        console.log(newValue);
         onChange({ [question.id]: newValue });
         onSubmit({ [question.id]: newValue });
       }}

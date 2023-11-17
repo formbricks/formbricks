@@ -194,7 +194,6 @@ export const getResponseBySingleUseId = async (
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
-  console.log(responseInput);
   captureTelemetry("response created");
 
   try {
@@ -242,8 +241,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     responseNoteCache.revalidate({
       responseId: response.id,
     });
-    console.log(responsePrisma);
-    console.log(response);
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

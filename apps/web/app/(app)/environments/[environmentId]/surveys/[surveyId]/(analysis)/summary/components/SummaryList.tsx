@@ -24,38 +24,53 @@ import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
 import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TLanguages } from "@formbricks/types/product";
 
 interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
   responsesPerPage: number;
+  languages: TLanguages;
 }
 
-const checkForI18n = (response: TResponse, id, survey: TSurvey) => {
-  const language = response.language ?? "default";
-  const question = survey.questions.find((question) => question.id === id);
-  if (question?.type === "multipleChoiceMulti") {
-    let choiceValues = [] as string[];
-    (response.data[id] as string[]).forEach((data) => {
-      choiceValues.push(
-        getLocalizedValue(question.choices.find((choice) => choice.label[language] === data)?.label, "en")
-      );
-    });
-    return choiceValues;
+function getLanguageSymbol(languages, language) {
+  for (let languageSymbol in languages) {
+    if (languages.hasOwnProperty(languageSymbol) && languages[languageSymbol] === language) {
+      return languageSymbol;
+    }
   }
-  return getLocalizedValue(
-    (question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion)?.choices.find(
-      (choice) => choice.label[language] === response.data[id]
-    )?.label,
-    "en"
-  );
-};
+  return "en";
+}
 
-export default function SummaryList({ environment, survey, responses, responsesPerPage }: SummaryListProps) {
+export default function SummaryList({
+  environment,
+  survey,
+  responses,
+  responsesPerPage,
+  languages,
+}: SummaryListProps) {
+  const checkForI18n = (response: TResponse, id, survey: TSurvey) => {
+    const language = getLanguageSymbol(languages, response.language);
+    const question = survey.questions.find((question) => question.id === id);
+    if (question?.type === "multipleChoiceMulti") {
+      let choiceValues = [] as string[];
+      (response.data[id] as string[]).forEach((data) => {
+        choiceValues.push(
+          getLocalizedValue(question.choices.find((choice) => choice.label[language] === data)?.label, "en")
+        );
+      });
+      return choiceValues;
+    }
+    return getLocalizedValue(
+      (question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion)?.choices.find(
+        (choice) => choice.label[language] === response.data[id]
+      )?.label,
+      "en"
+    );
+  };
   const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
-      console.log(responses);
       const questionResponses = responses
         .filter((response) => question.id in response.data)
         .map((r) => ({

@@ -62,7 +62,6 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      {console.log(question)}
       {question.imageUrl && (
         <div className="my-4 rounded-md">
           {/* eslint-disable-next-line @next/next/no-img-element */}

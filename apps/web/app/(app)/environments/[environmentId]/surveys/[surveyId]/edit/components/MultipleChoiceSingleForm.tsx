@@ -9,6 +9,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
 import LocalizedInput from "@formbricks/ee/multiLanguageSupport/components/LocalizedInput";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -60,10 +61,10 @@ export default function MultipleChoiceSingleForm({
     for (let i = 0; i < question.choices.length; i++) {
       for (let j = i + 1; j < question.choices.length; j++) {
         if (
-          question.choices[i].label[selectedLanguage].trim() ===
-          question.choices[j].label[selectedLanguage].trim()
+          getLocalizedValue(question.choices[i].label, selectedLanguage).trim() ===
+          getLocalizedValue(question.choices[j].label, selectedLanguage).trim()
         ) {
-          return question.choices[i].label[selectedLanguage].trim(); // Return the duplicate label
+          return getLocalizedValue(question.choices[i].label, selectedLanguage).trim(); // Return the duplicate label
         }
       }
     }
@@ -72,7 +73,7 @@ export default function MultipleChoiceSingleForm({
 
   const findEmptyLabel = () => {
     for (let i = 0; i < question.choices.length; i++) {
-      if (question.choices[i].label[selectedLanguage].trim() === "") return true;
+      if (getLocalizedValue(question.choices[i].label, selectedLanguage).trim() === "") return true;
     }
     return false;
   };
@@ -253,9 +254,10 @@ export default function MultipleChoiceSingleForm({
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
                   isInValid={
-                    (isInvalidValue === "" && choice.label[selectedLanguage].trim() === "") ||
+                    (isInvalidValue === "" &&
+                      getLocalizedValue(choice.label, selectedLanguage).trim() === "") ||
                     (isInvalidValue !== null &&
-                      choice.label[selectedLanguage].trim() === isInvalidValue.trim())
+                      getLocalizedValue(choice.label, selectedLanguage).trim() === isInvalidValue.trim())
                   }
                 />
                 {question.choices && question.choices.length > 2 && (
