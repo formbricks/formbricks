@@ -72,12 +72,13 @@ export const renderWidget = (survey: TSurvey) => {
           const existingDisplays = config.get().state.displays;
           const displays = existingDisplays ? [...existingDisplays, localDisplay] : [localDisplay];
           const previousConfig = config.get();
+          let state = filterPublicSurveys({
+            ...previousConfig.state,
+            displays,
+          });
           config.update({
             ...previousConfig,
-            state: {
-              ...previousConfig.state,
-              displays,
-            },
+            state,
           });
         }
 
@@ -108,18 +109,19 @@ export const renderWidget = (survey: TSurvey) => {
           if (!lastDisplay.responded) {
             lastDisplay.responded = true;
             const previousConfig = config.get();
+            let state = filterPublicSurveys({
+              ...previousConfig.state,
+              displays,
+            });
             config.update({
               ...previousConfig,
-              state: {
-                ...previousConfig.state,
-                displays,
-              },
+              state,
             });
           }
         }
 
-        if (config.get().state.person && config.get().state.person?.id) {
-          surveyState.updatePersonId(config.get().state.person?.id!);
+        if (config.get().state.person && config.get().state.person?.userId) {
+          surveyState.updateUserId(config.get().state.person?.userId!);
         }
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({

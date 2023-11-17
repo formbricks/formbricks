@@ -6,11 +6,12 @@ import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
-import { TResponse, TResponseInput, ZResponseInput, ZResponseClientInput } from "@formbricks/types/responses";
+import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 import { ZId } from "@formbricks/types/environment";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
+import { TPerson } from "@formbricks/types/people";
 
 interface Context {
   params: {
@@ -36,7 +37,7 @@ export async function POST(request: Request, context: Context): Promise<NextResp
 
   const responseInput: TResponseInput = await request.json();
   const agent = UAParser(request.headers.get("user-agent"));
-  const inputValidation = ZResponseClientInput.safeParse(responseInput);
+  const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -62,14 +63,6 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     );
   }
 
-  // get or create person
-  const person = await getOrCreatePersonByUserId(inputValidation.data.userId, survey.environmentId);
-
-  const responseInputWithPersonId: TResponseInput = {
-    ...responseInput,
-    personId: person.id,
-  };
-
   const teamDetails = await getTeamDetails(survey.environmentId);
 
   let response: TResponse;
@@ -85,7 +78,7 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     };
 
     response = await createResponse({
-      ...responseInputWithPersonId,
+      ...inputValidation.data,
       meta,
     });
   } catch (error) {

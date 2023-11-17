@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
-import { updateDisplay } from "@formbricks/lib/display/service";
-import { TDisplayCreateInput, ZDisplayUpdateInput } from "@formbricks/types/displays";
-import { NextResponse } from "next/server";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { updateDisplayLegacy } from "@formbricks/lib/display/service";
+import { TDisplayLegacyCreateInput, ZDisplayLegacyCreateInput } from "@formbricks/types/displays";
+import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -16,8 +16,8 @@ export async function PUT(
   if (!displayId) {
     return responses.badRequestResponse("Missing displayId", undefined, true);
   }
-  const displayInput: TDisplayCreateInput = await request.json();
-  const inputValidation = ZDisplayUpdateInput.safeParse(displayInput);
+  const displayInput: TDisplayLegacyCreateInput = await request.json();
+  const inputValidation = ZDisplayLegacyCreateInput.safeParse(displayInput);
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -27,7 +27,7 @@ export async function PUT(
     );
   }
   try {
-    const display = await updateDisplay(displayId, inputValidation.data);
+    const display = await updateDisplayLegacy(displayId, inputValidation.data);
     return responses.successResponse(display, true);
   } catch (error) {
     console.error(error);

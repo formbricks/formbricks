@@ -8,6 +8,7 @@ import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseInput,
+  TResponseLegacyInput,
   TResponseUpdateInput,
   ZResponseInput,
   ZResponseUpdateInput,
@@ -17,7 +18,7 @@ import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
-import { getPerson, transformPrismaPerson } from "../person/service";
+import { getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
 import { formatResponseDateFields } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
@@ -192,6 +193,69 @@ export const getResponseBySingleUseId = async (
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseInput]);
+  captureTelemetry("response created");
+
+  try {
+    let person: TPerson | null = null;
+
+    if (responseInput.userId) {
+      person = await getPersonByUserId(responseInput.userId, responseInput.environmentId);
+      if (!person) {
+        throw new ResourceNotFoundError("Person", responseInput.userId);
+      }
+    }
+
+    const responsePrisma = await prisma.response.create({
+      data: {
+        survey: {
+          connect: {
+            id: responseInput.surveyId,
+          },
+        },
+        finished: responseInput.finished,
+        data: responseInput.data,
+        ...(person?.id && {
+          person: {
+            connect: {
+              id: person.id,
+            },
+          },
+          personAttributes: person?.attributes,
+        }),
+        ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
+        singleUseId: responseInput.singleUseId,
+      },
+      select: responseSelection,
+    });
+
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+
+    responseCache.revalidate({
+      id: response.id,
+      personId: response.person?.id,
+      surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
+    });
+
+    return response;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const createResponseLegacy = async (responseInput: TResponseLegacyInput): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 

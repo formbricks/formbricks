@@ -172,7 +172,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     <LinkSurvey
       survey={survey}
       product={product}
-      personId={person?.id}
+      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}

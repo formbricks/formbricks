@@ -30,11 +30,19 @@ export const ZDisplayLegacyCreateInput = z.object({
 export type TDisplayLegacyCreateInput = z.infer<typeof ZDisplayLegacyCreateInput>;
 
 export const ZDisplayUpdateInput = z.object({
-  personId: z.string().cuid().optional(),
+  environmentId: z.string().cuid(),
+  userId: z.string().cuid().optional(),
   responseId: z.string().cuid().optional(),
 });
 
 export type TDisplayUpdateInput = z.infer<typeof ZDisplayUpdateInput>;
+
+export const ZDisplayLegacyUpdateInput = z.object({
+  personId: z.string().cuid().optional(),
+  responseId: z.string().cuid().optional(),
+});
+
+export type TDisplayLegacyUpdateInput = z.infer<typeof ZDisplayLegacyUpdateInput>;
 
 export const ZDisplaysWithSurveyName = ZDisplay.extend({
   surveyName: z.string(),

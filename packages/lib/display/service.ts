@@ -6,9 +6,11 @@ import {
   TDisplay,
   TDisplayCreateInput,
   TDisplayLegacyCreateInput,
+  TDisplayLegacyUpdateInput,
   TDisplayUpdateInput,
   ZDisplayCreateInput,
   ZDisplayLegacyCreateInput,
+  ZDisplayLegacyUpdateInput,
   ZDisplayUpdateInput,
 } from "@formbricks/types/displays";
 import { ZId } from "@formbricks/types/environment";
@@ -32,9 +34,60 @@ const selectDisplay = {
 
 export const updateDisplay = async (
   displayId: string,
-  displayInput: Partial<TDisplayUpdateInput>
+  displayInput: TDisplayUpdateInput
 ): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayUpdateInput.partial()]);
+
+  let person = null;
+  if (displayInput.userId) {
+    person = await getPersonByUserId(displayInput.userId, displayInput.environmentId);
+    if (!person) {
+      throw new ResourceNotFoundError("Person", displayInput.userId);
+    }
+  }
+
+  try {
+    const data = {
+      ...(person?.id && {
+        person: {
+          connect: {
+            id: person.id,
+          },
+        },
+      }),
+      ...(displayInput.responseId && {
+        responseId: displayInput.responseId,
+      }),
+    };
+    const display = await prisma.display.update({
+      where: {
+        id: displayId,
+      },
+      data,
+      select: selectDisplay,
+    });
+
+    displayCache.revalidate({
+      id: display.id,
+      surveyId: display.surveyId,
+    });
+
+    return display;
+  } catch (error) {
+    console.error(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const updateDisplayLegacy = async (
+  displayId: string,
+  displayInput: TDisplayLegacyUpdateInput
+): Promise<TDisplay> => {
+  validateInputs([displayInput, ZDisplayLegacyUpdateInput]);
   try {
     const data = {
       ...(displayInput.personId && {
@@ -152,7 +205,7 @@ export const createDisplayLegacy = async (displayInput: TDisplayLegacyCreateInpu
   }
 };
 
-export const markDisplayResponded = async (displayId: string): Promise<TDisplay> => {
+export const markDisplayRespondedLegacy = async (displayId: string): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);
 
   try {
