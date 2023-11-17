@@ -1,20 +1,19 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
-import { EditFormbricksSignature } from "./components/EditSignature";
-import { EditBrandColor } from "./components/EditBrandColor";
-import { EditPlacement } from "./components/EditPlacement";
-import { EditHighlightBorder } from "./components/EditHighlightBorder";
-import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { DEFAULT_BRAND_COLOR, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { getServerSession } from "next-auth";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import { EditBrandColor } from "./components/EditBrandColor";
+import { EditHighlightBorder } from "./components/EditHighlightBorder";
+import { EditPlacement } from "./components/EditPlacement";
+import { EditFormbricksBranding } from "./components/EditBranding";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([
@@ -33,8 +32,10 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     throw new Error("Team not found");
   }
 
+  const canRemoveLinkBranding = team.billing.features.linkSurvey.status !== "inactive";
+  const canRemoveInAppBranding = team.billing.features.inAppSurvey.status !== "inactive";
+
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const canRemoveSignature = team.billing.features.linkSurvey.status !== "inactive";
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
 
@@ -68,11 +69,18 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         />
       </SettingsCard>
       <SettingsCard
-        title="Formbricks Signature"
+        title="Formbricks Branding"
         description="We love your support but understand if you toggle it off.">
-        <EditFormbricksSignature
+        <EditFormbricksBranding
+          type="linkSurvey"
           product={product}
-          canRemoveSignature={canRemoveSignature}
+          canRemoveBranding={canRemoveLinkBranding}
+          environmentId={params.environmentId}
+        />
+        <EditFormbricksBranding
+          type="inAppSurvey"
+          product={product}
+          canRemoveBranding={canRemoveInAppBranding}
           environmentId={params.environmentId}
         />
       </SettingsCard>
