@@ -20,7 +20,7 @@ export class DisplayAPI {
 
   async update(
     displayId: string,
-    displayInput: TDisplayUpdateInput
+    displayInput: Omit<TDisplayUpdateInput, "environmentId">
   ): Promise<Result<TDisplay, NetworkError | Error>> {
     return makeRequest(
       this.apiHost,

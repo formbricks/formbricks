@@ -20,7 +20,7 @@ export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
 
 export const ZJsState = z.object({
   person: ZPerson.nullable(),
-  surveys: z.array(ZSurveyWithTriggers),
+  surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
   displays: z.array(ZJSStateDisplay).optional(),
@@ -55,7 +55,7 @@ export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
 
 export const ZJsSyncLegacyInput = z.object({
   environmentId: z.string().cuid(),
-  personId: z.string().cuid().optional(),
+  personId: z.string().cuid().optional().or(z.literal("legacy")),
   sessionId: z.string().cuid().optional(),
   jsVersion: z.string().optional(),
 });

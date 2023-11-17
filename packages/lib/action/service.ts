@@ -40,7 +40,6 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
         const action: TAction = {
           id: actionPrisma.id,
           createdAt: actionPrisma.createdAt,
-          // sessionId: actionPrisma.sessionId,
           personId: actionPrisma.personId,
           properties: actionPrisma.properties,
           actionClass: actionPrisma.actionClass,
@@ -57,6 +56,60 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
     [`getLastestActionByEnvironmentId-${environmentId}`],
     {
       tags: [actionCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
+  return action
+    ? {
+        ...action,
+        createdAt: new Date(action.createdAt),
+      }
+    : action;
+};
+
+export const getLatestActionByPersonId = async (personId: string): Promise<TAction | null> => {
+  const action = await unstable_cache(
+    async () => {
+      validateInputs([personId, ZId]);
+
+      try {
+        const actionPrisma = await prisma.action.findFirst({
+          where: {
+            personId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            actionClass: true,
+          },
+        });
+
+        if (!actionPrisma) {
+          return null;
+        }
+        const action: TAction = {
+          id: actionPrisma.id,
+          createdAt: actionPrisma.createdAt,
+          personId: actionPrisma.personId,
+          properties: actionPrisma.properties,
+          actionClass: actionPrisma.actionClass,
+        };
+        return action;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getLastestActionByPersonId-${personId}`],
+    {
+      tags: [actionCache.tag.byPersonId(personId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
