@@ -64,7 +64,9 @@ export const uploadFile = async (
   });
 
   if (!uploadResponse.ok) {
-    throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+    const uploadJson = await uploadResponse.json();
+    console.log(uploadJson);
+    throw new Error(`${uploadJson.message}`);
   }
 
   return {

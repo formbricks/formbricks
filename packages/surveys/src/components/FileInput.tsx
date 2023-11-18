@@ -47,7 +47,7 @@ export default function FileInput({
             }
           } catch (err: any) {
             setIsUploading(false);
-            if (err.name === "FileTooLargeError") {
+            if (err.message === "File size exceeds the 10 MB limit") {
               alert(err.message);
             } else {
               alert("Upload failed! Please try again.");
@@ -69,7 +69,7 @@ export default function FileInput({
           }
         } catch (err: any) {
           setIsUploading(false);
-          if (err.name === "FileTooLargeError") {
+          if (err.message === "File size exceeds the 10 MB limit") {
             alert(err.message);
           } else {
             alert("Upload failed! Please try again.");
@@ -131,7 +131,7 @@ export default function FileInput({
                 uploadedUrls.push(response.url);
               } catch (err: any) {
                 setIsUploading(false);
-                if (err.name === "FileTooLargeError") {
+                if (err.message === "File size exceeds the 10 MB limit") {
                   alert(err.message);
                 } else {
                   alert("Upload failed! Please try again.");
@@ -147,7 +147,7 @@ export default function FileInput({
               uploadedUrls.push(response.url);
             } catch (err: any) {
               setIsUploading(false);
-              if (err.name === "FileTooLargeError") {
+              if (err.message === "File size exceeds the 10 MB limit") {
                 alert(err.message);
               } else {
                 alert("Upload failed! Please try again.");
@@ -168,7 +168,9 @@ export default function FileInput({
     }
   };
 
-  const handleDeleteFile = (index: number) => {
+  const handleDeleteFile = (index: number, event: JSXInternal.TargetedMouseEvent<SVGSVGElement>) => {
+    event.stopPropagation();
+
     if (fileUrls) {
       const newFiles = [...selectedFiles];
       newFiles.splice(index, 1);
@@ -196,11 +198,7 @@ export default function FileInput({
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
   return (
-    <label
-      htmlFor="selectedFile"
-      className="items-left relative mt-3 flex w-full  cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
-      onDragOver={(e) => handleDragOver(e)}
-      onDrop={(e) => handleDrop(e)}>
+    <div className="items-left relative mt-3 flex w-full  cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
       <div className="">
         {fileUrls &&
           fileUrls?.map((file, index) => (
@@ -214,7 +212,7 @@ export default function FileInput({
                     strokeWidth={1}
                     stroke="currentColor"
                     className="h-5 text-slate-700 hover:text-slate-900"
-                    onClick={() => handleDeleteFile(index)}>
+                    onClick={(e) => handleDeleteFile(index, e)}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
                   </svg>
                 </div>
@@ -244,48 +242,52 @@ export default function FileInput({
           ))}
       </div>
 
-      {isUploading && (
-        <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg bg-slate-100 py-4">
-          <label htmlFor="selectedFile" className="text-sm font-medium text-slate-500">
-            Uploading...
-          </label>
-        </div>
-      )}
+      <div>
+        {isUploading && (
+          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg bg-slate-100 py-4">
+            <label htmlFor="selectedFile" className="text-sm font-medium text-slate-500">
+              Uploading...
+            </label>
+          </div>
+        )}
 
-      {showUploader && (
-        <div className="flex flex-col items-center justify-center py-6">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-6 text-slate-500">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-            />
-          </svg>
+        <label htmlFor="selectedFile" onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
+          {showUploader && (
+            <div className="flex flex-col items-center justify-center py-6">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-6 text-slate-500">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                />
+              </svg>
 
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            <span className="font-medium">Click or drag to upload files.</span>
-          </p>
-          <input
-            type="file"
-            id="selectedFile"
-            name="selectedFile"
-            accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
-            className="hidden"
-            onChange={(e) => {
-              const inputElement = e.target as HTMLInputElement; // Cast e.target to HTMLInputElement
-              if (inputElement.files) {
-                handleFileUpload(inputElement.files[0]);
-              }
-            }}
-          />
-        </div>
-      )}
-    </label>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <span className="font-medium">Click or drag to upload files.</span>
+              </p>
+              <input
+                type="file"
+                id="selectedFile"
+                name="selectedFile"
+                accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
+                className="hidden"
+                onChange={(e) => {
+                  const inputElement = e.target as HTMLInputElement; // Cast e.target to HTMLInputElement
+                  if (inputElement.files) {
+                    handleFileUpload(inputElement.files[0]);
+                  }
+                }}
+              />
+            </div>
+          )}
+        </label>
+      </div>
+    </div>
   );
 }
