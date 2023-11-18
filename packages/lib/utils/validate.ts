@@ -8,7 +8,7 @@ export const validateInputs = (...pairs: ValidationPair[]): void => {
     const inputValidation = schema.safeParse(value);
 
     if (!inputValidation.success) {
-      console.error(`Validation failed for ${schema}: ${inputValidation.error.message}`);
+      console.error(`Validation failed for ${JSON.stringify(schema)}: ${inputValidation.error.message}`);
       throw new ValidationError("Validation failed");
     }
   }
