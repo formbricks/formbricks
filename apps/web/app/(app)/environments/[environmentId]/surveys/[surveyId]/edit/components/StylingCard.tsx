@@ -21,7 +21,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
   const [open, setOpen] = useState(false);
 
   const { type, productOverwrites, surveyBackground } = localSurvey;
-  const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
+  const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
   const { bg, bgType, brightness } = surveyBackground ?? {};
 
   const [inputValue, setInputValue] = useState(100);
@@ -148,12 +148,12 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
     });
   };
 
-  const handleClickOutside = (clickOutside: boolean) => {
+  const handleClickOutsideClose = (clickOutsideClose: boolean) => {
     setLocalSurvey({
       ...localSurvey,
       productOverwrites: {
         ...localSurvey.productOverwrites,
-        clickOutside,
+        clickOutsideClose,
       },
     });
   };
@@ -278,8 +278,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
                         setCurrentPlacement={handlePlacementChange}
                         setOverlay={handleOverlay}
                         overlay={darkOverlay ? "dark" : "light"}
-                        setClickOutside={handleClickOutside}
-                        clickOutside={!!clickOutside}
+                        setClickOutsideClose={handleClickOutsideClose}
+                        clickOutsideClose={!!clickOutsideClose}
                       />
                     </div>
                   </div>

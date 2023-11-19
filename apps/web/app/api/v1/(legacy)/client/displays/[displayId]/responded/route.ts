@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { markDisplayResponded } from "@formbricks/lib/display/service";
+import { markDisplayRespondedLegacy } from "@formbricks/lib/display/service";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -14,7 +14,7 @@ export async function POST(_: Request, { params }: { params: { displayId: string
   }
 
   try {
-    const display = await markDisplayResponded(displayId);
+    const display = await markDisplayRespondedLegacy(displayId);
     return responses.successResponse(
       {
         ...display,

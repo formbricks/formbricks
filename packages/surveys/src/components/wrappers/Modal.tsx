@@ -101,7 +101,7 @@ export default function Modal({
           className={cn(
             getPlacementStyle(placement),
             show ? "opacity-100" : "opacity-0",
-            "pointer-events-auto absolute bottom-0 h-fit w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+            "border-border pointer-events-auto absolute bottom-0 h-fit w-full overflow-hidden rounded-lg border bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
           {!isCenter && (
             <div class="absolute right-0 top-0 block pr-[1.4rem] pt-2">

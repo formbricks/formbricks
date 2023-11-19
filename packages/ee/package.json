@@ -18,6 +18,6 @@
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
-    "stripe": "^14.0.0"
+    "stripe": "^14.4.0"
   }
 }

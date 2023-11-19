@@ -37,7 +37,7 @@ export const ZSurveyProductOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
-  clickOutside: z.boolean().nullish(),
+  clickOutsideClose: z.boolean().nullish(),
   darkOverlay: z.boolean().nullish(),
 });
 
