@@ -8,44 +8,27 @@ interface ProgressBarProps {
   questionId: string;
 }
 
-const PROGRESS_INCREMENT = 0.1;
-
 export default function ProgressBar({ survey, questionId }: ProgressBarProps) {
   const [progress, setProgress] = useState(0); // [0, 1]
-  const [prevQuestionIdx, setPrevQuestionIdx] = useState(0); // [0, survey.questions.length
-  const [prevQuestionId, setPrevQuestionId] = useState(""); // [0, survey.questions.length
 
   useEffect(() => {
     // calculate progress
-    setProgress(calculateProgress(questionId, survey, progress));
-    function calculateProgress(questionId: string, survey: TSurvey, progress: number) {
+    setProgress(calculateProgress(questionId, survey));
+    function calculateProgress(questionId: string, survey: TSurvey) {
       if (survey.questions.length === 0) return 0;
+      if (questionId === "start") return 0;
       if (questionId === "end") return 1;
+
       let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);
-      if (progress > 0 && questionId === prevQuestionId) return progress;
       if (currentQustionIdx === -1) currentQustionIdx = 0;
+
       const elementIdx = calculateElementIdx(survey, currentQustionIdx);
 
-      const newProgress = elementIdx / survey.questions.length;
-
-      // Determine if user went backwards in the survey
-      const didUserGoBackwards = currentQustionIdx < prevQuestionIdx;
-
-      // Update the progress array based on user's navigation
-      let updatedProgress = progress;
-      if (didUserGoBackwards) {
-        updatedProgress = progress - (prevQuestionIdx - currentQustionIdx) * PROGRESS_INCREMENT;
-      } else if (newProgress > progress) {
-        updatedProgress = newProgress;
-      } else if (newProgress <= progress && progress + PROGRESS_INCREMENT <= 1) {
-        updatedProgress = progress + PROGRESS_INCREMENT;
-      }
-      setPrevQuestionId(questionId);
-      setPrevQuestionIdx(currentQustionIdx);
-      return updatedProgress;
+      const newProgress = Number((elementIdx / survey.questions.length).toFixed(2));
+      return newProgress;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionId, survey, setPrevQuestionIdx]);
+  }, [questionId, survey]);
 
   return <Progress progress={progress} />;
 }
