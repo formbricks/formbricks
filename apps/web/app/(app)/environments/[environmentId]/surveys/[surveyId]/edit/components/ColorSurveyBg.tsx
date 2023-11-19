@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { Label } from "@formbricks/ui/Label";
 import { TSurvey } from "@formbricks/types/surveys";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { useState } from "react";
 
 interface ColorSurveyBgBgProps {
   localSurvey?: TSurvey;

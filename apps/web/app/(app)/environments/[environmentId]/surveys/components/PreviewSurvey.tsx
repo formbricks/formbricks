@@ -3,11 +3,13 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 
-import { SurveyInline } from "@formbricks/ui/Survey";
+import PreviewSurveyBgDeskstop from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgDeskstop";
+import PreviewSurveyBgMobile from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgMobile";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { SurveyInline } from "@formbricks/ui/Survey";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
   ArrowsPointingInIcon,
@@ -17,8 +19,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import PreviewSurveyBgMobile from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgMobile";
-import PreviewSurveyBgDeskstop from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgDeskstop";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -226,7 +226,7 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="relative z-10 w-full max-w-md px-4">
+                <div className="relative z-10 w-full max-w-md  px-4">
                   <SurveyInline
                     survey={survey}
                     brandColor={brandColor}

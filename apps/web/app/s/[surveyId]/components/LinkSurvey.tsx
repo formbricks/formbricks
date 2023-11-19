@@ -1,19 +1,19 @@
 "use client";
 
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
-import { SurveyInline } from "@formbricks/ui/Survey";
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
+import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { SurveyInline } from "@formbricks/ui/Survey";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { FormbricksAPI } from "@formbricks/api";
 
 interface LinkSurveyProps {
   survey: TSurvey;
