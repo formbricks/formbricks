@@ -1,20 +1,20 @@
 "use client";
 
-import type { NextPage } from "next";
+import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
+import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
-import { OTPInput } from "@formbricks/ui/OTPInput";
-import { useCallback, useEffect, useState } from "react";
-import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import { cn } from "@formbricks/lib/cn";
+import { OTPInput } from "@formbricks/ui/OTPInput";
+import type { NextPage } from "next";
+import { useCallback, useEffect, useState } from "react";
 
 interface LinkSurveyPinScreenProps {
   surveyId: string;
   product: TProduct;
-  personId?: string;
+  userId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
   singleUseId?: string;
@@ -28,7 +28,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     product,
     webAppUrl,
     emailVerificationStatus,
-    personId,
+    userId,
     prefillAnswer,
     singleUseId,
     singleUseResponse,
@@ -100,18 +100,16 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   }
 
   return (
-    <div className="flex h-full  items-center bg-red-500">
-      <LinkSurvey
-        survey={survey}
-        product={product}
-        personId={personId}
-        emailVerificationStatus={emailVerificationStatus}
-        prefillAnswer={prefillAnswer}
-        singleUseId={singleUseId}
-        singleUseResponse={singleUseResponse}
-        webAppUrl={webAppUrl}
-      />
-    </div>
+    <LinkSurvey
+      survey={survey}
+      product={product}
+      userId={userId}
+      emailVerificationStatus={emailVerificationStatus}
+      prefillAnswer={prefillAnswer}
+      singleUseId={singleUseId}
+      singleUseResponse={singleUseResponse}
+      webAppUrl={webAppUrl}
+    />
   );
 };
 
