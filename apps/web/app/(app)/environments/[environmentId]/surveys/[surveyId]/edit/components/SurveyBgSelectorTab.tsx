@@ -1,8 +1,8 @@
+import { TSurvey } from "@formbricks/types/surveys";
 import { useState } from "react";
-import ImageSurveyBg from "./ImageSurveyBg";
 import AnimatedSurveyBg from "./AnimatedSurveyBg";
 import ColorSurveyBg from "./ColorSurveyBg";
-import { TSurvey } from "@formbricks/types/surveys";
+import ImageSurveyBg from "./ImageSurveyBg";
 
 interface SurveyBgSelectorTabProps {
   localSurvey: TSurvey;
@@ -10,6 +10,16 @@ interface SurveyBgSelectorTabProps {
   colours: string[];
   bgType: string | null | undefined;
 }
+
+const TabButton = ({ isActive, onClick, children }) => (
+  <button
+    className={`w-1/4 rounded-md p-2 text-sm font-medium leading-none text-slate-800 ${
+      isActive ? "bg-white shadow-sm" : ""
+    }`}
+    onClick={onClick}>
+    {children}
+  </button>
+);
 
 export default function SurveyBgSelectorTab({
   localSurvey,
@@ -19,44 +29,33 @@ export default function SurveyBgSelectorTab({
 }: SurveyBgSelectorTabProps) {
   const [tab, setTab] = useState(bgType || "image");
 
+  const renderContent = () => {
+    switch (tab) {
+      case "image":
+        return <ImageSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />;
+      case "animation":
+        return <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />;
+      case "color":
+        return <ColorSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} colours={colours} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4 px-8">
       <div className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-6 py-1.5">
-        <button
-          className={
-            tab === "image"
-              ? "w-1/4 rounded-md bg-white  p-2 text-sm font-medium leading-none text-slate-800 shadow-sm"
-              : "w-1/4 rounded-md  p-2 text-sm font-medium leading-none text-slate-800"
-          }
-          onClick={() => setTab("image")}>
+        <TabButton isActive={tab === "image"} onClick={() => setTab("image")}>
           Image
-        </button>
-        <button
-          className={
-            tab === "animation"
-              ? "w-1/4 rounded-md bg-white p-2 text-sm font-medium leading-none text-slate-800 shadow-sm"
-              : "w-1/4 rounded-md p-2 text-sm font-medium leading-none text-slate-800"
-          }
-          onClick={() => setTab("animation")}>
+        </TabButton>
+        <TabButton isActive={tab === "animation"} onClick={() => setTab("animation")}>
           Animation
-        </button>
-        <button
-          className={
-            tab === "color"
-              ? "w-1/4 rounded-md bg-white p-2 text-sm font-medium leading-none text-slate-800 shadow-sm"
-              : "w-1/4 rounded-md p-2 text-sm font-medium leading-none text-slate-800"
-          }
-          onClick={() => setTab("color")}>
+        </TabButton>
+        <TabButton isActive={tab === "color"} onClick={() => setTab("color")}>
           Color
-        </button>
+        </TabButton>
       </div>
-      {tab === "image" ? (
-        <ImageSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
-      ) : tab === "animation" ? (
-        <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />
-      ) : (
-        <ColorSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} colours={colours} />
-      )}
+      {renderContent()}
     </div>
   );
 }
