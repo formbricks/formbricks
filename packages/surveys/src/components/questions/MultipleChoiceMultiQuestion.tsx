@@ -145,18 +145,20 @@ export default function MultipleChoiceMultiQuestion({
                     aria-labelledby={`${choice.id}-label`}
                     onChange={(e) => {
                       if ((e.target as HTMLInputElement)?.checked) {
-                        addItem(choice.label[language]);
+                        addItem(getLocalizedValue(choice.label, language));
                       } else {
-                        removeItem(choice.label[language]);
+                        removeItem(getLocalizedValue(choice.label, language));
                       }
                     }}
-                    checked={Array.isArray(value) && value.includes(choice.label[language])}
+                    checked={
+                      Array.isArray(value) && value.includes(getLocalizedValue(choice.label, language))
+                    }
                     required={
                       question.required && Array.isArray(value) && value.length ? false : question.required
                     }
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                    {choice.label[language]}
+                    {getLocalizedValue(choice.label, language)}
                   </span>
                 </span>
               </label>

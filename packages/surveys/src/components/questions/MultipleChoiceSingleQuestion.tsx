@@ -68,6 +68,7 @@ export default function MultipleChoiceSingleQuestion({
           <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
         </div>
       )}
+      {console.log(question)}
       <Headline
         headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
@@ -113,13 +114,13 @@ export default function MultipleChoiceSingleQuestion({
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setOtherSelected(false);
-                      onChange({ [question.id]: choice.label[language] });
+                      onChange({ [question.id]: getLocalizedValue(choice.label, language) });
                     }}
-                    checked={value === choice.label[language]}
+                    checked={value === getLocalizedValue(choice.label, language)}
                     required={question.required && idx === 0}
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                    {choice.label[language]}
+                    {getLocalizedValue(choice.label, language)}
                   </span>
                 </span>
               </label>
