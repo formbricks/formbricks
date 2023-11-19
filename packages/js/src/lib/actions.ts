@@ -1,4 +1,5 @@
-import { TJsActionInput, TSurveyWithTriggers } from "@formbricks/types/js";
+import { TJsActionInput } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
@@ -58,10 +59,10 @@ export const trackAction = async (
   return okVoid();
 };
 
-export const triggerSurvey = (actionName: string, activeSurveys: TSurveyWithTriggers[]): void => {
+export const triggerSurvey = (actionName: string, activeSurveys: TSurvey[]): void => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
-      if (typeof trigger === "string" ? trigger === actionName : trigger.name === actionName) {
+      if (trigger === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
         renderWidget(survey);
         return;

@@ -18,7 +18,7 @@ import { FormbricksAPI } from "@formbricks/api";
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
-  personId?: string;
+  userId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
   singleUseId?: string;
@@ -29,7 +29,7 @@ interface LinkSurveyProps {
 export default function LinkSurvey({
   survey,
   product,
-  personId,
+  userId,
   emailVerificationStatus,
   prefillAnswer,
   singleUseId,
@@ -41,9 +41,7 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
-  const [surveyState, setSurveyState] = useState(
-    new SurveyState(survey.id, singleUseId, responseId, personId)
-  );
+  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );

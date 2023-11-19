@@ -96,32 +96,35 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
         </Button>
       </div>
       <div className="grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
-        {showEmbed && (
+        {showEmbed ? (
           <CodeBlock
             customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
             language="html"
             showCopyToClipboard={false}>
             {emailHtml}
           </CodeBlock>
-        )}
-        <div>
-          <div className="mb-6 flex gap-2">
-            <div className="h-3 w-3 rounded-full bg-red-500"></div>
-            <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-            <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-          </div>
-          <div className="">
-            <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
-            <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
-            <div className="p-4">
-              {emailHtml ? (
-                <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>
-              ) : (
-                <LoadingSpinner />
-              )}
+        ) : (
+          <div>
+            <div className="mb-6 flex gap-2">
+              <div className="h-3 w-3 rounded-full bg-red-500"></div>
+              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+            </div>
+            <div className="">
+              <div className="mb-2 border-b border-slate-200 pb-2 text-sm">
+                To : {email || "user@mail.com"}
+              </div>
+              <div className="border-b border-slate-200 pb-2 text-sm">Subject : {subject}</div>
+              <div className="p-4">
+                {emailHtml ? (
+                  <div dangerouslySetInnerHTML={{ __html: emailHtmlPreview }}></div>
+                ) : (
+                  <LoadingSpinner />
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
