@@ -44,7 +44,7 @@ export default function SurveyEditor({
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
   const [languages, setLanguages] = useState<TLanguages>({ en: "English" });
-  const allLanguages = Object.entries(product.languages);
+  const allLanguages = Object.entries(product.languages ?? { en: "English" });
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
 
   useEffect(() => {
