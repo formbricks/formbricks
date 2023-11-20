@@ -291,10 +291,10 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   }
 };
 
-export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> => {
-  const personPrisma = await unstable_cache(
+export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> =>
+  await unstable_cache(
     async () => {
-      validateInputs([userId, ZString], [environmentId, ZId]);
+      validateInputs([environmentId, ZId], [userId, ZString]);
 
       // check if userId exists as a column
       const personWithUserId = await prisma.person.findFirst({
@@ -306,7 +306,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
       });
 
       if (personWithUserId) {
-        return personWithUserId;
+        return transformPrismaPerson(personWithUserId);
       }
 
       // Check if a person with the userId attribute exists
@@ -352,23 +352,14 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
         userId,
       });
 
-      return personWithUserIdAttribute;
+      return transformPrismaPerson(personWithUserIdAttribute);
     },
-    [`getPersonByUserId-${userId}-${environmentId}`],
+    [`getPersonByUserId-${environmentId}-${userId}`],
     {
-      tags: [
-        personCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        personCache.tag.byUserId(userId), // fix for caching issue on vercel
-        personCache.tag.byEnvironmentId(environmentId), // fix for caching issue on vercel
-      ],
+      tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!personPrisma) {
-    return null;
-  }
-  return transformPrismaPerson(personPrisma);
-};
 
 export const updatePersonAttribute = async (
   personId: string,
