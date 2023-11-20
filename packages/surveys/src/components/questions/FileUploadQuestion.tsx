@@ -14,7 +14,6 @@ interface FileUploadQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   surveyId?: string;
 }
 

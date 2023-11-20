@@ -1,5 +1,6 @@
 import CTAQuestion from "@/components/questions/CTAQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
+import FileUploadQuestion from "@/components/questions/FileUploadQuestion";
 import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
 import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
 import NPSQuestion from "@/components/questions/NPSQuestion";
@@ -103,6 +104,16 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+    />
+  ) : question.type === TSurveyQuestionType.FileUpload ? (
+    <FileUploadQuestion
       question={question}
       value={value}
       onChange={onChange}
