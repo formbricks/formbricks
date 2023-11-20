@@ -12,7 +12,7 @@ export class PeopleAPI {
     this.environmentId = environmentId;
   }
 
-  async updateAttribute(
+  async update(
     personInput: TPersonUpdateInput,
     userId: string | undefined
   ): Promise<Result<TPerson, NetworkError | Error>> {

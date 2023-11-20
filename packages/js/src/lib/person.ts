@@ -30,7 +30,7 @@ export const updatePersonAttribute = async (
     apiHost: config.get().apiHost,
     environmentId: config.get().environmentId,
   });
-  const res = await api.client.people.updateAttribute(input, config.get().state.person?.userId);
+  const res = await api.client.people.update(input, config.get().state.person?.userId);
 
   if (!res.ok) {
     throw new Error("Could not update Person");
