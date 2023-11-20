@@ -37,7 +37,7 @@ export default function ThankYouCard({
 
       <div>
         <Headline
-          isThankYouCard={true}
+          alignTextCenter={true}
           headline={headline}
           questionId="thankYouCard"
           style={{ "justify-content": "center" }}

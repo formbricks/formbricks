@@ -3,7 +3,7 @@ interface HeadlineProps {
   questionId: string;
   style?: any;
   required?: boolean;
-  isThankYouCard?: boolean;
+  alignTextCenter: boolean;
 }
 
 export default function Headline({
@@ -11,7 +11,7 @@ export default function Headline({
   questionId,
   style,
   required = true,
-  isThankYouCard = false,
+  alignTextCenter = false,
 }: HeadlineProps) {
   return (
     <label
@@ -19,7 +19,7 @@ export default function Headline({
       className="text-heading mb-1.5 block text-base font-semibold leading-6"
       style={style}>
       <div
-        className={`flex items-center  ${isThankYouCard ? "justify-center" : "mr-[3ch] justify-between"}`}
+        className={`flex items-center  ${alignTextCenter ? "justify-center" : "mr-[3ch] justify-between"}`}
         style={style}>
         {headline}
         {!required && (
