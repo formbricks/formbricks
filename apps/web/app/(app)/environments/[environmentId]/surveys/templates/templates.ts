@@ -406,7 +406,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionType.OpenText,
-          headline: "What is the main benefit your receive from {{productName}}?",
+          headline: "What is the primary advantage you gain from {{productName}}?",
           required: true,
           inputType: "text",
         },
