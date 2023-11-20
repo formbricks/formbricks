@@ -2,6 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Brand Colors */
+  --formbricks-brand: #038178;
+
+  /* Fill Colors */
+  --formbricks-fill-primary: #fefefe;
+  --formbricks-fill-secondary: #0f172a;
+  --formbricks-fill-disabled: #e0e0e0;
+
+  /* Label Colors */
+  --formbricks-label-primary: #0f172a;
+  --formbricks-label-secondary: #384258;
+  --formbricks-label-disabled: #bdbdbd;
+
+  /* Border Colors */
+  --formbricks-border-primary: #e0e0e0;
+  --formbricks-border-secondary: #0f172a;
+  --formbricks-border-disabled: #ececec;
+
+  /* Functional Colors */
+  --formbricks-focus: #1982fc;
+  --formbricks-error: #d13a3a;
+}
+
+.dark {
+  /* Brand Colors */
+  --formbricks-brand: #038178; 
+
+  /* Fill Colors */
+  --formbricks-fill-primary: #0f172a;
+  --formbricks-fill-secondary: #e0e0e0;
+  --formbricks-fill-disabled: #394258;
+
+  /* Label Colors */
+  --formbricks-label-primary: #fefefe;
+  --formbricks-label-secondary: #f2f2f2;
+  --formbricks-label-disabled: #bdbdbd;
+
+  /* Border Colors */
+  --formbricks-border-primary: #394258;
+  --formbricks-border-secondary: #e0e0e0;
+  --formbricks-border-disabled: #394258;
+
+  /* Functional Colors */
+  --formbricks-focus: #1982fc;
+  --formbricks-error: #d13a3a;
+}
+
+
 @layer base {
   [data-nextjs-scroll-focus-boundary] {
     display: contents;

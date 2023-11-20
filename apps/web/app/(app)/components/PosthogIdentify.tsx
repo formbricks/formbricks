@@ -1,5 +1,5 @@
 "use client";
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 import type { Session } from "next-auth";
 import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";

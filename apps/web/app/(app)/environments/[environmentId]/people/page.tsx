@@ -80,7 +80,7 @@ export default async function PeoplePage({
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
                   <div className="ph-no-capture text-slate-900">
-                    {truncateMiddle(getAttributeValue(person, "userId"), 24)}
+                    {truncateMiddle(getAttributeValue(person, "userId"), 24) || person.userId}
                   </div>
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
