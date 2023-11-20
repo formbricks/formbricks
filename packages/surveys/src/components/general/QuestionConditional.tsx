@@ -8,7 +8,7 @@ import NPSQuestion from "@/components/questions/NPSQuestion";
 import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
 import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
 import RatingQuestion from "@/components/questions/RatingQuestion";
-import DateQuestion from "@/components/DateQuestion";
+import DateQuestion from "@/components/questions/DateQuestion";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -111,7 +111,6 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      brandColor={brandColor}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion

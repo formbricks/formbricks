@@ -1,9 +1,9 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import Headline from "@/components/general/Headline";
+import Subheader from "@/components/general/Subheader";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
 import { useEffect, useState } from "preact/hooks";
 
 interface IDateQuestionProps {
@@ -14,7 +14,6 @@ interface IDateQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  brandColor: string;
   autoFocus?: boolean;
 }
 
@@ -25,7 +24,6 @@ export default function DateQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   onChange,
 }: IDateQuestionProps) {
   console.log({ value });
@@ -100,12 +98,7 @@ export default function DateQuestion({
             }}
           />
         )}
-        <SubmitButton
-          isLastQuestion={isLastQuestion}
-          brandColor={brandColor}
-          onClick={() => {}}
-          buttonLabel="Submit"
-        />
+        <SubmitButton isLastQuestion={isLastQuestion} onClick={() => {}} buttonLabel="Submit" />
       </div>
     </form>
   );
