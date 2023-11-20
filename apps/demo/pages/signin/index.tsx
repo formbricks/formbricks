@@ -8,8 +8,12 @@ export default function SiginPage() {
   const submitAction = (e: FormEvent) => {
     e.preventDefault();
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
+      formbricks.init({
+        environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
+        apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
+        userId: "123456",
+      });
       formbricks.setEmail("matti@example.com");
-      formbricks.setUserId("123456");
       formbricks.setAttribute("Plan", "Premium");
     }
     router.push("/app");

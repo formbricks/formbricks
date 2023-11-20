@@ -1,9 +1,10 @@
 import { TJsActionInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
-import { NetworkError, Result, err, okVoid } from "./errors";
+import { NetworkError, Result, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
+import { FormbricksAPI } from "@formbricks/api";
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
@@ -23,25 +24,17 @@ export const trackAction = async (
   // don't send actions to the backend if the person is not identified
   if (config.get().state?.person?.userId && !intentsToNotCreateOnApp.includes(name)) {
     logger.debug(`Sending action "${name}" to backend`);
-    const res = await fetch(`${config.get().apiHost}/api/v1/client/${config.get().environmentId}/actions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
 
-      body: JSON.stringify(input),
+    const api = new FormbricksAPI({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+    });
+    const res = await api.client.action.create({
+      ...input,
     });
 
     if (!res.ok) {
-      const error = await res.json();
-
-      return err({
-        code: "network_error",
-        message: `Error tracking action: ${JSON.stringify(error)}`,
-        status: res.status,
-        url: res.url,
-        responseMessage: error.message,
-      });
+      throw new Error("Could not create display");
     }
   }
 
