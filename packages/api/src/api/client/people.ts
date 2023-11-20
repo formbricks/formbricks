@@ -12,6 +12,13 @@ export class PeopleAPI {
     this.environmentId = environmentId;
   }
 
+  async create(userId: string): Promise<Result<TPerson, NetworkError | Error>> {
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/people`, "POST", {
+      environmentId: this.environmentId,
+      userId,
+    });
+  }
+
   async update(
     personInput: TPersonUpdateInput,
     userId: string | undefined
