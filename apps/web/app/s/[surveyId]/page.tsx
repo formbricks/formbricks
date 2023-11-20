@@ -6,7 +6,7 @@ import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
+import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -147,7 +147,11 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const userId = searchParams.userId;
   if (userId) {
-    await getOrCreatePersonByUserId(userId, survey.environmentId);
+    // make sure the person exists or get's created
+    const person = await getPersonByUserId(survey.environmentId, userId);
+    if (!person) {
+      await createPerson(survey.environmentId, userId);
+    }
   }
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);

@@ -291,7 +291,7 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   }
 };
 
-export const getPersonByUserId = async (userId: string, environmentId: string): Promise<TPerson | null> => {
+export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> => {
   const personPrisma = await unstable_cache(
     async () => {
       validateInputs([userId, ZString], [environmentId, ZId]);
@@ -369,45 +369,6 @@ export const getPersonByUserId = async (userId: string, environmentId: string): 
   }
   return transformPrismaPerson(personPrisma);
 };
-
-export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> =>
-  await unstable_cache(
-    async () => {
-      validateInputs([userId, ZString], [environmentId, ZId]);
-
-      let person = await getPersonByUserId(userId, environmentId);
-
-      if (person) {
-        return person;
-      }
-
-      // create a new person
-      const personPrisma = await prisma.person.create({
-        data: {
-          environment: {
-            connect: {
-              id: environmentId,
-            },
-          },
-          userId,
-        },
-        select: selectPerson,
-      });
-
-      personCache.revalidate({
-        id: personPrisma.id,
-        environmentId,
-        userId,
-      });
-
-      return transformPrismaPerson(personPrisma);
-    },
-    [`getOrCreatePersonByUserId-${userId}-${environmentId}`],
-    {
-      tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
 
 export const updatePersonAttribute = async (
   personId: string,
