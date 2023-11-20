@@ -31,7 +31,7 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
       );
     }
 
-    const person = await getPersonByUserId(userId, environmentId);
+    const person = await getPersonByUserId(environmentId, userId);
 
     if (!person) {
       return responses.notFoundResponse("PersonByUserId", userId, true);

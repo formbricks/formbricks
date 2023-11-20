@@ -148,7 +148,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const userId = searchParams.userId;
   if (userId) {
     // make sure the person exists or get's created
-    const person = await getPersonByUserId(userId, survey.environmentId);
+    const person = await getPersonByUserId(survey.environmentId, userId);
     if (!person) {
       await createPerson(survey.environmentId, userId);
     }
