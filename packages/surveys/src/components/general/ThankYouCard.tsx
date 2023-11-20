@@ -36,12 +36,7 @@ export default function ThankYouCard({
       <span className="bg-shadow mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
 
       <div>
-        <Headline
-          alignTextCenter={true}
-          headline={headline}
-          questionId="thankYouCard"
-          style={{ "justify-content": "center" }}
-        />
+        <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
       </div>
