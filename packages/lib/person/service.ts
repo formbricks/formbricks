@@ -370,7 +370,7 @@ export const getPersonByUserId = async (userId: string, environmentId: string): 
   return transformPrismaPerson(personPrisma);
 };
 
-export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> =>
+/* export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> =>
   await unstable_cache(
     async () => {
       validateInputs([userId, ZString], [environmentId, ZId]);
@@ -407,7 +407,7 @@ export const getOrCreatePersonByUserId = async (userId: string, environmentId: s
       tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
-  )();
+  )(); */
 
 export const updatePersonAttribute = async (
   personId: string,
