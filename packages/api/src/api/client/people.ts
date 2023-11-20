@@ -21,7 +21,7 @@ export class PeopleAPI {
 
   async update(
     personInput: TPersonUpdateInput,
-    userId: string | undefined
+    userId: string
   ): Promise<Result<TPerson, NetworkError | Error>> {
     return makeRequest(
       this.apiHost,

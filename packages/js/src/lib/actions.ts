@@ -31,6 +31,7 @@ export const trackAction = async (
     });
     const res = await api.client.action.create({
       ...input,
+      userId: config.get().state.person!.userId,
     });
 
     if (!res.ok) {
