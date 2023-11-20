@@ -134,7 +134,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionType.OpenText,
-          headline: "What is the main benefit your receive from Formbricks?",
+          headline: "What is the primary advantage you gain from Formbricks?",
           inputType: "text",
           longAnswer: true,
           required: true,
