@@ -1,7 +1,7 @@
 import { TJsActionInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
-import { NetworkError, Result, okVoid } from "./errors";
+import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
 import { FormbricksAPI } from "@formbricks/api";
@@ -34,7 +34,13 @@ export const trackAction = async (
     });
 
     if (!res.ok) {
-      throw new Error("Could not create display");
+      return err({
+        code: "network_error",
+        message: `Error tracking action ${name}`,
+        status: 500,
+        url: `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/actions`,
+        responseMessage: res.error.message,
+      });
     }
   }
 

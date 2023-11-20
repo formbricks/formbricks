@@ -33,7 +33,15 @@ export const updatePersonAttribute = async (
   const res = await api.client.people.update(input, config.get().state.person?.userId);
 
   if (!res.ok) {
-    throw new Error("Could not update Person");
+    return err({
+      code: "network_error",
+      status: 500,
+      message: `Error updating person with userId ${config.get().state.person?.userId}`,
+      url: `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/people/${
+        config.get().state.person?.userId
+      }`,
+      responseMessage: res.error.message,
+    });
   }
 
   logger.debug("Attribute updated. Syncing...");
