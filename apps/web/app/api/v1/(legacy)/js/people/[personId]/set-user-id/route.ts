@@ -26,9 +26,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const { environmentId, userId } = inputValidation.data;
 
-    let person = await getPersonByUserId(userId, environmentId);
+    let person = await getPersonByUserId(environmentId, userId);
     if (!person) {
-      person = await createPerson(userId, environmentId);
+      person = await createPerson(environmentId, userId);
     }
 
     const state = await getUpdatedState(environmentId, person.id);

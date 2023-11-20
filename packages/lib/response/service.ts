@@ -201,7 +201,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     let person: TPerson | null = null;
 
     if (responseInput.userId) {
-      person = await getPersonByUserId(responseInput.userId, responseInput.environmentId);
+      person = await getPersonByUserId(responseInput.environmentId, responseInput.userId);
       if (!person) {
         throw new ResourceNotFoundError("Person", responseInput.userId);
       }

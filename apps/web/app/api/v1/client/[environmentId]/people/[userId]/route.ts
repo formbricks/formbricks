@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getOrCreatePersonByUserId, updatePerson } from "@formbricks/lib/person/service";
+import { getPersonByUserId, updatePerson } from "@formbricks/lib/person/service";
 import { ZPersonUpdateInput } from "@formbricks/types/people";
 import { NextResponse } from "next/server";
 
@@ -31,7 +31,7 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
       );
     }
 
-    const person = await getOrCreatePersonByUserId(userId, environmentId);
+    const person = await getPersonByUserId(userId, environmentId);
 
     if (!person) {
       return responses.notFoundResponse("PersonByUserId", userId, true);
