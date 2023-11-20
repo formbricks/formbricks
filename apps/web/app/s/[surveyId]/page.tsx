@@ -1,19 +1,19 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
+import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
+import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrCreatePersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { getEmailVerificationStatus } from "./lib/helpers";
-import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
-import { notFound } from "next/navigation";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { TResponse } from "@formbricks/types/responses";
-import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import type { Metadata } from "next";
-import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
+import { notFound } from "next/navigation";
+import { getEmailVerificationStatus } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
   params: {
@@ -146,9 +146,8 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   const userId = searchParams.userId;
-  let person;
   if (userId) {
-    person = await getOrCreatePersonByUserId(userId, survey.environmentId);
+    await getOrCreatePersonByUserId(userId, survey.environmentId);
   }
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
@@ -158,7 +157,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       <PinScreen
         surveyId={survey.id}
         product={product}
-        personId={person?.id}
+        userId={userId}
         emailVerificationStatus={emailVerificationStatus}
         prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
@@ -172,7 +171,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     <LinkSurvey
       survey={survey}
       product={product}
-      personId={person?.id}
+      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}

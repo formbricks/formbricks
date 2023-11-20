@@ -306,7 +306,7 @@ export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<n
           AND: [
             { environmentId: { in: environmentIds } },
             {
-              sessions: {
+              actions: {
                 some: {
                   createdAt: { gte: firstDayOfMonth },
                 },

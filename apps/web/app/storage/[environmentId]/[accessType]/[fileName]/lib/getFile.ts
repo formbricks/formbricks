@@ -1,4 +1,4 @@
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 import { responses } from "@/app/lib/api/response";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";

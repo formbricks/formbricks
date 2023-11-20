@@ -256,17 +256,15 @@ export default function SingleResponseCard({
                 {timeSince(response.updatedAt.toISOString())}
               </time>
               {!isViewer && (
-                <TooltipRenderer
-                  shouldRender={isSubmissionFresh || !response.finished}
-                  tooltipContent={deleteSubmissionToolTip}>
+                <TooltipRenderer shouldRender={isSubmissionFresh} tooltipContent={deleteSubmissionToolTip}>
                   <TrashIcon
                     onClick={() => {
-                      if (!isSubmissionFresh || !response.finished) {
+                      if (!isSubmissionFresh) {
                         setDeleteDialogOpen(true);
                       }
                     }}
                     className={`h-4 w-4 ${
-                      isSubmissionFresh || !response.finished
+                      isSubmissionFresh
                         ? "cursor-not-allowed text-gray-400"
                         : "text-slate-500 hover:text-red-700"
                     } `}
