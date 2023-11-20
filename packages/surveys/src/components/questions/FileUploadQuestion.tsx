@@ -1,10 +1,10 @@
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
-import { BackButton } from "./BackButton";
-import Headline from "./Headline";
-import Subheader from "./Subheader";
-import SubmitButton from "./SubmitButton";
-import FileInput from "./FileInput";
+import { BackButton } from "../buttons/BackButton";
+import SubmitButton from "../buttons/SubmitButton";
+import FileInput from "../general/FileInput";
+import Headline from "../general/Headline";
+import Subheader from "../general/Subheader";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
@@ -26,7 +26,6 @@ export default function FileUploadQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  brandColor,
   surveyId,
 }: FileUploadQuestionProps) {
   return (
@@ -78,12 +77,7 @@ export default function FileUploadQuestion({
           />
         )}
         <div></div>
-        <SubmitButton
-          buttonLabel={question.buttonLabel}
-          isLastQuestion={isLastQuestion}
-          brandColor={brandColor}
-          onClick={() => {}}
-        />
+        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
       </div>
     </form>
   );

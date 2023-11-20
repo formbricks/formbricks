@@ -2,7 +2,7 @@ import { TAllowedFileExtension } from "@formbricks/types/common";
 import { useMemo } from "preact/hooks";
 import { JSXInternal } from "preact/src/jsx";
 import { useState } from "react";
-import { uploadFile } from "../lib/uploadFile";
+import { uploadFile } from "../../lib/uploadFile";
 
 interface MultipleFileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
