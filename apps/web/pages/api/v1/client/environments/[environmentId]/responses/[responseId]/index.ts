@@ -1,7 +1,8 @@
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { TPerson } from "@formbricks/types/people";
+import { transformPrismaPerson } from "@formbricks/lib/person/service";
+import { responseCache } from "@formbricks/lib/response/cache";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
@@ -68,6 +69,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         person: {
           select: {
             id: true,
+            userId: true,
+            environmentId: true,
             createdAt: true,
             updatedAt: true,
             attributes: {
@@ -114,20 +117,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    const transformPrismaPerson = (person): TPerson => {
-      const attributes = person.attributes.reduce((acc, attr) => {
-        acc[attr.attributeClass.name] = attr.value;
-        return acc;
-      }, {} as Record<string, string | number>);
-
-      return {
-        id: person.id,
-        attributes: attributes,
-        createdAt: person.createdAt,
-        updatedAt: person.updatedAt,
-        environmentId: environmentId,
-      };
-    };
+    // update response cache
+    responseCache.revalidate({
+      id: responseId,
+      surveyId: responsePrisma.surveyId,
+      environmentId,
+    });
 
     const responseData: TResponse = {
       ...responsePrisma,

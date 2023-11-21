@@ -9,7 +9,7 @@ interface AlertDialogProps {
   confirmWhat: string;
   onDiscard: () => void;
   text?: string;
-  useSaveInsteadOfCancel?: boolean;
+  confirmButtonLabel: string;
   onSave?: () => void;
 }
 
@@ -19,12 +19,12 @@ export default function AlertDialog({
   confirmWhat,
   onDiscard,
   text,
-  useSaveInsteadOfCancel = false,
+  confirmButtonLabel,
   onSave,
 }: AlertDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={`Confirm ${confirmWhat}`}>
-      <p>{text || "Are you sure? This action cannot be undone."}</p>
+      <p className="mb-6 text-sm">{text || "Are you sure? This action cannot be undone."}</p>
       <div className="space-x-2 text-right">
         <Button variant="warn" onClick={onDiscard}>
           Discard
@@ -32,12 +32,12 @@ export default function AlertDialog({
         <Button
           variant="darkCTA"
           onClick={() => {
-            if (useSaveInsteadOfCancel && onSave) {
+            if (onSave) {
               onSave();
             }
             setOpen(false);
           }}>
-          {useSaveInsteadOfCancel ? "Save" : "Cancel"}
+          {confirmButtonLabel}
         </Button>
       </div>
     </Modal>

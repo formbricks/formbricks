@@ -1,10 +1,9 @@
-import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export interface SurveyBaseProps {
-  survey: TSurveyWithTriggers;
-  brandColor: string;
-  formbricksSignature: boolean;
+  survey: TSurvey;
+  isBrandingEnabled: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;

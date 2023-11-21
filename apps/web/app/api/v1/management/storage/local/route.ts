@@ -10,7 +10,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
+import { env } from "@formbricks/lib/env.mjs";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "public"; // public files are accessible by anyone
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     fileType,
     Number(signedTimestamp),
     signedSignature,
-    ENCRYPTION_KEY
+    env.ENCRYPTION_KEY
   );
 
   if (!validated) {

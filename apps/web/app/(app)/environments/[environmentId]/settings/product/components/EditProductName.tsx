@@ -16,9 +16,14 @@ type TEditProductName = {
 type EditProductNameProps = {
   product: TProduct;
   environmentId: string;
+  isProductNameEditDisabled: boolean;
 };
 
-const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentId }) => {
+const EditProductName: React.FC<EditProductNameProps> = ({
+  product,
+  environmentId,
+  isProductNameEditDisabled,
+}) => {
   const router = useRouter();
   const {
     register,
@@ -45,6 +50,11 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
         return;
       }
       const updatedProduct = await updateProductAction(environmentId, product.id, { name: data.name });
+      if (isProductNameEditDisabled) {
+        toast.error("Only Owners, Admins and Editors can perform this action.");
+        throw new Error();
+      }
+
       if (!!updatedProduct?.id) {
         toast.success("Product name updated successfully.");
         router.refresh();
@@ -55,7 +65,7 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
     }
   };
 
-  return (
+  return !isProductNameEditDisabled ? (
     <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(updateProduct)}>
       <Label htmlFor="fullname">What&apos;s your product called?</Label>
       <Input
@@ -74,6 +84,8 @@ const EditProductName: React.FC<EditProductNameProps> = ({ product, environmentI
         Update
       </Button>
     </form>
+  ) : (
+    <p className="text-sm text-red-700">Only Owners, Admins and Editors can perform this action.</p>
   );
 };
 

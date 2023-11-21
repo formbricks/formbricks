@@ -213,7 +213,7 @@ export default function WebhookSettingsTab({
 
             <Button
               variant="secondary"
-              href="https://formbricks.com/docs/webhook-api/overview"
+              href="https://formbricks.com/docs/api/management/webhooks"
               target="_blank">
               Read Docs
             </Button>

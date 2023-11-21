@@ -1,14 +1,14 @@
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 import { responses } from "@/app/lib/api/response";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/service";
+import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
 import { notFound } from "next/navigation";
 import path from "path";
 
 const getFile = async (environmentId: string, accessType: string, fileName: string) => {
   if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
     try {
-      const { fileBuffer, metaData } = await getFileFromLocalStorage(
+      const { fileBuffer, metaData } = await getLocalFile(
         path.join(UPLOADS_DIR, environmentId, accessType, fileName)
       );
 
@@ -24,7 +24,7 @@ const getFile = async (environmentId: string, accessType: string, fileName: stri
   }
 
   try {
-    const signedUrl = await getFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+    const signedUrl = await getS3File(`${environmentId}/${accessType}/${fileName}`);
 
     return new Response(null, {
       status: 302,

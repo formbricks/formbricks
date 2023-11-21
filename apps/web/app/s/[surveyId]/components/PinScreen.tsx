@@ -14,7 +14,7 @@ import { cn } from "@formbricks/lib/cn";
 interface LinkSurveyPinScreenProps {
   surveyId: string;
   product: TProduct;
-  personId?: string;
+  userId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
   singleUseId?: string;
@@ -28,7 +28,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     product,
     webAppUrl,
     emailVerificationStatus,
-    personId,
+    userId,
     prefillAnswer,
     singleUseId,
     singleUseResponse,
@@ -103,7 +103,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     <LinkSurvey
       survey={survey}
       product={product}
-      personId={personId}
+      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       prefillAnswer={prefillAnswer}
       singleUseId={singleUseId}

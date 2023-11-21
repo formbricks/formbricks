@@ -1,6 +1,6 @@
 import { Fence } from "@/components/shared/Fence";
 
-export const meta = {
+export const metadata = {
   title: "Formbricks Surveys API Documentation - How to Retrieve All Surveys",
   description:
     "Explore the comprehensive guide to the Formbricks Surveys API. Learn how to effectively retrieve all the surveys in your environment with the necessary headers and API key setup. Includes sample request and response formats.",
@@ -146,7 +146,7 @@ This set of API can be used to
                     {
                         "id": "lkjaxb73ulydzeumhd51sx9g",
                         "type": "openText",
-                        "headline": "What is the main benefit your receive from My Product?",
+                        "headline": "What is the main benefit you receive from My Product?",
                         "required": true
                     },
                     {
@@ -412,7 +412,7 @@ This set of API can be used to
     <CodeGroup title="Request" tag="POST" label="/api/v1/management/surveys">
 
     ```bash {{ title: 'cURL' }}
-    curl -X DELETE \
+    curl -X POST \
     'https://app.formbricks.com/api/v1/management/surveys' \
     --header \
     'x-api-key: <your-api-key>'

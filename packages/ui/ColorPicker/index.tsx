@@ -15,6 +15,8 @@ export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: 
             className="ml-2 mr-2 h-10 w-32 flex-1 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
             color={color}
             onChange={onChange}
+            id="color"
+            aria-label="Primary color"
           />
         </div>
         <PopoverPicker color={color} onChange={onChange} />

@@ -1,23 +1,32 @@
 import { Result } from "@formbricks/types/errorHandlers";
 import { NetworkError } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/makeRequest";
-import { TDisplay, TDisplayInput } from "@formbricks/types/displays";
+import { TDisplay, TDisplayCreateInput, TDisplayUpdateInput } from "@formbricks/types/displays";
 
 export class DisplayAPI {
   private apiHost: string;
+  private environmentId: string;
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, environmentId: string) {
     this.apiHost = baseUrl;
+    this.environmentId = environmentId;
   }
 
-  async markDisplayedForPerson({
-    surveyId,
-    personId,
-  }: TDisplayInput): Promise<Result<TDisplay, NetworkError | Error>> {
-    return makeRequest(this.apiHost, "/api/v1/client/displays", "POST", { surveyId, personId });
+  async create(
+    displayInput: Omit<TDisplayCreateInput, "environmentId">
+  ): Promise<Result<TDisplay, NetworkError | Error>> {
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/displays`, "POST", displayInput);
   }
 
-  async markResponded({ displayId }: { displayId: string }): Promise<Result<TDisplay, NetworkError | Error>> {
-    return makeRequest(this.apiHost, `/api/v1/client/displays/${displayId}/responded`, "POST");
+  async update(
+    displayId: string,
+    displayInput: Omit<TDisplayUpdateInput, "environmentId">
+  ): Promise<Result<TDisplay, NetworkError | Error>> {
+    return makeRequest(
+      this.apiHost,
+      `/api/v1/client/${this.environmentId}/displays/${displayId}`,
+      "PUT",
+      displayInput
+    );
   }
 }
