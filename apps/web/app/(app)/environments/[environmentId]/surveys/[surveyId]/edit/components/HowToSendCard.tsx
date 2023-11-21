@@ -9,7 +9,6 @@ import {
   CheckCircleIcon,
   ComputerDesktopIcon,
   DevicePhoneMobileIcon,
-  EnvelopeIcon,
   ExclamationCircleIcon,
   LinkIcon,
 } from "@heroicons/react/24/solid";
