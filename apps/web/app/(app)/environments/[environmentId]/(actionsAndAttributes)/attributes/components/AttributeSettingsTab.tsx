@@ -7,7 +7,7 @@ import type { AttributeClass } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { ArchiveBoxArrowDownIcon, ArchiveBoxXMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { updatetAttributeClass } from "@formbricks/lib/attributeClass/service";
+import { updateAttributeClass } from "@formbricks/lib/attributeClass/service";
 import { useState } from "react";
 
 interface AttributeSettingsTabProps {
@@ -25,7 +25,7 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
   const onSubmit = async (data) => {
     setisAttributeBeingSubmitted(true);
     setOpen(false);
-    await updatetAttributeClass(attributeClass.id, data);
+    await updateAttributeClass(attributeClass.id, data);
     router.refresh();
     setisAttributeBeingSubmitted(false);
   };
@@ -33,7 +33,7 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
   const handleArchiveToggle = async () => {
     setisAttributeBeingSubmitted(true);
     const data = { archived: !attributeClass.archived };
-    await updatetAttributeClass(attributeClass.id, data);
+    await updateAttributeClass(attributeClass.id, data);
     setisAttributeBeingSubmitted(false);
   };
 

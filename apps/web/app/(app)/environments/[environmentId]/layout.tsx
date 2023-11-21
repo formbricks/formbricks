@@ -11,7 +11,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session || !session.user) {
     return redirect(`/auth/login`);
   }
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);

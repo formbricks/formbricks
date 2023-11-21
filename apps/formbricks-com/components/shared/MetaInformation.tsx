@@ -30,6 +30,7 @@ export default function MetaInformation({
       <meta name="image" content={`https://${BASE_URL}/favicon.ico`} />
       <meta property="og:image" content={`https://${BASE_URL}/social-image.png`} />
       <link rel="icon" type="image/x-icon" href={`https://${BASE_URL}/favicon.ico`} />
+      <link rel="canonical" href="https://formbricks.com/" />
       <meta name="msapplication-TileColor" content="#00C4B8" />
       <meta name="msapplication-TileImage" content={`https://${BASE_URL}/favicon.ico`} />
       <meta property="og:image:alt" content="Open Source Experience Management, Privacy-first" />

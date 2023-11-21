@@ -25,7 +25,7 @@ export const ZSurveyWelcomeCard = z.object({
   html: z.string().optional(),
   fileUrl: z.string().optional(),
   buttonLabel: z.string().optional(),
-  timeToFinish: z.boolean().default(false),
+  timeToFinish: z.boolean().default(true),
 });
 
 export const ZSurveyHiddenFields = z.object({
@@ -37,7 +37,7 @@ export const ZSurveyProductOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
-  clickOutside: z.boolean().nullish(),
+  clickOutsideClose: z.boolean().nullish(),
   darkOverlay: z.boolean().nullish(),
 });
 

@@ -10,6 +10,10 @@ export default async function EnvironmentNotice({ environmentId }: EnvironmentNo
   const headersList = headers();
   const currentUrl = headersList.get("referer") || headersList.get("x-invoke-path") || "";
   const environment = await getEnvironment(environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+
   const environments = await getEnvironments(environment.productId);
   const otherEnvironmentId = environments.find((e) => e.id !== environment.id)?.id || "";
 
