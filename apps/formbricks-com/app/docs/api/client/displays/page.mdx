@@ -3,7 +3,7 @@ import { Fence } from "@/components/shared/Fence";
 export const metadata = {
   title: "Formbricks Public Client API Guide: Manage Survey Displays & Responses",
   description:
-    "Dive deep into Formbricks' Public Client API designed for customisation. This comprehensive guide provides detailed instructions on how to mark surveys as displayed as well as responded for individual persons, ensuring seamless client-side interactions without compromising data security.",
+    "Dive deep into Formbricks' Public Client API designed for customisation. This comprehensive guide provides detailed instructions on how to mark create and update survey displays for users.",
 };
 
 #### Client API
@@ -13,8 +13,8 @@ export const metadata = {
 The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
 
 This set of API can be used to
-- [Create a Display](#create-display)
-- [Update a Display](#update-display)
+- [Create Display](#create-display)
+- [Update Display](#update-display)
 
 ---
 
@@ -23,7 +23,7 @@ This set of API can be used to
 <Row>
   <Col>
 
-    Create a Display for a survey
+    Create Display of survey for a user
 
     ### Mandatory Request Body JSON Keys
     <Properties>
