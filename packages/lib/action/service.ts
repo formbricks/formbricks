@@ -240,7 +240,7 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     actionType = "automatic";
   }
 
-  const person = await getPersonByUserId(userId, environmentId);
+  const person = await getPersonByUserId(environmentId, userId);
 
   if (!person) {
     throw new Error("Person not found");
