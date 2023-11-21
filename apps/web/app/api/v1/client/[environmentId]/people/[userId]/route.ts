@@ -37,9 +37,9 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
       return responses.notFoundResponse("PersonByUserId", userId, true);
     }
 
-    const updatedPerson = await updatePerson(person.id, inputValidation.data);
+    await updatePerson(person.id, inputValidation.data);
 
-    return responses.successResponse(updatedPerson, true);
+    return responses.successResponse({}, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);
