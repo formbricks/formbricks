@@ -1,4 +1,3 @@
-import { getSyncSurveysCached } from "@/app/api/v1/(legacy)/js/sync/lib/surveys";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -9,15 +8,25 @@ import {
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
+import { getSurveys, getSyncSurveys } from "@formbricks/lib/survey/service";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TJsLegacyState } from "@formbricks/types/js";
+import { TJsLegacyState, TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
+import { TSurvey } from "@formbricks/types/surveys";
+
+export const transformLegacySurveys = (surveys: TSurvey[]): TSurveyWithTriggers[] => {
+  const updatedSurveys = surveys.map((survey) => {
+    const updatedSurvey: any = { ...survey };
+    updatedSurvey.triggers = updatedSurvey.triggers.map((trigger) => ({ name: trigger }));
+    return updatedSurvey;
+  });
+  return updatedSurveys;
+};
 
 export const getUpdatedState = async (environmentId: string, personId?: string): Promise<TJsLegacyState> => {
   let environment: TEnvironment | null;
@@ -85,11 +94,13 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
   if (isAppSurveyLimitReached) {
     surveys = [];
   } else if (isPerson) {
-    surveys = await getSyncSurveysCached(environmentId, person as TPerson);
+    surveys = await getSyncSurveys(environmentId, person as TPerson);
   } else {
     surveys = await getSurveys(environmentId);
-    surveys = surveys.filter((survey) => survey.type === "web");
+    surveys = surveys.filter((survey) => survey.type === "web" && survey.status === "inProgress");
   }
+
+  surveys = transformLegacySurveys(surveys);
 
   // get/create rest of the state
   const [noCodeActionClasses, product] = await Promise.all([
