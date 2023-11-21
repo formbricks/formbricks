@@ -1,7 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { getPerson } from "@formbricks/lib/person/service";
+import { createPerson, getPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -71,6 +71,13 @@ export async function POST(request: Request, context: Context): Promise<NextResp
   }
 
   const teamDetails = await getTeamDetails(survey.environmentId);
+
+  if (responseInput.userId) {
+    let user = await getPersonByUserId(environmentId, responseInput.userId);
+    if (!user) {
+      await createPerson(environmentId, responseInput.userId);
+    }
+  }
 
   let response: TResponse;
   try {
