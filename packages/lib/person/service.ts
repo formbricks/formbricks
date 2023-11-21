@@ -188,6 +188,22 @@ export const createPerson = async (environmentId: string, userId: string): Promi
     return transformedPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // If the person already exists, return it
+      if (error.code === "P2002") {
+        // HOTFIX to handle formbricks-js failing because of caching issue
+        // Handle the case where the person record already exists
+        const existingPerson = await prisma.person.findFirst({
+          where: {
+            environmentId,
+            userId,
+          },
+          select: selectPerson,
+        });
+
+        if (existingPerson) {
+          return transformPrismaPerson(existingPerson);
+        }
+      }
       throw new DatabaseError(error.message);
     }
 
