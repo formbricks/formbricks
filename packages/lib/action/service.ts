@@ -240,8 +240,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     actionType = "automatic";
   }
 
-  console.log("get person by user id", environmentId, userId);
-
   let person = await getPersonByUserId(environmentId, userId);
 
   if (!person) {
