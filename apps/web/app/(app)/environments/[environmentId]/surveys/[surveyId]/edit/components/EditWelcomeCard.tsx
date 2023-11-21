@@ -157,7 +157,7 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
-            {/*             <div className="mt-8 flex items-center">
+            <div className="mt-8 flex items-center">
               <div className="mr-2">
                 <Switch
                   id="timeToFinish"
@@ -176,7 +176,7 @@ export default function EditWelcomeCard({
                   Display an estimate of completion time for survey
                 </div>
               </div>
-            </div> */}
+            </div>
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

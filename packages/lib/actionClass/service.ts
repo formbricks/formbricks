@@ -28,7 +28,7 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
       try {
-        const actionClasses = await prisma.eventClass.findMany({
+        const actionClasses = await prisma.actionClass.findMany({
           where: {
             environmentId: environmentId,
           },
@@ -61,7 +61,7 @@ export const getActionClassByEnvironmentIdAndName = async (
       validateInputs([environmentId, ZId], [name, ZString]);
 
       try {
-        const actionClass = await prisma.eventClass.findFirst({
+        const actionClass = await prisma.actionClass.findFirst({
           where: {
             name,
             environmentId,
@@ -87,7 +87,7 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
       validateInputs([actionClassId, ZId]);
 
       try {
-        const actionClass = await prisma.eventClass.findUnique({
+        const actionClass = await prisma.actionClass.findUnique({
           where: {
             id: actionClassId,
           },
@@ -113,7 +113,7 @@ export const deleteActionClass = async (
   validateInputs([environmentId, ZId], [actionClassId, ZId]);
 
   try {
-    const result = await prisma.eventClass.delete({
+    const result = await prisma.actionClass.delete({
       where: {
         id: actionClassId,
       },
@@ -141,7 +141,7 @@ export const createActionClass = async (
   validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
 
   try {
-    const actionClassPrisma = await prisma.eventClass.create({
+    const actionClassPrisma = await prisma.actionClass.create({
       data: {
         name: actionClass.name,
         description: actionClass.description,
@@ -174,7 +174,7 @@ export const updateActionClass = async (
   validateInputs([environmentId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput.partial()]);
 
   try {
-    const result = await prisma.eventClass.update({
+    const result = await prisma.actionClass.update({
       where: {
         id: actionClassId,
       },

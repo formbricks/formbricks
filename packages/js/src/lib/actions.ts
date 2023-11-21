@@ -1,8 +1,10 @@
-import { TJsActionInput, TSurveyWithTriggers } from "@formbricks/types/js";
+import { TJsActionInput } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
+import { FormbricksAPI } from "@formbricks/api";
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
@@ -14,35 +16,36 @@ export const trackAction = async (
 ): Promise<Result<void, NetworkError>> => {
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
-    sessionId: config.get().state?.session?.id ?? "",
+    userId: config.get().state?.person?.userId,
     name,
     properties: properties || {},
   };
 
-  if (!intentsToNotCreateOnApp.includes(name)) {
-    const res = await fetch(`${config.get().apiHost}/api/v1/js/actions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  // don't send actions to the backend if the person is not identified
+  if (config.get().state?.person?.userId && !intentsToNotCreateOnApp.includes(name)) {
+    logger.debug(`Sending action "${name}" to backend`);
 
-      body: JSON.stringify(input),
+    const api = new FormbricksAPI({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+    });
+    const res = await api.client.action.create({
+      ...input,
+      userId: config.get().state.person!.userId,
     });
 
     if (!res.ok) {
-      const error = await res.json();
-
       return err({
         code: "network_error",
-        message: `Error tracking event: ${JSON.stringify(error)}`,
-        status: res.status,
-        url: res.url,
-        responseMessage: error.message,
+        message: `Error tracking action ${name}`,
+        status: 500,
+        url: `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/actions`,
+        responseMessage: res.error.message,
       });
     }
   }
 
-  logger.debug(`Formbricks: Event "${name}" tracked`);
+  logger.debug(`Formbricks: Action "${name}" tracked`);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = config.get().state?.surveys;
@@ -56,10 +59,10 @@ export const trackAction = async (
   return okVoid();
 };
 
-export const triggerSurvey = (actionName: string, activeSurveys: TSurveyWithTriggers[]): void => {
+export const triggerSurvey = (actionName: string, activeSurveys: TSurvey[]): void => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
-      if (typeof trigger === "string" ? trigger === actionName : trigger.name === actionName) {
+      if (trigger === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
         renderWidget(survey);
         return;

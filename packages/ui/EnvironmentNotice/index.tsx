@@ -8,6 +8,10 @@ interface EnvironmentNoticeProps {
 
 export default async function EnvironmentNotice({ environmentId }: EnvironmentNoticeProps) {
   const environment = await getEnvironment(environmentId);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+
   const environments = await getEnvironments(environment.productId);
   const otherEnvironmentId = environments.filter((e) => e.id !== environment.id)[0].id;
 
