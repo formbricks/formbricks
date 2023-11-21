@@ -34,10 +34,6 @@ Adds an Actions for a given User by their User ID
       <Property name="name" type="string">
         The name of the Action being created.
       </Property>
-      <Property name="properties" type="JSON">
-        JSON object with the properties in key value pairs.
-      </Property>
-
     </Properties>
 
   </Col>
@@ -49,20 +45,14 @@ Adds an Actions for a given User by their User ID
     curl --location --request POST 'https://app.formbricks.com/api/v1/client/<environment-id>/actions' \
     --data-raw '{
         "userId": "1",
-        "name": "new_action_v2",
-        "properties": {
-            "k1":"v1"
-        }
+        "name": "new_action_v2"
     }'
     ```
 
     ```json {{ title: 'Example Request Body' }}
     {
         "userId": "1",
-        "name": "new_action_v2",
-        "properties": {
-            "k1":"v1"
-        }
+        "name": "new_action_v2"
     }
     ```
 
@@ -81,7 +71,7 @@ Adds an Actions for a given User by their User ID
         "code": "bad_request",
         "message": "Fields are missing or incorrectly formatted",
         "details": {
-            "properties": "Required"
+            "name": "Required"
         }
     }
     ```
