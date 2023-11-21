@@ -7,6 +7,7 @@ import { uploadFile } from "../../lib/uploadFile";
 interface MultipleFileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
+  environmentId: string | undefined;
   onFileUpload: (uploadedUrls: string[]) => void;
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
@@ -16,6 +17,7 @@ interface MultipleFileInputProps {
 export default function FileInput({
   allowedFileExtensions,
   surveyId,
+  environmentId,
   onFileUpload,
   fileUrls,
   maxSizeInMB,
@@ -36,7 +38,7 @@ export default function FileInput({
         } else {
           setIsUploading(true);
           try {
-            const response = await uploadFile(file, allowedFileExtensions, surveyId);
+            const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
             setSelectedFiles([...selectedFiles, file]);
 
             setIsUploading(false);
@@ -58,7 +60,7 @@ export default function FileInput({
         setIsUploading(true);
 
         try {
-          const response = await uploadFile(file, allowedFileExtensions, surveyId);
+          const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
 
           setSelectedFiles([...selectedFiles, file]);
           setIsUploading(false);
@@ -125,7 +127,7 @@ export default function FileInput({
             } else {
               setIsUploading(true);
               try {
-                const response = await uploadFile(file, allowedFileExtensions, surveyId);
+                const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
                 setSelectedFiles([...selectedFiles, file]);
 
                 uploadedUrls.push(response.url);
@@ -141,7 +143,7 @@ export default function FileInput({
           } else {
             setIsUploading(true);
             try {
-              const response = await uploadFile(file, allowedFileExtensions, surveyId);
+              const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
               setSelectedFiles([...selectedFiles, file]);
 
               uploadedUrls.push(response.url);

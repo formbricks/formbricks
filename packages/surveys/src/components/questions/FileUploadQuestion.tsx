@@ -14,7 +14,8 @@ interface FileUploadQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  surveyId?: string;
+  surveyId: string;
+  environmentId: string;
 }
 
 export default function FileUploadQuestion({
@@ -26,6 +27,7 @@ export default function FileUploadQuestion({
   isFirstQuestion,
   isLastQuestion,
   surveyId,
+  environmentId,
 }: FileUploadQuestionProps) {
   return (
     <form
@@ -50,6 +52,7 @@ export default function FileUploadQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
 
       <FileInput
+        environmentId={environmentId}
         surveyId={surveyId}
         onFileUpload={(urls: string[]) => {
           if (urls) {

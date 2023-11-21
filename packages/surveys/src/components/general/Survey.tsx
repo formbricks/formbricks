@@ -146,6 +146,8 @@ export function Survey({
       return (
         currQues && (
           <QuestionConditional
+            surveyId={survey.id}
+            environmentId={survey.environmentId}
             question={currQues}
             value={responseData[currQues.id]}
             onChange={onChange}

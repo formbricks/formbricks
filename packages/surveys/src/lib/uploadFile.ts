@@ -1,7 +1,8 @@
 export const uploadFile = async (
   file: File | Blob,
   allowedFileExtensions: string[] | undefined,
-  surveyId: string | undefined
+  surveyId: string | undefined,
+  environmentId: string | undefined
 ) => {
   if (!(file instanceof Blob) || !(file instanceof File)) {
     throw new Error(`Invalid file type. Expected Blob or File, but received ${typeof file}`);
@@ -14,7 +15,7 @@ export const uploadFile = async (
     surveyId: surveyId,
   };
 
-  const response = await fetch("/api/v1/client/storage", {
+  const response = await fetch(`/api/v1/client/${environmentId}/storage`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
