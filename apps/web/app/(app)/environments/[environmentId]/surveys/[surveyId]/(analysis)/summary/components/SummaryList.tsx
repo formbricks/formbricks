@@ -3,7 +3,11 @@ import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[su
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import type { TSurveyPictureSelectionQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import type {
+  TSurveyDateQuestion,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestionSummary,
+} from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import {
@@ -22,7 +26,8 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
+import PictureChoiceSummary from "./PictureChoiceSummary";
+import DateQuestionSummary from "./DateQuestionSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;
@@ -42,6 +47,7 @@ export default function SummaryList({ environment, survey, responses, responsesP
           updatedAt: r.updatedAt,
           person: r.person,
         }));
+
       return {
         question,
         responses: questionResponses,
@@ -49,106 +55,114 @@ export default function SummaryList({ environment, survey, responses, responsesP
     });
 
   return (
-    <>
-      <div className="mt-10 space-y-8">
-        {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
-          <EmptyInAppSurveys environment={environment} />
-        ) : responses.length === 0 ? (
-          <EmptySpaceFiller
-            type="response"
-            environment={environment}
-            noWidgetRequired={survey.type === "link"}
-          />
-        ) : (
-          <>
-            {getSummaryData().map((questionSummary) => {
-              if (questionSummary.question.type === TSurveyQuestionType.OpenText) {
-                return (
-                  <OpenTextSummary
-                    key={questionSummary.question.id}
-                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
-                    environmentId={environment.id}
-                    responsesPerPage={responsesPerPage}
-                  />
-                );
-              }
-              if (
-                questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle ||
-                questionSummary.question.type === TSurveyQuestionType.MultipleChoiceMulti
-              ) {
-                return (
-                  <MultipleChoiceSummary
-                    key={questionSummary.question.id}
-                    questionSummary={
-                      questionSummary as TSurveyQuestionSummary<
-                        TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
-                      >
-                    }
-                    environmentId={environment.id}
-                    surveyType={survey.type}
-                    responsesPerPage={responsesPerPage}
-                  />
-                );
-              }
-              if (questionSummary.question.type === TSurveyQuestionType.NPS) {
-                return (
-                  <NPSSummary
-                    key={questionSummary.question.id}
-                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyNPSQuestion>}
-                  />
-                );
-              }
-              if (questionSummary.question.type === TSurveyQuestionType.CTA) {
-                return (
-                  <CTASummary
-                    key={questionSummary.question.id}
-                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCTAQuestion>}
-                  />
-                );
-              }
-              if (questionSummary.question.type === TSurveyQuestionType.Rating) {
-                return (
-                  <RatingSummary
-                    key={questionSummary.question.id}
-                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyRatingQuestion>}
-                  />
-                );
-              }
-              if (questionSummary.question.type === TSurveyQuestionType.Consent) {
-                return (
-                  <ConsentSummary
-                    key={questionSummary.question.id}
-                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
-                  />
-                );
-              }
-              if (questionSummary.question.type === TSurveyQuestionType.PictureSelection) {
-                return (
-                  <PictureChoiceSummary
-                    key={questionSummary.question.id}
-                    questionSummary={
-                      questionSummary as TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>
-                    }
-                  />
-                );
-              }
-              return null;
+    <div className="mt-10 space-y-8">
+      {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
+        <EmptyInAppSurveys environment={environment} />
+      ) : responses.length === 0 ? (
+        <EmptySpaceFiller
+          type="response"
+          environment={environment}
+          noWidgetRequired={survey.type === "link"}
+        />
+      ) : (
+        <>
+          {getSummaryData().map((questionSummary) => {
+            if (questionSummary.question.type === TSurveyQuestionType.OpenText) {
+              return (
+                <OpenTextSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
+                  environmentId={environment.id}
+                  responsesPerPage={responsesPerPage}
+                />
+              );
+            }
+            if (
+              questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle ||
+              questionSummary.question.type === TSurveyQuestionType.MultipleChoiceMulti
+            ) {
+              return (
+                <MultipleChoiceSummary
+                  key={questionSummary.question.id}
+                  questionSummary={
+                    questionSummary as TSurveyQuestionSummary<
+                      TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
+                    >
+                  }
+                  environmentId={environment.id}
+                  surveyType={survey.type}
+                  responsesPerPage={responsesPerPage}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.NPS) {
+              return (
+                <NPSSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyNPSQuestion>}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.CTA) {
+              return (
+                <CTASummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCTAQuestion>}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.Rating) {
+              return (
+                <RatingSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyRatingQuestion>}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.Consent) {
+              return (
+                <ConsentSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.PictureSelection) {
+              return (
+                <PictureChoiceSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.Date) {
+              return (
+                <DateQuestionSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyDateQuestion>}
+                  environmentId={environment.id}
+                  responsesPerPage={responsesPerPage}
+                />
+              );
+            }
+
+            return null;
+          })}
+
+          {survey.hiddenFields?.enabled &&
+            survey.hiddenFields.fieldIds?.map((question) => {
+              return (
+                <HiddenFieldsSummary
+                  environment={environment}
+                  question={question}
+                  responses={responses}
+                  survey={survey}
+                  key={question}
+                />
+              );
             })}
-            {survey.hiddenFields?.enabled &&
-              survey.hiddenFields.fieldIds?.map((question) => {
-                return (
-                  <HiddenFieldsSummary
-                    environment={environment}
-                    question={question}
-                    responses={responses}
-                    survey={survey}
-                    key={question}
-                  />
-                );
-              })}
-          </>
-        )}
-      </div>
-    </>
+        </>
+      )}
+    </div>
   );
 }

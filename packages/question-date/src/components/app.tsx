@@ -25,82 +25,80 @@ export default function App({ defaultDate }: { defaultDate?: Date }) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(defaultDate);
 
   return (
-    <div className="flex flex-col gap-1">
-      <div>
-        {!datePickerOpen && (
-          <div
-            onClick={() => setDatePickerOpen(true)}
-            class="relative flex h-10 w-[180px] cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
-            <div className="flex items-center">
-              <CalendarIcon />
-              <span>
-                {selectedDate
-                  ? selectedDate?.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                  : "Select a date"}
-              </span>
-            </div>
+    <div className="h-10">
+      {!datePickerOpen && (
+        <div
+          onClick={() => setDatePickerOpen(true)}
+          class="relative flex h-10 w-[320px] cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          <div className="flex items-center">
+            <CalendarIcon />
+            <span>
+              {selectedDate
+                ? selectedDate?.toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "Select a date"}
+            </span>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* @ts-ignore */}
+      {/* @ts-ignore */}
 
-        <DatePicker
-          key={datePickerOpen}
-          value={selectedDate}
-          isOpen={datePickerOpen}
-          onChange={(value) => {
-            const event = new CustomEvent("dateChange", { detail: value });
-            setSelectedDate(value as Date);
-            window.dispatchEvent(event);
-          }}
-          minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
-          format="M-d-y"
-          className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}`}
-          calendarClassName="date-picker-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"
-          clearIcon={null}
-          onCalendarOpen={() => {
-            setDatePickerOpen(true);
-          }}
-          onCalendarClose={() => {
-            // reset state
-            setDatePickerOpen(false);
-            setSelectedDate(selectedDate);
-          }}
-          // @ts-ignore
-          calendarIcon={<CalendarIcon />}
-          tileClassName={({ date }) => {
-            const baseClass =
-              "hover:bg-slate-200 rounded-md h-9 p-0 mt-1 font-normal text-slate-900 aria-selected:opacity-100";
-            // today's date class
-            if (
-              date.getDate() === new Date().getDate() &&
-              date.getMonth() === new Date().getMonth() &&
-              date.getFullYear() === new Date().getFullYear()
-            ) {
-              return baseClass + " bg-slate-100";
-            }
-            // active date class
-            if (
-              date.getDate() === selectedDate?.getDate() &&
-              date.getMonth() === selectedDate?.getMonth() &&
-              date.getFullYear() === selectedDate?.getFullYear()
-            ) {
-              return baseClass + " bg-slate-900 !text-slate-100";
-            }
+      <DatePicker
+        key={datePickerOpen}
+        value={selectedDate}
+        isOpen={datePickerOpen}
+        onChange={(value) => {
+          const event = new CustomEvent("dateChange", { detail: value });
+          setSelectedDate(value as Date);
+          window.dispatchEvent(event);
+        }}
+        minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
+        format="M-d-y"
+        className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}`}
+        calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"
+        clearIcon={null}
+        onCalendarOpen={() => {
+          setDatePickerOpen(true);
+        }}
+        onCalendarClose={() => {
+          // reset state
+          setDatePickerOpen(false);
+          setSelectedDate(selectedDate);
+        }}
+        // @ts-ignore
+        calendarIcon={<CalendarIcon />}
+        tileClassName={({ date }) => {
+          const baseClass =
+            "hover:bg-slate-200 rounded-md h-9 p-0 mt-1 font-normal text-slate-900 aria-selected:opacity-100";
+          // today's date class
+          if (
+            date.getDate() === new Date().getDate() &&
+            date.getMonth() === new Date().getMonth() &&
+            date.getFullYear() === new Date().getFullYear()
+          ) {
+            return baseClass + " bg-slate-100";
+          }
+          // active date class
+          if (
+            date.getDate() === selectedDate?.getDate() &&
+            date.getMonth() === selectedDate?.getMonth() &&
+            date.getFullYear() === selectedDate?.getFullYear()
+          ) {
+            return baseClass + " bg-slate-900 !text-slate-100";
+          }
 
-            return baseClass;
-          }}
-          formatShortWeekday={(_, date) => {
-            return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
-          }}
-          showNeighboringMonth={false}
-          showLeadingZeros={false}
-        />
-      </div>
+          return baseClass;
+        }}
+        formatShortWeekday={(_, date) => {
+          return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
+        }}
+        showNeighboringMonth={false}
+        showLeadingZeros={false}
+      />
     </div>
   );
 }

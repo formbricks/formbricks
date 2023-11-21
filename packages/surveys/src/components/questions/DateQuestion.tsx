@@ -27,7 +27,7 @@ export default function DateQuestion({
   onChange,
 }: IDateQuestionProps) {
   const [datePickerOpen, _setDatePickerOpen] = useState(true);
-  const defaultDate = value ? new Date(value as string) : new Date();
+  const defaultDate = value ? new Date(value as string) : undefined;
 
   useEffect(() => {
     // Check if the DatePicker has already been loaded
@@ -45,7 +45,7 @@ export default function DateQuestion({
       script.onload = () => {
         // Initialize the DatePicker once the script is loaded
         // @ts-expect-error
-        window.initDatePicker(document.getElementById("date-pick"), defaultDate);
+        window.initDatePicker(document.getElementById("date-picker-root"), defaultDate);
       };
 
       return () => {
@@ -60,7 +60,7 @@ export default function DateQuestion({
       }
 
       // @ts-ignore
-      window.initDatePicker(document.getElementById("date-pick"), defaultDate);
+      window.initDatePicker(document.getElementById("date-picker-root"), defaultDate);
     }
 
     return () => {};
@@ -88,7 +88,7 @@ export default function DateQuestion({
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
 
-      <div className="mt-4" id="date-pick"></div>
+      <div className="mt-4" id="date-picker-root"></div>
 
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
