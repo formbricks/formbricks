@@ -28,6 +28,7 @@
 
 .dp-input-root [class$="inputGroup"] {
   flex: none;
+  font-size: 16px;
 }
 
 .wrapper-hide .react-date-picker__inputGroup {

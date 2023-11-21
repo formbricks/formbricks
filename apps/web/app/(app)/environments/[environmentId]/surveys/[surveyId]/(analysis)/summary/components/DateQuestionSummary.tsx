@@ -7,6 +7,7 @@ import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { questionTypes } from "@/app/lib/questions";
+import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 
 interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummary<TSurveyDateQuestion>;
@@ -72,7 +73,7 @@ export default function DateQuestionSummary({
                 )}
               </div>
               <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
-                {response.value}
+                {formatDateWithOrdinal(new Date(response.value as string))}
               </div>
               <div className="px-4 text-slate-500 md:px-6">{timeSince(response.updatedAt.toISOString())}</div>
             </div>

@@ -21,7 +21,7 @@ export default function App({ defaultDate, format }: { defaultDate?: Date; forma
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
-          className="relative flex h-10 w-[320px] cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          className="relative flex h-10 w-[320px] cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
           <div className="flex items-center gap-2">
             <CalendarIcon />
             <span>
