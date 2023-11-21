@@ -2,25 +2,17 @@ import { useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
 
 const CalendarIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    className="cal-icon mr-2 h-4 w-4">
-    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-    <line x1="16" x2="16" y1="2" y2="6"></line>
-    <line x1="8" x2="8" y1="2" y2="6"></line>
-    <line x1="3" x2="21" y1="10" y2="10"></line>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+    <path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+    <path
+      fill-rule="evenodd"
+      d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
+      clip-rule="evenodd"
+    />
   </svg>
 );
 
-export default function App({ defaultDate }: { defaultDate?: Date }) {
+export default function App({ defaultDate, format }: { defaultDate?: Date; format?: string }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(defaultDate);
 
@@ -29,8 +21,8 @@ export default function App({ defaultDate }: { defaultDate?: Date }) {
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
-          class="relative flex h-10 w-[320px] cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
-          <div className="flex items-center">
+          className="relative flex h-10 w-[320px] cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          <div className="flex items-center gap-2">
             <CalendarIcon />
             <span>
               {selectedDate
@@ -45,10 +37,10 @@ export default function App({ defaultDate }: { defaultDate?: Date }) {
         </div>
       )}
 
-      {/* @ts-ignore */}
+      {/* @ts-expect-error */}
 
       <DatePicker
-        key={datePickerOpen}
+        key={datePickerOpen ? "open" : "closed"}
         value={selectedDate}
         isOpen={datePickerOpen}
         onChange={(value) => {
@@ -57,7 +49,7 @@ export default function App({ defaultDate }: { defaultDate?: Date }) {
           window.dispatchEvent(event);
         }}
         minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
-        format="M-d-y"
+        format={format ?? "M-d-y"}
         className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}`}
         calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"
         clearIcon={null}
@@ -88,7 +80,7 @@ export default function App({ defaultDate }: { defaultDate?: Date }) {
             date.getMonth() === selectedDate?.getMonth() &&
             date.getFullYear() === selectedDate?.getFullYear()
           ) {
-            return baseClass + " bg-slate-900 !text-slate-100";
+            return baseClass + " !bg-slate-900 !text-slate-100";
           }
 
           return baseClass;

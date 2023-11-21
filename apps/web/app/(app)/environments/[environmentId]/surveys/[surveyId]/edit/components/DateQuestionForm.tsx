@@ -4,7 +4,8 @@ import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import QuestionFormInput from "./QuestionFormInput";
+import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
@@ -14,6 +15,21 @@ interface IDateQuestionFormProps {
   lastQuestion: boolean;
   isInValid: boolean;
 }
+
+const dateOptions = [
+  {
+    value: "M-d-y",
+    label: "MM-DD-YYYY",
+  },
+  {
+    value: "d-M-y",
+    label: "DD-MM-YYYY",
+  },
+  {
+    value: "y-M-d",
+    label: "YYYY-MM-DD",
+  },
+];
 
 export default function DateQuestionForm({
   question,
@@ -61,7 +77,17 @@ export default function DateQuestionForm({
           </Button>
         )}
       </div>
-      <div className="mt-2"></div>
+
+      <div className="mt-3">
+        <Label htmlFor="questionType">Date Format</Label>
+        <div className="mt-2 flex items-center">
+          <OptionsSwitcher
+            options={dateOptions}
+            currentOption={question.format}
+            handleTypeChange={(value) => updateQuestion(questionIdx, { format: value })}
+          />
+        </div>
+      </div>
     </form>
   );
 }

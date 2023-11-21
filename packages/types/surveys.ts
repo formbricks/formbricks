@@ -292,6 +292,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Date),
   html: z.string().optional(),
+  format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
 });
 
 export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;

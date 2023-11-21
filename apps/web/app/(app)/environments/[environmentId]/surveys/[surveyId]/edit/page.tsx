@@ -51,16 +51,14 @@ export default async function SurveysEditPage({ params }) {
   }
 
   return (
-    <>
-      <SurveyEditor
-        survey={survey}
-        product={product}
-        environment={environment}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        responseCount={responseCount}
-        membershipRole={currentUserMembership?.role}
-      />
-    </>
+    <SurveyEditor
+      survey={survey}
+      product={product}
+      environment={environment}
+      actionClasses={actionClasses}
+      attributeClasses={attributeClasses}
+      responseCount={responseCount}
+      membershipRole={currentUserMembership?.role}
+    />
   );
 }

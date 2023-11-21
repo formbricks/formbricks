@@ -8,7 +8,7 @@ import {
   QueueListIcon,
   StarIcon,
   CheckIcon,
-  CalendarIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -134,12 +134,13 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
-    id: "date",
+    id: QuestionId.Date,
     label: "Date",
     description: "Ask your users to select a date",
-    icon: CalendarIcon,
+    icon: CalendarDaysIcon,
     preset: {
       headline: "When is your birthday?",
+      format: "M-d-y",
     },
   },
 ];

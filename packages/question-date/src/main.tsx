@@ -23,12 +23,12 @@ const addStylesToDom = () => {
   }
 };
 
-const init = (element: HTMLElement, selectedDate?: Date) => {
+const init = (element: HTMLElement, selectedDate?: Date, format?: string) => {
   addStylesToDom();
   const container = document.createElement("div");
   container.id = "datePickerContainer";
   element.appendChild(container);
-  render(<App defaultDate={selectedDate} />, container);
+  render(<App defaultDate={selectedDate} format={format} />, container);
 };
 
 window.initDatePicker = init;

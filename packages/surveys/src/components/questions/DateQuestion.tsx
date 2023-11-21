@@ -45,7 +45,7 @@ export default function DateQuestion({
       script.onload = () => {
         // Initialize the DatePicker once the script is loaded
         // @ts-expect-error
-        window.initDatePicker(document.getElementById("date-picker-root"), defaultDate);
+        window.initDatePicker(document.getElementById("date-picker-root"), defaultDate, question.format);
       };
 
       return () => {
@@ -60,11 +60,11 @@ export default function DateQuestion({
       }
 
       // @ts-ignore
-      window.initDatePicker(document.getElementById("date-picker-root"), defaultDate);
+      window.initDatePicker(document.getElementById("date-picker-root"), defaultDate, question.format);
     }
 
     return () => {};
-  }, [datePickerOpen]);
+  }, [datePickerOpen, question.format]);
 
   useEffect(() => {
     window.addEventListener("dateChange", (e) => {
