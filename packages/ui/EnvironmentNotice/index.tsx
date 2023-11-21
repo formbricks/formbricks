@@ -4,9 +4,10 @@ import { LightBulbIcon } from "@heroicons/react/24/outline";
 
 interface EnvironmentNoticeProps {
   environmentId: string;
+  subPageUrl: string;
 }
 
-export default async function EnvironmentNotice({ environmentId }: EnvironmentNoticeProps) {
+export default async function EnvironmentNotice({ environmentId, subPageUrl }: EnvironmentNoticeProps) {
   const environment = await getEnvironment(environmentId);
   if (!environment) {
     throw new Error("Environment not found");
@@ -22,7 +23,7 @@ export default async function EnvironmentNotice({ environmentId }: EnvironmentNo
         <p>
           {`You're currently in the ${environment.type} environment.`}
           <a
-            href={`${WEBAPP_URL}/environments/${otherEnvironmentId}/settings/api-keys`}
+            href={`${WEBAPP_URL}/environments/${otherEnvironmentId}${subPageUrl}`}
             className="ml-1 cursor-pointer text-sm underline">
             Switch to {environment.type === "production" ? "Development" : "Production"} now.
           </a>
