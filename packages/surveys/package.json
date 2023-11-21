@@ -25,7 +25,7 @@
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@preact/preset-vite": "^2.6.0",
+    "@preact/preset-vite": "^2.7.0",
     "autoprefixer": "^10.4.16",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.31",
