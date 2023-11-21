@@ -1,9 +1,9 @@
 "use client";
 
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
-import { env } from "@formbricks/lib/env.mjs";
 import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
+import { env } from "@formbricks/lib/env.mjs";
 import { Button } from "@formbricks/ui/Button";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -88,8 +88,10 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
                   key={choice.id}
                   htmlFor={choice.id}
                   className={cn(
-                    selectedChoice === choice.label ? "z-10 border-zinc-500 bg-slate-100" : "border-zinc-300",
-                    "relative flex cursor-pointer flex-col rounded-md border-2 bg-zinc-100 p-4 hover:bg-zinc-200 focus:outline-none"
+                    selectedChoice === choice.label
+                      ? "z-10 border-slate-400 bg-slate-100"
+                      : "border-gray-200",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-100 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -120,12 +122,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button
-          size="lg"
-          className="text-slate-500 hover:text-slate-900"
-          variant="minimal"
-          onClick={skip}
-          id="role-skip">
+        <Button size="lg" className="text-slate-500" variant="minimal" onClick={skip} id="role-skip">
           Skip
         </Button>
         <Button

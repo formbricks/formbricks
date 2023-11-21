@@ -1,11 +1,10 @@
 "use client";
 
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
-import { env } from "@formbricks/lib/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
-import { TProfileObjective } from "@formbricks/types/profile";
-import { TProfile } from "@formbricks/types/profile";
+import { env } from "@formbricks/lib/env.mjs";
+import { TProfile, TProfileObjective } from "@formbricks/types/profile";
 import { Button } from "@formbricks/ui/Button";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -96,8 +95,10 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoice === choice.label ? "z-10 border-zinc-500 bg-slate-100" : "border-zinc-300",
-                    "relative flex cursor-pointer flex-col rounded-md border-2 bg-zinc-100 p-4 hover:bg-zinc-200 focus:outline-none"
+                    selectedChoice === choice.label
+                      ? "z-10 border-slate-400 bg-slate-100"
+                      : "border-gray-200",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-100 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -127,12 +128,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button
-          size="lg"
-          className="text-slate-500 hover:text-slate-900"
-          variant="minimal"
-          onClick={skip}
-          id="objective-skip">
+        <Button size="lg" className="text-slate-500" variant="minimal" onClick={skip} id="objective-skip">
           Skip
         </Button>
         <Button
