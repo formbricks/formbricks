@@ -1,18 +1,10 @@
-import { TJsState } from "@formbricks/types/js";
 import { TPerson, TPersonUpdateInput } from "@formbricks/types/people";
 import { Config } from "./config";
-import {
-  AttributeAlreadyExistsError,
-  MissingPersonError,
-  NetworkError,
-  Result,
-  err,
-  ok,
-  okVoid,
-} from "./errors";
+import { AttributeAlreadyExistsError, MissingPersonError, NetworkError, Result, err, okVoid } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
 import { sync } from "./sync";
+import { FormbricksAPI } from "@formbricks/api";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -20,7 +12,7 @@ const logger = Logger.getInstance();
 export const updatePersonAttribute = async (
   key: string,
   value: string
-): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
+): Promise<Result<void, NetworkError | MissingPersonError>> => {
   if (!config.get().state.person || !config.get().state.person?.id) {
     return err({
       code: "missing_person",
@@ -34,28 +26,21 @@ export const updatePersonAttribute = async (
     },
   };
 
-  const res = await fetch(
-    `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/people/${
-      config.get().state.person?.userId
-    }`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(input),
-    }
-  );
-
-  const resJson = await res.json();
+  const api = new FormbricksAPI({
+    apiHost: config.get().apiHost,
+    environmentId: config.get().environmentId,
+  });
+  const res = await api.client.people.update(config.get().state.person!.userId, input);
 
   if (!res.ok) {
     return err({
       code: "network_error",
-      status: res.status,
-      message: "Error updating person",
-      url: res.url,
-      responseMessage: resJson.message,
+      status: 500,
+      message: `Error updating person with userId ${config.get().state.person?.userId}`,
+      url: `${config.get().apiHost}/api/v1/client/${config.get().environmentId}/people/${
+        config.get().state.person?.userId
+      }`,
+      responseMessage: res.error.message,
     });
   }
 
@@ -67,7 +52,7 @@ export const updatePersonAttribute = async (
     userId: config.get().state.person?.userId,
   });
 
-  return ok(resJson.data as TJsState);
+  return okVoid();
 };
 
 export const hasAttributeValue = (key: string, value: string): boolean => {

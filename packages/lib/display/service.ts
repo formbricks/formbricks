@@ -70,7 +70,7 @@ export const updateDisplay = async (
 
   let person: TPerson | null = null;
   if (displayInput.userId) {
-    person = await getPersonByUserId(displayInput.userId, displayInput.environmentId);
+    person = await getPersonByUserId(displayInput.environmentId, displayInput.userId);
     if (!person) {
       throw new ResourceNotFoundError("Person", displayInput.userId);
     }
@@ -160,7 +160,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   try {
     let person;
     if (displayInput.userId) {
-      person = await getPersonByUserId(displayInput.userId, displayInput.environmentId);
+      person = await getPersonByUserId(displayInput.environmentId, displayInput.userId);
     }
     const display = await prisma.display.create({
       data: {
