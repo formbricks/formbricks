@@ -14,6 +14,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
+export const generateMetadata = async ({ params }) => {
+  const survey = await getSurvey(params.surveyId);
+  return {
+    title: survey?.name ? `${survey?.name}` : "",
+  };
+};
+
 export default async function SurveysEditPage({ params }) {
   const [survey, product, environment, actionClasses, attributeClasses, responseCount, team, session] =
     await Promise.all([
