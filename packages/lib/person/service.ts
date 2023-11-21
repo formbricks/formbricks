@@ -305,9 +305,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
         select: selectPerson,
       });
 
-      return personWithUserId ? transformPrismaPerson(personWithUserId) : null;
-
-      /*  if (personWithUserId) {
+      if (personWithUserId) {
         return transformPrismaPerson(personWithUserId);
       }
 
@@ -352,9 +350,9 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
         id: personWithUserIdAttribute.id,
         environmentId,
         userId,
-      }); 
+      });
 
-      return transformPrismaPerson(personWithUserIdAttribute); */
+      return transformPrismaPerson(personWithUserIdAttribute);
     },
     [`getPersonByUserId-${environmentId}-${userId}`],
     {
