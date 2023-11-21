@@ -292,7 +292,6 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Date),
   html: z.string().optional(),
-  label: z.string(),
 });
 
 export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;
@@ -309,7 +308,6 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
 
 export const ZSurveyQuestion = z.union([
-  // ZSurveyWelcomeQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
   ZSurveyMultipleChoiceSingleQuestion,
@@ -413,6 +411,7 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("rating"),
   z.literal("consent"),
   z.literal("pictureSelection"),
+  z.literal("date"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;

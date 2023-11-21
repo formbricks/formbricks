@@ -9,20 +9,14 @@
   text-align: center;
 }
 
-.input-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  /* margin-bottom: 2em; */
-  width: 180px;
-  /* border: 2px solid #333; */
-  cursor: pointer;
-}
-
 .dp-input-root [class$="wrapper"] {
+  min-width: 180px;
+  height: 40px;
+  font-size: 14px;
   display: flex;
   flex-direction: row-reverse;
   border-radius: 8px;
+  border: 1px solid rgb(203 213 225) !important;
   padding-left: 24px;
   padding-right: 24px;
   padding-top: 8px;
@@ -36,10 +30,6 @@
 
 .wrapper-hide .react-date-picker__wrapper {
   display: none;
-}
-
-.react-date-picker__inputGroup__input:invalid {
-  background: none;
 }
 
 .date-picker-root [class$="navigation"] {

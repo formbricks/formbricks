@@ -28,6 +28,7 @@ import { PictureSelectionResponse } from "../PictureSelectionResponse";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { LoadingWrapper } from "../LoadingWrapper";
+import { format } from "date-fns";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -58,6 +59,16 @@ function TooltipRenderer(props: TooltipRendererProps) {
   }
 
   return <>{children}</>;
+}
+
+function DateResponse({ date }: { date?: string }) {
+  if (!date) return null;
+
+  return (
+    <p className="ph-no-capture my-1 font-semibold text-slate-700">
+      {format(new Date(date), "MMMM dd, yyyy")}
+    </p>
+  );
 }
 
 export default function SingleResponseCard({
@@ -309,6 +320,12 @@ export default function SingleResponseCard({
                         answer={response.data[question.id]}
                         range={question.range}
                       />
+                    </div>
+                  ) : question.type === TSurveyQuestionType.Date ? (
+                    <div>
+                      {/* {response.data[question.id]} */}
+                      {/* {format(new Date(response.data[question.id] as string), "MMMM dd, yyyy")} */}
+                      <DateResponse date={response.data[question.id] as string} />
                     </div>
                   ) : (
                     <p className="ph-no-capture my-1 font-semibold text-slate-700">

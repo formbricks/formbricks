@@ -19,11 +19,14 @@
     "autoprefixer": "^10.4.16",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.31",
-    "preact": "^10.18.1",
+    "preact": "^10.19.2",
     "react-date-picker": "^10.5.2",
     "tailwindcss": "^3.3.3",
     "terser": "^5.22.0",
     "typescript": "^5.2.2",
     "vite": "^4.4.11"
+  },
+  "dependencies": {
+    "react-calendar": "^4.6.1"
   }
 }

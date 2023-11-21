@@ -26,7 +26,6 @@ export default function DateQuestion({
   isLastQuestion,
   onChange,
 }: IDateQuestionProps) {
-  console.log({ value });
   const [datePickerOpen, _setDatePickerOpen] = useState(true);
   const defaultDate = value ? new Date(value as string) : new Date();
 
@@ -71,8 +70,7 @@ export default function DateQuestion({
     window.addEventListener("dateChange", (e) => {
       // @ts-expect-error
       const date = e.detail as Date;
-
-      onChange({ [question.id]: date.toISOString() });
+      onChange({ [question.id]: date.toDateString() });
     });
   }, []);
 
@@ -80,7 +78,10 @@ export default function DateQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        console.log("submit: ", value);
+        if (question.required && !value) {
+          alert("Please select a date");
+          return;
+        }
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
