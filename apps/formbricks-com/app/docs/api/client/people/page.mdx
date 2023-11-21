@@ -3,7 +3,7 @@ import { Fence } from "@/components/shared/Fence";
 export const metadata = {
   title: "Formbricks Public Client API Guide: Manage Users",
   description:
-    "Dive deep into Formbricks' Public Client API designed for customisation. This comprehensive guide provides detailed instructions on creating and editing users.",
+    "Dive deep into Formbricks' Public Client API designed for customisation. This comprehensive guide provides detailed instructions on creating and updating users to help in user identification.",
 };
 
 #### Client API
@@ -45,7 +45,7 @@ This set of API can be used to
 
     ```bash {{ title: 'cURL' }}
     curl -X POST \
-    'https://app.formbricks.com//api/v1/client/<environment-id>/people' \
+    'https://app.formbricks.com/api/v1/client/<environment-id>/people' \
     -H 'Content-Type: application/json' \
     -d '{
         "environmentId":"clonzr6vc0009z8md7y06hipl",
