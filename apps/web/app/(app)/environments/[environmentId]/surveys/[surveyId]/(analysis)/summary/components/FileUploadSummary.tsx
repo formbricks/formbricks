@@ -1,13 +1,13 @@
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
+import { DownloadIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
-import { FileIcon } from "lucide-react";
-import { questionTypes } from "@/app/lib/questions";
 
 interface FileUploadSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyFileUploadQuestion>;
@@ -78,23 +78,11 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
                 {Array.isArray(response.value) &&
                   (response.value.length > 0 ? (
                     response.value.map((fileUrl, index) => (
-                      <div className="relative m-2 rounded-lg bg-slate-300">
+                      <div className="relative m-2 rounded-lg bg-slate-200">
                         <a href={fileUrl as string} key={index} download target="_blank">
                           <div className="absolute right-0 top-0 m-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 bg-opacity-50 hover:bg-slate-200/50">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.5"
-                                stroke="currentColor"
-                                className="h-6 w-6">
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                                />
-                              </svg>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
+                              <DownloadIcon className="h-6 text-slate-500" />
                             </div>
                           </div>
                         </a>

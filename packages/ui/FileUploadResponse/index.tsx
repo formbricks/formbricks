@@ -14,10 +14,10 @@ export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
         <div className="col-span-2 grid md:grid-cols-2 lg:grid-cols-4">
           {Array.isArray(selected) ? (
             selected.map((fileUrl, index) => (
-              <div className="relative m-2 ml-0 rounded-lg bg-slate-300">
+              <div className="relative m-2 ml-0 rounded-lg bg-slate-200">
                 <a href={fileUrl as string} key={index} download>
                   <div className="absolute right-0 top-0 m-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 bg-opacity-50 hover:bg-slate-200/50">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
