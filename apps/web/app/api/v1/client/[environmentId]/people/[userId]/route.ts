@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getOrCreatePersonByUserId, updatePerson } from "@formbricks/lib/person/service";
+import { createPerson, getPersonByUserId, updatePerson } from "@formbricks/lib/person/service";
 import { ZPersonUpdateInput } from "@formbricks/types/people";
 import { NextResponse } from "next/server";
 
@@ -31,15 +31,17 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
       );
     }
 
-    const person = await getOrCreatePersonByUserId(userId, environmentId);
+    let person = await getPersonByUserId(environmentId, userId);
 
     if (!person) {
-      return responses.notFoundResponse("PersonByUserId", userId, true);
+      // return responses.notFoundResponse("PersonByUserId", userId, true);
+      // HOTFIX: create person if not found to work around caching issue
+      person = await createPerson(environmentId, userId);
     }
 
-    const updatedPerson = await updatePerson(person.id, inputValidation.data);
+    await updatePerson(person.id, inputValidation.data);
 
-    return responses.successResponse(updatedPerson, true);
+    return responses.successResponse({}, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);

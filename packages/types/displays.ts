@@ -31,7 +31,7 @@ export type TDisplayLegacyCreateInput = z.infer<typeof ZDisplayLegacyCreateInput
 
 export const ZDisplayUpdateInput = z.object({
   environmentId: z.string().cuid(),
-  userId: z.string().cuid().optional(),
+  userId: z.string().optional(),
   responseId: z.string().cuid().optional(),
 });
 
