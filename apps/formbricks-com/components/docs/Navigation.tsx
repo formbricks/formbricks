@@ -258,7 +258,6 @@ export const navigation: Array<NavGroup> = [
       { title: "Introduction", href: "/docs/contributing/introduction" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
-      { title: "Gitpod", href: "/docs/contributing/gitpod" },
       { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
       { title: "How to create a service", href: "/docs/contributing/creating-a-service" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
