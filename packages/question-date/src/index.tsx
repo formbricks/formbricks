@@ -1,5 +1,5 @@
 import { render } from "preact";
-import App from "./components/app.tsx";
+import Question from "./components/Question.tsx";
 import globalCss from "./styles/globals.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
@@ -28,9 +28,9 @@ const init = (element: HTMLElement, selectedDate?: Date, format?: string) => {
   const container = document.createElement("div");
   container.id = "datePickerContainer";
   element.appendChild(container);
-  render(<App defaultDate={selectedDate} format={format} />, container);
+  render(<Question defaultDate={selectedDate} format={format} />, container);
 };
 
 window.initDatePicker = init;
 
-// render(<App />, document.getElementById("date-picker-root")!);
+// render(<Question />, document.getElementById("date-picker-root")!);

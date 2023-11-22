@@ -9,9 +9,11 @@
   text-align: center;
 }
 
+.dp-input-root {
+  width: 100%;
+}
+
 .dp-input-root [class$="wrapper"] {
-  /* min-width: 320px; */
-  min-width: 100%;
   height: 40px;
   display: flex;
   flex-direction: row-reverse;
@@ -34,6 +36,10 @@
 
 .wrapper-hide .react-date-picker__inputGroup {
   display: none;
+}
+
+.hide-invalid .react-date-picker__inputGroup__input:invalid {
+  background: none;
 }
 
 .wrapper-hide .react-date-picker__wrapper {

@@ -7,7 +7,7 @@ export default defineConfig({
     minify: "terser",
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "src/main.tsx"),
+        main: resolve(__dirname, "src/index.tsx"),
       },
       output: {
         entryFileNames: "index.js",

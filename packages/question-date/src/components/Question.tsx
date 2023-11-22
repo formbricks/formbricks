@@ -12,9 +12,10 @@ const CalendarIcon = () => (
   </svg>
 );
 
-export default function App({ defaultDate, format }: { defaultDate?: Date; format?: string }) {
+export default function Question({ defaultDate, format }: { defaultDate?: Date; format?: string }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(defaultDate);
+  const [hideInvalid, setHideInvalid] = useState(!selectedDate);
 
   useEffect(() => {
     if (datePickerOpen) {
@@ -25,8 +26,14 @@ export default function App({ defaultDate, format }: { defaultDate?: Date; forma
     }
   }, [datePickerOpen]);
 
+  useEffect(() => {
+    if (!!selectedDate && hideInvalid) {
+      setHideInvalid(false);
+    }
+  }, [selectedDate]);
+
   return (
-    <div className="h-10 p-4">
+    <div className="relative h-10">
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
@@ -64,7 +71,9 @@ export default function App({ defaultDate, format }: { defaultDate?: Date; forma
         yearPlaceholder="YYYY"
         autoFocus
         format={format ?? "M-d-y"}
-        className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}`}
+        className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""} ${
+          hideInvalid ? "hide-invalid" : ""
+        }`}
         calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"
         clearIcon={null}
         onCalendarOpen={() => {

@@ -6,7 +6,7 @@ import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { useEffect, useState } from "preact/hooks";
 
-interface IDateQuestionProps {
+interface DateQuestionProps {
   question: TSurveyDateQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
@@ -25,7 +25,7 @@ export default function DateQuestion({
   isFirstQuestion,
   isLastQuestion,
   onChange,
-}: IDateQuestionProps) {
+}: DateQuestionProps) {
   const [datePickerOpen, _setDatePickerOpen] = useState(true);
   const defaultDate = value ? new Date(value as string) : undefined;
 
@@ -88,7 +88,7 @@ export default function DateQuestion({
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
 
-      <div className="mt-4" id="date-picker-root"></div>
+      <div className="my-4" id="date-picker-root"></div>
 
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
