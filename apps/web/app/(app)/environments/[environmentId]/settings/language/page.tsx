@@ -1,8 +1,8 @@
 export const revalidate = REVALIDATION_INTERVAL;
-import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
+import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 export default async function LanguageSettingsPage({ params }: { params: { environmentId: string } }) {
   const product = await getProductByEnvironmentId(params.environmentId);
@@ -14,8 +14,8 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
     <div>
       <SettingsTitle title="Languages" />
       <SettingsCard
-        title="Languages"
-        description="Add languages to activate field level transaltions in your product.">
+        title="Multi-language surveys"
+        description="Add languages to activate field level transaltions in your surveys.">
         <EditLanguage product={product} />
       </SettingsCard>
     </div>

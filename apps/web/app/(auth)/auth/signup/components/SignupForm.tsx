@@ -1,16 +1,16 @@
 "use client";
 
+import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
+import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
+import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 import { createUser } from "@/app/lib/users/users";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
 import { Button } from "@formbricks/ui/Button";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
-import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
-import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
-import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 
 export const SignupForm = ({
   webAppUrl,
@@ -160,7 +160,7 @@ export const SignupForm = ({
                     className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
-                {passwordResetEnabled && isPasswordFocused && (
+                {passwordResetEnabled && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
