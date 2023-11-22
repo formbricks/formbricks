@@ -17,6 +17,8 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "tsc && vite build",
+    "build:surveys": "SURVEYS_PACKAGE_BUILD=surveys vite build",
+    "build:question-date": "SURVEYS_PACKAGE_BUILD=question-date vite build",
     "go": "vite build --watch",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",

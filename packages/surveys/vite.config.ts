@@ -4,19 +4,23 @@ import preact from "@preact/preset-vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-// https://vitejs.dev/config/
+const buildPackage = process.env.SURVEYS_PACKAGE_BUILD;
+
+const entryPoint = buildPackage === "surveys" ? "src/index.ts" : "src/question-date/src/index.tsx";
+const name = buildPackage === "surveys" ? "formbricks-surveys" : "formbricks-question-date";
+const fileName = buildPackage === "surveys" ? "index" : "question-date";
+
 export default defineConfig({
+  define: { "process.env.NODE_ENV": '"production"' },
   build: {
-    emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
+    emptyOutDir: false,
     minify: "terser",
     sourcemap: true,
     lib: {
-      // Could also be a dictionary or array of multiple entry points
-      entry: resolve(__dirname, "src/index.ts"),
-      name: "formbricks-surveys",
+      entry: resolve(__dirname, entryPoint),
+      name,
       formats: ["cjs", "es", "umd"],
-      // the proper extensions will be added
-      fileName: "index",
+      fileName,
     },
   },
   plugins: [preact(), dts({ rollupTypes: true }), tsconfigPaths()],
