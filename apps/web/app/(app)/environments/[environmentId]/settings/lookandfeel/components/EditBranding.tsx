@@ -14,6 +14,7 @@ interface EditFormbricksBrandingProps {
   product: TProduct;
   canRemoveBranding: boolean;
   environmentId: string;
+  isFormbricksCloud?: boolean;
 }
 
 export function EditFormbricksBranding({
@@ -21,6 +22,7 @@ export function EditFormbricksBranding({
   product,
   canRemoveBranding,
   environmentId,
+  isFormbricksCloud,
 }: EditFormbricksBrandingProps) {
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
@@ -65,7 +67,11 @@ export function EditFormbricksBranding({
                 </span>
               ) : (
                 <span className="underline">
-                  <Link href={`/environments/${environmentId}/settings/billing`}>add your creditcard.</Link>
+                  {isFormbricksCloud ? (
+                    <Link href={`/environments/${environmentId}/settings/billing`}>add your creditcard.</Link>
+                  ) : (
+                    <a href="mailto:hola@formbricks.com">get a self-hosted license (free to get started).</a>
+                  )}
                 </span>
               )}
             </AlertDescription>

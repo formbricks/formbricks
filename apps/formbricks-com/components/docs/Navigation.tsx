@@ -258,7 +258,6 @@ export const navigation: Array<NavGroup> = [
       { title: "Introduction", href: "/docs/contributing/introduction" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
-      { title: "Gitpod", href: "/docs/contributing/gitpod" },
       { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
       { title: "How to create a service", href: "/docs/contributing/creating-a-service" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
@@ -269,9 +268,10 @@ export const navigation: Array<NavGroup> = [
     title: "Client API",
     links: [
       { title: "Overview", href: "/docs/api/client/overview" },
-      { title: "Displays", href: "/docs/api/client/displays" },
-      { title: "Responses", href: "/docs/api/client/responses" },
       { title: "Actions", href: "/docs/api/client/actions" },
+      { title: "Displays", href: "/docs/api/client/displays" },
+      { title: "People", href: "/docs/api/client/people" },
+      { title: "Responses", href: "/docs/api/client/responses" },
     ],
   },
   {
