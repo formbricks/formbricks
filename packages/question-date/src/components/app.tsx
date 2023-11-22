@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useState, useEffect } from "preact/hooks";
 import DatePicker from "react-date-picker";
 
 const CalendarIcon = () => (
@@ -16,12 +16,21 @@ export default function App({ defaultDate, format }: { defaultDate?: Date; forma
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(defaultDate);
 
+  useEffect(() => {
+    if (datePickerOpen) {
+      const input = document.querySelector(".react-date-picker__inputGroup__input") as HTMLInputElement;
+      if (input) {
+        input.focus();
+      }
+    }
+  }, [datePickerOpen]);
+
   return (
-    <div className="h-10">
+    <div className="h-10 p-4">
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
-          className="relative flex h-10 w-[320px] cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          className="relative flex h-10 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
           <div className="flex items-center gap-2">
             <CalendarIcon />
             <span>
@@ -49,6 +58,11 @@ export default function App({ defaultDate, format }: { defaultDate?: Date; forma
           window.dispatchEvent(event);
         }}
         minDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
+        maxDate={new Date("3000-12-31")}
+        dayPlaceholder="DD"
+        monthPlaceholder="MM"
+        yearPlaceholder="YYYY"
+        autoFocus
         format={format ?? "M-d-y"}
         className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}`}
         calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"

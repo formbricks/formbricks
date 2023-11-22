@@ -320,11 +320,7 @@ export default function SingleResponseCard({
                       />
                     </div>
                   ) : question.type === TSurveyQuestionType.Date ? (
-                    <div>
-                      {/* {response.data[question.id]} */}
-                      {/* {format(new Date(response.data[question.id] as string), "MMMM dd, yyyy")} */}
-                      <DateResponse date={response.data[question.id] as string} />
-                    </div>
+                    <DateResponse date={response.data[question.id] as string} />
                   ) : (
                     <p className="ph-no-capture my-1 font-semibold text-slate-700">
                       {response.data[question.id]}
