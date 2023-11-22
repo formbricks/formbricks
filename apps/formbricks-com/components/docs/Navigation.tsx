@@ -269,9 +269,10 @@ export const navigation: Array<NavGroup> = [
     title: "Client API",
     links: [
       { title: "Overview", href: "/docs/api/client/overview" },
+      { title: "Actions", href: "/docs/api/client/actions" },
       { title: "Displays", href: "/docs/api/client/displays" },
-      { title: "Responses", href: "/docs/api/client/responses" },
       { title: "People", href: "/docs/api/client/people" },
+      { title: "Responses", href: "/docs/api/client/responses" },
     ],
   },
   {
