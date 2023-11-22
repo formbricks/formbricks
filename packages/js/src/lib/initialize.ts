@@ -14,7 +14,7 @@ import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } 
 import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
-import { addWidgetContainer } from "./widget";
+import { addWidgetContainer, closeSurvey } from "./widget";
 import { trackAction } from "./actions";
 
 const config = Config.getInstance();
@@ -128,6 +128,7 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 
 export const deinitalize = (): void => {
   logger.debug("Deinitializing");
+  closeSurvey();
   removeAllEventListeners();
   config.resetConfig();
   isInitialized = false;

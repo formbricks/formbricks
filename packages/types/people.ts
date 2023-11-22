@@ -12,9 +12,10 @@ export const ZPerson = z.object({
   environmentId: z.string().cuid2(),
 });
 
+export type TPerson = z.infer<typeof ZPerson>;
+
 export const ZPersonUpdateInput = z.object({
   attributes: ZPersonAttributes,
 });
 
 export type TPersonUpdateInput = z.infer<typeof ZPersonUpdateInput>;
-export type TPerson = z.infer<typeof ZPerson>;

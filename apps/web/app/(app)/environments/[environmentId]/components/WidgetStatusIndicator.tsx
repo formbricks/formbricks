@@ -9,7 +9,11 @@ interface WidgetStatusIndicatorProps {
 }
 
 export default async function WidgetStatusIndicator({ environmentId, type }: WidgetStatusIndicatorProps) {
-  const [environment] = await Promise.all([getEnvironment(environmentId)]);
+  const environment = await getEnvironment(environmentId);
+
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
 
   const stati = {
     notImplemented: {
