@@ -1,6 +1,6 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import AddedImage from "@/components/general/AddedImage";
+import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import Subheader from "@/components/general/Subheader";
 import { TResponseData } from "@formbricks/types/responses";
@@ -54,7 +54,7 @@ export default function OpenTextQuestion({
         // }
       }}
       className="w-full">
-      {question.imageUrl && <AddedImage imgUrl={question.imageUrl} />}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

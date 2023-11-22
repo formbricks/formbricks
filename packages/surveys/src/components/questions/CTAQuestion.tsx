@@ -1,6 +1,6 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import AddedImage from "@/components/general/AddedImage";
+import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
 import { TResponseData } from "@formbricks/types/responses";
@@ -25,7 +25,7 @@ export default function CTAQuestion({
 }: CTAQuestionProps) {
   return (
     <div>
-      {question.imageUrl && <AddedImage imgUrl={question.imageUrl} />}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html} questionId={question.id} />
 

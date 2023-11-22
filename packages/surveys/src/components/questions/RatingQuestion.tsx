@@ -1,6 +1,6 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import AddedImage from "@/components/general/AddedImage";
+import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
@@ -69,7 +69,7 @@ export default function RatingQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      {question.imageUrl && <AddedImage imgUrl={question.imageUrl} />}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mb-4 mt-8">

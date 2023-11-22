@@ -1,9 +1,9 @@
-interface AddedImageProps {
+interface QuestionImageProps {
   imgUrl: string;
   altText?: string;
 }
 
-export default function AddedImage({ imgUrl, altText = "Image" }: AddedImageProps) {
+export default function QuestionImage({ imgUrl, altText = "Image" }: QuestionImageProps) {
   return (
     <div className="mb-4 rounded-md">
       {/* eslint-disable-next-line @next/next/no-img-element */}
