@@ -72,7 +72,7 @@ x-next-public-sentry-dsn: &next_public_sentry_dsn # Cron Secret
 
 
 x-cron-secret:
-  &cron_secret # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
+  &cron_secret helloshubham
 
 
 x-asset-prefix-url: &asset_prefix_url
