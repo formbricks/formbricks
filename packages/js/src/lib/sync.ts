@@ -66,6 +66,7 @@ const syncWithBackend = async ({
 
 export const sync = async (params: TJsSyncParams): Promise<void> => {
   try {
+    const { userId } = config.get();
     const syncResult = await syncWithBackend(params);
     if (syncResult?.ok !== true) {
       logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
@@ -88,7 +89,7 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
 
     // before finding the surveys, check for public use
 
-    if (!state.person?.id) {
+    if (!userId) {
       // unidentified user
       // set the displays and filter out surveys
       const publicState = {
@@ -177,7 +178,7 @@ export const addExpiryCheckListener = (): void => {
       await sync({
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
-        userId: config.get().state?.person?.userId,
+        userId: config.get().userId,
         // personId: config.get().state?.person?.id,
       });
     }, updateInterval);

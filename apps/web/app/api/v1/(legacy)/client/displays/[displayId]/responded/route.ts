@@ -14,15 +14,8 @@ export async function POST(_: Request, { params }: { params: { displayId: string
   }
 
   try {
-    const display = await markDisplayRespondedLegacy(displayId);
-    return responses.successResponse(
-      {
-        ...display,
-        createdAt: display.createdAt.toISOString(),
-        updatedAt: display.updatedAt.toISOString(),
-      },
-      true
-    );
+    await markDisplayRespondedLegacy(displayId);
+    return responses.successResponse({}, true);
   } catch (error) {
     return responses.internalServerErrorResponse(error.message);
   }
