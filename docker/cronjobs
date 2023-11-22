@@ -1,3 +1,2 @@
-* * * * * myvar="hi man" echo "hello stackoverflow $ENCRYPTION_KEY $WEBAPP_URL $myvar hehe" >/proc/1/fd/1 2>/proc/1/fd/2
-0 0 * * * curl $WEBAPP_URL/api/cron/close_surveys -X POST -H 'content-type: application/json' -H `x-api-key: $CRON_SECRET` --fail
-0 8 * * 1 curl $WEBAPP_URL/api/cron/weekly_summary -X POST -H 'content-type: application/json' -H `x-api-key: $CRON_SECRET` --fail
+* * * * * curl $WEBAPP_URL/api/cron/close_surveys -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''
+* * * * * curl $WEBAPP_URL/api/cron/weekly_summary -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''

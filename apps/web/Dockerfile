@@ -24,7 +24,18 @@ RUN pnpm turbo run build --filter=web...
 FROM node:18-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-RUN chmod u+s /usr/bin/crontab
+# Install sudo if necessary
+RUN apk add --no-cache sudo curl
+
+# USER root
+
+# RUN chmod u+s /usr/bin/crontab
+
+RUN env >> /etc/environment
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 WORKDIR /home/nextjs
 
@@ -43,14 +54,13 @@ EXPOSE 3000
 
 ENV HOSTNAME "0.0.0.0"
 
-RUN env >> /etc/environment
-
-CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
-        pnpm dlx prisma migrate deploy && \
-        (crontab /app/docker/cronjobs) && \
-        (crond -d 8 -f) && \
-        node apps/web/server.js; \
-    else \
-        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
-        exit 1; \
-    fi
+CMD crontab /app/docker/cronjobs && \
+    crond -d 8 -f & \
+    su -s /bin/sh nextjs -c ' \
+        if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
+            pnpm dlx prisma migrate deploy && \
+            exec node apps/web/server.js; \
+        else \
+            echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
+            exit 1; \
+        fi'
