@@ -83,6 +83,19 @@ export const setPersonAttribute = async (
   const result = await updatePersonAttribute(key, value.toString());
 
   if (result.ok) {
+    // udpdate attribute in config
+    config.update({
+      environmentId: config.get().environmentId,
+      apiHost: config.get().apiHost,
+      userId: config.get().userId,
+      state: {
+        ...config.get().state,
+        attributes: {
+          ...config.get().state.attributes,
+          [key]: value.toString(),
+        },
+      },
+    });
     return okVoid();
   }
 
