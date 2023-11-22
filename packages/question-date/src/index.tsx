@@ -3,9 +3,9 @@ import Question from "./components/Question.tsx";
 import globalCss from "./styles/globals.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
-import "react-date-picker/dist/DatePicker.css";
-import "react-calendar/dist/Calendar.css";
-import "./styles/globals.css";
+// import "react-date-picker/dist/DatePicker.css";
+// import "react-calendar/dist/Calendar.css";
+// import "./styles/globals.css";
 
 declare global {
   interface Window {

@@ -37,7 +37,7 @@ export default function DateQuestion({
     // @ts-expect-error
     if (!window.initDatePicker) {
       const script = document.createElement("script");
-      script.src = "http://localhost:8080/dist/index.js";
+      script.src = "http://localhost:8080/dist/index.umd.js";
       script.async = true;
 
       document.body.appendChild(script);

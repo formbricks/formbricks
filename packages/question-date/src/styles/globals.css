@@ -14,7 +14,7 @@
 }
 
 .dp-input-root [class$="wrapper"] {
-  height: 40px;
+  height: 48px;
   display: flex;
   flex-direction: row-reverse;
   gap: 8px;
@@ -38,8 +38,18 @@
   display: none;
 }
 
+.dp-input-root .react-date-picker__inputGroup__input {
+  background: #f1f5f9 !important;
+  border-radius: 2px;
+}
+
+.dp-input-root .react-date-picker__inputGroup__input:invalid {
+  background: #fecaca !important;
+  border-radius: 2px;
+}
+
 .hide-invalid .react-date-picker__inputGroup__input:invalid {
-  background: none;
+  background: #f1f5f9 !important;
 }
 
 .wrapper-hide .react-date-picker__wrapper {

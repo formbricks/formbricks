@@ -27,9 +27,12 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
   }, [datePickerOpen]);
 
   useEffect(() => {
-    if (!!selectedDate && hideInvalid) {
-      setHideInvalid(false);
+    if (!!selectedDate) {
+      if (hideInvalid) {
+        setHideInvalid(false);
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   return (
@@ -37,7 +40,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
-          className="relative flex h-10 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          className="relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
           <div className="flex items-center gap-2">
             <CalendarIcon />
             <span>
@@ -56,7 +59,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
       {/* @ts-expect-error */}
 
       <DatePicker
-        key={datePickerOpen ? "open" : "closed"}
+        key={datePickerOpen}
         value={selectedDate}
         isOpen={datePickerOpen}
         onChange={(value) => {
@@ -69,11 +72,10 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         dayPlaceholder="DD"
         monthPlaceholder="MM"
         yearPlaceholder="YYYY"
-        autoFocus
         format={format ?? "M-d-y"}
-        className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""} ${
-          hideInvalid ? "hide-invalid" : ""
-        }`}
+        className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}
+          ${hideInvalid ? "hide-invalid" : ""}
+        `}
         calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"
         clearIcon={null}
         onCalendarOpen={() => {
@@ -95,7 +97,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
             date.getMonth() === new Date().getMonth() &&
             date.getFullYear() === new Date().getFullYear()
           ) {
-            return baseClass + " bg-slate-100";
+            return `${baseClass} bg-slate-100`;
           }
           // active date class
           if (
@@ -103,7 +105,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
             date.getMonth() === selectedDate?.getMonth() &&
             date.getFullYear() === selectedDate?.getFullYear()
           ) {
-            return baseClass + " !bg-slate-900 !text-slate-100";
+            return `${baseClass} !bg-slate-900 !text-slate-100`;
           }
 
           return baseClass;
