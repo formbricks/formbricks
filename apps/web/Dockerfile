@@ -10,6 +10,12 @@ ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 ARG ENCRYPTION_KEY
 ENV ENCRYPTION_KEY=b19a492fe2a9c01debe543f945d8481728e126904f5b54acc53eb0936748fb02
 
+# Install Supercronic
+RUN apk add --no-cache curl \
+    && curl -fsSLo /tmp/supercronic \
+       "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
+    && chmod +x /tmp/supercronic
+
 WORKDIR /app
 
 COPY . .
@@ -24,16 +30,15 @@ RUN pnpm turbo run build --filter=web...
 FROM node:18-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-RUN apk add --no-cache curl \
-    && curl -fsSLo /usr/local/bin/supercronic \
-       "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
-    && chmod +x /usr/local/bin/supercronic
+RUN apk add --no-cache curl
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 WORKDIR /home/nextjs
+
+COPY --from=installer /tmp/supercronic /usr/local/bin/supercronic
 
 COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
