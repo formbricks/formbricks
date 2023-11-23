@@ -44,20 +44,18 @@ export class StorageAPI {
     const { data } = json;
     const { signedUrl, fileUrl, signingData, presignedFields } = data;
 
-    console.log(signedUrl, fileUrl, signingData, presignedFields);
-
     let requestHeaders: Record<string, string> = {};
 
     if (signingData) {
       const { signature, timestamp, uuid } = signingData;
 
       requestHeaders = {
-        fileType: file.type,
-        fileName: file.name,
-        surveyId: surveyId ?? "",
-        signature,
-        timestamp,
-        uuid,
+        "X-File-Type": file.type,
+        "X-File-Name": file.name,
+        "X-Survey-ID": surveyId ?? "",
+        "X-Signature": signature,
+        "X-Timestamp": timestamp,
+        "X-UUID": uuid,
       };
     }
 
@@ -72,12 +70,7 @@ export class StorageAPI {
     // Add the actual file to be uploaded
     formData.append("file", file);
 
-    // make the signed url with current api host
-
-    const transformedSignedUrl = this.apiHost + new URL(signedUrl).pathname;
-    console.log({ transformedSignedUrl });
-
-    const uploadResponse = await fetch(transformedSignedUrl, {
+    const uploadResponse = await fetch(signedUrl, {
       method: "POST",
       ...(signingData ? { headers: requestHeaders } : {}),
       body: formData,
@@ -85,7 +78,6 @@ export class StorageAPI {
 
     if (!uploadResponse.ok) {
       const uploadJson = await uploadResponse.json();
-      console.log(uploadJson);
       throw new Error(`${uploadJson.message}`);
     }
 

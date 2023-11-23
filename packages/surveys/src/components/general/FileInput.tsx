@@ -2,13 +2,11 @@ import { TAllowedFileExtension } from "@formbricks/types/common";
 import { useMemo } from "preact/hooks";
 import { JSXInternal } from "preact/src/jsx";
 import { useState } from "react";
-// import { uploadFile } from "../../lib/uploadFile";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 
 interface MultipleFileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
-  environmentId: string | undefined;
   onUploadCallback: (uploadedUrls: string[]) => void;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   fileUrls: string[] | undefined;
@@ -19,7 +17,6 @@ interface MultipleFileInputProps {
 export default function FileInput({
   allowedFileExtensions,
   surveyId,
-  environmentId,
   onUploadCallback,
   onFileUpload,
   fileUrls,
@@ -41,7 +38,6 @@ export default function FileInput({
         } else {
           setIsUploading(true);
           try {
-            // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
             const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
             setSelectedFiles([...selectedFiles, file]);
 
@@ -64,7 +60,6 @@ export default function FileInput({
         setIsUploading(true);
 
         try {
-          // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
           const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
 
           setSelectedFiles([...selectedFiles, file]);
@@ -132,7 +127,6 @@ export default function FileInput({
             } else {
               setIsUploading(true);
               try {
-                // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
                 const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
                 setSelectedFiles([...selectedFiles, file]);
 
@@ -149,7 +143,6 @@ export default function FileInput({
           } else {
             setIsUploading(true);
             try {
-              // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
               const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
               setSelectedFiles([...selectedFiles, file]);
 
@@ -208,7 +201,7 @@ export default function FileInput({
 
   return (
     <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
-      <div className="">
+      <div>
         {fileUrls &&
           fileUrls?.map((file, index) => (
             <div key={index} className="relative m-2 rounded-md bg-slate-200">

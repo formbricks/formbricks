@@ -25,7 +25,7 @@ export async function OPTIONS(): Promise<NextResponse> {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
         "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, filename, filetype, surveyid, signature, timestamp, uuid",
+          "Content-Type, Authorization, X-File-Name, X-File-Type, X-Survey-ID, X-Signature, X-Timestamp, X-UUID",
       },
     }
   );
@@ -37,13 +37,13 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
   const accessType = "private"; // private files are accessible only by authorized users
   const headersList = headers();
 
-  const fileType = headersList.get("fileType");
-  const fileName = headersList.get("fileName");
-  const surveyId = headersList.get("surveyId");
+  const fileType = headersList.get("X-File-Type");
+  const fileName = headersList.get("X-File-Name");
+  const surveyId = headersList.get("X-Survey-ID");
 
-  const signedSignature = headersList.get("signature");
-  const signedUuid = headersList.get("uuid");
-  const signedTimestamp = headersList.get("timestamp");
+  const signedSignature = headersList.get("X-Signature");
+  const signedUuid = headersList.get("X-UUID");
+  const signedTimestamp = headersList.get("X-Timestamp");
 
   if (!fileType) {
     return responses.badRequestResponse("contentType is required");

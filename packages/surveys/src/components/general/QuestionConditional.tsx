@@ -22,7 +22,6 @@ interface QuestionConditionalProps {
   isLastQuestion: boolean;
   autoFocus?: boolean;
   surveyId: string;
-  environmentId: string;
 }
 
 export default function QuestionConditional({
@@ -35,7 +34,6 @@ export default function QuestionConditional({
   isLastQuestion,
   autoFocus = true,
   surveyId,
-  environmentId,
   onFileUpload,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
@@ -122,7 +120,6 @@ export default function QuestionConditional({
   ) : question.type === TSurveyQuestionType.FileUpload ? (
     <FileUploadQuestion
       surveyId={surveyId}
-      environmentId={environmentId}
       question={question}
       value={value}
       onChange={onChange}

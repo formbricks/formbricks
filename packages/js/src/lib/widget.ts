@@ -136,12 +136,7 @@ export const renderWidget = (survey: TSurvey) => {
           environmentId: config.get().environmentId,
         });
 
-        const uploadedUrl = await api.client.storage.uploadFile(file, params);
-        console.log({
-          uploadedUrl,
-        });
-
-        return uploadedUrl;
+        return await api.client.storage.uploadFile(file, params);
       },
     });
   }, survey.delay * 1000);

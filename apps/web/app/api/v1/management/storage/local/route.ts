@@ -16,13 +16,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "public"; // public files are accessible by anyone
   const headersList = headers();
 
-  const fileType = headersList.get("fileType");
-  const fileName = headersList.get("fileName");
-  const environmentId = headersList.get("environmentId");
+  const fileType = headersList.get("X-File-Type");
+  const fileName = headersList.get("X-File-Name");
+  const environmentId = headersList.get("X-Environment-ID");
 
-  const signedSignature = headersList.get("signature");
-  const signedUuid = headersList.get("uuid");
-  const signedTimestamp = headersList.get("timestamp");
+  const signedSignature = headersList.get("X-Signature");
+  const signedUuid = headersList.get("X-UUID");
+  const signedTimestamp = headersList.get("X-Timestamp");
 
   if (!fileType) {
     return responses.badRequestResponse("fileType is required");

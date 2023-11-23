@@ -17,7 +17,6 @@ interface FileUploadQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   surveyId: string;
-  environmentId: string;
 }
 
 export default function FileUploadQuestion({
@@ -29,7 +28,6 @@ export default function FileUploadQuestion({
   isFirstQuestion,
   isLastQuestion,
   surveyId,
-  environmentId,
   onFileUpload,
 }: FileUploadQuestionProps) {
   return (
@@ -55,7 +53,6 @@ export default function FileUploadQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
 
       <FileInput
-        environmentId={environmentId}
         surveyId={surveyId}
         onFileUpload={onFileUpload}
         onUploadCallback={(urls: string[]) => {
