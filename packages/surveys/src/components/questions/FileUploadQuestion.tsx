@@ -5,6 +5,7 @@ import SubmitButton from "../buttons/SubmitButton";
 import FileInput from "../general/FileInput";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
@@ -12,6 +13,7 @@ interface FileUploadQuestionProps {
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
   onBack: () => void;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   surveyId: string;
@@ -28,6 +30,7 @@ export default function FileUploadQuestion({
   isLastQuestion,
   surveyId,
   environmentId,
+  onFileUpload,
 }: FileUploadQuestionProps) {
   return (
     <form
@@ -54,7 +57,8 @@ export default function FileUploadQuestion({
       <FileInput
         environmentId={environmentId}
         surveyId={surveyId}
-        onFileUpload={(urls: string[]) => {
+        onFileUpload={onFileUpload}
+        onUploadCallback={(urls: string[]) => {
           if (urls) {
             onChange({ [question.id]: urls });
           } else {

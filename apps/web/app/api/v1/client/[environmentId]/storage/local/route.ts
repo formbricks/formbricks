@@ -17,6 +17,20 @@ interface Context {
   };
 }
 
+export async function OPTIONS(): Promise<NextResponse> {
+  return NextResponse.json(
+    {},
+    {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, filename, filetype, surveyid, signature, timestamp, uuid",
+      },
+    }
+  );
+}
+
 export async function POST(req: NextRequest, context: Context): Promise<NextResponse> {
   const environmentId = context.params.environmentId;
 

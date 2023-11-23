@@ -130,6 +130,19 @@ export const renderWidget = (survey: TSurvey) => {
         });
       },
       onClose: closeSurvey,
+      onFileUpload: async (file: File, params) => {
+        const api = new FormbricksAPI({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+        });
+
+        const uploadedUrl = await api.client.storage.uploadFile(file, params);
+        console.log({
+          uploadedUrl,
+        });
+
+        return uploadedUrl;
+      },
     });
   }, survey.delay * 1000);
 };

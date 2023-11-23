@@ -2,13 +2,15 @@ import { TAllowedFileExtension } from "@formbricks/types/common";
 import { useMemo } from "preact/hooks";
 import { JSXInternal } from "preact/src/jsx";
 import { useState } from "react";
-import { uploadFile } from "../../lib/uploadFile";
+// import { uploadFile } from "../../lib/uploadFile";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 interface MultipleFileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
   environmentId: string | undefined;
-  onFileUpload: (uploadedUrls: string[]) => void;
+  onUploadCallback: (uploadedUrls: string[]) => void;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
   allowMultipleFiles?: boolean;
@@ -18,6 +20,7 @@ export default function FileInput({
   allowedFileExtensions,
   surveyId,
   environmentId,
+  onUploadCallback,
   onFileUpload,
   fileUrls,
   maxSizeInMB,
@@ -38,14 +41,15 @@ export default function FileInput({
         } else {
           setIsUploading(true);
           try {
-            const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+            // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+            const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
             setSelectedFiles([...selectedFiles, file]);
 
             setIsUploading(false);
             if (fileUrls) {
-              onFileUpload([...fileUrls, response.url]);
+              onUploadCallback([...fileUrls, response]);
             } else {
-              onFileUpload([response.url]);
+              onUploadCallback([response]);
             }
           } catch (err: any) {
             setIsUploading(false);
@@ -60,14 +64,15 @@ export default function FileInput({
         setIsUploading(true);
 
         try {
-          const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+          // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+          const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
 
           setSelectedFiles([...selectedFiles, file]);
           setIsUploading(false);
           if (fileUrls) {
-            onFileUpload([...fileUrls, response.url]);
+            onUploadCallback([...fileUrls, response]);
           } else {
-            onFileUpload([response.url]);
+            onUploadCallback([response]);
           }
         } catch (err: any) {
           setIsUploading(false);
@@ -127,10 +132,11 @@ export default function FileInput({
             } else {
               setIsUploading(true);
               try {
-                const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+                // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+                const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
                 setSelectedFiles([...selectedFiles, file]);
 
-                uploadedUrls.push(response.url);
+                uploadedUrls.push(response);
               } catch (err: any) {
                 setIsUploading(false);
                 if (err.message === "File size exceeds the 10 MB limit") {
@@ -143,10 +149,11 @@ export default function FileInput({
           } else {
             setIsUploading(true);
             try {
-              const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+              // const response = await uploadFile(file, allowedFileExtensions, surveyId, environmentId);
+              const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
               setSelectedFiles([...selectedFiles, file]);
 
-              uploadedUrls.push(response.url);
+              uploadedUrls.push(response);
             } catch (err: any) {
               setIsUploading(false);
               if (err.message === "File size exceeds the 10 MB limit") {
@@ -160,9 +167,9 @@ export default function FileInput({
 
         setIsUploading(false);
         if (fileUrls) {
-          onFileUpload([...fileUrls, ...uploadedUrls]);
+          onUploadCallback([...fileUrls, ...uploadedUrls]);
         } else {
-          onFileUpload(uploadedUrls);
+          onUploadCallback(uploadedUrls);
         }
       } else {
         alert("no selected files are valid");
@@ -179,7 +186,7 @@ export default function FileInput({
       setSelectedFiles(newFiles);
       const updatedFileUrls = [...fileUrls];
       updatedFileUrls.splice(index, 1);
-      onFileUpload(updatedFileUrls);
+      onUploadCallback(updatedFileUrls);
     }
   };
 
