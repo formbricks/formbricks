@@ -1,30 +1,21 @@
-export const handleFileUpload = async (
-  file: File,
-  environmentId: string
-): Promise<{
-  error?: string;
-  url: string;
-}> => {
-  if (!file) return { error: "No file provided", url: "" };
-
-  if (!file.type.startsWith("image/")) {
-    return { error: "Please upload an image file.", url: "" };
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    return {
-      error: "File size must be less than 10 MB.",
-      url: "",
-    };
+export const uploadFile = async (
+  file: File | Blob,
+  allowedFileExtensions: string[] | undefined,
+  surveyId: string | undefined,
+  environmentId: string | undefined
+) => {
+  if (!(file instanceof Blob) || !(file instanceof File)) {
+    throw new Error(`Invalid file type. Expected Blob or File, but received ${typeof file}`);
   }
 
   const payload = {
     fileName: file.name,
     fileType: file.type,
-    environmentId,
+    allowedFileExtensions: allowedFileExtensions,
+    surveyId: surveyId,
   };
 
-  const response = await fetch("/api/v1/management/storage", {
+  const response = await fetch(`/api/v1/client/${environmentId}/storage`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -33,11 +24,7 @@ export const handleFileUpload = async (
   });
 
   if (!response.ok) {
-    // throw new Error(`Upload failed with status: ${response.status}`);
-    return {
-      error: "Upload failed. Please try again.",
-      url: "",
-    };
+    throw new Error(`Upload failed with status: ${response.status}`);
   }
 
   const json = await response.json();
@@ -51,12 +38,12 @@ export const handleFileUpload = async (
     const { signature, timestamp, uuid } = signingData;
 
     requestHeaders = {
-      "X-File-Type": file.type,
-      "X-File-Name": file.name,
-      "X-Environment-ID": environmentId ?? "",
-      "X-Signature": signature,
-      "X-Timestamp": timestamp,
-      "X-UUID": uuid,
+      fileType: file.type,
+      fileName: file.name,
+      surveyId: surveyId ?? "",
+      signature,
+      timestamp,
+      uuid,
     };
   }
 
@@ -78,13 +65,13 @@ export const handleFileUpload = async (
   });
 
   if (!uploadResponse.ok) {
-    return {
-      error: "Upload failed. Please try again.",
-      url: "",
-    };
+    const uploadJson = await uploadResponse.json();
+    console.log(uploadJson);
+    throw new Error(`${uploadJson.message}`);
   }
 
   return {
+    uploaded: true,
     url: fileUrl,
   };
 };

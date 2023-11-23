@@ -11,6 +11,7 @@ export function SurveyInline({
   onClose = () => {},
   prefillResponseData,
   isRedirectDisabled = false,
+  onFileUpload,
 }: SurveyBaseProps) {
   return (
     <div id="fbjs" className="formbricks-form h-full w-full">
@@ -24,6 +25,7 @@ export function SurveyInline({
         onClose={onClose}
         prefillResponseData={prefillResponseData}
         isRedirectDisabled={isRedirectDisabled}
+        onFileUpload={onFileUpload}
       />
     </div>
   );

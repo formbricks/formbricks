@@ -21,6 +21,7 @@ export function Survey({
   onFinished = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  onFileUpload,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -146,11 +147,13 @@ export function Survey({
       return (
         currQues && (
           <QuestionConditional
+            surveyId={survey.id}
             question={currQues}
             value={responseData[currQues.id]}
             onChange={onChange}
             onSubmit={onSubmit}
             onBack={onBack}
+            onFileUpload={onFileUpload}
             isFirstQuestion={
               history && prefillResponseData
                 ? history[history.length - 1] === survey.questions[0].id

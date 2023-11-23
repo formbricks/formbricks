@@ -207,6 +207,7 @@ export default function PreviewSurvey({
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    onFileUpload={async () => ""}
                   />
                 </Modal>
               ) : (
@@ -221,6 +222,7 @@ export default function PreviewSurvey({
                         activeQuestionId={activeQuestionId || undefined}
                         isBrandingEnabled={product.linkSurveyBranding}
                         onActiveQuestionChange={setActiveQuestionId}
+                        onFileUpload={async () => ""}
                       />
                     </div>
                   </div>
@@ -277,6 +279,7 @@ export default function PreviewSurvey({
                   isBrandingEnabled={product.linkSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
+                  onFileUpload={async () => ""}
                 />
               </Modal>
             ) : (
@@ -290,6 +293,7 @@ export default function PreviewSurvey({
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       isRedirectDisabled={true}
+                      onFileUpload={async () => ""}
                     />
                   </div>
                 </div>
