@@ -24,14 +24,10 @@ RUN pnpm turbo run build --filter=web...
 FROM node:18-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install sudo if necessary
-RUN apk add --no-cache sudo curl
-
-# USER root
-
-# RUN chmod u+s /usr/bin/crontab
-
-RUN env >> /etc/environment
+RUN apk add --no-cache curl \
+    && curl -fsSLo /usr/local/bin/supercronic \
+       "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
+    && chmod +x /usr/local/bin/supercronic
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -54,13 +50,15 @@ EXPOSE 3000
 
 ENV HOSTNAME "0.0.0.0"
 
-CMD crontab /app/docker/cronjobs && \
-    crond -d 8 -f & \
-    su -s /bin/sh nextjs -c ' \
-        if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
-            pnpm dlx prisma migrate deploy && \
-            exec node apps/web/server.js; \
-        else \
-            echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!"; \
-            exit 1; \
-        fi'
+# Set the user to nextjs
+USER nextjs
+
+# Command to run when starting the container
+CMD supercronic -quiet /app/docker/cronjobs & \
+    if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
+        pnpm dlx prisma migrate deploy && \
+        exec node apps/web/server.js; \
+    else \
+        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!" >&2; \
+        exit 1; \
+    fi
