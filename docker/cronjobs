@@ -1,2 +1,2 @@
-* * * * * curl $WEBAPP_URL/api/cron/close_surveys -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''
-* * * * * curl $WEBAPP_URL/api/cron/weekly_summary -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''
+0 0 * * * $WEBAPP_URL/api/cron/close_surveys -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''
+0 8 * * 1 curl $WEBAPP_URL/api/cron/weekly_summary -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''
