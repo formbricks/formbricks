@@ -1,5 +1,12 @@
+# Installer stage: Building the application
 FROM node:18-alpine AS installer
 RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Install Supercronic (cron for containers without super user privileges)
+RUN apk add --no-cache curl \
+    && curl -fsSLo /tmp/supercronic \
+       "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
+    && chmod +x /tmp/supercronic
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
@@ -9,12 +16,6 @@ ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 
 ARG ENCRYPTION_KEY
 ENV ENCRYPTION_KEY=b19a492fe2a9c01debe543f945d8481728e126904f5b54acc53eb0936748fb02
-
-# Install Supercronic
-RUN apk add --no-cache curl \
-    && curl -fsSLo /tmp/supercronic \
-       "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
-    && chmod +x /tmp/supercronic
 
 WORKDIR /app
 
@@ -27,22 +28,19 @@ RUN pnpm install
 RUN pnpm post-install --filter=web...
 RUN pnpm turbo run build --filter=web...
 
+# Runner stage: Setting up the runtime environment
 FROM node:18-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-RUN apk add --no-cache curl
-
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN apk add --no-cache curl \
+    # && addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
 
 WORKDIR /home/nextjs
 
 COPY --from=installer /tmp/supercronic /usr/local/bin/supercronic
-
 COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
-
 # Leverage output traces to reduce image size
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
@@ -52,13 +50,9 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./
 COPY --from=installer /app/docker/cronjobs /app/docker/cronjobs
 
 EXPOSE 3000
-
 ENV HOSTNAME "0.0.0.0"
-
-# Set the user to nextjs
 USER nextjs
 
-# Command to run when starting the container
 CMD supercronic -quiet /app/docker/cronjobs & \
     if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
         pnpm dlx prisma migrate deploy && \
