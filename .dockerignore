@@ -33,4 +33,5 @@ yarn-error.log*
 .direnv
 
 .vscode
+.github
 **/.turbo
