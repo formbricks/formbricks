@@ -1,19 +1,28 @@
 export const revalidate = REVALIDATION_INTERVAL;
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import SurveyEditor from "./components/SurveyEditor";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { colours } from "@formbricks/lib/constants";
+import SurveyEditor from "./components/SurveyEditor";
+
+export const generateMetadata = async ({ params }) => {
+  const survey = await getSurvey(params.surveyId);
+  return {
+    title: survey?.name ? `${survey?.name} | Editor` : "Editor",
+  };
+};
 
 export default async function SurveysEditPage({ params }) {
   const [survey, product, environment, actionClasses, attributeClasses, responseCount, team, session] =

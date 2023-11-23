@@ -5,6 +5,7 @@ import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
 import { sync } from "./sync";
 import { FormbricksAPI } from "@formbricks/api";
+import { closeSurvey } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -102,6 +103,7 @@ export const logoutPerson = async (): Promise<void> => {
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
+  closeSurvey();
   const syncParams = {
     environmentId: config.get().environmentId,
     apiHost: config.get().apiHost,
