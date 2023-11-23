@@ -12,8 +12,6 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { colours } from "@formbricks/lib/constants";
 import SurveyEditor from "./components/SurveyEditor";
 
