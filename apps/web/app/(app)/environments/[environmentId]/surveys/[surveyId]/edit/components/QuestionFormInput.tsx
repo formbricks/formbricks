@@ -1,11 +1,11 @@
 "use client";
 
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurvey } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 // import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { ImagePlusIcon } from "lucide-react";
-import { RefObject, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { MentionsInput, Mention } from "react-mentions";
 
 interface QuestionFormInputProps {
@@ -15,25 +15,45 @@ interface QuestionFormInputProps {
   isInValid: boolean;
   environmentId: string;
   ref?: RefObject<HTMLInputElement>;
+  localSurvey: TSurvey;
 }
 
 const QuestionFormInput = ({
   question,
+  localSurvey,
   questionIdx,
   updateQuestion,
-  isInValid,
+  // isInValid,
   environmentId,
-  ref,
-}: QuestionFormInputProps) => {
+}: // ref,
+QuestionFormInputProps) => {
   const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
+  const [mentionDisplayString, setMentionDisplayString] = useState<string>(question.headline);
+  const [prevHeadline, setPreviousHeadline] = useState<string>("");
+  const [data, setData] = useState<
+    {
+      id: string;
+      display: string;
+    }[]
+  >();
 
-  const data = [
-    { id: "question 1", display: "question 1" },
-    { id: "question 2", display: "question 2" },
-    { id: "question 3", display: "question 3" },
-    { id: "question 4", display: "question 4" },
-    { id: "question 5", display: "question 5" },
-  ];
+  useEffect(() => {
+    setData(
+      localSurvey.questions.map((q) => {
+        if (question.id !== q.id)
+          return {
+            id: q.id,
+            display: q.headline,
+          };
+        else {
+          return {
+            id: "",
+            display: "",
+          };
+        }
+      })
+    );
+  }, [localSurvey, question]);
 
   return (
     <div className="mt-3">
@@ -65,11 +85,13 @@ const QuestionFormInput = ({
             // ref={ref}
             id="headline"
             name="headline"
-            value={question.headline}
-            onChange={(event) => {
+            value={mentionDisplayString}
+            onChange={(event, _, newPlainTextValue) => {
+              setPreviousHeadline(question.headline);
               updateQuestion(questionIdx, {
-                headline: event.target.value,
+                headline: newPlainTextValue,
               });
+              setMentionDisplayString(event.target.value);
             }}
             style={{
               width: "100%",
@@ -93,11 +115,16 @@ const QuestionFormInput = ({
               },
             }}>
             <Mention
-              data={data}
+              data={data || []}
               trigger="@"
               appendSpaceOnAdd
               markup="[__display__]"
               displayTransform={(_, display: string) => display}
+              onAdd={(id: string) => {
+                updateQuestion(questionIdx, {
+                  recallString: prevHeadline + "recall:" + id,
+                });
+              }}
               style={{
                 backgroundColor: "#cee4e5",
                 padding: "0.2rem",

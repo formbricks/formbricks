@@ -182,6 +182,8 @@ export default function QuestionsView({
     setLocalSurvey(updatedSurvey);
   };
 
+  console.log(localSurvey.questions);
+
   return (
     <div className="mt-12 px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">

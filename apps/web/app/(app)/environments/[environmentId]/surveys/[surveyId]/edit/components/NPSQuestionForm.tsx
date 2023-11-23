@@ -36,6 +36,7 @@ export default function NPSQuestionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
       />
 
       <div className="mt-3">

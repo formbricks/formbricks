@@ -59,6 +59,7 @@ export default function OpenQuestionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
       />
 
       <div className="mt-3">

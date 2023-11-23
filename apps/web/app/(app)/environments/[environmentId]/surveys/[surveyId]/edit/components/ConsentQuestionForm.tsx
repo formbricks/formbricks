@@ -34,6 +34,7 @@ export default function ConsentQuestionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
       />
 
       <div className="mt-3">

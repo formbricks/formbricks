@@ -1,4 +1,4 @@
-import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyRatingQuestion, TSurveyQuestions } from "@formbricks/types/surveys";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -36,6 +36,7 @@ export default function RatingQuestionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
       />
 
       <div className="mt-3">

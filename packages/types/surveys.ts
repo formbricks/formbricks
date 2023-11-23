@@ -204,6 +204,7 @@ const ZSurveyQuestionBase = z.object({
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
   isDraft: z.boolean().optional(),
+  recallString: z.string().optional(),
 });
 
 export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);

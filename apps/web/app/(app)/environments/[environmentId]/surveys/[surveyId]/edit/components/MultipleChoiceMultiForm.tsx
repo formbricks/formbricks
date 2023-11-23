@@ -170,6 +170,7 @@ export default function MultipleChoiceMultiForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
       />
 
       <div className="mt-3">
