@@ -11,10 +11,10 @@ export interface SurveyBaseProps {
   onFinished?: () => void;
   onClose?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {
