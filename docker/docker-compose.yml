@@ -86,7 +86,6 @@ services:
     volumes:
       - uploads:/apps/web/uploads/
     <<: *environment
-    entrypoint: ["sh", "-c", "/entrypoint.sh"]
 
 volumes:
   postgres:

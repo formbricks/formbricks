@@ -7,7 +7,6 @@ import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail }
 import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
 
 export async function POST(): Promise<NextResponse> {
-  console.log("weekly summary: started");
   // check authentication with x-api-key header and CRON_SECRET env variable
   if (headers().get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
@@ -52,8 +51,6 @@ export async function POST(): Promise<NextResponse> {
       );
     }
   }
-  console.log("weekly summary: completed");
-
   // wait for all emails to be sent
   await Promise.all(emailSendingPromises);
   return responses.successResponse({}, true);
