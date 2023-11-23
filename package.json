@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "packages/surveys/src/question-date"
   ],
   "prisma": {
     "schema": "packages/database/schema.prisma"

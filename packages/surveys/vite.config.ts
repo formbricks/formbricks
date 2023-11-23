@@ -4,7 +4,7 @@ import preact from "@preact/preset-vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-const buildPackage = process.env.SURVEYS_PACKAGE_BUILD;
+const buildPackage = "surveys";
 
 const entryPoint = buildPackage === "surveys" ? "src/index.ts" : "src/question-date/src/index.tsx";
 const name = buildPackage === "surveys" ? "formbricks-surveys" : "formbricks-question-date";
