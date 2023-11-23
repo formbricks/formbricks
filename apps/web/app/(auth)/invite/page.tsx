@@ -10,7 +10,7 @@ import {
   UsedContent,
   RightAccountContent,
 } from "./components/InviteContentComponents";
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 
 export default async function JoinTeam({ searchParams }) {
   const currentUser = await getServerSession(authOptions);

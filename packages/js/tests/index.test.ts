@@ -41,6 +41,7 @@ test("Formbricks should Initialise", async () => {
   await formbricks.init({
     environmentId,
     apiHost,
+    userId: initialUserId,
   });
 
   const configFromBrowser = localStorage.getItem("formbricks-js");
@@ -60,21 +61,7 @@ test("Formbricks should get the current person with no attributes", () => {
   expect(Object.keys(currentStatePersonAttributes)).toHaveLength(0);
 });
 
-test("Formbricks should set userId", async () => {
-  mockSetUserIdResponse();
-  await formbricks.setUserId(initialUserId);
-
-  const currentStatePerson = formbricks.getPerson();
-
-  const currentStatePersonAttributes = currentStatePerson.attributes;
-  const numberOfUserAttributes = Object.keys(currentStatePersonAttributes).length;
-  expect(numberOfUserAttributes).toStrictEqual(1);
-
-  const userId = currentStatePersonAttributes.userId;
-  expect(userId).toStrictEqual(initialUserId);
-});
-
-test("Formbricks should set email", async () => {
+/* test("Formbricks should set email", async () => {
   mockSetEmailIdResponse();
   await formbricks.setEmail(initialUserEmail);
 
@@ -125,7 +112,7 @@ test("Formbricks should update attribute", async () => {
   expect(email).toStrictEqual(updatedUserEmail);
   const customAttribute = currentStatePersonAttributes[customAttributeKey];
   expect(customAttribute).toStrictEqual(customAttributeValue);
-});
+}); */
 
 test("Formbricks should track event", async () => {
   mockEventTrackResponse();

@@ -1,6 +1,6 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddNoCodeActionModal";
+import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -97,6 +97,7 @@ export default function WhenToSendCard({
   };
 
   useEffect(() => {
+    if (isAddEventModalOpen) return;
     if (activeIndex !== null) {
       const newActionClass = actionClassArray[actionClassArray.length - 1].name;
       const currentActionClass = localSurvey.triggers[activeIndex];

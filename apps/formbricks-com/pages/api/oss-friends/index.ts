@@ -128,6 +128,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://requestly.io",
         },
         {
+          name: "Revert",
+          description: "The open-source unified API to build B2B integrations remarkably fast",
+          href: "https://revert.dev",
+        },
+        {
           name: "Rivet",
           description: "Open-source solution to deploy, scale, and operate your multiplayer game.",
           href: "https://rivet.gg",
@@ -144,7 +149,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
           href: "https://www.sniffnet.net",
         },
-         {
+        {
           name: "Spark.NET",
           description:
             "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
