@@ -54,12 +54,12 @@ const uploadFile = async (
       const { signature, timestamp, uuid } = signingData;
 
       requestHeaders = {
-        fileType: file.type,
-        fileName: file.name,
-        environmentId: environmentId ?? "",
-        signature,
-        timestamp,
-        uuid,
+        "X-File-Type": file.type,
+        "X-File-Name": encodeURIComponent(file.name),
+        "X-Environment-ID": environmentId ?? "",
+        "X-Signature": signature,
+        "X-Timestamp": String(timestamp),
+        "X-UUID": uuid,
       };
     }
 
