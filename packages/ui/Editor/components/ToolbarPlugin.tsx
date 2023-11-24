@@ -353,7 +353,7 @@ export default function ToolbarPlugin(props: TextEditorProps) {
   }, [props.updateTemplate, props.firstRender]);
 
   useEffect(() => {
-    if (props.setFirstRender) {
+    if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
         const parser = new DOMParser();
