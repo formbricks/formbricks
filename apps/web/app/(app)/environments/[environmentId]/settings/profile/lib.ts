@@ -52,10 +52,10 @@ export const handleFileUpload = async (
 
     requestHeaders = {
       "X-File-Type": file.type,
-      "X-File-Name": file.name,
+      "X-File-Name": encodeURIComponent(file.name),
       "X-Environment-ID": environmentId ?? "",
       "X-Signature": signature,
-      "X-Timestamp": timestamp,
+      "X-Timestamp": String(timestamp),
       "X-UUID": uuid,
     };
   }

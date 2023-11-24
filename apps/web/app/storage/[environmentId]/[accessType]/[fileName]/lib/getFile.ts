@@ -15,7 +15,7 @@ const getFile = async (environmentId: string, accessType: string, fileName: stri
       return new Response(fileBuffer, {
         headers: {
           "Content-Type": metaData.contentType,
-          "Content-Disposition": "attachment; filename=" + fileName,
+          "Content-Disposition": "attachment",
         },
       });
     } catch (err) {

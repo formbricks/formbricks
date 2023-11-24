@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
   const headersList = headers();
 
   const fileType = headersList.get("X-File-Type");
-  const fileName = headersList.get("X-File-Name");
+  const encodedFileName = headersList.get("X-File-Name");
   const surveyId = headersList.get("X-Survey-ID");
 
   const signedSignature = headersList.get("X-Signature");
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
     return responses.badRequestResponse("contentType is required");
   }
 
-  if (!fileName) {
+  if (!encodedFileName) {
     return responses.badRequestResponse("fileName is required");
   }
 
@@ -78,6 +78,8 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
   if (!team) {
     return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
   }
+
+  const fileName = decodeURIComponent(encodedFileName);
 
   // validate signature
 

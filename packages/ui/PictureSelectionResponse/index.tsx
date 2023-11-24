@@ -18,13 +18,15 @@ export const PictureSelectionResponse = ({ choices, selected }: PictureSelection
     <div className="my-1 flex flex-wrap gap-x-5 gap-y-4">
       {selected.map((id) => (
         <div className="relative h-32 w-56">
-          <Image
-            src={choiceImageMapping[id]}
-            alt={choiceImageMapping[id].split("/").pop() || "Image"}
-            fill
-            style={{ objectFit: "cover" }}
-            className="rounded-lg"
-          />
+          {choiceImageMapping[id] && (
+            <Image
+              src={choiceImageMapping[id]}
+              alt={choiceImageMapping[id].split("/").pop() || "Image"}
+              fill
+              style={{ objectFit: "cover" }}
+              className="rounded-lg"
+            />
+          )}
         </div>
       ))}
     </div>
