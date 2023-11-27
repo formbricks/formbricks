@@ -25,7 +25,8 @@ const selectProduct = {
   brandColor: true,
   highlightBorderColor: true,
   recontactDays: true,
-  formbricksSignature: true,
+  linkSurveyBranding: true,
+  inAppSurveyBranding: true,
   placement: true,
   clickOutsideClose: true,
   darkOverlay: true,
@@ -81,6 +82,10 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
           },
           select: selectProduct,
         });
+
+        if (!productPrisma) {
+          return null;
+        }
 
         return productPrisma;
       } catch (error) {
@@ -263,9 +268,7 @@ export const createProduct = async (
     type: "production",
   });
 
-  product = await updateProduct(product.id, {
+  return await updateProduct(product.id, {
     environments: [devEnvironment, prodEnvironment],
   });
-
-  return product;
 };

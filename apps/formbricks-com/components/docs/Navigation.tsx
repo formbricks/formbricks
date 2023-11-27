@@ -193,6 +193,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
+      { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
     ],
   },
   {
@@ -226,10 +227,11 @@ export const navigation: Array<NavGroup> = [
   {
     title: "Integrations",
     links: [
-      { title: "Zapier", href: "/docs/integrations/zapier" },
-      { title: "n8n", href: "/docs/integrations/n8n" },
-      { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "Airtable", href: "/docs/integrations/airtable" },
       { title: "Google Sheets", href: "/docs/integrations/google-sheets" },
+      { title: "Make.com", href: "/docs/integrations/make" },
+      { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
   },
   {
@@ -247,6 +249,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Production", href: "/docs/self-hosting/production" },
       { title: "Docker", href: "/docs/self-hosting/docker" },
       { title: "Migration Guide", href: "/docs/self-hosting/migration-guide" },
+      { title: "External auth providers", href: "/docs/self-hosting/external-auth-providers" },
     ],
   },
   {
@@ -255,7 +258,6 @@ export const navigation: Array<NavGroup> = [
       { title: "Introduction", href: "/docs/contributing/introduction" },
       { title: "Demo App", href: "/docs/contributing/demo" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
-      { title: "Gitpod", href: "/docs/contributing/gitpod" },
       { title: "How we code at Formbricks", href: "/docs/contributing/how-we-code" },
       { title: "How to create a service", href: "/docs/contributing/creating-a-service" },
       { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
@@ -266,7 +268,9 @@ export const navigation: Array<NavGroup> = [
     title: "Client API",
     links: [
       { title: "Overview", href: "/docs/api/client/overview" },
+      { title: "Actions", href: "/docs/api/client/actions" },
       { title: "Displays", href: "/docs/api/client/displays" },
+      { title: "People", href: "/docs/api/client/people" },
       { title: "Responses", href: "/docs/api/client/responses" },
     ],
   },

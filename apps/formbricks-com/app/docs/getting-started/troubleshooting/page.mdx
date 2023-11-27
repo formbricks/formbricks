@@ -1,0 +1,96 @@
+import Image from "next/image";
+
+import I1 from "./1-set-up-in-app-micro-survey-popup.webp";
+import I2 from "./2-micro-survey-pop-up-in-app.webp";
+import I3 from "./3-survey-logs-in-app-survey-popup.webp";
+
+export const metadata = {
+  title: "Formbricks Troubleshooting Guide",
+  description:
+    "Troubleshoot your Formbricks integration and get your in-app surveys up and running in no time. Most frequent errors and how to debug them.",
+};
+
+#### Getting Started
+
+# Troubleshooting Guide
+
+In case you don’t see your survey right away, here's what you can do. Go through these to find the error fast:
+
+## Formbricks Cloud and your app are not connected properly.
+
+Go back to [app.formbricks.com](http://app.formbricks.com) or your self-hosted instance's URL and go to the Setup Checklist in the Settings. If the status is still indicated as “Not connected” your app hasn't yet pinged the Formbricks Cloud:
+
+<Image
+  src={I1}
+  alt="setup checklist ui of survey popup for in app surveys"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+**How to fix it:**
+
+1. Check if your app loads the Formbricks widget correctly.
+2. Make sure you have `debug` mode enabled in your integration and you should see the Formbricks debug logs in your browser console while being in your app (right click in the browser, `Inspect`, switch to the console tab). If you don’t see them, double check your integration.
+
+---
+
+## Survey not loaded
+
+If your app is connected with Formbricks Cloud, the survey might have not been loaded properly. Check the debug logs and search for the list of surveys loaded. It should look like so:
+
+<Image
+  src={I3}
+  alt="survey logs for in app survey pop up micro"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+**How to fix it:**
+
+The widget only loads surveys which are **public** and **in progress**. Go to Formbricks Cloud and to the Survey Summary page. Check if your survey is live:
+
+<Image
+  src={I2}
+  alt="ui of survey popup for in app micro surveys"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+---
+
+## Survey not triggered
+
+If the survey is loaded by the widget it might not have been triggered properly.
+
+**How to fix:**
+
+1. Open your local app in an incognito tab or window. The New Session event is only fired if a user was inactive for 60 minutes or was logged out of Formbricks via formrbicks.logout().
+2. Check the debug logs for “Event ‘New Session” tracked”. If you see it in the logs and the survey still did not get displayed, [please let us know.](mailto:support@formbricks.com)
+
+---
+
+## Survey not displayed in HTML page
+
+If the survey is loaded by the widget in the HTML page, try the below steps:
+
+**How to fix:**
+
+1. Make sure you have added the [script](/docs/getting-started/framework-guides#html) in the head of the HTML page.
+2. Verify that you have set the \<environment-id\> and \<host\> as per your Formbricks instance.
+3. Verify that you have the latest version of the JS Package.
+4. Check the debug logs to see if you still see any errors.
+
+---
+
+## Cannot read undefined of .init()
+
+If you see this error in the console, it means that the Formbricks JS package is not loaded properly.
+
+**How to fix:**
+
+1. Update to the latest version of the JS Package.
+2. Verify this wherever you call initialise the Formbricks instance in your code.
+3. It should now start working.
+
+---
+
+If you are still facing issues, please [Open an Issue on GitHub](https://github.com/formbricks/formbricks/issues) or [join our Discord](https://formbricks.com/discord)! We’re more than happy to help you get started 😊

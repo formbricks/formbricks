@@ -19,7 +19,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
   const [open, setOpen] = useState(false);
 
   const { type, productOverwrites } = localSurvey;
-  const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
+  const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
+    productOverwrites ?? {};
 
   const togglePlacement = () => {
     setLocalSurvey({
@@ -93,12 +94,12 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
-  const handleClickOutside = (clickOutside: boolean) => {
+  const handleClickOutsideClose = (clickOutsideClose: boolean) => {
     setLocalSurvey({
       ...localSurvey,
       productOverwrites: {
         ...localSurvey.productOverwrites,
-        clickOutside,
+        clickOutsideClose,
       },
     });
   };
@@ -163,8 +164,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                         setCurrentPlacement={handlePlacementChange}
                         setOverlay={handleOverlay}
                         overlay={darkOverlay ? "dark" : "light"}
-                        setClickOutside={handleClickOutside}
-                        clickOutside={!!clickOutside}
+                        setClickOutsideClose={handleClickOutsideClose}
+                        clickOutsideClose={!!clickOutsideClose}
                       />
                     </div>
                   </div>
@@ -183,9 +184,9 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 />
                 <Label htmlFor="autoComplete" className="cursor-pointer">
                   <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Overwrite border highlight</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Highlight Border</h3>
                     <p className="text-xs font-normal text-slate-500">
-                      Change the border highlight for this survey.
+                      Change the highlight border for this survey.
                     </p>
                   </div>
                 </Label>

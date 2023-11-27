@@ -8,8 +8,10 @@ import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseInput,
+  TResponseLegacyInput,
   TResponseUpdateInput,
   ZResponseInput,
+  ZResponseLegacyInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
@@ -17,7 +19,7 @@ import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
-import { getPerson, transformPrismaPerson } from "../person/service";
+import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
 import { formatResponseDateFields } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
@@ -38,6 +40,7 @@ const responseSelection = {
   person: {
     select: {
       id: true,
+      userId: true,
       createdAt: true,
       updatedAt: true,
       environmentId: true,
@@ -192,6 +195,72 @@ export const getResponseBySingleUseId = async (
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
+  captureTelemetry("response created");
+
+  const { environmentId, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
+
+  try {
+    let person: TPerson | null = null;
+
+    if (userId) {
+      person = await getPersonByUserId(environmentId, userId);
+      if (!person) {
+        // create person if it does not exist
+        person = await createPerson(environmentId, userId);
+      }
+    }
+
+    const responsePrisma = await prisma.response.create({
+      data: {
+        survey: {
+          connect: {
+            id: surveyId,
+          },
+        },
+        finished: finished,
+        data: data,
+        ...(person?.id && {
+          person: {
+            connect: {
+              id: person.id,
+            },
+          },
+          personAttributes: person?.attributes,
+        }),
+        ...(meta && ({ meta } as Prisma.JsonObject)),
+        singleUseId,
+      },
+      select: responseSelection,
+    });
+
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+
+    responseCache.revalidate({
+      id: response.id,
+      personId: response.person?.id,
+      surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
+    });
+
+    return response;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const createResponseLegacy = async (responseInput: TResponseLegacyInput): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseLegacyInput]);
   captureTelemetry("response created");
 
   try {
@@ -530,38 +599,6 @@ export const getResponseCountBySurveyId = async (surveyId: string): Promise<numb
     [`getResponseCountBySurveyId-${surveyId}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-export const getMonthlyResponseCount = async (environmentId: string): Promise<number> =>
-  await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const responseAggregations = await prisma.response.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          survey: {
-            environmentId,
-            type: "web",
-          },
-          createdAt: {
-            gte: firstDayOfMonth,
-          },
-        },
-      });
-
-      return responseAggregations._count.id;
-    },
-    [`getMonthlyResponseCount-${environmentId}`],
-    {
-      tags: [responseCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

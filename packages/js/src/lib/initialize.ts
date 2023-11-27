@@ -13,10 +13,9 @@ import {
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
-import { resetPerson } from "./person";
-import { isExpired } from "./session";
 import { sync } from "./sync";
-import { addWidgetContainer } from "./widget";
+import { addWidgetContainer, closeSurvey } from "./widget";
+import { trackAction } from "./actions";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -70,46 +69,40 @@ export const initialize = async (
     localConfigResult.ok &&
     localConfigResult.value.state &&
     localConfigResult.value.environmentId === c.environmentId &&
-    localConfigResult.value.apiHost === c.apiHost
+    localConfigResult.value.apiHost === c.apiHost &&
+    localConfigResult.value.state?.person?.userId === c.userId &&
+    localConfigResult.value.expiresAt // only accept config when they follow new config version with expiresAt
   ) {
-    const { state, apiHost, environmentId } = localConfigResult.value;
-
-    logger.debug("Found existing configuration. Checking session.");
-    const existingSession = state.session;
-
-    config.update(localConfigResult.value);
-
-    if (isExpired(existingSession)) {
-      logger.debug("Session expired. Resyncing.");
-
-      try {
-        await sync({
-          apiHost,
-          environmentId,
-          personId: state.person.id,
-          sessionId: existingSession.id,
-        });
-      } catch (e) {
-        logger.debug("Sync failed. Clearing config and starting from scratch.");
-        await resetPerson();
-        return await initialize(c);
-      }
+    logger.debug("Found existing configuration.");
+    if (localConfigResult.value.expiresAt < new Date()) {
+      logger.debug("Configuration expired.");
+      await sync({
+        apiHost: c.apiHost,
+        environmentId: c.environmentId,
+        userId: c.userId,
+      });
     } else {
-      logger.debug("Session valid. Continuing.");
-      // continue for now - next sync will check complete state
+      logger.debug("Configuration not expired. Extending expiration.");
+      config.update(localConfigResult.value);
     }
   } else {
-    logger.debug("No valid configuration found. Creating new config.");
-
+    logger.debug("No valid configuration found or it has been expired. Creating new config.");
     logger.debug("Syncing.");
+
+    // when the local storage is expired / empty, we sync to get the latest config
+
     await sync({
       apiHost: c.apiHost,
       environmentId: c.environmentId,
+      userId: c.userId,
     });
+
+    // and track the new session event
+    trackAction("New Session");
   }
 
   logger.debug("Adding event listeners");
-  addEventListeners(c.debug);
+  addEventListeners();
   addCleanupEventListeners();
 
   isInitialized = true;
@@ -135,6 +128,7 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 
 export const deinitalize = (): void => {
   logger.debug("Deinitializing");
+  closeSurvey();
   removeAllEventListeners();
   config.resetConfig();
   isInitialized = false;

@@ -19,10 +19,8 @@ export async function POST(request: NextRequest) {
   const ws = xlsx.utils.json_to_sheet(json, { header: fields });
   xlsx.utils.book_append_sheet(wb, ws, "Sheet1");
 
-  const buffer = xlsx.write(wb, { type: "buffer", bookType: "xlsx" });
-
-  const binaryString = String.fromCharCode.apply(null, buffer);
-  const base64String = btoa(binaryString);
+  const buffer = xlsx.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  const base64String = buffer.toString("base64");
 
   const headers = new Headers();
   headers.set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");

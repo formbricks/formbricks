@@ -10,25 +10,25 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessType = "public"; // public files are accessible by anyone
   const headersList = headers();
 
-  const fileType = headersList.get("fileType");
-  const fileName = headersList.get("fileName");
-  const environmentId = headersList.get("environmentId");
+  const fileType = headersList.get("X-File-Type");
+  const encodedFileName = headersList.get("X-File-Name");
+  const environmentId = headersList.get("X-Environment-ID");
 
-  const signedSignature = headersList.get("signature");
-  const signedUuid = headersList.get("uuid");
-  const signedTimestamp = headersList.get("timestamp");
+  const signedSignature = headersList.get("X-Signature");
+  const signedUuid = headersList.get("X-UUID");
+  const signedTimestamp = headersList.get("X-Timestamp");
 
   if (!fileType) {
     return responses.badRequestResponse("fileType is required");
   }
 
-  if (!fileName) {
+  if (!encodedFileName) {
     return responses.badRequestResponse("fileName is required");
   }
 
@@ -59,6 +59,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!isUserAuthorized) {
     return responses.unauthorizedResponse();
   }
+
+  const fileName = decodeURIComponent(encodedFileName);
 
   // validate signature
 

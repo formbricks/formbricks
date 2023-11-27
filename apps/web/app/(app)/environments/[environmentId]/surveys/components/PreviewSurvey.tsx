@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -27,6 +28,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
 let surveyNameTemp;
@@ -64,6 +66,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
+  onFileUpload,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -204,9 +207,10 @@ export default function PreviewSurvey({
                     survey={survey}
                     brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
-                    formbricksSignature={product.formbricksSignature}
+                    isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    onFileUpload={onFileUpload}
                   />
                 </Modal>
               ) : (
@@ -219,8 +223,9 @@ export default function PreviewSurvey({
                         survey={survey}
                         brandColor={brandColor}
                         activeQuestionId={activeQuestionId || undefined}
-                        formbricksSignature={product.formbricksSignature}
+                        isBrandingEnabled={product.linkSurveyBranding}
                         onActiveQuestionChange={setActiveQuestionId}
+                        onFileUpload={onFileUpload}
                       />
                     </div>
                   </div>
@@ -274,9 +279,10 @@ export default function PreviewSurvey({
                   survey={survey}
                   brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
-                  formbricksSignature={product.formbricksSignature}
+                  isBrandingEnabled={product.linkSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
+                  onFileUpload={onFileUpload}
                 />
               </Modal>
             ) : (
@@ -287,9 +293,10 @@ export default function PreviewSurvey({
                       survey={survey}
                       brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
+                      isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       isRedirectDisabled={true}
+                      onFileUpload={onFileUpload}
                     />
                   </div>
                 </div>

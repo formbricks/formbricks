@@ -10,8 +10,8 @@ import { createPresignedPost, PresignedPostOptions } from "@aws-sdk/s3-presigned
 import { access, mkdir, writeFile, readFile, unlink, rmdir } from "fs/promises";
 import { join } from "path";
 import mime from "mime";
-import { env } from "@/env.mjs";
-import { IS_S3_CONFIGURED, LOCAL_UPLOAD_URL, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import { env } from "../env.mjs";
+import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { storageCache } from "./cache";
 import { TAccessType } from "@formbricks/types/storage";
@@ -175,7 +175,10 @@ export const getUploadSignedUrl = async (
       const { signature, timestamp, uuid } = generateLocalSignedUrl(fileName, environmentId, fileType);
 
       return {
-        signedUrl: LOCAL_UPLOAD_URL[accessType],
+        signedUrl:
+          accessType === "private"
+            ? new URL(`${WEBAPP_URL}/api/v1/client/${environmentId}/storage/local`).href
+            : new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
         signingData: {
           signature,
           timestamp,

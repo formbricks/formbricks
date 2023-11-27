@@ -155,6 +155,11 @@ const nextConfig = {
         destination: "https://formbricks.com/clmyhzfrymr4ko00hycsg1tvx",
         permanent: true,
       },
+      {
+        source: "/docs/contributing/gitpod",
+        destination: "/docs/contributing/setup#gitpod",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
