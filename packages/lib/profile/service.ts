@@ -149,20 +149,6 @@ const deleteUser = async (id: string): Promise<TProfile> => {
   return profile;
 };
 
-export const createProfileWithProviders = async (data: any): Promise<TProfile> => {
-  const profile = await prisma.user.create({
-    data: data,
-    select: responseSelection,
-  });
-
-  profileCache.revalidate({
-    email: profile.email,
-    id: profile.id,
-  });
-
-  return profile;
-};
-
 export const createProfile = async (data: TProfileCreateInput): Promise<TProfile> => {
   validateInputs([data, ZProfileUpdateInput]);
 

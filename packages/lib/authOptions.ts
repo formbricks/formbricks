@@ -3,7 +3,7 @@ import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "./constants";
 import { verifyToken } from "./jwt";
-import { createProfileWithProviders, getProfileByEmail, updateProfile } from "./profile/service";
+import { createProfile, getProfileByEmail, updateProfile } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -12,10 +12,7 @@ import GoogleProvider from "next-auth/providers/google";
 import AzureAD from "next-auth/providers/azure-ad";
 import { createTeam } from "./team/service";
 import { createProduct } from "./product/service";
-import { createEnvironment } from "./environment/service";
-import { createMembership } from "./membership/service";
-import { createActionClass } from "./actionClass/service";
-import { createAttributeClass } from "./attributeClass/service";
+import { createAccount } from "./account/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -211,104 +208,20 @@ export const authOptions: NextAuthOptions = {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        const prodActionClasses = [
-          {
-            name: "New Session",
-            description: "Gets fired when a new session is created",
-            type: "automatic" as "automatic",
-          },
-          {
-            name: "Exit Intent (Desktop)",
-            description: "A user on Desktop leaves the website with the cursor.",
-            type: "automatic" as "automatic",
-          },
-          {
-            name: "50% Scroll",
-            description: "A user scrolled 50% of the current page",
-            type: "automatic" as "automatic",
-          },
-        ];
-
-        const prodAttributeClasses = [
-          {
-            name: "userId",
-            description: "The internal ID of the person",
-            type: "automatic" as "automatic",
-          },
-          {
-            name: "email",
-            description: "The email of the person",
-            type: "automatic" as "automatic",
-          },
-        ];
-
-        const devActionClasses = [
-          {
-            name: "New Session",
-            description: "Gets fired when a new session is created",
-            type: "automatic" as "automatic",
-          },
-          {
-            name: "Exit Intent (Desktop)",
-            description: "A user on Desktop leaves the website with the cursor.",
-            type: "automatic" as "automatic",
-          },
-          {
-            name: "50% Scroll",
-            description: "A user scrolled 50% of the current page",
-            type: "automatic" as "automatic",
-          },
-        ];
-
-        const devAttributeClasses = [
-          {
-            name: "userId",
-            description: "The internal ID of the person",
-            type: "automatic" as "automatic",
-          },
-          {
-            name: "email",
-            description: "The email of the person",
-            type: "automatic" as "automatic",
-          },
-        ];
-
-        const registerUserAndSetupTeam = async () => {
-          const userProfile = await createProfileWithProviders({
-            name: user.name,
-            email: user.email,
-            emailVerified: new Date(Date.now()),
-            onboardingCompleted: false,
-            identityProvider: provider,
-            identityProviderAccountId: user.id as string,
-            accounts: [{ ...account }],
-          });
-          const team = await createTeam({ name: userProfile.name + "'s Team" });
-          const product = await createProduct(team.id, { name: "My Product" });
-          const productionEnvironment = await createEnvironment(product.id, { type: "production" });
-          prodActionClasses.forEach(async (actionClass) => {
-            await createActionClass(productionEnvironment.id, {
-              ...actionClass,
-              environmentId: productionEnvironment.id,
-            });
-          });
-          prodAttributeClasses.forEach(async (attributeClass) => {
-            await createAttributeClass(productionEnvironment.id, attributeClass.name, attributeClass.type);
-          });
-          const developmentEnvironment = await createEnvironment(product.id, { type: "development" });
-          devActionClasses.forEach(async (actionClass) => {
-            await createActionClass(productionEnvironment.id, {
-              ...actionClass,
-              environmentId: developmentEnvironment.id,
-            });
-          });
-          devAttributeClasses.forEach(async (attributeClass) => {
-            await createAttributeClass(productionEnvironment.id, attributeClass.name, attributeClass.type);
-          });
-          await createMembership(team.id, user.id, { role: "owner" });
-        };
-
-        await registerUserAndSetupTeam();
+        const userProfile = await createProfile({
+          name: user.name,
+          email: user.email,
+          emailVerified: new Date(Date.now()),
+          onboardingCompleted: false,
+          identityProvider: provider,
+          identityProviderAccountId: account.providerAccountId,
+        });
+        const team = await createTeam({ name: userProfile.name + "'s Team" });
+        await createAccount({
+          ...account,
+          userId: userProfile.id,
+        });
+        await createProduct(team.id, { name: "My Product" });
 
         return true;
       }
