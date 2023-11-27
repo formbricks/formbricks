@@ -68,7 +68,10 @@ export default function Modal({
   };
 
   const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor) return {};
+    if (!highlightBorderColor)
+      return {
+        overflow: "visible",
+      };
 
     return {
       borderRadius: "8px",

@@ -20,7 +20,10 @@ export default function Modal({
   const modalRef = useRef<HTMLDivElement | null>(null);
 
   const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor) return {};
+    if (!highlightBorderColor)
+      return {
+        overflow: "visible",
+      };
 
     return {
       border: `2px solid ${highlightBorderColor}`,
