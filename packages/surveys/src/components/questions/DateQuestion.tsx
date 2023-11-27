@@ -36,7 +36,8 @@ export default function DateQuestion({
 
     if (!window.initDatePicker) {
       const script = document.createElement("script");
-      script.src = "http://localhost:8080/dist/question-date.umd.js";
+      script.src =
+        "https://question-date-test.s3.ap-south-1.amazonaws.com/question-date.umd.js?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEEwaCmFwLXNvdXRoLTEiSDBGAiEAl1dJQYvkHIkUoGgr12Sg94EGyp9Kjp7O1dCqkx8PkqkCIQDk8nP3m%2FBQGFHphq%2FYI38%2BXCz6JBZvxK1Folsm0nOb3CrtAgil%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAAaDDU3Njc3NTQzODYyNSIMGitdoIbYUIaPGGTxKsECCx%2FYnee6lrJ2RoS9mfNbycLkbHfrt0CEeXQZ4ASKnzRmL6NbMbSE0k7yWmSEM18A0uKG%2Bgsc8u%2Bgvh0uI3vig9rQlTydNIyEMGUWd52WVf4mGXe%2BEH075WsFttAc9cREb%2ByqZSYzJIwPpMGEPwLAhbC50DTkMSZBRITcTPBGY%2B1tjFibpL7TH68t%2BIxNlrZmHHuuSKCOg0u2i06cFyBJOJf0QWn9qEa1E3b1Rku0TOeuSEDxW0EJ9ux6makL5oDYabvz1FGtBvrD8b6aN0fGa50ld5PDjk6Ctm01uOvcm%2BUDGyJTwM4up%2BTNDgtZgSwVcAEPL1nV%2F6NdbGDr4PnZPIHoRmQFhMvEiqdl8qzv5YxcftBD9ZRJAuKHQx5m%2FprCBOacK0zYyQBTHfoOk0LBWA53iLOMQZcX4%2FHrCdBm4UN0MI6KkqsGOrICnVmCVQtPOsgGScMi%2BmLipYJl1uHQaiirCsxpPLlYC%2FWiHzVFWCnuPWxJLePiMPt1%2FdsdqFtlzphJWWjo6QOWfpwa72UbZXzyZGhm4jaY%2B1ZW2NL%2FC8uGKy%2BtXNoNSOkDCJBDS1pzTJKmsmU6iaeFHeYAwpLQWoogg0%2BquAHoDmrPSHIvq%2BzfbQG2sQXECdTrv73IzQRYZ6o1cE9UZuzTmTlsZLr456QetNpsxm6uPe2HyocgnZnRv6WtuO9YZeN1FAU1Ye6sJpJFcrZ2UqHOCCWHDDTzDz7LuSmLO3oqCCal09xOKcm%2BXBQksVm8E2lGzr8TbWNoVM%2BaRmytwMMq82VoPSJxgx00qIirxrGggB%2BsXY5rQMifsgZ1qtMCqrlcB9i8s%2BWnVt0vyLRJt0zcpzC%2B&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231127T120158Z&X-Amz-SignedHeaders=host&X-Amz-Expires=43200&X-Amz-Credential=ASIAYMST6YEQQPJRWZXB%2F20231127%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Signature=fc3fbbb69df86f7505b01794c332b48517f3779a77f0cd86be1907d1e375fcca";
       script.async = true;
 
       document.body.appendChild(script);
