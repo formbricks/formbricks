@@ -10,6 +10,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import AddAPIKeyModal from "./AddApiKeyModal";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
+import { FilesIcon } from "lucide-react";
 
 export default function EditAPIKeys({
   environmentTypeId,
@@ -59,6 +60,26 @@ export default function EditAPIKeys({
     }
   };
 
+  const ApiKeyDisplay = ({ apiKey }) => {
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(apiKey);
+      toast.success("API Key copied to clipboard");
+    };
+
+    if (!apiKey) {
+      return <span className="italic">secret</span>;
+    }
+
+    const displayKey = `${apiKey.slice(0, 3)}...${apiKey.slice(-3)}`;
+
+    return (
+      <div className="flex">
+        <span>{displayKey}</span>
+        <FilesIcon className="mx-2 h-4 w-4 cursor-pointer" onClick={copyToClipboard} />
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="mb-6 text-right">
@@ -92,7 +113,7 @@ export default function EditAPIKeys({
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-2 sm:block">
-                  {apiKey.apiKey || <span className="italic">secret</span>}
+                  <ApiKeyDisplay apiKey={apiKey.apiKey} />
                 </div>
                 <div className="col-span-4 hidden sm:col-span-2 sm:block">
                   {apiKey.lastUsedAt && timeSince(apiKey.lastUsedAt.toString())}
