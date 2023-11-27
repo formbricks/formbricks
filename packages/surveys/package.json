@@ -25,6 +25,7 @@
     "clean": "rimraf .turbo node_modules dist"
   },
   "devDependencies": {
+    "@formbricks/lib": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "^2.7.0",

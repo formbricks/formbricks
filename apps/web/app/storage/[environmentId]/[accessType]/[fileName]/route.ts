@@ -22,7 +22,9 @@ export async function GET(
     );
   }
 
-  const { environmentId, accessType, fileName } = params;
+  const { environmentId, accessType, fileName: fileNameOG } = params;
+
+  const fileName = decodeURIComponent(fileNameOG);
 
   if (accessType === "public") {
     return await getFile(environmentId, accessType, fileName);
@@ -42,7 +44,8 @@ export async function GET(
     return responses.unauthorizedResponse();
   }
 
-  return await getFile(environmentId, accessType, fileName);
+  const file = await getFile(environmentId, accessType, fileName);
+  return file;
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: { fileName: string } }) {

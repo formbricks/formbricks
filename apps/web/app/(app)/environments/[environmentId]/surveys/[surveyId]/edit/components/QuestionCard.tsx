@@ -18,12 +18,14 @@ import {
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
+  ArrowUpTrayIcon,
   PhotoIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
+import FileUploadQuestionForm from "./FileUploadQuestionForm";
 import CTAQuestionForm from "./CTAQuestionForm";
 import ConsentQuestionForm from "./ConsentQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
@@ -34,9 +36,11 @@ import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
 import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { TProduct } from "@formbricks/types/product";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
+  product?: TProduct;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -76,6 +80,7 @@ export function BackButtonInput({
 
 export default function QuestionCard({
   localSurvey,
+  product,
   questionIdx,
   moveQuestion,
   updateQuestion,
@@ -125,7 +130,9 @@ export default function QuestionCard({
               <div>
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
-                    {question.type === TSurveyQuestionType.OpenText ? (
+                    {question.type === TSurveyQuestionType.FileUpload ? (
+                      <ArrowUpTrayIcon />
+                    ) : question.type === TSurveyQuestionType.OpenText ? (
                       <ChatBubbleBottomCenterTextIcon />
                     ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                       <QueueListIcon />
@@ -243,6 +250,16 @@ export default function QuestionCard({
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
                   localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.FileUpload ? (
+                <FileUploadQuestionForm
+                  localSurvey={localSurvey}
+                  product={product}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

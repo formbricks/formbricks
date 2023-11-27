@@ -14,6 +14,7 @@ import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -166,6 +167,20 @@ export default function LinkSurvey({
                   source: sourceParam || "",
                 },
               });
+          }}
+          onFileUpload={async (file: File, params: TUploadFileConfig) => {
+            const api = new FormbricksAPI({
+              apiHost: webAppUrl,
+              environmentId: survey.environmentId,
+            });
+
+            try {
+              const uploadedUrl = await api.client.storage.uploadFile(file, params);
+              return uploadedUrl;
+            } catch (err) {
+              console.error(err);
+              return "";
+            }
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

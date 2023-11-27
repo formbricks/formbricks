@@ -1,37 +1,33 @@
-"use client";
+interface UploadFileConfig {
+  allowedFileExtensions?: string[];
+  surveyId?: string;
+}
 
-const uploadFile = async (
-  file: File | Blob,
-  allowedFileExtensions: string[] | undefined,
-  environmentId: string | undefined
-) => {
-  try {
+export class StorageAPI {
+  private apiHost: string;
+  private environmentId: string;
+
+  constructor(apiHost: string, environmentId: string) {
+    this.apiHost = apiHost;
+    this.environmentId = environmentId;
+  }
+
+  async uploadFile(
+    file: File,
+    { allowedFileExtensions, surveyId }: UploadFileConfig | undefined = {}
+  ): Promise<string> {
     if (!(file instanceof Blob) || !(file instanceof File)) {
       throw new Error(`Invalid file type. Expected Blob or File, but received ${typeof file}`);
-    }
-
-    const fileBuffer = await file.arrayBuffer();
-
-    // check the file size
-
-    const bufferBytes = fileBuffer.byteLength;
-    const bufferKB = bufferBytes / 1024;
-
-    if (bufferKB > 10240) {
-      const err = new Error("File size is greater than 10MB");
-      err.name = "FileTooLargeError";
-
-      throw err;
     }
 
     const payload = {
       fileName: file.name,
       fileType: file.type,
-      allowedFileExtensions: allowedFileExtensions,
-      environmentId: environmentId,
+      allowedFileExtensions,
+      surveyId,
     };
 
-    const response = await fetch("/api/v1/management/storage", {
+    const response = await fetch(`${this.apiHost}/api/v1/client/${this.environmentId}/storage`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -56,7 +52,7 @@ const uploadFile = async (
       requestHeaders = {
         "X-File-Type": file.type,
         "X-File-Name": encodeURIComponent(file.name),
-        "X-Environment-ID": environmentId ?? "",
+        "X-Survey-ID": surveyId ?? "",
         "X-Signature": signature,
         "X-Timestamp": String(timestamp),
         "X-UUID": uuid,
@@ -81,16 +77,10 @@ const uploadFile = async (
     });
 
     if (!uploadResponse.ok) {
-      throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+      const uploadJson = await uploadResponse.json();
+      throw new Error(`${uploadJson.message}`);
     }
 
-    return {
-      uploaded: true,
-      url: fileUrl,
-    };
-  } catch (error) {
-    throw error;
+    return fileUrl;
   }
-};
-
-export { uploadFile };
+}

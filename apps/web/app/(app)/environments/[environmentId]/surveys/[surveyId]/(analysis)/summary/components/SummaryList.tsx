@@ -5,6 +5,7 @@ import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type {
   TSurveyDateQuestion,
+  TSurveyFileUploadQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionSummary,
 } from "@formbricks/types/surveys";
@@ -26,8 +27,9 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import PictureChoiceSummary from "./PictureChoiceSummary";
 import DateQuestionSummary from "./DateQuestionSummary";
+import FileUploadSummary from "./FileUploadSummary";
+import PictureChoiceSummary from "./PictureChoiceSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;
@@ -142,6 +144,15 @@ export default function SummaryList({ environment, survey, responses, responsesP
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyDateQuestion>}
                   environmentId={environment.id}
                   responsesPerPage={responsesPerPage}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.FileUpload) {
+              return (
+                <FileUploadSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyFileUploadQuestion>}
+                  environmentId={environment.id}
                 />
               );
             }

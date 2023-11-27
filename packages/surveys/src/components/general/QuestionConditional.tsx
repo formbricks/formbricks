@@ -1,7 +1,6 @@
-import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 import CTAQuestion from "@/components/questions/CTAQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
+import FileUploadQuestion from "@/components/questions/FileUploadQuestion";
 import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
 import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
 import NPSQuestion from "@/components/questions/NPSQuestion";
@@ -9,6 +8,9 @@ import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
 import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
 import RatingQuestion from "@/components/questions/RatingQuestion";
 import DateQuestion from "@/components/questions/DateQuestion";
+import { TResponseData } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -16,9 +18,11 @@ interface QuestionConditionalProps {
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData) => void;
   onBack: () => void;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  surveyId: string;
 }
 
 export default function QuestionConditional({
@@ -30,6 +34,8 @@ export default function QuestionConditional({
   isFirstQuestion,
   isLastQuestion,
   autoFocus = true,
+  surveyId,
+  onFileUpload,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
@@ -121,6 +127,18 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+    />
+  ) : question.type === TSurveyQuestionType.FileUpload ? (
+    <FileUploadQuestion
+      surveyId={surveyId}
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      onFileUpload={onFileUpload}
     />
   ) : null;
 }
