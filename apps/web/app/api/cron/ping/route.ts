@@ -11,7 +11,7 @@ export async function POST() {
     return responses.notAuthenticatedResponse();
   }
 
-  captureTelemetry("self-hosted");
+  captureTelemetry("ping");
 
   return responses.successResponse({}, true);
 }
