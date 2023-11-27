@@ -202,6 +202,7 @@ function getSelectedNode(selection: RangeSelection) {
 
 export default function ToolbarPlugin(props: TextEditorProps) {
   const [editor] = useLexicalComposerContext();
+
   const toolbarRef = useRef(null);
   const [blockType, setBlockType] = useState("paragraph");
   const [isLink, setIsLink] = useState(false);
@@ -348,10 +349,11 @@ export default function ToolbarPlugin(props: TextEditorProps) {
         }
       });
     }
-  }, [props.updateTemplate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.updateTemplate, props.firstRender]);
 
   useEffect(() => {
-    if (props.setFirstRender) {
+    if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
         const parser = new DOMParser();

@@ -1,5 +1,5 @@
 import z from "zod";
-import { ZPerson } from "./people";
+import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
 import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
 import { ZProduct } from "./product";
@@ -18,8 +18,17 @@ export const ZJSStateDisplay = z.object({
 
 export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
 
+export const ZJsStateSync = z.object({
+  person: ZPersonClient.nullish(),
+  surveys: z.array(ZSurvey),
+  noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
+});
+
+export type TJsStateSync = z.infer<typeof ZJsStateSync>;
+
 export const ZJsState = z.object({
-  person: ZPerson.nullable(),
+  attributes: ZPersonAttributes,
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
@@ -65,6 +74,7 @@ export type TJsSyncLegacyInput = z.infer<typeof ZJsSyncLegacyInput>;
 export const ZJsConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
+  userId: z.string().optional(),
   state: ZJsState,
   expiresAt: z.date(),
 });
@@ -74,6 +84,7 @@ export type TJsConfig = z.infer<typeof ZJsConfig>;
 export const ZJsConfigUpdateInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
+  userId: z.string().optional(),
   state: ZJsState,
 });
 

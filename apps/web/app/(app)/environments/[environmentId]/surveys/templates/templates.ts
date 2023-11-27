@@ -1,5 +1,9 @@
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey, TSurveyHiddenFields, TSurveyWelcomeCard } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyHiddenFields,
+  TSurveyQuestionType,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -406,7 +410,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionType.OpenText,
-          headline: "What is the main benefit your receive from {{productName}}?",
+          headline: "What is the main benefit you receive from {{productName}}?",
           required: true,
           inputType: "text",
         },
@@ -2478,7 +2482,7 @@ export const customSurvey: TTemplate = {
       {
         id: createId(),
         type: TSurveyQuestionType.OpenText,
-        headline: "Custom Survey",
+        headline: "What would you like to know?",
         subheader: "This is an example survey.",
         placeholder: "Type your answer here...",
         required: true,

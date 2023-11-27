@@ -34,7 +34,7 @@ export default async function ProfileSettingsPage({ params }) {
   return !isViewer ? (
     <div>
       <SettingsTitle title="API Keys" />
-      <EnvironmentNotice environmentId={environment.id} />
+      <EnvironmentNotice environmentId={environment.id} subPageUrl="/settings/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard
           title="Development Env Keys"

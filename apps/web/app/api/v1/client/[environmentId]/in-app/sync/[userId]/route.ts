@@ -4,13 +4,12 @@ import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
-import { getOrCreatePersonByUserId, getPersonByUserId } from "@formbricks/lib/person/service";
+import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TPerson } from "@formbricks/types/people";
+import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -72,13 +71,15 @@ export async function GET(
       isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
     }
 
-    let person: TPerson | null;
+    let person = await getPersonByUserId(environmentId, userId);
     if (!isMauLimitReached) {
-      person = await getOrCreatePersonByUserId(userId, environmentId);
+      if (!person) {
+        person = await createPerson(environmentId, userId);
+      }
     } else {
-      person = await getPersonByUserId(userId, environmentId);
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
+        // if it's a new person and MAU limit is reached, throw an error
         throw new Error(errorMessage);
       } else {
         // check if person has been active this month
@@ -100,8 +101,8 @@ export async function GET(
     }
 
     // return state
-    const state: TJsState = {
-      person,
+    const state: TJsStateSync = {
+      person: { id: person.id, userId: person.userId },
       surveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
