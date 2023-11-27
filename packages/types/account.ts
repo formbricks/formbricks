@@ -13,10 +13,12 @@ export const ZAccountInput = z.object({
   id_token: z.string().nullable(),
 });
 
+export type TAccountInput = z.infer<typeof ZAccountInput>;
+
 export const ZAccount = ZAccountInput.extend({
   id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
-export type TAccountInput = z.infer<typeof ZAccountInput>;
+
 export type TAccount = z.infer<typeof ZAccount>;
