@@ -70,11 +70,9 @@ export default function EditAPIKeys({
       return <span className="italic">secret</span>;
     }
 
-    const displayKey = `${apiKey.slice(0, 3)}...${apiKey.slice(-3)}`;
-
     return (
-      <div className="flex">
-        <span>{displayKey}</span>
+      <div className="flex items-center">
+        <span>{apiKey}</span>
         <FilesIcon className="mx-2 h-4 w-4 cursor-pointer" onClick={copyToClipboard} />
       </div>
     );
@@ -93,10 +91,9 @@ export default function EditAPIKeys({
         </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-9 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
+        <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-4 sm:col-span-2">Label</div>
-          <div className="col-span-4 hidden sm:col-span-2 sm:block">API Key</div>
-          <div className="col-span-4 hidden sm:col-span-2 sm:block">Last used</div>
+          <div className="col-span-4 hidden sm:col-span-5 sm:block">API Key</div>
           <div className="col-span-4 sm:col-span-2">Created at</div>
           <div className=""></div>
         </div>
@@ -109,14 +106,11 @@ export default function EditAPIKeys({
             apiKeysLocal &&
             apiKeysLocal.map((apiKey) => (
               <div
-                className="grid h-12 w-full grid-cols-9 content-center rounded-lg px-6 text-left text-sm text-slate-900"
+                className="grid h-12 w-full grid-cols-10 content-center rounded-lg px-6 text-left text-sm text-slate-900"
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
-                <div className="col-span-4 hidden sm:col-span-2 sm:block">
+                <div className="col-span-4 hidden sm:col-span-5 sm:block">
                   <ApiKeyDisplay apiKey={apiKey.apiKey} />
-                </div>
-                <div className="col-span-4 hidden sm:col-span-2 sm:block">
-                  {apiKey.lastUsedAt && timeSince(apiKey.lastUsedAt.toString())}
                 </div>
                 <div className="col-span-4 sm:col-span-2">{timeSince(apiKey.createdAt.toString())}</div>
                 <div className="col-span-1 text-center">
