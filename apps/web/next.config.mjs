@@ -9,7 +9,7 @@ const nextConfig = {
   output: "standalone",
   experimental: {
     serverActions: {
-        allowedOrigins: [process.env.ALLOWED_ORIGIN ?? "localhost:3000"],
+      allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
     },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
