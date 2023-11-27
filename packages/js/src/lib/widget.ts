@@ -1,13 +1,14 @@
+import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
 import { renderSurveyModal } from "@formbricks/surveys";
-import { TJSStateDisplay, TSurveyWithTriggers } from "@formbricks/types/js";
+import { TJSStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
-import { FormbricksAPI } from "@formbricks/api";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -15,7 +16,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 
-export const renderWidget = (survey: TSurveyWithTriggers) => {
+export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -45,7 +46,7 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
   const productOverwrites = survey.productOverwrites ?? {};
   const brandColor = productOverwrites.brandColor ?? product.brandColor;
   const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
-  const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
+  const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
@@ -71,12 +72,13 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
           const existingDisplays = config.get().state.displays;
           const displays = existingDisplays ? [...existingDisplays, localDisplay] : [localDisplay];
           const previousConfig = config.get();
+          let state = filterPublicSurveys({
+            ...previousConfig.state,
+            displays,
+          });
           config.update({
             ...previousConfig,
-            state: {
-              ...previousConfig.state,
-              displays,
-            },
+            state,
           });
         }
 
@@ -107,18 +109,19 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
           if (!lastDisplay.responded) {
             lastDisplay.responded = true;
             const previousConfig = config.get();
+            let state = filterPublicSurveys({
+              ...previousConfig.state,
+              displays,
+            });
             config.update({
               ...previousConfig,
-              state: {
-                ...previousConfig.state,
-                displays,
-              },
+              state,
             });
           }
         }
 
-        if (config.get().state.person && config.get().state.person?.id) {
-          surveyState.updatePersonId(config.get().state.person?.id!);
+        if (config.get().state.person && config.get().state.person?.userId) {
+          surveyState.updateUserId(config.get().state.person?.userId!);
         }
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
@@ -127,6 +130,14 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
         });
       },
       onClose: closeSurvey,
+      onFileUpload: async (file: File, params) => {
+        const api = new FormbricksAPI({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+        });
+
+        return await api.client.storage.uploadFile(file, params);
+      },
     });
   }, survey.delay * 1000);
 };

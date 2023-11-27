@@ -1,5 +1,4 @@
 import "server-only";
-import path from "path";
 import { env } from "./env.mjs";
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
@@ -59,7 +58,7 @@ export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 
 // Storage constants
-export const UPLOADS_DIR = path.resolve("./uploads");
+export const UPLOADS_DIR = "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
   free: 1024 * 1024 * 10, // 10MB
@@ -67,13 +66,24 @@ export const MAX_SIZES = {
 } as const;
 export const IS_S3_CONFIGURED: boolean =
   env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION && env.S3_BUCKET_NAME ? true : false;
-export const LOCAL_UPLOAD_URL = {
-  public: new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
-  private: new URL(`${WEBAPP_URL}/api/v1/client/storage/local`).href,
-} as const;
 
 // Pricing
 export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
+
+// Rate Limiting
+export const SIGNUP_RATE_LIMIT = {
+  interval: 60 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 30,
+};
+export const LOGIN_RATE_LIMIT = {
+  interval: 15 * 60 * 1000, // 15 minutes
+  allowedPerInterval: 30,
+};
+export const CLIENT_SIDE_API_RATE_LIMIT = {
+  interval: 10 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 50,
+};
+
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;

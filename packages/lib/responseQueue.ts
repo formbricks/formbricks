@@ -78,7 +78,7 @@ export class ResponseQueue {
         const response = await this.api.client.response.create({
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,
-          personId: this.surveyState.personId || null,
+          userId: this.surveyState.userId || null,
           singleUseId: this.surveyState.singleUseId || null,
         });
         if (!response.ok) {

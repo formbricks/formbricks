@@ -97,6 +97,7 @@ export default function WhenToSendCard({
   };
 
   useEffect(() => {
+    if (isAddEventModalOpen) return;
     if (activeIndex !== null) {
       const newActionClass = actionClassArray[actionClassArray.length - 1].name;
       const currentActionClass = localSurvey.triggers[activeIndex];

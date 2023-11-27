@@ -50,6 +50,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/api/v1/responses",
+        destination: "/api/v1/management/responses",
+        permanent: true,
+      },
+      {
         source: "/api/v1/me",
         destination: "/api/v1/management/me",
         permanent: true,

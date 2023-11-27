@@ -134,7 +134,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionType.OpenText,
-          headline: "What is the main benefit your receive from Formbricks?",
+          headline: "What is the main benefit you receive from Formbricks?",
           inputType: "text",
           longAnswer: true,
           required: true,
@@ -1270,6 +1270,14 @@ export const templates: TTemplate[] = [
           buttonLabel: "Get discount",
           buttonUrl: "https://app.formbricks.com/auth/signup",
           buttonExternal: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionType.FileUpload,
+          headline: "Upload file",
+          required: false,
+          allowMultipleFiles: false,
+          maxSizeInMB: 10,
         },
       ],
       thankYouCard: thankYouCardDefault,

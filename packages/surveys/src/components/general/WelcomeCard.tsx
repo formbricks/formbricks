@@ -1,6 +1,6 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
 import { calculateElementIdx } from "@/lib/utils";
-import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 
@@ -11,7 +11,7 @@ interface WelcomeCardProps {
   buttonLabel?: string;
   timeToFinish?: boolean;
   onSubmit: (data: { [x: string]: any }) => void;
-  survey: TSurveyWithTriggers;
+  survey: TSurvey;
 }
 
 const TimerIcon = () => {
