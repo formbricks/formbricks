@@ -70,11 +70,11 @@ x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Enab
 
 x-next-public-sentry-dsn: &next_public_sentry_dsn # Cron Secret
 
+# Set this to a random string to secure your cron endpoints
+x-cron-secret: &cron_secret YOUR_CRON_SECRET
 
-x-cron-secret:
-  &cron_secret # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
-
-
+  
+# Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
 x-asset-prefix-url: &asset_prefix_url
 
 services:
@@ -94,6 +94,7 @@ services:
       args:
         DATABASE_URL: *database_url
         NEXTAUTH_SECRET: *nextauth_secret
+        ENCRYPTION_KEY: *encryption_key
 
     depends_on:
       - postgres

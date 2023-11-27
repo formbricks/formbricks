@@ -4,7 +4,7 @@ import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TJsState, ZJsPublicSyncInput } from "@formbricks/types/js";
+import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -51,7 +51,7 @@ export async function GET(
       throw new Error("Product not found");
     }
 
-    const state: TJsState = {
+    const state: TJsStateSync = {
       surveys: surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web"),
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

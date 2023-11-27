@@ -5,6 +5,7 @@ import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
 import { env } from "@formbricks/lib/env.mjs";
 import { Button } from "@formbricks/ui/Button";
+import { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { handleTabNavigation } from "../utils";
@@ -13,6 +14,7 @@ type RoleProps = {
   next: () => void;
   skip: () => void;
   setFormbricksResponseId: (id: string) => void;
+  session: Session;
 };
 
 type RoleChoice = {
@@ -20,7 +22,7 @@ type RoleChoice = {
   id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
 };
 
-const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
+const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, session }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const fieldsetRef = useRef<HTMLFieldSetElement>(null);
@@ -55,7 +57,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
           console.error(e);
         }
         if (formbricksEnabled && env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID) {
-          const res = await createResponse(env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID, {
+          const res = await createResponse(env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID, session.user.id, {
             role: selectedRole.label,
           });
           if (res.ok) {
