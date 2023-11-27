@@ -6,15 +6,19 @@ export const metadata = {
     "Unlock the full potential of Formbricks' Responses API. From fetching to updating survey responses, our comprehensive guide helps you integrate and manage survey data efficiently without compromising security. Ideal for client-side interactions.",
 };
 
-#### Management API
+#### Client API
 
 # Responses API
 
 The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
 
+This set of API can be used to
+- [Create Response](#create-response)
+- [Update Response](#update-response)
+
 ---
 
-## Create a response {{ tag: 'POST', label: '/api/v1/client/responses' }}
+## Create Response {{ tag: 'POST', label: '/api/v1/client/<environment-id>/responses' }}
 
 Add a new response to a survey.
 
@@ -39,8 +43,8 @@ Add a new response to a survey.
     ### Optional Body Fields
 
     <Properties>
-      <Property name="personId" type="string" required>
-        Internal Formbricks id to identify the user sending the response
+      <Property name="userId" type="string" required>
+        Pre-existing User ID to identify the user sending the response
       </Property>
     </Properties>
 
@@ -49,20 +53,20 @@ Add a new response to a survey.
 | field name | required | default | description                                                                                                                                    |
 | ---------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | data       | yes      | -       | The response data object (answers to the survey). In this object the key is the questionId, the value the answer of the user to this question. |
-| personId   | no       | -       | The person this response is connected to.                                                                                                      |
+| userId     | no       | -       | The person this response is connected to.                                                                                                      |
 | surveyId   | yes      | -       | The survey this response is connected to.                                                                                                      |
 | finished   | yes      | false   | Mark a response as complete to be able to filter accordingly.                                                                                  |
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/api/v1/client/responses">
+    <CodeGroup title="Request" tag="POST" label="/api/v1/client/<environment-id>/responses">
 
     ```bash {{ title: 'cURL' }}
-    curl --location --request POST 'https://app.formbricks.com/api/v1/client/responses' \
+    curl --location --request POST 'https://app.formbricks.com/api/v1/client/<environment-id>/responses' \
     --data-raw '{
-      "surveyId":"clfqz1esd0000yzah51trddn8",
-      "personId": "clfqjny0v000ayzgsycx54a2c",
+      "surveyId":"cloqzeuu70000z8khcirufo60",
+      "userId": "1",
       "finished": true,
       "data": {
           "clfqjny0v0003yzgscnog1j9i": 10,
@@ -73,8 +77,8 @@ Add a new response to a survey.
 
     ```json {{ title: 'Example Request Body' }}
     {
-      "personId": "clfqjny0v000ayzgsycx54a2c",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
+      "userId": "1",
+      "surveyId": "cloqzeuu70000z8khcirufo60",
       "finished": true,
       "data": {
           "clfqjny0v0003yzgscnog1j9i": 10,
@@ -90,19 +94,30 @@ Add a new response to a survey.
     ```json {{ title: '200 Success' }}
     {
     "data": {
-      "id": "clisyqeoi000219t52m5gopke",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
-      "finished": true,
-      "person": {
-        "id": "clfqjny0v000ayzgsycx54a2c",
-        "attributes": {
-          "email": "me@johndoe.com"
-        }
-      },
-      "data": {
-          "clfqjny0v0003yzgscnog1j9i": 10,
-          "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
-        }
+        "id": "clp84xdld0002px36fkgue5ka",
+        "createdAt": "2023-11-21T09:30:09.553Z",
+        "updatedAt": "2023-11-21T09:30:09.553Z",
+        "surveyId": "cloqzeuu70000z8khcirufo60",
+        "finished": true,
+        "data": {
+            "clfqjny0v0003yzgscnog1j9i": 10,
+            "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
+        },
+        "meta": {
+            "userAgent": {}
+        },
+        "personAttributes": {},
+        "singleUseId": null,
+        "person": {
+            "id": "cloo25v3e0000z8ptskh030jd",
+            "userId": "1",
+            "attributes": {},
+            "environmentId": "clonzr6vc0009z8md7y06hipl",
+            "createdAt": "2023-11-07T08:17:23.114Z",
+            "updatedAt": "2023-11-07T08:17:23.114Z"
+        },
+        "tags": [],
+        "notes": []
       }
     }
     ```
@@ -124,7 +139,7 @@ Add a new response to a survey.
 
 ---
 
-## Update a response {{ tag: 'POST', label: '/api/v1/client/responses/<response-id>' }}
+## Update Response {{ tag: 'PUT', label: '/api/v1/client/<environment-id>/responses/<response-id>' }}
 
 Update an existing response in a survey.
 
@@ -134,6 +149,9 @@ Update an existing response in a survey.
     ### Mandatory Body Fields
 
     <Properties>
+      <Property name="finished" type="boolean">
+        Marks whether the response is complete or not.
+      </Property>
       <Property name="data" type="string">
         The data of the response as JSON object (key: questionId, value: answer).
       </Property>
@@ -149,27 +167,25 @@ Update an existing response in a survey.
   </Col>
   <Col sticky>
 
-    <CodeGroup title="Request" tag="POST" label="/api/v1/client/responses/<response-id>">
+    <CodeGroup title="Request" tag="PUT" label="/api/v1/client/<environment-id>/responses/<response-id>">
 
     ```bash {{ title: 'cURL' }}
-    curl --location --request POST 'https://app.formbricks.com/api/v1/client/responses/<response-id>' \
+    curl --location --request PUT 'https://app.formbricks.com/api/v1/client/<environment-id>/responses/<response-id>' \
     --data-raw '{
-      "personId": "clfqjny0v000ayzgsycx54a2c",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
-      "finished": true,
-      "data": {
-          "clggpvpvu0009n40g8ikawby8": 5,
+      "finished":false,
+        "data": {
+        "clfqjny0v0003yzgscnog1j9i": 10,
+        "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
       }
     }'
     ```
 
     ```json {{ title: 'Example Request Body' }}
     {
-      "personId": "clfqjny0v000ayzgsycx54a2c",
-      "surveyId": "clfqz1esd0000yzah51trddn8",
-      "finished": true,
-      "data": {
-          "clggpvpvu0009n40g8ikawby8": 5,
+      "finished":false,
+        "data": {
+        "clfqjny0v0003yzgscnog1j9i": 10,
+        "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
       }
     }
     ```
@@ -181,20 +197,30 @@ Update an existing response in a survey.
     ```json {{ title: '200 Success' }}
     {
       "data": {
-        "id": "clisyqeoi000219t52m5gopke",
-        "surveyId": "clfqz1esd0000yzah51trddn8",
-        "finished": true,
-        "person": {
-          "id": "clfqjny0v000ayzgsycx54a2c",
-          "attributes": {
-            "email": "me@johndoe.com"
-          }
-        },
+        "id": "clp84xdld0002px36fkgue5ka",
+        "createdAt": "2023-11-21T09:30:09.553Z",
+        "updatedAt": "2023-11-21T09:35:38.357Z",
+        "surveyId": "cloqzeuu70000z8khcirufo60",
+        "finished": false,
         "data": {
-          "clfqjny0v0003yzgscnog1j9i": 10,
-          "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks",
-          "clggpvpvu0009n40g8ikawby8": 5
-        }
+            "clfqjny0v0003yzgscnog1j9i": 10,
+            "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks"
+        },
+        "meta": {
+            "userAgent": {}
+        },
+        "personAttributes": {},
+        "singleUseId": null,
+        "person": {
+            "id": "cloo25v3e0000z8ptskh030jd",
+            "userId": "1",
+            "attributes": {},
+            "environmentId": "clonzr6vc0009z8md7y06hipl",
+            "createdAt": "2023-11-07T08:17:23.114Z",
+            "updatedAt": "2023-11-07T08:17:23.114Z"
+        },
+        "tags": [],
+        "notes": []
       }
     }
     ```

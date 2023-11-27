@@ -110,6 +110,7 @@ export default function SurveyEditor({
               product={product}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              onFileUpload={async (file) => file.name}
             />
           </aside>
         </div>
