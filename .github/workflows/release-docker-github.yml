@@ -6,6 +6,7 @@ name: Docker
 # documentation.
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -15,6 +16,9 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
 
 jobs:
   build:
