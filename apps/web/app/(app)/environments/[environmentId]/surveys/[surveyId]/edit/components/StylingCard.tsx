@@ -184,9 +184,9 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 />
                 <Label htmlFor="autoComplete" className="cursor-pointer">
                   <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Overwrite border highlight</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Highlight Border</h3>
                     <p className="text-xs font-normal text-slate-500">
-                      Change the border highlight for this survey.
+                      Change the highlight border for this survey.
                     </p>
                   </div>
                 </Label>

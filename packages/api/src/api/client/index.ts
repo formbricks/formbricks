@@ -3,12 +3,14 @@ import { DisplayAPI } from "./display";
 import { ApiConfig } from "../../types";
 import { ActionAPI } from "./action";
 import { PeopleAPI } from "./people";
+import { StorageAPI } from "./storage";
 
 export class Client {
   response: ResponseAPI;
   display: DisplayAPI;
   action: ActionAPI;
   people: PeopleAPI;
+  storage: StorageAPI;
 
   constructor(options: ApiConfig) {
     const { apiHost, environmentId } = options;
@@ -17,5 +19,6 @@ export class Client {
     this.display = new DisplayAPI(apiHost, environmentId);
     this.action = new ActionAPI(apiHost, environmentId);
     this.people = new PeopleAPI(apiHost, environmentId);
+    this.storage = new StorageAPI(apiHost, environmentId);
   }
 }

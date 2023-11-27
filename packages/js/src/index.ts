@@ -1,12 +1,12 @@
 import { TJsConfigInput } from "@formbricks/types/js";
+import { trackAction } from "./lib/actions";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
-import { trackAction } from "./lib/actions";
 import { initialize } from "./lib/initialize";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeActions";
-import { resetPerson, setPersonAttribute, setPersonUserId, getPerson, logoutPerson } from "./lib/person";
+import { logoutPerson, resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
 
 const logger = Logger.getInstance();
 
@@ -64,7 +64,6 @@ const formbricks = {
   reset,
   registerRouteChange,
   getApi,
-  getPerson,
 };
 
 export type FormbricksType = typeof formbricks;

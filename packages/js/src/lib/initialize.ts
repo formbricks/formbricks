@@ -14,7 +14,7 @@ import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } 
 import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
-import { addWidgetContainer } from "./widget";
+import { addWidgetContainer, closeSurvey } from "./widget";
 import { trackAction } from "./actions";
 
 const config = Config.getInstance();
@@ -70,7 +70,7 @@ export const initialize = async (
     localConfigResult.value.state &&
     localConfigResult.value.environmentId === c.environmentId &&
     localConfigResult.value.apiHost === c.apiHost &&
-    localConfigResult.value.state?.person?.userId === c.userId &&
+    localConfigResult.value.userId === c.userId &&
     localConfigResult.value.expiresAt // only accept config when they follow new config version with expiresAt
   ) {
     logger.debug("Found existing configuration.");
@@ -128,6 +128,7 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 
 export const deinitalize = (): void => {
   logger.debug("Deinitializing");
+  closeSurvey();
   removeAllEventListeners();
   config.resetConfig();
   isInitialized = false;

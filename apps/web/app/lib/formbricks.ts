@@ -6,15 +6,15 @@ export const formbricksEnabled =
 
 export const createResponse = async (
   surveyId: string,
+  userId: string,
   data: { [questionId: string]: any },
   finished: boolean = false
 ): Promise<any> => {
   const api = formbricks.getApi();
-  const userId = formbricks.getPerson()?.userId;
 
   return await api.client.response.create({
     surveyId,
-    userId: userId ?? "",
+    userId,
     finished,
     data,
   });

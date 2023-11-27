@@ -18,7 +18,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getPersonByUserId } from "../person/service";
+import { createPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 import { formatDisplaysDateFields } from "./util";
@@ -157,16 +157,22 @@ export const updateDisplayLegacy = async (
 
 export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayCreateInput]);
+
+  const { environmentId, userId, surveyId } = displayInput;
+
   try {
     let person;
-    if (displayInput.userId) {
-      person = await getPersonByUserId(displayInput.environmentId, displayInput.userId);
+    if (userId) {
+      person = await getPersonByUserId(environmentId, userId);
+      if (!person) {
+        person = await createPerson(environmentId, userId);
+      }
     }
     const display = await prisma.display.create({
       data: {
         survey: {
           connect: {
-            id: displayInput.surveyId,
+            id: surveyId,
           },
         },
 
