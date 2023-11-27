@@ -17,6 +17,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getServerSession } from "next-auth";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { TIntegrationType } from "@formbricks/types/integration";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
@@ -41,7 +42,7 @@ export default async function IntegrationsPage({ params }) {
     getWebhookCountBySource(environmentId, "n8n"),
   ]);
 
-  const isIntegrationConnected = (type: "googleSheets" | "notion") =>
+  const isIntegrationConnected = (type: TIntegrationType) =>
     integrations.some((integration) => integration.type === type);
   if (!session) {
     throw new Error("Session not found");
@@ -55,10 +56,9 @@ export default async function IntegrationsPage({ params }) {
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
-
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
-
-  const isAirtableIntegrationConnected = integrations.some((integration) => integration.type === "airtable");
+  const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
+  const isN8nIntegrationConnected = isIntegrationConnected("n8n");
 
   const integrationCards = [
     {
@@ -135,10 +135,10 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
+      connectText: `${isN8nIntegrationConnected ? "Manage" : "Connect"}`,
       docsText: "Docs",
       docsNewTab: true,
       connectHref: "https://n8n.io",
-      connectText: "Connect",
       connectNewTab: true,
       label: "n8n",
       description: "Integrate Formbricks with 350+ apps via n8n",
