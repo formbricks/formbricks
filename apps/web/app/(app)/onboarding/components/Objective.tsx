@@ -1,11 +1,10 @@
 "use client";
 
 import { updateProfileAction } from "@/app/(app)/onboarding/actions";
-import { env } from "@formbricks/lib/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
 import { cn } from "@formbricks/lib/cn";
-import { TProfileObjective } from "@formbricks/types/profile";
-import { TProfile } from "@formbricks/types/profile";
+import { env } from "@formbricks/lib/env.mjs";
+import { TProfile, TProfileObjective } from "@formbricks/types/profile";
 import { Button } from "@formbricks/ui/Button";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -129,7 +128,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip} id="objective-skip">
+        <Button size="lg" className="text-slate-500" variant="minimal" onClick={skip} id="objective-skip">
           Skip
         </Button>
         <Button

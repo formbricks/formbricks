@@ -14,11 +14,12 @@ import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
-  personId?: string;
+  userId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
   singleUseId?: string;
@@ -29,7 +30,7 @@ interface LinkSurveyProps {
 export default function LinkSurvey({
   survey,
   product,
-  personId,
+  userId,
   emailVerificationStatus,
   prefillAnswer,
   singleUseId,
@@ -41,9 +42,7 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
-  const [surveyState, setSurveyState] = useState(
-    new SurveyState(survey.id, singleUseId, responseId, personId)
-  );
+  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
@@ -85,21 +84,20 @@ export default function LinkSurvey({
     }
   }, []);
 
-  const [hiddenFieldsRecord, setHiddenFieldsRecord] = useState<Record<string, string | number | string[]>>();
+  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
+    const fieldsRecord: Record<string, string | number | string[]> = {};
+    let fieldsSet = false;
 
-  useEffect(() => {
     survey.hiddenFields?.fieldIds?.forEach((field) => {
-      // set the question and answer to the survey state
       const answer = searchParams?.get(field);
       if (answer) {
-        setHiddenFieldsRecord((prev) => {
-          return {
-            ...prev,
-            [field]: answer,
-          };
-        });
+        fieldsRecord[field] = answer;
+        fieldsSet = true;
       }
     });
+
+    // Only return the record if at least one field was set.
+    return fieldsSet ? fieldsRecord : null;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   useEffect(() => {
@@ -169,6 +167,20 @@ export default function LinkSurvey({
                   source: sourceParam || "",
                 },
               });
+          }}
+          onFileUpload={async (file: File, params: TUploadFileConfig) => {
+            const api = new FormbricksAPI({
+              apiHost: webAppUrl,
+              environmentId: survey.environmentId,
+            });
+
+            try {
+              const uploadedUrl = await api.client.storage.uploadFile(file, params);
+              return uploadedUrl;
+            } catch (err) {
+              console.error(err);
+              return "";
+            }
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

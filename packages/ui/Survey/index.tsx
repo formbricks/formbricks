@@ -1,5 +1,6 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
 import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { useEffect, useMemo } from "react";
 
@@ -15,6 +16,7 @@ interface SurveyProps {
   onFinished?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
@@ -39,6 +41,7 @@ export const SurveyInline = ({
   autoFocus,
   prefillResponseData,
   isRedirectDisabled,
+  onFileUpload,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -55,6 +58,7 @@ export const SurveyInline = ({
       autoFocus,
       prefillResponseData,
       isRedirectDisabled,
+      onFileUpload,
     });
   }, [
     activeQuestionId,
@@ -69,6 +73,7 @@ export const SurveyInline = ({
     autoFocus,
     prefillResponseData,
     isRedirectDisabled,
+    onFileUpload,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -88,6 +93,7 @@ export const SurveyModal = ({
   onClose = () => {},
   autoFocus,
   isRedirectDisabled,
+  onFileUpload,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -105,6 +111,7 @@ export const SurveyModal = ({
       onActiveQuestionChange,
       autoFocus,
       isRedirectDisabled,
+      onFileUpload,
     });
   }, [
     activeQuestionId,
@@ -121,6 +128,7 @@ export const SurveyModal = ({
     survey,
     autoFocus,
     isRedirectDisabled,
+    onFileUpload,
   ]);
   return <div id="formbricks-survey"></div>;
 };

@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@/app/lib/preview";
+import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
   { name: "Top Right", value: "topRight", disabled: false },
@@ -18,8 +18,8 @@ type TPlacementProps = {
   setCurrentPlacement: (placement: TPlacement) => void;
   setOverlay: (overlay: string) => void;
   overlay: string;
-  setClickOutside: (clickOutside: boolean) => void;
-  clickOutside: boolean;
+  setClickOutsideClose: (clickOutside: boolean) => void;
+  clickOutsideClose: boolean;
 };
 
 export default function Placement({
@@ -27,8 +27,8 @@ export default function Placement({
   currentPlacement,
   setOverlay,
   overlay,
-  setClickOutside,
-  clickOutside,
+  setClickOutsideClose,
+  clickOutsideClose,
 }: TPlacementProps) {
   return (
     <>
@@ -78,8 +78,8 @@ export default function Placement({
           <div className="mt-6 space-y-2">
             <Label className="font-semibold">Allow users to exit by clicking outside the study</Label>
             <RadioGroup
-              onValueChange={(value) => setClickOutside(value === "allow")}
-              value={clickOutside ? "allow" : "disallow"}
+              onValueChange={(value) => setClickOutsideClose(value === "allow")}
+              value={clickOutsideClose ? "allow" : "disallow"}
               className="flex space-x-4">
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <RadioGroupItem id="disallow" value="disallow" />

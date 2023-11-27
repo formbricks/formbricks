@@ -64,7 +64,10 @@ export async function PUT(
       return responses.notFoundResponse("Survey", params.surveyId);
     }
     const surveyUpdate = await request.json();
-    const inputValidation = ZSurvey.safeParse(surveyUpdate);
+    const inputValidation = ZSurvey.safeParse({
+      ...survey,
+      ...surveyUpdate,
+    });
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",

@@ -16,10 +16,11 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function PUT(request: Request, context: Context): Promise<NextResponse> {
-  const { displayId } = context.params;
+  const { displayId, environmentId } = context.params;
   const jsonInput = await request.json();
   const inputValidation = ZDisplayUpdateInput.safeParse({
     ...jsonInput,
+    environmentId,
   });
 
   if (!inputValidation.success) {

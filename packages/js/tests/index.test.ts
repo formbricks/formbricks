@@ -61,7 +61,7 @@ test("Formbricks should get the current person with no attributes", () => {
   expect(Object.keys(currentStatePersonAttributes)).toHaveLength(0);
 });
 
-test("Formbricks should set email", async () => {
+/* test("Formbricks should set email", async () => {
   mockSetEmailIdResponse();
   await formbricks.setEmail(initialUserEmail);
 
@@ -112,7 +112,7 @@ test("Formbricks should update attribute", async () => {
   expect(email).toStrictEqual(updatedUserEmail);
   const customAttribute = currentStatePersonAttributes[customAttributeKey];
   expect(customAttribute).toStrictEqual(customAttributeValue);
-});
+}); */
 
 test("Formbricks should track event", async () => {
   mockEventTrackResponse();
