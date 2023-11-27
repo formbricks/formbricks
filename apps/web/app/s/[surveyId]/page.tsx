@@ -1,9 +1,10 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import MediaBackground from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
-import SurveyBg from "@/app/s/[surveyId]/components/SurveyBg";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -174,17 +175,20 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   return survey ? (
-    <SurveyBg survey={survey}>
-      <LinkSurvey
-        survey={survey}
-        product={product}
-        userId={userId}
-        emailVerificationStatus={emailVerificationStatus}
-        prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
-        singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-        singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-        webAppUrl={WEBAPP_URL}
-      />
-    </SurveyBg>
+    <div>
+      <MediaBackground survey={survey}>
+        <LinkSurvey
+          survey={survey}
+          product={product}
+          userId={userId}
+          emailVerificationStatus={emailVerificationStatus}
+          prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+          singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+          singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+          webAppUrl={WEBAPP_URL}
+        />
+      </MediaBackground>
+      <LegalFooter bgColor={survey.surveyBackground?.bg || "#ffff"} />
+    </div>
   ) : null;
 }

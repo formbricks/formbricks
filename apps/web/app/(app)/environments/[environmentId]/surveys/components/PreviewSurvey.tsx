@@ -1,10 +1,9 @@
 "use client";
 
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
-import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
-
-import PreviewSurveyBgDeskstop from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgDeskstop";
 import PreviewSurveyBgMobile from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgMobile";
+import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
+import MediaBackground from "@/app/s/[surveyId]/components/MediaBackground";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -290,7 +289,7 @@ export default function PreviewSurvey({
                 />
               </Modal>
             ) : (
-              <PreviewSurveyBgDeskstop survey={survey} ContentRef={ContentRef}>
+              <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
                 <div className="z-0 w-full  max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}
@@ -301,7 +300,7 @@ export default function PreviewSurvey({
                     isRedirectDisabled={true}
                   />
                 </div>
-              </PreviewSurveyBgDeskstop>
+              </MediaBackground>
             )}
           </div>
         )}
