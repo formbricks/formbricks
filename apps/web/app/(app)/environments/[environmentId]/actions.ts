@@ -8,6 +8,7 @@ import { createMembership } from "@formbricks/lib/membership/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createShortUrl } from "@formbricks/lib/shortUrl/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -204,6 +205,11 @@ export async function copyToOtherEnvironmentAction(
       productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
     },
+  });
+
+  surveyCache.revalidate({
+    id: newSurvey.id,
+    environmentId: targetEnvironmentId,
   });
   return newSurvey;
 }
