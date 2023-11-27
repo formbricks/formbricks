@@ -70,6 +70,7 @@ export default function DateQuestionForm({
             </div>
           </>
         )}
+
         {!showSubheader && (
           <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />

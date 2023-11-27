@@ -90,15 +90,18 @@ export default function DateQuestion({
       <div className="my-4" id="date-picker-root"></div>
 
       <div className="mt-4 flex w-full justify-between">
-        {!isFirstQuestion && (
-          <BackButton
-            backButtonLabel={question.backButtonLabel}
-            onClick={() => {
-              onBack();
-            }}
-          />
-        )}
-        <SubmitButton isLastQuestion={isLastQuestion} onClick={() => {}} buttonLabel="Submit" />
+        <div>
+          {!isFirstQuestion && (
+            <BackButton
+              backButtonLabel={question.backButtonLabel}
+              onClick={() => {
+                onBack();
+              }}
+            />
+          )}
+        </div>
+
+        <SubmitButton isLastQuestion={isLastQuestion} onClick={() => {}} buttonLabel={question.buttonLabel} />
       </div>
     </form>
   );
