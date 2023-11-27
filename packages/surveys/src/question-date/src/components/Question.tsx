@@ -1,4 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
+// import { createPortal } from "preact/compat";
 import DatePicker from "react-date-picker";
 
 const CalendarIcon = () => (
@@ -11,6 +12,12 @@ const CalendarIcon = () => (
     />
   </svg>
 );
+
+// const DatePickerPortal = ({ children, isOpen }: { children: any; isOpen: boolean }) => {
+//   if (!isOpen) return null;
+
+//   return createPortal(children, document.getElementById("date-picker-calendar-container")!);
+// };
 
 export default function Question({ defaultDate, format }: { defaultDate?: Date; format?: string }) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -57,7 +64,6 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
       )}
 
       {/* @ts-expect-error */}
-
       <DatePicker
         key={datePickerOpen}
         value={selectedDate}

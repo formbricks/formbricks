@@ -24,7 +24,7 @@ export default function Modal({
 
     return {
       border: `2px solid ${highlightBorderColor}`,
-      overflow: "hidden",
+      overflow: "visible",
     };
   }, [highlightBorderColor]);
 
@@ -51,7 +51,7 @@ export default function Modal({
       : "";
 
   return (
-    <div aria-live="assertive" className="relative h-full w-full overflow-hidden">
+    <div aria-live="assertive" className="relative h-full w-full overflow-visible">
       <div
         ref={modalRef}
         style={highlightBorderColorStyle}
