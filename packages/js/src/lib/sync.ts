@@ -1,4 +1,4 @@
-import { TJsState, TJsSyncParams } from "@formbricks/types/js";
+import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
@@ -17,7 +17,7 @@ const syncWithBackend = async ({
   apiHost,
   environmentId,
   userId,
-}: TJsSyncParams): Promise<Result<TJsState, NetworkError>> => {
+}: TJsSyncParams): Promise<Result<TJsStateSync, NetworkError>> => {
   const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}`;
   const publicUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
 
@@ -61,7 +61,7 @@ const syncWithBackend = async ({
   const data = await response.json();
   const { data: state } = data;
 
-  return ok(state as TJsState);
+  return ok(state as TJsStateSync);
 };
 
 export const sync = async (params: TJsSyncParams): Promise<void> => {
@@ -72,7 +72,6 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
       throw syncResult.error;
     }
 
-    const state = syncResult.value;
     let oldState: TJsState | undefined;
     try {
       oldState = config.get().state;
@@ -80,37 +79,37 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
       // ignore error
     }
 
-    config.update({
-      apiHost: params.apiHost,
-      environmentId: params.environmentId,
-      state,
-    });
+    let state: TJsState = {
+      surveys: syncResult.value.surveys,
+      noCodeActionClasses: syncResult.value.noCodeActionClasses,
+      product: syncResult.value.product,
+      attributes: oldState?.attributes || {},
+    };
 
-    // before finding the surveys, check for public use
-
-    if (!state.person?.id) {
+    if (!params.userId) {
       // unidentified user
       // set the displays and filter out surveys
-      const publicState = {
+      state = {
         ...state,
         displays: oldState?.displays || [],
       };
+      state = filterPublicSurveys(state);
 
-      const filteredState = filterPublicSurveys(publicState);
-
-      // update config
-      config.update({
-        apiHost: params.apiHost,
-        environmentId: params.environmentId,
-        state: filteredState,
-      });
-
-      const surveyNames = filteredState.surveys.map((s) => s.name);
+      const surveyNames = state.surveys.map((s) => s.name);
       logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
     } else {
       const surveyNames = state.surveys.map((s) => s.name);
       logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
     }
+
+    config.update({
+      apiHost: params.apiHost,
+      environmentId: params.environmentId,
+      userId: params.userId,
+      state,
+    });
+
+    // before finding the surveys, check for public use
   } catch (error) {
     logger.error(`Error during sync: ${error}`);
     throw error;
@@ -177,7 +176,7 @@ export const addExpiryCheckListener = (): void => {
       await sync({
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
-        userId: config.get().state?.person?.userId,
+        userId: config.get().userId,
         // personId: config.get().state?.person?.id,
       });
     }, updateInterval);

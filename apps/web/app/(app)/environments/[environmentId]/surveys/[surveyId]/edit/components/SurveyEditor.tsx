@@ -41,6 +41,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      if (localSurvey) return;
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
 
       if (survey.questions.length > 0) {
@@ -109,6 +110,7 @@ export default function SurveyEditor({
               product={product}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              onFileUpload={async (file) => file.name}
             />
           </aside>
         </div>
