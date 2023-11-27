@@ -7,7 +7,7 @@ import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
-import { TJsState, ZJsPeopleAttributeInput } from "@formbricks/types/js";
+import { TJsStateSync, ZJsPeopleAttributeInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 interface Context {
@@ -79,8 +79,8 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
     }
 
     // return state
-    const state: TJsState = {
-      person,
+    const state: TJsStateSync = {
+      person: { id: person.id, userId: person.userId },
       surveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

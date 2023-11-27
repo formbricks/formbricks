@@ -31,8 +31,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       person = await createPerson(environmentId, userId);
     }
 
+    const personClient = {
+      id: person.id,
+      userId: person.userId,
+    };
+
     const state = await getUpdatedState(environmentId, person.id);
-    return responses.successResponse({ ...state }, true);
+    return responses.successResponse({ ...state, person: personClient }, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);

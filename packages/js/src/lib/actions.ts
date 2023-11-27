@@ -14,15 +14,16 @@ export const trackAction = async (
   name: string,
   properties: TJsActionInput["properties"] = {}
 ): Promise<Result<void, NetworkError>> => {
+  const { userId } = config.get();
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
-    userId: config.get().state?.person?.userId,
+    userId,
     name,
     properties: properties || {},
   };
 
   // don't send actions to the backend if the person is not identified
-  if (config.get().state?.person?.userId && !intentsToNotCreateOnApp.includes(name)) {
+  if (userId && !intentsToNotCreateOnApp.includes(name)) {
     logger.debug(`Sending action "${name}" to backend`);
 
     const api = new FormbricksAPI({
@@ -31,7 +32,7 @@ export const trackAction = async (
     });
     const res = await api.client.action.create({
       ...input,
-      userId: config.get().state.person!.userId,
+      userId,
     });
 
     if (!res.ok) {
