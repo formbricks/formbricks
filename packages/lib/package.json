@@ -12,9 +12,9 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
   "dependencies": {
-    "@aws-sdk/s3-presigned-post": "^3.454.0",
-    "@aws-sdk/client-s3": "3.454.0",
-    "@aws-sdk/s3-request-presigner": "3.454.0",
+    "@aws-sdk/s3-presigned-post": "^3.458.0",
+    "@aws-sdk/client-s3": "3.458.0",
+    "@aws-sdk/s3-request-presigner": "3.458.0",
     "@t3-oss/env-nextjs": "^0.7.1",
     "mime": "3.0.0",
     "@formbricks/api": "*",
