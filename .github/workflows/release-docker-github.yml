@@ -27,6 +27,16 @@ jobs:
       id-token: write
 
     steps:
+      - name: Generate Random NEXTAUTH_SECRET
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
+
+      - name: Generate Random ENCRYPTION_KEY
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
