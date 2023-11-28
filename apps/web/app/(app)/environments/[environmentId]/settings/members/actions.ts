@@ -15,6 +15,7 @@ import { getServerSession } from "next-auth";
 import { hasTeamAuthority } from "@formbricks/lib/auth";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { verifyUserRoleAccess } from "@formbricks/lib/team/auth";
+import { teamCache } from "@formbricks/lib/team/cache";
 
 export const updateTeamNameAction = async (teamId: string, teamName: string) => {
   const session = await getServerSession(authOptions);
@@ -146,6 +147,8 @@ export const inviteUserAction = async (
       role,
     },
   });
+
+  teamCache.revalidate({ id: teamId, userId: session.user.id });
 
   return invite;
 };

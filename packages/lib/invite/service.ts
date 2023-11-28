@@ -20,6 +20,7 @@ import { unstable_cache } from "next/cache";
 import { inviteCache } from "./cache";
 import { formatInviteDateFields } from "./util";
 import { getMembershipByUserIdTeamId } from "../membership/service";
+import { TMembership } from "@formbricks/types/memberships";
 
 const inviteSelect = {
   id: true,
@@ -114,7 +115,18 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (inviteId: string): Promise<{ inviteId: string; email: string }> =>
+export const getInvite = async (
+  inviteId: string
+): Promise<{
+  inviteId: string;
+  email: string;
+  creatorName: string;
+  creatorEmail: string;
+  accepted: boolean;
+  teamId: string;
+  role: TMembership["role"];
+  expiresAt: Date;
+}> =>
   unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
@@ -125,6 +137,11 @@ export const getInvite = async (inviteId: string): Promise<{ inviteId: string; e
         },
         select: {
           email: true,
+          creator: true,
+          accepted: true,
+          teamId: true,
+          role: true,
+          expiresAt: true,
         },
       });
 
@@ -135,6 +152,12 @@ export const getInvite = async (inviteId: string): Promise<{ inviteId: string; e
       return {
         inviteId,
         email: invite.email,
+        creatorName: invite.creator?.name ?? "",
+        creatorEmail: invite.creator?.email ?? "",
+        accepted: invite.accepted,
+        teamId: invite.teamId,
+        role: invite.role,
+        expiresAt: invite.expiresAt,
       };
     },
     [`getInvite-${inviteId}`],
