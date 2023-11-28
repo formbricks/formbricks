@@ -122,5 +122,5 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     console.warn("Posthog capture not possible. No team owner found");
   }
 
-  return responses.successResponse(response, true);
+  return responses.successResponse({ id: response.id }, true);
 }
