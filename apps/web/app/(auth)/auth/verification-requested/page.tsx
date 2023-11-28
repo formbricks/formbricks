@@ -7,7 +7,7 @@ const VerificationPageSchema = z.string().email();
 export default function VerificationPage(params) {
   const email = params.searchParams.email;
   try {
-    const parsedEmail = VerificationPageSchema.parse(email);
+    const parsedEmail = VerificationPageSchema.parse(email).toLowerCase();
     return (
       <FormWrapper>
         <>
