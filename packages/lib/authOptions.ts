@@ -13,6 +13,7 @@ import AzureAD from "next-auth/providers/azure-ad";
 import { createTeam } from "./team/service";
 import { createProduct } from "./product/service";
 import { createAccount } from "./account/service";
+import { createMembership } from "./membership/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -222,7 +223,7 @@ export const authOptions: NextAuthOptions = {
           userId: userProfile.id,
         });
         await createProduct(team.id, { name: "My Product" });
-
+        await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
         return true;
       }
 
