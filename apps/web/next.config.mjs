@@ -102,6 +102,13 @@ const nextConfig = {
   },
 };
 
+// set actions allowed origins
+if (process.env.WEBAPP_URL) {
+  nextConfig.experimental.serverActions = {
+    allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
+  };
+}
+
 const sentryOptions = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
