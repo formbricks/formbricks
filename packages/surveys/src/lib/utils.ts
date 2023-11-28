@@ -69,3 +69,23 @@ export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number):
   if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
   return elementIdx;
 };
+
+export function calculateProgress(questionId: string, survey: TSurvey, progress: number) {
+  if (survey.questions.length === 0) return 0;
+  let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);
+  if (currentQustionIdx === -1) currentQustionIdx = 0;
+  const elementIdx = calculateElementIdx(survey, currentQustionIdx);
+
+  const newProgress = elementIdx / survey.questions.length;
+
+  // Determine if user went backwards in the survey
+
+  // Update the progress array based on user's navigation
+  let updatedProgress = progress;
+  if (newProgress > progress) {
+    updatedProgress = newProgress;
+  } else if (newProgress <= progress && progress + 0.1 <= 1) {
+    updatedProgress = progress + 0.1;
+  }
+  return updatedProgress;
+}

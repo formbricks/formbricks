@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
 import type { TResponseData } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
-import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
-
+import { calculateProgress } from "@/lib/utils";
+import Progress from "@/components/general/Progress";
 export function Survey({
   survey,
   isBrandingEnabled,
@@ -32,7 +32,16 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
-
+  const computeProgressArray = () => {
+    let progress = 0;
+    let progressArrayTemp: number[] = [];
+    survey.questions.forEach((question) => {
+      progress = calculateProgress(question.id, survey, progress);
+      progressArrayTemp.push(progress);
+    });
+    return progressArrayTemp;
+  };
+  const progressArray = computeProgressArray();
   useEffect(() => {
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
       setQuestionId(survey?.questions[0]?.id);
@@ -180,7 +189,7 @@ export function Survey({
           </div>
           <div className="mt-8">
             {isBrandingEnabled && <FormbricksBranding />}
-            <ProgressBar survey={survey} questionId={questionId} />
+            <Progress progress={questionId === "end" ? 1 : progressArray[currentQuestionIndex]} />
           </div>
         </div>
       </AutoCloseWrapper>
