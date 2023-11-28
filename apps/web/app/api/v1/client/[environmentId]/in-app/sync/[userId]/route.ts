@@ -4,7 +4,7 @@ import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
-import { createPerson, getPerson, getPersonByUserId } from "@formbricks/lib/person/service";
+import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
