@@ -72,12 +72,5 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.warn("Posthog capture not possible. No team owner found");
   }
 
-  return responses.successResponse(
-    {
-      ...display,
-      createdAt: display.createdAt.toISOString(),
-      updatedAt: display.updatedAt.toISOString(),
-    },
-    true
-  );
+  return responses.successResponse({ id: display.id }, true);
 }

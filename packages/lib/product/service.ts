@@ -83,6 +83,10 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
           select: selectProduct,
         });
 
+        if (!productPrisma) {
+          return null;
+        }
+
         return productPrisma;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -264,9 +268,7 @@ export const createProduct = async (
     type: "production",
   });
 
-  product = await updateProduct(product.id, {
+  return await updateProduct(product.id, {
     environments: [devEnvironment, prodEnvironment],
   });
-
-  return product;
 };

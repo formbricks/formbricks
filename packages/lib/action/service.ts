@@ -13,7 +13,7 @@ import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
-import { getPersonByUserId } from "../person/service";
+import { createPerson, getPersonByUserId } from "../person/service";
 
 export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
   const action = await unstable_cache(
@@ -240,10 +240,11 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     actionType = "automatic";
   }
 
-  const person = await getPersonByUserId(userId, environmentId);
+  let person = await getPersonByUserId(environmentId, userId);
 
   if (!person) {
-    throw new Error("Person not found");
+    // create person if it does not exist
+    person = await createPerson(environmentId, userId);
   }
 
   let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);

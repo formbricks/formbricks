@@ -6,6 +6,7 @@ import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
+import { TPersonClient } from "@formbricks/types/people";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -66,7 +67,15 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const state = await getUpdatedState(environmentId, personId);
 
-    return responses.successResponse({ ...state }, true);
+    let person: TPersonClient | null = null;
+    if (state.person && "id" in state.person && "userId" in state.person) {
+      person = {
+        id: state.person.id,
+        userId: state.person.userId,
+      };
+    }
+
+    return responses.successResponse({ ...state, person }, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);

@@ -19,7 +19,7 @@ import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
-import { getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
+import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
 import { formatResponseDateFields } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
@@ -197,13 +197,16 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
+  const { environmentId, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
+
   try {
     let person: TPerson | null = null;
 
-    if (responseInput.userId) {
-      person = await getPersonByUserId(responseInput.userId, responseInput.environmentId);
+    if (userId) {
+      person = await getPersonByUserId(environmentId, userId);
       if (!person) {
-        throw new ResourceNotFoundError("Person", responseInput.userId);
+        // create person if it does not exist
+        person = await createPerson(environmentId, userId);
       }
     }
 
@@ -211,11 +214,11 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       data: {
         survey: {
           connect: {
-            id: responseInput.surveyId,
+            id: surveyId,
           },
         },
-        finished: responseInput.finished,
-        data: responseInput.data,
+        finished: finished,
+        data: data,
         ...(person?.id && {
           person: {
             connect: {
@@ -224,8 +227,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           },
           personAttributes: person?.attributes,
         }),
-        ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
-        singleUseId: responseInput.singleUseId,
+        ...(meta && ({ meta } as Prisma.JsonObject)),
+        singleUseId,
       },
       select: responseSelection,
     });

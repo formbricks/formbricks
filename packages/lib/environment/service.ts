@@ -22,14 +22,13 @@ import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 import { formatEnvironmentDateFields } from "./util";
 
-export const getEnvironment = (environmentId: string) =>
+export const getEnvironment = (environmentId: string): Promise<TEnvironment | null> =>
   unstable_cache(
-    async (): Promise<TEnvironment> => {
+    async () => {
       validateInputs([environmentId, ZId]);
-      let environmentPrisma;
 
       try {
-        environmentPrisma = await prisma.environment.findUnique({
+        return await prisma.environment.findUnique({
           where: {
             id: environmentId,
           },
@@ -41,16 +40,6 @@ export const getEnvironment = (environmentId: string) =>
         }
 
         throw error;
-      }
-
-      try {
-        const environment = ZEnvironment.parse(environmentPrisma);
-        return environment;
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          console.error(JSON.stringify(error.errors, null, 2));
-        }
-        throw new ValidationError("Data validation of environment failed");
       }
     },
     [`getEnvironment-${environmentId}`],
