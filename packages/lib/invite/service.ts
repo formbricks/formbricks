@@ -115,18 +115,7 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (
-  inviteId: string
-): Promise<{
-  inviteId: string;
-  email: string;
-  creatorName: string;
-  creatorEmail: string;
-  accepted: boolean;
-  teamId: string;
-  role: TMembership["role"];
-  expiresAt: Date;
-}> =>
+export const getInvite = async (inviteId: string) =>
   unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
