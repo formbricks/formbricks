@@ -27,12 +27,6 @@ This set of API can be used to
 
     ### Mandatory Request Body JSON Keys
     <Properties>
-      <Property name="environmentId" type="string">
-        Environment to create a person in
-      </Property>
-    </Properties>
-
-    <Properties>
       <Property name="userId" type="string">
         User ID which you would like to identify the person with
       </Property>
@@ -48,7 +42,6 @@ This set of API can be used to
     'https://app.formbricks.com/api/v1/client/<environment-id>/people' \
     -H 'Content-Type: application/json' \
     -d '{
-        "environmentId":"clonzr6vc0009z8md7y06hipl",
         "userId":"docs_user"
     }'
     ```
@@ -60,15 +53,7 @@ This set of API can be used to
     ```json {{title:'200 Success'}}
     {
       "data": {
-        "status": "success",
-        "person": {
-            "id": "clp861gvu0000v7wzr950fqad",
-            "userId": "docs_user",
-            "attributes": {},
-            "environmentId": "clonzr6vc0009z8md7y06hipl",
-            "createdAt": "2023-11-21T10:01:20.058Z",
-            "updatedAt": "2023-11-21T10:01:20.058Z"
-            }
+          "userId": "docs_user"
         }
     }
     ```
@@ -126,16 +111,7 @@ This set of API can be used to
 
     ```json {{title:'200 Success'}}
     {
-      "data": {
-        "id": "clp868htl0003v7wzmy977m15",
-        "userId": "new_docs_user",
-        "attributes": {
-            "welcome_to": "formbricks"
-        },
-        "environmentId": "clonzr6vc0009z8md7y06hipl",
-        "createdAt": "2023-11-21T10:06:47.865Z",
-        "updatedAt": "2023-11-21T10:06:47.865Z"
-      }
+      "data": {}
     }
     ```
 
