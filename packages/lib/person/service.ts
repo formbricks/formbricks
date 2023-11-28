@@ -379,7 +379,9 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
     }
   )();
 
-// LEGACY
+/**
+ * @deprecated This function is deprecated and only used in legacy endpoints. Use updatePerson instead.
+ */
 export const updatePersonAttribute = async (
   personId: string,
   attributeClassId: string,
