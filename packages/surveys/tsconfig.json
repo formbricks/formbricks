@@ -1,6 +1,6 @@
 {
   "extends": "@formbricks/tsconfig/js-library.json",
-  "include": ["src", "sideload"],
+  "include": ["src"],
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "isolatedModules": true,

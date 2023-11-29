@@ -19,7 +19,7 @@
     "build": "pnpm run build:surveys && pnpm run build:question-date",
     "build:surveys": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build",
     "build:question-date": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build",
-    "go": "vite build --watch",
+    "go": "concurrently \"vite build --watch\" \"serve dist -p 3003\"",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist"
@@ -37,7 +37,9 @@
     "terser": "^5.24.0",
     "vite": "^5.0.2",
     "vite-plugin-dts": "^3.6.3",
-    "vite-tsconfig-paths": "^4.2.1"
+    "vite-tsconfig-paths": "^4.2.1",
+    "serve": "14.2.1",
+    "concurrently": "8.2.2"
   },
   "dependencies": {
     "react-date-picker": "^10.5.2"

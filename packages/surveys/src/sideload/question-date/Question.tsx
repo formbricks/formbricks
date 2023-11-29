@@ -36,7 +36,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
   }, [selectedDate]);
 
   return (
-    <div className="relative h-10">
+    <div className="relative h-12">
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
