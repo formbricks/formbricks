@@ -11,7 +11,9 @@ import { Label } from "@formbricks/ui/Label";
 import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { TI18nString } from "@formbricks/types/surveys";
 interface FileUploadFormProps {
   localSurvey: TSurvey;
   product?: TProduct;
@@ -20,14 +22,21 @@ interface FileUploadFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
+  languages: string[][];
 }
 
 export default function FileUploadQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
   isInValid,
   product,
+  selectedLanguage,
+  setSelectedLanguage,
+  languages,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -100,33 +109,44 @@ export default function FileUploadQuestionForm({
 
     return 10;
   }, [billingInfo, billingInfoError, billingInfoLoading]);
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+        selectedLanguage={selectedLanguage}
+        setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
+      />
       <div className="mt-3">
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
             <div className="mt-2 inline-flex w-full items-center">
-              <Input
-                id="subheader"
-                name="subheader"
-                value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
-              />
+              <div className="w-full">
+                <LocalizedInput
+                  id="subheader"
+                  name="subheader"
+                  value={question.subheader as TI18nString}
+                  languages={languages}
+                  isInValid={isInValid}
+                  onChange={(e) => {
+                    let translatedSubheader = {
+                      ...(question.subheader as TI18nString),
+                      [selectedLanguage]: e.target.value,
+                    };
+                    updateQuestion(questionIdx, { subheader: translatedSubheader });
+                  }}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
+                />
+              </div>
+
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {

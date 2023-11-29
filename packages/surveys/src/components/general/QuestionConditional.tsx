@@ -138,6 +138,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       onFileUpload={onFileUpload}
+      language={language}
     />
   ) : null;
 }
