@@ -2,16 +2,20 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import * as Collapsible from "@radix-ui/react-collapsible";
-
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { TI18nString } from "@formbricks/types/surveys";
 interface EditThankYouCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
+  isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
+  languages: string[][];
 }
 
 export default function EditThankYouCard({
@@ -19,6 +23,10 @@ export default function EditThankYouCard({
   setLocalSurvey,
   setActiveQuestionId,
   activeQuestionId,
+  isInValid,
+  selectedLanguage,
+  setSelectedLanguage,
+  languages,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
@@ -93,13 +101,21 @@ export default function EditThankYouCard({
             <div className="mt-3">
               <Label htmlFor="headline">Headline</Label>
               <div className="mt-2">
-                <Input
+                <LocalizedInput
                   id="headline"
                   name="headline"
-                  defaultValue={localSurvey?.thankYouCard?.headline}
+                  value={localSurvey?.thankYouCard?.headline as TI18nString}
+                  languages={languages}
+                  isInValid={isInValid}
                   onChange={(e) => {
-                    updateSurvey({ headline: e.target.value });
+                    let translatedHeadline = {
+                      ...(localSurvey?.thankYouCard?.headline as TI18nString),
+                      [selectedLanguage]: e.target.value,
+                    };
+                    updateSurvey({ headline: translatedHeadline });
                   }}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               </div>
             </div>
@@ -107,13 +123,21 @@ export default function EditThankYouCard({
             <div className="mt-3">
               <Label htmlFor="subheader">Description</Label>
               <div className="mt-2">
-                <Input
+                <LocalizedInput
                   id="subheader"
                   name="subheader"
-                  defaultValue={localSurvey?.thankYouCard?.subheader}
+                  value={localSurvey?.thankYouCard?.subheader as TI18nString}
+                  languages={languages}
+                  isInValid={isInValid}
                   onChange={(e) => {
-                    updateSurvey({ subheader: e.target.value });
+                    let translatedSubheader = {
+                      ...(localSurvey?.thankYouCard?.subheader as TI18nString),
+                      [selectedLanguage]: e.target.value,
+                    };
+                    updateSurvey({ subheader: translatedSubheader });
                   }}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               </div>
             </div>

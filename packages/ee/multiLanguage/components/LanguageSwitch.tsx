@@ -6,8 +6,9 @@ import { Switch } from "@formbricks/ui/Switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { ArrowUpRightIcon, ChevronDownIcon, ChevronUpIcon, LanguageIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { convertArrayToObject } from "../utils/i18n";
+import useClickOutside from "@formbricks/lib/useClickOutside";
 
 interface LanguageSwitchProps {
   allLanguages: string[][];
@@ -26,8 +27,13 @@ export default function LanguageSwitch({
   isEnterpriseEdition,
 }: LanguageSwitchProps) {
   const [translationsEnabled, setTranslationsEnabled] = useState(false);
-  const [showLanguageToggle, setshowLanguageToggle] = useState(false);
   const [languagesArray, setLanguagesArray] = useState<string[][]>(Object.entries(languages));
+  const [showLanguageToggle, setshowLanguageToggle] = useState(false);
+
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  useClickOutside(wrapperRef, () => {
+    setshowLanguageToggle(false);
+  });
 
   const toggleLanguage = (language: string[]) => {
     const languageCode = language[0]; // Assuming the first element is a unique language code
@@ -66,7 +72,9 @@ export default function LanguageSwitch({
                     </span>
                   </div>
                   {showLanguageToggle && (
-                    <div className="absolute z-20 mt-2 space-y-4 rounded-md border bg-white p-4">
+                    <div
+                      className="absolute z-20 mt-2 space-y-4 rounded-md border bg-white p-4"
+                      ref={wrapperRef}>
                       {allLanguages?.map((language) => {
                         if (language[0] === "en") return;
                         return (

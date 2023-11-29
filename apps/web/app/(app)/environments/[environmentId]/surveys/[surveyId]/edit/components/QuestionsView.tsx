@@ -196,6 +196,10 @@ export default function QuestionsView({
           setLocalSurvey={setLocalSurvey}
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
+          isInValid={invalidQuestions ? invalidQuestions.includes("start") : false}
+          languages={languages}
+          setSelectedLanguage={setSelectedLanguage}
+          selectedLanguage={selectedLanguage}
         />
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -236,6 +240,10 @@ export default function QuestionsView({
           setLocalSurvey={setLocalSurvey}
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
+          isInValid={invalidQuestions ? invalidQuestions.includes("end") : false}
+          languages={languages}
+          setSelectedLanguage={setSelectedLanguage}
+          selectedLanguage={selectedLanguage}
         />
 
         {localSurvey.type === "link" ? (

@@ -13,7 +13,7 @@ import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { validateQuestion } from "./Validation";
+import { isLabelValidForAllLanguages, validateQuestion } from "./Validation";
 import { deleteSurveyAction, updateSurveyAction } from "../actions";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 
@@ -109,12 +109,25 @@ export default function SurveyMenuBar({
 
   const validateSurvey = (survey) => {
     const existingQuestionIds = new Set();
-
+    console.log(survey);
     if (survey.questions.length === 0) {
       toast.error("Please add at least one question");
       return;
     }
-
+    if (survey.thankYouCard.enabled) {
+      if (!isLabelValidForAllLanguages(survey.thankYouCard.headline, languages)) {
+        faultyQuestions.push("end");
+        toast.error("Please fill all required fields.");
+        return;
+      }
+    }
+    if (survey.welcomeCard.enabled) {
+      if (!isLabelValidForAllLanguages(survey.welcomeCard.headline, languages)) {
+        faultyQuestions.push("start");
+        toast.error("Please fill all required fields.");
+        return;
+      }
+    }
     let pin = survey?.pin;
     if (pin !== null && pin.toString().length !== 4) {
       toast.error("PIN must be a four digit number.");

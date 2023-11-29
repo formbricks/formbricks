@@ -133,6 +133,7 @@ export function Survey({
           timeToFinish={survey.welcomeCard.timeToFinish}
           onSubmit={onSubmit}
           survey={survey}
+          language={language}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -142,6 +143,7 @@ export function Survey({
           subheader={survey.thankYouCard.subheader}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
+          language={language}
         />
       );
     } else {

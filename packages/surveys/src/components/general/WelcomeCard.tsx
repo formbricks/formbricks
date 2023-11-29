@@ -1,17 +1,18 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
-import { calculateElementIdx } from "@/lib/utils";
-import { TSurvey } from "@formbricks/types/surveys";
+import { calculateElementIdx, getLocalizedValue } from "@/lib/utils";
+import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 
 interface WelcomeCardProps {
-  headline?: string;
+  headline?: TI18nString;
   html?: string;
   fileUrl?: string;
   buttonLabel?: string;
   timeToFinish?: boolean;
   onSubmit: (data: { [x: string]: any }) => void;
   survey: TSurvey;
+  language: string;
 }
 
 const TimerIcon = () => {
@@ -38,6 +39,7 @@ export default function WelcomeCard({
   buttonLabel,
   timeToFinish,
   onSubmit,
+  language,
   survey,
 }: WelcomeCardProps) {
   const calculateTimeToComplete = () => {
@@ -75,7 +77,7 @@ export default function WelcomeCard({
         <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
       )}
 
-      <Headline headline={headline} questionId="welcomeCard" />
+      <Headline headline={getLocalizedValue(headline, language)} questionId="welcomeCard" />
       <HtmlBody htmlString={html} questionId="welcomeCard" />
 
       <div className="mt-10 flex w-full justify-between">

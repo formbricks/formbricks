@@ -1,4 +1,4 @@
-import { TI18nString } from "@formbricks/types/surveys";
+import { TI18nString, TSurveyThankYouCard, TSurveyWelcomeCard } from "@formbricks/types/surveys";
 import { TSurveyQuestion, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 // Helper function to create an i18nString from a regular string.
 // languages = ["german","hindi"]
@@ -52,6 +52,30 @@ const translateChoice = (choice: any, languages?: string[]) => {
     label: createI18nString(choice.label, languages),
   };
 };
+export const translateWelcomeCard = (
+  welcomeCard: TSurveyWelcomeCard,
+  languages?: string[]
+): TSurveyWelcomeCard => {
+  const clonedWelcomeCard = { ...welcomeCard };
+  clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages);
+  return clonedWelcomeCard;
+};
+
+export const translateThankYouCard = (
+  thankYouCard: TSurveyThankYouCard,
+  languages?: string[]
+): TSurveyThankYouCard => {
+  const clonedThankYouCard = { ...thankYouCard };
+  clonedThankYouCard.headline = createI18nString(
+    thankYouCard.headline ? thankYouCard.headline : "",
+    languages
+  );
+  clonedThankYouCard.subheader = createI18nString(
+    thankYouCard.subheader ? thankYouCard.subheader : "",
+    languages
+  );
+  return clonedThankYouCard;
+};
 
 // Function that will translate a single question
 export const translateQuestion = (question: TSurveyQuestion, languages?: string[]) => {
@@ -76,10 +100,14 @@ export const translateSurvey = (survey: TSurvey, languages?: string[]): TSurvey 
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages); // Added return here
   });
+  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard);
+  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard);
   const translatedSurvey = { ...survey };
   return {
     ...translatedSurvey,
     questions: translatedQuestions,
+    welcomeCard: translatedWelcomeCard,
+    thankYouCard: translatedThankYouCard,
   };
 };
 

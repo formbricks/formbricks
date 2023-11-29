@@ -10,12 +10,17 @@ import { Switch } from "@formbricks/ui/Switch";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { TI18nString } from "@formbricks/types/surveys";
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
+  isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
+  languages: string[][];
 }
 
 export default function EditWelcomeCard({
@@ -23,6 +28,10 @@ export default function EditWelcomeCard({
   setLocalSurvey,
   setActiveQuestionId,
   activeQuestionId,
+  isInValid,
+  selectedLanguage,
+  setSelectedLanguage,
+  languages,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -112,13 +121,21 @@ export default function EditWelcomeCard({
             <div className="mt-3">
               <Label htmlFor="headline">Headline</Label>
               <div className="mt-2">
-                <Input
+                <LocalizedInput
                   id="headline"
                   name="headline"
-                  defaultValue={localSurvey?.welcomeCard?.headline}
+                  value={localSurvey?.welcomeCard?.headline as TI18nString}
+                  languages={languages}
+                  isInValid={isInValid}
                   onChange={(e) => {
-                    updateSurvey({ headline: e.target.value });
+                    let translatedHeadline = {
+                      ...(localSurvey?.welcomeCard?.headline as TI18nString),
+                      [selectedLanguage]: e.target.value,
+                    };
+                    updateSurvey({ headline: translatedHeadline });
                   }}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                 />
               </div>
             </div>

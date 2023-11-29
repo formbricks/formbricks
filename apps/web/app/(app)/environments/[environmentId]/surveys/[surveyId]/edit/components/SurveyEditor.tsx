@@ -16,7 +16,6 @@ import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwit
 import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
-
 interface SurveyEditorProps {
   survey: TSurvey;
   product: TProduct;
@@ -115,7 +114,7 @@ export default function SurveyEditor({
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
-            <div className="mt-16 ">
+            <div className="mt-16">
               <LanguageSwitch
                 allLanguages={allLanguages}
                 languages={languages}

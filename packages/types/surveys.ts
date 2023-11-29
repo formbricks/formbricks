@@ -15,8 +15,8 @@ export type TI18nString = z.infer<typeof ZI18nObject>;
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
-  headline: z.optional(z.string()),
-  subheader: z.optional(z.string()),
+  headline: z.optional(ZI18nObject),
+  subheader: z.optional(ZI18nObject),
 });
 
 export enum TSurveyQuestionType {
@@ -33,7 +33,7 @@ export enum TSurveyQuestionType {
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
-  headline: z.optional(z.string()),
+  headline: ZI18nObject,
   html: z.string().optional(),
   fileUrl: z.string().optional(),
   buttonLabel: z.string().optional(),
