@@ -1,17 +1,33 @@
-const postcss = require("postcss");
+// basic regex -- [whitespace](number)(rem)[whitespace or ;]
+const REM_REGEX = /(\d*\.?\d+\s?)(rem)/gi;
+const PROCESSED = Symbol("processed");
 
-const remtoEm = postcss.plugin("rem-to-em", () => {
-  return (root) => {
-    root.walkDecls((decl) => {
-      if (decl.value.includes("rem")) {
-        decl.value = decl.value.replace(/([\d.]+)rem/g, (match, value) => {
-          return `${parseFloat(value) * 1}em`; // 1rem = 1em in this case
-        });
+const remtoEm = (opts = {}) => {
+  // Work with options here
+  const { transformMediaQuery = false } = opts;
+
+  return {
+    postcssPlugin: "postcss-rem-to-em-plugin",
+    Declaration(decl) {
+      if (!decl[PROCESSED]) {
+        decl.value = decl.value.replace(REM_REGEX, "$1em");
+        decl[PROCESSED] = true;
       }
-    });
+    },
+
+    AtRule: {
+      media: (atRule) => {
+        if (!atRule[PROCESSED] && transformMediaQuery) {
+          console.log("atrule pre", atRule.params);
+          atRule.params = atRule.params.replace(REM_REGEX, "$1em");
+          console.log("atrule post", atRule.params);
+          atRule[PROCESSED] = true;
+        }
+      },
+    },
   };
-});
+};
 
 module.exports = {
-  plugins: [require("tailwindcss"), require("autoprefixer"), remtoEm],
+  plugins: [require("tailwindcss"), require("autoprefixer"), remtoEm()],
 };
