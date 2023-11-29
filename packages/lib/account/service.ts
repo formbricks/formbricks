@@ -6,7 +6,7 @@ import { validateInputs } from "../utils/validate";
 import { ZAccountInput, TAccountInput, TAccount } from "@formbricks/types/account";
 
 export const createAccount = async (accountData: TAccountInput): Promise<TAccount> => {
-  validateInputs([accountData, ZAccountInput]);
+  validateInputs([accountData, ZAccountInput.partial()]);
 
   try {
     const account = await prisma.account.create({
