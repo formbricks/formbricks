@@ -21,9 +21,9 @@ export default async function JoinTeam({ searchParams }) {
 
     const invite = await getInvite(inviteId);
 
-    const isExpired = (expiresAt: Date) => new Date(expiresAt) < new Date();
+    const isInviteExpired = new Date(invite.expiresAt) < new Date();
 
-    if (!invite || isExpired(invite.expiresAt)) {
+    if (!invite || isInviteExpired) {
       return <ExpiredContent />;
     } else if (invite.accepted) {
       return <UsedContent />;
@@ -36,7 +36,7 @@ export default async function JoinTeam({ searchParams }) {
       await createMembership(invite.teamId, currentUser.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
-      sendInviteAcceptedEmail(invite.creatorName, currentUser.user?.name, invite.creatorEmail);
+      sendInviteAcceptedEmail(invite.creator.name ?? "", currentUser.user?.name, invite.creator.email);
 
       return <RightAccountContent />;
     }

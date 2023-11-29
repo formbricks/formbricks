@@ -20,7 +20,6 @@ import { unstable_cache } from "next/cache";
 import { inviteCache } from "./cache";
 import { formatInviteDateFields } from "./util";
 import { getMembershipByUserIdTeamId } from "../membership/service";
-import { TMembership } from "@formbricks/types/memberships";
 
 const inviteSelect = {
   id: true,
@@ -115,7 +114,9 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (inviteId: string) =>
+export const getInvite = async (
+  inviteId: string
+): Promise<TInvite & { creator: { name: string | null; email: string } }> =>
   unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
@@ -124,13 +125,13 @@ export const getInvite = async (inviteId: string) =>
         where: {
           id: inviteId,
         },
-        select: {
-          email: true,
-          creator: true,
-          accepted: true,
-          teamId: true,
-          role: true,
-          expiresAt: true,
+        include: {
+          creator: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
         },
       });
 
@@ -138,16 +139,7 @@ export const getInvite = async (inviteId: string) =>
         throw new ResourceNotFoundError("Invite", inviteId);
       }
 
-      return {
-        inviteId,
-        email: invite.email,
-        creatorName: invite.creator?.name ?? "",
-        creatorEmail: invite.creator?.email ?? "",
-        accepted: invite.accepted,
-        teamId: invite.teamId,
-        role: invite.role,
-        expiresAt: invite.expiresAt,
-      };
+      return invite;
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
