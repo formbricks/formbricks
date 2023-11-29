@@ -29,6 +29,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.crowd.dev",
         },
         {
+          name: "DevHunt",
+          description: "Find the best Dev Tools upvoted by the community every week.",
+          href: "https://devhunt.org/",
+        },
+        {
           name: "Documenso",
           description:
             "The Open-Source DocuSign Alternative. We aim to earn your trust by enabling you to self-host the platform and examine its inner workings.",
