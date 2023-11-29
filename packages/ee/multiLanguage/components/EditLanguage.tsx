@@ -3,7 +3,8 @@ import { TLanguages, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { updateProductAction } from "../lib/actions";
@@ -100,7 +101,6 @@ export default function EditLanguage({ product }: { product: TProduct }) {
                   value={language[0]}
                   onChange={(e) => handleOnChange(index, "symbol", e)}
                 />
-                {index !== 0 && <PencilIcon className="ml-2 h-4 w-4 cursor-pointer text-slate-400" />}
                 {index !== 0 && (
                   <TrashIcon
                     className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
@@ -112,6 +112,11 @@ export default function EditLanguage({ product }: { product: TProduct }) {
           ))}
         </div>
       </div>
+      {isEditing && (
+        <p className="pt-1 text-sm text-slate-500">
+          Unsaved changes <ExclamationTriangleIcon className="inline h-3 w-3" />{" "}
+        </p>
+      )}
       {isEditing ? (
         <Button variant="darkCTA" className="mt-4 w-fit" onClick={updateLanguages} loading={isUpdating}>
           Save

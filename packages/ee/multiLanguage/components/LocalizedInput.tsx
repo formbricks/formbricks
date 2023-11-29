@@ -1,6 +1,6 @@
+import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import LanguageIndicator from "./LanguageIndicator";
-import { TI18nString } from "@formbricks/types/surveys";
 
 interface LocalizedInputProps {
   id: string;
