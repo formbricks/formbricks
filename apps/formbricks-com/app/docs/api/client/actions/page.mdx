@@ -45,14 +45,17 @@ Adds an Actions for a given User by their User ID
     curl --location --request POST 'https://app.formbricks.com/api/v1/client/<environment-id>/actions' \
     --data-raw '{
         "userId": "1",
-        "name": "new_action_v2"
+        "name": "new_action_v2",
+        "properties":{}
+
     }'
     ```
 
     ```json {{ title: 'Example Request Body' }}
     {
         "userId": "1",
-        "name": "new_action_v2"
+        "name": "new_action_v3",
+        "properties":{}
     }
     ```
 

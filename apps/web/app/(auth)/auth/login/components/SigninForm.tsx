@@ -48,7 +48,7 @@ export const SigninForm = ({
     try {
       const signInResponse = await signIn("credentials", {
         callbackUrl: searchParams?.get("callbackUrl") || "/",
-        email: data.email,
+        email: data.email.toLowerCase(),
         password: data.password,
         ...(totpLogin && { totpCode: data.totpCode }),
         ...(totpBackup && { backupCode: data.backupCode }),
