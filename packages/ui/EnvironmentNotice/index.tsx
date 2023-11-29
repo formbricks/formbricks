@@ -1,29 +1,20 @@
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
-import { headers } from "next/headers";
 
 interface EnvironmentNoticeProps {
   environmentId: string;
+  subPageUrl: string;
 }
 
-export default async function EnvironmentNotice({ environmentId }: EnvironmentNoticeProps) {
-  const headersList = headers();
-  const currentUrl = headersList.get("referer") || headersList.get("x-invoke-path") || "";
+export default async function EnvironmentNotice({ environmentId, subPageUrl }: EnvironmentNoticeProps) {
   const environment = await getEnvironment(environmentId);
   if (!environment) {
     throw new Error("Environment not found");
   }
 
   const environments = await getEnvironments(environment.productId);
-  const otherEnvironmentId = environments.find((e) => e.id !== environment.id)?.id || "";
-
-  const replaceEnvironmentId = (url: string, newId: string): string => {
-    const regex = /environments\/([a-zA-Z0-9]+)/;
-    if (regex.test(url)) {
-      return url.replace(regex, `environments/${newId}`);
-    }
-    return url;
-  };
+  const otherEnvironmentId = environments.filter((e) => e.id !== environment.id)[0].id;
 
   return (
     <div>
@@ -32,7 +23,7 @@ export default async function EnvironmentNotice({ environmentId }: EnvironmentNo
         <p>
           {`You're currently in the ${environment.type} environment.`}
           <a
-            href={replaceEnvironmentId(currentUrl, otherEnvironmentId)}
+            href={`${WEBAPP_URL}/environments/${otherEnvironmentId}${subPageUrl}`}
             className="ml-1 cursor-pointer text-sm underline">
             Switch to {environment.type === "production" ? "Development" : "Production"} now.
           </a>

@@ -34,6 +34,7 @@ export function Survey({
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (activeQuestionId === "hidden") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
       setQuestionId(survey?.questions[0]?.id);
       return;
