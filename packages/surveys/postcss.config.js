@@ -3,7 +3,7 @@ const REM_REGEX = /(\d*\.?\d+\s?)(rem)/gi;
 const PROCESSED = Symbol("processed");
 
 const remtoEm = (opts = {}) => {
-  // Work with options here
+  // This function converts rem units to em units in CSS declarations and media queries
   const { transformMediaQuery = false } = opts;
 
   return {
@@ -18,9 +18,7 @@ const remtoEm = (opts = {}) => {
     AtRule: {
       media: (atRule) => {
         if (!atRule[PROCESSED] && transformMediaQuery) {
-          console.log("atrule pre", atRule.params);
           atRule.params = atRule.params.replace(REM_REGEX, "$1em");
-          console.log("atrule post", atRule.params);
           atRule[PROCESSED] = true;
         }
       },
