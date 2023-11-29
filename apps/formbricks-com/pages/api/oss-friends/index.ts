@@ -41,6 +41,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://dyrector.io",
         },
         {
+          name: "DevHunt",
+          description:
+            "Find the best Dev Tools upvoted by the community every week.",
+          href: "https://devhunt.org/",
+        },
+        {
           name: "Erxes",
           description:
             "The Open-Source HubSpot Alternative. A single XOS enables to create unique and life-changing experiences that work for all types of business.",
@@ -194,12 +200,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Webstudio",
           description: "Webstudio is an open source alternative to Webflow",
           href: "https://webstudio.is",
-        },
-        {
-          name: "DevHunt",
-          description:
-            "Find the best Dev Tools upvoted by the community every week.",
-          href: "https://devhunt.org/",
         }
       ],
     });
