@@ -4,11 +4,14 @@
 
 /* @import "./survey.css"; */
 
+#fbjs {
+  font-size: 16px;
+}
+
 /* Firefox */
 #fbjs * {
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0;
-  font-size: 16px;
 }
 
 /* Chrome, Edge, and Safari */
