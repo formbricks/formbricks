@@ -1,11 +1,12 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
+import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import Subheader from "@/components/general/Subheader";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { useCallback } from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "preact/hooks";
 import { TResponseTtc } from "@formbricks/types/responses";
 import { getUpdatedTtcObj } from "../../lib/utils";
 
@@ -87,12 +88,7 @@ export default function OpenTextQuestion({
         // }
       }}
       className="w-full">
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

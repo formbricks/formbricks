@@ -1,9 +1,9 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
 import { calculateElementIdx } from "@/lib/utils";
-import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 
 interface WelcomeCardProps {
   headline?: string;
@@ -12,7 +12,7 @@ interface WelcomeCardProps {
   buttonLabel?: string;
   timeToFinish?: boolean;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  survey: TSurveyWithTriggers;
+  survey: TSurvey;
 }
 
 const TimerIcon = () => {

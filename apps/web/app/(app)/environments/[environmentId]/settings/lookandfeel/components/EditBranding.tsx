@@ -14,6 +14,7 @@ interface EditFormbricksBrandingProps {
   product: TProduct;
   canRemoveBranding: boolean;
   environmentId: string;
+  isFormbricksCloud?: boolean;
 }
 
 export function EditFormbricksBranding({
@@ -21,11 +22,17 @@ export function EditFormbricksBranding({
   product,
   canRemoveBranding,
   environmentId,
+  isFormbricksCloud,
 }: EditFormbricksBrandingProps) {
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
   );
   const [updatingBranding, setUpdatingBranding] = useState(false);
+
+  const getTextFromType = (type) => {
+    if (type === "linkSurvey") return "Link Surveys";
+    if (type === "inAppSurvey") return "In App Surveys";
+  };
 
   const toggleBranding = async () => {
     try {
@@ -52,15 +59,19 @@ export function EditFormbricksBranding({
         <div className="mb-4">
           <Alert>
             <AlertDescription>
-              To remove the Formbricks branding from the <span className="font-semibold">{type} surveys</span>
-              , please{" "}
+              To remove the Formbricks branding from the&nbsp;
+              <span className="font-semibold">{getTextFromType(type)}</span>, please&nbsp;
               {type === "linkSurvey" ? (
                 <span className="underline">
                   <Link href={`/environments/${environmentId}/settings/billing`}>upgrade your plan.</Link>
                 </span>
               ) : (
                 <span className="underline">
-                  <Link href={`/environments/${environmentId}/settings/billing`}>add your creditcard.</Link>
+                  {isFormbricksCloud ? (
+                    <Link href={`/environments/${environmentId}/settings/billing`}>add your creditcard.</Link>
+                  ) : (
+                    <a href="mailto:hola@formbricks.com">get a self-hosted license (free to get started).</a>
+                  )}
                 </span>
               )}
             </AlertDescription>

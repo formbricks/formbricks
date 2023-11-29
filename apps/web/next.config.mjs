@@ -48,6 +48,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/api/v1/responses",
+        destination: "/api/v1/management/responses",
+        permanent: true,
+      },
+      {
         source: "/api/v1/me",
         destination: "/api/v1/management/me",
         permanent: true,
@@ -96,6 +101,13 @@ const nextConfig = {
     INTERNAL_SECRET: createId(),
   },
 };
+
+// set actions allowed origins
+if (process.env.WEBAPP_URL) {
+  nextConfig.experimental.serverActions = {
+    allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
+  };
+}
 
 const sentryOptions = {
   // For all available options, see:

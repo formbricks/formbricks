@@ -1,11 +1,11 @@
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
-import { useState, useEffect } from "react";
-import { TResponseTtc } from "@formbricks/types/responses";
+import QuestionImage from "@/components/general/QuestionImage";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
+import { useEffect, useState } from "preact/hooks";
 import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface ConsentQuestionProps {
@@ -58,12 +58,7 @@ export default function ConsentQuestion({
   }, []);
   return (
     <div>
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 

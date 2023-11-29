@@ -1,12 +1,12 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { cn } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
-import { useState, useEffect } from "react";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { useEffect, useState } from "preact/hooks";
 import { getUpdatedTtcObj } from "../../lib/utils";
 
 interface PictureSelectionProps {
@@ -114,12 +114,7 @@ export default function PictureSelectionQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">

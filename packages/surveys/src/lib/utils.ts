@@ -1,5 +1,5 @@
-import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { TResponseTtc } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -49,7 +49,7 @@ export const shuffleQuestions = (array: any[], shuffleOption: string) => {
   return arrayCopy;
 };
 
-export const calculateElementIdx = (survey: TSurveyWithTriggers, currentQustionIdx: number): number => {
+export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number): number => {
   const currentQuestion = survey.questions[currentQustionIdx];
   const surveyLength = survey.questions.length;
   const middleIdx = Math.floor(surveyLength / 2);

@@ -1,11 +1,12 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
+import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import Subheader from "@/components/general/Subheader";
 import { cn } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "preact/hooks";
 import { TResponseTtc } from "@formbricks/types/responses";
 import { getUpdatedTtcObj } from "../../lib/utils";
 
@@ -64,12 +65,7 @@ export default function NPSQuestion({
         setTtcObj(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">

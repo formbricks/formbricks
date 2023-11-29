@@ -3,7 +3,7 @@ import { TResponseUpdate } from "@formbricks/types/responses";
 export class SurveyState {
   responseId: string | null = null;
   displayId: string | null = null;
-  personId: string | null = null;
+  userId: string | null = null;
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {} };
   singleUseId: string | null;
@@ -12,10 +12,10 @@ export class SurveyState {
     surveyId: string,
     singleUseId?: string | null,
     responseId?: string | null,
-    personId?: string | null
+    userId?: string | null
   ) {
     this.surveyId = surveyId;
-    this.personId = personId ?? null;
+    this.userId = userId ?? null;
     this.singleUseId = singleUseId ?? null;
     this.responseId = responseId ?? null;
   }
@@ -36,7 +36,7 @@ export class SurveyState {
       this.surveyId,
       this.singleUseId ?? undefined,
       this.responseId ?? undefined,
-      this.personId ?? undefined
+      this.userId ?? undefined
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
@@ -60,11 +60,11 @@ export class SurveyState {
   }
 
   /**
-   * Update the person ID
-   * @param id - The person ID
+   * Update the user ID
+   * @param id - The user ID
    */
-  updatePersonId(id: string) {
-    this.personId = id;
+  updateUserId(id: string) {
+    this.userId = id;
   }
 
   /**

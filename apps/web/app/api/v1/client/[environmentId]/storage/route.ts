@@ -10,6 +10,10 @@ interface Context {
   };
 }
 
+export async function OPTIONS(): Promise<NextResponse> {
+  return responses.successResponse({}, true);
+}
+
 // api endpoint for uploading private files
 // uploaded files will be private, only the user who has access to the environment can access the file
 // uploading private files requires no authentication

@@ -3,7 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { createDisplay } from "@formbricks/lib/display/service";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
-import { TDisplay, ZDisplayCreateInput } from "@formbricks/types/displays";
+import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { NextResponse } from "next/server";
 
@@ -34,11 +34,12 @@ export async function POST(request: Request, context: Context): Promise<NextResp
 
   // find teamId & teamOwnerId from environmentId
   const teamDetails = await getTeamDetails(inputValidation.data.environmentId);
+  let response = {};
 
   // create display
-  let display: TDisplay;
   try {
-    display = await createDisplay(inputValidation.data);
+    const { id } = await createDisplay(inputValidation.data);
+    response = { id };
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
@@ -54,12 +55,5 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     console.warn("Posthog capture not possible. No team owner found");
   }
 
-  return responses.successResponse(
-    {
-      ...display,
-      createdAt: display.createdAt.toISOString(),
-      updatedAt: display.updatedAt.toISOString(),
-    },
-    true
-  );
+  return responses.successResponse(response, true);
 }
