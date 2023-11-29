@@ -1,5 +1,5 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
-import { ChevronDoubleDownIcon, XCircleIcon } from "@heroicons/react/20/solid";
+import { ChevronDoubleDownIcon, XCircleIcon, CheckCircleIcon } from "@heroicons/react/20/solid";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
@@ -7,13 +7,36 @@ interface QuestionSkipProps {
   skippedQuestions: string[] | undefined;
   status: string;
   questions: TSurveyQuestion[];
+  isFirstQuestionAnswered?: boolean;
 }
 
-export default function QuestionSkip({ skippedQuestions, status, questions }: QuestionSkipProps) {
+export default function QuestionSkip({
+  skippedQuestions,
+  status,
+  questions,
+  isFirstQuestionAnswered,
+}: QuestionSkipProps) {
   return (
-    <>
+    <div>
       {skippedQuestions && (
-        <div className="flex w-full p-2 text-sm text-slate-400">
+        <div className="my-2 flex w-full px-2 text-sm text-slate-400">
+          {status === "welcomeCard" && (
+            <div className="mb-2 flex">
+              {
+                <div
+                  className={`relative flex ${
+                    isFirstQuestionAnswered ? "h-[100%]" : "h-[200%]"
+                  } w-0.5 items-center justify-center`}
+                  style={{
+                    background:
+                      "repeating-linear-gradient(rgb(148, 163, 184), rgb(148, 163, 184) 5px, transparent 5px, transparent 8px)", // adjust the values to fit your design
+                  }}>
+                  <CheckCircleIcon className="p-0.25 absolute top-0 w-[1.5rem] min-w-[1.5rem] rounded-full bg-white text-slate-400" />
+                </div>
+              }
+              <div className=" ml-6 flex flex-col text-slate-700">Welcome Card</div>
+            </div>
+          )}
           {status === "skipped" && (
             <div className="flex">
               <div
@@ -80,6 +103,6 @@ export default function QuestionSkip({ skippedQuestions, status, questions }: Qu
           )}
         </div>
       )}
-    </>
+    </div>
   );
 }

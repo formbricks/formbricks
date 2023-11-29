@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -28,6 +29,7 @@ interface PreviewSurveyProps {
   product: TProduct;
   environment: TEnvironment;
   language: string;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
 let surveyNameTemp;
@@ -66,6 +68,7 @@ export default function PreviewSurvey({
   product,
   environment,
   language,
+  onFileUpload,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -210,6 +213,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     language={language}
+                    onFileUpload={onFileUpload}
                   />
                 </Modal>
               ) : (
@@ -225,6 +229,7 @@ export default function PreviewSurvey({
                         isBrandingEnabled={product.linkSurveyBranding}
                         onActiveQuestionChange={setActiveQuestionId}
                         language={language}
+                        onFileUpload={onFileUpload}
                       />
                     </div>
                   </div>
@@ -282,6 +287,7 @@ export default function PreviewSurvey({
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   language={language}
+                  onFileUpload={onFileUpload}
                 />
               </Modal>
             ) : (
@@ -296,6 +302,7 @@ export default function PreviewSurvey({
                       onActiveQuestionChange={setActiveQuestionId}
                       isRedirectDisabled={true}
                       language={language}
+                      onFileUpload={onFileUpload}
                     />
                   </div>
                 </div>

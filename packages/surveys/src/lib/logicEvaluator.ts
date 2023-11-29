@@ -50,6 +50,19 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
         responseValue === undefined ||
         responseValue === "dismissed"
       );
+    case "uploaded":
+      if (Array.isArray(responseValue)) {
+        return responseValue.length > 0;
+      } else {
+        return responseValue !== "skipped" && responseValue !== "" && responseValue !== null;
+      }
+    case "notUploaded":
+      return (
+        (Array.isArray(responseValue) && responseValue.length === 0) ||
+        responseValue === "" ||
+        responseValue === null ||
+        responseValue === "skipped"
+      );
     default:
       return false;
   }

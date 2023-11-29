@@ -12,10 +12,10 @@ import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
 import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -49,6 +49,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      if (localSurvey) return;
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
 
       if (survey.questions.length > 0) {
@@ -92,7 +93,7 @@ export default function SurveyEditor({
   }, [languages]);
 
   if (!localSurvey) {
-    return <ErrorComponent />;
+    return <Loading />;
   }
 
   return (
@@ -158,6 +159,7 @@ export default function SurveyEditor({
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               language={selectedLanguage}
+              onFileUpload={async (file) => file.name}
             />
           </aside>
         </div>

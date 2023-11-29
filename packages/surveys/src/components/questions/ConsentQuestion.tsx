@@ -3,6 +3,7 @@ import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { getLocalizedValue } from "../../lib/utils";
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
+import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
 
@@ -29,19 +30,13 @@ export default function ConsentQuestion({
 }: ConsentQuestionProps) {
   return (
     <div>
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
         required={question.required}
-      />
+      />{" "}
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
-
       <form
         onSubmit={(e) => {
           e.preventDefault();

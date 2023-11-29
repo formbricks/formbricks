@@ -61,6 +61,7 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
           isRedirectDisabled={false}
           key={survey.id}
           language="en"
+          onFileUpload={async () => ""}
         />
 
         <Button

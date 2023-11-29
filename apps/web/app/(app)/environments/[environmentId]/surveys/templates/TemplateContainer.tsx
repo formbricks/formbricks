@@ -79,6 +79,7 @@ export default function TemplateContainerWithPreview({
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
                 language={"en"}
+                onFileUpload={async (file) => file.name}
               />
             </div>
           )}

@@ -1,10 +1,10 @@
-import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 import { useEffect, useState } from "preact/hooks";
 import Progress from "./Progress";
 import { calculateElementIdx } from "@/lib/utils";
 
 interface ProgressBarProps {
-  survey: TSurveyWithTriggers;
+  survey: TSurvey;
   questionId: string;
 }
 
@@ -18,7 +18,7 @@ export default function ProgressBar({ survey, questionId }: ProgressBarProps) {
   useEffect(() => {
     // calculate progress
     setProgress(calculateProgress(questionId, survey, progress));
-    function calculateProgress(questionId: string, survey: TSurveyWithTriggers, progress: number) {
+    function calculateProgress(questionId: string, survey: TSurvey, progress: number) {
       if (survey.questions.length === 0) return 0;
       if (questionId === "end") return 1;
       let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);

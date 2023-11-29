@@ -3,7 +3,11 @@ import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[su
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import type { TSurveyPictureSelectionQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import type {
+  TSurveyFileUploadQuestion,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestionSummary,
+} from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import {
@@ -25,6 +29,7 @@ import RatingSummary from "./RatingSummary";
 import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TLanguages } from "@formbricks/types/product";
+import FileUploadSummary from "./FileUploadSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;
@@ -159,6 +164,15 @@ export default function SummaryList({
                   <ConsentSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
+                  />
+                );
+              }
+              if (questionSummary.question.type === TSurveyQuestionType.FileUpload) {
+                return (
+                  <FileUploadSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyFileUploadQuestion>}
+                    environmentId={environment.id}
                   />
                 );
               }

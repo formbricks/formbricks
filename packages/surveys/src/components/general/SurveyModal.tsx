@@ -16,6 +16,7 @@ export function SurveyModal({
   onResponse = () => {},
   onClose = () => {},
   onFinished = () => {},
+  onFileUpload,
   isRedirectDisabled = false,
   language,
 }: SurveyModalProps) {
@@ -54,6 +55,7 @@ export function SurveyModal({
               }
             }, 4000); // close modal automatically after 4 seconds
           }}
+          onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
         />
       </Modal>

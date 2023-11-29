@@ -1,23 +1,50 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { createResponse } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
-import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { ZId } from "@formbricks/types/environment";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
+
+interface Context {
+  params: {
+    environmentId: string;
+  };
+}
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const responseInput: TResponseInput = await request.json();
+export async function POST(request: Request, context: Context): Promise<NextResponse> {
+  const { environmentId } = context.params;
+  const environmentIdValidation = ZId.safeParse(environmentId);
+
+  if (!environmentIdValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(environmentIdValidation.error),
+      true
+    );
+  }
+
+  const responseInput = await request.json();
+
+  // legacy workaround for formbricks-js 1.2.0 & 1.2.1
+  if (responseInput.personId && typeof responseInput.personId === "string") {
+    const person = await getPerson(responseInput.personId);
+    responseInput.userId = person?.userId;
+    delete responseInput.personId;
+  }
+
   const agent = UAParser(request.headers.get("user-agent"));
-  const inputValidation = ZResponseInput.safeParse(responseInput);
+  const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -27,17 +54,20 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  let survey;
-
-  try {
-    survey = await getSurvey(responseInput.surveyId);
-  } catch (error) {
-    if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
-    } else {
-      console.error(error);
-      return responses.internalServerErrorResponse(error.message);
-    }
+  // get and check survey
+  const survey = await getSurvey(responseInput.surveyId);
+  if (!survey) {
+    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
+  }
+  if (survey.environmentId !== environmentId) {
+    return responses.badRequestResponse(
+      "Survey is part of another environment",
+      {
+        "survey.environmentId": survey.environmentId,
+        environmentId,
+      },
+      true
+    );
   }
 
   const teamDetails = await getTeamDetails(survey.environmentId);
@@ -54,14 +84,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     };
 
-    // check if personId is anonymous
-    if (responseInput.personId === "anonymous") {
-      // remove this from the request
-      responseInput.personId = null;
-    }
-
     response = await createResponse({
-      ...responseInput,
+      ...inputValidation.data,
       meta,
     });
   } catch (error) {
@@ -98,5 +122,5 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.warn("Posthog capture not possible. No team owner found");
   }
 
-  return responses.successResponse(response, true);
+  return responses.successResponse({ id: response.id }, true);
 }

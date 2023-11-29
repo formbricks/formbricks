@@ -82,6 +82,7 @@ export default function LogicEditor({
     cta: ["clicked", "skipped"],
     consent: ["skipped", "accepted"],
     pictureSelection: ["submitted", "skipped"],
+    fileUpload: ["uploaded", "notUploaded"],
   };
 
   const logicConditions: LogicConditions = {
@@ -97,6 +98,16 @@ export default function LogicEditor({
     },
     accepted: {
       label: "is accepted",
+      values: null,
+      unique: true,
+    },
+    uploaded: {
+      label: "has uploaded file",
+      values: null,
+      unique: true,
+    },
+    notUploaded: {
+      label: "has not uploaded file",
       values: null,
       unique: true,
     },
@@ -243,7 +254,7 @@ export default function LogicEditor({
                 <SelectContent>
                   {conditions[question.type].map(
                     (condition) =>
-                      !(question.required && condition === "skipped") && (
+                      !(question.required && (condition === "skipped" || condition === "notUploaded")) && (
                         <SelectItem
                           key={condition}
                           value={condition}

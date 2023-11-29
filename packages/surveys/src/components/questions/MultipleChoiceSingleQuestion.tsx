@@ -1,5 +1,6 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
+import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import Subheader from "@/components/general/Subheader";
 import { cn, shuffleQuestions, getLocalizedValue } from "@/lib/utils";
@@ -62,13 +63,7 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit({ [question.id]: value });
       }}
       className="w-full">
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
-      {console.log(question)}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
@@ -77,7 +72,7 @@ export default function MultipleChoiceSingleQuestion({
       <Subheader
         subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
         questionId={question.id}
-      />
+      />{" "}
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
