@@ -94,7 +94,7 @@ export default function PictureSelectionQuestion({
       <Subheader
         subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
         questionId={question.id}
-      />{" "}
+      />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
