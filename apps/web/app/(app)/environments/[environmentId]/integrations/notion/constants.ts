@@ -1,8 +1,10 @@
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+
 export const TYPE_MAPPING = {
-  cta: ["checkbox"],
-  multipleChoiceMulti: ["multi_select"],
-  multipleChoiceSingle: ["select", "status"],
-  openText: [
+  [TSurveyQuestionType.CTA]: ["checkbox"],
+  [TSurveyQuestionType.MultipleChoiceMulti]: ["multi_select"],
+  [TSurveyQuestionType.MultipleChoiceSingle]: ["select", "status"],
+  [TSurveyQuestionType.OpenText]: [
     "created_by",
     "created_time",
     "date",
@@ -15,9 +17,11 @@ export const TYPE_MAPPING = {
     "title",
     "url",
   ],
-  nps: ["number"],
-  consent: ["checkbox"],
-  rating: ["number"],
+  [TSurveyQuestionType.NPS]: ["number"],
+  [TSurveyQuestionType.Consent]: ["checkbox"],
+  [TSurveyQuestionType.Rating]: ["number"],
+  [TSurveyQuestionType.PictureSelection]: ["url"],
+  [TSurveyQuestionType.FileUpload]: ["url"],
 };
 
 export const UNSUPPORTED_TYPES_BY_NOTION = [

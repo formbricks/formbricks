@@ -7,8 +7,13 @@ import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
-export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {
+export async function handleIntegrations(
+  integrations: TIntegration[],
+  data: TPipelineInput,
+  surveyData: TSurvey
+) {
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
@@ -18,7 +23,7 @@ export async function handleIntegrations(integrations: TIntegration[], data: TPi
         await handleAirtableIntegration(integration as TIntegrationAirtable, data);
         break;
       case "notion":
-        await handleNotionIntegration(integration as TIntegrationNotion, data);
+        await handleNotionIntegration(integration as TIntegrationNotion, data, surveyData);
         break;
     }
   }
@@ -68,11 +73,15 @@ async function extractResponses(data: TPipelineInput, questionIds: string[]): Pr
   return [responses, questions];
 }
 
-async function handleNotionIntegration(integration: TIntegrationNotion, data: TPipelineInput) {
+async function handleNotionIntegration(
+  integration: TIntegrationNotion,
+  data: TPipelineInput,
+  surveyData: TSurvey
+) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const properties = buildNotionPayloadProperties(element.mapping, data);
+        const properties = buildNotionPayloadProperties(element.mapping, data, surveyData);
         await writeNotionData(element.databaseId, properties, integration.config);
       }
     }
@@ -81,10 +90,26 @@ async function handleNotionIntegration(integration: TIntegrationNotion, data: TP
 
 function buildNotionPayloadProperties(
   mapping: TIntegrationNotionConfigData["mapping"],
-  data: TPipelineInput
+  data: TPipelineInput,
+  surveyData: TSurvey
 ) {
   const properties: any = {};
   const responses = data.response.data;
+
+  const mappingQIds = mapping
+    .filter((m) => m.question.type === TSurveyQuestionType.PictureSelection)
+    .map((m) => m.question.id);
+
+  Object.keys(responses).forEach((resp) => {
+    if (mappingQIds.find((qId) => qId === resp)) {
+      const selectedChoiceIds = responses[resp] as string[];
+      const pictureQuestion = surveyData.questions.find((q) => q.id === resp);
+
+      responses[resp] = (pictureQuestion as any)?.choices
+        .filter((choice) => selectedChoiceIds.includes(choice.id))
+        .map((choice) => choice.imageUrl);
+    }
+  });
 
   mapping.forEach((map) => {
     const value = responses[map.question.id];
@@ -129,7 +154,7 @@ function getValue(colType: string, value: string | string[] | number) {
           name: value,
         };
       case "checkbox":
-        return value === "accepted";
+        return value === "accepted" || value === "clicked";
       case "date":
         return {
           start: new Date(value as string).toISOString().substring(0, 10),
@@ -141,7 +166,7 @@ function getValue(colType: string, value: string | string[] | number) {
       case "phone_number":
         return value;
       case "url":
-        return value;
+        return typeof value === "string" ? value : (value as string[]).join(", ");
     }
   } catch (error) {
     throw new Error("Payload build failed!");

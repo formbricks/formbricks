@@ -15,7 +15,7 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import { TIntegrationInput } from "@formbricks/types/integration";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
@@ -103,24 +103,34 @@ export default function AddIntegrationModal({
   }, [selectedDatabase?.id]);
 
   const questionItems = useMemo(() => {
-    return (
+    const questions =
       selectedSurvey?.questions.map((q) => ({
         id: q.id,
         name: q.headline,
         type: q.type,
-      })) || []
-    );
+      })) || [];
+
+    const hiddenFields = selectedSurvey?.hiddenFields.enabled
+      ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
+          id: fId,
+          name: fId,
+          type: TSurveyQuestionType.OpenText,
+        })) || []
+      : [];
+    return [...questions, ...hiddenFields];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 
   useEffect(() => {
     if (selectedIntegration) {
       const selectedDB = databases.find((db) => db.id === selectedIntegration.databaseId)!;
-      setSelectedDatabase({
-        id: selectedDB.id,
-        name: (selectedDB as any).title?.[0]?.plain_text,
-        properties: selectedDB.properties,
-      });
+      if (selectedDB) {
+        setSelectedDatabase({
+          id: selectedDB.id,
+          name: (selectedDB as any).title?.[0]?.plain_text,
+          properties: selectedDB.properties,
+        });
+      }
       setSelectedSurvey(
         surveys.find((survey) => {
           return survey.id === selectedIntegration.surveyId;
