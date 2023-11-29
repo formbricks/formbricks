@@ -195,6 +195,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description: "Webstudio is an open source alternative to Webflow",
           href: "https://webstudio.is",
         },
+        {
+          name: "DevHunt",
+          description:
+            "Find the best Dev Tools upvoted by the community every week.",
+          href: "https://devhunt.org/",
+        }
       ],
     });
   }
