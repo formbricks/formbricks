@@ -5,10 +5,9 @@ import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TResponseTtc } from "@formbricks/types/responses";
-import { getUpdatedTtcObj } from "../../lib/utils";
-
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
   value: string | number | string[];
@@ -17,8 +16,8 @@ interface CTAQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  ttcObj: TResponseTtc;
-  setTtcObj: (ttc: TResponseTtc) => void;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function CTAQuestion({
@@ -27,33 +26,12 @@ export default function CTAQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  ttcObj,
-  setTtcObj,
+  ttc,
+  setTtc,
 }: CTAQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
 
-  useEffect(() => {
-    setStartTime(performance.now());
-  }, [question.id]);
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        // Restart the timer when the tab becomes visible again
-        setStartTime(performance.now());
-      } else {
-        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-        setTtcObj(updatedTtcObj);
-      }
-    };
-
-    // Attach the event listener
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      // Clean up the event listener when the component is unmounted
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   return (
     <div>
@@ -66,8 +44,8 @@ export default function CTAQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-              setTtcObj(updatedTtcObj);
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
               onSubmit({ [question.id]: "" }, updatedTtcObj);
               onBack();
             }}
@@ -79,8 +57,8 @@ export default function CTAQuestion({
               tabIndex={0}
               type="button"
               onClick={() => {
-                const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-                setTtcObj(updatedTtcObj);
+                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedTtcObj);
                 onSubmit({ [question.id]: "dismissed" }, updatedTtcObj);
               }}
               className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
@@ -95,8 +73,8 @@ export default function CTAQuestion({
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();
               }
-              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-              setTtcObj(updatedTtcObj);
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
               onSubmit({ [question.id]: "clicked" }, updatedTtcObj);
             }}
             type="button"

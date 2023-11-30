@@ -5,9 +5,8 @@ import QuestionImage from "@/components/general/QuestionImage";
 import { cn } from "@/lib/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
-import { useEffect, useState } from "preact/hooks";
-import { getUpdatedTtcObj } from "../../lib/utils";
-
+import { useState } from "preact/hooks";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import {
   ConfusedFace,
   FrowningFace,
@@ -30,8 +29,8 @@ interface RatingQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  ttcObj: TResponseTtc;
-  setTtcObj: (ttc: TResponseTtc) => void;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function RatingQuestion({
@@ -42,40 +41,19 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  ttcObj,
-  setTtcObj,
+  ttc,
+  setTtc,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
 
-  useEffect(() => {
-    setStartTime(performance.now());
-  }, [question.id]);
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        // Restart the timer when the tab becomes visible again
-        setStartTime(performance.now());
-      } else {
-        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-        setTtcObj(updatedTtcObj);
-      }
-    };
-
-    // Attach the event listener
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      // Clean up the event listener when the component is unmounted
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
     if (question.required) {
-      const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-      setTtcObj(updatedTtcObj);
+      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+      setTtc(updatedTtcObj);
       onSubmit(
         {
           [question.id]: number,
@@ -101,8 +79,8 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-        setTtcObj(updatedTtcObj);
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
@@ -221,8 +199,8 @@ export default function RatingQuestion({
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-              setTtcObj(updatedTtcObj);
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
               onBack();
             }}
           />

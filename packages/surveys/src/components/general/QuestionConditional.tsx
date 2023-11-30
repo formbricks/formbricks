@@ -21,8 +21,8 @@ interface QuestionConditionalProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
-  ttcObj: TResponseTtc;
-  setTtcObj: (ttc: TResponseTtc) => void;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
 }
 
@@ -35,8 +35,8 @@ export default function QuestionConditional({
   isFirstQuestion,
   isLastQuestion,
   autoFocus = true,
-  ttcObj,
-  setTtcObj,
+  ttc,
+  setTtc,
   surveyId,
   onFileUpload,
 }: QuestionConditionalProps) {
@@ -50,8 +50,8 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       autoFocus={autoFocus}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -62,8 +62,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -74,8 +74,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
@@ -86,8 +86,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
@@ -98,8 +98,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
@@ -110,8 +110,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
@@ -122,8 +122,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
@@ -134,8 +134,8 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.FileUpload ? (
     <FileUploadQuestion
@@ -148,8 +148,8 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       onFileUpload={onFileUpload}
-      ttcObj={ttcObj}
-      setTtcObj={setTtcObj}
+      ttc={ttc}
+      setTtc={setTtc}
     />
   ) : null;
 }

@@ -20,7 +20,7 @@ import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
-import { calculateTotal, formatResponseDateFields } from "../response/util";
+import { calculateTtcTotal, formatResponseDateFields } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
@@ -512,7 +512,7 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
-    const ttc = responseInput.finished ? calculateTotal(responseInput.ttc) : responseInput.ttc;
+    const ttc = responseInput.finished ? calculateTtcTotal(responseInput.ttc) : responseInput.ttc;
 
     const responsePrisma = await prisma.response.update({
       where: {

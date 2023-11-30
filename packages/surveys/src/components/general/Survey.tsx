@@ -32,7 +32,7 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const [ttcObj, setTtcObj] = useState<TResponseTtc>({});
+  const [ttc, setTtc] = useState<TResponseTtc>({});
 
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
@@ -156,8 +156,8 @@ export function Survey({
             onChange={onChange}
             onSubmit={onSubmit}
             onBack={onBack}
-            ttcObj={ttcObj}
-            setTtcObj={setTtcObj}
+            ttc={ttc}
+            setTtc={setTtc}
             onFileUpload={onFileUpload}
             isFirstQuestion={
               history && prefillResponseData

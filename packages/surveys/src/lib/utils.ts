@@ -1,4 +1,3 @@
-import { TResponseTtc } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const cn = (...classes: string[]) => {
@@ -69,20 +68,4 @@ export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number):
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
   if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
   return elementIdx;
-};
-
-export const getUpdatedTtcObj = (ttcObj: TResponseTtc, questionId: string, time: number) => {
-  // Check if the question ID already exists
-  if (ttcObj.hasOwnProperty(questionId)) {
-    return {
-      ...ttcObj,
-      [questionId]: ttcObj[questionId] + time,
-    };
-  } else {
-    // If the question ID does not exist, add it to the object
-    return {
-      ...ttcObj,
-      [questionId]: time,
-    };
-  }
 };

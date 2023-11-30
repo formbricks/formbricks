@@ -25,7 +25,7 @@ export const formatResponseDateFields = (response: TResponseDates): TResponseDat
   return response;
 };
 
-export function calculateTotal(ttc: TResponseTtc) {
+export function calculateTtcTotal(ttc: TResponseTtc) {
   const result = { ...ttc };
   result._total = Object.values(result).reduce((acc: number, val: number) => acc + val, 0);
 

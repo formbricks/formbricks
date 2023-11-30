@@ -6,9 +6,9 @@ import Subheader from "@/components/general/Subheader";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { useCallback } from "react";
-import { useState, useEffect } from "preact/hooks";
+import { useState } from "preact/hooks";
 import { TResponseTtc } from "@formbricks/types/responses";
-import { getUpdatedTtcObj } from "../../lib/utils";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -19,8 +19,8 @@ interface OpenTextQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
-  ttcObj: TResponseTtc;
-  setTtcObj: (ttc: TResponseTtc) => void;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function OpenTextQuestion({
@@ -32,33 +32,12 @@ export default function OpenTextQuestion({
   isFirstQuestion,
   isLastQuestion,
   autoFocus = true,
-  ttcObj,
-  setTtcObj,
+  ttc,
+  setTtc,
 }: OpenTextQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
 
-  useEffect(() => {
-    setStartTime(performance.now());
-  }, [question.id]);
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        // Restart the timer when the tab becomes visible again
-        setStartTime(performance.now());
-      } else {
-        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-        setTtcObj(updatedTtcObj);
-      }
-    };
-
-    // Attach the event listener
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      // Clean up the event listener when the component is unmounted
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleInputChange = (inputValue: string) => {
     // const isValidInput = validateInput(inputValue, question.inputType, question.required);
@@ -82,9 +61,9 @@ export default function OpenTextQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         //  if ( validateInput(value as string, question.inputType, question.required)) {
-        const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-        setTtcObj(updatedTtcObj);
-        onSubmit({ [question.id]: value, inputType: question.inputType }, updatedTtcObj);
+        const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedttc);
+        onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
         // }
       }}
       className="w-full">
@@ -109,9 +88,9 @@ export default function OpenTextQuestion({
               if (e.key === "Enter" && isInputEmpty(value as string)) {
                 e.preventDefault(); // Prevent form submission
               } else if (e.key === "Enter") {
-                const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-                setTtcObj(updatedTtcObj);
-                onSubmit({ [question.id]: value, inputType: question.inputType }, updatedTtcObj);
+                const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedttc);
+                onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
               }
             }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
@@ -142,8 +121,8 @@ export default function OpenTextQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
-              const updatedTtcObj = getUpdatedTtcObj(ttcObj, question.id, performance.now() - startTime);
-              setTtcObj(updatedTtcObj);
+              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedttc);
               onBack();
             }}
           />
