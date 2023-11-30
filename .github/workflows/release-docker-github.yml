@@ -6,6 +6,7 @@ name: Docker
 # documentation.
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -15,6 +16,9 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
 
 jobs:
   build:
@@ -27,6 +31,16 @@ jobs:
       id-token: write
 
     steps:
+      - name: Generate Random NEXTAUTH_SECRET
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
+
+      - name: Generate Random ENCRYPTION_KEY
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v3
 

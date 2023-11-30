@@ -6,7 +6,7 @@ export const metadata = {
 
 #### Self-Hosting
 
-# Deploying Formbricks to Production
+# One-Click Setup
 
 If you want to quickly set up a production instance of Formbricks on a server running Ubuntu, we've got you covered! This method utilizes a convenient shell script that takes care of everything, including Docker, Postgres DB, and SSL certificate configuration. The shell script will automatically install all the required dependencies and configure your server, making the process a breeze.
 
@@ -29,7 +29,7 @@ Copy and paste the following command into your terminal:
 <CodeGroup title="Single Command to deploy Formbricks">
 
 ```bash
-/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/production.sh)"
+curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/production.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
 ```
 
 </CodeGroup>
@@ -154,6 +154,69 @@ my.hosted.url.com
 
 </CodeGroup>
 </Col>
+
+## Update Formbricks
+
+To update Formbricks, simply run the following command:
+
+<Col>
+<CodeGroup title="Update Formbricks">
+
+```bash
+./formbricks.sh update
+```
+
+</CodeGroup>
+</Col>
+The script will automatically pull the latest version of Formbricks from Dockerhub and restart the containers.
+
+## Stop Formbricks Instance
+
+To stop Formbricks, simply run the following command:
+
+<Col>
+<CodeGroup title="Stop Formbricks">
+
+```bash
+./formbricks.sh stop
+```
+
+</CodeGroup>
+</Col>
+The script will automatically stop all the Formbricks related containers and brings the entire stack down.
+
+## Restart Formbricks Instance
+
+To restart Formbricks, simply run the following command:
+
+<Col>
+<CodeGroup title="Restart Formbricks">
+
+```bash
+./formbricks.sh restart
+```
+
+</CodeGroup>
+</Col>
+
+The script will automatically restart all the Formbricks related containers and brings the entire stack up with the previous configuration.
+
+
+## Uninstall Formbricks
+
+To uninstall Formbricks, simply run the following command, but keep in mind that this will delete all your data!
+
+<Col>
+<CodeGroup title="Uninstall Formbricks">
+
+```bash
+./formbricks.sh uninstall
+```
+
+</CodeGroup>
+</Col>
+The script will automatically stop all the Formbricks related containers, remove the Formbricks directory, and delete the Docker network.
+
 ## Debugging
 
 If you encounter any issues, you can check the logs of the container with:
@@ -167,6 +230,7 @@ cd formbricks && docker compose logs -f
 </CodeGroup>
 </Col>
 You can close the logs again with `CTRL + C`.
+
 
 ## Troubleshooting
 

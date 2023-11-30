@@ -9,7 +9,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -101,8 +101,8 @@ export async function GET(
     }
 
     // return state
-    const state: TJsState = {
-      person,
+    const state: TJsStateSync = {
+      person: { id: person.id, userId: person.userId },
       surveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

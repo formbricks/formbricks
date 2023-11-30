@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
   const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
 
   return {
-    title: `${survey.name} | Open Source Survey by Formbricks`,
+    title: survey.name,
     metadataBase: new URL(WEBAPP_URL),
     openGraph: {
       title: survey.name,
