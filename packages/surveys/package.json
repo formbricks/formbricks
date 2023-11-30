@@ -1,6 +1,5 @@
 {
   "name": "@formbricks/surveys",
-  "private": true,
   "license": "MIT",
   "version": "0.9.0",
   "description": "Formbricks-surveys is a helper library to embed surveys into your application",
