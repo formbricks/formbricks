@@ -7,15 +7,18 @@ import { cn, shuffleQuestions } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -26,7 +29,13 @@ export default function MultipleChoiceMultiQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttc,
+  setTtc,
 }: MultipleChoiceMultiProps) {
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
   const getChoicesWithoutOtherLabels = useCallback(
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
     [question]
@@ -89,7 +98,9 @@ export default function MultipleChoiceMultiQuestion({
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
         onChange({ [question.id]: newValue });
-        onSubmit({ [question.id]: newValue });
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -196,8 +207,10 @@ export default function MultipleChoiceMultiQuestion({
                     }}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
+                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                        setTtc(updatedTtcObj);
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value });
+                          onSubmit({ [question.id]: value }, updatedTtcObj);
                         }, 100);
                       }
                     }}
@@ -217,7 +230,11 @@ export default function MultipleChoiceMultiQuestion({
           <BackButton
             tabIndex={questionChoices.length + 3}
             backButtonLabel={question.backButtonLabel}
-            onClick={onBack}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onBack();
+            }}
           />
         )}
         <div></div>

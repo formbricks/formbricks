@@ -225,6 +225,7 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
 
     personCache.revalidate({
       id: transformedPerson.id,
+      userId: transformedPerson.userId,
       environmentId: transformedPerson.environmentId,
     });
 
@@ -288,6 +289,7 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
 
     personCache.revalidate({
       id: personId,
+      userId: person.userId,
       environmentId: person.environmentId,
     });
 
@@ -377,6 +379,9 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
     }
   )();
 
+/**
+ * @deprecated This function is deprecated and only used in legacy endpoints. Use updatePerson instead.
+ */
 export const updatePersonAttribute = async (
   personId: string,
   attributeClassId: string,

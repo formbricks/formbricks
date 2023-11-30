@@ -20,7 +20,7 @@ import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
-import { formatResponseDateFields } from "../response/util";
+import { calculateTtcTotal, formatResponseDateFields } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
@@ -35,6 +35,7 @@ const responseSelection = {
   finished: true,
   data: true,
   meta: true,
+  ttc: true,
   personAttributes: true,
   singleUseId: true,
   person: {
@@ -269,7 +270,14 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
     if (responseInput.personId) {
       person = await getPerson(responseInput.personId);
     }
-
+    const ttcTemp = responseInput.ttc;
+    const questionId = Object.keys(ttcTemp)[0];
+    const ttc = responseInput.finished
+      ? {
+          ...ttcTemp,
+          _total: ttcTemp[questionId], // Add _total property with the same value
+        }
+      : ttcTemp;
     const responsePrisma = await prisma.response.create({
       data: {
         survey: {
@@ -279,6 +287,7 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
         },
         finished: responseInput.finished,
         data: responseInput.data,
+        ttc,
         ...(responseInput.personId && {
           person: {
             connect: {
@@ -287,6 +296,7 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
           },
           personAttributes: person?.attributes,
         }),
+
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
         singleUseId: responseInput.singleUseId,
       },
@@ -502,6 +512,7 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
+    const ttc = responseInput.finished ? calculateTtcTotal(responseInput.ttc) : responseInput.ttc;
 
     const responsePrisma = await prisma.response.update({
       where: {
@@ -510,6 +521,7 @@ export const updateResponse = async (
       data: {
         finished: responseInput.finished,
         data,
+        ttc,
       },
       select: responseSelection,
     });
