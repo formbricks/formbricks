@@ -14,6 +14,7 @@ import { TResponse } from "@formbricks/types/responses";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEmailVerificationStatus } from "./lib/helpers";
+import { ZId } from "@formbricks/types/environment";
 
 interface LinkSurveyPageProps {
   params: {
@@ -27,6 +28,11 @@ interface LinkSurveyPageProps {
 }
 
 export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
+  const validId = ZId.safeParse(params.surveyId);
+  if (!validId.success) {
+    notFound();
+  }
+
   const survey = await getSurvey(params.surveyId);
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
@@ -74,6 +80,10 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
 }
 
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
+  const validId = ZId.safeParse(params.surveyId);
+  if (!validId.success) {
+    notFound();
+  }
   const survey = await getSurvey(params.surveyId);
 
   const suId = searchParams.suId;
