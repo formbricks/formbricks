@@ -438,9 +438,12 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../types
-      eslint-config-formbricks:
-        specifier: workspace:*
-        version: link:../eslint-config-formbricks
+      eslint-config-prettier:
+        specifier: ^9.0.0
+        version: 9.0.0(eslint@8.54.0)
+      eslint-config-turbo:
+        specifier: latest
+        version: 1.8.8(eslint@8.54.0)
       terser:
         specifier: ^5.24.0
         version: 5.24.0
@@ -578,9 +581,12 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      eslint-config-formbricks:
-        specifier: workspace:*
-        version: link:../eslint-config-formbricks
+      eslint-config-prettier:
+        specifier: ^9.0.0
+        version: 9.0.0(eslint@8.54.0)
+      eslint-config-turbo:
+        specifier: latest
+        version: 1.8.8(eslint@8.54.0)
       isomorphic-fetch:
         specifier: ^3.0.0
         version: 3.0.0
@@ -702,9 +708,12 @@ importers:
       autoprefixer:
         specifier: ^10.4.16
         version: 10.4.16(postcss@8.4.31)
-      eslint-config-formbricks:
-        specifier: workspace:*
-        version: link:../eslint-config-formbricks
+      eslint-config-prettier:
+        specifier: ^9.0.0
+        version: 9.0.0(eslint@8.54.0)
+      eslint-config-turbo:
+        specifier: latest
+        version: 1.8.8(eslint@8.54.0)
       postcss:
         specifier: ^8.4.31
         version: 8.4.31

@@ -213,6 +213,14 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
+    title: "Link Surveys",
+    links: [
+      { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
+      { title: "Identify Users", href: "/docs/link-surveys/user-identification" },
+      { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
+    ],
+  },
+  {
     title: "Best Practices",
     links: [
       { title: "Learn from Churn", href: "/docs/best-practices/cancel-subscription" },
@@ -236,21 +244,13 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "Link Surveys",
-    links: [
-      { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
-      { title: "User Identification", href: "/docs/link-surveys/user-identification" },
-      { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
-    ],
-  },
-  {
     title: "Self-hosting",
     links: [
-      { title: "Deployment", href: "/docs/self-hosting/deployment" },
-      { title: "Production", href: "/docs/self-hosting/production" },
-      { title: "Docker", href: "/docs/self-hosting/docker" },
+      { title: "Introduction", href: "/docs/self-hosting/deployment" },
+      { title: "One-Click Setup", href: "/docs/self-hosting/production" },
+      { title: "Advanced Setup", href: "/docs/self-hosting/docker" },
+      { title: "Configure", href: "/docs/self-hosting/external-auth-providers" },
       { title: "Migration Guide", href: "/docs/self-hosting/migration-guide" },
-      { title: "External auth providers", href: "/docs/self-hosting/external-auth-providers" },
     ],
   },
   {

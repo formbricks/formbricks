@@ -8,9 +8,7 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
-    serverActions: {
-      allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
-    },
+    serverActions: true,
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
@@ -103,6 +101,13 @@ const nextConfig = {
     INTERNAL_SECRET: createId(),
   },
 };
+
+// set actions allowed origins
+if (process.env.WEBAPP_URL) {
+  nextConfig.experimental.serverActions = {
+    allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
+  };
+}
 
 const sentryOptions = {
   // For all available options, see:

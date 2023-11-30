@@ -34,10 +34,12 @@ export async function POST(request: Request, context: Context): Promise<NextResp
 
   // find teamId & teamOwnerId from environmentId
   const teamDetails = await getTeamDetails(inputValidation.data.environmentId);
+  let response = {};
 
   // create display
   try {
-    await createDisplay(inputValidation.data);
+    const { id } = await createDisplay(inputValidation.data);
+    response = { id };
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
@@ -53,5 +55,5 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     console.warn("Posthog capture not possible. No team owner found");
   }
 
-  return responses.successResponse({}, true);
+  return responses.successResponse(response, true);
 }

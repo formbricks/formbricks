@@ -4,6 +4,10 @@
 
 /* @import "./survey.css"; */
 
+#fbjs {
+  font-size: 16px;
+}
+
 /* Firefox */
 #fbjs * {
   scrollbar-width: thin;
