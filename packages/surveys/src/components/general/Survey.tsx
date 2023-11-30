@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
-import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
+import ProgressBar from "@/components/general/ProgressBar";
 
 export function Survey({
   survey,
