@@ -1,11 +1,12 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import { cn } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import {
   ConfusedFace,
   FrowningFace,
@@ -24,10 +25,12 @@ interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function RatingQuestion({
@@ -38,15 +41,25 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttc,
+  setTtc,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
     if (question.required) {
-      onSubmit({
-        [question.id]: number,
-      });
+      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+      setTtc(updatedTtcObj);
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        updatedTtcObj
+      );
     }
   };
 
@@ -66,7 +79,9 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -184,6 +199,8 @@ export default function RatingQuestion({
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
               onBack();
             }}
           />
