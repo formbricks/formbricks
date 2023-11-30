@@ -4,6 +4,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { useMemo, useState } from "react";
 
 interface SummaryMetadataProps {
   responses: TResponse[];
@@ -34,8 +35,8 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   </TooltipProvider>
 );
 
-function formatTime(ttcTemp, totalResponses) {
-  const seconds = ttcTemp / (1000 * totalResponses);
+function formatTime(ttc, totalResponses) {
+  const seconds = ttc / (1000 * totalResponses);
   let formattedValue;
 
   if (seconds >= 60) {
@@ -56,15 +57,23 @@ export default function SummaryMetadata({
   setShowDropOffs,
   showDropOffs,
 }: SummaryMetadataProps) {
-  const completedResponses = responses.filter((r) => r.finished).length;
-  let validTtcResponseCount = 0; //stores the count of responses that contains a _total value
-  let ttcTemp = 0;
-  responses.map((response) => {
-    if (response.ttc._total) {
-      validTtcResponseCount++;
-      ttcTemp = ttcTemp + response.ttc._total;
-    }
-  });
+  const completedResponsesCount = useMemo(() => responses.filter((r) => r.finished).length, [responses]);
+  const [validTtcResponsesCount, setValidResponsesCount] = useState(0);
+
+  const ttc = useMemo(() => {
+    let validTtcResponsesCountAcc = 0; //stores the count of responses that contains a _total value
+    const ttc = responses.reduce((acc, response) => {
+      if (response.ttc._total) {
+        validTtcResponsesCountAcc++;
+        return acc + response.ttc._total;
+      }
+      return acc;
+    }, 0);
+    setValidResponsesCount(validTtcResponsesCountAcc);
+    return ttc;
+  }, [responses]);
+
+  console.log(ttc);
 
   const totalResponses = responses.length;
 
@@ -86,21 +95,21 @@ export default function SummaryMetadata({
           />
           <StatCard
             label="Responses"
-            percentage={`${Math.round((completedResponses / displayCount) * 100)}%`}
-            value={responses.length === 0 ? <span>-</span> : completedResponses}
+            percentage={`${Math.round((completedResponsesCount / displayCount) * 100)}%`}
+            value={responses.length === 0 ? <span>-</span> : completedResponsesCount}
             tooltipText="People who completed the survey."
           />
           <StatCard
             label="Drop Offs"
-            percentage={`${Math.round(((totalResponses - completedResponses) / totalResponses) * 100)}%`}
-            value={responses.length === 0 ? <span>-</span> : totalResponses - completedResponses}
+            percentage={`${Math.round(((totalResponses - completedResponsesCount) / totalResponses) * 100)}%`}
+            value={responses.length === 0 ? <span>-</span> : totalResponses - completedResponsesCount}
             tooltipText="People who started but not completed the survey."
           />
           <StatCard
             label="Time to Complete"
             percentage={null}
             value={
-              validTtcResponseCount === 0 ? <span>-</span> : `${formatTime(ttcTemp, validTtcResponseCount)}`
+              validTtcResponsesCount === 0 ? <span>-</span> : `${formatTime(ttc, validTtcResponsesCount)}`
             }
             tooltipText="Average time to complete the survey."
           />
