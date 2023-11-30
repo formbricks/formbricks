@@ -9,7 +9,10 @@ interface ProgressBarProps {
 }
 
 export default function ProgressBar({ survey, questionId }: ProgressBarProps) {
-  const currentQuestionIdx = survey.questions.findIndex((e) => e.id === questionId);
+  const currentQuestionIdx = useMemo(
+    () => survey.questions.findIndex((e) => e.id === questionId),
+    [survey, questionId]
+  );
 
   const calculateProgress = useCallback((questionId: string, survey: TSurvey, progress: number) => {
     if (survey.questions.length === 0) return 0;
