@@ -3,13 +3,17 @@ import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "./constants";
 import { verifyToken } from "./jwt";
-import { getProfileByEmail, updateProfile } from "./profile/service";
+import { createProfile, getProfileByEmail, updateProfile } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import AzureAD from "next-auth/providers/azure-ad";
+import { createTeam } from "./team/service";
+import { createProduct } from "./product/service";
+import { createAccount } from "./account/service";
+import { createMembership } from "./membership/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -205,120 +209,21 @@ export const authOptions: NextAuthOptions = {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        await prisma.user.create({
-          data: {
-            name: user.name,
-            email: user.email,
-            emailVerified: new Date(Date.now()),
-            onboardingCompleted: false,
-            identityProvider: provider,
-            identityProviderAccountId: user.id as string,
-            accounts: {
-              create: [{ ...account }],
-            },
-            memberships: {
-              create: [
-                {
-                  accepted: true,
-                  role: "owner",
-                  // @ts-ignore
-                  team: {
-                    create: {
-                      name: `${user.name}'s Team`,
-                      products: {
-                        create: [
-                          {
-                            name: "My Product",
-                            environments: {
-                              create: [
-                                {
-                                  type: "production",
-                                  actionClasses: {
-                                    create: [
-                                      {
-                                        name: "New Session",
-                                        description: "Gets fired when a new session is created",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "Exit Intent (Desktop)",
-                                        description: "A user on Desktop leaves the website with the cursor.",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "50% Scroll",
-                                        description: "A user scrolled 50% of the current page",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                  attributeClasses: {
-                                    create: [
-                                      {
-                                        name: "userId",
-                                        description: "The internal ID of the person",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "email",
-                                        description: "The email of the person",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                },
-                                {
-                                  type: "development",
-                                  actionClasses: {
-                                    create: [
-                                      {
-                                        name: "New Session",
-                                        description: "Gets fired when a new session is created",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "Exit Intent (Desktop)",
-                                        description: "A user on Desktop leaves the website with the cursor.",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "50% Scroll",
-                                        description: "A user scrolled 50% of the current page",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                  attributeClasses: {
-                                    create: [
-                                      {
-                                        name: "userId",
-                                        description: "The internal ID of the person",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "email",
-                                        description: "The email of the person",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                },
-                              ],
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-          include: {
-            memberships: true,
-          },
+        const userProfile = await createProfile({
+          name: user.name,
+          email: user.email,
+          emailVerified: new Date(Date.now()),
+          onboardingCompleted: false,
+          identityProvider: provider,
+          identityProviderAccountId: account.providerAccountId,
         });
-
+        const team = await createTeam({ name: userProfile.name + "'s Team" });
+        await createAccount({
+          ...account,
+          userId: userProfile.id,
+        });
+        await createProduct(team.id, { name: "My Product" });
+        await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
         return true;
       }
 
