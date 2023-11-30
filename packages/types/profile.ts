@@ -48,6 +48,8 @@ export const ZProfileCreateInput = z.object({
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
   objective: ZProfileObjective.nullish(),
+  identityProvider: z.enum(["email", "google", "github", "azuread"]).optional(),
+  identityProviderAccountId: z.string().optional(),
 });
 
 export type TProfileCreateInput = z.infer<typeof ZProfileCreateInput>;
