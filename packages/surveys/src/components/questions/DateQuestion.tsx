@@ -105,7 +105,7 @@ export default function DateQuestion({
         e.preventDefault();
         if (question.required && !value) {
           // alert("Please select a date");
-          setErrorMessage("Please select a date");
+          setErrorMessage("Please select a date.");
           return;
         }
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -116,7 +116,7 @@ export default function DateQuestion({
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
 
-      <div className={"text-red-500"}>
+      <div className={"text-red-600"}>
         <span>{errorMessage}</span>
       </div>
 
