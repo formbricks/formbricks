@@ -1,4 +1,4 @@
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
@@ -6,17 +6,21 @@ import FileInput from "../general/FileInput";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { useState } from "preact/hooks";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   surveyId: string;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function FileUploadQuestion({
@@ -29,22 +33,30 @@ export default function FileUploadQuestion({
   isLastQuestion,
   surveyId,
   onFileUpload,
+  ttc,
+  setTtc,
 }: FileUploadQuestionProps) {
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
         if (question.required) {
           if (value && (typeof value === "string" || Array.isArray(value)) && value.length > 0) {
-            onSubmit({ [question.id]: typeof value === "string" ? [value] : value });
+            onSubmit({ [question.id]: typeof value === "string" ? [value] : value }, updatedTtcObj);
           } else {
             alert("Please upload a file");
           }
         } else {
           if (value) {
-            onSubmit({ [question.id]: typeof value === "string" ? [value] : value });
+            onSubmit({ [question.id]: typeof value === "string" ? [value] : value }, updatedTtcObj);
           } else {
-            onSubmit({ [question.id]: "skipped" });
+            onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
           }
         }
       }}

@@ -86,8 +86,8 @@ export const LOGIN_RATE_LIMIT = {
   allowedPerInterval: 30,
 };
 export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 10 * 60 * 1000, // 60 minutes
-  allowedPerInterval: 50,
+  interval: 10 * 15 * 1000, // 15 minutes
+  allowedPerInterval: 60,
 };
 
 // Enterprise License constant
