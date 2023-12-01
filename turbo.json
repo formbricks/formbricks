@@ -119,6 +119,7 @@
         "S3_SECRET_KEY",
         "S3_REGION",
         "S3_BUCKET_NAME",
+        "SURVEYS_PACKAGE_MODE",
         "ENTERPRISE_LICENSE_KEY",
         "SURVEYS_PACKAGE_BUILD"
       ]

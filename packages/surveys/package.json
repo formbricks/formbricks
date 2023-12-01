@@ -23,11 +23,11 @@
     }
   },
   "scripts": {
-    "dev": "vite build --watch",
+    "dev": "SURVEYS_PACKAGE_MODE=development vite build --watch",
     "build": "pnpm run build:surveys && pnpm run build:question-date",
     "build:surveys": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build",
     "build:question-date": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build",
-    "go": "concurrently \"vite build --watch\" \"serve dist -p 3003\"",
+    "go": "concurrently \"pnpm dev\" \"serve dist -p 3003\"",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist"
