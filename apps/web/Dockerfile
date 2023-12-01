@@ -1,5 +1,5 @@
 # Installer stage: Building the application
-FROM node:18-alpine AS installer
+FROM node:20-alpine AS installer
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install Supercronic (cron for containers without super user privileges)
@@ -29,7 +29,7 @@ RUN pnpm post-install --filter=web...
 RUN pnpm turbo run build --filter=web...
 
 # Runner stage: Setting up the runtime environment
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 RUN apk add --no-cache curl \
