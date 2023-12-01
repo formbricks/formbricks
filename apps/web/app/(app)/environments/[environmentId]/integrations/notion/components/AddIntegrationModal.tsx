@@ -1,26 +1,26 @@
-import React, { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import NotionLogo from "@/images/notion.png";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon, PlusIcon, XMarkIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
-import { Modal } from "@formbricks/ui/Modal";
-import { Label } from "@formbricks/ui/Label";
-import { Button } from "@formbricks/ui/Button";
 import {
   ERRORS,
   TYPE_MAPPING,
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
+import NotionLogo from "@/images/notion.png";
 import { TIntegrationInput } from "@formbricks/types/integration";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
+import { ArrowPathIcon, ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import Image from "next/image";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -293,7 +293,7 @@ export default function AddIntegrationModal({
           <div className="flex w-full items-center">
             <div className="w-[340px] max-w-full">
               <DropdownSelector
-                placeholder="Select a formbricks question"
+                placeholder="Select a survey question"
                 items={filteredQuestionItems}
                 selectedItem={mapping?.[idx]?.question}
                 setSelectedItem={(item) => {
