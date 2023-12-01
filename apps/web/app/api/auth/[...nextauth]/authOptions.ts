@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyToken } from "@formbricks/lib/jwt";
 import { getProfileByEmail } from "@formbricks/lib/profile/service";
+import Providers from "next-auth/providers";
 import {
   TIntegration,
   TSlackConfig,
@@ -17,6 +18,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import SlackProvider from "next-auth/providers/slack";
+import { cn } from "@formbricks/lib/cn";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -143,7 +145,83 @@ export const authOptions: NextAuthOptions = {
       clientId: env.SLACK_CLIENT_ID as string,
       clientSecret: env.SLACK_CLIENT_SECRET as string,
       allowDangerousEmailAccountLinking: true,
-      idToken: true,
+      wellKnown: "",
+      token: {
+        async request(context) {
+          const formData = new URLSearchParams();
+          formData.append("code", context.params.code ?? "");
+          formData.append("client_id", context.provider.clientId ?? "");
+          formData.append("client_secret", context.provider.clientSecret ?? "");
+
+          try {
+            const response = await fetch("https://slack.com/api/oauth.access", {
+              method: "POST",
+              body: formData,
+            });
+
+            const data = await response.json();
+            return {
+              tokens: {
+                access_token: data.access_token,
+                refresh_token: data.refresh_token,
+                expires_at: data.expires_in,
+                user_id: data.user_id,
+                team_id: data.team_id,
+                team_name: data.team_name,
+              },
+            };
+          } catch (error) {
+            throw error;
+          }
+        },
+      },
+      userinfo: {
+        async request(context) {
+          const formData = new URLSearchParams();
+          formData.append("user", context.tokens.user_id ?? "");
+
+          const response = await fetch(`https://slack.com/api/users.info`, {
+            method: "POST",
+            body: formData,
+            headers: {
+              Authorization: `Bearer ${context.tokens.access_token}`,
+            },
+          });
+
+          console.log(response);
+
+          const data = await response.json();
+
+          console.log("============responsetype===============");
+          // console.log(data)
+
+          // if (!response.ok) {
+          //   throw new Error(`HTTP error! status: ${response.status}`);
+          // }
+
+          console.log(data);
+
+          // Slack APIs always respond with an 'ok' field in the JSON response
+          // If 'ok' is false, there's an error. Here we throw an error if 'ok' is false.
+          if (!data.ok) {
+            throw new Error(data.error);
+          }
+
+          return {
+            name: data.user.name,
+            sub: data.user.id,
+            email: data.user.profile.email,
+            image: data.user.profile.image_original,
+          };
+        },
+      },
+      authorization: {
+        url: "https://slack.com/oauth/authorize",
+        params: {
+          scope: "channels:read,groups:read,mpim:read,im:read,users:read,users.profile:read,users:read.email",
+        },
+      },
+      idToken: false,
     }),
   ],
   callbacks: {
@@ -202,6 +280,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: any) {
+      console.log("===================signin=======================");
       console.log(user, account);
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
@@ -407,3 +486,11 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/login", // Error code passed in query string as ?error=
   },
 };
+
+// Nahi Chalta hai
+// https://slack.com/openid/connect/authorize?client_id=5781516181558.6018565403344&scope=channels:read,groups:read,mpim:read,im:read&response_type=code&state=2XTLDiWfqyVmAXCzJPRWscqChn1frWXTojso-dTtW9o
+
+// https://slack.com/openid/connect/authorize?client_id=5781516181558.6018565403344&user_scope=channels:read,groups:read,mpim:read,im:read&response_type=code&redirect_uri=https://localhost:3000/api/auth/callback/slack
+
+// Chalta Hai
+// https://gitpodslackte-fow3293.slack.com/oauth?client_id=5781516181558.6018565403344&scope=channels:read,groups:read,mpim:read,im:read&redirect_uri=&state=&granular_bot_scope=1&single_channel=0&install_redirect=&tracked=1&team=
