@@ -1,10 +1,7 @@
 import { Fence } from "@/components/shared/Fence";
+import {generateManagementApiMetadata} from "@/lib/utils"
 
-export const metadata = {
-  title: "Formbricks Responses API Documentation - Manage Your Survey Data Seamlessly",
-  description:
-    "Unlock the full potential of Formbricks' Responses API. From fetching to updating survey responses, our comprehensive guide helps you integrate and manage survey data efficiently without compromising security. Ideal for client-side interactions.",
-};
+export const metadata = generateManagementApiMetadata("Responses",["Fetch","Delete"])
 
 #### Management API
 

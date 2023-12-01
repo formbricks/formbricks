@@ -128,6 +128,7 @@ export const renderWidget = (survey: TSurvey) => {
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
+          ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
         });
       },
