@@ -1,7 +1,6 @@
 "use client";
 
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
-import PreviewSurveyBgMobile from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurveyBgMobile";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import MediaBackground from "@/app/s/[surveyId]/components/MediaBackground";
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -206,7 +205,7 @@ export default function PreviewSurvey({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
-            <PreviewSurveyBgMobile survey={survey} ContentRef={ContentRef}>
+            <MediaBackground survey={survey} ContentRef={ContentRef} isMobilePreview>
               {/* below element is use to create notch for the mobile device mockup   */}
               <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
               {previewType === "modal" ? (
@@ -235,7 +234,7 @@ export default function PreviewSurvey({
                   />
                 </div>
               )}
-            </PreviewSurveyBgMobile>
+            </MediaBackground>
           </>
         )}
         {previewMode === "desktop" && (
