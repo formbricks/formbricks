@@ -7,15 +7,18 @@ import { cn, shuffleQuestions } from "@/lib/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
+import { TResponseTtc } from "@formbricks/types/responses";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -26,7 +29,13 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttc,
+  setTtc,
 }: MultipleChoiceSingleProps) {
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
   const [otherSelected, setOtherSelected] = useState(
     !!value && !question.choices.find((c) => c.label === value)
   ); // initially set to true if value is not in choices
@@ -58,7 +67,9 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -78,8 +89,10 @@ export default function MultipleChoiceSingleQuestion({
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
                     onChange({ [question.id]: choice.label });
+                    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                    setTtc(updatedTtcObj);
                     setTimeout(() => {
-                      onSubmit({ [question.id]: choice.label });
+                      onSubmit({ [question.id]: choice.label }, updatedTtcObj);
                     }, 350);
                   }
                 }}
@@ -157,8 +170,10 @@ export default function MultipleChoiceSingleQuestion({
                     }}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
+                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                        setTtc(updatedTtcObj);
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value });
+                          onSubmit({ [question.id]: value }, updatedTtcObj);
                         }, 100);
                       }
                     }}
@@ -178,7 +193,11 @@ export default function MultipleChoiceSingleQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             tabIndex={questionChoices.length + 3}
-            onClick={onBack}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onBack();
+            }}
           />
         )}
         <div></div>

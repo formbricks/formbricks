@@ -1,5 +1,6 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
 import { calculateElementIdx } from "@/lib/utils";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
@@ -10,7 +11,7 @@ interface WelcomeCardProps {
   fileUrl?: string;
   buttonLabel?: string;
   timeToFinish?: boolean;
-  onSubmit: (data: { [x: string]: any }) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurvey;
 }
 
@@ -85,7 +86,7 @@ export default function WelcomeCard({
             isLastQuestion={false}
             focus={true}
             onClick={() => {
-              onSubmit({ ["welcomeCard"]: "clicked" });
+              onSubmit({ ["welcomeCard"]: "clicked" }, {});
             }}
             type="button"
           />
