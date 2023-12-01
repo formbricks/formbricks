@@ -45,6 +45,15 @@ const FAQ_DATA = [
       </>
     ),
   },
+  {
+    question: "How can I change Button texts in my survey?",
+    answer: () => (
+      <>
+        For the question that you want to change the button text, click on the <b>Show Advanced Settings</b>{" "}
+        toggle and change the button label in the <b>Button Text</b> field.
+      </>
+    ),
+  },
 ];
 
 export const faqJsonLdData = FAQ_DATA.map((faq) => ({
