@@ -1,4 +1,4 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useMemo } from "preact/hooks";
 import DatePicker from "react-date-picker";
 
 const CalendarIcon = () => (
@@ -35,6 +35,20 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
+  const formattedDate = useMemo(() => {
+    if (!selectedDate) return "";
+
+    if (format === "M-d-y") {
+      return `${selectedDate?.getMonth() + 1}-${selectedDate?.getDate()}-${selectedDate?.getFullYear()}`;
+    }
+
+    if (format === "d-M-y") {
+      return `${selectedDate?.getDate()}-${selectedDate?.getMonth() + 1}-${selectedDate?.getFullYear()}`;
+    }
+
+    return `${selectedDate?.getFullYear()}-${selectedDate?.getMonth() + 1}-${selectedDate?.getDate()}`;
+  }, [format, selectedDate]);
+
   return (
     <div className="relative h-12">
       {!datePickerOpen && (
@@ -43,15 +57,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
           className="relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
           <div className="flex items-center gap-2">
             <CalendarIcon />
-            <span>
-              {selectedDate
-                ? selectedDate?.toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : "Select a date"}
-            </span>
+            <span>{selectedDate ? formattedDate : "Select a date"}</span>
           </div>
         </div>
       )}

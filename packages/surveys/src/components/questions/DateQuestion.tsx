@@ -45,10 +45,12 @@ export default function DateQuestion({
 
     if (!window.initDatePicker) {
       const script = document.createElement("script");
+
       script.src =
         process.env.NODE_ENV === "production"
           ? "https://unpkg.com/@formbricks/surveys@%5E1.0.0/dist/question-date.umd.js"
           : "http://localhost:3003/question-date.umd.js";
+
       script.async = true;
 
       document.body.appendChild(script);

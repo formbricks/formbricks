@@ -3,9 +3,6 @@ import Question from "./Question.tsx";
 import globalCss from "./styles/globals.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
-// import "react-date-picker/dist/DatePicker.css";
-// import "react-calendar/dist/Calendar.css";
-// import "./styles/globals.css";
 
 declare global {
   interface Window {
@@ -32,5 +29,3 @@ const init = (element: HTMLElement, selectedDate?: Date, format?: string) => {
 };
 
 window.initDatePicker = init;
-
-// render(<Question />, document.getElementById("date-picker-root")!);
