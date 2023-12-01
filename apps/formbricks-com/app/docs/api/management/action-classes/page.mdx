@@ -1,10 +1,6 @@
 import { Fence } from "@/components/shared/Fence";
-
-export const metadata = {
-  title: "Formbricks People API: Fetch or Create Person Overview",
-  description:
-    "Dive into Formbricks' People API within the Public Client API suite, designed to work without authentication requirements. Seamlessly fetch or create a person by their userId and environmentId, optimizing client-side interactions while maintaining data privacy.",
-};
+import {generateManagementApiMetadata} from "@/lib/utils"
+export const metadata = generateManagementApiMetadata("Action Class",["Fetch","Create","Delete"])
 
 #### Management API
 

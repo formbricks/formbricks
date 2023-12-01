@@ -8,6 +8,7 @@ import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -160,12 +161,27 @@ export default function LinkSurvey({
                   ...responseUpdate.data,
                   ...hiddenFieldsRecord,
                 },
+                ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",
                 },
               });
+          }}
+          onFileUpload={async (file: File, params: TUploadFileConfig) => {
+            const api = new FormbricksAPI({
+              apiHost: webAppUrl,
+              environmentId: survey.environmentId,
+            });
+
+            try {
+              const uploadedUrl = await api.client.storage.uploadFile(file, params);
+              return uploadedUrl;
+            } catch (err) {
+              console.error(err);
+              return "";
+            }
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

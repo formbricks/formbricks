@@ -29,7 +29,7 @@ export const renderWidget = (survey: TSurvey) => {
 
   const product = config.get().state.product;
 
-  const surveyState = new SurveyState(survey.id, null, null, config.get().state.person?.id);
+  const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(
     {
@@ -61,8 +61,9 @@ export const renderWidget = (survey: TSurvey) => {
       highlightBorderColor,
       placement,
       onDisplay: async () => {
+        const { userId } = config.get();
         // if config does not have a person, we store the displays in local storage
-        if (!config.get().state.person || !config.get().state.person?.userId) {
+        if (!userId) {
           const localDisplay: TJSStateDisplay = {
             createdAt: new Date(),
             surveyId: survey.id,
@@ -88,7 +89,7 @@ export const renderWidget = (survey: TSurvey) => {
         });
         const res = await api.client.display.create({
           surveyId: survey.id,
-          userId: config.get().state.person?.userId,
+          userId,
         });
         if (!res.ok) {
           throw new Error("Could not create display");
@@ -99,8 +100,9 @@ export const renderWidget = (survey: TSurvey) => {
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
+        const { userId } = config.get();
         // if user is unidentified, update the display in local storage if not already updated
-        if (!config.get().state.person || !config.get().state.person?.userId) {
+        if (!userId) {
           const displays = config.get().state.displays;
           const lastDisplay = displays && displays[displays.length - 1];
           if (!lastDisplay) {
@@ -120,16 +122,25 @@ export const renderWidget = (survey: TSurvey) => {
           }
         }
 
-        if (config.get().state.person && config.get().state.person?.userId) {
-          surveyState.updateUserId(config.get().state.person?.userId!);
+        if (userId) {
+          surveyState.updateUserId(userId);
         }
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
+          ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
         });
       },
       onClose: closeSurvey,
+      onFileUpload: async (file: File, params) => {
+        const api = new FormbricksAPI({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+        });
+
+        return await api.client.storage.uploadFile(file, params);
+      },
     });
   }, survey.delay * 1000);
 };
@@ -140,7 +151,7 @@ export const closeSurvey = async (): Promise<void> => {
   addWidgetContainer();
 
   // if unidentified user, refilter the surveys
-  if (!config.get().state.person || !config.get().state.person?.userId) {
+  if (!config.get().userId) {
     const state = config.get().state;
     const updatedState = filterPublicSurveys(state);
     config.update({
@@ -156,7 +167,7 @@ export const closeSurvey = async (): Promise<void> => {
     await sync({
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
-      userId: config.get().state?.person?.userId,
+      userId: config.get().userId,
     });
     surveyRunning = false;
   } catch (e) {

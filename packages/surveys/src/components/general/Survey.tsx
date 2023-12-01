@@ -3,12 +3,12 @@ import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
-import type { TResponseData } from "@formbricks/types/responses";
+import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
-import ProgressBar from "./ProgressBar";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
+import ProgressBar from "@/components/general/ProgressBar";
 
 export function Survey({
   survey,
@@ -21,6 +21,7 @@ export function Survey({
   onFinished = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  onFileUpload,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -31,8 +32,10 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const [ttc, setTtc] = useState<TResponseTtc>({});
 
   useEffect(() => {
+    if (activeQuestionId === "hidden") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
       setQuestionId(survey?.questions[0]?.id);
       return;
@@ -51,7 +54,7 @@ export function Survey({
     // call onDisplay when component is mounted
     onDisplay();
     if (prefillResponseData) {
-      onSubmit(prefillResponseData, true);
+      onSubmit(prefillResponseData, {}, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -88,11 +91,12 @@ export function Survey({
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData, isFromPrefilling: Boolean = false) => {
+  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFromPrefilling: Boolean = false) => {
+    const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
     const finished = nextQuestionId === "end";
-    onResponse({ data: responseData, finished });
+    onResponse({ data: responseData, ttc, finished });
     if (finished) {
       onFinished();
     }
@@ -146,11 +150,15 @@ export function Survey({
       return (
         currQues && (
           <QuestionConditional
+            surveyId={survey.id}
             question={currQues}
             value={responseData[currQues.id]}
             onChange={onChange}
             onSubmit={onSubmit}
             onBack={onBack}
+            ttc={ttc}
+            setTtc={setTtc}
+            onFileUpload={onFileUpload}
             isFirstQuestion={
               history && prefillResponseData
                 ? history[history.length - 1] === survey.questions[0].id

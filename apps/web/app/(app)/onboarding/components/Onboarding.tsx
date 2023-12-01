@@ -17,7 +17,7 @@ import Role from "./Role";
 const MAX_STEPS = 6;
 
 interface OnboardingProps {
-  session: Session | null;
+  session: Session;
   environmentId: string;
   profile: TProfile;
   product: TProduct;
@@ -88,7 +88,12 @@ export default function Onboarding({ session, environmentId, profile, product }:
           <Greeting next={next} skip={doLater} name={profile.name ? profile.name : ""} session={session} />
         )}
         {currentStep === 2 && (
-          <Role next={next} skip={skipStep} setFormbricksResponseId={setFormbricksResponseId} />
+          <Role
+            next={next}
+            skip={skipStep}
+            setFormbricksResponseId={setFormbricksResponseId}
+            session={session}
+          />
         )}
         {currentStep === 3 && (
           <Objective

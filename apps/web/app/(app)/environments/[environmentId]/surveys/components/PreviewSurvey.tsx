@@ -5,6 +5,7 @@ import TabOption from "@/app/(app)/environments/[environmentId]/surveys/componen
 import MediaBackground from "@/app/s/[surveyId]/components/MediaBackground";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -27,6 +28,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
 let surveyNameTemp;
@@ -64,6 +66,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
+  onFileUpload,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -221,6 +224,7 @@ export default function PreviewSurvey({
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    onFileUpload={onFileUpload}
                   />
                 </Modal>
               ) : (
@@ -231,6 +235,7 @@ export default function PreviewSurvey({
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
+                    onFileUpload={onFileUpload}
                   />
                 </div>
               )}
@@ -285,6 +290,7 @@ export default function PreviewSurvey({
                   isBrandingEnabled={product.linkSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
+                  onFileUpload={onFileUpload}
                 />
               </Modal>
             ) : (
@@ -297,6 +303,7 @@ export default function PreviewSurvey({
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    onFileUpload={onFileUpload}
                   />
                 </div>
               </MediaBackground>
