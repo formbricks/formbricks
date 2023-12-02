@@ -71,13 +71,6 @@ export default function WelcomeCard({
     return `${minutes} minutes`;
   };
 
-  // function getNumberOfResponses() {
-  //   if (survey.responseCount && survey.responseCount > 10) {
-  //     return `(${survey.responseCount})`;
-  //   }
-  //   return ``;
-  // }
-
   return (
     <div>
       {fileUrl && (
@@ -102,19 +95,17 @@ export default function WelcomeCard({
           <div className="text-subheading flex items-center text-xs">Press Enter ↵</div>
         </div>
       </div>
-      {/* {timeToFinish && (
+      {timeToFinish && (
         <div className="item-center mt-4 flex text-slate-500">
           <TimerIcon />
-          <p className="text-xs">
-            Takes {calculateTimeToComplete()}
-          </p>
+          <p className="text-xs">Takes {calculateTimeToComplete()}</p>
         </div>
-      )} */}
-      {/* {(numberOfResponses && survey.responseCount && survey.responseCount > 10) && ( */}
-      <div className="item-center mt-4 flex text-slate-500">
-        <p className="text-xs">`(${survey.responseCount})` users completed this survey</p>
-      </div>
-      {/* )} */}
+      )}
+      {numberOfResponses && survey.responseCount && survey.responseCount > 10 && (
+        <div className="item-center mt-4 flex text-slate-500">
+          <p className="text-xs">`(${survey.responseCount})` users completed this survey</p>
+        </div>
+      )}
     </div>
   );
 }
