@@ -18,7 +18,15 @@ export default function RedirectCountDown({ redirectUrl, isRedirectDisabled }: R
           if (prevTime <= 0) {
             clearInterval(interval);
             if (!isRedirectDisabled) {
-              window.location.href = redirectUrl;
+              var currentSearchParams = new URLSearchParams(window.location.search);
+              var redirectUrlObject = new URL(redirectUrl);
+
+              // Use forEach method to iterate over the search parameters
+              currentSearchParams.forEach((value, key) => {
+                redirectUrlObject.searchParams.set(key, value);
+              });
+
+              window.location.href = redirectUrlObject.toString();
             }
             return 0;
           }
