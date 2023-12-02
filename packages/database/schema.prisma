@@ -296,6 +296,8 @@ model Survey {
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
   pin               String?
+  numberOfResponses Boolean @default(false)
+  responseCount     Int?    @default(0)
 
   @@index([environmentId])
 }

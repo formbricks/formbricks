@@ -8,7 +8,7 @@ import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
+import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TResponse } from "@formbricks/types/responses";
 import type { Metadata } from "next";
@@ -89,6 +89,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const suId = searchParams.suId;
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
+  const isNumberOfResponseEnabled = survey?.numberOfResponses;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -167,6 +168,9 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
 
+  if (isNumberOfResponseEnabled) {
+    survey.responseCount = await getResponseCountBySurveyId(survey.id);
+  }
   if (isSurveyPinProtected) {
     return (
       <PinScreen

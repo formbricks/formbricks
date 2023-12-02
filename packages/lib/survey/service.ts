@@ -47,6 +47,8 @@ export const selectSurvey = {
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
+  numberOfResponses: true,
+  responseCount: true,
   triggers: {
     select: {
       actionClass: {

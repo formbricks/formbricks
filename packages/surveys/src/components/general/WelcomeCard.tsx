@@ -69,6 +69,13 @@ export default function WelcomeCard({
     return `${minutes} minutes`;
   };
 
+  function getNumberOfResponses() {
+    if (survey.responseCount && survey.responseCount > 10) {
+      return `(${survey.responseCount})`;
+    }
+    return ``;
+  }
+
   return (
     <div>
       {fileUrl && (
@@ -96,7 +103,9 @@ export default function WelcomeCard({
       {timeToFinish && (
         <div className="item-center mt-4 flex text-slate-500">
           <TimerIcon />
-          <p className="text-xs">Takes {calculateTimeToComplete()}</p>
+          <p className="text-xs">
+            Takes {calculateTimeToComplete()} {getNumberOfResponses()}
+          </p>
         </div>
       )}
     </div>
