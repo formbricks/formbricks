@@ -71,6 +71,14 @@ export default function WelcomeCard({
     return `${minutes} minutes`;
   };
 
+  function getReponseCount() {
+    if (survey.responseCount && survey.responseCount > 10) {
+      return `${survey.responseCount}`;
+    }
+
+    return "";
+  }
+
   return (
     <div>
       {fileUrl && (
@@ -101,9 +109,9 @@ export default function WelcomeCard({
           <p className="text-xs">Takes {calculateTimeToComplete()}</p>
         </div>
       )}
-      {numberOfResponses && survey.responseCount && survey.responseCount > 10 && (
+      {numberOfResponses && (
         <div className="item-center mt-4 flex text-slate-500">
-          <p className="text-xs">({survey.responseCount}) users completed this survey</p>
+          <p className="text-xs">({getReponseCount()}) users completed this survey</p>
         </div>
       )}
     </div>
