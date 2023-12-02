@@ -22,6 +22,7 @@ import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { formatSurveyDateFields } from "./util";
+import { getResponseCountBySurveyId } from "../response/service";
 
 export const selectSurvey = {
   id: true,
@@ -268,6 +269,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
         const transformedSurvey = {
           ...surveyPrisma,
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+          responseCount: await getResponseCountBySurveyId(surveyPrisma.id),
         };
         surveys.push(transformedSurvey);
       }

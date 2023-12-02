@@ -89,7 +89,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const suId = searchParams.suId;
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
-  const isNumberOfResponseEnabled = survey?.numberOfResponses;
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -168,9 +167,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
 
-  if (isNumberOfResponseEnabled) {
-    survey.responseCount = await getResponseCountBySurveyId(survey.id);
-  }
+  survey.responseCount = await getResponseCountBySurveyId(survey.id);
   if (isSurveyPinProtected) {
     return (
       <PinScreen
