@@ -167,8 +167,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
-  const responseCount = await getResponseCountBySurveyId(params.surveyId);
-
+  const responseCount = await getResponseCountBySurveyId(survey.id);
   if (isSurveyPinProtected) {
     return (
       <PinScreen

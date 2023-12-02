@@ -135,7 +135,7 @@ export function Survey({
           onSubmit={onSubmit}
           survey={survey}
           showResponseCount={survey.welcomeCard.showResponseCount}
-          responseCount={responseCount}
+          responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
