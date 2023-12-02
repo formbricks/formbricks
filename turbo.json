@@ -119,7 +119,8 @@
         "S3_SECRET_KEY",
         "S3_REGION",
         "S3_BUCKET_NAME",
-        "ENTERPRISE_LICENSE_KEY"
+        "ENTERPRISE_LICENSE_KEY",
+        "GTM_ID"
       ]
     },
     "post-install": {

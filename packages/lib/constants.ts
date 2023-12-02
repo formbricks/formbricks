@@ -87,3 +87,6 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+// Google Tag Manager
+export const GTM_ID = env.GTM_ID;

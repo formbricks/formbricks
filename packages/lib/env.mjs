@@ -67,6 +67,7 @@ export const env = createEnv({
     AZUREAD_TENANT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    GTM_ID: z.string().optional(),
   },
 
   /*
@@ -143,5 +144,6 @@ export const env = createEnv({
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    GTM_ID: process.env.GTM_ID,
   },
 });
