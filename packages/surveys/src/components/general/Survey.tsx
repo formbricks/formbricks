@@ -22,6 +22,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   onFileUpload,
+  responseCount,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -33,7 +34,6 @@ export function Survey({
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [ttc, setTtc] = useState<TResponseTtc>({});
-
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
@@ -134,6 +134,8 @@ export function Survey({
           timeToFinish={survey.welcomeCard.timeToFinish}
           onSubmit={onSubmit}
           survey={survey}
+          showResponseCount={survey.welcomeCard.showResponseCount}
+          responseCount={responseCount}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {

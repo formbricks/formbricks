@@ -25,6 +25,7 @@ interface LinkSurveyProps {
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
+  responseCount?: number;
 }
 
 export default function LinkSurvey({
@@ -36,6 +37,7 @@ export default function LinkSurvey({
   singleUseId,
   singleUseResponse,
   webAppUrl,
+  responseCount,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -187,6 +189,7 @@ export default function LinkSurvey({
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
+          responseCount={responseCount}
         />
       </ContentWrapper>
     </>
