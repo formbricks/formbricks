@@ -132,6 +132,7 @@ export function Survey({
           fileUrl={survey.welcomeCard.fileUrl}
           buttonLabel={survey.welcomeCard.buttonLabel}
           timeToFinish={survey.welcomeCard.timeToFinish}
+          numberOfResponses={survey.welcomeCard.numberOfResponses}
           onSubmit={onSubmit}
           survey={survey}
         />

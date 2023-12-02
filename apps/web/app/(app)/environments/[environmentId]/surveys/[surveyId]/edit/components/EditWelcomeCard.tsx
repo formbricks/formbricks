@@ -38,6 +38,7 @@ export default function EditWelcomeCard({
   };
 
   const updateSurvey = (data) => {
+    console.log("data", data);
     setLocalSurvey({
       ...localSurvey,
       welcomeCard: {
@@ -174,6 +175,26 @@ export default function EditWelcomeCard({
                 </Label>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   Display an estimate of completion time for survey
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 flex items-center">
+              <div className="mr-2">
+                <Switch
+                  id="numberOfResponses"
+                  name="numberOfResponses"
+                  checked={localSurvey?.welcomeCard?.numberOfResponses}
+                  onCheckedChange={() =>
+                    updateSurvey({ numberOfResponses: !localSurvey.welcomeCard.numberOfResponses })
+                  }
+                />
+              </div>
+              <div className="flex-column">
+                <Label htmlFor="numberOfResponses" className="">
+                  No Of Responses
+                </Label>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Display the number of Responses to Respondents
                 </div>
               </div>
             </div>

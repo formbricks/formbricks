@@ -11,6 +11,7 @@ interface WelcomeCardProps {
   fileUrl?: string;
   buttonLabel?: string;
   timeToFinish?: boolean;
+  numberOfResponses?: boolean;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurvey;
 }
@@ -38,6 +39,7 @@ export default function WelcomeCard({
   fileUrl,
   buttonLabel,
   timeToFinish,
+  numberOfResponses,
   onSubmit,
   survey,
 }: WelcomeCardProps) {
@@ -69,12 +71,12 @@ export default function WelcomeCard({
     return `${minutes} minutes`;
   };
 
-  function getNumberOfResponses() {
-    if (survey.responseCount && survey.responseCount > 10) {
-      return `(${survey.responseCount})`;
-    }
-    return ``;
-  }
+  // function getNumberOfResponses() {
+  //   if (survey.responseCount && survey.responseCount > 10) {
+  //     return `(${survey.responseCount})`;
+  //   }
+  //   return ``;
+  // }
 
   return (
     <div>
@@ -100,14 +102,19 @@ export default function WelcomeCard({
           <div className="text-subheading flex items-center text-xs">Press Enter ↵</div>
         </div>
       </div>
-      {timeToFinish && (
+      {/* {timeToFinish && (
         <div className="item-center mt-4 flex text-slate-500">
           <TimerIcon />
           <p className="text-xs">
-            Takes {calculateTimeToComplete()} {getNumberOfResponses()}
+            Takes {calculateTimeToComplete()}
           </p>
         </div>
-      )}
+      )} */}
+      {/* {(numberOfResponses && survey.responseCount && survey.responseCount > 10) && ( */}
+      <div className="item-center mt-4 flex text-slate-500">
+        <p className="text-xs">`(${survey.responseCount})` users completed this survey</p>
+      </div>
+      {/* )} */}
     </div>
   );
 }
