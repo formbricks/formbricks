@@ -103,7 +103,7 @@ export default function WelcomeCard({
       )}
       {numberOfResponses && survey.responseCount && survey.responseCount > 10 && (
         <div className="item-center mt-4 flex text-slate-500">
-          <p className="text-xs">`(${survey.responseCount})` users completed this survey</p>
+          <p className="text-xs">({survey.responseCount}) users completed this survey</p>
         </div>
       )}
     </div>
