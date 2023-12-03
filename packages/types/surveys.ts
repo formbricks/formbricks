@@ -27,6 +27,7 @@ export const ZSurveyWelcomeCard = z.object({
   fileUrl: z.string().optional(),
   buttonLabel: z.string().optional(),
   timeToFinish: z.boolean().default(true),
+  showResponseCount: z.boolean().default(false),
 });
 
 export const ZSurveyHiddenFields = z.object({
@@ -382,6 +383,7 @@ export const ZSurvey = z.object({
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   pin: z.string().nullable().optional(),
+  responseCount: z.number(),
 });
 
 export const ZSurveyInput = z.object({

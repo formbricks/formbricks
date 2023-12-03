@@ -177,6 +177,26 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
+            <div className="mt-8 flex items-center">
+              <div className="mr-2">
+                <Switch
+                  id="showResponseCount"
+                  name="showResponseCount"
+                  checked={localSurvey?.welcomeCard?.showResponseCount}
+                  onCheckedChange={() =>
+                    updateSurvey({ showResponseCount: !localSurvey.welcomeCard.showResponseCount })
+                  }
+                />
+              </div>
+              <div className="flex-column">
+                <Label htmlFor="showResponseCount" className="">
+                  Show Number of Responses
+                </Label>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Display the number of responses on the survey
+                </div>
+              </div>
+            </div>
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

@@ -122,6 +122,11 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       const transformedSurvey = {
         ...surveyPrisma,
+        responseCount: await prisma.response.count({
+          where: {
+            surveyId: surveyId,
+          },
+        }),
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
 
@@ -172,6 +177,17 @@ export const getSurveysByAttributeClassId = async (
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
+          responseCount: await prisma.response.count({
+            where: {
+              survey: {
+                attributeFilters: {
+                  some: {
+                    attributeClassId,
+                  },
+                },
+              },
+            },
+          }),
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
@@ -217,6 +233,19 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
+          responseCount: await prisma.response.count({
+            where: {
+              survey: {
+                triggers: {
+                  some: {
+                    actionClass: {
+                      id: actionClassId,
+                    },
+                  },
+                },
+              },
+            },
+          }),
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
@@ -265,6 +294,11 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
+          responseCount: await prisma.response.count({
+            where: {
+              surveyId: environmentId,
+            },
+          }),
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
@@ -430,6 +464,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     ...data,
   };
 
+  delete data.responseCount;
+
   try {
     const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
@@ -438,6 +474,11 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
+      responseCount: await prisma.response.count({
+        where: {
+          surveyId: surveyId,
+        },
+      }),
       triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
       attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
     };
@@ -526,6 +567,11 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 
   const transformedSurvey = {
     ...survey,
+    responseCount: await prisma.response.count({
+      where: {
+        surveyId: survey.id,
+      },
+    }),
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
