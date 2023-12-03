@@ -3,12 +3,10 @@ import ArrowSticker from "@/images/formtribe/arrow-stickers.png";
 import DeputyBadge from "@/images/formtribe/deputy-batch.png";
 import HoodieSticker from "@/images/formtribe/hoodie-stickers.png";
 import LegendBadge from "@/images/formtribe/legend-batch.png";
-import PHLogo from "@/images/formtribe/ph-logo.png";
 import PrimeBadge from "@/images/formtribe/prime-batch.png";
 import RookieBadge from "@/images/formtribe/rookie-batch.png";
 import HallOfFame from "@/pages/community/HallOfFame";
 import Roadmap from "@/pages/community/Roadmap";
-import { Button } from "@formbricks/ui/Button";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import Image from "next/image";
@@ -19,7 +17,7 @@ import LayoutTribe from "./LayoutTribe";
 import LevelCard from "./LevelCard";
 import LevelsGrid from "./LevelsGrid";
 
-const SideQuests = [
+/* const SideQuests = [
   {
     points: "Spread the Word Tweet (100 Points)",
     quest: "Tweet “🧱🚀” on the day of the ProductHunt launch to spread the word.",
@@ -75,7 +73,7 @@ const SideQuests = [
     quest: "Complete all side quests.",
     proof: "All quests marked as completed.",
   },
-];
+]; */
 
 const LevelsData = [
   {
@@ -485,7 +483,7 @@ export default function FormTribeHackathon() {
       <div
         className="mb-12 flex flex-col items-center justify-center overflow-clip text-center lg:mb-40"
         id="levels">
-        <LevelsGrid />
+        <LevelsGrid contributors={members} />
         <div className="py-16 md:py-24">
           <h2 className="mt-10 px-8 text-2xl font-bold text-slate-100 sm:text-3xl md:text-4xl">
             <span className="xl:inline">Write Code, Level Up and Unlock Benefits</span>
@@ -706,21 +704,6 @@ export default function FormTribeHackathon() {
   );
 }
 
-const SectionHeading = ({ title, descriptionLine1, descriptionLine2, id }) => {
-  return (
-    <div id={id} className="py-16 md:py-24">
-      <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
-        <span className="xl:inline">{title}</span>
-      </h2>
-      <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-600 sm:text-lg md:mt-6 md:text-xl">
-        {descriptionLine1}
-        <br></br>
-        {descriptionLine2}
-      </p>
-    </div>
-  );
-};
-
 const ValueCard = ({ title, description, emoji }) => {
   return (
     <div className="rounded-xl bg-slate-800 p-3 text-left">
@@ -732,62 +715,6 @@ const ValueCard = ({ title, description, emoji }) => {
           <span className="xl:inline">{title}</span>
         </h2>
         <p className=" leading-6 text-slate-400">{description}</p>
-      </div>
-    </div>
-  );
-};
-
-const Breaker = ({ icon, title }) => {
-  return (
-    <div id="join">
-      <div className="rounded-lg-12 mt-12 rounded-lg bg-slate-200 px-4 py-12 shadow-inner sm:mt-20 sm:grid sm:grid-cols-6">
-        <div className="col-span-2 mr-8 flex items-center justify-center sm:justify-end">
-          <div className="h-24 w-24 rounded-full bg-white"></div>
-          <div className="absolute -mt-4 animate-bounce text-[6rem]">{icon}</div>
-        </div>
-        <div className="col-span-4">
-          <h3 className="mt-8 text-xl font-bold sm:mt-0">{title}</h3>
-          <p className="mb-4 mt-1 text-slate-500">Get notified on launch plus a weekly update:</p>
-          <form method="post" action="https://listmonk.formbricks.com/subscription/form">
-            <div className="hidden">
-              <input type="hidden" name="nonce" />
-              <input
-                id="5d65b"
-                type="checkbox"
-                name="l"
-                checked
-                value="5d65bc6e-e685-4694-8c8e-9b20d7be6c40"
-              />
-            </div>
-            <div className="mt-2 sm:flex">
-              <div className="">
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Your email"
-                  aria-placeholder="your-email"
-                  required
-                  className="block h-12 w-full rounded-lg border-0 px-3 py-2 text-sm text-slate-900 sm:mr-4 sm:h-full sm:w-64"
-                />
-              </div>
-              <Button
-                variant="highlight"
-                type="submit"
-                className="mt-2 inline w-full justify-center bg-gradient-to-br from-[#032E1E] via-[#032E1E] to-[#013C27] text-white sm:ml-2 sm:mt-0 sm:w-40 ">
-                Join the Tribe
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <div className="mt-4 flex items-center justify-center">
-        <Image src={PHLogo} alt="ph-logo" className="mr-2 h-8 w-8" />
-        <a
-          href="https://www.producthunt.com/posts/formbricks"
-          target="_blank"
-          className="text-sm font-semibold text-[#ff6154]">
-          Get notified on Product Hunt.
-        </a>
       </div>
     </div>
   );

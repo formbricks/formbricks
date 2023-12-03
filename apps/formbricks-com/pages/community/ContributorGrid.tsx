@@ -2,10 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa6";
 
-const GridComponent = ({ contributors }) => {
+type Contributor = {
+  githubId: string;
+  imgUrl: string;
+  name: string;
+};
+
+type GridComponentProps = {
+  contributors: Contributor[];
+};
+
+const ContributorGrid: React.FC<GridComponentProps> = ({ contributors }) => {
   return (
     <div className="-mb-64 mt-24 grid scale-105 grid-cols-4 gap-6 md:-mb-32 md:grid-cols-8">
-      {contributors.map((contributor, index) => (
+      {contributors?.map((contributor, index) => (
         <div key={index} className={`col-span-1 ${index % 2 !== 0 ? "-mt-8" : ""}`}>
           <Link
             href={`https://github.com/${contributor.githubId}`}
@@ -31,4 +41,4 @@ const GridComponent = ({ contributors }) => {
   );
 };
 
-export default GridComponent;
+export default ContributorGrid;

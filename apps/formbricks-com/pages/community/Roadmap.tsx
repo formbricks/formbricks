@@ -22,7 +22,7 @@ interface RoadmapProps {
 export const Roadmap: React.FC<RoadmapProps> = ({ data }) => {
   return (
     <div className="px-6 text-left">
-      {data.map((eventblock) => (
+      {data?.map((eventblock) => (
         <div key={eventblock.id} className="relative mb-6 border-l-2 border-slate-400 pb-2 pl-12">
           <h3 className="my-4 hidden pt-2 font-semibold text-slate-800 md:block">
             {eventblock.description} • <span className="font-normal">{eventblock.period}</span>
@@ -30,7 +30,7 @@ export const Roadmap: React.FC<RoadmapProps> = ({ data }) => {
           <h3 className="my-4 block pt-2 font-semibold text-slate-800 md:hidden">
             {eventblock.description} <br></br> <span className="font-normal">{eventblock.period}</span>
           </h3>
-          {eventblock.events.map((event) => (
+          {eventblock?.events?.map((event) => (
             <div key={event.name}>
               {event.link ? (
                 <Link

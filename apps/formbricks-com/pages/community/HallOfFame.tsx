@@ -24,7 +24,7 @@ interface BadgeSectionProps {
 }
 
 const BadgeSection: React.FC<BadgeSectionProps> = ({ badgeImage, level, members, className }) => {
-  const filteredMembers = members.filter((member) => member.level === level);
+  const filteredMembers = members?.filter((member) => member.level === level);
 
   return (
     <div className="group flex flex-col items-center space-y-6 pt-12 md:flex-row md:space-x-10 md:px-4">
@@ -34,8 +34,8 @@ const BadgeSection: React.FC<BadgeSectionProps> = ({ badgeImage, level, members,
         className="h-32 w-32 transition-all delay-100 duration-300 group-hover:-rotate-6 group-hover:scale-110"
       />
       <div className="grid w-full gap-2 md:grid-cols-3">
-        {filteredMembers.length > 0 ? (
-          filteredMembers.map((member) => (
+        {filteredMembers?.length > 0 ? (
+          filteredMembers?.map((member) => (
             <Link
               key={member.githubId}
               href={`https://github.com/formbricks/formbricks/pulls?q=is:pr+author:${member.githubId}`}
