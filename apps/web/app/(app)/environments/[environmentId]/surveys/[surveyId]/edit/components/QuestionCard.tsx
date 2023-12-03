@@ -35,6 +35,7 @@ import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { TProduct } from "@formbricks/types/product";
+import MeetScheduleQuestionForm from "./MeetScheduleQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -247,6 +248,14 @@ export default function QuestionCard({
                 <FileUploadQuestionForm
                   localSurvey={localSurvey}
                   product={product}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.MeetSchedule ? (
+                <MeetScheduleQuestionForm
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

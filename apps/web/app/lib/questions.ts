@@ -9,6 +9,7 @@ import {
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -141,6 +142,16 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: "File Upload",
       allowMultipleFiles: false,
+    },
+  },
+  {
+    id: QuestionId.MeetSchedule,
+    label: "Meet Schedule",
+    description: "Allow respondents to schedule a meet",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: "Meet Schedule",
+      meetingLink: "johannes",
     },
   },
 ];

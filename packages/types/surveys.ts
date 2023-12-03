@@ -18,6 +18,7 @@ export enum TSurveyQuestionType {
   Rating = "rating",
   Consent = "consent",
   PictureSelection = "pictureSelection",
+  MeetSchedule = "meetSchedule",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -186,6 +187,11 @@ const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+const ZSurveyMeetScheduleLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["submitted", "skipped", "accepted"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
@@ -196,6 +202,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyRatingLogic,
   ZSurveyPictureSelectionLogic,
   ZSurveyFileUploadLogic,
+  ZSurveyMeetScheduleLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -317,6 +324,12 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
 });
 
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
+export const ZSurveyMeetScheduleQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.MeetSchedule),
+  meetingLink: z.string(),
+});
+
+export type TSurveyMeetScheduleQuestion = z.infer<typeof ZSurveyMeetScheduleQuestion>;
 
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
@@ -328,6 +341,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyRatingQuestion,
   ZSurveyPictureSelectionQuestion,
   ZSurveyFileUploadQuestion,
+  ZSurveyMeetScheduleQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -423,6 +437,7 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("rating"),
   z.literal("consent"),
   z.literal("pictureSelection"),
+  z.literal("meetSchedule"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;

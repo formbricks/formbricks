@@ -9,6 +9,7 @@ import PictureSelectionQuestion from "@/components/questions/PictureSelectionQue
 import RatingQuestion from "@/components/questions/RatingQuestion";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import MeetScheduleQuestion from "@/components/questions/MeetScheduleQuestion";
 import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 interface QuestionConditionalProps {
@@ -148,6 +149,18 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       onFileUpload={onFileUpload}
+      ttc={ttc}
+      setTtc={setTtc}
+    />
+  ) : question.type === TSurveyQuestionType.MeetSchedule ? (
+    <MeetScheduleQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       ttc={ttc}
       setTtc={setTtc}
     />

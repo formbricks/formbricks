@@ -283,6 +283,21 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
+    case TSurveyQuestionType.MeetSchedule:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {firstQuestion.subheader}
+          </Text>
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+            You have been invited to schedule a meet via cal.com Open Survey to continue{" "}
+          </Text>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
   }
 };
 

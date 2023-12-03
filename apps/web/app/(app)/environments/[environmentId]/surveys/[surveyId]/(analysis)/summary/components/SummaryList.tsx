@@ -5,6 +5,7 @@ import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type {
   TSurveyFileUploadQuestion,
+  TSurveyMeetScheduleQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionSummary,
 } from "@formbricks/types/surveys";
@@ -28,6 +29,7 @@ import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
 import FileUploadSummary from "./FileUploadSummary";
 import PictureChoiceSummary from "./PictureChoiceSummary";
+import MeetScheduleSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/MeetScheduleSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;
@@ -143,6 +145,15 @@ export default function SummaryList({ environment, survey, responses, responsesP
                     questionSummary={
                       questionSummary as TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>
                     }
+                  />
+                );
+              }
+              if (questionSummary.question.type === TSurveyQuestionType.MeetSchedule) {
+                return (
+                  <MeetScheduleSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyMeetScheduleQuestion>}
+                    environmentId={environment.id}
                   />
                 );
               }
