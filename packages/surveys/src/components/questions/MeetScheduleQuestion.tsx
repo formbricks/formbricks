@@ -34,6 +34,7 @@ export default function MeetScheduleQuestion({
   setTtc,
 }: MeetScheduleQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const [bookingStatus, setBookingStatus] = useState(value);
   const onSuccessfulBooking = useCallback(() => {
