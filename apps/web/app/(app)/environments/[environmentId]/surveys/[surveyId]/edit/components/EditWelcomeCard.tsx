@@ -193,7 +193,7 @@ export default function EditWelcomeCard({
                   Show Number of Responses
                 </Label>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Display the number of responses on the survey
+                  Display the number of responses on the survey (if 10 or more)
                 </div>
               </div>
             </div>

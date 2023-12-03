@@ -20,6 +20,7 @@ interface SurveyProps {
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
+  previewMode?: boolean;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -42,6 +43,7 @@ export const SurveyInline = ({
   prefillResponseData,
   isRedirectDisabled,
   onFileUpload,
+  previewMode = false,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {

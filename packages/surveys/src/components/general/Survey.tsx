@@ -22,6 +22,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   onFileUpload,
+  previewMode = false,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -135,6 +136,7 @@ export function Survey({
           showResponseCount={survey.welcomeCard.showResponseCount}
           onSubmit={onSubmit}
           survey={survey}
+          previewMode={previewMode}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {

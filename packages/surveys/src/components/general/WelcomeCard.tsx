@@ -14,6 +14,7 @@ interface WelcomeCardProps {
   showResponseCount?: boolean;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurvey;
+  previewMode?: boolean;
 }
 
 const TimerIcon = () => {
@@ -58,7 +59,10 @@ export default function WelcomeCard({
   showResponseCount,
   onSubmit,
   survey,
+  previewMode = false,
 }: WelcomeCardProps) {
+  const responseCount = previewMode ? 100 : survey.responseCount;
+
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
     if (idx === 0.5) {
@@ -117,11 +121,11 @@ export default function WelcomeCard({
           <p className="text-xs">Takes {calculateTimeToComplete()}</p>
         </div>
       )}
-      {showResponseCount && survey.responseCount >= 10 && (
+      {showResponseCount && responseCount >= 10 && (
         <div className="item-center mt-2 flex text-slate-500">
           <PersonIcon />
           <p className="text-xs">
-            {survey.responseCount} {survey.responseCount === 1 ? "Response" : "Responses"} so far
+            {responseCount} {responseCount === 1 ? "Response" : "Responses"} so far
           </p>
         </div>
       )}
