@@ -34,6 +34,7 @@ export const ZJsState = z.object({
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
   displays: z.array(ZJSStateDisplay).optional(),
+  responseCount: z.number().optional(),
 });
 
 export type TJsState = z.infer<typeof ZJsState>;

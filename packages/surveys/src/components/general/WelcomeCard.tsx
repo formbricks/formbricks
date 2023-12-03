@@ -97,17 +97,18 @@ export default function WelcomeCard({
           <div className="text-subheading flex items-center text-xs">Press Enter ↵</div>
         </div>
       </div>
-      {timeToFinish && (
-        <div className="item-center mt-4 flex text-slate-500">
-          <TimerIcon />
-          <p className="pt-1 text-xs">
-            Takes {calculateTimeToComplete()}{" "}
-            {showResponseCount && responseCount && responseCount > 9 && (
-              <span>⋅ {responseCount} people responded</span>
-            )}
-          </p>
-        </div>
-      )}
+      {timeToFinish ||
+        (showResponseCount && (
+          <div className="item-center mt-4 flex text-slate-500">
+            {timeToFinish && <TimerIcon />}
+            <p className="pt-1 text-xs">
+              {timeToFinish && <span> Takes {calculateTimeToComplete()} </span>}
+              {showResponseCount && responseCount && responseCount > 9 && (
+                <span>⋅ {responseCount} people responded</span>
+              )}
+            </p>
+          </div>
+        ))}
     </div>
   );
 }

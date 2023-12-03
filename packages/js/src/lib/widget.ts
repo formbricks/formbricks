@@ -28,6 +28,7 @@ export const renderWidget = (survey: TSurvey) => {
   }
 
   const product = config.get().state.product;
+  const responseCount = config.get().state.responseCount;
 
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
@@ -141,6 +142,7 @@ export const renderWidget = (survey: TSurvey) => {
 
         return await api.client.storage.uploadFile(file, params);
       },
+      responseCount: responseCount,
     });
   }, survey.delay * 1000);
 };
