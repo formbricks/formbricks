@@ -1,7 +1,2 @@
 @import "./fonts.css";
 @import "./tailwind.css";
-
-
-.grid-row-padding:nth-child(odd) {
-    padding-top: [desired padding value];
-  }
