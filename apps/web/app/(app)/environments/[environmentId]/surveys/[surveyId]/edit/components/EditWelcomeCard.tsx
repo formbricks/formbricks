@@ -191,10 +191,10 @@ export default function EditWelcomeCard({
               </div>
               <div className="flex-column">
                 <Label htmlFor="numberOfResponses" className="">
-                  No Of Responses
+                  Show Number Of Responses
                 </Label>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Display the number of Responses to Respondents
+                  Display the number of responses
                 </div>
               </div>
             </div>

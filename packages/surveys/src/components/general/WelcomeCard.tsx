@@ -98,12 +98,12 @@ export default function WelcomeCard({
       {timeToFinish && (
         <div className="item-center mt-4 flex text-slate-500">
           <TimerIcon />
-          <p className="text-xs">Takes {calculateTimeToComplete()}</p>
-        </div>
-      )}
-      {numberOfResponses && survey.responseCount! > 10 && (
-        <div className="item-center mt-4 flex text-slate-500">
-          <p className="text-xs">{survey.responseCount} users completed this survey</p>
+          <p className="pt-1 text-xs">
+            Takes {calculateTimeToComplete()}{" "}
+            {numberOfResponses && survey.responseCount! > 9 && (
+              <span>⋅ {survey.responseCount} people responded</span>
+            )}
+          </p>
         </div>
       )}
     </div>
