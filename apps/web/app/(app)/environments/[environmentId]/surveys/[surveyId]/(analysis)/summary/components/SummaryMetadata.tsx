@@ -73,8 +73,6 @@ export default function SummaryMetadata({
     return ttc;
   }, [responses]);
 
-  console.log(ttc);
-
   const totalResponses = responses.length;
 
   return (

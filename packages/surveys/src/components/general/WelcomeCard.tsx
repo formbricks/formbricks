@@ -124,11 +124,11 @@ export default function WelcomeCard({
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
-      ) : showResponseCount && !timeToFinish ? (
+      ) : showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
         <div className="item-center mt-4 flex text-slate-500">
           <UsersIcon />
           <p className="pt-1 text-xs">
-            <span>{responseCount && responseCount > 3 ? `${responseCount} people responded` : ""}</span>
+            <span>{`${responseCount} people responded`}</span>
           </p>
         </div>
       ) : timeToFinish && showResponseCount ? (
