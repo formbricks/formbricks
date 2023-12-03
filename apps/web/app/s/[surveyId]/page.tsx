@@ -15,6 +15,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEmailVerificationStatus } from "./lib/helpers";
 import { ZId } from "@formbricks/types/environment";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 
 interface LinkSurveyPageProps {
   params: {
@@ -166,7 +167,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
-
+  const responseCount = await getResponseCountBySurveyId(survey.id);
   if (isSurveyPinProtected) {
     return (
       <PinScreen
@@ -192,6 +193,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
       webAppUrl={WEBAPP_URL}
+      responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
     />
   );
 }

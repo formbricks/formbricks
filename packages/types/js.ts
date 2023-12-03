@@ -1,8 +1,8 @@
 import z from "zod";
-import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
-import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
+import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
 import { ZProduct } from "./product";
+import { ZSurvey } from "./surveys";
 
 const ZSurveyWithTriggers = ZSurvey.extend({
   triggers: z.array(ZActionClass).or(z.array(z.string())),
