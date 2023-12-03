@@ -493,12 +493,12 @@ export default function FormTribeHackathon() {
             <br className="hidden md:block"></br> Unlock benefits like cash bounties, limited merch and more!
           </p>
         </div>
-        <div className="grid gap-6 px-8 md:grid-cols-4 lg:px-24">
+        <div className="max-w-8xl grid gap-6 px-8 md:grid-cols-4 lg:px-24">
           {LevelsData.map((badge, index) => (
             <LevelCard key={index} {...badge} />
           ))}
         </div>
-        <div className="mt-8 grid grid-cols-3 gap-4 px-56">
+        <div className="max-w-8xl mt-8 grid grid-cols-3 gap-4 px-56">
           <div className="px-8">
             <p className="h-0 text-lg font-bold text-slate-300">+ Sticker Set</p>
             <Image src={ArrowSticker} alt="rookie batch" className="" />
@@ -541,7 +541,7 @@ export default function FormTribeHackathon() {
             Apart from being decent human beings, this is what we value:
           </p>
         </div>
-        <div className="grid gap-x-6 gap-y-6 px-8 md:grid-cols-3 md:px-16">
+        <div className="max-w-8xl grid gap-x-6 gap-y-6 px-8 md:grid-cols-3 md:px-16">
           <ValueCard
             emoji="🧘‍♂️"
             title="Less is more."
@@ -662,7 +662,7 @@ export default function FormTribeHackathon() {
       </div>
 
       {/* Get started */}
-      <div className="mb-40 flex flex-col items-center justify-center text-center">
+      <div className=" mb-40 flex flex-col items-center justify-center text-center">
         <div className="py-16 md:py-24">
           <h2 className="mt-10 text-2xl font-bold text-slate-100 sm:text-3xl md:text-4xl">
             <span className="xl:inline">Get started</span>
@@ -681,24 +681,26 @@ export default function FormTribeHackathon() {
       </div>
 
       {/* FAQ */}
-      <div id="faq" className="bg-gradient-to-br from-white to-slate-100 px-8 pb-24 lg:px-32">
-        <div className="py-16 md:py-24">
-          <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
-            <span className="xl:inline">FAQ</span>
-          </h2>
-          <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-600 sm:text-lg md:mt-6 md:text-xl">
-            Anything unclear?
-          </p>
-        </div>
-
-        {FAQ.map((question) => (
-          <div key={question.question} className="">
-            <div>
-              <h3 className="mt-6 text-lg font-bold text-slate-700">{question.question} </h3>
-              <p className="text-slate-600">{question.answer}</p>
-            </div>
+      <div id="faq" className="bg-gradient-to-br from-white to-slate-100 px-8 pb-24 lg:px-32 ">
+        <div className="max-w-6xl">
+          <div className="py-16 md:py-24 ">
+            <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
+              <span className="xl:inline">FAQ</span>
+            </h2>
+            <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-600 sm:text-lg md:mt-6 md:text-xl">
+              Anything unclear?
+            </p>
           </div>
-        ))}
+
+          {FAQ.map((question) => (
+            <div key={question.question} className="">
+              <div>
+                <h3 className="mt-6 text-lg font-bold text-slate-700">{question.question} </h3>
+                <p className="text-slate-600">{question.answer}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </LayoutTribe>
   );
