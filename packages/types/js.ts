@@ -23,6 +23,7 @@ export const ZJsStateSync = z.object({
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
+  responseCount: z.number().optional(),
 });
 
 export type TJsStateSync = z.infer<typeof ZJsStateSync>;

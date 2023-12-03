@@ -193,7 +193,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
       webAppUrl={WEBAPP_URL}
-      responseCount={responseCount}
+      responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
     />
   );
 }
