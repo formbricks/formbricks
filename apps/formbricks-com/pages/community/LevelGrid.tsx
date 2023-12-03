@@ -20,6 +20,7 @@ const LevelGrid: React.FC<LevelGridProps> = ({ contributors }) => {
           <Link
             href={`https://github.com/${contributor.githubId}`}
             target="_blank"
+            rel="noopener noreferrer"
             className="group transition-transform">
             <div className="bg-brand-dark  mx-auto -mb-12 flex w-fit max-w-[90%] items-center justify-center rounded-t-xl px-4 pb-3 pt-1 text-sm text-slate-100 transition-all group-hover:-mt-12 group-hover:mb-0">
               <FaGithub className="mr-2 h-4 w-4" />
