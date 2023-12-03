@@ -1,4 +1,5 @@
 import FormbricksBranding from "@/components/general/FormbricksBranding";
+import ProgressBar from "@/components/general/ProgressBar";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,6 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
-import ProgressBar from "@/components/general/ProgressBar";
 
 export function Survey({
   survey,
@@ -131,10 +131,8 @@ export function Survey({
           html={survey.welcomeCard.html}
           fileUrl={survey.welcomeCard.fileUrl}
           buttonLabel={survey.welcomeCard.buttonLabel}
-          timeToFinish={survey.welcomeCard.timeToFinish}
           onSubmit={onSubmit}
           survey={survey}
-          showResponseCount={survey.welcomeCard.showResponseCount}
           responseCount={responseCount}
         />
       );

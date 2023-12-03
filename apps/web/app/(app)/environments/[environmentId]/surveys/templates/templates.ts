@@ -23,6 +23,7 @@ const welcomeCardDefault: TSurveyWelcomeCard = {
   headline: "Welcome!",
   html: "Thanks for providing your feedback - let's go!",
   timeToFinish: true,
+  showResponseCount: false,
 };
 
 export const testTemplate: TTemplate = {
@@ -320,6 +321,7 @@ export const testTemplate: TTemplate = {
     welcomeCard: {
       enabled: false,
       timeToFinish: false,
+      showResponseCount: false,
     },
     hiddenFields: {
       enabled: false,

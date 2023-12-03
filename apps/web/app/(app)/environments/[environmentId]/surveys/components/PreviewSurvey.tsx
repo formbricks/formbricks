@@ -3,11 +3,12 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 
-import { SurveyInline } from "@formbricks/ui/Survey";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { SurveyInline } from "@formbricks/ui/Survey";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
   ArrowsPointingInIcon,
@@ -17,7 +18,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { TUploadFileConfig } from "@formbricks/types/storage";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -211,7 +211,6 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
-                    responseCount={100}
                   />
                 </Modal>
               ) : (
@@ -227,7 +226,7 @@ export default function PreviewSurvey({
                         isBrandingEnabled={product.linkSurveyBranding}
                         onActiveQuestionChange={setActiveQuestionId}
                         onFileUpload={onFileUpload}
-                        responseCount={100}
+                        responseCount={42}
                       />
                     </div>
                   </div>
@@ -285,7 +284,6 @@ export default function PreviewSurvey({
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
-                  responseCount={100}
                 />
               </Modal>
             ) : (
@@ -300,7 +298,7 @@ export default function PreviewSurvey({
                       onActiveQuestionChange={setActiveQuestionId}
                       isRedirectDisabled={true}
                       onFileUpload={onFileUpload}
-                      responseCount={100}
+                      responseCount={42}
                     />
                   </div>
                 </div>

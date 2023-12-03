@@ -1,8 +1,8 @@
 import z from "zod";
-import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
-import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
+import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
 import { ZProduct } from "./product";
+import { ZSurvey } from "./surveys";
 
 const ZSurveyWithTriggers = ZSurvey.extend({
   triggers: z.array(ZActionClass).or(z.array(z.string())),
@@ -23,7 +23,6 @@ export const ZJsStateSync = z.object({
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
-  responseCount: z.number().optional(),
 });
 
 export type TJsStateSync = z.infer<typeof ZJsStateSync>;
@@ -34,7 +33,6 @@ export const ZJsState = z.object({
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
   displays: z.array(ZJSStateDisplay).optional(),
-  responseCount: z.number().optional(),
 });
 
 export type TJsState = z.infer<typeof ZJsState>;

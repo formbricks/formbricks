@@ -11,7 +11,6 @@ import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbr
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { NextResponse } from "next/server";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -101,15 +100,12 @@ export async function GET(
       throw new Error("Product not found");
     }
 
-    const responseCount = surveys && surveys[0] && (await getResponseCountBySurveyId(surveys[0].id));
-
     // return state
     const state: TJsStateSync = {
       person: { id: person.id, userId: person.userId },
       surveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
-      responseCount,
     };
 
     return responses.successResponse({ ...state }, true);
