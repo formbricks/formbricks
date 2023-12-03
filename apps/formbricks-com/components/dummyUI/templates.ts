@@ -22,9 +22,9 @@ import {
   VideoTabletAdjustIcon,
 } from "@formbricks/ui/icons";
 
-import { createId } from "@paralleldrive/cuid2";
-import { TTemplate } from "@formbricks/types/templates";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
+import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
   enabled: true,
@@ -54,6 +54,7 @@ export const customSurvey: TTemplate = {
     welcomeCard: {
       enabled: false,
       timeToFinish: false,
+      numberOfResponses: false,
     },
     hiddenFields: {
       enabled: false,
@@ -153,6 +154,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -263,6 +265,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -343,6 +346,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -392,6 +396,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -450,6 +455,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -516,6 +522,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -585,6 +592,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -643,6 +651,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -688,6 +697,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -726,6 +736,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -755,6 +766,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -806,6 +818,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -851,6 +864,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -908,6 +922,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -964,6 +979,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1016,6 +1032,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1046,6 +1063,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1074,6 +1092,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1101,6 +1120,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1145,6 +1165,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1182,6 +1203,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1219,6 +1241,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
@@ -1284,6 +1307,7 @@ export const templates: TTemplate[] = [
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
+        numberOfResponses: false,
       },
       hiddenFields: {
         enabled: false,
