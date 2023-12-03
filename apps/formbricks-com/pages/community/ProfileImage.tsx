@@ -16,7 +16,7 @@ export const ProfileImage: React.FC = ({}) => {
       <Image
         src={DummyFace}
         alt="Dummy Face"
-        className="rounded-lg ring-pink-600 transition-all hover:scale-105 hover:ring-1"
+        className="ring-brand-dark rounded-lg ring-offset-4 ring-offset-slate-900 transition-all hover:scale-105 hover:ring-1"
       />
     </Link>
   );

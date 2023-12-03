@@ -1,20 +1,23 @@
+import ArrowGift from "@/images/formtribe/arrow-gift.png";
 import ArrowSticker from "@/images/formtribe/arrow-stickers.png";
 import DeputyBadge from "@/images/formtribe/deputy-batch.png";
+import HoodieSticker from "@/images/formtribe/hoodie-stickers.png";
 import LegendBadge from "@/images/formtribe/legend-batch.png";
 import PHLogo from "@/images/formtribe/ph-logo.png";
 import PrimeBadge from "@/images/formtribe/prime-batch.png";
 import RookieBadge from "@/images/formtribe/rookie-batch.png";
-import HallOfFame from "@/pages/formtribe/HallOfFame";
-import ProfileImage from "@/pages/formtribe/ProfileImage";
-import Roadmap from "@/pages/formtribe/Roadmap";
+import HallOfFame from "@/pages/community/HallOfFame";
+import Roadmap from "@/pages/community/Roadmap";
 import { Button } from "@formbricks/ui/Button";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
+import ContributorGrid from "./ContributorGrid";
 import LayoutTribe from "./LayoutTribe";
+import LevelCard from "./LevelCard";
+import LevelsGrid from "./LevelsGrid";
 
 const SideQuests = [
   {
@@ -74,6 +77,46 @@ const SideQuests = [
   },
 ];
 
+const LevelsData = [
+  {
+    badgeSrc: RookieBadge,
+    badgeAlt: "Rookie Badge",
+    title: "Repository Rookie",
+    points: "Level 1",
+    tasks: [
+      { title: "Easy issues", description: "Warm up with the repo, get your first PR merged." },
+      { title: "DevRel tasks", description: "Write docs and manuals for better understanding." },
+    ],
+  },
+  {
+    badgeSrc: DeputyBadge,
+    badgeAlt: "Deputy Badge",
+    title: "Deploy Deputy",
+    points: "Level 2",
+    tasks: [
+      { title: "Core Contributions", description: "Work on more complex issues. Get guidance." },
+      { title: "Work with core team", description: "Work closely with the core team, learn faster." },
+    ],
+  },
+  {
+    badgeSrc: PrimeBadge,
+    badgeAlt: "Prime Badge",
+    title: "Pushmaster Prime",
+    points: "Level 3",
+    tasks: [
+      { title: "Cash Bounties", description: "Get access to issues with $$$ bounties." },
+      { title: "Job Listings", description: "We hire top contributors. Hear about new jobs first!" },
+    ],
+  },
+  {
+    badgeSrc: LegendBadge,
+    badgeAlt: "Legend Badge",
+    title: "Formbricks Legend",
+    points: "Special Honor",
+    tasks: [{ title: "Unconditional Love", description: "Finally. From the community and core team 🤍" }],
+  },
+];
+
 const TheDeal = [
   {
     os: "100% free",
@@ -81,8 +124,8 @@ const TheDeal = [
     pro: "Custom URL",
   },
   {
-    os: "All features included",
-    free: "Unlimited Submissions",
+    os: "All community features included",
+    free: "Unlimited Link Survey Submissions",
     pro: "Remove Branding",
   },
   {
@@ -143,15 +186,6 @@ const TheDeal = [
 
 const FAQ = [
   {
-    question: "What is “FormTribe”?",
-    answer: "The FormTribe is our community of contributors. Together",
-  },
-  {
-    question: "Is this product part of Formbricks or its own, isolated tool?",
-    answer:
-      "The link survey is part of the Formbricks core product. The code is managed in the Formbricks mono repository.",
-  },
-  {
     question: "Why do I have to sign a CLA?",
     answer:
       "To assure this project to be financially viable, we have to be able to relicense the code for enterprise customers and governments. To be able to do so, we are legally obliged to have you sign a CLA.",
@@ -189,26 +223,26 @@ const roadmapDates = [
     id: "earlywork",
     description: "Previously at Formbricks",
     period: "February until September 2023",
-    events: [
-      { name: "Formbricks team building surveying infrastructure for in-app surveying" },
-      { name: "Loads of feature requests for Typeform-like surveying tool" },
-    ],
+    events: [{ name: "Formbricks team building out surveying infrastructure" }],
   },
   {
     id: "hackathon",
     description: "Hackathon Kick-Off 🔥",
     period: "1st October 2023",
     events: [
-      { name: "✅ Email Embeds", link: "https://google.com" },
-      { name: "✅ Hidden Fields", link: "https://google.com" },
-      { name: "✅ Question Type: Picture Choice", link: "https://google.com" },
-      { name: "✅ Question Type: Welcome Card", link: "https://google.com" },
-      { name: "✅ Add Image to Question", link: "https://google.com" },
-      { name: "✅ Dynamic Link Previews", link: "https://google.com" },
-      { name: "✅ Fullscreen Previews", link: "https://google.com" },
-      { name: "✅ PIN protected surveys", link: "https://google.com" },
-      { name: "✅ Source Tracking", link: "https://google.com" },
-      { name: "✅ Time To Complete Indicator", link: "https://google.com" },
+      { name: "✅ Email Embeds", link: "https://github.com/formbricks/formbricks/pull/873" },
+      { name: "✅ Hidden Fields", link: "https://github.com/formbricks/formbricks/pull/1144" },
+      {
+        name: "✅ Question Type: Picture Choice",
+        link: "https://github.com/formbricks/formbricks/pull/1388",
+      },
+      { name: "✅ Question Type: Welcome Card", link: "https://github.com/formbricks/formbricks/pull/1073" },
+      { name: "✅ Add Image to Question", link: "https://github.com/formbricks/formbricks/pull/1305" },
+      { name: "✅ Dynamic Link Previews", link: "https://github.com/formbricks/formbricks/pull/1093" },
+      { name: "✅ Fullscreen Previews", link: "https://github.com/formbricks/formbricks/pull/898" },
+      { name: "✅ PIN protected surveys", link: "https://github.com/formbricks/formbricks/pull/1142" },
+      { name: "✅ Source Tracking", link: "https://github.com/formbricks/formbricks/pull/1486" },
+      { name: "✅ Time To Complete Indicator", link: "https://github.com/formbricks/formbricks/pull/1461" },
     ],
   },
   {
@@ -216,25 +250,189 @@ const roadmapDates = [
     description: "Product Hunt Launch 🚀",
     period: "31st October 2023",
     events: [
-      { name: "✅ Question Type: File Upload", link: "https://google.com" },
-      { name: "✅ Notion Integration", link: "https://google.com" },
-      { name: "✅ Media Backgrounds", link: "https://google.com" },
-      { name: "⚙️ Custom Styling", link: "https://google.com" },
-      { name: "⚙️ Recall Information", link: "https://google.com" },
-      { name: "◯ Unsplash Backgrounds", link: "https://google.com" },
-      { name: "◯ Question Type: Matrix", link: "https://google.com" },
-      { name: "◯ Question Type: Collect payment", link: "https://google.com" },
-      { name: "◯ Question Type: Schedule a call (Powered by Cal.com)", link: "https://google.com" },
-      { name: "◯ Question Type: Signature (Powered by Documenso)", link: "https://google.com" },
+      { name: "✅ Question Type: File Upload", link: "https://github.com/formbricks/formbricks/pull/1277" },
+      { name: "✅ Notion Integration", link: "https://github.com/formbricks/formbricks/pull/1197" },
+      { name: "✅ Media Backgrounds", link: "https://github.com/formbricks/formbricks/pull/1515" },
+      { name: "🚧 Custom Styling", link: "https://github.com/formbricks/formbricks/pull/916" },
+      { name: "🚧 Recall Information", link: "https://github.com/formbricks/formbricks/issues/884" },
+      { name: "⏳ Unsplash Backgrounds" },
+      { name: "⏳ Question Type: Matrix" },
+      { name: "⏳ Question Type: Collect payment" },
+      { name: "⏳Question Type: Schedule a call (Powered by Cal.com)" },
+      { name: "⏳ Question Type: Signature (Powered by Documenso)" },
     ],
   },
 ];
 
 const members = [
-  { name: "Piyush Gupta", githubId: "gupta123", points: "200", level: "prime" },
-  { name: "Giyush Pupta", githubId: "gupta13", points: "500", level: "legend" },
-  { name: "Ziyush Fupta", githubId: "gupta3", points: "100", level: "deputy" },
-  { name: "Riyush Lupta", githubId: "gpta3", points: "50", level: "rookie" },
+  {
+    name: "Shubham Palriwala",
+    githubId: "ShubhamPalriwala",
+    points: "100",
+    level: "prime",
+    imgUrl: "https://avatars.githubusercontent.com/u/55556994?v=4",
+  },
+  {
+    name: "Rotimi Best",
+    githubId: "rotimi-best",
+    points: "100",
+    level: "prime",
+    imgUrl: "https://avatars.githubusercontent.com/u/31730715?v=4",
+  },
+  {
+    name: "Dhruwang Jariwala",
+    githubId: "Dhruwang",
+    points: "100",
+    level: "prime",
+    imgUrl: "https://avatars.githubusercontent.com/u/67850763?v=4",
+  },
+  {
+    name: "Piyush Gupta",
+    githubId: "gupta-piyush19",
+    points: "100",
+    level: "prime",
+    imgUrl: "https://avatars.githubusercontent.com/u/56182734?v=4",
+  },
+  {
+    name: "Naitik Kapadia",
+    githubId: "KapadiaNaitik",
+    points: "100",
+    level: "deputy",
+    imgUrl: "https://avatars.githubusercontent.com/u/88614335?v=4",
+  },
+  {
+    name: "Anshuman Pandey",
+    githubId: "pandeymangg",
+    points: "100",
+    level: "prime",
+    imgUrl: "https://avatars.githubusercontent.com/u/54475686?v=4",
+  },
+  {
+    name: "Midka",
+    githubId: "kymppi",
+    points: "100",
+    level: "deputy",
+    imgUrl: "https://avatars.githubusercontent.com/u/48528700?v=4",
+  },
+  {
+    name: "Meet Patel",
+    githubId: "Meetcpatel",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/26919832?v=4",
+  },
+  {
+    name: "Ankur Datta",
+    githubId: "Ankur-Datta-4",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/75306530?v=4",
+  },
+  {
+    name: "Abhinav Arya",
+    githubId: "itzabhinavarya",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/95561280?v=4",
+  },
+  {
+    name: "Anjy Gupta",
+    githubId: "anjy7",
+    points: "100",
+    level: "deputy",
+    imgUrl: "https://avatars.githubusercontent.com/u/92802904?v=4",
+  },
+  {
+    name: "Aditya Deshlahre",
+    githubId: "adityadeshlahre",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/132184385?v=4",
+  },
+  {
+    name: "Ashutosh Bhadauriya",
+    githubId: "Ashutosh-Bhadauriya",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/62984427?v=4",
+  },
+  {
+    name: "Bilal Mirza",
+    githubId: "bilalmirza74",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/84387676?v=4",
+  },
+  {
+    name: "Timothy",
+    githubId: "timothyde",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/13225886?v=4",
+  },
+  {
+    name: "Jonas Höbenreich",
+    githubId: "jonas-hoebenreich",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/64426524?v=4",
+  },
+  {
+    name: "Pratik Awaik",
+    githubId: "PratikAwaik",
+    points: "100",
+    level: "deputy",
+    imgUrl: "https://avatars.githubusercontent.com/u/54103265?v=4",
+  },
+  {
+    name: "Rohan Gupta",
+    githubId: "rohan9896",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/56235204?v=4",
+  },
+  {
+    name: "Shubham Khunt",
+    githubId: "shubhamkhunt04",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/55044317?v=4",
+  },
+  {
+    name: "Joe",
+    githubId: "joe-shajan",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/69904519?v=4",
+  },
+  {
+    name: "Ty Kerr",
+    githubId: "ty-kerr",
+    points: "100",
+    level: "deputy",
+    imgUrl: "https://avatars.githubusercontent.com/u/17407010?v=4",
+  },
+  {
+    name: "Olasunkanmi Balogun",
+    githubId: "SiR-PENt",
+    points: "100",
+    level: "rookie",
+    imgUrl: "https://avatars.githubusercontent.com/u/80556643?v=4",
+  },
+  {
+    name: "Ronit Panda",
+    githubId: "rtpa25",
+    points: "100",
+    level: "deputy",
+    imgUrl: "https://avatars.githubusercontent.com/u/72537293?v=4",
+  },
+  {
+    name: "Nafees Nazik",
+    githubId: "G3root",
+    points: "100",
+    level: "deputy",
+    imgUrl: "https://avatars.githubusercontent.com/u/84864519?v=4",
+  },
 ];
 
 export default function FormTribeHackathon() {
@@ -246,184 +444,87 @@ export default function FormTribeHackathon() {
     <LayoutTribe
       title="Join the FormTribe"
       description="We build an Open Source Typeform alternative together and give it to the world. Join us!">
-      <Head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Kablammo:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </Head>
       {/* Header */}
 
-      <div className="flex h-full w-full flex-col items-center justify-center text-center">
-        <div className="py-24">
-          <h1 className="mt-10 text-3xl font-bold text-slate-100 sm:text-4xl md:text-5xl">
+      <div className="flex h-full w-full flex-col items-center justify-center overflow-clip text-center">
+        <div className="py-16 md:py-24">
+          <h1 className="mt-10 px-6 text-3xl font-bold text-slate-100 sm:text-4xl md:text-5xl">
             <span className="xl:inline">
-              The Open Source Typeform Alternative for all. <br></br>Built as a community, free forever.
+              Beautiful Open Source Surveys. <br className="hidden md:block"></br>Built as a community, free
+              forever.
             </span>
           </h1>
 
           <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-300 sm:text-lg md:mt-6 md:text-xl">
             The time is ripe, this is needed. So we ship it as a community - and give it back to the world!
-            <br></br>Join our Tribe and make this possible. The Open Source gods are on our side 🤍
+            <br></br>Join us and build surveying infrastructure for millions - free and open source.
           </p>
         </div>
-        <div className="grid grid-cols-8 gap-x-6 overflow-hidden pt-24">
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-          <ProfileImage />
-        </div>
+        <ContributorGrid contributors={members} />
       </div>
 
       {/* Roadmap */}
-      <div className="flex flex-col items-center justify-center bg-white pb-24 text-center">
-        <div className="py-24">
+      <div
+        className="flex flex-col items-center justify-center bg-gradient-to-br from-white to-slate-100 pb-12 text-center md:pb-24"
+        id="roadmap">
+        <div className="py-16 md:py-24">
           <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
-            <span className="xl:inline">How it started, and how it’s going</span>
+            <span className="xl:inline">
+              First Things First: <br></br>An Open Source Typeform Alternative
+            </span>
           </h2>
           <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-600 sm:text-lg md:mt-6 md:text-xl">
-            We kicked this off with a hackathon in October.
-            <br></br>Today, you can cover 80% of survey use cases. Let’s ship the last 20% 🚀
+            It&apos;s been requested many times over, so Typeform-like surveys is where we start.
+            <br></br>In October, we kicked it off in style with a 30-day hackathon.
           </p>
         </div>
         <Roadmap data={roadmapDates} />
       </div>
 
       {/* Levels */}
-      <div className="mb-40 flex flex-col items-center justify-center text-center">
-        <div className="py-24">
-          <h2 className="mt-10 text-2xl font-bold text-slate-100 sm:text-3xl md:text-4xl">
-            <span className="xl:inline">Level Up and Unlock Benefits</span>
+      <div
+        className="mb-12 flex flex-col items-center justify-center overflow-clip text-center lg:mb-40"
+        id="levels">
+        <LevelsGrid />
+        <div className="py-16 md:py-24">
+          <h2 className="mt-10 px-8 text-2xl font-bold text-slate-100 sm:text-3xl md:text-4xl">
+            <span className="xl:inline">Write Code, Level Up and Unlock Benefits</span>
           </h2>
           <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-300 sm:text-lg md:mt-6 md:text-xl">
-            The more you contribute, the higher you level up.
-            <br></br>Unlock benefits like cash bounties, limited merch and more!
+            The more you contribute, the more points you collect.
+            <br className="hidden md:block"></br> Unlock benefits like cash bounties, limited merch and more!
           </p>
         </div>
-        <div className="grid grid-cols-4 gap-4 px-12">
-          <div className="group">
-            <div className="flex w-full flex-col items-center rounded-t-xl bg-slate-700 p-10 transition-colors group-hover:bg-slate-600">
-              <Image
-                src={RookieBadge}
-                alt="rookie batch"
-                className="h-32 w-32 transition-all group-hover:scale-105"
-              />
-              <p className="mt-4 font-bold text-slate-200">Repository Rookie</p>
-              <p className="text-sm leading-5 text-slate-400">10 points</p>
-            </div>
-            <div className="w-full rounded-b-xl bg-slate-600 p-10 text-left">
-              <p className="text-sm font-bold text-slate-200">Easy issues</p>
-              <p className="text-sm leading-5 text-slate-400">
-                Warm up with the repo, get your first PR merged.
-              </p>
-              <p className="mt-4 text-sm font-bold text-slate-200">DevRel tasks</p>
-              <p className="text-sm leading-5 text-slate-400">
-                Write docs and manuals for better understanding.
-              </p>
-            </div>
-          </div>
-          <div className="group">
-            <div className="flex w-full flex-col items-center rounded-t-xl bg-slate-700 p-10 transition-colors group-hover:bg-slate-600">
-              <Image
-                src={DeputyBadge}
-                alt="rookie batch"
-                className="h-32 w-32 transition-all group-hover:scale-105"
-              />
-              <p className="mt-4 font-bold text-slate-200">Deploy Deputy</p>
-              <p className="text-sm leading-5 text-slate-400">100 points</p>
-            </div>
-            <div className="w-full rounded-b-xl bg-slate-600 p-10 text-left">
-              <p className="text-sm font-bold text-slate-200">Core Contributions</p>
-              <p className="text-sm leading-5 text-slate-400">Work on more complex issues. Get guidance.</p>
-              <p className="mt-4 text-sm font-bold text-slate-200">Work with core team</p>
-              <p className="text-sm leading-5 text-slate-400">
-                Work closely with the core team, learn faster.
-              </p>
-            </div>
-          </div>
-          <div className="group">
-            <div className="flex w-full flex-col items-center rounded-t-xl bg-slate-700 p-10 transition-colors group-hover:bg-slate-600">
-              <Image
-                src={PrimeBadge}
-                alt="rookie batch"
-                className="h-32 w-32 transition-all group-hover:scale-105"
-              />
-              <p className="mt-4 font-bold text-slate-200">Pushmaster Prime</p>
-              <p className="text-sm leading-5 text-slate-400">500 points</p>
-            </div>
-            <div className="w-full rounded-b-xl bg-slate-600 p-10 text-left">
-              <p className="text-sm font-bold text-slate-200">Cash Bounties</p>
-              <p className="text-sm leading-5 text-slate-400">Get access to issues with $$$ bounties.</p>
-              <p className="mt-4 text-sm font-bold text-slate-200">Job Listings</p>
-              <p className="text-sm leading-5 text-slate-400">
-                We hire from our contributors. Hear about jobs first.
-              </p>
-            </div>
-          </div>
-          <div className="group">
-            <div className="flex w-full flex-col items-center rounded-t-xl bg-slate-700 p-10 transition-colors group-hover:bg-slate-600">
-              <Image
-                src={LegendBadge}
-                alt="rookie batch"
-                className="h-32 w-32 transition-all group-hover:scale-105"
-              />
-              <p className="mt-4 font-bold text-slate-200">FormTribe Legend</p>
-              <p className="text-sm leading-5 text-slate-400">Special Honor</p>
-            </div>
-            <div className=" w-full rounded-b-xl bg-slate-600 p-10 text-left">
-              <p className="text-sm font-bold text-slate-200">Unconditional Love</p>
-              <p className="text-sm leading-5 text-slate-400">from the community and core team 🤍</p>
-              <p className="mt-4 text-sm font-bold text-slate-200">&nbsp;</p>
-              <p className="text-sm leading-5 text-slate-400">&nbsp;</p>
-              <p className="text-sm leading-5 text-slate-400">&nbsp;</p>
-            </div>
-          </div>
+        <div className="grid gap-6 px-8 md:grid-cols-4 lg:px-24">
+          {LevelsData.map((badge, index) => (
+            <LevelCard key={index} {...badge} />
+          ))}
         </div>
-        <div className="mt-8 grid grid-cols-3 gap-4 px-32">
-          <div>
-            <p className="text-lg font-bold text-slate-300">Get a Sticker Set</p>
-            <Image
-              src={ArrowSticker}
-              alt="rookie batch"
-              className="w-full transition-all group-hover:scale-105"
-            />
+        <div className="mt-8 grid grid-cols-3 gap-4 px-56">
+          <div className="px-8">
+            <p className="h-0 text-lg font-bold text-slate-300">+ Sticker Set</p>
+            <Image src={ArrowSticker} alt="rookie batch" className="" />
           </div>
-          <div>
-            <p className="text-lg font-bold text-slate-300">Get a Hoodie</p>
-            <Image
-              src={ArrowSticker}
-              alt="rookie batch"
-              className="w-full transition-all group-hover:scale-105"
-            />
+          <div className="px-8">
+            <p className="h-0 text-lg font-bold text-slate-300">+ Hoodie</p>
+            <Image src={HoodieSticker} alt="rookie batch" className="" />
           </div>
-          <div>
-            <p className="text-lg font-bold text-slate-300">Get a Special Gift</p>
-            <Image
-              src={ArrowSticker}
-              alt="rookie batch"
-              className="w-full transition-all group-hover:scale-105"
-            />
+          <div className="px-8">
+            <p className="h-0 text-lg font-bold text-slate-300">+ Handmade Gift</p>
+            <Image src={ArrowGift} alt="rookie batch" className="" />
           </div>
         </div>
       </div>
 
       {/* Become a Legend */}
-      <div className="flex flex-col items-center justify-center bg-white pb-24 text-center">
-        <div className="py-24">
+      <div
+        className="flex flex-col items-center justify-center bg-gradient-to-br from-white to-slate-100  pb-24 text-center"
+        id="hof">
+        <div className="py-16 md:py-24">
           <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
-            <span className="xl:inline">Become a Legend</span>
+            <span className="xl:inline">
+              Become a<br className="md:hidden"></br> Formbricks Legend
+            </span>
           </h2>
           <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-600 sm:text-lg md:mt-6 md:text-xl">
             This is your wall of fame. We’re honoured to be in this together!
@@ -433,8 +534,8 @@ export default function FormTribeHackathon() {
       </div>
 
       {/* Our values */}
-      <div className="mb-40 flex flex-col items-center justify-center text-center">
-        <div className="py-24">
+      <div className="mb-24 flex flex-col items-center justify-center text-center md:mb-40">
+        <div className="py-16 md:py-24">
           <h2 className="mt-10 text-2xl font-bold text-slate-100 sm:text-3xl md:text-4xl">
             <span className="xl:inline">Our values</span>
           </h2>
@@ -442,16 +543,19 @@ export default function FormTribeHackathon() {
             Apart from being decent human beings, this is what we value:
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-x-6 px-16">
+        <div className="grid gap-x-6 gap-y-6 px-8 md:grid-cols-3 md:px-16">
           <ValueCard
+            emoji="🧘‍♂️"
             title="Less is more."
             description="Like with friends, we’re about forming deep and meaningful relationships within our community. If you want to merge a PR with improved punctuation to catch a green square, this is likely not the right place for you :)"
           />
           <ValueCard
+            emoji="🤝"
             title="Show up & Pull through."
             description="When you pick a task up, please make sure to complete it in timely manner. The longer it floats around, the more merge conflicts arise."
           />
           <ValueCard
+            emoji="🍔"
             title="Only bite off what you can chew."
             description="Open source is all about learning and so is our community. We love help you learn but have to manage our resources well. Please don’t take up tasks far outside your area of competence."
           />
@@ -498,24 +602,24 @@ export default function FormTribeHackathon() {
       </div> */}
 
       {/* The Promise */}
-      <div className="flex flex-col items-center justify-center bg-white pb-24 text-center">
-        <div className="py-24">
+      <div className="flex flex-col items-center justify-center bg-gradient-to-br from-white to-slate-100  pb-24 text-center">
+        <div className="py-16 md:py-24">
           <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
             <span className="xl:inline">The Deal</span>
           </h2>
           <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-600 sm:text-lg md:mt-6 md:text-xl">
-            We&apos;re kinda making a handshake deal here. This is it:
+            We&apos;re kinda making a handshake agreement here. This is it:
           </p>
         </div>
-        <div className="mx-auto max-w-4xl bg-white">
+        <div className="mx-auto max-w-4xl px-4">
           <div>
-            <div className="grid grid-cols-3 items-end rounded-t-lg border border-slate-200 bg-slate-100 px-6 py-3 text-sm font-bold text-slate-800 sm:text-base">
+            <div className="grid grid-cols-2 items-end rounded-t-lg border border-slate-200 bg-slate-100 px-6 py-3 text-sm font-bold text-slate-800 sm:text-base md:grid-cols-3">
               <div>Self-hosted</div>
               <div>Formbricks Cloud</div>
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div>
+                    <div className="hidden md:block">
                       Formbricks Cloud Pro{" "}
                       <span className="ml-1 hidden rounded-full bg-slate-700 px-2 text-xs font-normal text-white sm:inline">
                         Why tho?
@@ -532,10 +636,10 @@ export default function FormTribeHackathon() {
             {TheDeal.map((feature) => (
               <div
                 key={feature.free}
-                className="grid grid-cols-3 gap-x-2 border-x border-b border-slate-200 px-6 py-3 text-sm text-slate-900 last:rounded-b-lg">
+                className="grid grid-cols-2 gap-x-2 border-x border-b border-slate-200 px-6 py-3 text-sm text-slate-900 last:rounded-b-lg md:grid-cols-3">
                 <div>{feature.os}</div>
                 <div>{feature.free}</div>
-                <div>{feature.pro}</div>
+                <div className="hidden md:block">{feature.pro}</div>
               </div>
             ))}
           </div>
@@ -561,7 +665,7 @@ export default function FormTribeHackathon() {
 
       {/* Get started */}
       <div className="mb-40 flex flex-col items-center justify-center text-center">
-        <div className="py-24">
+        <div className="py-16 md:py-24">
           <h2 className="mt-10 text-2xl font-bold text-slate-100 sm:text-3xl md:text-4xl">
             <span className="xl:inline">Get started</span>
           </h2>
@@ -569,7 +673,7 @@ export default function FormTribeHackathon() {
             We&apos;re still setting things up,{" "}
             <Link
               href="https://formbricks.com/discord"
-              className="underline decoration-pink-500 underline-offset-2">
+              className="decoration-brand-dark underline underline-offset-2">
               join our Discord
             </Link>{" "}
             to stay in the loop :)
@@ -579,8 +683,8 @@ export default function FormTribeHackathon() {
       </div>
 
       {/* FAQ */}
-      <div id="faq" className=" bg-white px-32 pb-24">
-        <div className="py-24">
+      <div id="faq" className="bg-gradient-to-br from-white to-slate-100 px-8 pb-24 lg:px-32">
+        <div className="py-16 md:py-24">
           <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
             <span className="xl:inline">FAQ</span>
           </h2>
@@ -604,7 +708,7 @@ export default function FormTribeHackathon() {
 
 const SectionHeading = ({ title, descriptionLine1, descriptionLine2, id }) => {
   return (
-    <div id={id} className="py-24">
+    <div id={id} className="py-16 md:py-24">
       <h2 className="mt-10 text-2xl font-bold text-slate-800 sm:text-3xl md:text-4xl">
         <span className="xl:inline">{title}</span>
       </h2>
@@ -617,14 +721,18 @@ const SectionHeading = ({ title, descriptionLine1, descriptionLine2, id }) => {
   );
 };
 
-const ValueCard = ({ title, description }) => {
+const ValueCard = ({ title, description, emoji }) => {
   return (
     <div className="rounded-xl bg-slate-800 p-3 text-left">
-      <div className="mb-4 h-24 rounded-xl border border-slate-600 bg-slate-700"></div>
-      <h2 className="text-xl font-bold text-slate-300">
-        <span className="xl:inline">{title}</span>
-      </h2>
-      <p className="text-sm leading-5 text-slate-400">{description}</p>
+      <div className="mb-4 flex h-24 items-center justify-center rounded-xl border border-slate-600 bg-slate-700 text-6xl">
+        {emoji}
+      </div>
+      <div className="px-2">
+        <h2 className="text-xl font-bold text-slate-300">
+          <span className="xl:inline">{title}</span>
+        </h2>
+        <p className=" leading-6 text-slate-400">{description}</p>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import Logo from "@/images/formtribe/formtribe-logo.png";
+import footerLogoDark from "@/images/logo/footerlogo-dark.svg";
 import { Button } from "@formbricks/ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Bars3Icon } from "@heroicons/react/24/solid";
@@ -21,7 +21,7 @@ export default function HeaderLight() {
       <div className="flex items-center justify-start">
         <Link href="/">
           <span className="sr-only">FormTribe</span>
-          <Image alt="Formtribe Logo" src={Logo} className="h-8 w-auto sm:h-10" />
+          <Image alt="Formbricks Logo" src={footerLogoDark} className="h-8 w-auto pl-4 sm:h-10" />
         </Link>
 
         <Link
@@ -39,7 +39,7 @@ export default function HeaderLight() {
             {navItem.name}
           </Link>
         ))}
-        <Button variant="secondary" size="sm" className="ml-2" href="#join">
+        <Button variant="secondary" size="sm" className="ml-2" href="https://formbricks.com/discord">
           Join us!
         </Button>
       </div>
@@ -49,17 +49,17 @@ export default function HeaderLight() {
         <Popover open={mobileNavMenuOpen} onOpenChange={setMobileNavMenuOpen}>
           <PopoverTrigger onClick={() => setMobileNavMenuOpen(!mobileNavMenuOpen)}>
             <span>
-              <Bars3Icon className="h-8 w-8 rounded-md bg-slate-200 p-1 text-slate-600" />
+              <Bars3Icon className="h-8 w-8 rounded-md bg-slate-700 p-1 text-slate-200" />
             </span>
           </PopoverTrigger>
-          <PopoverContent className="mr-4 bg-slate-100 shadow">
+          <PopoverContent className="border-slate-600 bg-slate-700 shadow">
             <div className="flex flex-col">
               {navigation.map((navItem) => (
                 <Link key={navItem.name} href={navItem.href}>
                   <div
                     onClick={() => setMobileNavMenuOpen(false)}
                     className="flex items-center space-x-2 rounded-md p-2">
-                    <span className="font-medium text-slate-600">{navItem.name}</span>
+                    <span className="font-medium text-slate-200">{navItem.name}</span>
                   </div>
                 </Link>
               ))}
