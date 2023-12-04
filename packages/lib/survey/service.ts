@@ -22,6 +22,7 @@ import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { formatSurveyDateFields } from "./util";
+import { personCache } from "../person/cache";
 
 export const selectSurvey = {
   id: true,
@@ -685,9 +686,10 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
 
       return surveys;
     },
-    [`getSyncSurveys-${environmentId}`],
+    [`getSyncSurveys-${environmentId}-${person.userId}`],
     {
       tags: [
+        personCache.tag.byEnvironmentIdAndUserId(environmentId, person.userId),
         displayCache.tag.byPersonId(person.id),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
