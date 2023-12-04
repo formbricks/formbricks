@@ -608,7 +608,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
 };
 
 export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
-  validateInputs([environmentId, ZId], [person, ZPerson]);
+  validateInputs([environmentId, ZId]);
 
   return unstable_cache(
     async () => {
