@@ -222,6 +222,11 @@ export default function SurveyMenuBar({
         const { isDraft, ...rest } = question;
         return rest;
       }),
+      attributeFilters: localSurvey.attributeFilters.filter((attributeFilter) => {
+        if (attributeFilter.attributeClassId && attributeFilter.value) {
+          return true;
+        }
+      }),
     };
 
     if (!validateSurvey(localSurvey)) {
@@ -251,6 +256,14 @@ export default function SurveyMenuBar({
       return;
     }
   };
+
+  function containsEmptyTriggers() {
+    return (
+      localSurvey.type === "web" &&
+      localSurvey.triggers &&
+      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+    );
+  }
 
   return (
     <>
@@ -298,7 +311,7 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing}
+            disabled={isSurveyPublishing || containsEmptyTriggers()}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
@@ -318,11 +331,7 @@ export default function SurveyMenuBar({
           )}
           {localSurvey.status === "draft" && !audiencePrompt && (
             <Button
-              disabled={
-                localSurvey.type === "web" &&
-                localSurvey.triggers &&
-                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0 || isSurveySaving)
-              }
+              disabled={isSurveySaving || containsEmptyTriggers()}
               variant="darkCTA"
               loading={isSurveyPublishing}
               onClick={async () => {
