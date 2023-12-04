@@ -16,6 +16,7 @@ import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
 import { addWidgetContainer, closeSurvey } from "./widget";
 import { trackAction } from "./actions";
+import { setPersonAttribute } from "./person";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -81,6 +82,13 @@ export const initialize = async (
         environmentId: c.environmentId,
         userId: c.userId,
       });
+
+      // if userId and attributes are available, set them
+      if (c.userId && c.attributes) {
+        for (const [key, value] of Object.entries(c.attributes)) {
+          await setPersonAttribute(key, value);
+        }
+      }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
       config.update(localConfigResult.value);
@@ -97,8 +105,15 @@ export const initialize = async (
       userId: c.userId,
     });
 
+    // if userId and attributes are available, set them
+    if (c.userId && c.attributes) {
+      for (const [key, value] of Object.entries(c.attributes)) {
+        await setPersonAttribute(key, value);
+      }
+    }
+
     // and track the new session event
-    trackAction("New Session");
+    await trackAction("New Session");
   }
 
   logger.debug("Adding event listeners");
