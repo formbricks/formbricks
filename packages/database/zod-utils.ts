@@ -18,7 +18,7 @@ export {
   ZSurveyHiddenFields,
   ZSurveyClosedMessage,
   ZSurveyProductOverwrites,
-  ZSurveyBackground,
+  ZSurveyStyling,
   ZSurveyVerifyEmail,
   ZSurveySingleUse,
 } from "@formbricks/types/surveys";

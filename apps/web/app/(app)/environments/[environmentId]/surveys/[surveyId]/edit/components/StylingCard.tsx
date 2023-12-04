@@ -20,10 +20,10 @@ interface StylingCardProps {
 export default function StylingCard({ localSurvey, setLocalSurvey, colours }: StylingCardProps) {
   const [open, setOpen] = useState(false);
 
-  const { type, productOverwrites, surveyBackground } = localSurvey;
+  const { type, productOverwrites, styling } = localSurvey;
   const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
     productOverwrites ?? {};
-  const { bg, bgType, brightness } = surveyBackground ?? {};
+  const { bg, bgType, brightness } = styling ?? {};
 
   const [inputValue, setInputValue] = useState(100);
 
@@ -55,10 +55,13 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
   const toggleBackgroundColor = () => {
     setLocalSurvey({
       ...localSurvey,
-      surveyBackground: {
-        ...localSurvey.surveyBackground,
-        bg: !!bg ? undefined : "#ffff",
-        bgType: !!bg ? undefined : "color",
+      styling: {
+        ...localSurvey.styling,
+        background: {
+          ...localSurvey.styling.background,
+          bg: !!bg ? undefined : "#ffff",
+          bgType: !!bg ? undefined : "color",
+        },
       },
     });
   };
@@ -66,9 +69,12 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
   const toggleBrightness = () => {
     setLocalSurvey({
       ...localSurvey,
-      surveyBackground: {
-        ...localSurvey.surveyBackground,
-        brightness: !!brightness ? undefined : 100,
+      styling: {
+        ...localSurvey.styling,
+        background: {
+          ...localSurvey.styling.background,
+          brightness: !!brightness ? undefined : 100,
+        },
       },
     });
     setInputValue(100);
@@ -98,11 +104,14 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
     setInputValue(100);
     setLocalSurvey({
       ...localSurvey,
-      surveyBackground: {
-        ...localSurvey.surveyBackground,
-        bg: color,
-        bgType: type,
-        brightness: brightness !== undefined ? 100 : brightness,
+      styling: {
+        ...localSurvey.styling,
+        background: {
+          ...localSurvey.styling.background,
+          bg: color,
+          bgType: type,
+          brightness: undefined,
+        },
       },
     });
   };
@@ -110,9 +119,12 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
   const handleBrightnessChange = (percent: number) => {
     setLocalSurvey({
       ...localSurvey,
-      surveyBackground: {
-        ...localSurvey.surveyBackground,
-        brightness: percent,
+      styling: {
+        ...localSurvey.styling,
+        background: {
+          ...localSurvey.styling.background,
+          brightness: percent,
+        },
       },
     });
   };

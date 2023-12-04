@@ -201,7 +201,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
         />
       </MediaBackground>
-      <LegalFooter bgColor={survey.surveyBackground?.bg || "#ffff"} />
+      <LegalFooter bgColor={survey.styling?.background?.bg || "#ffff"} />
     </div>
   ) : null;
 }

@@ -7,7 +7,7 @@ interface AnimatedSurveyBgProps {
 }
 
 export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: AnimatedSurveyBgProps) {
-  const [color, setColor] = useState(localSurvey?.surveyBackground?.bg || "#ffff");
+  const [color, setColor] = useState(localSurvey?.styling?.background?.bg || "#ffff");
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
   const animationFiles = {

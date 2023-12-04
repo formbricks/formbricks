@@ -16,8 +16,8 @@ export default function ImageSurveyBg({ localSurvey, handleBgChange }: ImageSurv
     }
   };
 
-  const fileUrl = isUrl(localSurvey?.surveyBackground?.bg ?? "")
-    ? localSurvey?.surveyBackground?.bg ?? ""
+  const fileUrl = isUrl(localSurvey?.styling?.background?.bg ?? "")
+    ? localSurvey?.styling?.background?.bg ?? ""
     : "";
 
   return (

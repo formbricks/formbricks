@@ -44,7 +44,7 @@ export const selectSurvey = {
   verifyEmail: true,
   redirectUrl: true,
   productOverwrites: true,
-  surveyBackground: true,
+  styling: true,
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
@@ -586,9 +586,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       productOverwrites: existingSurvey.productOverwrites
         ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
         : Prisma.JsonNull,
-      surveyBackground: existingSurvey.surveyBackground
-        ? JSON.parse(JSON.stringify(existingSurvey.surveyBackground))
-        : Prisma.JsonNull,
+      styling: existingSurvey.styling ? JSON.parse(JSON.stringify(existingSurvey.styling)) : Prisma.JsonNull,
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,

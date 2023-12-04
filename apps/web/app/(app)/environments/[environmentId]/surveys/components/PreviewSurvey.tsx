@@ -164,10 +164,10 @@ export default function PreviewSurvey({
   }
 
   useEffect(() => {
-    if (survey.surveyBackground?.bgType === "animation") {
+    if (survey.styling?.background?.bgType === "animation") {
       animationTrigger();
     }
-  }, [survey.surveyBackground?.bg]);
+  }, [survey.styling?.background?.bg]);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {

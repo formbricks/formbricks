@@ -19,32 +19,34 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   ContentRef,
 }) => {
   const getFilterStyle = () => {
-    return survey.surveyBackground?.brightness ? `brightness-${survey.surveyBackground.brightness}` : "";
+    return survey.styling?.background?.brightness
+      ? `brightness-${survey.styling?.background?.brightness}`
+      : "";
   };
 
   const renderBackground = () => {
     const filterStyle = getFilterStyle();
     const baseClasses = "absolute inset-0 h-full w-full";
 
-    switch (survey.surveyBackground?.bgType) {
+    switch (survey.styling?.background?.bgType) {
       case "color":
         return (
           <div
             className={`${baseClasses} ${filterStyle}`}
-            style={{ backgroundColor: survey.surveyBackground.bg || "#ffff" }}
+            style={{ backgroundColor: survey.styling?.background?.bg || "#ffff" }}
           />
         );
       case "animation":
         return (
           <video muted loop autoPlay className={`${baseClasses} object-cover ${filterStyle}`}>
-            <source src={survey.surveyBackground.bg || ""} type="video/mp4" />
+            <source src={survey.styling?.background?.bg || ""} type="video/mp4" />
           </video>
         );
       case "image":
         return (
           <div
             className={`${baseClasses} bg-cover bg-center ${filterStyle}`}
-            style={{ backgroundImage: `url(${survey.surveyBackground.bg})` }}
+            style={{ backgroundImage: `url(${survey.styling?.background?.bg})` }}
           />
         );
       default:
