@@ -12,6 +12,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { getServerSession } from "next-auth";
+import { colours } from "@formbricks/lib/constants";
 import SurveyEditor from "./components/SurveyEditor";
 
 export const generateMetadata = async ({ params }) => {
@@ -67,6 +68,7 @@ export default async function SurveysEditPage({ params }) {
         attributeClasses={attributeClasses}
         responseCount={responseCount}
         membershipRole={currentUserMembership?.role}
+        colours={colours}
       />
     </>
   );
