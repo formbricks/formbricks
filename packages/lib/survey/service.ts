@@ -5,7 +5,7 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
+import { TPerson, ZPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
@@ -22,6 +22,7 @@ import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { formatSurveyDateFields } from "./util";
+import { personCache } from "../person/cache";
 
 export const selectSurvey = {
   id: true,
@@ -540,6 +541,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 };
 
 export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+  validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -605,8 +607,10 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
   return newSurvey;
 };
 
-export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> =>
-  unstable_cache(
+export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+  validateInputs([environmentId, ZId], [person, ZPerson]);
+
+  return unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
 
@@ -685,9 +689,10 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
 
       return surveys;
     },
-    [`getSyncSurveys-${environmentId}`],
+    [`getSyncSurveys-${environmentId}-${person.userId}`],
     {
       tags: [
+        personCache.tag.byEnvironmentIdAndUserId(environmentId, person.userId),
         displayCache.tag.byPersonId(person.id),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
@@ -695,3 +700,4 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+};
