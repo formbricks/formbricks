@@ -204,6 +204,7 @@ export async function copyToOtherEnvironmentAction(
       singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
       productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
+      surveyBackground: existingSurvey.surveyBackground ?? prismaClient.JsonNull,
     },
   });
 

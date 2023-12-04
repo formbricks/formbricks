@@ -20,6 +20,7 @@ interface SurveyProps {
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
+  responseCount?: number;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -42,6 +43,7 @@ export const SurveyInline = ({
   prefillResponseData,
   isRedirectDisabled,
   onFileUpload,
+  responseCount,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -59,6 +61,7 @@ export const SurveyInline = ({
       prefillResponseData,
       isRedirectDisabled,
       onFileUpload,
+      responseCount,
     });
   }, [
     activeQuestionId,
@@ -74,6 +77,7 @@ export const SurveyInline = ({
     prefillResponseData,
     isRedirectDisabled,
     onFileUpload,
+    responseCount,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -94,6 +98,7 @@ export const SurveyModal = ({
   autoFocus,
   isRedirectDisabled,
   onFileUpload,
+  responseCount,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -112,6 +117,7 @@ export const SurveyModal = ({
       autoFocus,
       isRedirectDisabled,
       onFileUpload,
+      responseCount,
     });
   }, [
     activeQuestionId,
@@ -129,6 +135,7 @@ export const SurveyModal = ({
     autoFocus,
     isRedirectDisabled,
     onFileUpload,
+    responseCount,
   ]);
   return <div id="formbricks-survey"></div>;
 };

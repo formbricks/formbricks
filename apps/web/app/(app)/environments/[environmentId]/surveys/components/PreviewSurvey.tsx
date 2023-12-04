@@ -2,7 +2,7 @@
 
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
-import MediaBackground from "@/app/s/[surveyId]/components/MediaBackground";
+import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -236,6 +236,7 @@ export default function PreviewSurvey({
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     onFileUpload={onFileUpload}
+                    responseCount={42}
                   />
                 </div>
               )}
@@ -304,6 +305,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    responseCount={42}
                   />
                 </div>
               </MediaBackground>

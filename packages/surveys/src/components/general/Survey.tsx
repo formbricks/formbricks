@@ -1,4 +1,5 @@
 import FormbricksBranding from "@/components/general/FormbricksBranding";
+import ProgressBar from "@/components/general/ProgressBar";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,6 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
-import ProgressBar from "@/components/general/ProgressBar";
 
 export function Survey({
   survey,
@@ -22,6 +22,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   onFileUpload,
+  responseCount,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -33,7 +34,6 @@ export function Survey({
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [ttc, setTtc] = useState<TResponseTtc>({});
-
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
@@ -131,9 +131,9 @@ export function Survey({
           html={survey.welcomeCard.html}
           fileUrl={survey.welcomeCard.fileUrl}
           buttonLabel={survey.welcomeCard.buttonLabel}
-          timeToFinish={survey.welcomeCard.timeToFinish}
           onSubmit={onSubmit}
           survey={survey}
+          responseCount={responseCount}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {

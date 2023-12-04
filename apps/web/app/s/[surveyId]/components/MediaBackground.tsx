@@ -11,7 +11,7 @@ interface MediaBackgroundProps {
   ContentRef?: React.RefObject<HTMLDivElement>;
 }
 
-const MediaBackground: React.FC<MediaBackgroundProps> = ({
+export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   children,
   survey,
   isEditorView = false,
@@ -83,5 +83,3 @@ const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   }
 };
-
-export default MediaBackground;

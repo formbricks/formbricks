@@ -3,7 +3,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import MediaBackground from "@/app/s/[surveyId]/components/MediaBackground";
+import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
@@ -18,6 +18,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEmailVerificationStatus } from "./lib/helpers";
 import { ZId } from "@formbricks/types/environment";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 
 interface LinkSurveyPageProps {
   params: {
@@ -169,7 +170,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
-
+  const responseCount = await getResponseCountBySurveyId(survey.id);
   if (isSurveyPinProtected) {
     return (
       <PinScreen
@@ -197,6 +198,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           singleUseId={isSingleUseSurvey ? singleUseId : undefined}
           singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
           webAppUrl={WEBAPP_URL}
+          responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
         />
       </MediaBackground>
       <LegalFooter bgColor={survey.surveyBackground?.bg || "#ffff"} />
