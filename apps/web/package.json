@@ -38,7 +38,7 @@
     "lru-cache": "^10.1.0",
     "lucide-react": "^0.294.0",
     "mime": "^4.0.0",
-    "next": "13.5.6",
+    "next": "13.5.1",
     "nodemailer": "^6.9.7",
     "otplib": "^12.0.1",
     "posthog-js": "^1.93.3",
