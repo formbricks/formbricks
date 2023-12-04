@@ -1,7 +1,7 @@
 "use client";
 
 import { TPlacement } from "@formbricks/types/common";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyBackgroundBgType } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -23,7 +23,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
   const { type, productOverwrites, styling } = localSurvey;
   const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
     productOverwrites ?? {};
-  const { bg, bgType, brightness } = styling ?? {};
+  const { bg, bgType, brightness } = styling?.background ?? {};
 
   const [inputValue, setInputValue] = useState(100);
 
@@ -58,7 +58,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
       styling: {
         ...localSurvey.styling,
         background: {
-          ...localSurvey.styling.background,
+          ...localSurvey.styling?.background,
           bg: !!bg ? undefined : "#ffff",
           bgType: !!bg ? undefined : "color",
         },
@@ -72,7 +72,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
       styling: {
         ...localSurvey.styling,
         background: {
-          ...localSurvey.styling.background,
+          ...localSurvey.styling?.background,
           brightness: !!brightness ? undefined : 100,
         },
       },
@@ -100,14 +100,14 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
     });
   };
 
-  const handleBgChange = (color: string, type: string) => {
+  const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
     setInputValue(100);
     setLocalSurvey({
       ...localSurvey,
       styling: {
         ...localSurvey.styling,
         background: {
-          ...localSurvey.styling.background,
+          ...localSurvey.styling?.background,
           bg: color,
           bgType: type,
           brightness: undefined,
@@ -120,9 +120,9 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
     setLocalSurvey({
       ...localSurvey,
       styling: {
-        ...localSurvey.styling,
+        ...(localSurvey.styling || {}),
         background: {
-          ...localSurvey.styling.background,
+          ...localSurvey.styling?.background,
           brightness: percent,
         },
       },

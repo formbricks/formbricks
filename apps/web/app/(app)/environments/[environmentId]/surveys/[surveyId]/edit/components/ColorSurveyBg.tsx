@@ -9,7 +9,7 @@ interface ColorSurveyBgBgProps {
 }
 
 export default function ColorSurveyBg({ localSurvey, handleBgChange, colours }: ColorSurveyBgBgProps) {
-  const [color, setColor] = useState(localSurvey?.stylin?.background?.bg || "#ffff");
+  const [color, setColor] = useState(localSurvey?.styling?.background?.bg || "#ffff");
 
   const handleBg = (x: string) => {
     setColor(x);

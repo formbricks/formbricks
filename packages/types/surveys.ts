@@ -45,16 +45,20 @@ export const ZSurveyProductOverwrites = z.object({
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
-export const ZSurveyBackground = z.object({
+export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
+
+export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
+
+export const ZSurveyStylingBackground = z.object({
   bg: z.string().nullish(),
   bgType: z.enum(["animation", "color", "image"]).nullish(),
   brightness: z.number().nullish(),
 });
 
-export type TSurveyBackground = z.infer<typeof ZSurveyBackground>;
+export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
 
 export const ZSurveyStyling = z.object({
-  background: ZSurveyBackground.nullish(),
+  background: ZSurveyStylingBackground.nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
