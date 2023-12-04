@@ -14,6 +14,7 @@ import { getAttributeClasses } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
+import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
@@ -541,6 +542,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 };
 
 export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+  validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -607,8 +609,10 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
   return newSurvey;
 };
 
-export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> =>
-  unstable_cache(
+export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+  validateInputs([environmentId, ZId]);
+
+  return unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
 
@@ -687,9 +691,10 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
 
       return surveys;
     },
-    [`getSyncSurveys-${environmentId}`],
+    [`getSyncSurveys-${environmentId}-${person.userId}`],
     {
       tags: [
+        personCache.tag.byEnvironmentIdAndUserId(environmentId, person.userId),
         displayCache.tag.byPersonId(person.id),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
@@ -697,3 +702,4 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+};
