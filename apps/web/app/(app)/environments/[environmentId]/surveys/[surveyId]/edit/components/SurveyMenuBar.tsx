@@ -252,6 +252,14 @@ export default function SurveyMenuBar({
     }
   };
 
+  function containsEmptyTriggers() {
+    return (
+      localSurvey.type === "web" &&
+      localSurvey.triggers &&
+      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+    );
+  }
+
   return (
     <>
       {environment?.type === "development" && (
@@ -298,7 +306,7 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing}
+            disabled={isSurveyPublishing || containsEmptyTriggers()}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
@@ -318,11 +326,7 @@ export default function SurveyMenuBar({
           )}
           {localSurvey.status === "draft" && !audiencePrompt && (
             <Button
-              disabled={
-                localSurvey.type === "web" &&
-                localSurvey.triggers &&
-                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0 || isSurveySaving)
-              }
+              disabled={isSurveySaving || containsEmptyTriggers()}
               variant="darkCTA"
               loading={isSurveyPublishing}
               onClick={async () => {
