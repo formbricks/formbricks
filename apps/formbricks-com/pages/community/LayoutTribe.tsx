@@ -10,14 +10,10 @@ interface LayoutProps {
 
 export default function Layout({ title, description, children }: LayoutProps) {
   return (
-    <div className="max-w-8xl mx-auto">
+    <div className="mx-auto bg-gradient-to-br from-gray-800 via-gray-900 to-gray-900">
       <MetaInformation title={title} description={description} />
       <HeaderTribe />
-      {
-        <main className="relative mx-auto flex w-full max-w-6xl flex-col justify-center px-2 lg:px-8 xl:px-12">
-          {children}
-        </main>
-      }
+      <main className="">{children}</main>
       <Footer />
     </div>
   );

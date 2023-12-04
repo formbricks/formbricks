@@ -59,23 +59,16 @@ x-github-auth-enabled: &github_auth_enabled 0
 x-github-id: &github_id
 x-github-secret: &github_secret # Configure Google Login
 
-
 x-google-auth-enabled: &google_auth_enabled 0
 x-google-client-id: &google_client_id
 x-google-client-secret: &google_client_secret # Disable Sentry warning
 
-
 x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Enable Sentry Error Tracking
-
 
 x-next-public-sentry-dsn: &next_public_sentry_dsn # Cron Secret
 
 # Set this to a random string to secure your cron endpoints
 x-cron-secret: &cron_secret YOUR_CRON_SECRET
-
-  
-# Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
-x-asset-prefix-url: &asset_prefix_url
 
 services:
   postgres:
@@ -130,7 +123,6 @@ services:
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
-      ASSET_PREFIX_URL: *asset_prefix_url
 
 volumes:
   postgres:

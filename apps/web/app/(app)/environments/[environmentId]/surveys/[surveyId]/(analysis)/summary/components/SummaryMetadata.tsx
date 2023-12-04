@@ -63,7 +63,7 @@ export default function SummaryMetadata({
   const ttc = useMemo(() => {
     let validTtcResponsesCountAcc = 0; //stores the count of responses that contains a _total value
     const ttc = responses.reduce((acc, response) => {
-      if (response.ttc._total) {
+      if (response.ttc?._total) {
         validTtcResponsesCountAcc++;
         return acc + response.ttc._total;
       }
@@ -72,8 +72,6 @@ export default function SummaryMetadata({
     setValidResponsesCount(validTtcResponsesCountAcc);
     return ttc;
   }, [responses]);
-
-  console.log(ttc);
 
   const totalResponses = responses.length;
 
