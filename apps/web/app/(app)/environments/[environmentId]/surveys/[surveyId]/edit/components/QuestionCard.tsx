@@ -269,7 +269,7 @@ export default function QuestionCard({
               ) : null}
               <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
-                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700">
+                  <Collapsible.CollapsibleTrigger className="flex items-center text-sm text-slate-700">
                     {openAdvanced ? (
                       <ChevronDownIcon className="mr-1 h-4 w-3" />
                     ) : (
