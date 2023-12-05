@@ -18,6 +18,7 @@ interface SettingsViewProps {
   attributeClasses: TAttributeClass[];
   responseCount: number;
   membershipRole?: TMembershipRole;
+  colours: string[];
 }
 
 export default function SettingsView({
@@ -28,6 +29,7 @@ export default function SettingsView({
   attributeClasses,
   responseCount,
   membershipRole,
+  colours,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -60,7 +62,7 @@ export default function SettingsView({
         environmentId={environment.id}
       />
 
-      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} colours={colours} />
     </div>
   );
 }

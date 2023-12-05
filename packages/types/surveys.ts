@@ -45,6 +45,24 @@ export const ZSurveyProductOverwrites = z.object({
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
+export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
+
+export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
+
+export const ZSurveyStylingBackground = z.object({
+  bg: z.string().nullish(),
+  bgType: z.enum(["animation", "color", "image"]).nullish(),
+  brightness: z.number().nullish(),
+});
+
+export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
+
+export const ZSurveyStyling = z.object({
+  background: ZSurveyStylingBackground.nullish(),
+});
+
+export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
+
 export const ZSurveyClosedMessage = z
   .object({
     enabled: z.boolean().optional(),
@@ -379,6 +397,7 @@ export const ZSurvey = z.object({
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
   productOverwrites: ZSurveyProductOverwrites.nullable(),
+  styling: ZSurveyStyling.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
