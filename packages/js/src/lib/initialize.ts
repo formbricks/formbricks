@@ -97,7 +97,6 @@ export const initialize = async (
     logger.debug("Syncing.");
 
     // when the local storage is expired / empty, we sync to get the latest config
-
     await sync({
       apiHost: c.apiHost,
       environmentId: c.environmentId,

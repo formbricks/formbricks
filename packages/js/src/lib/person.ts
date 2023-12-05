@@ -55,8 +55,11 @@ export const updatePersonAttribute = async (
   return okVoid();
 };
 
-export const updatePersonAttributes = async (attributes: TPersonAttributes) => {
+export const updatePersonAttributes = async (
+  attributes: TPersonAttributes
+): Promise<Result<void, NetworkError | MissingPersonError>> => {
   const { apiHost, environmentId, userId } = config.get();
+
   if (!userId) {
     return err({
       code: "missing_person",
@@ -71,6 +74,11 @@ export const updatePersonAttributes = async (attributes: TPersonAttributes) => {
     }
   }
 
+  if (Object.keys(attributesToUpdate).length === 0) {
+    logger.debug("No attributes to update. Skipping update.");
+    return okVoid();
+  }
+
   const input: TPersonUpdateInput = {
     attributes: attributesToUpdate,
   };
@@ -82,25 +90,35 @@ export const updatePersonAttributes = async (attributes: TPersonAttributes) => {
 
   const res = await api.client.people.update(userId, input);
 
-  if (!res.ok) {
-    return err({
-      code: "network_error",
-      status: 500,
-      message: `Error updating person with userId ${userId}`,
-      url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}`,
-      responseMessage: res.error.message,
+  if (res.ok) {
+    config.update({
+      environmentId: config.get().environmentId,
+      apiHost: config.get().apiHost,
+      userId: config.get().userId,
+      state: {
+        ...config.get().state,
+        attributes: attributesToUpdate,
+      },
     });
+
+    logger.debug("Attributes updated. Syncing...");
+
+    await sync({
+      environmentId: environmentId,
+      apiHost: apiHost,
+      userId: userId,
+    });
+
+    return okVoid();
   }
 
-  logger.debug("Attributes updated. Syncing...");
-
-  await sync({
-    environmentId: environmentId,
-    apiHost: apiHost,
-    userId: userId,
+  return err({
+    code: "network_error",
+    status: 500,
+    message: `Error updating person with userId ${userId}`,
+    url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}`,
+    responseMessage: res.error.message,
   });
-
-  return okVoid();
 };
 
 export const isExistingAttribute = (key: string, value: string): boolean => {
