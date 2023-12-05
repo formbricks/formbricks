@@ -30,6 +30,8 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
+    "@playwright/test": "^1.40.1",
+    "@types/node": "20.10.1",
     "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
@@ -58,5 +60,8 @@
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
+  },
+  "dependencies": {
+    "playwright": "^1.40.1"
   }
 }
