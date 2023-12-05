@@ -21,12 +21,17 @@ export default function AppPage({}) {
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
-      const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
+      // const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
+      // const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+      const userId = new Date().getTime().toString();
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
         debug: true,
+        attributes: {
+          status: "active",
+        },
       });
       window.formbricks = formbricks;
     }

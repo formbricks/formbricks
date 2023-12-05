@@ -16,7 +16,7 @@ import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
 import { addWidgetContainer, closeSurvey } from "./widget";
 import { trackAction } from "./actions";
-import { setPersonAttribute } from "./person";
+import { updatePersonAttributes } from "./person";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -77,6 +77,7 @@ export const initialize = async (
     logger.debug("Found existing configuration.");
     if (localConfigResult.value.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
+
       await sync({
         apiHost: c.apiHost,
         environmentId: c.environmentId,
@@ -85,9 +86,7 @@ export const initialize = async (
 
       // if userId and attributes are available, set them
       if (c.userId && c.attributes) {
-        for (const [key, value] of Object.entries(c.attributes)) {
-          await setPersonAttribute(key, value);
-        }
+        await updatePersonAttributes(c.attributes);
       }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
@@ -107,9 +106,7 @@ export const initialize = async (
 
     // if userId and attributes are available, set them
     if (c.userId && c.attributes) {
-      for (const [key, value] of Object.entries(c.attributes)) {
-        await setPersonAttribute(key, value);
-      }
+      await updatePersonAttributes(c.attributes);
     }
 
     // and track the new session event

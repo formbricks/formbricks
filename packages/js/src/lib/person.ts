@@ -1,5 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TPersonUpdateInput } from "@formbricks/types/people";
+import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
 import { Config } from "./config";
 import { AttributeAlreadyExistsError, MissingPersonError, NetworkError, Result, err, okVoid } from "./errors";
 import { deinitalize, initialize } from "./initialize";
@@ -45,6 +45,54 @@ export const updatePersonAttribute = async (
   }
 
   logger.debug("Attribute updated. Syncing...");
+
+  await sync({
+    environmentId: environmentId,
+    apiHost: apiHost,
+    userId: userId,
+  });
+
+  return okVoid();
+};
+
+export const updatePersonAttributes = async (attributes: TPersonAttributes) => {
+  const { apiHost, environmentId, userId } = config.get();
+  if (!userId) {
+    return err({
+      code: "missing_person",
+      message: "Unable to update attribute. User identification deactivated. No userId set.",
+    });
+  }
+
+  const attributesToUpdate: TPersonAttributes = {};
+  for (const [key, value] of Object.entries(attributes)) {
+    if (!isExistingAttribute(key, value.toString())) {
+      attributesToUpdate[key] = value;
+    }
+  }
+
+  const input: TPersonUpdateInput = {
+    attributes: attributesToUpdate,
+  };
+
+  const api = new FormbricksAPI({
+    apiHost: config.get().apiHost,
+    environmentId: config.get().environmentId,
+  });
+
+  const res = await api.client.people.update(userId, input);
+
+  if (!res.ok) {
+    return err({
+      code: "network_error",
+      status: 500,
+      message: `Error updating person with userId ${userId}`,
+      url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}`,
+      responseMessage: res.error.message,
+    });
+  }
+
+  logger.debug("Attributes updated. Syncing...");
 
   await sync({
     environmentId: environmentId,
