@@ -14,23 +14,23 @@ async function createUser(page) {
   await page.press('input[name="password"]', "Enter");
 }
 
-async function loginUser(page) {
-  await page.getByText("Login").click();
-  await page.getByText("Login with Email").click();
-  await page.fill('input[name="email"]', email);
-  await page.press('input[name="email"]', "Tab");
-  await page.fill('input[name="password"]', password);
-  await page.press('input[name="password"]', "Enter");
+class LoginPage {
+  async login(page, email, password) {
+    await page.getByText("Login").click();
+    await page.getByText("Login with Email").click();
+    await page.fill('input[name="email"]', email);
+    await page.press('input[name="email"]', "Tab");
+    await page.fill('input[name="password"]', password);
+    await page.press('input[name="password"]', "Enter");
+  }
 }
 
-async function completeOnboarding(page) {
-  await page.getByText("Begin (1 min)").click();
-  await page.getByLabel("Engineer").check();
-  await page.getByText("Next").click();
-  await page.getByLabel("Improve user retention").check();
-  await page.getByText("Next").click();
-  await page.getByLabel("Your product name").fill("test");
-  await page.getByText("Done").click();
+test("create account, login, and complete onboarding", async ({ page }) => {
+  const loginPage = new LoginPage();
+  await createUser(page);
+  await loginPage.login(page, email, password);
+  await completeOnboarding(page);
+});
   await expect(page).toHaveTitle(/Your Surveys | Formbricks/);
 }
 
