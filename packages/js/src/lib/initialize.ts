@@ -16,7 +16,7 @@ import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
 import { addWidgetContainer, closeSurvey } from "./widget";
 import { trackAction } from "./actions";
-import { updatePersonAttributes } from "./person";
+import { updateInitialAttributesInConfig, updatePersonAttributes } from "./person";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -78,15 +78,30 @@ export const initialize = async (
     if (localConfigResult.value.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
 
-      await sync({
-        apiHost: c.apiHost,
-        environmentId: c.environmentId,
-        userId: c.userId,
-      });
-
-      // if userId and attributes are available, set them
       if (c.userId && c.attributes) {
-        await updatePersonAttributes(c.attributes);
+        // if userId and attributes are available, set them
+        const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+
+        if (res.ok !== true) {
+          return err(res.error);
+        }
+
+        // and sync with the BE
+        await sync({
+          apiHost: c.apiHost,
+          environmentId: c.environmentId,
+          userId: c.userId,
+        });
+
+        // update the initial attributes in the config
+        updateInitialAttributesInConfig(c.attributes);
+      } else {
+        // otherwise just sync normally
+        await sync({
+          apiHost: c.apiHost,
+          environmentId: c.environmentId,
+          userId: c.userId,
+        });
       }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
@@ -96,16 +111,30 @@ export const initialize = async (
     logger.debug("No valid configuration found or it has been expired. Creating new config.");
     logger.debug("Syncing.");
 
-    // when the local storage is expired / empty, we sync to get the latest config
-    await sync({
-      apiHost: c.apiHost,
-      environmentId: c.environmentId,
-      userId: c.userId,
-    });
-
-    // if userId and attributes are available, set them
     if (c.userId && c.attributes) {
-      await updatePersonAttributes(c.attributes);
+      // if userId and attributes are available, set them
+      const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+
+      if (res.ok !== true) {
+        return err(res.error);
+      }
+
+      // and sync with the BE
+      await sync({
+        apiHost: c.apiHost,
+        environmentId: c.environmentId,
+        userId: c.userId,
+      });
+
+      // update the initial attributes in the config
+      updateInitialAttributesInConfig(c.attributes);
+    } else {
+      // otherwise just sync normally
+      await sync({
+        apiHost: c.apiHost,
+        environmentId: c.environmentId,
+        userId: c.userId,
+      });
     }
 
     // and track the new session event

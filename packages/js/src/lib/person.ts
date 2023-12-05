@@ -56,10 +56,11 @@ export const updatePersonAttribute = async (
 };
 
 export const updatePersonAttributes = async (
+  apiHost: string,
+  environmentId: string,
+  userId: string,
   attributes: TPersonAttributes
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
-  const { apiHost, environmentId, userId } = config.get();
-
   if (!userId) {
     return err({
       code: "missing_person",
@@ -67,7 +68,33 @@ export const updatePersonAttributes = async (
     });
   }
 
+  const input: TPersonUpdateInput = {
+    attributes,
+  };
+
+  const api = new FormbricksAPI({
+    apiHost,
+    environmentId,
+  });
+
+  const res = await api.client.people.update(userId, input);
+
+  if (res.ok) {
+    return okVoid();
+  }
+
+  return err({
+    code: "network_error",
+    status: 500,
+    message: `Error updating person with userId ${userId}`,
+    url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}`,
+    responseMessage: res.error.message,
+  });
+};
+
+export const updateInitialAttributesInConfig = (attributes: TPersonAttributes): void => {
   const attributesToUpdate: TPersonAttributes = {};
+
   for (const [key, value] of Object.entries(attributes)) {
     if (!isExistingAttribute(key, value.toString())) {
       attributesToUpdate[key] = value;
@@ -76,48 +103,17 @@ export const updatePersonAttributes = async (
 
   if (Object.keys(attributesToUpdate).length === 0) {
     logger.debug("No attributes to update. Skipping update.");
-    return okVoid();
+    return;
   }
 
-  const input: TPersonUpdateInput = {
-    attributes: attributesToUpdate,
-  };
-
-  const api = new FormbricksAPI({
-    apiHost: config.get().apiHost,
+  config.update({
     environmentId: config.get().environmentId,
-  });
-
-  const res = await api.client.people.update(userId, input);
-
-  if (res.ok) {
-    config.update({
-      environmentId: config.get().environmentId,
-      apiHost: config.get().apiHost,
-      userId: config.get().userId,
-      state: {
-        ...config.get().state,
-        attributes: attributesToUpdate,
-      },
-    });
-
-    logger.debug("Attributes updated. Syncing...");
-
-    await sync({
-      environmentId: environmentId,
-      apiHost: apiHost,
-      userId: userId,
-    });
-
-    return okVoid();
-  }
-
-  return err({
-    code: "network_error",
-    status: 500,
-    message: `Error updating person with userId ${userId}`,
-    url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}`,
-    responseMessage: res.error.message,
+    apiHost: config.get().apiHost,
+    userId: config.get().userId,
+    state: {
+      ...config.get().state,
+      attributes: attributesToUpdate,
+    },
   });
 };
 
