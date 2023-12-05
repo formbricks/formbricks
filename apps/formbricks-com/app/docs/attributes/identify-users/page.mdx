@@ -29,6 +29,29 @@ formbricks.init({
 
 </CodeGroup>
 </Col>
+
+## Enhanced Initialization with User Attributes
+
+In addition to setting the `userId`, Formbricks now allows you to set user attributes right at the initialization. This ensures that your user data is seamlessly integrated from the start. Here's how you can include user attributes in the `init()` function:
+
+<Col>
+<CodeGroup title="Enhanced Initialization with User Attributes">
+
+```javascript
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user_id>",
+  attributes: {
+    // your custom attributes
+    key: "value",
+  },
+});
+```
+
+</CodeGroup>
+</Col>
+
 ## Setting User Email
 
 The `userId` is the main identifier used in Formbricks and user identification is only enabled when it is set. In addition to the userId you can also set attributes that describes the user better. The email address can be set using the setEmail function:

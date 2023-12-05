@@ -10,9 +10,31 @@ export const metadata = {
 
 One way to send attributes to Formbricks is in your code. In Formbricks, there are two special attributes for [user identification](/docs/attributes/identify-users)(user ID & email) and custom attributes. An example:
 
+## Setting Custom Attributes During Initialization
+
+You can also set custom user attributes directly during the initialization of Formbricks for better user identification.
+
+<Col>
+<CodeGroup title="Set custom attributes during initialization">
+
+```javascript
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user_id>",
+  attributes: {
+    plan: "free",
+  },
+});
+```
+
+</CodeGroup>
+</Col>
+
 ## Setting Custom User Attributes
 
 You can use the setAttribute function to set any custom attribute for the user (e.g. name, plan, etc.):
+
 <Col>
 <CodeGroup title="Setting Plan to Pro">
 
