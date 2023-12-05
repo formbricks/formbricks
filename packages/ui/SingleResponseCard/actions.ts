@@ -1,7 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { deleteResponse } from "@formbricks/lib/response/service";
 import { canUserAccessResponse } from "@formbricks/lib/response/auth";
@@ -12,10 +12,10 @@ import {
   createResponseNote,
 } from "@formbricks/lib/responseNote/service";
 
-import { createTag } from "@formbricks/lib/tag/service";
+import { createTag, getTag } from "@formbricks/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnResponse/service";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { canUserAccessTagOnResponse } from "@formbricks/lib/tagOnResponse/auth";
+import { canUserAccessTagOnResponse, verifyUserRoleAccess } from "@formbricks/lib/tagOnResponse/auth";
 
 export const createTagAction = async (environmentId: string, tagName: string) => {
   const session = await getServerSession(authOptions);
@@ -23,6 +23,9 @@ export const createTagAction = async (environmentId: string, tagName: string) =>
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user!.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user!.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await createTag(environmentId, tagName);
 };
@@ -34,6 +37,10 @@ export const createTagToResponeAction = async (responseId: string, tagId: string
   const isAuthorized = await canUserAccessTagOnResponse(session.user!.id, tagId, responseId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
+  const tag = await getTag(tagId);
+  const { hasDeleteAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user!.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
+
   return await addTagToRespone(responseId, tagId);
 };
 
@@ -43,6 +50,10 @@ export const deleteTagOnResponseAction = async (responseId: string, tagId: strin
 
   const isAuthorized = await canUserAccessTagOnResponse(session.user!.id, tagId, responseId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const tag = await getTag(tagId);
+  const { hasDeleteAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user!.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   return await deleteTagOnResponse(responseId, tagId);
 };

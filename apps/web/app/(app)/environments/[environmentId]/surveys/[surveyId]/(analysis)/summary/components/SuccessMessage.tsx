@@ -1,19 +1,19 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui/Confetti";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { TProduct } from "@formbricks/types/product";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProfile } from "@formbricks/types/profile";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
   profile: TProfile;
   singleUseIds?: string[];
@@ -22,7 +22,7 @@ interface SummaryMetadataProps {
 export default function SuccessMessage({
   environment,
   survey,
-  surveyBaseUrl,
+  webAppUrl,
   product,
   profile,
 }: SummaryMetadataProps) {
@@ -60,7 +60,7 @@ export default function SuccessMessage({
         survey={survey}
         open={showLinkModal}
         setOpen={setShowLinkModal}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
         profile={profile}
       />

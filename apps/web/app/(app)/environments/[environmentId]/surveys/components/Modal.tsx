@@ -1,6 +1,6 @@
 import { getPlacementStyle } from "@/app/lib/preview";
 import { cn } from "@formbricks/lib/cn";
-import { PlacementType } from "@formbricks/types/js";
+import { TPlacement } from "@formbricks/types/common";
 import { ReactNode, useEffect, useMemo, useState, useRef } from "react";
 
 export default function Modal({
@@ -12,7 +12,7 @@ export default function Modal({
 }: {
   children: ReactNode;
   isOpen: boolean;
-  placement: PlacementType;
+  placement: TPlacement;
   previewMode: string;
   highlightBorderColor: string | null | undefined;
 }) {
@@ -56,7 +56,7 @@ export default function Modal({
         ref={modalRef}
         style={highlightBorderColorStyle}
         className={cn(
-          "pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out",
+          "pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out ",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full ",
           slidingAnimationClass
         )}>

@@ -1,45 +1,48 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { TMembership, TMembershipRole, ZMembershipRole } from "@formbricks/types/v1/memberships";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TMembership } from "@formbricks/types/memberships";
 import {
   TProfile,
   TProfileCreateInput,
   TProfileUpdateInput,
   ZProfileUpdateInput,
-} from "@formbricks/types/v1/profile";
+} from "@formbricks/types/profile";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteTeam } from "../team/service";
 import { validateInputs } from "../utils/validate";
+import { profileCache } from "./cache";
+import { updateMembership } from "../membership/service";
 
 const responseSelection = {
   id: true,
   name: true,
   email: true,
+  emailVerified: true,
+  imageUrl: true,
   createdAt: true,
   updatedAt: true,
   onboardingCompleted: true,
   twoFactorEnabled: true,
   identityProvider: true,
+  objective: true,
 };
 
-export const getProfileCacheTag = (userId: string): string => `profiles-${userId}`;
-export const getProfileByEmailCacheTag = (email: string): string => `profiles-${email}`;
-
 // function to retrive basic information about a user's profile
-export const getProfile = async (userId: string): Promise<TProfile | null> =>
+export const getProfile = async (id: string): Promise<TProfile | null> =>
   unstable_cache(
     async () => {
-      validateInputs([userId, ZId]);
+      validateInputs([id, ZId]);
+
       try {
         const profile = await prisma.user.findUnique({
           where: {
-            id: userId,
+            id,
           },
           select: responseSelection,
         });
@@ -57,70 +60,53 @@ export const getProfile = async (userId: string): Promise<TProfile | null> =>
         throw error;
       }
     },
-    [`profiles-${userId}`],
+    [`getProfile-${id}`],
     {
-      tags: [getProfileByEmailCacheTag(userId)],
+      tags: [profileCache.tag.byId(id)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
 
-export const getProfileByEmail = async (email: string): Promise<TProfile | null> => {
-  validateInputs([email, z.string().email()]);
-  try {
-    const profile = await prisma.user.findFirst({
-      where: {
-        email,
-      },
-      select: responseSelection,
-    });
+export const getProfileByEmail = async (email: string): Promise<TProfile | null> =>
+  unstable_cache(
+    async () => {
+      validateInputs([email, z.string().email()]);
 
-    if (!profile) {
-      return null;
-    }
+      try {
+        const profile = await prisma.user.findFirst({
+          where: {
+            email,
+          },
+          select: responseSelection,
+        });
 
-    unstable_cache(
-      async () => profile, // Cache only if the profile is not null
-      [`profiles-${email}`],
-      {
-        tags: [getProfileCacheTag(email)],
-        revalidate: SERVICES_REVALIDATION_INTERVAL,
+        if (!profile) {
+          return null;
+        }
+
+        return profile;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
-    );
-
-    return profile;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+    },
+    [`getProfileByEmail-${email}`],
+    {
+      tags: [profileCache.tag.byEmail(email)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
-
-    throw error;
-  }
-};
-
-const updateUserMembership = async (teamId: string, userId: string, role: TMembershipRole) => {
-  validateInputs([teamId, ZId], [userId, ZId], [role, ZMembershipRole]);
-  await prisma.membership.update({
-    where: {
-      userId_teamId: {
-        userId,
-        teamId,
-      },
-    },
-    data: {
-      role,
-    },
-  });
-};
+  )();
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");
 
 // function to update a user's profile
-export const updateProfile = async (
-  personId: string,
-  data: Partial<TProfileUpdateInput>
-): Promise<TProfile> => {
+export const updateProfile = async (personId: string, data: TProfileUpdateInput): Promise<TProfile> => {
   validateInputs([personId, ZId], [data, ZProfileUpdateInput.partial()]);
+
   try {
     const updatedProfile = await prisma.user.update({
       where: {
@@ -130,8 +116,10 @@ export const updateProfile = async (
       select: responseSelection,
     });
 
-    revalidateTag(getProfileByEmailCacheTag(updatedProfile.email));
-    revalidateTag(getProfileCacheTag(personId));
+    profileCache.revalidate({
+      email: updatedProfile.email,
+      id: updatedProfile.id,
+    });
 
     return updatedProfile;
   } catch (error) {
@@ -143,40 +131,48 @@ export const updateProfile = async (
   }
 };
 
-const deleteUser = async (userId: string): Promise<TProfile> => {
-  validateInputs([userId, ZId]);
+const deleteUser = async (id: string): Promise<TProfile> => {
+  validateInputs([id, ZId]);
+
   const profile = await prisma.user.delete({
     where: {
-      id: userId,
+      id,
     },
     select: responseSelection,
   });
-  revalidateTag(getProfileByEmailCacheTag(profile.email));
-  revalidateTag(getProfileCacheTag(userId));
+
+  profileCache.revalidate({
+    email: profile.email,
+    id,
+  });
 
   return profile;
 };
 
 export const createProfile = async (data: TProfileCreateInput): Promise<TProfile> => {
   validateInputs([data, ZProfileUpdateInput]);
+
   const profile = await prisma.user.create({
     data: data,
     select: responseSelection,
   });
 
-  revalidateTag(getProfileByEmailCacheTag(profile.email));
-  revalidateTag(getProfileCacheTag(profile.id));
+  profileCache.revalidate({
+    email: profile.email,
+    id: profile.id,
+  });
 
   return profile;
 };
 
 // function to delete a user's profile including teams
-export const deleteProfile = async (userId: string): Promise<TProfile> => {
-  validateInputs([userId, ZId]);
+export const deleteProfile = async (id: string): Promise<TProfile> => {
+  validateInputs([id, ZId]);
+
   try {
     const currentUserMemberships = await prisma.membership.findMany({
       where: {
-        userId: userId,
+        userId: id,
       },
       include: {
         team: {
@@ -203,15 +199,13 @@ export const deleteProfile = async (userId: string): Promise<TProfile> => {
         await deleteTeam(teamId);
       } else if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
         const firstAdmin = teamAdminMemberships[0];
-        await updateUserMembership(teamId, firstAdmin.userId, "owner");
+        await updateMembership(firstAdmin.userId, teamId, { role: "owner" });
       } else if (currentUserIsTeamOwner) {
         await deleteTeam(teamId);
       }
     }
 
-    revalidateTag(getProfileCacheTag(userId));
-
-    const deletedProfile = await deleteUser(userId);
+    const deletedProfile = await deleteUser(id);
 
     return deletedProfile;
   } catch (error) {

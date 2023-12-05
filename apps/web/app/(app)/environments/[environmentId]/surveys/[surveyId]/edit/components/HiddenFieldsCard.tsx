@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyHiddenFields, TSurveyQuestions } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestions } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -162,7 +162,10 @@ const validateHiddenField = (
     return "Question already exists";
   }
   // no key words -- userId & suid & existing question ids
-  if (["userId", "suid"].includes(field) || existingQuestions.findIndex((q) => q.id === field) !== -1) {
+  if (
+    ["userId", "source", "suid", "end", "start", "welcomeCard", "hidden"].includes(field) ||
+    existingQuestions.findIndex((q) => q.id === field) !== -1
+  ) {
     return "Question not allowed";
   }
   // no spaced words --> should be valid query param on url

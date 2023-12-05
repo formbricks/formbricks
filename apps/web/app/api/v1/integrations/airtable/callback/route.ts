@@ -1,9 +1,10 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
-import { AIR_TABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
+import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { responses } from "@/app/lib/api/response";
 import * as z from "zod";
 
 async function getEmail(token: string) {
@@ -26,27 +27,27 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!environmentId) {
-    return NextResponse.json({ error: "Invalid environmentId" });
+    return responses.badRequestResponse("Invalid environmentId");
   }
 
   if (!session) {
-    return NextResponse.json({ Error: "Invalid session" }, { status: 400 });
+    return responses.notAuthenticatedResponse();
   }
 
   if (code && typeof code !== "string") {
-    return NextResponse.json({ message: "`code` must be a string" }, { status: 400 });
+    return responses.badRequestResponse("`code` must be a string");
   }
   const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user.id, environmentId);
   if (!canUserAccessEnvironment) {
-    return NextResponse.json({ Error: "You dont have access to environment" }, { status: 401 });
+    return responses.unauthorizedResponse();
   }
 
-  const client_id = AIR_TABLE_CLIENT_ID;
+  const client_id = AIRTABLE_CLIENT_ID;
   const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
   const code_verifier = Buffer.from(environmentId + session.user.id + environmentId).toString("base64");
 
-  if (!client_id) return NextResponse.json({ Error: "Airtable client id is missing" }, { status: 400 });
-  if (!redirect_uri) return NextResponse.json({ Error: "Airtable redirect url is missing" }, { status: 400 });
+  if (!client_id) return responses.internalServerErrorResponse("Airtable client id is missing");
+  if (!redirect_uri) return responses.internalServerErrorResponse("Airtable redirect url is missing");
 
   const formData = {
     grant_type: "authorization_code",
@@ -58,7 +59,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const key = await fetchAirtableAuthToken(formData);
-
+    if (!key) {
+      return responses.notFoundResponse("airtable auth token", key);
+    }
     const email = await getEmail(key.access_token);
 
     await connectAirtable({
@@ -67,7 +70,9 @@ export async function GET(req: NextRequest) {
       key,
     });
     return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
-  } catch (error) {}
-
-  NextResponse.json({ Error: "unknown error occurred" }, { status: 400 });
+  } catch (error) {
+    console.error(error);
+    responses.internalServerErrorResponse(error);
+  }
+  responses.badRequestResponse("unknown error occurred");
 }

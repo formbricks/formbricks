@@ -1,5 +1,5 @@
 "use client";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
 import { Input } from "@formbricks/ui/Input";
@@ -76,7 +76,7 @@ export default function ResponseOptionsCard({
   };
 
   const handleProtectSurveyWithPinToggle = () => {
-    setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : 1234 }));
+    setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : "1234" }));
   };
 
   const handleProtectSurveyPinChange = (pin: string) => {

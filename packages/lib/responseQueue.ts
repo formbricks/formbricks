@@ -1,14 +1,13 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import { createResponse, updateResponse } from "./client/response";
-import { updateDisplay } from "./client/display";
+import { FormbricksAPI } from "@formbricks/api";
+import { TResponseUpdate } from "@formbricks/types/responses";
 import SurveyState from "./surveyState";
 
 interface QueueConfig {
   apiHost: string;
+  environmentId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
   setSurveyState?: (state: SurveyState) => void;
-  personId?: string;
 }
 
 export class ResponseQueue {
@@ -16,10 +15,15 @@ export class ResponseQueue {
   private config: QueueConfig;
   private surveyState: SurveyState;
   private isRequestInProgress = false;
+  private api: FormbricksAPI;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
     this.surveyState = surveyState;
+    this.api = new FormbricksAPI({
+      apiHost: config.apiHost,
+      environmentId: config.environmentId,
+    });
   }
 
   add(responseUpdate: TResponseUpdate) {
@@ -69,21 +73,21 @@ export class ResponseQueue {
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
     try {
       if (this.surveyState.responseId !== null) {
-        await updateResponse(responseUpdate, this.surveyState.responseId, this.config.apiHost);
+        await this.api.client.response.update({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {
-        const response = await createResponse(
-          {
-            ...responseUpdate,
-            surveyId: this.surveyState.surveyId,
-            personId: this.config.personId || null,
-            singleUseId: this.surveyState.singleUseId || null,
-          },
-          this.config.apiHost
-        );
-        if (this.surveyState.displayId) {
-          await updateDisplay(this.surveyState.displayId, { responseId: response.id }, this.config.apiHost);
+        const response = await this.api.client.response.create({
+          ...responseUpdate,
+          surveyId: this.surveyState.surveyId,
+          userId: this.surveyState.userId || null,
+          singleUseId: this.surveyState.singleUseId || null,
+        });
+        if (!response.ok) {
+          throw new Error("Could not create response");
         }
-        this.surveyState.updateResponseId(response.id);
+        if (this.surveyState.displayId) {
+          await this.api.client.display.update(this.surveyState.displayId, { responseId: response.data.id });
+        }
+        this.surveyState.updateResponseId(response.data.id);
         if (this.config.setSurveyState) {
           this.config.setSurveyState(this.surveyState);
         }

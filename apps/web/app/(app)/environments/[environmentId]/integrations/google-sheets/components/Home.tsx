@@ -1,12 +1,11 @@
 "use client";
-
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import { timeSince } from "@formbricks/lib/time";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
-} from "@formbricks/types/v1/integration/googleSheet";
+} from "@formbricks/types/integration/googleSheet";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";

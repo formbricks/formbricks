@@ -1,6 +1,6 @@
 import "server-only";
 
-import { ZId } from "@formbricks/types/v1/environment";
+import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
 import { hasUserEnvironmentAccess } from "../environment/auth";
 import { getPerson } from "./service";
@@ -25,6 +25,6 @@ export const canUserAccessPerson = async (userId: string, personId: string): Pro
     [`canUserAccessPerson-${userId}-people-${personId}`],
     {
       revalidate: SERVICES_REVALIDATION_INTERVAL,
-      tags: [personCache.tag.byId(personId), personCache.tag.byUserId(userId)],
+      tags: [personCache.tag.byId(personId)],
     }
   )();

@@ -1,20 +1,20 @@
 import { revalidateTag } from "next/cache";
 
 interface RevalidateProps {
+  id?: string;
   environmentId?: string;
   personId?: string;
-  responseId?: string;
   singleUseId?: string;
   surveyId?: string;
 }
 
 export const responseCache = {
   tag: {
+    byId(responseId: string) {
+      return `responses-${responseId}`;
+    },
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-responses`;
-    },
-    byResponseId(responseId: string) {
-      return `responses-${responseId}`;
     },
     byPersonId(personId: string) {
       return `people-${personId}-responses`;
@@ -26,9 +26,9 @@ export const responseCache = {
       return `surveys-${surveyId}-responses`;
     },
   },
-  revalidate({ environmentId, personId, responseId, singleUseId, surveyId }: RevalidateProps): void {
-    if (responseId) {
-      revalidateTag(this.tag.byResponseId(responseId));
+  revalidate({ environmentId, personId, id, singleUseId, surveyId }: RevalidateProps): void {
+    if (id) {
+      revalidateTag(this.tag.byId(id));
     }
 
     if (personId) {

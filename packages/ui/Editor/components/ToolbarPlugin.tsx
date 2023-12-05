@@ -202,6 +202,7 @@ function getSelectedNode(selection: RangeSelection) {
 
 export default function ToolbarPlugin(props: TextEditorProps) {
   const [editor] = useLexicalComposerContext();
+
   const toolbarRef = useRef(null);
   const [blockType, setBlockType] = useState("paragraph");
   const [isLink, setIsLink] = useState(false);
@@ -348,10 +349,11 @@ export default function ToolbarPlugin(props: TextEditorProps) {
         }
       });
     }
-  }, [props.updateTemplate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.updateTemplate, props.firstRender]);
 
   useEffect(() => {
-    if (props.setFirstRender) {
+    if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
         const parser = new DOMParser();
@@ -453,11 +455,8 @@ export default function ToolbarPlugin(props: TextEditorProps) {
               StartIcon={Bold}
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-                if (isItalic) {
-                  editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-                }
               }}
-              className={isBold ? "bg-subtle" : ""}
+              className={isBold ? "bg-subtle active-button" : "inactive-button"}
             />
           )}
           {!props.excludedToolbarItems?.includes("italic") && (
@@ -468,11 +467,8 @@ export default function ToolbarPlugin(props: TextEditorProps) {
               StartIcon={Italic}
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-                if (isItalic) {
-                  editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-                }
               }}
-              className={isItalic ? "bg-subtle" : ""}
+              className={isItalic ? "bg-subtle active-button" : "inactive-button"}
             />
           )}
           {!props.excludedToolbarItems?.includes("link") && (
@@ -483,7 +479,7 @@ export default function ToolbarPlugin(props: TextEditorProps) {
                 type="button"
                 StartIcon={Link}
                 onClick={insertLink}
-                className={isLink ? "bg-subtle" : ""}
+                className={isLink ? "bg-subtle active-button" : "inactive-button"}
               />
               {isLink && createPortal(<FloatingLinkEditor editor={editor} />, document.body)}{" "}
             </>

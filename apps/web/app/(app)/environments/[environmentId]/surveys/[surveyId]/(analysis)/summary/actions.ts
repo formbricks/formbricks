@@ -1,10 +1,11 @@
 "use server";
 
+import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { AuthenticationError, AuthorizationError } from "@formbricks/types/v1/errors";
+import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { getServerSession } from "next-auth";
 
 type TSendEmailActionArgs = {
@@ -31,4 +32,14 @@ export const sendEmailAction = async ({ html, subject, to }: TSendEmailActionArg
     throw new AuthenticationError("Not authenticated");
   }
   return await sendEmbedSurveyPreviewEmail(to, subject, html);
+};
+
+export const getEmailHtmlAction = async (surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
+
+  return await getEmailTemplateHtml(surveyId);
 };

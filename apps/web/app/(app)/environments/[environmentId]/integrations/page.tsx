@@ -7,19 +7,49 @@ import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import { Card } from "@formbricks/ui/Card";
 import Image from "next/image";
-import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
+import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getServerSession } from "next-auth";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
 
-  const [environment, integrations, userWebhooks, zapierWebhooks] = await Promise.all([
+  const [
+    environment,
+    integrations,
+    team,
+    session,
+    userWebhookCount,
+    zapierWebhookCount,
+    makeWebhookCount,
+    n8nwebhookCount,
+  ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
-    getCountOfWebhooksBasedOnSource(environmentId, "user"),
-    getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
+    getTeamByEnvironmentId(params.environmentId),
+    getServerSession(authOptions),
+    getWebhookCountBySource(environmentId, "user"),
+    getWebhookCountBySource(environmentId, "zapier"),
+    getWebhookCountBySource(environmentId, "make"),
+    getWebhookCountBySource(environmentId, "n8n"),
   ]);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   const containsGoogleSheetIntegration = integrations.some(
     (integration) => integration.type === "googleSheets"
@@ -48,23 +78,31 @@ export default async function IntegrationsPage({ params }) {
       label: "Zapier",
       description: "Integrate Formbricks with 5000+ apps via Zapier",
       icon: <Image src={ZapierLogo} alt="Zapier Logo" />,
-      connected: zapierWebhooks > 0,
+      connected: zapierWebhookCount > 0,
       statusText:
-        zapierWebhooks === 1 ? "1 zap" : zapierWebhooks === 0 ? "Not Connected" : `${zapierWebhooks} zaps`,
+        zapierWebhookCount === 1
+          ? "1 zap"
+          : zapierWebhookCount === 0
+          ? "Not Connected"
+          : `${zapierWebhookCount} zaps`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
       connectText: "Manage Webhooks",
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/webhook-api/overview",
+      docsHref: "https://formbricks.com/docs/api/management/webhooks",
       docsText: "Docs",
       docsNewTab: true,
       label: "Webhooks",
       description: "Trigger Webhooks based on actions in your surveys",
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
-      connected: userWebhooks > 0,
+      connected: userWebhookCount > 0,
       statusText:
-        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} webhooks`,
+        userWebhookCount === 1
+          ? "1 webhook"
+          : userWebhookCount === 0
+          ? "Not Connected"
+          : `${userWebhookCount} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
@@ -102,6 +140,13 @@ export default async function IntegrationsPage({ params }) {
       label: "n8n",
       description: "Integrate Formbricks with 350+ apps via n8n",
       icon: <Image src={n8nLogo} alt="n8n Logo" />,
+      connected: n8nwebhookCount > 0,
+      statusText:
+        n8nwebhookCount === 1
+          ? "1 integration"
+          : n8nwebhookCount === 0
+          ? "Not Connected"
+          : `${n8nwebhookCount} integrations`,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -113,8 +158,17 @@ export default async function IntegrationsPage({ params }) {
       label: "Make.com",
       description: "Integrate Formbricks with 1000+ apps via Make",
       icon: <Image src={MakeLogo} alt="Make Logo" />,
+      connected: makeWebhookCount > 0,
+      statusText:
+        makeWebhookCount === 1
+          ? "1 integration"
+          : makeWebhookCount === 0
+          ? "Not Connected"
+          : `${makeWebhookCount} integration`,
     },
   ];
+
+  if (isViewer) return <ErrorComponent />;
 
   return (
     <div>
