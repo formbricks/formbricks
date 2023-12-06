@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
 
-const email = "testp@gmail.com";
+const email = "test@gmail.com";
 const password = "Test@123";
 
 async function createUser(page) {
-  await page.goto("http://localhost:3000/auth/signup");
+  await page.goto("/auth/signup");
   await page.getByText("Continue with Email").click();
   await page.fill('input[name="name"]', "test");
   await page.press('input[name="name"]', "Tab");
@@ -15,7 +15,7 @@ async function createUser(page) {
 }
 
 async function loginUser(page) {
-  await page.getByText("Login").click();
+  await page.goto("/auth/login");
   await page.getByText("Login with Email").click();
   await page.fill('input[name="email"]', email);
   await page.press('input[name="email"]', "Tab");
