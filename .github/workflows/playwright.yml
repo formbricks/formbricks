@@ -18,6 +18,10 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 20
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Install Docker Compose
+      run: sudo apt-get update && sudo apt-get install -y docker-compose
     - name: Install dependencies
       run: npm install -g pnpm && pnpm install
     - name: Install Playwright Browsers
