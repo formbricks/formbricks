@@ -18,7 +18,8 @@ jobs:
         image: postgres:12.1
         env:
           POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: formbricks
+          POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
       mailhog:
