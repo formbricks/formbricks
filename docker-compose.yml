@@ -78,51 +78,53 @@ services:
       - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=postgres
-
-  formbricks:
-    restart: always
-    build:
-      context: .
-      dockerfile: ./apps/web/Dockerfile
-      args:
-        DATABASE_URL: *database_url
-        NEXTAUTH_SECRET: *nextauth_secret
-        ENCRYPTION_KEY: *encryption_key
-
-    depends_on:
-      - postgres
     ports:
-      - 3000:3000
+      - 5432:5432
 
-    environment:
-      WEBAPP_URL: *webapp_url
-      DATABASE_URL: *database_url
-      NEXTAUTH_SECRET: *nextauth_secret
-      NEXTAUTH_URL: *nextauth_url
-      MAIL_FROM: *mail_from
-      SMTP_HOST: *smtp_host
-      SMTP_PORT: *smtp_port
-      SMTP_SECURE_ENABLED: *smtp_secure_enabled
-      SMTP_USER: *smtp_user
-      SMTP_PASSWORD: *smtp_password
-      ENCRYPTION_KEY: *encryption_key
-      SHORT_URL_BASE: *short_url_base
-      PRIVACY_URL: *privacy_url
-      TERMS_URL: *terms_url
-      IMPRINT_URL: *imprint_url
-      EMAIL_VERIFICATION_DISABLED: *email_verification_disabled
-      PASSWORD_RESET_DISABLED: *password_reset_disabled
-      SIGNUP_DISABLED: *signup_disabled
-      INVITE_DISABLED: *invite_disabled
-      SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
-      NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
-      GITHUB_AUTH_ENABLED: *github_auth_enabled
-      GITHUB_ID: *github_id
-      GITHUB_SECRET: *github_secret
-      GOOGLE_AUTH_ENABLED: *google_auth_enabled
-      GOOGLE_CLIENT_ID: *google_client_id
-      GOOGLE_CLIENT_SECRET: *google_client_secret
-      CRON_SECRET: *cron_secret
+  # formbricks:
+  #   restart: always
+  #   build:
+  #     context: .
+  #     dockerfile: ./apps/web/Dockerfile
+  #     args:
+  #       DATABASE_URL: *database_url
+  #       NEXTAUTH_SECRET: *nextauth_secret
+  #       ENCRYPTION_KEY: *encryption_key
+
+  #   depends_on:
+  #     - postgres
+  #   ports:
+  #     - 3000:3000
+
+  #   environment:
+  #     WEBAPP_URL: *webapp_url
+  #     DATABASE_URL: *database_url
+  #     NEXTAUTH_SECRET: *nextauth_secret
+  #     NEXTAUTH_URL: *nextauth_url
+  #     MAIL_FROM: *mail_from
+  #     SMTP_HOST: *smtp_host
+  #     SMTP_PORT: *smtp_port
+  #     SMTP_SECURE_ENABLED: *smtp_secure_enabled
+  #     SMTP_USER: *smtp_user
+  #     SMTP_PASSWORD: *smtp_password
+  #     ENCRYPTION_KEY: *encryption_key
+  #     SHORT_URL_BASE: *short_url_base
+  #     PRIVACY_URL: *privacy_url
+  #     TERMS_URL: *terms_url
+  #     IMPRINT_URL: *imprint_url
+  #     EMAIL_VERIFICATION_DISABLED: *email_verification_disabled
+  #     PASSWORD_RESET_DISABLED: *password_reset_disabled
+  #     SIGNUP_DISABLED: *signup_disabled
+  #     INVITE_DISABLED: *invite_disabled
+  #     SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
+  #     NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
+  #     GITHUB_AUTH_ENABLED: *github_auth_enabled
+  #     GITHUB_ID: *github_id
+  #     GITHUB_SECRET: *github_secret
+  #     GOOGLE_AUTH_ENABLED: *google_auth_enabled
+  #     GOOGLE_CLIENT_ID: *google_client_id
+  #     GOOGLE_CLIENT_SECRET: *google_client_secret
+  #     CRON_SECRET: *cron_secret
 
 volumes:
   postgres:
