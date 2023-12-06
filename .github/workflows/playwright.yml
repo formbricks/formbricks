@@ -40,7 +40,7 @@ jobs:
     - name: Install Playwright Browsers
       run: pnpm exec playwright install --with-deps
     - name: Run Playwright tests
-      run: pnpm exec playwright test
+      run: pnpm test
       env:
         WEBAPP_URL: http://localhost:3000
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/formbricks?schema=public
