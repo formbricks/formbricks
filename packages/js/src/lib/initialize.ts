@@ -66,6 +66,14 @@ export const initialize = async (
 
   const localConfigResult = config.loadFromLocalStorage();
 
+  if (!c.userId && c.attributes) {
+    logger.error("No userId provided but attributes. Cannot update attributes without userId.");
+    return err({
+      code: "missing_field",
+      field: "userId",
+    });
+  }
+
   if (
     localConfigResult.ok &&
     localConfigResult.value.state &&
