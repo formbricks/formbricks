@@ -8,6 +8,7 @@ import {
   TProfile,
   TProfileCreateInput,
   TProfileUpdateInput,
+  ZProfile,
   ZProfileUpdateInput,
 } from "@formbricks/types/profile";
 import { Prisma } from "@prisma/client";
@@ -19,7 +20,7 @@ import { deleteTeam } from "../team/service";
 import { validateInputs } from "../utils/validate";
 import { profileCache } from "./cache";
 import { formatProfileDateFields } from "./util";
-
+import { formatDateFields } from "../utils/datetime";
 const responseSelection = {
   id: true,
   name: true,
@@ -51,7 +52,6 @@ export const getProfile = async (id: string): Promise<TProfile | null> => {
         if (!profile) {
           return null;
         }
-
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -74,7 +74,7 @@ export const getProfile = async (id: string): Promise<TProfile | null> => {
 
   return {
     ...profile,
-    ...formatProfileDateFields(profile),
+    ...formatDateFields(profile, ZProfile),
   } as TProfile;
 };
 

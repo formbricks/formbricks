@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TTeam, TTeamBilling, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
+import { TTeam, TTeamBilling, TTeamUpdateInput, ZTeam, ZTeamUpdateInput } from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -12,6 +12,7 @@ import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
+import { formatDateFields } from "../utils/datetime";
 
 export const select = {
   id: true,
@@ -44,7 +45,7 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        return teams;
+        return teams.map((team) => formatDateFields(team, ZTeam));
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -81,7 +82,7 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
           select: { ...select, memberships: true }, // include memberships
         });
 
-        return team;
+        return formatDateFields(team, ZTeam);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -111,7 +112,7 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> =>
           select,
         });
 
-        return team;
+        return formatDateFields(team, ZTeam);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -281,7 +282,7 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
     }
   )();
 
-  return teams;
+  return teams.map((team) => formatDateFields(team, ZTeam));
 };
 
 export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<number> =>

@@ -8,6 +8,7 @@ import {
   TDisplayLegacyCreateInput,
   TDisplayLegacyUpdateInput,
   TDisplayUpdateInput,
+  ZDisplay,
   ZDisplayCreateInput,
   ZDisplayLegacyCreateInput,
   ZDisplayLegacyUpdateInput,
@@ -23,6 +24,7 @@ import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 import { formatDisplaysDateFields } from "./util";
 import { TPerson } from "@formbricks/types/people";
+import { formatDateFields } from "../utils/datetime";
 
 const selectDisplay = {
   id: true,
@@ -39,14 +41,14 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
       validateInputs([displayId, ZId]);
 
       try {
-        const responsePrisma = await prisma.response.findUnique({
+        const display = await prisma.response.findUnique({
           where: {
             id: displayId,
           },
           select: selectDisplay,
         });
 
-        return responsePrisma;
+        return formatDateFields(display, ZDisplay);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

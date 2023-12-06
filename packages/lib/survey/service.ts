@@ -19,7 +19,7 @@ import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { captureTelemetry } from "../telemetry";
-import { diffInDays } from "../utils/datetime";
+import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { formatSurveyDateFields } from "./util";
@@ -127,7 +127,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
 
-      return transformedSurvey;
+      return formatDateFields(transformedSurvey, ZSurvey);
     },
     [`getSurvey-${surveyId}`],
     {
@@ -179,7 +179,7 @@ export const getSurveysByAttributeClassId = async (
         surveys.push(transformedSurvey);
       }
 
-      return surveys;
+      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
     },
     [`getSurveysByAttributeClassId-${attributeClassId}-${page}`],
     {
@@ -224,7 +224,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
         surveys.push(transformedSurvey);
       }
 
-      return surveys;
+      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
     },
     [`getSurveysByActionClassId-${actionClassId}-${page}`],
     {
@@ -271,7 +271,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
         };
         surveys.push(transformedSurvey);
       }
-      return surveys;
+      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
     },
     [`getSurveys-${environmentId}-${page}`],
     {
@@ -689,7 +689,7 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
         }
       });
 
-      return surveys;
+      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
     },
     [`getSyncSurveys-${environmentId}-${person.userId}`],
     {

@@ -18,8 +18,8 @@ import { validateInputs } from "../utils/validate";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { inviteCache } from "./cache";
-import { formatInviteDateFields } from "./util";
 import { getMembershipByUserIdTeamId } from "../membership/service";
+import { formatDateFields } from "../utils/datetime";
 
 const inviteSelect = {
   id: true,
@@ -53,7 +53,7 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
     }
   )();
 
-  return invites.map(formatInviteDateFields);
+  return invites.map((invite: TInvite) => formatDateFields(invite, ZInvitee));
 };
 
 export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
@@ -139,7 +139,7 @@ export const getInvite = async (
         throw new ResourceNotFoundError("Invite", inviteId);
       }
 
-      return invite;
+      return formatDateFields(invite, ZInvitee);
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }

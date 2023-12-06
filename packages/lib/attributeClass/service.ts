@@ -8,6 +8,7 @@ import {
   ZAttributeClassUpdateInput,
   TAttributeClassType,
   ZAttributeClassType,
+  ZAttributeClass,
 } from "@formbricks/types/attributeClasses";
 import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
@@ -16,8 +17,7 @@ import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { attributeClassCache } from "./cache";
-import { formatAttributeClassDateFields } from "./util";
-
+import { formatDateFields } from "../utils/datetime";
 export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
   const attributeClass = await unstable_cache(
     async () => {
@@ -44,7 +44,7 @@ export const getAttributeClass = async (attributeClassId: string): Promise<TAttr
     return null;
   }
 
-  return formatAttributeClassDateFields(attributeClass);
+  return formatDateFields(attributeClass, ZAttributeClass) as TAttributeClass;
 };
 
 export const getAttributeClasses = async (
@@ -81,7 +81,7 @@ export const getAttributeClasses = async (
     }
   )();
 
-  return attributeClasses.map(formatAttributeClassDateFields);
+  return attributeClasses.map((attributeClass) => formatDateFields(attributeClass, ZAttributeClass));
 };
 
 export const updateAttributeClass = async (
@@ -118,12 +118,13 @@ export const getAttributeClassByName = async (environmentId: string, name: strin
     async (): Promise<TAttributeClass | null> => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
-      return await prisma.attributeClass.findFirst({
+      const attributeClass = await prisma.attributeClass.findFirst({
         where: {
           environmentId,
           name,
         },
       });
+      return formatDateFields(attributeClass, ZAttributeClass) as TAttributeClass;
     },
     [`getAttributeClassByName-${environmentId}-${name}`],
     {

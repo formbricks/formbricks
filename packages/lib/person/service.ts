@@ -4,13 +4,14 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/people";
+import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
 import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
+import { formatDateFields } from "../utils/datetime";
 
 export const selectPerson = {
   id: true,
@@ -94,7 +95,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     return null;
   }
 
-  return transformPrismaPerson(prismaPerson);
+  return formatDateFields(transformPrismaPerson(prismaPerson), ZPerson);
 };
 
 export const getPeople = async (environmentId: string, page?: number): Promise<TPerson[]> => {
@@ -131,7 +132,7 @@ export const getPeople = async (environmentId: string, page?: number): Promise<T
   }
 
   return peoplePrisma
-    .map(transformPrismaPerson)
+    .map((prismaPerson) => formatDateFields(transformPrismaPerson(prismaPerson), ZPerson))
     .filter((person: TPerson | null): person is TPerson => person !== null);
 };
 
@@ -324,7 +325,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
       });
 
       if (personWithUserId) {
-        return transformPrismaPerson(personWithUserId);
+        return formatDateFields(transformPrismaPerson(personWithUserId), ZPerson);
       }
 
       // Check if a person with the userId attribute exists

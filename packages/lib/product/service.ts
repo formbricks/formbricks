@@ -15,6 +15,7 @@ import { environmentCache } from "../environment/cache";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
 import { productCache } from "./cache";
+import { formatDateFields } from "../utils/datetime";
 
 const selectProduct = {
   id: true,
@@ -48,7 +49,7 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        return products;
+        return products.map((product) => formatDateFields(product, ZProduct));
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -87,7 +88,7 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
           return null;
         }
 
-        return productPrisma;
+        return formatDateFields(productPrisma, ZProduct);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -236,7 +237,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
     });
   }
 
-  return product;
+  return formatDateFields(product, ZProduct);
 };
 
 export const createProduct = async (

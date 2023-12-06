@@ -3,14 +3,19 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
-import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
+import {
+  TActionClass,
+  TActionClassInput,
+  ZActionClass,
+  ZActionClassInput,
+} from "@formbricks/types/actionClasses";
 import { ZId } from "@formbricks/types/environment";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
-
+import { formatDateFields } from "../utils/datetime";
 const select = {
   id: true,
   createdAt: true,
@@ -40,7 +45,10 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
           },
         });
 
-        return actionClasses;
+        return actionClasses.map((actionClass) => ({
+          ...actionClass,
+          ...formatDateFields(actionClass, ZActionClass),
+        }));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
@@ -69,7 +77,7 @@ export const getActionClassByEnvironmentIdAndName = async (
           select,
         });
 
-        return actionClass;
+        return formatDateFields(actionClass, ZActionClass) as TActionClass;
       } catch (error) {
         throw new DatabaseError(`Database error when fetching action`);
       }
@@ -94,7 +102,7 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
           select,
         });
 
-        return actionClass;
+        return formatDateFields(actionClass, ZActionClass) as TActionClass;
       } catch (error) {
         throw new DatabaseError(`Database error when fetching action`);
       }

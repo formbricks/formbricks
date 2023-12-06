@@ -10,8 +10,10 @@ import {
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
+  ZResponse,
   ZResponseInput,
   ZResponseLegacyInput,
+  ZResponseNote,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
@@ -20,13 +22,13 @@ import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
-import { calculateTtcTotal, formatResponseDateFields } from "../response/util";
+import { calculateTtcTotal } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
-
+import { formatDateFields } from "../utils/datetime";
 const responseSelection = {
   id: true,
   createdAt: true,
@@ -137,8 +139,8 @@ export const getResponsesByPersonId = async (
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 
@@ -189,8 +191,8 @@ export const getResponseBySingleUseId = async (
   }
 
   return {
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   };
 };
 
@@ -374,8 +376,8 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   }
 
   return {
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   } as TResponse;
 };
 
@@ -426,8 +428,8 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 
@@ -483,8 +485,8 @@ export const getResponsesByEnvironmentId = async (
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 

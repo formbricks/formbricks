@@ -1,6 +1,6 @@
 import "server-only";
 
-import { TWebhook, TWebhookInput, ZWebhookInput } from "@formbricks/types/webhooks";
+import { TWebhook, TWebhookInput, ZWebhook, ZWebhookInput } from "@formbricks/types/webhooks";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
 import { validateInputs } from "../utils/validate";
@@ -10,6 +10,7 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { webhookCache } from "./cache";
 import { unstable_cache } from "next/cache";
+import { formatDateFields } from "../utils/datetime";
 
 export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> =>
   unstable_cache(
@@ -24,7 +25,7 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
-        return webhooks;
+        return webhooks.map((webhook) => formatDateFields(webhook, ZWebhook));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
       }
@@ -73,7 +74,7 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> =>
           id,
         },
       });
-      return webhook;
+      return formatDateFields(webhook, ZWebhook);
     },
     [`getWebhook-${id}`],
     {

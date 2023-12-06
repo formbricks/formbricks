@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/apiKeys";
+import { TApiKey, TApiKeyCreateInput, ZApiKey, ZApiKeyCreateInput } from "@formbricks/types/apiKeys";
 import { Prisma } from "@prisma/client";
 import { getHash } from "../crypto";
 import { createHash, randomBytes } from "crypto";
@@ -12,7 +12,7 @@ import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { apiKeyCache } from "./cache";
-
+import { formatDateFields } from "../utils/datetime";
 export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> =>
   unstable_cache(
     async () => {
@@ -33,7 +33,7 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> =>
           throw new ResourceNotFoundError("API Key from ID", apiKeyId);
         }
 
-        return apiKeyData;
+        return formatDateFields(apiKeyData, ZApiKey) as TApiKey;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -63,7 +63,10 @@ export const getApiKeys = async (environmentId: string, page?: number): Promise<
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        return apiKeys;
+        return apiKeys.map((apiKey) => ({
+          ...apiKey,
+          ...formatDateFields(apiKey, ZApiKey),
+        }));
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -127,7 +130,7 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
           },
         });
 
-        return apiKeyData;
+        return formatDateFields(apiKeyData, ZApiKey) as TApiKey;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

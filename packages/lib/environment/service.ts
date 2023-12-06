@@ -21,6 +21,7 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 import { formatEnvironmentDateFields } from "./util";
+import { formatDateFields } from "../utils/datetime";
 
 export const getEnvironment = (environmentId: string): Promise<TEnvironment | null> =>
   unstable_cache(
@@ -28,11 +29,12 @@ export const getEnvironment = (environmentId: string): Promise<TEnvironment | nu
       validateInputs([environmentId, ZId]);
 
       try {
-        return await prisma.environment.findUnique({
+        const environment = await prisma.environment.findUnique({
           where: {
             id: environmentId,
           },
         });
+        return formatDateFields(environment, ZEnvironment);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -81,7 +83,7 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
       }
 
       try {
-        return environments;
+        return environments.map((environment) => formatDateFields(environment, ZEnvironment));
       } catch (error) {
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2));
@@ -130,7 +132,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
     async () => {
       validateInputs([userId, ZId]);
       try {
-        return await prisma.environment.findFirst({
+        const environment = await prisma.environment.findFirst({
           where: {
             type: "production",
             product: {
@@ -144,6 +146,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
             },
           },
         });
+        return formatDateFields(environment, ZEnvironment);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 
 import { DatabaseError } from "@formbricks/types/errors";
-import { TResponseNote } from "@formbricks/types/responses";
+import { TResponseNote, ZResponseNote } from "@formbricks/types/responses";
 import { Prisma } from "@prisma/client";
 import { responseCache } from "../response/cache";
 import { validateInputs } from "../utils/validate";
@@ -12,6 +12,7 @@ import { ZString } from "@formbricks/types/common";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { responseNoteCache } from "./cache";
+import { formatDateFields } from "../utils/datetime";
 
 const select = {
   id: true,
@@ -39,6 +40,7 @@ export const createResponseNote = async (
   userId: string,
   text: string
 ): Promise<TResponseNote> => {
+  console.log("creating note");
   validateInputs([responseId, ZId], [userId, ZId], [text, ZString]);
 
   try {
@@ -60,7 +62,7 @@ export const createResponseNote = async (
       id: responseNote.id,
       responseId: responseNote.response.id,
     });
-
+    console.log(typeof responseNote.updatedAt);
     return responseNote;
   } catch (error) {
     console.error(error);
@@ -82,7 +84,7 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
           },
           select,
         });
-        return responseNote;
+        return formatDateFields(responseNote, ZResponseNote);
       } catch (error) {
         console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -108,7 +110,7 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
           },
           select,
         });
-        return responseNotes;
+        return responseNotes.map((responseNote) => formatDateFields(responseNote, ZResponseNote));
       } catch (error) {
         console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
