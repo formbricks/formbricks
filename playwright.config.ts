@@ -68,7 +68,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "pnpm go --filter=web",
+    command: "pnpm dev --filter=web",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.PLAYWRIGHT_CI,
     // reuseExistingServer: true,
