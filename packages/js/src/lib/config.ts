@@ -7,6 +7,13 @@ export class Config {
   private static instance: Config | undefined;
   private config: TJsConfig | null = null;
 
+  private constructor() {
+    const localConfig = this.loadFromLocalStorage();
+    if (localConfig.ok) {
+      this.config = localConfig.value;
+    }
+  }
+
   static getInstance(): Config {
     if (!Config.instance) {
       Config.instance = new Config();
