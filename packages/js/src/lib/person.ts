@@ -1,7 +1,15 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
 import { Config } from "./config";
-import { AttributeAlreadyExistsError, MissingPersonError, NetworkError, Result, err, okVoid } from "./errors";
+import {
+  AttributeAlreadyExistsError,
+  MissingPersonError,
+  NetworkError,
+  Result,
+  err,
+  ok,
+  okVoid,
+} from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
 import { sync } from "./sync";
@@ -60,7 +68,7 @@ export const updatePersonAttributes = async (
   environmentId: string,
   userId: string,
   attributes: TPersonAttributes
-): Promise<Result<void, NetworkError | MissingPersonError>> => {
+): Promise<Result<TPersonAttributes, NetworkError | MissingPersonError>> => {
   if (!userId) {
     return err({
       code: "missing_person",
@@ -68,8 +76,31 @@ export const updatePersonAttributes = async (
     });
   }
 
+  // clean attributes and remove existing attributes if config already exists
+  const updatedAttributes = { ...attributes };
+  try {
+    const existingAttributes = config.get()?.state?.attributes;
+    if (existingAttributes) {
+      for (const [key, value] of Object.entries(existingAttributes)) {
+        if (updatedAttributes[key] === value) {
+          delete updatedAttributes[key];
+        }
+      }
+    }
+  } catch (e) {
+    logger.debug("config not set; sending all attributes to backend");
+  }
+
+  // send to backend if updatedAttributes is not empty
+  if (Object.keys(updatedAttributes).length === 0) {
+    logger.debug("No attributes to update. Skipping update.");
+    return ok(updatedAttributes);
+  }
+
+  logger.debug("Updating attributes: " + JSON.stringify(updatedAttributes));
+
   const input: TPersonUpdateInput = {
-    attributes,
+    attributes: updatedAttributes,
   };
 
   const api = new FormbricksAPI({
@@ -80,7 +111,7 @@ export const updatePersonAttributes = async (
   const res = await api.client.people.update(userId, input);
 
   if (res.ok) {
-    return okVoid();
+    return ok(updatedAttributes);
   }
 
   return err({
@@ -89,31 +120,6 @@ export const updatePersonAttributes = async (
     message: `Error updating person with userId ${userId}`,
     url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}`,
     responseMessage: res.error.message,
-  });
-};
-
-export const updateInitialAttributesInConfig = (attributes: TPersonAttributes): void => {
-  const attributesToUpdate: TPersonAttributes = {};
-
-  for (const [key, value] of Object.entries(attributes)) {
-    if (!isExistingAttribute(key, value.toString())) {
-      attributesToUpdate[key] = value;
-    }
-  }
-
-  if (Object.keys(attributesToUpdate).length === 0) {
-    logger.debug("No attributes to update. Skipping update.");
-    return;
-  }
-
-  config.update({
-    environmentId: config.get().environmentId,
-    apiHost: config.get().apiHost,
-    userId: config.get().userId,
-    state: {
-      ...config.get().state,
-      attributes: attributesToUpdate,
-    },
   });
 };
 
