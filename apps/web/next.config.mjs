@@ -4,7 +4,7 @@ import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
 
-function getHostname(url) {
+function getHostname(url: string) {
   const urlObj = new URL(url);
   return urlObj.hostname;
 }
@@ -38,7 +38,7 @@ const nextConfig = {
         protocol: "https",
         hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
       },
-      {
+      process.env.WEBAPP_URL && {
         protocol: "https",
         hostname: getHostname(process.env.WEBAPP_URL),
       },
