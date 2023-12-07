@@ -21,20 +21,25 @@ function isZodDate(schema: z.ZodTypeAny): boolean {
   return false;
 }
 
-// Function to format date fields in an object based on a Zod schema
-export function formatDateFields<T extends z.ZodRawShape>(object: unknown, zodSchema: z.ZodObject<T>): any {
-  if (!object || typeof object !== "object") return null;
+export function formatDateFields<T extends z.ZodRawShape>(
+  object: z.infer<z.ZodObject<T>>,
+  zodSchema: z.ZodObject<T>
+): z.infer<typeof zodSchema> {
   const schemaFields = zodSchema.shape;
   const formattedObject = { ...object };
 
   for (const key in schemaFields) {
     if (Object.prototype.hasOwnProperty.call(schemaFields, key) && isZodDate(schemaFields[key])) {
       const dateStr = (formattedObject as any)[key];
-      if (typeof dateStr === "string") {
-        (formattedObject as any)[key] = new Date(dateStr);
+      try {
+        if (typeof dateStr === "string") {
+          (formattedObject as any)[key] = new Date(dateStr);
+        }
+      } catch (error) {
+        console.error(`Error parsing date for key ${key}:`, error);
       }
     }
   }
 
-  return formattedObject as T;
+  return formattedObject as z.infer<typeof zodSchema>;
 }

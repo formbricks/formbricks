@@ -10,6 +10,7 @@ import {
   ZInviteUpdateInput,
   ZCurrentUser,
   TCurrentUser,
+  ZInvite,
 } from "@formbricks/types/invites";
 import { ResourceNotFoundError, ValidationError, DatabaseError } from "@formbricks/types/errors";
 import { ZString, ZOptionalNumber } from "@formbricks/types/common";
@@ -34,7 +35,7 @@ const inviteSelect = {
   role: true,
 };
 
-export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[] | null> => {
+export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[]> => {
   const invites = await unstable_cache(
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
@@ -55,7 +56,7 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
   if (!invites) {
     throw new ResourceNotFoundError("Invites by teamId", teamId);
   }
-  return invites.map((invite: TInvite) => formatDateFields(invite, ZInvitee));
+  return invites.map((invite: TInvite) => formatDateFields(invite, ZInvite));
 };
 
 export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
@@ -141,7 +142,10 @@ export const getInvite = async (
         throw new ResourceNotFoundError("Invite", inviteId);
       }
 
-      return formatDateFields(invite, ZInvitee);
+      return {
+        ...formatDateFields(invite, ZInvite),
+        creator: invite.creator,
+      };
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
