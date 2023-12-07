@@ -38,10 +38,6 @@ const nextConfig = {
         protocol: "https",
         hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
       },
-      {
-        protocol: "https",
-        hostname: `${getHostname(process.env.WEBAPP_URL)}`,
-      },
     ],
   },
   async redirects() {
@@ -116,6 +112,10 @@ if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
   };
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: getHostname(process.env.WEBAPP_URL),
+  });
 }
 
 const sentryOptions = {
