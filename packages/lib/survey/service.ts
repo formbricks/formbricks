@@ -22,7 +22,6 @@ import { captureTelemetry } from "../telemetry";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { formatSurveyDateFields } from "./util";
 
 export const selectSurvey = {
   id: true,
@@ -142,10 +141,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return {
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  };
+  return formatDateFields(survey, ZSurvey);
 };
 
 export const getSurveysByAttributeClassId = async (
@@ -179,7 +175,7 @@ export const getSurveysByAttributeClassId = async (
         surveys.push(transformedSurvey);
       }
 
-      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+      return surveys;
     },
     [`getSurveysByAttributeClassId-${attributeClassId}-${page}`],
     {
@@ -188,10 +184,10 @@ export const getSurveysByAttributeClassId = async (
     }
   )();
 
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  if (!surveys) {
+    throw new ResourceNotFoundError("Surveys", attributeClassId);
+  }
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
@@ -224,7 +220,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
         surveys.push(transformedSurvey);
       }
 
-      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+      return surveys;
     },
     [`getSurveysByActionClassId-${actionClassId}-${page}`],
     {
@@ -233,10 +229,10 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
     }
   )();
 
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  if (!surveys) {
+    throw new ResourceNotFoundError("Survey", actionClassId);
+  }
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
@@ -282,10 +278,10 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  if (!surveys) {
+    throw new ResourceNotFoundError("Survey", environmentId);
+  }
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
@@ -689,6 +685,9 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
         }
       });
 
+      if (!surveys) {
+        throw new ResourceNotFoundError("Survey", environmentId);
+      }
       return surveys.map((survey) => formatDateFields(survey, ZSurvey));
     },
     [`getSyncSurveys-${environmentId}-${person.userId}`],

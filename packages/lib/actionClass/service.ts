@@ -44,11 +44,10 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
             createdAt: "asc",
           },
         });
-
-        return actionClasses.map((actionClass) => ({
-          ...actionClass,
-          ...formatDateFields(actionClass, ZActionClass),
-        }));
+        if (!actionClasses) {
+          throw new ResourceNotFoundError("actionClasses", environmentId);
+        }
+        return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
@@ -76,8 +75,10 @@ export const getActionClassByEnvironmentIdAndName = async (
           },
           select,
         });
-
-        return formatDateFields(actionClass, ZActionClass) as TActionClass;
+        if (!actionClass) {
+          throw new ResourceNotFoundError("actionClass", environmentId);
+        }
+        return formatDateFields(actionClass, ZActionClass);
       } catch (error) {
         throw new DatabaseError(`Database error when fetching action`);
       }
@@ -101,8 +102,11 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
           },
           select,
         });
+        if (!actionClass) {
+          throw new ResourceNotFoundError("actionClass", actionClassId);
+        }
 
-        return formatDateFields(actionClass, ZActionClass) as TActionClass;
+        return formatDateFields(actionClass, ZActionClass);
       } catch (error) {
         throw new DatabaseError(`Database error when fetching action`);
       }

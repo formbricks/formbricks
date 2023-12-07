@@ -22,7 +22,6 @@ import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
-import { formatDisplaysDateFields } from "./util";
 import { TPerson } from "@formbricks/types/people";
 import { formatDateFields } from "../utils/datetime";
 
@@ -47,6 +46,9 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
           },
           select: selectDisplay,
         });
+        if (!display) {
+          throw new ResourceNotFoundError("Display", displayId);
+        }
 
         return formatDateFields(display, ZDisplay);
       } catch (error) {
@@ -297,10 +299,6 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
           },
         });
 
-        if (!displays) {
-          throw new ResourceNotFoundError("Display from PersonId", personId);
-        }
-
         return displays;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -316,8 +314,10 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return formatDisplaysDateFields(displays);
+  if (!displays) {
+    throw new ResourceNotFoundError("Display from PersonId", personId);
+  }
+  return displays.map((display) => formatDateFields(display, ZDisplay));
 };
 
 export const deleteDisplayByResponseId = async (responseId: string, surveyId: string): Promise<TDisplay> => {

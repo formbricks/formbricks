@@ -44,6 +44,9 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
+        if (!teams) {
+          throw new ResourceNotFoundError("Teams by UserId", userId);
+        }
 
         return teams.map((team) => formatDateFields(team, ZTeam));
       } catch (error) {
@@ -81,6 +84,9 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
           },
           select: { ...select, memberships: true }, // include memberships
         });
+        if (!team) {
+          throw new ResourceNotFoundError("Team by EnvironmentId", environmentId);
+        }
 
         return formatDateFields(team, ZTeam);
       } catch (error) {
@@ -111,7 +117,9 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> =>
           },
           select,
         });
-
+        if (!team) {
+          throw new ResourceNotFoundError("Team", teamId);
+        }
         return formatDateFields(team, ZTeam);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {

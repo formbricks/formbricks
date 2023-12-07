@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseNote, ZResponseNote } from "@formbricks/types/responses";
 import { Prisma } from "@prisma/client";
 import { responseCache } from "../response/cache";
@@ -40,7 +40,6 @@ export const createResponseNote = async (
   userId: string,
   text: string
 ): Promise<TResponseNote> => {
-  console.log("creating note");
   validateInputs([responseId, ZId], [userId, ZId], [text, ZString]);
 
   try {
@@ -62,7 +61,6 @@ export const createResponseNote = async (
       id: responseNote.id,
       responseId: responseNote.response.id,
     });
-    console.log(typeof responseNote.updatedAt);
     return responseNote;
   } catch (error) {
     console.error(error);
@@ -84,6 +82,9 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
           },
           select,
         });
+        if (!responseNote) {
+          throw new ResourceNotFoundError("Response Note", responseNoteId);
+        }
         return formatDateFields(responseNote, ZResponseNote);
       } catch (error) {
         console.error(error);
@@ -110,6 +111,9 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
           },
           select,
         });
+        if (!responseNotes) {
+          throw new ResourceNotFoundError("Response Notes by ResponseId", responseId);
+        }
         return responseNotes.map((responseNote) => formatDateFields(responseNote, ZResponseNote));
       } catch (error) {
         console.error(error);

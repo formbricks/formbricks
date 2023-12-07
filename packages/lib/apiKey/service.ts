@@ -13,6 +13,7 @@ import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { apiKeyCache } from "./cache";
 import { formatDateFields } from "../utils/datetime";
+
 export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> =>
   unstable_cache(
     async () => {
@@ -33,7 +34,7 @@ export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> =>
           throw new ResourceNotFoundError("API Key from ID", apiKeyId);
         }
 
-        return formatDateFields(apiKeyData, ZApiKey) as TApiKey;
+        return formatDateFields(apiKeyData, ZApiKey);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -62,11 +63,11 @@ export const getApiKeys = async (environmentId: string, page?: number): Promise<
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
+        if (!apiKeys) {
+          throw new ResourceNotFoundError("apiKeys", environmentId);
+        }
 
-        return apiKeys.map((apiKey) => ({
-          ...apiKey,
-          ...formatDateFields(apiKey, ZApiKey),
-        }));
+        return apiKeys.map((apiKey) => formatDateFields(apiKey, ZApiKey));
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -129,8 +130,11 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
             hashedKey,
           },
         });
+        if (!apiKeyData) {
+          throw new ResourceNotFoundError("apiKey", apiKey);
+        }
 
-        return formatDateFields(apiKeyData, ZApiKey) as TApiKey;
+        return formatDateFields(apiKeyData, ZApiKey);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

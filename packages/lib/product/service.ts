@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { Prisma } from "@prisma/client";
@@ -48,6 +48,9 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
+        if (!products) {
+          throw new ResourceNotFoundError("Products by teamId", teamId);
+        }
 
         return products.map((product) => formatDateFields(product, ZProduct));
       } catch (error) {
@@ -85,7 +88,7 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
         });
 
         if (!productPrisma) {
-          return null;
+          throw new ResourceNotFoundError("Products by environmentId", environmentId);
         }
 
         return formatDateFields(productPrisma, ZProduct);
@@ -166,8 +169,11 @@ export const getProduct = async (productId: string): Promise<TProduct | null> =>
           },
           select: selectProduct,
         });
+        if (!productPrisma) {
+          throw new ResourceNotFoundError("Product", productId);
+        }
 
-        return productPrisma;
+        return formatDateFields(productPrisma, ZProduct);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

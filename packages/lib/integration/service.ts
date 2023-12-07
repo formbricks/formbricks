@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZId } from "@formbricks/types/environment";
 import {
   TIntegration,
@@ -66,6 +66,9 @@ export const getIntegrations = async (environmentId: string, page?: number): Pro
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
+        if (!integrations) {
+          throw new ResourceNotFoundError("Integrations by EnvironmentId", environmentId);
+        }
         return integrations.map((integration) => formatDateFields(integration, ZIntegration));
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -90,6 +93,9 @@ export const getIntegration = async (integrationId: string): Promise<TIntegratio
             id: integrationId,
           },
         });
+        if (!integration) {
+          throw new ResourceNotFoundError("Integrations", integrationId);
+        }
         return formatDateFields(integration, ZIntegration);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -119,7 +125,9 @@ export const getIntegrationByType = async (
             },
           },
         });
-
+        if (!integration) {
+          throw new ResourceNotFoundError("Integration by type", type);
+        }
         return formatDateFields(integration, ZIntegration);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {

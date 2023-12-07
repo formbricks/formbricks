@@ -12,7 +12,7 @@ import {
 } from "@formbricks/types/attributeClasses";
 import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -44,7 +44,7 @@ export const getAttributeClass = async (attributeClassId: string): Promise<TAttr
     return null;
   }
 
-  return formatDateFields(attributeClass, ZAttributeClass) as TAttributeClass;
+  return formatDateFields(attributeClass, ZAttributeClass);
 };
 
 export const getAttributeClasses = async (
@@ -80,6 +80,9 @@ export const getAttributeClasses = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  if (!attributeClasses) {
+    throw new ResourceNotFoundError("attribute Classes", environmentId);
+  }
 
   return attributeClasses.map((attributeClass) => formatDateFields(attributeClass, ZAttributeClass));
 };
@@ -124,7 +127,11 @@ export const getAttributeClassByName = async (environmentId: string, name: strin
           name,
         },
       });
-      return formatDateFields(attributeClass, ZAttributeClass) as TAttributeClass;
+      if (!attributeClass) {
+        throw new ResourceNotFoundError("attribute Class", name);
+      }
+
+      return formatDateFields(attributeClass, ZAttributeClass);
     },
     [`getAttributeClassByName-${environmentId}-${name}`],
     {

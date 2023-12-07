@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
@@ -92,7 +92,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
   )();
 
   if (!prismaPerson) {
-    return null;
+    throw new ResourceNotFoundError("person", personId);
   }
 
   return formatDateFields(transformPrismaPerson(prismaPerson), ZPerson);
@@ -371,7 +371,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
         userId,
       });
 
-      return transformPrismaPerson(personWithUserIdAttribute);
+      return formatDateFields(transformPrismaPerson(personWithUserIdAttribute), ZPerson);
     },
     [`getPersonByUserId-${environmentId}-${userId}`],
     {

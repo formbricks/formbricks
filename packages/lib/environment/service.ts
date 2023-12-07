@@ -20,7 +20,6 @@ import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
-import { formatEnvironmentDateFields } from "./util";
 import { formatDateFields } from "../utils/datetime";
 
 export const getEnvironment = (environmentId: string): Promise<TEnvironment | null> =>
@@ -34,6 +33,9 @@ export const getEnvironment = (environmentId: string): Promise<TEnvironment | nu
             id: environmentId,
           },
         });
+        if (!environment) {
+          throw new ResourceNotFoundError("Environment", environmentId);
+        }
         return formatDateFields(environment, ZEnvironment);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -82,6 +84,9 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
         environments.push(targetEnvironment);
       }
 
+      if (!environments) {
+        throw new ResourceNotFoundError("Environments by ProductId", productId);
+      }
       try {
         return environments.map((environment) => formatDateFields(environment, ZEnvironment));
       } catch (error) {
@@ -146,7 +151,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
             },
           },
         });
-        return formatDateFields(environment, ZEnvironment);
+        return environment;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -161,8 +166,10 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return environment ? formatEnvironmentDateFields(environment) : environment;
+  if (!environment) {
+    throw new ResourceNotFoundError("Environment by UserId", userId);
+  }
+  return formatDateFields(environment, ZEnvironment);
 };
 
 export const createEnvironment = async (

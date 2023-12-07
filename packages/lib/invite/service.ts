@@ -52,7 +52,9 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
+  if (!invites) {
+    throw new ResourceNotFoundError("Invites by teamId", teamId);
+  }
   return invites.map((invite: TInvite) => formatDateFields(invite, ZInvitee));
 };
 

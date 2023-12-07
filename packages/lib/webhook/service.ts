@@ -25,6 +25,9 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
+        if (!webhooks) {
+          throw new ResourceNotFoundError("Webhooks by EnvironemntId", environmentId);
+        }
         return webhooks.map((webhook) => formatDateFields(webhook, ZWebhook));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
@@ -74,6 +77,9 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> =>
           id,
         },
       });
+      if (!webhook) {
+        throw new ResourceNotFoundError("Webhook", id);
+      }
       return formatDateFields(webhook, ZWebhook);
     },
     [`getWebhook-${id}`],
