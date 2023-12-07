@@ -17,10 +17,11 @@ import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { profileCache } from "./cache";
 import { formatProfileDateFields } from "./util";
-import { formatDateFields } from "../utils/datetime";
+
 const responseSelection = {
   id: true,
   name: true,

@@ -26,9 +26,10 @@ import { calculateTtcTotal } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
-import { formatDateFields } from "../utils/datetime";
+
 const responseSelection = {
   id: true,
   createdAt: true,

@@ -18,6 +18,7 @@ import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { attributeClassCache } from "./cache";
 import { formatDateFields } from "../utils/datetime";
+
 export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
   const attributeClass = await unstable_cache(
     async () => {
