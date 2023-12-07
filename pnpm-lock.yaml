@@ -18,9 +18,6 @@ importers:
       '@playwright/test':
         specifier: ^1.40.1
         version: 1.40.1
-      '@types/node':
-        specifier: 20.10.1
-        version: 20.10.1
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:packages/eslint-config-formbricks
@@ -287,7 +284,7 @@ importers:
         version: 8.0.1(typescript@5.3.2)
       vite:
         specifier: ^5.0.6
-        version: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+        version: 5.0.6(terser@5.25.0)
 
   apps/web:
     dependencies:
@@ -459,10 +456,10 @@ importers:
         version: 5.25.0
       vite:
         specifier: ^5.0.6
-        version: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+        version: 5.0.6(terser@5.25.0)
       vite-plugin-dts:
         specifier: ^3.6.4
-        version: 3.6.4(@types/node@20.10.1)(typescript@5.3.2)(vite@5.0.6)
+        version: 3.6.4(typescript@5.3.2)(vite@5.0.6)
 
   packages/database:
     dependencies:
@@ -602,7 +599,7 @@ importers:
         version: 3.0.0
       jest:
         specifier: ^29.7.0
-        version: 29.7.0(@types/node@20.10.1)
+        version: 29.7.0
       jest-environment-jsdom:
         specifier: ^29.7.0
         version: 29.7.0
@@ -614,10 +611,10 @@ importers:
         version: 5.25.0
       vite:
         specifier: ^5.0.6
-        version: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+        version: 5.0.6(terser@5.25.0)
       vite-plugin-dts:
         specifier: ^3.6.4
-        version: 3.6.4(@types/node@20.10.1)(typescript@5.3.2)(vite@5.0.6)
+        version: 3.6.4(typescript@5.3.2)(vite@5.0.6)
 
   packages/lib:
     dependencies:
@@ -738,10 +735,10 @@ importers:
         version: 5.25.0
       vite:
         specifier: ^5.0.6
-        version: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+        version: 5.0.6(terser@5.25.0)
       vite-plugin-dts:
         specifier: ^3.6.4
-        version: 3.6.4(@types/node@20.10.1)(typescript@5.3.2)(vite@5.0.6)
+        version: 3.6.4(typescript@5.3.2)(vite@5.0.6)
       vite-tsconfig-paths:
         specifier: ^4.2.1
         version: 4.2.1(typescript@5.3.2)(vite@5.0.6)
@@ -4212,7 +4209,7 @@ packages:
       magic-string: 0.27.0
       react-docgen-typescript: 2.2.2(typescript@5.3.2)
       typescript: 5.3.2
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     dev: true
 
   /@jridgewell/gen-mapping@0.3.3:
@@ -4586,24 +4583,24 @@ packages:
       '@types/react': 18.2.28
       react: 18.2.0
 
-  /@microsoft/api-extractor-model@7.28.2(@types/node@20.10.1):
+  /@microsoft/api-extractor-model@7.28.2:
     resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0(@types/node@20.10.1)
+      '@rushstack/node-core-library': 3.61.0
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor@7.38.0(@types/node@20.10.1):
+  /@microsoft/api-extractor@7.38.0:
     resolution: {integrity: sha512-e1LhZYnfw+JEebuY2bzhw0imDCl1nwjSThTrQqBXl40hrVo6xm3j/1EpUr89QyzgjqmAwek2ZkIVZbrhaR+cqg==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.2(@types/node@20.10.1)
+      '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0(@types/node@20.10.1)
+      '@rushstack/node-core-library': 3.61.0
       '@rushstack/rig-package': 0.5.1
       '@rushstack/ts-command-line': 4.16.1
       colors: 1.2.5
@@ -5180,7 +5177,7 @@ packages:
       debug: 4.3.4
       kolorist: 1.8.0
       resolve: 1.22.8
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     transitivePeerDependencies:
       - preact
       - supports-color
@@ -5214,7 +5211,7 @@ packages:
       '@prefresh/utils': 1.2.0
       '@rollup/pluginutils': 4.2.1
       preact: 10.19.2
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -6952,7 +6949,7 @@ packages:
     resolution: {integrity: sha512-6i/8UoL0P5y4leBIGzvkZdS85RDMG9y1ihZzmTZQ5LdHUYmZ7pKFoj8X0236s3lusPs1Fa5HTQUpwI+UfTcmeA==}
     dev: true
 
-  /@rushstack/node-core-library@3.61.0(@types/node@20.10.1):
+  /@rushstack/node-core-library@3.61.0:
     resolution: {integrity: sha512-tdOjdErme+/YOu4gPed3sFS72GhtWCgNV9oDsHDnoLY5oDfwjKUc9Z+JOZZ37uAxcm/OCahDHfuu2ugqrfWAVQ==}
     peerDependencies:
       '@types/node': '*'
@@ -6960,7 +6957,6 @@ packages:
       '@types/node':
         optional: true
     dependencies:
-      '@types/node': 20.10.1
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
@@ -7902,7 +7898,7 @@ packages:
       magic-string: 0.30.5
       rollup: 3.29.4
       typescript: 5.3.2
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -8330,7 +8326,7 @@ packages:
       react: 18.2.0
       react-docgen: 7.0.1
       react-dom: 18.2.0(react@18.2.0)
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     transitivePeerDependencies:
       - '@preact/preset-vite'
       - encoding
@@ -8905,12 +8901,6 @@ packages:
     dependencies:
       undici-types: 5.26.5
 
-  /@types/node@20.10.1:
-    resolution: {integrity: sha512-T2qwhjWwGH81vUEx4EXmBKsTJRXFXNZTL4v0gi01+zyBmCwzE6TyHszqX01m+QHTEq+EZNo13NeJIdEqf+Myrg==}
-    dependencies:
-      undici-types: 5.26.5
-    dev: true
-
   /@types/node@20.10.3:
     resolution: {integrity: sha512-XJavIpZqiXID5Yxnxv3RUDKTN5b81ddNC3ecsA0SoFXz/QU8OGBwZGMomiq0zw+uuqbL/krztv/DINAQ/EV4gg==}
     dependencies:
@@ -9267,7 +9257,7 @@ packages:
       '@babel/plugin-transform-react-jsx-source': 7.23.3(@babel/core@7.23.5)
       magic-string: 0.27.0
       react-refresh: 0.14.0
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -9283,7 +9273,7 @@ packages:
       '@babel/plugin-transform-react-jsx-source': 7.23.3(@babel/core@7.23.5)
       '@types/babel__core': 7.20.5
       react-refresh: 0.14.0
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -11015,7 +11005,7 @@ packages:
       capture-stack-trace: 1.0.2
     dev: false
 
-  /create-jest@29.7.0(@types/node@20.10.1):
+  /create-jest@29.7.0:
     resolution: {integrity: sha512-Adz2bdH0Vq3F53KEMJOoftQFutWCukm6J24wbPWRO4k1kMY7gS7ds/uoJkNuV8wDCtWWnuwGcJwpWcih+zEW1Q==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     hasBin: true
@@ -11024,7 +11014,7 @@ packages:
       chalk: 4.1.2
       exit: 0.1.2
       graceful-fs: 4.2.11
-      jest-config: 29.7.0(@types/node@20.10.1)
+      jest-config: 29.7.0(@types/node@20.10.3)
       jest-util: 29.7.0
       prompts: 2.4.2
     transitivePeerDependencies:
@@ -14270,7 +14260,7 @@ packages:
       - supports-color
     dev: true
 
-  /jest-cli@29.7.0(@types/node@20.10.1):
+  /jest-cli@29.7.0:
     resolution: {integrity: sha512-OVVobw2IubN/GSYsxETi+gOe7Ka59EFMR/twOU3Jb2GnKKeMGJB5SGUUrEz3SFVmJASUdZUzy83sLNNQ2gZslg==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     hasBin: true
@@ -14284,10 +14274,10 @@ packages:
       '@jest/test-result': 29.7.0
       '@jest/types': 29.6.3
       chalk: 4.1.2
-      create-jest: 29.7.0(@types/node@20.10.1)
+      create-jest: 29.7.0
       exit: 0.1.2
       import-local: 3.1.0
-      jest-config: 29.7.0(@types/node@20.10.1)
+      jest-config: 29.7.0(@types/node@20.10.3)
       jest-util: 29.7.0
       jest-validate: 29.7.0
       yargs: 17.7.2
@@ -14296,46 +14286,6 @@ packages:
       - babel-plugin-macros
       - supports-color
       - ts-node
-    dev: true
-
-  /jest-config@29.7.0(@types/node@20.10.1):
-    resolution: {integrity: sha512-uXbpfeQ7R6TZBqI3/TxCU4q4ttk3u0PJeC+E0zbfSoSjq6bJ7buBPxzQPL0ifrkY4DNu4JUdk0ImlBUYi840eQ==}
-    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-    peerDependencies:
-      '@types/node': '*'
-      ts-node: '>=9.0.0'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-      ts-node:
-        optional: true
-    dependencies:
-      '@babel/core': 7.23.5
-      '@jest/test-sequencer': 29.7.0
-      '@jest/types': 29.6.3
-      '@types/node': 20.10.1
-      babel-jest: 29.7.0(@babel/core@7.23.5)
-      chalk: 4.1.2
-      ci-info: 3.9.0
-      deepmerge: 4.3.1
-      glob: 7.2.3
-      graceful-fs: 4.2.11
-      jest-circus: 29.7.0
-      jest-environment-node: 29.7.0
-      jest-get-type: 29.6.3
-      jest-regex-util: 29.6.3
-      jest-resolve: 29.7.0
-      jest-runner: 29.7.0
-      jest-util: 29.7.0
-      jest-validate: 29.7.0
-      micromatch: 4.0.5
-      parse-json: 5.2.0
-      pretty-format: 29.7.0
-      slash: 3.0.0
-      strip-json-comments: 3.1.1
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
     dev: true
 
   /jest-config@29.7.0(@types/node@20.10.3):
@@ -14710,7 +14660,7 @@ packages:
       supports-color: 8.1.1
     dev: true
 
-  /jest@29.7.0(@types/node@20.10.1):
+  /jest@29.7.0:
     resolution: {integrity: sha512-NIy3oAFp9shda19hy4HK0HRTWKtPJmGdnvywu01nOqNC2vZg+Z+fvJDxpMQA88eb2I9EcafcdjYgsDthnYTvGw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     hasBin: true
@@ -14723,7 +14673,7 @@ packages:
       '@jest/core': 29.7.0
       '@jest/types': 29.6.3
       import-local: 3.1.0
-      jest-cli: 29.7.0(@types/node@20.10.1)
+      jest-cli: 29.7.0
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -20645,7 +20595,7 @@ packages:
       vfile-message: 3.1.4
     dev: false
 
-  /vite-plugin-dts@3.6.4(@types/node@20.10.1)(typescript@5.3.2)(vite@5.0.6):
+  /vite-plugin-dts@3.6.4(typescript@5.3.2)(vite@5.0.6):
     resolution: {integrity: sha512-yOVhUI/kQhtS6lCXRYYLv2UUf9bftcwQK9ROxCX2ul17poLQs02ctWX7+vXB8GPRzH8VCK3jebEFtPqqijXx6w==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
@@ -20655,13 +20605,13 @@ packages:
       vite:
         optional: true
     dependencies:
-      '@microsoft/api-extractor': 7.38.0(@types/node@20.10.1)
+      '@microsoft/api-extractor': 7.38.0
       '@rollup/pluginutils': 5.0.5(rollup@2.78.0)
       '@vue/language-core': 1.8.22(typescript@5.3.2)
       debug: 4.3.4
       kolorist: 1.8.0
       typescript: 5.3.2
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
       vue-tsc: 1.8.22(typescript@5.3.2)
     transitivePeerDependencies:
       - '@types/node'
@@ -20680,13 +20630,13 @@ packages:
       debug: 4.3.4
       globrex: 0.1.2
       tsconfck: 2.1.2(typescript@5.3.2)
-      vite: 5.0.6(@types/node@20.10.1)(terser@5.25.0)
+      vite: 5.0.6(terser@5.25.0)
     transitivePeerDependencies:
       - supports-color
       - typescript
     dev: true
 
-  /vite@5.0.6(@types/node@20.10.1)(terser@5.25.0):
+  /vite@5.0.6(terser@5.25.0):
     resolution: {integrity: sha512-MD3joyAEBtV7QZPl2JVVUai6zHms3YOmLR+BpMzLlX2Yzjfcc4gTgNi09d/Rua3F4EtC8zdwPU8eQYyib4vVMQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
@@ -20714,7 +20664,6 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 20.10.1
       esbuild: 0.19.8
       postcss: 8.4.32
       rollup: 4.4.1

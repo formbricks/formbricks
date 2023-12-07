@@ -25,13 +25,13 @@
     "generate": "turbo run generate",
     "lint": "turbo run lint",
     "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
-    "test": "playwright test",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
     "prepare": "husky install"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
     "@playwright/test": "^1.40.1",
-    "@types/node": "20.10.1",
     "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
