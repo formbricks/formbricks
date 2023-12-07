@@ -1,13 +1,10 @@
-name: Playwright Tests
+name: E2E Tests
 
-# Uncomment below just before merging
-# on:
-#   push:
-#     branches: [ main ]
-#   pull_request:
-#     branches: [ main ]
 on:
   push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   test:
