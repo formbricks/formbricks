@@ -1,5 +1,3 @@
-import PHIcon from "@/images/formtribe/ph-logo.png";
-import Image from "next/image";
 import Link from "next/link";
 
 export const GitHubSponsorship: React.FC = () => {
@@ -38,7 +36,7 @@ export const GitHubSponsorship: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center justify-end">
-          <Image src={PHIcon} alt="Product Hunt Logo" width={80} className="" />
+          {/* <Image src={PHIcon} alt="Product Hunt Logo" width={80} className="" /> */}
         </div>
       </div>
     </Link>

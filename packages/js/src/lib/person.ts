@@ -1,7 +1,15 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TPersonUpdateInput } from "@formbricks/types/people";
+import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
 import { Config } from "./config";
-import { AttributeAlreadyExistsError, MissingPersonError, NetworkError, Result, err, okVoid } from "./errors";
+import {
+  AttributeAlreadyExistsError,
+  MissingPersonError,
+  NetworkError,
+  Result,
+  err,
+  ok,
+  okVoid,
+} from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
 import { sync } from "./sync";
@@ -53,6 +61,66 @@ export const updatePersonAttribute = async (
   });
 
   return okVoid();
+};
+
+export const updatePersonAttributes = async (
+  apiHost: string,
+  environmentId: string,
+  userId: string,
+  attributes: TPersonAttributes
+): Promise<Result<TPersonAttributes, NetworkError | MissingPersonError>> => {
+  if (!userId) {
+    return err({
+      code: "missing_person",
+      message: "Unable to update attribute. User identification deactivated. No userId set.",
+    });
+  }
+
+  // clean attributes and remove existing attributes if config already exists
+  const updatedAttributes = { ...attributes };
+  try {
+    const existingAttributes = config.get()?.state?.attributes;
+    if (existingAttributes) {
+      for (const [key, value] of Object.entries(existingAttributes)) {
+        if (updatedAttributes[key] === value) {
+          delete updatedAttributes[key];
+        }
+      }
+    }
+  } catch (e) {
+    logger.debug("config not set; sending all attributes to backend");
+  }
+
+  // send to backend if updatedAttributes is not empty
+  if (Object.keys(updatedAttributes).length === 0) {
+    logger.debug("No attributes to update. Skipping update.");
+    return ok(updatedAttributes);
+  }
+
+  logger.debug("Updating attributes: " + JSON.stringify(updatedAttributes));
+
+  const input: TPersonUpdateInput = {
+    attributes: updatedAttributes,
+  };
+
+  const api = new FormbricksAPI({
+    apiHost,
+    environmentId,
+  });
+
+  const res = await api.client.people.update(userId, input);
+
+  if (res.ok) {
+    return ok(updatedAttributes);
+  }
+
+  return err({
+    code: "network_error",
+    status: 500,
+    message: `Error updating person with userId ${userId}`,
+    url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}`,
+    responseMessage: res.error.message,
+  });
 };
 
 export const isExistingAttribute = (key: string, value: string): boolean => {
