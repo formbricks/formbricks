@@ -14,10 +14,11 @@ import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { validateInputs } from "../utils/validate";
 import { profileCache } from "./cache";
-import { updateMembership } from "../membership/service";
+import { formatProfileDateFields } from "./util";
 
 const responseSelection = {
   id: true,
@@ -34,8 +35,8 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's profile
-export const getProfile = async (id: string): Promise<TProfile | null> =>
-  unstable_cache(
+export const getProfile = async (id: string): Promise<TProfile | null> => {
+  const profile = await unstable_cache(
     async () => {
       validateInputs([id, ZId]);
 
@@ -67,8 +68,18 @@ export const getProfile = async (id: string): Promise<TProfile | null> =>
     }
   )();
 
-export const getProfileByEmail = async (email: string): Promise<TProfile | null> =>
-  unstable_cache(
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    ...profile,
+    ...formatProfileDateFields(profile),
+  } as TProfile;
+};
+
+export const getProfileByEmail = async (email: string): Promise<TProfile | null> => {
+  const profile = await unstable_cache(
     async () => {
       validateInputs([email, z.string().email()]);
 
@@ -99,6 +110,16 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    ...profile,
+    ...formatProfileDateFields(profile),
+  } as TProfile;
+};
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");
