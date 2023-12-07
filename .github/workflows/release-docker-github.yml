@@ -62,8 +62,6 @@ jobs:
       # https://github.com/docker/setup-buildx-action
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3 # v3.0.0
-        with:
-          platforms: linux/amd64,linux/arm64
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -91,6 +89,7 @@ jobs:
         with:
           context: .
           file: ./apps/web/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
