@@ -49,7 +49,7 @@ jobs:
       run: pnpm test
       env:
         WEBAPP_URL: http://localhost:3000
-        DATABASE_URL: postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/formbricks?schema=public
         NEXTAUTH_SECRET: luJthrnoDpVgGakjVYlccsZ1FdlwxIWogWIsrxzoQ6E=
         NEXTAUTH_URL: http://localhost:3000
         EMAIL_VERIFICATION_DISABLED: 1
