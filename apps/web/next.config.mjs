@@ -4,7 +4,7 @@ import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
 
-function getHostname(url: string) {
+function getHostname(url) {
   const urlObj = new URL(url);
   return urlObj.hostname;
 }
