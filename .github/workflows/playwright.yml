@@ -2,7 +2,7 @@ name: E2E Tests
 on:
   workflow_call:
 jobs:
-  test:
+  build:
     name: Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
