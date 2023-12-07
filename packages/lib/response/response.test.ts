@@ -170,6 +170,7 @@ describe("Tests for Response Service", () => {
     prismaMock.person.findFirst.mockResolvedValue(null);
     prismaMock.person.create.mockResolvedValue(mockPerson);
     const response = await createResponse(mockResponseInputWithUserId);
+
     expect(response).toEqual(expectedResponseWithPerson);
 
     expect(prismaMock.person.create).toHaveBeenCalledWith({

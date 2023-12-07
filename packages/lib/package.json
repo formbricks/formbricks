@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
-    "test": "jest --watch",
+    "test:unit": "jest --watch",
     "test:ci": "jest --ci"
   },
   "dependencies": {
