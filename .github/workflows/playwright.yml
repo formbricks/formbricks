@@ -30,9 +30,6 @@ jobs:
       run: pnpm exec playwright install --with-deps
     - name: Run Playwright tests
       run: pnpm test
-    - name: Setup tmate session
-      if: success() || failure()
-      uses: mxschmitt/action-tmate@v3
     - uses: actions/upload-artifact@v3
       if: always()
       with:
