@@ -1,22 +1,26 @@
 import { UsageAttributesUpdater } from "@/app/(app)/components/FormbricksClient";
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
-import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
+import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { Badge } from "@formbricks/ui/Badge";
+import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
+import Link from "next/link";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(environmentId);
+  const team = await getTeamByEnvironmentId(environmentId);
 
   if (!session) {
     throw new Error("Session not found");
@@ -25,6 +29,14 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   if (!product) {
     throw new Error("Product not found");
   }
+
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const isSurveyCreationDeletionDisabled = isViewer;
 
   const environment = await getEnvironment(environmentId);
   if (!environment) {
@@ -49,16 +61,18 @@ export default async function SurveysList({ environmentId }: { environmentId: st
   return (
     <>
       <ul className="grid place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 ">
-        <Link href={`/environments/${environmentId}/surveys/templates`}>
-          <li className="col-span-1 h-56">
-            <div className="delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-900 to-slate-800 font-light text-white shadow transition ease-in-out hover:scale-105 hover:from-slate-800 hover:to-slate-700">
-              <div id="main-cta" className="px-4 py-8 sm:p-14 xl:p-10">
-                <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
-                Create Survey
+        {!isSurveyCreationDeletionDisabled && (
+          <Link href={`/environments/${environmentId}/surveys/templates`}>
+            <li className="col-span-1 h-56">
+              <div className="delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-900 to-slate-800 font-light text-white shadow transition ease-in-out hover:scale-105 hover:from-slate-800 hover:to-slate-700">
+                <div id="main-cta" className="px-4 py-8 sm:p-14 xl:p-10">
+                  <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
+                  Create Survey
+                </div>
               </div>
-            </div>
-          </li>
-        </Link>
+            </li>
+          </Link>
+        )}
         {surveys
           .sort((a, b) => b.updatedAt?.getTime() - a.updatedAt?.getTime())
           .map((survey) => {
@@ -113,6 +127,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                         otherEnvironment={otherEnvironment!}
                         webAppUrl={WEBAPP_URL}
                         singleUseId={singleUseId}
+                        isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
                       />
                     </div>
                   </div>

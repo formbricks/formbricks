@@ -6,7 +6,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "../../packages/types/*.d.ts",
-    "../../packages/lib/jwt.ts"
+    "../../packages/lib/jwt.ts",
+    "../../packages/ee/RoleManagement/components/TransferOwnershipModal.tsx"
   ],
   "exclude": ["../../.env"],
   "compilerOptions": {

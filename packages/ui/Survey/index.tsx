@@ -1,5 +1,6 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
 import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { useEffect, useMemo } from "react";
 
@@ -8,16 +9,18 @@ const createContainerId = () => `formbricks-survey-container`;
 interface SurveyProps {
   survey: TSurvey;
   brandColor: string;
-  formbricksSignature: boolean;
+  isBrandingEnabled: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
+  responseCount?: number;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -30,7 +33,7 @@ interface SurveyModalProps extends SurveyProps {
 export const SurveyInline = ({
   survey,
   brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
   onResponse = () => {},
@@ -39,13 +42,15 @@ export const SurveyInline = ({
   autoFocus,
   prefillResponseData,
   isRedirectDisabled,
+  onFileUpload,
+  responseCount,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
     renderSurveyInline({
       survey,
       brandColor,
-      formbricksSignature,
+      isBrandingEnabled,
       containerId,
       onDisplay,
       onResponse,
@@ -55,12 +60,14 @@ export const SurveyInline = ({
       autoFocus,
       prefillResponseData,
       isRedirectDisabled,
+      onFileUpload,
+      responseCount,
     });
   }, [
     activeQuestionId,
     brandColor,
     containerId,
-    formbricksSignature,
+    isBrandingEnabled,
     onActiveQuestionChange,
     onClose,
     onDisplay,
@@ -69,6 +76,8 @@ export const SurveyInline = ({
     autoFocus,
     prefillResponseData,
     isRedirectDisabled,
+    onFileUpload,
+    responseCount,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -76,7 +85,7 @@ export const SurveyInline = ({
 export const SurveyModal = ({
   survey,
   brandColor,
-  formbricksSignature,
+  isBrandingEnabled,
   activeQuestionId,
   placement = "bottomRight",
   clickOutside = false,
@@ -88,12 +97,14 @@ export const SurveyModal = ({
   onClose = () => {},
   autoFocus,
   isRedirectDisabled,
+  onFileUpload,
+  responseCount,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
       survey,
       brandColor,
-      formbricksSignature,
+      isBrandingEnabled,
       placement,
       clickOutside,
       darkOverlay,
@@ -105,13 +116,15 @@ export const SurveyModal = ({
       onActiveQuestionChange,
       autoFocus,
       isRedirectDisabled,
+      onFileUpload,
+      responseCount,
     });
   }, [
     activeQuestionId,
     brandColor,
     clickOutside,
     darkOverlay,
-    formbricksSignature,
+    isBrandingEnabled,
     highlightBorderColor,
     onActiveQuestionChange,
     onClose,
@@ -121,6 +134,8 @@ export const SurveyModal = ({
     survey,
     autoFocus,
     isRedirectDisabled,
+    onFileUpload,
+    responseCount,
   ]);
   return <div id="formbricks-survey"></div>;
 };

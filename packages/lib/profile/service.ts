@@ -14,15 +14,18 @@ import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { validateInputs } from "../utils/validate";
 import { profileCache } from "./cache";
-import { updateMembership } from "../membership/service";
+import { formatProfileDateFields } from "./util";
 
 const responseSelection = {
   id: true,
   name: true,
   email: true,
+  emailVerified: true,
+  imageUrl: true,
   createdAt: true,
   updatedAt: true,
   onboardingCompleted: true,
@@ -32,8 +35,8 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's profile
-export const getProfile = async (id: string): Promise<TProfile | null> =>
-  unstable_cache(
+export const getProfile = async (id: string): Promise<TProfile | null> => {
+  const profile = await unstable_cache(
     async () => {
       validateInputs([id, ZId]);
 
@@ -65,8 +68,18 @@ export const getProfile = async (id: string): Promise<TProfile | null> =>
     }
   )();
 
-export const getProfileByEmail = async (email: string): Promise<TProfile | null> =>
-  unstable_cache(
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    ...profile,
+    ...formatProfileDateFields(profile),
+  } as TProfile;
+};
+
+export const getProfileByEmail = async (email: string): Promise<TProfile | null> => {
+  const profile = await unstable_cache(
     async () => {
       validateInputs([email, z.string().email()]);
 
@@ -98,14 +111,21 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
     }
   )();
 
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    ...profile,
+    ...formatProfileDateFields(profile),
+  } as TProfile;
+};
+
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");
 
 // function to update a user's profile
-export const updateProfile = async (
-  personId: string,
-  data: Partial<TProfileUpdateInput>
-): Promise<TProfile> => {
+export const updateProfile = async (personId: string, data: TProfileUpdateInput): Promise<TProfile> => {
   validateInputs([personId, ZId], [data, ZProfileUpdateInput.partial()]);
 
   try {

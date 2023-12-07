@@ -3,7 +3,11 @@ import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[su
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import type { TSurveyPictureSelectionQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import type {
+  TSurveyFileUploadQuestion,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestionSummary,
+} from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import {
@@ -22,21 +26,17 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
+import FileUploadSummary from "./FileUploadSummary";
+import PictureChoiceSummary from "./PictureChoiceSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
-  openTextResponsesPerPage: number;
+  responsesPerPage: number;
 }
 
-export default function SummaryList({
-  environment,
-  survey,
-  responses,
-  openTextResponsesPerPage,
-}: SummaryListProps) {
+export default function SummaryList({ environment, survey, responses, responsesPerPage }: SummaryListProps) {
   const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses
@@ -73,7 +73,7 @@ export default function SummaryList({
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
                     environmentId={environment.id}
-                    openTextResponsesPerPage={openTextResponsesPerPage}
+                    responsesPerPage={responsesPerPage}
                   />
                 );
               }
@@ -91,6 +91,7 @@ export default function SummaryList({
                     }
                     environmentId={environment.id}
                     surveyType={survey.type}
+                    responsesPerPage={responsesPerPage}
                   />
                 );
               }
@@ -123,6 +124,15 @@ export default function SummaryList({
                   <ConsentSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
+                  />
+                );
+              }
+              if (questionSummary.question.type === TSurveyQuestionType.FileUpload) {
+                return (
+                  <FileUploadSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyFileUploadQuestion>}
+                    environmentId={environment.id}
                   />
                 );
               }

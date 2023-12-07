@@ -120,11 +120,11 @@ export default function Header() {
     : "relative";
   return (
     <Popover className={`${stickyNavClass}`} as="header">
-      <a href="https://www.producthunt.com/products/formbricks" target="_blank">
+      {/*       <a href="https://www.producthunt.com/posts/formbricks" target="_blank">
         <div className="hidden bg-[#ff6154] px-4 py-2 text-center text-sm text-white md:block lg:py-0">
-          We&apos;re launching soon on Product Hunt - get notified 🚀
+          We&apos;re live on Product Hunt - Show your support for Open Source 🚀
         </div>
-      </a>
+      </a> */}
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
         <div className="flex w-0 flex-1 justify-start">
           <Link href="/">
@@ -279,6 +279,11 @@ export default function Header() {
             Pricing
           </Link>
           <Link
+            href="/concierge"
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            Concierge
+          </Link>
+          <Link
             href="/docs"
             className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Docs
@@ -293,12 +298,6 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link> */}
-
-          <Link
-            href="/concierge"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
-            Concierge
-          </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-2 lg:mr-5" />

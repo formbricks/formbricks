@@ -1,0 +1,130 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const metadata = {
+  title: "Formbricks Public Client API Guide: Manage Users",
+  description:
+    "Dive deep into Formbricks' Public Client API designed for customisation. This comprehensive guide provides detailed instructions on creating and updating users to help in user identification.",
+};
+
+#### Client API
+
+# People API
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+This set of API can be used to
+- [Create Person](#create-person)
+- [Update Person](#update-person)
+
+---
+
+## Create Person {{ tag: 'POST', label: '/api/v1/client/<environment-id>/people' }}
+
+<Row>
+  <Col>
+
+    Create User with your own User ID
+
+    ### Mandatory Request Body JSON Keys
+    <Properties>
+      <Property name="userId" type="string">
+        User ID which you would like to identify the person with
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/client/<environment-id>/people">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST \
+    'https://app.formbricks.com/api/v1/client/<environment-id>/people' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "userId":"docs_user"
+    }'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+          "userId": "docs_user"
+        }
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "Fields are missing or incorrectly formatted",
+      "details": {
+        "surveyId": "Required"
+      }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Update Person {{ tag: 'POST', label: '/api/v1/client/<environment-id>/people/<user-id>' }}
+
+<Row>
+  <Col>
+
+    Update Person by their User ID
+
+    ### Mandatory Request Body JSON Keys
+    <Properties>
+      <Property name="attributes" type="JSON">
+        Key Value pairs of attributes to add to the user
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/client/<environment-id>/people/<user-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST \
+    --location \
+    'https://app.formbricks.com/api/v1/client/<environment-id>/people/<user-id>'
+    -H 'Content-Type: application/json' \
+    -d '{
+        "attributes":{
+            "welcome_to":"formbricks"
+        }
+    }'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {}
+    }
+    ```
+
+    ```json {{ title: '500 Internal Server Error' }}
+    {
+      "code": "internal_server_error",
+      "message": "Database operation failed",
+      "details": {}
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---

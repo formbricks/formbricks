@@ -1,20 +1,28 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
-import { TActionClass } from "@formbricks/types/actionClasses";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { getActionClasses } from "../actionClass/service";
+import { getAttributeClasses } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { displayCache } from "../display/cache";
+import { getDisplaysByPersonId } from "../display/service";
+import { personCache } from "../person/cache";
+import { productCache } from "../product/cache";
+import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { captureTelemetry } from "../telemetry";
+import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
-import { formatSurveyDateFields } from "./util";
 import { surveyCache } from "./cache";
+import { formatSurveyDateFields } from "./util";
 
 export const selectSurvey = {
   id: true,
@@ -37,12 +45,13 @@ export const selectSurvey = {
   verifyEmail: true,
   redirectUrl: true,
   productOverwrites: true,
+  styling: true,
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
   triggers: {
     select: {
-      eventClass: {
+      actionClass: {
         select: {
           id: true,
           createdAt: true,
@@ -115,7 +124,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       const transformedSurvey = {
         ...surveyPrisma,
-        triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+        triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
 
       return transformedSurvey;
@@ -165,7 +174,7 @@ export const getSurveysByAttributeClassId = async (
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
       }
@@ -194,7 +203,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
         where: {
           triggers: {
             some: {
-              eventClass: {
+              actionClass: {
                 id: actionClassId,
               },
             },
@@ -210,7 +219,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
       }
@@ -258,7 +267,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       for (const surveyPrisma of surveysPrisma) {
         const transformedSurvey = {
           ...surveyPrisma,
-          triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass.name),
+          triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
         };
         surveys.push(transformedSurvey);
       }
@@ -279,7 +288,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   }));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
@@ -323,7 +332,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         create: newTriggers.map((trigger) => ({
-          eventClassId: getActionClassIdFromName(actionClasses, trigger),
+          actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       };
     }
@@ -332,7 +341,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       data.triggers = {
         ...(data.triggers || []),
         deleteMany: {
-          eventClassId: {
+          actionClassId: {
             in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
           },
         },
@@ -449,7 +458,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     throw error;
   }
-}
+};
 
 export async function deleteSurvey(surveyId: string) {
   validateInputs([surveyId, ZId]);
@@ -473,7 +482,7 @@ export async function deleteSurvey(surveyId: string) {
   // Revalidate triggers by actionClassId
   deletedSurvey.triggers.forEach((trigger) => {
     surveyCache.revalidate({
-      actionClassId: trigger.eventClass.id,
+      actionClassId: trigger.actionClass.id,
     });
   });
   // Revalidate surveys by attributeClassId
@@ -486,7 +495,7 @@ export async function deleteSurvey(surveyId: string) {
   return deletedSurvey;
 }
 
-export async function createSurvey(environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> {
+export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
 
   if (surveyBody.attributeFilters) {
@@ -519,7 +528,7 @@ export async function createSurvey(environmentId: string, surveyBody: TSurveyInp
 
   const transformedSurvey = {
     ...survey,
-    triggers: survey.triggers.map((trigger) => trigger.eventClass.name),
+    triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
   captureTelemetry("survey created");
@@ -530,9 +539,10 @@ export async function createSurvey(environmentId: string, surveyBody: TSurveyInp
   });
 
   return transformedSurvey;
-}
+};
 
-export async function duplicateSurvey(environmentId: string, surveyId: string) {
+export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+  validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -558,7 +568,7 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
         create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: getActionClassIdFromName(actionClasses, trigger),
+          actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       },
       attributeFilters: {
@@ -578,6 +588,7 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
       productOverwrites: existingSurvey.productOverwrites
         ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
         : Prisma.JsonNull,
+      styling: existingSurvey.styling ? JSON.parse(JSON.stringify(existingSurvey.styling)) : Prisma.JsonNull,
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
@@ -596,4 +607,99 @@ export async function duplicateSurvey(environmentId: string, surveyId: string) {
   revalidateSurveyByAttributeClassId(newAttributeFilters);
 
   return newSurvey;
-}
+};
+
+export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+  validateInputs([environmentId, ZId]);
+
+  return unstable_cache(
+    async () => {
+      const product = await getProductByEnvironmentId(environmentId);
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      let surveys = await getSurveys(environmentId);
+
+      // filtered surveys for running and web
+      surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+
+      const displays = await getDisplaysByPersonId(person.id);
+
+      // filter surveys that meet the displayOption criteria
+      surveys = surveys.filter((survey) => {
+        if (survey.displayOption === "respondMultiple") {
+          return true;
+        } else if (survey.displayOption === "displayOnce") {
+          return displays.filter((display) => display.surveyId === survey.id).length === 0;
+        } else if (survey.displayOption === "displayMultiple") {
+          return (
+            displays.filter((display) => display.surveyId === survey.id && display.responseId !== null)
+              .length === 0
+          );
+        } else {
+          throw Error("Invalid displayOption");
+        }
+      });
+
+      const attributeClasses = await getAttributeClasses(environmentId);
+
+      // filter surveys that meet the attributeFilters criteria
+      const potentialSurveysWithAttributes = surveys.filter((survey) => {
+        const attributeFilters = survey.attributeFilters;
+        if (attributeFilters.length === 0) {
+          return true;
+        }
+        // check if meets all attribute filters criterias
+        return attributeFilters.every((attributeFilter) => {
+          const attributeClassName = attributeClasses.find(
+            (attributeClass) => attributeClass.id === attributeFilter.attributeClassId
+          )?.name;
+          if (!attributeClassName) {
+            throw Error("Invalid attribute filter class");
+          }
+          const personAttributeValue = person.attributes[attributeClassName];
+          if (attributeFilter.condition === "equals") {
+            return personAttributeValue === attributeFilter.value;
+          } else if (attributeFilter.condition === "notEquals") {
+            return personAttributeValue !== attributeFilter.value;
+          } else {
+            throw Error("Invalid attribute filter condition");
+          }
+        });
+      });
+
+      const latestDisplay = displays[0];
+
+      // filter surveys that meet the recontactDays criteria
+      surveys = potentialSurveysWithAttributes.filter((survey) => {
+        if (!latestDisplay) {
+          return true;
+        } else if (survey.recontactDays !== null) {
+          const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+          if (!lastDisplaySurvey) {
+            return true;
+          }
+          return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+        } else if (product.recontactDays !== null) {
+          return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+        } else {
+          return true;
+        }
+      });
+
+      return surveys;
+    },
+    [`getSyncSurveys-${environmentId}-${person.userId}`],
+    {
+      tags: [
+        personCache.tag.byEnvironmentIdAndUserId(environmentId, person.userId),
+        displayCache.tag.byPersonId(person.id),
+        surveyCache.tag.byEnvironmentId(environmentId),
+        productCache.tag.byEnvironmentId(environmentId),
+      ],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+};

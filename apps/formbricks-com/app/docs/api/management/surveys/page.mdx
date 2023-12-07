@@ -1,10 +1,7 @@
 import { Fence } from "@/components/shared/Fence";
+import {generateManagementApiMetadata} from "@/lib/utils"
 
-export const metadata = {
-  title: "Formbricks Surveys API Documentation - How to Retrieve All Surveys",
-  description:
-    "Explore the comprehensive guide to the Formbricks Surveys API. Learn how to effectively retrieve all the surveys in your environment with the necessary headers and API key setup. Includes sample request and response formats.",
-};
+export const metadata = generateManagementApiMetadata("Surveys",["Fetch","Create","Update","Delete"])
 
 #### Management API
 
@@ -14,6 +11,7 @@ This set of API can be used to
 - [List All Surveys](#list-all-surveys)
 - [Get Survey](#get-survey-by-id)
 - [Create Survey](#create-survey)
+- [Update Survey](#update-survey-by-id)
 - [Delete Survey](#delete-survey-by-id)
 
 <Note>You will need an API Key to interact with these APIs.</Note>
@@ -146,7 +144,7 @@ This set of API can be used to
                     {
                         "id": "lkjaxb73ulydzeumhd51sx9g",
                         "type": "openText",
-                        "headline": "What is the main benefit your receive from My Product?",
+                        "headline": "What is the main benefit you receive from My Product?",
                         "required": true
                     },
                     {
@@ -412,7 +410,7 @@ This set of API can be used to
     <CodeGroup title="Request" tag="POST" label="/api/v1/management/surveys">
 
     ```bash {{ title: 'cURL' }}
-    curl -X DELETE \
+    curl -X POST \
     'https://app.formbricks.com/api/v1/management/surveys' \
     --header \
     'x-api-key: <your-api-key>'
@@ -452,6 +450,121 @@ This set of API can be used to
             "closeOnDate": null,
             "surveyClosedMessage": null,
             "verifyEmail": null
+        }
+    }
+    ```
+    
+    ```json {{ title: '401 Not Authenticated' }}
+    {
+      "code": "not_authenticated",
+      "message": "Not authenticated",
+      "details": {
+        "x-Api-Key": "Header not provided or API Key invalid"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Update Survey by ID {{ tag: 'PUT', label: '/api/v1/management/surveys/<survey-id>' }}
+
+<Row>
+  <Col>
+
+    Update a survey by its ID
+
+    ### Mandatory Headers
+
+    <Properties>
+      <Property name="x-Api-Key" type="string">
+        Your Formbricks API key.
+      </Property>
+    </Properties>
+
+    ### Body
+
+    <CodeGroup title="Request Body">
+    ```json {{ title: 'cURL' }}
+    {
+        "name": "My renamed Survey",
+        "redirectUrl":"https://formbricks.com",
+        "type":"web"
+    }
+    ```
+    </CodeGroup>
+
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="PUT" label="/api/v1/management/surveys/<survey-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://app.formbricks.com/api/v1/management/surveys/<survey-id> \
+     --header 'Content-Type: application/json' \
+     --header 'x-api-key: <your-api-key>' \
+     -d '{"name": "My renamed Survey"}'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+        "data": {
+            "id": "cloqzeuu70000z8khcirufo60",
+            "createdAt": "2023-11-09T09:23:42.367Z",
+            "updatedAt": "2023-11-09T09:23:42.367Z",
+            "name": "My renamed Survey",
+            "redirectUrl": null,
+            "type": "link",
+            "environmentId": "clonzr6vc0009z8md7y06hipl",
+            "status": "inProgress",
+            "welcomeCard": {
+                "html": "Thanks for providing your feedback - let's go!",
+                "enabled": false,
+                "headline": "Welcome!",
+                "timeToFinish": false
+            },
+            "questions": [
+                {
+                    "id": "l9rwn5nbk48y44tvnyyjcvca",
+                    "type": "openText",
+                    "headline": "Why did you leave the platform?",
+                    "required": true,
+                    "inputType": "text"
+                }
+            ],
+            "thankYouCard": {
+                "enabled": true,
+                "headline": "Thank you!",
+                "subheader": "We appreciate your feedback."
+            },
+            "hiddenFields": {
+                "enabled": true,
+                "fieldIds": []
+            },
+            "displayOption": "displayOnce",
+            "recontactDays": null,
+            "autoClose": null,
+            "delay": 0,
+            "autoComplete": 50,
+            "closeOnDate": null,
+            "surveyClosedMessage": null,
+            "productOverwrites": null,
+            "singleUse": {
+                "enabled": false,
+                "isEncrypted": true
+            },
+            "verifyEmail": null,
+            "pin": null,
+            "triggers": [],
+            "attributeFilters": []
         }
     }
     ```

@@ -5,15 +5,15 @@ import { TActionClassType } from "@formbricks/types/actionClasses";
 import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getSession } from "../session/service";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
+import { createPerson, getPersonByUserId } from "../person/service";
 
 export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
   const action = await unstable_cache(
@@ -21,9 +21,9 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
       validateInputs([environmentId, ZId]);
 
       try {
-        const actionPrisma = await prisma.event.findFirst({
+        const actionPrisma = await prisma.action.findFirst({
           where: {
-            eventClass: {
+            actionClass: {
               environmentId: environmentId,
             },
           },
@@ -31,7 +31,7 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
             createdAt: "desc",
           },
           include: {
-            eventClass: true,
+            actionClass: true,
           },
         });
         if (!actionPrisma) {
@@ -40,9 +40,9 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
         const action: TAction = {
           id: actionPrisma.id,
           createdAt: actionPrisma.createdAt,
-          sessionId: actionPrisma.sessionId,
+          personId: actionPrisma.personId,
           properties: actionPrisma.properties,
-          actionClass: actionPrisma.eventClass,
+          actionClass: actionPrisma.actionClass,
         };
         return action;
       } catch (error) {
@@ -70,15 +70,69 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
     : action;
 };
 
+export const getLatestActionByPersonId = async (personId: string): Promise<TAction | null> => {
+  const action = await unstable_cache(
+    async () => {
+      validateInputs([personId, ZId]);
+
+      try {
+        const actionPrisma = await prisma.action.findFirst({
+          where: {
+            personId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            actionClass: true,
+          },
+        });
+
+        if (!actionPrisma) {
+          return null;
+        }
+        const action: TAction = {
+          id: actionPrisma.id,
+          createdAt: actionPrisma.createdAt,
+          personId: actionPrisma.personId,
+          properties: actionPrisma.properties,
+          actionClass: actionPrisma.actionClass,
+        };
+        return action;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError("Database operation failed");
+        }
+
+        throw error;
+      }
+    },
+    [`getLastestActionByPersonId-${personId}`],
+    {
+      tags: [actionCache.tag.byPersonId(personId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
+  return action
+    ? {
+        ...action,
+        createdAt: new Date(action.createdAt),
+      }
+    : action;
+};
+
 export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
   const actions = await unstable_cache(
     async () => {
       validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
-      const actionsPrisma = await prisma.event.findMany({
+      const actionsPrisma = await prisma.action.findMany({
         where: {
-          session: {
-            personId: personId,
+          person: {
+            id: personId,
           },
         },
         orderBy: {
@@ -87,7 +141,7 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
         take: page ? ITEMS_PER_PAGE : undefined,
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         include: {
-          eventClass: true,
+          actionClass: true,
         },
       });
 
@@ -97,9 +151,10 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
         actions.push({
           id: action.id,
           createdAt: action.createdAt,
-          sessionId: action.sessionId,
+          personId: action.personId,
+          // sessionId: action.sessionId,
           properties: action.properties,
-          actionClass: action.eventClass,
+          actionClass: action.actionClass,
         });
       });
       return actions;
@@ -124,9 +179,9 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
       try {
-        const actionsPrisma = await prisma.event.findMany({
+        const actionsPrisma = await prisma.action.findMany({
           where: {
-            eventClass: {
+            actionClass: {
               environmentId: environmentId,
             },
           },
@@ -136,7 +191,7 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           include: {
-            eventClass: true,
+            actionClass: true,
           },
         });
         const actions: TAction[] = [];
@@ -145,9 +200,10 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
           actions.push({
             id: action.id,
             createdAt: action.createdAt,
-            sessionId: action.sessionId,
+            // sessionId: action.sessionId,
+            personId: action.personId,
             properties: action.properties,
-            actionClass: action.eventClass,
+            actionClass: action.actionClass,
           });
         });
         return actions;
@@ -177,17 +233,18 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
 
-  const { environmentId, name, properties, sessionId } = data;
+  const { environmentId, name, properties, userId } = data;
 
-  let eventType: TActionClassType = "code";
+  let actionType: TActionClassType = "code";
   if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
-    eventType = "automatic";
+    actionType = "automatic";
   }
 
-  const session = await getSession(sessionId);
+  let person = await getPersonByUserId(environmentId, userId);
 
-  if (!session) {
-    throw new ResourceNotFoundError("Session", sessionId);
+  if (!person) {
+    // create person if it does not exist
+    person = await createPerson(environmentId, userId);
   }
 
   let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
@@ -195,20 +252,20 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
   if (!actionClass) {
     actionClass = await createActionClass(environmentId, {
       name,
-      type: eventType,
+      type: actionType,
       environmentId,
     });
   }
 
-  const action = await prisma.event.create({
+  const action = await prisma.action.create({
     data: {
       properties,
-      session: {
+      person: {
         connect: {
-          id: sessionId,
+          id: person.id,
         },
       },
-      eventClass: {
+      actionClass: {
         connect: {
           id: actionClass.id,
         },
@@ -216,15 +273,15 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     },
   });
 
-  revalidateTag(sessionId);
   actionCache.revalidate({
     environmentId,
+    personId: person.id,
   });
 
   return {
     id: action.id,
     createdAt: action.createdAt,
-    sessionId: action.sessionId,
+    personId: action.personId,
     properties: action.properties,
     actionClass,
   };
@@ -236,9 +293,9 @@ export const getActionCountInLastHour = async (actionClassId: string): Promise<n
       validateInputs([actionClassId, ZId]);
 
       try {
-        const numEventsLastHour = await prisma.event.count({
+        const numEventsLastHour = await prisma.action.count({
           where: {
-            eventClassId: actionClassId,
+            actionClassId: actionClassId,
             createdAt: {
               gte: new Date(Date.now() - 60 * 60 * 1000),
             },
@@ -262,9 +319,9 @@ export const getActionCountInLast24Hours = async (actionClassId: string): Promis
       validateInputs([actionClassId, ZId]);
 
       try {
-        const numEventsLast24Hours = await prisma.event.count({
+        const numEventsLast24Hours = await prisma.action.count({
           where: {
-            eventClassId: actionClassId,
+            actionClassId: actionClassId,
             createdAt: {
               gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
             },
@@ -288,9 +345,9 @@ export const getActionCountInLast7Days = async (actionClassId: string): Promise<
       validateInputs([actionClassId, ZId]);
 
       try {
-        const numEventsLast7Days = await prisma.event.count({
+        const numEventsLast7Days = await prisma.action.count({
           where: {
-            eventClassId: actionClassId,
+            actionClassId: actionClassId,
             createdAt: {
               gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
             },

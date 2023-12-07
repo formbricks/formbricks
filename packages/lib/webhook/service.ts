@@ -36,7 +36,7 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
     }
   )();
 
-export const getCountOfWebhooksBasedOnSource = async (
+export const getWebhookCountBySource = async (
   environmentId: string,
   source: TWebhookInput["source"]
 ): Promise<number> =>

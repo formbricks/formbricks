@@ -8,3 +8,10 @@ export const ZStorageRetrievalParams = z.object({
   environmentId: z.string().cuid(),
   accessType: ZAccessType,
 });
+
+export const ZUploadFileConfig = z.object({
+  allowedFileExtensions: z.array(z.string()).optional(),
+  surveyId: z.string().optional(),
+});
+
+export type TUploadFileConfig = z.infer<typeof ZUploadFileConfig>;

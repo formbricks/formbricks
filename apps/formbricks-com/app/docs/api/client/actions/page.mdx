@@ -1,0 +1,88 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const metadata = {
+  title: "Formbricks Responses API Documentation - Manage Your Survey Data Seamlessly",
+  description:
+    "Unlock the full potential of Formbricks' Client Actions API. Create Actions right from the API.",
+};
+
+#### Client API
+
+# Actions API
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+This API can be used to:
+- [Add Action for User](#add-action-for-user)
+
+
+---
+
+## Add Action for User {{ tag: 'POST', label: '/api/v1/client/<environment-id>/actions' }}
+
+Adds an Actions for a given User by their User ID
+
+<Row>
+  <Col>
+
+    ### Mandatory Body Fields
+
+    <Properties>
+      <Property name="userId" type="string">
+        The id of the user for whom the action is being created.
+      </Property>
+      <Property name="name" type="string">
+        The name of the Action being created.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/client/<environment-id>/actions">
+
+    ```bash {{ title: 'cURL' }}
+    curl --location --request POST 'https://app.formbricks.com/api/v1/client/<environment-id>/actions' \
+    --data-raw '{
+        "userId": "1",
+        "name": "new_action_v2",
+        "properties":{}
+
+    }'
+    ```
+
+    ```json {{ title: 'Example Request Body' }}
+    {
+        "userId": "1",
+        "name": "new_action_v3",
+        "properties":{}
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{ title: '200 Success' }}
+    {
+    "data": {}
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+        "code": "bad_request",
+        "message": "Fields are missing or incorrectly formatted",
+        "details": {
+            "name": "Required"
+        }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
