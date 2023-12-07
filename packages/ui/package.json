@@ -12,7 +12,7 @@
     "@formbricks/types": "workspace:*",
     "concurrently": "^8.2.2",
     "eslint-config-formbricks": "workspace:*",
-    "postcss": "^8.4.31",
+    "postcss": "^8.4.32",
     "react": "18.2.0"
   },
   "dependencies": {
@@ -47,7 +47,7 @@
     "react-day-picker": "^8.9.1",
     "react-hot-toast": "^2.4.1",
     "react-radio-group": "^3.0.3",
-    "react-use": "^17.4.1",
+    "react-use": "^17.4.2",
     "mime": "^4.0.0"
   }
 }
