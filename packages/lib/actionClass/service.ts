@@ -45,9 +45,6 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
             createdAt: "asc",
           },
         });
-        if (!actionClasses) {
-          throw new ResourceNotFoundError("actionClasses", environmentId);
-        }
         return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);

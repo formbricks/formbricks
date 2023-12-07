@@ -158,9 +158,6 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
   )();
 
   // Deserialize dates if caching does not support deserialization
-  if (!actions) {
-    throw new ResourceNotFoundError("Actions", personId);
-  }
   return actions.map((action) => formatDateFields(action, ZAction));
 };
 
@@ -215,9 +212,6 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  if (!actions) {
-    throw new ResourceNotFoundError("Actions", environmentId);
-  }
   return actions.map((action) => formatDateFields(action, ZAction));
 };
 
