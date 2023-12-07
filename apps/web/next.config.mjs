@@ -4,8 +4,8 @@ import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
 
-function removeHttps(url) {
-  return url.replace('https://', '');
+function removeProtocol(url) {
+  return url.replace(/(^\w+:|^)\/\//, "");
 }
 
 const nextConfig = {
@@ -39,7 +39,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: `${removeHttps(process.env.WEBAPP_URL)}`,
+        hostname: `${removeProtocol(process.env.WEBAPP_URL)}`,
       },
     ],
   },
