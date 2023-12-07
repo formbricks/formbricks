@@ -5,7 +5,7 @@ FROM node:20-alpine AS installer
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache g++ cmake make gcc python3
+RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev
 
 # Install Supercronic (cron for containers without super user privileges)
 RUN apk add --no-cache curl \
