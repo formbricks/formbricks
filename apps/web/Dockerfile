@@ -1,6 +1,7 @@
 # Installer stage: Building the application
 FROM node:20-alpine AS installer
 RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apk add g++
 
 # Install Supercronic (cron for containers without super user privileges)
 RUN apk add --no-cache curl \
