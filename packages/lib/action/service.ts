@@ -63,7 +63,7 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return formatDateFields(action!, ZAction);
+  return action ? formatDateFields(action, ZAction) : null;
 };
 
 export const getLatestActionByPersonId = async (personId: string): Promise<TAction | null> => {
@@ -112,7 +112,7 @@ export const getLatestActionByPersonId = async (personId: string): Promise<TActi
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return formatDateFields(action!, ZAction);
+  return action ? formatDateFields(action, ZAction) : null;
 };
 
 export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
