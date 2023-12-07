@@ -41,6 +41,13 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y docker-compose
     - name: Install dependencies
       run: npm install -g pnpm && pnpm install
+    - name: Wait for PostgreSQL to become ready
+      run: |
+        until PGPASSWORD=postgres psql -h postgres -U postgres -c '\q'; do
+          echo "PostgreSQL is still unavailable - sleeping"
+          sleep 1
+        done
+        echo "PostgreSQL is up - executing command"
     - name: Test PostgreSQL Connection
       run: PGPASSWORD=postgres psql -h postgres -U postgres -c '\l'
     - name: Install Playwright Browsers
