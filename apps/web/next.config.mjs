@@ -4,6 +4,10 @@ import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
 
+function removeHttps(url) {
+  return url.replace('https://', '');
+}
+
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
@@ -32,6 +36,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: `${removeHttps(process.env.WEBAPP_URL)}`,
       },
     ],
   },
