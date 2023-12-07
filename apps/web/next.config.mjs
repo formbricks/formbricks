@@ -40,7 +40,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: `${getHostname(process.env.WEBAPP_URL)}`,
+        hostname: getHostname(process.env.WEBAPP_URL),
       },
     ],
   },
