@@ -626,9 +626,6 @@ importers:
       '@formbricks/database':
         specifier: '*'
         version: link:../database
-      '@formbricks/surveys':
-        specifier: '*'
-        version: 1.0.0
       '@formbricks/types':
         specifier: '*'
         version: link:../types
@@ -3876,10 +3873,6 @@ packages:
 
   /@floating-ui/utils@0.1.6:
     resolution: {integrity: sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==}
-
-  /@formbricks/surveys@1.0.0:
-    resolution: {integrity: sha512-Bg8VVdPISgBFdTsvw36nHwTGaLeTzgklh6hVj/AO+haVllm2w8CyrRSrCZfPfBZWGTa4m29uyIf2Fgwv9K8oMw==}
-    dev: false
 
   /@headlessui/react@1.7.17(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-4am+tzvkqDSSgiwrsEpGWqgGo9dz8qU5M3znCkC4PgkpY4HcCZzEDEvozltGGGHIKl9jbXbZPSH5TWn4sWJdow==}

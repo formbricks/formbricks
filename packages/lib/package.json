@@ -21,7 +21,6 @@
     "mime": "4.0.0",
     "@formbricks/api": "*",
     "@formbricks/database": "*",
-    "@formbricks/surveys": "*",
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
     "aws-crt": "^1.19.0",
