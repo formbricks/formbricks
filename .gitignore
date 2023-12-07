@@ -45,6 +45,8 @@ packages/database/zod
 .direnv
 
 Zone.Identifier
+
+# Playwright
 /test-results/
 /playwright-report/
 /blob-report/
