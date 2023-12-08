@@ -26,8 +26,8 @@ export const getTeamsTag = (teamId: string) => `teams-${teamId}`;
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
 export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
-export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> =>
-  unstable_cache(
+export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> => {
+  const teams = await unstable_cache(
     async () => {
       validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
@@ -47,8 +47,7 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
         if (!teams) {
           throw new ResourceNotFoundError("Teams by UserId", userId);
         }
-
-        return teams.map((team) => formatDateFields(team, ZTeam));
+        return teams;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -63,9 +62,11 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return teams.map((team) => formatDateFields(team, ZTeam));
+};
 
-export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> =>
-  unstable_cache(
+export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> => {
+  const team = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -84,11 +85,8 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
           },
           select: { ...select, memberships: true }, // include memberships
         });
-        if (!team) {
-          throw new ResourceNotFoundError("Team by EnvironmentId", environmentId);
-        }
 
-        return formatDateFields(team, ZTeam);
+        return team;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -104,9 +102,11 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return team ? formatDateFields(team, ZTeam) : null;
+};
 
-export const getTeam = async (teamId: string): Promise<TTeam | null> =>
-  unstable_cache(
+export const getTeam = async (teamId: string): Promise<TTeam | null> => {
+  const team = await unstable_cache(
     async () => {
       validateInputs([teamId, ZString]);
 
@@ -117,10 +117,7 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> =>
           },
           select,
         });
-        if (!team) {
-          throw new ResourceNotFoundError("Team", teamId);
-        }
-        return formatDateFields(team, ZTeam);
+        return team;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -135,6 +132,8 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return team ? formatDateFields(team, ZTeam) : null;
+};
 
 export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
   try {

@@ -125,8 +125,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
-
-      return formatDateFields(transformedSurvey, ZSurvey);
+      return transformedSurvey;
     },
     [`getSurvey-${surveyId}`],
     {
@@ -135,13 +134,9 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     }
   )();
 
-  if (!survey) {
-    return null;
-  }
-
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return formatDateFields(survey, ZSurvey);
+  return survey ? formatDateFields(survey, ZSurvey) : null;
 };
 
 export const getSurveysByAttributeClassId = async (
@@ -183,10 +178,6 @@ export const getSurveysByAttributeClassId = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  if (!surveys) {
-    throw new ResourceNotFoundError("Surveys", attributeClassId);
-  }
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
@@ -228,10 +219,6 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  if (!surveys) {
-    throw new ResourceNotFoundError("Survey", actionClassId);
-  }
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
@@ -267,7 +254,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
         };
         surveys.push(transformedSurvey);
       }
-      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+      return surveys;
     },
     [`getSurveys-${environmentId}-${page}`],
     {
@@ -278,9 +265,6 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  if (!surveys) {
-    throw new ResourceNotFoundError("Survey", environmentId);
-  }
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
@@ -605,10 +589,10 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
   return newSurvey;
 };
 
-export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+export const getSyncSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
   validateInputs([environmentId, ZId]);
 
-  return unstable_cache(
+  const surveys = await unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
 
@@ -688,7 +672,7 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
       if (!surveys) {
         throw new ResourceNotFoundError("Survey", environmentId);
       }
-      return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+      return surveys;
     },
     [`getSyncSurveys-${environmentId}-${person.userId}`],
     {
@@ -701,4 +685,5 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };

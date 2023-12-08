@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { Prisma } from "@prisma/client";
@@ -34,8 +34,8 @@ const selectProduct = {
   environments: true,
 };
 
-export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> =>
-  unstable_cache(
+export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {
+  const products = await unstable_cache(
     async () => {
       validateInputs([teamId, ZId], [page, ZOptionalNumber]);
 
@@ -48,11 +48,7 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
-        if (!products) {
-          throw new ResourceNotFoundError("Products by teamId", teamId);
-        }
-
-        return products.map((product) => formatDateFields(product, ZProduct));
+        return products;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -67,9 +63,11 @@ export const getProducts = async (teamId: string, page?: number): Promise<TProdu
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return products.map((product) => formatDateFields(product, ZProduct));
+};
 
-export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> =>
-  unstable_cache(
+export const getProductByEnvironmentId = async (environmentId: string): Promise<TProduct | null> => {
+  const product = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -87,11 +85,7 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
           select: selectProduct,
         });
 
-        if (!productPrisma) {
-          throw new ResourceNotFoundError("Products by environmentId", environmentId);
-        }
-
-        return formatDateFields(productPrisma, ZProduct);
+        return productPrisma;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -106,6 +100,8 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return product ? formatDateFields(product, ZProduct) : null;
+};
 
 export const updateProduct = async (
   productId: string,
@@ -158,8 +154,8 @@ export const updateProduct = async (
   }
 };
 
-export const getProduct = async (productId: string): Promise<TProduct | null> =>
-  unstable_cache(
+export const getProduct = async (productId: string): Promise<TProduct | null> => {
+  const product = await unstable_cache(
     async () => {
       let productPrisma;
       try {
@@ -169,11 +165,8 @@ export const getProduct = async (productId: string): Promise<TProduct | null> =>
           },
           select: selectProduct,
         });
-        if (!productPrisma) {
-          throw new ResourceNotFoundError("Product", productId);
-        }
 
-        return formatDateFields(productPrisma, ZProduct);
+        return productPrisma;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -187,6 +180,8 @@ export const getProduct = async (productId: string): Promise<TProduct | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return product ? formatDateFields(product, ZProduct) : null;
+};
 
 export const deleteProduct = async (productId: string): Promise<TProduct> => {
   const product = await prisma.product.delete({
@@ -243,7 +238,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
     });
   }
 
-  return formatDateFields(product, ZProduct);
+  return product;
 };
 
 export const createProduct = async (

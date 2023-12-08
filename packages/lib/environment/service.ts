@@ -22,8 +22,8 @@ import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 import { formatDateFields } from "../utils/datetime";
 
-export const getEnvironment = (environmentId: string): Promise<TEnvironment | null> =>
-  unstable_cache(
+export const getEnvironment = async (environmentId: string): Promise<TEnvironment | null> => {
+  const environment = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -33,10 +33,7 @@ export const getEnvironment = (environmentId: string): Promise<TEnvironment | nu
             id: environmentId,
           },
         });
-        if (!environment) {
-          throw new ResourceNotFoundError("Environment", environmentId);
-        }
-        return formatDateFields(environment, ZEnvironment);
+        return environment;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -52,9 +49,11 @@ export const getEnvironment = (environmentId: string): Promise<TEnvironment | nu
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return environment ? formatDateFields(environment, ZEnvironment) : null;
+};
 
-export const getEnvironments = async (productId: string): Promise<TEnvironment[]> =>
-  unstable_cache(
+export const getEnvironments = async (productId: string): Promise<TEnvironment[]> => {
+  const environments = await unstable_cache(
     async (): Promise<TEnvironment[]> => {
       validateInputs([productId, ZId]);
       let productPrisma;
@@ -84,11 +83,8 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
         environments.push(targetEnvironment);
       }
 
-      if (!environments) {
-        throw new ResourceNotFoundError("Environments by ProductId", productId);
-      }
       try {
-        return environments.map((environment) => formatDateFields(environment, ZEnvironment));
+        return environments;
       } catch (error) {
         if (error instanceof z.ZodError) {
           console.error(JSON.stringify(error.errors, null, 2));
@@ -102,6 +98,8 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return environments.map((environment) => formatDateFields(environment, ZEnvironment));
+};
 
 export const updateEnvironment = async (
   environmentId: string,
@@ -166,10 +164,8 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!environment) {
-    throw new ResourceNotFoundError("Environment by UserId", userId);
-  }
-  return formatDateFields(environment, ZEnvironment);
+
+  return environment ? formatDateFields(environment, ZEnvironment) : null;
 };
 
 export const createEnvironment = async (

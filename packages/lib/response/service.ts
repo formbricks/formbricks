@@ -138,9 +138,6 @@ export const getResponsesByPersonId = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!responses) {
-    throw new ResourceNotFoundError("Responses by PersonId", personId);
-  }
 
   return responses.map((response) => ({
     ...formatDateFields(response, ZResponse),
@@ -190,14 +187,12 @@ export const getResponseBySingleUseId = async (
     }
   )();
 
-  if (!response) {
-    return null;
-  }
-
-  return {
-    ...formatDateFields(response, ZResponse),
-    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-  };
+  return response
+    ? {
+        ...formatDateFields(response, ZResponse),
+        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+      }
+    : null;
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
@@ -375,10 +370,6 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     }
   )();
 
-  if (!response) {
-    return null;
-  }
-
   return {
     ...formatDateFields(response, ZResponse),
     notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
@@ -430,9 +421,6 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!responses) {
-    throw new ResourceNotFoundError("Responses by SurveyId", surveyId);
-  }
 
   return responses.map((response) => ({
     ...formatDateFields(response, ZResponse),
@@ -490,9 +478,6 @@ export const getResponsesByEnvironmentId = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!responses) {
-    throw new ResourceNotFoundError("Responses by EnvironmentId", environmentId);
-  }
 
   return responses.map((response) => ({
     ...formatDateFields(response, ZResponse),

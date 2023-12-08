@@ -12,7 +12,7 @@ import {
 } from "@formbricks/types/attributeClasses";
 import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -41,11 +41,7 @@ export const getAttributeClass = async (attributeClassId: string): Promise<TAttr
     }
   )();
 
-  if (!attributeClass) {
-    return null;
-  }
-
-  return formatDateFields(attributeClass, ZAttributeClass);
+  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
 };
 
 export const getAttributeClasses = async (
@@ -81,10 +77,6 @@ export const getAttributeClasses = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!attributeClasses) {
-    throw new ResourceNotFoundError("attribute Classes", environmentId);
-  }
-
   return attributeClasses.map((attributeClass) => formatDateFields(attributeClass, ZAttributeClass));
 };
 
@@ -117,8 +109,8 @@ export const updateAttributeClass = async (
   }
 };
 
-export const getAttributeClassByName = async (environmentId: string, name: string) =>
-  await unstable_cache(
+export const getAttributeClassByName = async (environmentId: string, name: string) => {
+  const attributeClass = await unstable_cache(
     async (): Promise<TAttributeClass | null> => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
@@ -128,11 +120,8 @@ export const getAttributeClassByName = async (environmentId: string, name: strin
           name,
         },
       });
-      if (!attributeClass) {
-        throw new ResourceNotFoundError("attribute Class", name);
-      }
 
-      return formatDateFields(attributeClass, ZAttributeClass);
+      return attributeClass;
     },
     [`getAttributeClassByName-${environmentId}-${name}`],
     {
@@ -140,6 +129,8 @@ export const getAttributeClassByName = async (environmentId: string, name: strin
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
+};
 
 export const createAttributeClass = async (
   environmentId: string,

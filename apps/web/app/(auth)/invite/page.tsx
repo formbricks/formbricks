@@ -21,7 +21,7 @@ export default async function JoinTeam({ searchParams }) {
 
     const invite = await getInvite(inviteId);
 
-    const isInviteExpired = new Date(invite.expiresAt) < new Date();
+    const isInviteExpired = invite ? new Date(invite.expiresAt) < new Date() : true;
 
     if (!invite || isInviteExpired) {
       return <ExpiredContent />;

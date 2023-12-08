@@ -72,8 +72,8 @@ export const createResponseNote = async (
   }
 };
 
-export const getResponseNote = async (responseNoteId: string): Promise<TResponseNote | null> =>
-  unstable_cache(
+export const getResponseNote = async (responseNoteId: string): Promise<TResponseNote | null> => {
+  const responseNote = await unstable_cache(
     async () => {
       try {
         const responseNote = await prisma.responseNote.findUnique({
@@ -82,10 +82,7 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
           },
           select,
         });
-        if (!responseNote) {
-          throw new ResourceNotFoundError("Response Note", responseNoteId);
-        }
-        return formatDateFields(responseNote, ZResponseNote);
+        return responseNote;
       } catch (error) {
         console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -98,9 +95,11 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
     [`getResponseNote-${responseNoteId}`],
     { tags: [responseNoteCache.tag.byId(responseNoteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
+  return responseNote ? formatDateFields(responseNote, ZResponseNote) : null;
+};
 
-export const getResponseNotes = async (responseId: string): Promise<TResponseNote[]> =>
-  unstable_cache(
+export const getResponseNotes = async (responseId: string): Promise<TResponseNote[]> => {
+  const responseNotes = await unstable_cache(
     async () => {
       try {
         validateInputs([responseId, ZId]);
@@ -114,7 +113,7 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
         if (!responseNotes) {
           throw new ResourceNotFoundError("Response Notes by ResponseId", responseId);
         }
-        return responseNotes.map((responseNote) => formatDateFields(responseNote, ZResponseNote));
+        return responseNotes;
       } catch (error) {
         console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -127,6 +126,8 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
     [`getResponseNotes-${responseId}`],
     { tags: [responseNoteCache.tag.byResponseId(responseId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
+  return responseNotes.map((responseNote) => formatDateFields(responseNote, ZResponseNote));
+};
 
 export const updateResponseNote = async (responseNoteId: string, text: string): Promise<TResponseNote> => {
   validateInputs([responseNoteId, ZString], [text, ZString]);

@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
@@ -91,11 +91,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     { tags: [personCache.tag.byId(personId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
-  if (!prismaPerson) {
-    throw new ResourceNotFoundError("person", personId);
-  }
-
-  return formatDateFields(transformPrismaPerson(prismaPerson), ZPerson);
+  return prismaPerson ? formatDateFields(transformPrismaPerson(prismaPerson), ZPerson) : null;
 };
 
 export const getPeople = async (environmentId: string, page?: number): Promise<TPerson[]> => {
@@ -126,10 +122,6 @@ export const getPeople = async (environmentId: string, page?: number): Promise<T
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  if (!peoplePrisma || peoplePrisma.length === 0) {
-    return [];
-  }
 
   return peoplePrisma
     .map((prismaPerson) => formatDateFields(transformPrismaPerson(prismaPerson), ZPerson))
@@ -310,8 +302,8 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   }
 };
 
-export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> =>
-  await unstable_cache(
+export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> => {
+  const person = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [userId, ZString]);
 
@@ -325,7 +317,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
       });
 
       if (personWithUserId) {
-        return formatDateFields(transformPrismaPerson(personWithUserId), ZPerson);
+        return transformPrismaPerson(personWithUserId);
       }
 
       // Check if a person with the userId attribute exists
@@ -371,7 +363,7 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
         userId,
       });
 
-      return formatDateFields(transformPrismaPerson(personWithUserIdAttribute), ZPerson);
+      return transformPrismaPerson(personWithUserIdAttribute);
     },
     [`getPersonByUserId-${environmentId}-${userId}`],
     {
@@ -379,6 +371,8 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return person ? formatDateFields(person, ZPerson) : null;
+};
 
 /**
  * @deprecated This function is deprecated and only used in legacy endpoints. Use updatePerson instead.

@@ -28,8 +28,8 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
-  unstable_cache(
+export const getActionClasses = async (environmentId: string, page?: number): Promise<TActionClass[]> => {
+  const actionClasses = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -56,12 +56,14 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
+};
 
 export const getActionClassByEnvironmentIdAndName = async (
   environmentId: string,
   name: string
-): Promise<TActionClass | null> =>
-  unstable_cache(
+): Promise<TActionClass | null> => {
+  const actionClass = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
@@ -73,10 +75,8 @@ export const getActionClassByEnvironmentIdAndName = async (
           },
           select,
         });
-        if (!actionClass) {
-          throw new ResourceNotFoundError("actionClass", environmentId);
-        }
-        return formatDateFields(actionClass, ZActionClass);
+
+        return actionClass;
       } catch (error) {
         throw new DatabaseError(`Database error when fetching action`);
       }
@@ -87,9 +87,11 @@ export const getActionClassByEnvironmentIdAndName = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
+};
 
-export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> =>
-  unstable_cache(
+export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> => {
+  const actionClass = await unstable_cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -100,11 +102,8 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
           },
           select,
         });
-        if (!actionClass) {
-          throw new ResourceNotFoundError("actionClass", actionClassId);
-        }
 
-        return formatDateFields(actionClass, ZActionClass);
+        return actionClass;
       } catch (error) {
         throw new DatabaseError(`Database error when fetching action`);
       }
@@ -115,6 +114,8 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
+};
 
 export const deleteActionClass = async (
   environmentId: string,

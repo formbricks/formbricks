@@ -69,14 +69,12 @@ export const getProfile = async (id: string): Promise<TProfile | null> => {
     }
   )();
 
-  if (!profile) {
-    return null;
-  }
-
-  return {
-    ...profile,
-    ...formatDateFields(profile, ZProfile),
-  } as TProfile;
+  return profile
+    ? {
+        ...profile,
+        ...formatDateFields(profile, ZProfile),
+      }
+    : null;
 };
 
 export const getProfileByEmail = async (email: string): Promise<TProfile | null> => {
@@ -91,10 +89,6 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
           },
           select: responseSelection,
         });
-
-        if (!profile) {
-          return null;
-        }
 
         return profile;
       } catch (error) {
@@ -112,14 +106,12 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
     }
   )();
 
-  if (!profile) {
-    return null;
-  }
-
-  return {
-    ...profile,
-    ...formatProfileDateFields(profile),
-  } as TProfile;
+  return profile
+    ? {
+        ...profile,
+        ...formatProfileDateFields(profile),
+      }
+    : null;
 };
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>

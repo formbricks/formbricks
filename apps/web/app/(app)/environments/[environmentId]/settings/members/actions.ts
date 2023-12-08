@@ -97,8 +97,9 @@ export const leaveTeamAction = async (teamId: string) => {
 };
 
 export const createInviteTokenAction = async (inviteId: string) => {
-  const { email } = await getInvite(inviteId);
-
+  const invite = await getInvite(inviteId);
+  if (invite === null) return;
+  const email = invite.email;
   const inviteToken = createInviteToken(inviteId, email, {
     expiresIn: "7d",
   });

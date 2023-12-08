@@ -74,8 +74,9 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
   const handleShareInvite = async () => {
     try {
       if (!invite) return;
-
-      const { inviteToken } = await createInviteTokenAction(invite.id);
+      const newInviteToken = await createInviteTokenAction(invite.id);
+      if (!newInviteToken) return;
+      const { inviteToken } = newInviteToken;
       setShareInviteToken(inviteToken);
       setShowShareInviteModal(true);
     } catch (err) {

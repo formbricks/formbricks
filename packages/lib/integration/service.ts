@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import {
   TIntegration,
   TIntegrationInput,
@@ -54,8 +54,8 @@ export async function createOrUpdateIntegration(
   }
 }
 
-export const getIntegrations = async (environmentId: string, page?: number): Promise<TIntegration[]> =>
-  unstable_cache(
+export const getIntegrations = async (environmentId: string, page?: number): Promise<TIntegration[]> => {
+  const integrations = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -67,10 +67,7 @@ export const getIntegrations = async (environmentId: string, page?: number): Pro
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
-        if (!integrations) {
-          throw new ResourceNotFoundError("Integrations by EnvironmentId", environmentId);
-        }
-        return integrations.map((integration) => formatDateFields(integration, ZIntegration));
+        return integrations;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -84,9 +81,11 @@ export const getIntegrations = async (environmentId: string, page?: number): Pro
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return integrations.map((integration) => formatDateFields(integration, ZIntegration));
+};
 
-export const getIntegration = async (integrationId: string): Promise<TIntegration | null> =>
-  unstable_cache(
+export const getIntegration = async (integrationId: string): Promise<TIntegration | null> => {
+  const integration = await unstable_cache(
     async () => {
       try {
         const integration = await prisma.integration.findUnique({
@@ -94,10 +93,7 @@ export const getIntegration = async (integrationId: string): Promise<TIntegratio
             id: integrationId,
           },
         });
-        if (!integration) {
-          throw new ResourceNotFoundError("Integrations", integrationId);
-        }
-        return formatDateFields(integration, ZIntegration);
+        return integration;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -108,12 +104,14 @@ export const getIntegration = async (integrationId: string): Promise<TIntegratio
     [`getIntegration-${integrationId}`],
     { tags: [integrationCache.tag.byId(integrationId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
+  return integration ? formatDateFields(integration, ZIntegration) : null;
+};
 
 export const getIntegrationByType = async (
   environmentId: string,
   type: TIntegrationInput["type"]
-): Promise<TIntegration | null> =>
-  unstable_cache(
+): Promise<TIntegration | null> => {
+  const integration = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [type, ZIntegrationType]);
 
@@ -126,10 +124,7 @@ export const getIntegrationByType = async (
             },
           },
         });
-        if (!integration) {
-          throw new ResourceNotFoundError("Integration by type", type);
-        }
-        return formatDateFields(integration, ZIntegration);
+        return integration;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -143,6 +138,8 @@ export const getIntegrationByType = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return integration ? formatDateFields(integration, ZIntegration) : null;
+};
 
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
   validateInputs([integrationId, ZString]);

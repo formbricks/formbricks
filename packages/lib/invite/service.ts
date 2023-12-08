@@ -34,7 +34,12 @@ const inviteSelect = {
   expiresAt: true,
   role: true,
 };
-
+interface InviteWithCreator extends TInvite {
+  creator: {
+    name: string | null;
+    email: string;
+  };
+}
 export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[]> => {
   const invites = await unstable_cache(
     async () => {
@@ -53,9 +58,6 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!invites) {
-    throw new ResourceNotFoundError("Invites by teamId", teamId);
-  }
   return invites.map((invite: TInvite) => formatDateFields(invite, ZInvite));
 };
 
@@ -117,10 +119,8 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (
-  inviteId: string
-): Promise<TInvite & { creator: { name: string | null; email: string } }> =>
-  unstable_cache(
+export const getInvite = async (inviteId: string): Promise<InviteWithCreator | null> => {
+  const invite = await unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
 
@@ -137,19 +137,18 @@ export const getInvite = async (
           },
         },
       });
-
-      if (!invite) {
-        throw new ResourceNotFoundError("Invite", inviteId);
-      }
-
-      return {
-        ...formatDateFields(invite, ZInvite),
-        creator: invite.creator,
-      };
+      return invite;
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
+  return invite
+    ? {
+        ...formatDateFields(invite, ZInvite),
+        creator: invite.creator,
+      }
+    : null;
+};
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
   validateInputs([inviteId, ZString]);

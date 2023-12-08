@@ -5,7 +5,7 @@ import { TActionClassType } from "@formbricks/types/actionClasses";
 import { TAction, TActionInput, ZAction, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { actionClassCache } from "../actionClass/cache";
@@ -212,6 +212,7 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
+
   return actions.map((action) => formatDateFields(action, ZAction));
 };
 

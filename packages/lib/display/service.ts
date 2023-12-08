@@ -34,8 +34,8 @@ const selectDisplay = {
   personId: true,
 };
 
-export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
-  await unstable_cache(
+export const getDisplay = async (displayId: string): Promise<TDisplay | null> => {
+  const display = await unstable_cache(
     async () => {
       validateInputs([displayId, ZId]);
 
@@ -46,11 +46,8 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
           },
           select: selectDisplay,
         });
-        if (!display) {
-          throw new ResourceNotFoundError("Display", displayId);
-        }
 
-        return formatDateFields(display, ZDisplay);
+        return display;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -65,6 +62,8 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return display ? formatDateFields(display, ZDisplay) : null;
+};
 
 export const updateDisplay = async (
   displayId: string,
@@ -314,9 +313,6 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!displays) {
-    throw new ResourceNotFoundError("Display from PersonId", personId);
-  }
   return displays.map((display) => formatDateFields(display, ZDisplay));
 };
 
